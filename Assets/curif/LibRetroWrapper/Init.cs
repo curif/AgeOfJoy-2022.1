@@ -457,16 +457,17 @@ public static class CabinetFactory {
 }
 
 public class Init {
+
+    static string testedCabinetName = "TestedCabinet";
+
     //https://docs.unity3d.com/ScriptReference/RuntimeInitializeOnLoadMethodAttribute-ctor.html
     [RuntimeInitializeOnLoadMethod]
-    static async void OnRuntimeMethodLoad()
-    {
+    static async void OnRuntimeMethodLoad() {
         bool isWorkshop = true; //look for a process to detect if this is a workshop or not.
         ConfigManager.WriteConsole("+++++++++++++++++++++  Initialize Cabinets +++++++++++++++++++++");
 
         ConfigManager.WriteConsole("Loading cabinets");
-        CabinetDBAdmin cbadmin = new();
-        cbadmin.loadCabinets();
+        CabinetDBAdmin.loadCabinets();
 
         GameObject[] cabinetSpots = GameObject.FindGameObjectsWithTag("spot");
         int cabinetFoundIndex = 0;
@@ -485,15 +486,7 @@ public class Init {
                         ConfigManager.WriteConsole($"** YAML loaded cabinet {cbInfo.name} rom: {cbInfo.rom}");
 
                         //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
-                        ConfigManager.WriteConsole("Alerts and errors");
-                        Dictionary<string, System.Exception> exceptions = cbInfo.checkForProblems(new List<string>(CabinetMaterials.materialList.Keys), 
-                                                                                                Cabinet.userStandarConfigurableParts,
-                                                                                                new List<string>(CabinetFactory.CabinetStyles.Keys),
-                                                                                                new List<string>(CoinSlotsFactory.objects.Keys),
-                                                                                                new List<string>(CRTsFactory.objects.Keys));
-                        foreach(KeyValuePair<string, System.Exception> error in exceptions) {
-                            ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null? "-OK-" : error.Value)}");
-                        }
+                        CabinetInformation.showCabinetProblems(cbInfo);
                     }
                     catch (System.Exception e) {
                         ConfigManager.WriteConsole($"ERROR ** YAML cabinet not loaded {dir}: {e}");
@@ -501,17 +494,31 @@ public class Init {
                     }
 
                     if (cbInfo != null) {
-                        GameObject CabSpot = null;
+                        GameObject cabSpot = null;
+                        string name = "";
+                        Cabinet cab;
+
+                        //spot selection
                         if (dir.Contains("/test")) {
-                            CabSpot = GameObject.Find("CabSpot");
+                            cabSpot = GameObject.Find("CabSpot");
+                            name = testedCabinetName;
                         }
                         else {
-                            CabSpot = cabinetSpots[cabinetFoundIndex];
+                            cabSpot = cabinetSpots[cabinetFoundIndex];
                             cabinetFoundIndex++;
+                            name = $"Cabinet-{cabinetFoundIndex}";
                         }
+
+                        //invoque and deploy the new cabinet
                         try {
-                            CabinetFactory.fromInformation(cbInfo, CabSpot.transform.position, CabSpot.transform.rotation);
-                            Object.Destroy(CabSpot);
+                            cab = CabinetFactory.fromInformation(cbInfo, cabSpot.transform.position, cabSpot.transform.rotation);
+                            Object.Destroy(cabSpot);
+                            cab.gameObject.name = name;
+
+                            if (cab.gameObject.name == testedCabinetName) {
+                                //cabinet auto reload
+                                cab.gameObject.AddComponent(typeof(CabinetAutoReload));
+                            }
                         }
                         catch (System.Exception e) {
                             ConfigManager.WriteConsole($"ERROR ** cabinet not deployed {dir}: {e}");
@@ -526,51 +533,50 @@ public class Init {
             
         }
 
-        /*
-        // position.z = -7f;
-        GameObject CabSpot = GameObject.Find("CabSpot");
-        Cabinet c2 = CabinetFactory.Factory("TimePilot", "timeplt", CabSpot.transform.position, CabSpot.transform.rotation);
-        c2.SetMaterial(CabinetMaterials.Black)
-            .SetMarquee("ast-deluxe-marquee_orig.jpg")
-            .SetTextureTo("left", "side_left-rec.png", CabinetMaterials.Black, invertX: true)
-            .SetTextureTo("right", "side_left-rec.png", CabinetMaterials.Black)
-            .SetMaterial("screen-base", CabinetMaterials.LightWood)
-            .SetBezel("bezeltest.png")
-            .AddCoinSlot("plasticDouble")
-            .SetScreen("timeplt.zip", invertY: true);
-        Object.Destroy(CabSpot);
+        // if (isWorkshop) {
+        //     System.Timers.Timer timer = new System.Timers.Timer(2000);
+        //     timer.Start();
+        //     timer.Elapsed += ReloadTestCabinet;
+        // }
 
-        CabSpot = GameObject.Find("CabSpot2");
-        c2 = CabinetFactory.Factory("Generic", "generic-black", CabSpot.transform.position, CabSpot.transform.rotation);
-        c2.SetMaterial(CabinetMaterials.Black)
-            .SetMarquee("ast-deluxe-marquee_orig.jpg")
-            .SetTextureTo("left", "side_left-rec.png", CabinetMaterials.Black, invertX: true)
-            .SetTextureTo("right", "side_left-rec.png", CabinetMaterials.Black)
-            .SetMaterial("screen-base", CabinetMaterials.LightWood)
-            .AddCoinSlot("plastic")
-            .SetBezel("bezeltest.png")
-            .SetScreen("arkanoid.zip", invertY: true, invertX: false);
-        Object.Destroy(CabSpot);
-
-        GameObject[] emptyCabs;
-        emptyCabs = GameObject.FindGameObjectsWithTag("Cabinet");
-        foreach (GameObject cab in emptyCabs) {
-            //just one for now
-            Vector3 pos = cab.transform.position;
-            Quaternion rot = cab.transform.rotation;
-            Cabinet c = CabinetFactory.Factory("Generic", "respawned", pos, rot);
-            c.SetTextureTo("left", "side_left-rec.png", CabinetMaterials.Black)
-            .SetTextureTo("right", "side_left-rec.png", CabinetMaterials.Black, invertX: true)
-            .SetMaterial("screen-base", CabinetMaterials.LightWood)
-            .AddCoinSlot("plastic")
-            .SetBezel("bezeltest.png")
-            .SetScreen("galaga.zip", invertY: true, invertX: false);
-
-            Object.Destroy(cab);
-            break;
-        }
-        */      
         Debug.Log("+++++++++++++++++++++ Initialized");
 
     }
+
+    private static void ReloadTestCabinet(object sender,  System.Timers.ElapsedEventArgs e) {
+        string testFile = ConfigManager.Cabinets + "/test.zip";
+        if (File.Exists(testFile)) {
+            ConfigManager.WriteConsole($"New cabinet to test: {testFile}");
+                
+            //new cabinet to test
+            CabinetInformation cbInfo = null;       
+            try {
+                CabinetDBAdmin.loadCabinetFromZip(testFile);
+
+                cbInfo = CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/test"); //description.yaml
+             
+                CabinetInformation.showCabinetProblems(cbInfo);
+
+                GameObject cabSpot = GameObject.Find(testedCabinetName);
+                if (cabSpot == null) {
+                    ConfigManager.WriteConsole("ERROR ** there is no place where to deploy the cabinet");
+                    return;
+                }
+
+                ConfigManager.WriteConsole($"Deploy test cabinet {cbInfo.name}");
+                Cabinet cab = CabinetFactory.fromInformation(cbInfo, cabSpot.transform.position, cabSpot.transform.rotation);
+                cab.gameObject.name = testedCabinetName;
+
+                ConfigManager.WriteConsole($"destroy previous tested cabinet {cabSpot.name}");
+                Object.Destroy(cabSpot);
+            }
+            catch (System.Exception ex) {
+                ConfigManager.WriteConsole($"ERROR loading cabinet from description {testFile}: {ex}");
+                return;
+            }
+
+            ConfigManager.WriteConsole("New Tested Cabinet deployed ******");
+        }
+    }
+
 }

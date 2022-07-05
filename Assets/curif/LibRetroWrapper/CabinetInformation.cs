@@ -163,4 +163,20 @@ public class CabinetInformation {
 
         return exceptions;
     }
+
+
+    public static void showCabinetProblems(CabinetInformation cbInfo) {
+        //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
+        ConfigManager.WriteConsole("Alerts and errors");
+        Dictionary<string, System.Exception> exceptions = cbInfo.checkForProblems(new List<string>(CabinetMaterials.materialList.Keys), 
+                                                                                Cabinet.userStandarConfigurableParts,
+                                                                                new List<string>(CabinetFactory.CabinetStyles.Keys),
+                                                                                new List<string>(CoinSlotsFactory.objects.Keys),
+                                                                                new List<string>(CRTsFactory.objects.Keys));
+        foreach(KeyValuePair<string, System.Exception> error in exceptions) {
+            ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null? "-OK-" : error.Value)}");
+        }
+        ConfigManager.WriteConsole("===================");
+        return;
+    }
 }
