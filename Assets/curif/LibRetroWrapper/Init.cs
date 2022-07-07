@@ -18,6 +18,8 @@ public static class ConfigManager {
     public static string RomsDir = $"{BaseDir}/downloads";
     public static string GameSaveDir = $"{BaseDir}/save";
 
+    public static bool GameVideosStopped = false;
+
     static ConfigManager() {
          
         if (!Directory.Exists(ConfigManager.Cabinets)) {
@@ -38,6 +40,10 @@ public static class ConfigManager {
     public static void WriteConsole(string st) {
         UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, st);
     }
+
+    public static void SignalToStopVideos() {
+        GameVideosStopped = true;
+    }
 }
 
 public static class CabinetMaterials {
@@ -45,6 +51,7 @@ public static class CabinetMaterials {
     public static Material Base; //uses the shade mobile/difusse
     public static Material Black; 
     public static Material LightWood;
+    public static Material DarkWood;
     public static Material TVBorder;
     public static Material Screen;
     public static Material FrontGlassWithBezel;
@@ -62,11 +69,13 @@ public static class CabinetMaterials {
 
         //pre created in Unity editor
         Black = Resources.Load<Material>("Cabinets/Materials/CabinetBlack");
-        LightWood = Resources.Load<Material>("Cabinets/Materials/wood");
+        LightWood = Resources.Load<Material>("Cabinets/Materials/LightWood");
+        DarkWood = Resources.Load<Material>("Cabinets/Materials/DarkWood");
 
         materialList.Add("black", Black);
         materialList.Add("base", Base);
         materialList.Add("lightwood", LightWood);
+        materialList.Add("darkwood", DarkWood);
 
         TVBorder = Resources.Load<Material>("Cabinets/Materials/TVBorder");
         Marquee = Resources.Load<Material>("Cabinets/Materials/Marquee");
@@ -282,7 +291,7 @@ public class Cabinet {
         SetTextureTo("marquee", texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
         if (color != null) {
             Renderer r = Parts["marquee"].GetComponent<Renderer>();
-            Debug.Log($"SetMarquee color: {color}");
+            // Debug.Log($"SetMarquee color: {color}");
             r.material.SetColor("_EmissionColor", color);
         }
         
@@ -348,12 +357,13 @@ public class Cabinet {
         // AudioSource audioSource = Parts["screen"].AddComponent(typeof(AudioSource)) as AudioSource;
 
         libretroScreenController.GameFile = GameFile;
-        libretroScreenController.GameVideoFile = GameVideoFile;
         libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
-        libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
-        libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
         libretroScreenController.GameInvertX = invertX;
         libretroScreenController.GameInvertY = invertY;
+
+        libretroScreenController.GameVideoFile = GameVideoFile;
+        libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
+        libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
 
         //it's very basic, but the spatializer wont work, so may be it's the only alternative.
         AudioSource audio = Parts["screen"].GetComponent<AudioSource>();
@@ -401,6 +411,7 @@ public static class CabinetFactory {
         CabinetStyles.Add("timeplt",  Resources.Load<GameObject>($"Cabinets/PreFab/TimePilot"));
         CabinetStyles.Add("galaga",  Resources.Load<GameObject>($"Cabinets/PreFab/Galaga"));
         CabinetStyles.Add("pacmancabaret",  Resources.Load<GameObject>($"Cabinets/PreFab/PacManCabaret"));
+        CabinetStyles.Add("frogger",  Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
 
         foreach(KeyValuePair<string, GameObject> cab in CabinetStyles) {
             cab.Value.AddComponent<MeshCollider>();

@@ -20,7 +20,7 @@ public class CabinetInformation {
     public string coinslot = "coin-slot-double";
     public int timetoload = 3;
     public string pathBase;
-    public Video video;
+    public Video video = new();
     public List<System.Exception> problems;
 
     public static CabinetInformation fromYaml(string cabPath) {
@@ -114,7 +114,7 @@ public class CabinetInformation {
             float factor = Mathf.Pow(2, intensity);
             Color c = new Color32(r, g, b, a);
             Color cf = new Color(c.r * factor, c.g * factor, c.b * factor, a);
-            Debug.Log($" marquee color: {cf}");
+            // Debug.Log($" marquee color: {cf}");
             return cf;
         }
     }

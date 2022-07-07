@@ -30,7 +30,7 @@ public class UsdCoin : MonoBehaviour
     void Update() {
         if (!grabbable.isGrabbed) {
             if (CoinSlot != null) {
-                Debug.Log($"Dropped coin on {CoinSlot.name}");
+                ConfigManager.WriteConsole($"Dropped coin on {CoinSlot.name}");
                 var ctrl = CoinSlot.GetComponent<CoinSlotController>();
                 ctrl.insertCoin();
                 CoinSlot = null;
@@ -39,10 +39,13 @@ public class UsdCoin : MonoBehaviour
             gameObject.transform.localPosition = originalLocalPosition;
             gameObject.transform.localRotation = originalLocalRotation;
         }
+        // else {
+        //     ConfigManager.WriteConsole("Coin grabbed");
+        // }
     }
 
     void OnTriggerEnter(Collider col) {
-        // Debug.Log($" OnTriggerEnter Collision with  {col.gameObject.name}");
+        //Debug.Log($" OnTriggerEnter Collision with  {col.gameObject.name}");
         if (col.gameObject.tag == "CoinSlot" && grabbable.isGrabbed) {
             CoinSlot = col.gameObject;
             // Debug.Log($"Coin on {CoinSlot.name}");

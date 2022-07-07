@@ -52,16 +52,12 @@ public class LibretroScreenController : MonoBehaviour {
     [SerializeField]
     public LibretroMameCore.BrightnessOptions Brightness = LibretroMameCore.BrightnessOptions.BRIGHT_1;
 
-    CoinSlotController CoinSlot;
-
+    private CoinSlotController CoinSlot;
     private GameObject Camera;
     private LibretroMameCore.Waiter SecsForCheqClose = new(2);
-    // [SerializeField]
-    Renderer Display;
+    private Renderer Display;
     private bool isVisible = false;
-
-    GameVideoPlayer videoPlayer;
-    // LibretroMameCore.FpsControl fpsDebug = new(60f);
+    private GameVideoPlayer videoPlayer;
 
     private CoinSlotController getCoinSlotController() {
         Transform coinslot = gameObject.transform.parent.Find("coin-slot-added");

@@ -56,7 +56,7 @@ public class GameVideoPlayer : MonoBehaviour {
 
     // Update is called once per frame
     void Update() {
-        if (Display != null && videoPlayer != null & videoPlayer.isPlaying && !videoPlayer.isPaused ) {
+        if (Display != null && videoPlayer != null && videoPlayer.isPlaying && !videoPlayer.isPaused ) {
             Display.materials[1].SetFloat("u_time", Time.fixedTime);
         }
     }
