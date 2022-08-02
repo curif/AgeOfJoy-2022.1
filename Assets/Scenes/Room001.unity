@@ -20,11 +20,11 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientSkyColor: {r: 0.6226415, g: 0.6178344, b: 0.5257209, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
   m_HaloStrength: 0.5
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000004, guid: 33f7370878377ba18bf1811fc2535f92, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 33f7370878377ba18bf1811fc2535f92, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -138,6 +138,14 @@ PrefabInstance:
     - target: {fileID: 403694909476460908, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 844427906724710379, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: SceneToUnloadNames.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 844427906724710379, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: SceneToUnloadNames.Array.data[0]
+      value: Room001
       objectReference: {fileID: 0}
     - target: {fileID: 1511948523885844646, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -196,6 +204,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 4816835628289745674, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_Name
+      value: Floor
+      objectReference: {fileID: 0}
+    - target: {fileID: 4816835628289745674, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
@@ -206,6 +218,10 @@ PrefabInstance:
     - target: {fileID: 5002522937232156641, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 5050592821070653112, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_Name
+      value: GateController
       objectReference: {fileID: 0}
     - target: {fileID: 5050592821070653112, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -245,7 +261,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7974169810232895977, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.300003
       objectReference: {fileID: 0}
     - target: {fileID: 7974169810232895977, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_LocalPosition.z
@@ -277,6 +293,30 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7974169810232895977, guid: ed344290ded565153a93e855aff14ce5, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8974746421224691208, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.19
+      objectReference: {fileID: 0}
+    - target: {fileID: 8974746421224691208, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.57
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192380892334787128, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_BoundingSphereOverride.w
+      value: 1.3389921e+13
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192380892334787128, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_BoundingSphereOverride.x
+      value: 4.5821e-41
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192380892334787128, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_BoundingSphereOverride.y
+      value: 7.1e-44
+      objectReference: {fileID: 0}
+    - target: {fileID: 9192380892334787128, guid: ed344290ded565153a93e855aff14ce5, type: 3}
+      propertyPath: m_BoundingSphereOverride.z
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
