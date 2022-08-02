@@ -23,6 +23,10 @@ public class CabinetInformation {
     public Video video = new();
     public List<System.Exception> problems;
 
+    public static CabinetInformation fromName(string cabName) {
+        return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
+    }
+    
     public static CabinetInformation fromYaml(string cabPath) {
         
         string yamlPath = $"{cabPath}/description.yaml";

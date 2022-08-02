@@ -7,66 +7,86 @@ You should have received a copy of the GNU General Public License along with thi
 using UnityEngine;
 using System.Collections.Generic;
 //store Cabinets resources
-public static class CabinetFactory {
-    public static Dictionary<string, GameObject> CabinetStyles = new();
+public static class CabinetFactory
+{
+  public static Dictionary<string, GameObject> CabinetStyles = new();
 
-    static CabinetFactory() {
-        CabinetStyles.Add("generic",  Resources.Load<GameObject>($"Cabinets/PreFab/Generic"));
-        CabinetStyles.Add("timeplt",  Resources.Load<GameObject>($"Cabinets/PreFab/TimePilot"));
-        CabinetStyles.Add("galaga",  Resources.Load<GameObject>($"Cabinets/PreFab/Galaga"));
-        CabinetStyles.Add("pacmancabaret",  Resources.Load<GameObject>($"Cabinets/PreFab/PacManCabaret"));
-        CabinetStyles.Add("frogger",  Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
+  static CabinetFactory()
+  {
+    CabinetStyles.Add("generic", Resources.Load<GameObject>($"Cabinets/PreFab/Generic"));
+    CabinetStyles.Add("timeplt", Resources.Load<GameObject>($"Cabinets/PreFab/TimePilot"));
+    CabinetStyles.Add("galaga", Resources.Load<GameObject>($"Cabinets/PreFab/Galaga"));
+    CabinetStyles.Add("pacmancabaret", Resources.Load<GameObject>($"Cabinets/PreFab/PacManCabaret"));
+    CabinetStyles.Add("frogger", Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
 
-        foreach(KeyValuePair<string, GameObject> cab in CabinetStyles) {
-            cab.Value.AddComponent<MeshCollider>();
-        }
+    foreach (KeyValuePair<string, GameObject> cab in CabinetStyles)
+    {
+      cab.Value.AddComponent<MeshCollider>();
+    }
+  }
+
+  public static Cabinet Factory(string style, string name, Vector3 position, Quaternion rotation)
+  {
+    if (!CabinetStyles.ContainsKey(style) || CabinetStyles[style] == null)
+    {
+      Debug.LogError($"[Cabinet.Factory]: style {style} unknown or not loaded, falls to 'generic' cabinet");
+      style = "generic";
     }
 
-    public static Cabinet Factory(string style, string name, Vector3 position, Quaternion rotation) {
-        if (!CabinetStyles.ContainsKey(style) ||  CabinetStyles[style] == null) {
-            Debug.LogError($"Cabinet Factory: style {style} unknown or not loaded, falls to 'generic' cabinet");
-            style = "generic";
-        }
+    return new Cabinet(name, position, rotation, CabinetStyles[style]);
+  }
 
-        return new Cabinet(name, position, rotation, CabinetStyles[style]);
+  public static Cabinet fromInformation(CabinetInformation cbinfo, Vector3 position, Quaternion rotation)
+  {
+    Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, position, rotation);
+    cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
+
+    //process each part
+    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
+    foreach (CabinetInformation.Part p in cbinfo.Parts)
+    {
+      Material mat = CabinetMaterials.Base;
+      if (p.material != null)
+      {
+        mat = CabinetMaterials.fromName(p.material);
+      }
+
+      if (p.art != null)
+      {
+        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
+      }
+      else
+      {
+        cabinet.SetMaterial(p.name, mat);
+      }
     }
 
-    public static Cabinet fromInformation(CabinetInformation cbinfo, Vector3 position, Quaternion rotation) {
-        Cabinet cb = CabinetFactory.Factory(cbinfo.style, cbinfo.name, position, rotation);
-        cb.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
+    if (cbinfo.bezel != null)
+    {
+      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
+      cabinet.SetBezel(cbinfo.getPath(cbinfo.bezel.art.file));
+    }
 
-        //process each part
-        foreach(CabinetInformation.Part p in cbinfo.Parts) {
-            Material mat = CabinetMaterials.Base;
-            if (p.material != null) {
-                mat = CabinetMaterials.fromName(p.material);
-            }
+    if (cbinfo.marquee != null)
+    {
+      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {cbinfo.marquee.art.file}");
+      cabinet.SetMarquee(cbinfo.getPath(cbinfo.marquee.art.file), cbinfo.marquee.lightcolor.getColor());
+    }
+    else
+      cabinet.SetMarquee("", Color.white);
 
-            if (p.art != null) {
-                cb.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
-            }
-            else {
-                cb.SetMaterial(p.name, mat);
-            }
-        }
-        if (cbinfo.bezel != null) {
-            cb.SetBezel(cbinfo.getPath(cbinfo.bezel.art.file));
-        }
-        if (cbinfo.marquee != null) {
-            cb.SetMarquee(cbinfo.getPath(cbinfo.marquee.art.file), cbinfo.marquee.lightcolor.getColor());
-        }
-        else {
-            cb.SetMarquee("", Color.white);            
-        }
-        if (!string.IsNullOrEmpty(cbinfo.coinslot)) {
-            cb.AddCoinSlot(cbinfo.coinslot);
-        }
+    if (!string.IsNullOrEmpty(cbinfo.coinslot))
+    {
+      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
+      cabinet.AddCoinSlot(cbinfo.coinslot);
+    }
 
-        cb.addCRT(cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file), cbinfo.timetoload, 
+    cabinet.addCRT(cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file), cbinfo.timetoload,
                     invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
                     GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty
                     );
+    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
-        return cb;
-    }
+    return cabinet;
+  }
 }

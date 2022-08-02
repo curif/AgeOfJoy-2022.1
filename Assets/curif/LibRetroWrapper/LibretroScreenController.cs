@@ -76,7 +76,8 @@ public class LibretroScreenController : MonoBehaviour {
             throw new Exception("Camera not found in GameObject Tree");
         }
         Display = GetComponent<Renderer>();
-        Player = GameObject.Find("PlayerController");
+        Player = GameObject.Find("OVRPlayerControllerGalery");
+
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null) {
             Debug.LogError("Coin Slot not found in cabinet !!!! no one can play this game.");

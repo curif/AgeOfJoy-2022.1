@@ -452,9 +452,7 @@ public static unsafe class LibretroMameCore
             controlForAskIfTimeToExitGame = new LibretroMameCore.FpsControl(2f);
             FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
-            //lock controls
-            Player.GetComponent<SimpleCapsuleWithStickMovement>().EnableLinearMovement = false;
-            Player.GetComponent<SimpleCapsuleWithStickMovement>().EnableRotation = false;
+            LockControls(true);
 
             /* It's impossible to change the Sample Rate, fix in 48000
             audioConfig.sampleRate = sampleRate;
@@ -471,6 +469,13 @@ public static unsafe class LibretroMameCore
             Speaker.Play();
 
         }
+    }
+
+    public static void LockControls(bool takeControls)
+    {
+        //lock controls, if takeControls is true the Player can't move.
+        Player.GetComponent<OVRPlayerController>().EnableLinearMovement = !takeControls;
+        Player.GetComponent<OVRPlayerController>().EnableRotation = !takeControls;
     }
 
     public static bool isRunning(string thisGameFile) {
@@ -543,9 +548,8 @@ public static unsafe class LibretroMameCore
 
         ClearAll();
 
-        Player.GetComponent<SimpleCapsuleWithStickMovement>().EnableLinearMovement = true;
-        Player.GetComponent<SimpleCapsuleWithStickMovement>().EnableRotation = true;
-        
+        LockControls(false);
+
         WriteConsole("[curif.LibRetroMameCore.Run] End *************************************************");
     }
 

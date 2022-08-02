@@ -5,21 +5,29 @@ You should have received a copy of the GNU General Public License along with thi
 */
 using UnityEngine;
 using System.Collections.Generic;
-//other objects in cabinet, interchangeable.
+using System;
 
-public static class CoinSlotsFactory {
-    public static Dictionary<string, GameObject> objects = new();
-    
-    static CoinSlotsFactory() {
-        objects.Add("coin-slot-small", Resources.Load<GameObject>("Cabinets/PreFab/CoinSlots/CoinSlotPlastic"));
-        objects.Add("coin-slot-double", Resources.Load<GameObject>("Cabinets/PreFab/CoinSlots/CoinSlotPlasticDouble"));
-    }
 
-    public static GameObject Instantiate(string type, Vector3 position, Quaternion rotation, Transform parent) {
-        if (objects.ContainsKey(type)) {
-            return GameObject.Instantiate<GameObject>(objects[type], position, rotation, parent);
-        }
-        Debug.LogError($"CoinSlotsFactory Factory don't have a {type} object in list: {objects.Keys.ToString()}");
-        return null;
+public static class CoinSlotsFactory
+{
+  public static Dictionary<string, GameObject> objects = new();
+
+  static CoinSlotsFactory()
+  {
+    objects.Add("coin-slot-small", Resources.Load<GameObject>("Cabinets/PreFab/CoinSlots/CoinSlotPlasticPrefab"));
+    objects.Add("coin-slot-double", Resources.Load<GameObject>("Cabinets/PreFab/CoinSlots/CoinSlotPlasticDoublePrefab"));
+    ConfigManager.WriteConsole($"[CoinSlotsFactory] Coin slots loaded: {String.Join(",", objects.Keys)}");
+
+  }
+
+  public static GameObject Instantiate(string type, Vector3 position, Quaternion rotation, Transform parent)
+  {
+    if (objects.ContainsKey(type))
+    {
+      ConfigManager.WriteConsole($"[CoinSlotsFactory.Instantiate] {type}");
+      return GameObject.Instantiate<GameObject>(objects[type], position, rotation, parent);
     }
+    Debug.LogError($"[CoinSlotsFactory] don't have a {type} object in list: {String.Join(",", objects.Keys)}");
+    return null;
+  }
 }
