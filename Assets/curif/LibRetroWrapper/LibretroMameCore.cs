@@ -474,6 +474,7 @@ public static unsafe class LibretroMameCore
     public static void LockControls(bool takeControls)
     {
         //lock controls, if takeControls is true the Player can't move.
+        WriteConsole($"[LibRetroMameCore.LockControls] {takeControls}");
         Player.GetComponent<OVRPlayerController>().EnableLinearMovement = !takeControls;
         Player.GetComponent<OVRPlayerController>().EnableRotation = !takeControls;
     }
