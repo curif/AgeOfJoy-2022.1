@@ -26,6 +26,36 @@ public static class CabinetDBAdmin
     return;
   }
 
+  // create a new cabinet from an unnasigned rom and return its name (not used)
+  public static string CreateGenericForUnnasignedRom(string rom)
+  {
+    string cabName = Path.GetFileNameWithoutExtension(rom);
+    string pathDest = $"{ConfigManager.CabinetsDB}/{cabName}/";
+
+    if (Directory.Exists(pathDest))
+      return null;
+
+    Directory.CreateDirectory(pathDest);
+    string[] lines =
+        {
+          "---",
+          $"name: {cabName}",
+          $"rom: {rom}",
+          "timetoload: 8",
+          "year: 1980",
+          "style: galaga",
+          "material: black",
+          "crt:",
+          "  type: 19i",
+          "  orientation: vertical",
+          "  screen:",
+          "    damage: low",
+        };
+    File.WriteAllLines($"{pathDest}/description.yaml", lines);
+
+    return cabName;
+  }
+
   private static void DecompressFile(string path, string destPath)
   {
     ConfigManager.WriteConsole($"[DecompressFile] from {path} to {destPath}");
@@ -36,7 +66,8 @@ public static class CabinetDBAdmin
     ZipFile.ExtractToDirectory(path, destPath);
   }
 
-  public static string GetNameFromPath(string path) {
+  public static string GetNameFromPath(string path)
+  {
     return Path.GetFileNameWithoutExtension(path);
   }
   //load the contents of the zip file and move them to the database cabinet directory. Deletes the original zip file.
@@ -57,13 +88,14 @@ public static class CabinetDBAdmin
     DecompressFile(path, $"{ConfigManager.CabinetsDB}/{cabZipFileName}/");
     File.Delete(path);
   }
+  
   // check for new zip files, decompress and storage them into the cabinet DB
   public static void loadCabinets()
   {
     string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
     foreach (string file in files)
     {
-      if (File.Exists(file))
+      if (File.Exists(file) && !file.EndsWith("/test.zip"))
       {
         try
         {

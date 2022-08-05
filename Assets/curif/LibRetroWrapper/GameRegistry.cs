@@ -67,17 +67,24 @@ public class CabinetsPosition
   }
 }
 
+
 //https://blog.unity.com/technology/serialization-in-unity
 public class GameRegistry : MonoBehaviour
 {
 
   CabinetsPosition cabinetsPosition;
 
-  List<string> UnasignedRoms;
+  // List<string> UnasignedRoms;
   List<string> UnassignedCabinets;
 
   void Start()
   {
+    //Init.OnRuntimeMethodLoad runs before
+
+
+    // Scene[] rooms = SceneManager.GetAllScenes().Where(room => room.name.StartsWith("Room") && room.buildIndex != -1);
+    // ConfigManager.WriteConsole($"[GameRegistry] Rooms in build: {rooms.Length} ----------------");
+
     Recover().Show();
   }
 
@@ -123,11 +130,11 @@ public class GameRegistry : MonoBehaviour
       ConfigManager.WriteConsole($"{g.Rom} asigned to: {g.Room} cab: {g.CabinetDBName} pos #{g.Position}");
     }
 
-    ConfigManager.WriteConsole("[GameRegistry] Unassigned roms");
-    foreach (string rom in UnasignedRoms)
-    {
-      ConfigManager.WriteConsole($"{rom}");
-    }
+    // ConfigManager.WriteConsole("[GameRegistry] Unassigned roms");
+    // foreach (string rom in UnasignedRoms)
+    // {
+    //   ConfigManager.WriteConsole($"{rom}");
+    // }
 
     ConfigManager.WriteConsole("[GameRegistry] Unassigned cabinets");
     foreach (string cab in UnassignedCabinets)
@@ -144,9 +151,10 @@ public class GameRegistry : MonoBehaviour
     // UnasignedRoms = from dir in System.IO.Directory.GetDirectories(ConfigManager.RomsDir) where !Registry.Contains(new Game(rom: dir)) select dir;
 
     //roms that hasn't been assigned to any cabinet/Room yet.
-    UnasignedRoms = System.IO.Directory.GetDirectories(ConfigManager.RomsDir).
-                              Where(rom => !RomInRoom(rom)).
-                              ToList();
+    // UnasignedRoms = System.IO.Directory.GetFiles(ConfigManager.RomsDir).
+    //                           Select(rom => System.IO.Path.GetFileName(rom)).
+    //                           Where(rom => !RomInRoom(rom)).
+    //                           ToList();
 
     //check for new cabinets not assigned to any Room
     // UnassignedCabinets = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB).
@@ -177,28 +185,36 @@ public class GameRegistry : MonoBehaviour
       UnassignedCabinets.RemoveAt(0);
       dirty = true;
     }
+    /*
+        This is not possible, we can analyze all the cabinets to know witch room is not assigned.
+        //todo: assign unnasigned roms.
+        while (cabs.Count < quantity && UnasignedRoms.Count > 0)
+        {
+          string cabName = CabinetDBAdmin.CreateGenericForUnnasignedRom(UnasignedRoms[0]);
 
-    if (dirty) {
+          //if something weird happens, is better to not continue
+          if (String.IsNullOrEmpty(cabName))
+            break;
+
+          cabs.Add(Add(cabinetDBName: cabName, room: UnasignedRoms[0], position: cabs.Count));
+          ConfigManager.WriteConsole($"[GetCabinetsAssignedToRoom] Created generic cabinet for {UnasignedRoms[0]} at #{cabs.Count} for room {room}");
+          UnasignedRoms.RemoveAt(0);
+          dirty = true;
+        }
+    */
+    if (dirty)
+    {
       Persist();
     }
     Show();
 
-    //todo: assign unnasigned roms.
-
     //load cabinets information
-    foreach(CabinetPosition cab in cabs.Where(g => g.CabInfo == null)) {
-        cab.CabInfo = CabinetInformation.fromName(cab.CabinetDBName);
-        cab.Rom = cab.CabInfo.rom;
+    foreach (CabinetPosition cab in cabs.Where(g => g.CabInfo == null))
+    {
+      cab.CabInfo = CabinetInformation.fromName(cab.CabinetDBName);
+      cab.Rom = cab.CabInfo.rom;
     }
-/*
-    cabs = cabs.Where(g => g.CabInfo == null).
-                Select(g =>
-                {
-                  g.CabInfo = CabinetInformation.fromName(g.CabinetDBName);
-                  g.Rom = g.CabInfo.rom;
-                  return g;
-                }).ToList();
-*/
+
     return cabs;
   }
 

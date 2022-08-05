@@ -131,7 +131,7 @@ public class GateController : MonoBehaviour
     //https://docs.unity3d.com/ScriptReference/SceneManagement.SceneManager.GetSceneByName.html
     // If you use SceneManager.GetSceneByName(), after loading the scene in additive mode, then a valid scene is returned.
     Scene controledScene = SceneManager.GetSceneByName(sceneToUnloadName);
-    ConfigManager.WriteConsole($"[GateController] Evaluate Scene to unload: [{sceneToUnloadName} {controledScene.name}]");
+    // ConfigManager.WriteConsole($"[GateController] Evaluate Scene to unload: [{sceneToUnloadName} {controledScene.name}]");
     if (!String.IsNullOrEmpty(controledScene.name) && controledScene.isLoaded)
     {
       //the scene is loaded

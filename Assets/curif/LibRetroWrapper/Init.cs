@@ -15,12 +15,14 @@ public class Init {
     //https://docs.unity3d.com/ScriptReference/RuntimeInitializeOnLoadMethodAttribute-ctor.html
     [RuntimeInitializeOnLoadMethod]
     static async void OnRuntimeMethodLoad() {
-        bool isWorkshop = true; //look for a process to detect if this is a workshop or not.
-        ConfigManager.WriteConsole("+++++++++++++++++++++  Initialize Cabinets +++++++++++++++++++++");
+        // bool isWorkshop = true; //look for a process to detect if this is a workshop or not.
+        ConfigManager.WriteConsole("+++++++++++++++++++++  Initialize Cabinet Database +++++++++++++++++++++");
 
         ConfigManager.WriteConsole("Loading cabinets");
         CabinetDBAdmin.loadCabinets();
 
+
+/*
         GameObject[] cabinetSpots = GameObject.FindGameObjectsWithTag("spot");
         int cabinetFoundIndex = 0;
         ConfigManager.WriteConsole($"{cabinetSpots.Length} spots to fill in the workshop space.");
@@ -97,7 +99,7 @@ public class Init {
         //     timer.Start();
         //     timer.Elapsed += ReloadTestCabinet;
         // }
-
+*/
         Debug.Log("+++++++++++++++++++++ Initialized");
 
     }

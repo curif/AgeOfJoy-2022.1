@@ -2,48 +2,75 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System;
 
 
 public class CabinetAutoReload : MonoBehaviour
 {
-  string testFile = ConfigManager.Cabinets + "/test.zip";
+  static string testCabinetDir = ConfigManager.CabinetsDB + "/test";
+  static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
+  static string testFile = ConfigManager.Cabinets + "/test.zip";
+
+  bool loadedFirstTime;
 
   void Start()
   {
+    //it's not possible to use filesystemwatcher
+
+    ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
+
+    //this start() will be excecuted every time the component is loaded, do not excecute LoadCabinet() here.
+    // LoadCabinet();
+
     StartCoroutine(reload());
 
   }
 
   IEnumerator reload()
   {
-    if (!File.Exists(testFile))
-      yield return new WaitForSeconds(1f);
+    while (true)
+    {
+      ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
+      if (File.Exists(testFile))
+      {
+        //also deletes the zip file
+        ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from zip");
+        CabinetDBAdmin.loadCabinetFromZip(testFile);
+        LoadCabinet();
+      }
 
+      yield return new WaitForSeconds(2f);
+    }
+  }
 
-    ConfigManager.WriteConsole($"New cabinet to test: {testFile}");
+  private void LoadCabinet()
+  {
+
+    if (!File.Exists(testDescriptionCabinetFile))
+      return;
+
+    ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile} (1960 means first time)");
 
     //new cabinet to test
     CabinetInformation cbInfo = null;
     try
     {
-      CabinetDBAdmin.loadCabinetFromZip(testFile);
 
-      cbInfo = CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/test"); //description.yaml
+      cbInfo = CabinetInformation.fromYaml(testCabinetDir); //description.yaml
 
       CabinetInformation.showCabinetProblems(cbInfo);
 
       //cabinet inseption
-      ConfigManager.WriteConsole($"Deploy test cabinet {cbInfo.name}");
+      ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
       Cabinet cab = CabinetFactory.fromInformation(cbInfo, gameObject.transform.position, gameObject.transform.rotation);
-      Object.Destroy(gameObject);
+      UnityEngine.Object.Destroy(gameObject);
       cab.gameObject.AddComponent(typeof(CabinetAutoReload));
 
-      ConfigManager.WriteConsole("New Tested Cabinet deployed ******");
+      ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
     }
     catch (System.Exception ex)
     {
-      ConfigManager.WriteConsole($"ERROR loading cabinet from description {testFile}: {ex}");
+      ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}: {ex}");
     }
-
   }
 }
