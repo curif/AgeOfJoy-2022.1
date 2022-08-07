@@ -26,7 +26,7 @@ public static class CabinetFactory
     }
   }
 
-  public static Cabinet Factory(string style, string name, Vector3 position, Quaternion rotation)
+  public static Cabinet Factory(string style, string name, Vector3 position, Quaternion rotation, Transform parent)
   {
     if (!CabinetStyles.ContainsKey(style) || CabinetStyles[style] == null)
     {
@@ -34,12 +34,12 @@ public static class CabinetFactory
       style = "generic";
     }
 
-    return new Cabinet(name, position, rotation, CabinetStyles[style]);
+    return new Cabinet(name, position, rotation, parent, go: CabinetStyles[style]);
   }
 
-  public static Cabinet fromInformation(CabinetInformation cbinfo, Vector3 position, Quaternion rotation)
+  public static Cabinet fromInformation(CabinetInformation cbinfo, Vector3 position, Quaternion rotation, Transform parent)
   {
-    Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, position, rotation);
+    Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, position, rotation, parent);
     cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
 
     //process each part

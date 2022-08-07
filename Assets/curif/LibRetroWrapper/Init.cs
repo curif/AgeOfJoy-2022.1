@@ -103,7 +103,7 @@ public class Init {
         Debug.Log("+++++++++++++++++++++ Initialized");
 
     }
-
+/*
     private static void ReloadTestCabinet(object sender,  System.Timers.ElapsedEventArgs e) {
         string testFile = ConfigManager.Cabinets + "/test.zip";
         if (File.Exists(testFile)) {
@@ -139,5 +139,5 @@ public class Init {
             ConfigManager.WriteConsole("New Tested Cabinet deployed ******");
         }
     }
-
+*/
 }

@@ -11,8 +11,6 @@ public class CabinetAutoReload : MonoBehaviour
   static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
   static string testFile = ConfigManager.Cabinets + "/test.zip";
 
-  bool loadedFirstTime;
-
   void Start()
   {
     //it's not possible to use filesystemwatcher
@@ -30,11 +28,11 @@ public class CabinetAutoReload : MonoBehaviour
   {
     while (true)
     {
-      ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
+      // ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
       if (File.Exists(testFile))
       {
         //also deletes the zip file
-        ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from zip");
+        ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from {testFile}");
         CabinetDBAdmin.loadCabinetFromZip(testFile);
         LoadCabinet();
       }
@@ -49,7 +47,7 @@ public class CabinetAutoReload : MonoBehaviour
     if (!File.Exists(testDescriptionCabinetFile))
       return;
 
-    ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile} (1960 means first time)");
+    ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile}");
 
     //new cabinet to test
     CabinetInformation cbInfo = null;
@@ -62,9 +60,9 @@ public class CabinetAutoReload : MonoBehaviour
 
       //cabinet inseption
       ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
-      Cabinet cab = CabinetFactory.fromInformation(cbInfo, gameObject.transform.position, gameObject.transform.rotation);
+      Cabinet cab = CabinetFactory.fromInformation(cbInfo, transform.position, transform.rotation, transform.parent);
       UnityEngine.Object.Destroy(gameObject);
-      cab.gameObject.AddComponent(typeof(CabinetAutoReload));
+      cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
 
       ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
     }

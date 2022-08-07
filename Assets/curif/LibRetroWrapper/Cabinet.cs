@@ -65,7 +65,7 @@ public class Cabinet
     }
   }
 
-  public Cabinet(string name, Vector3 position, Quaternion rotation, GameObject go = null, string model = "Generic")
+  public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent, GameObject go = null, string model = "Generic")
   {
     Name = name;
     if (go == null)
@@ -79,7 +79,7 @@ public class Cabinet
     }
 
     //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
-    gameObject = GameObject.Instantiate(go, position, rotation) as GameObject;
+    gameObject = GameObject.Instantiate(go, position, rotation, parent) as GameObject;
 
     // https://stackoverflow.com/questions/40752083/how-to-find-child-of-a-gameobject-or-the-script-attached-to-child-gameobject-via
     for (int i = 0; i < gameObject.transform.childCount; i++)
