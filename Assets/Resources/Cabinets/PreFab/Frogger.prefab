@@ -1503,7 +1503,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7875310313346532058}
-  - component: {fileID: 5423966793485409907}
+  - component: {fileID: -5041213554875366991}
   m_Layer: 0
   m_Name: Frogger
   m_TagString: Untagged
@@ -1520,7 +1520,7 @@ Transform:
   m_GameObject: {fileID: 7350272261285075040}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1.1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 633399465644354914}
@@ -1547,8 +1547,8 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &5423966793485409907
-BoxCollider:
+--- !u!64 &-5041213554875366991
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1557,9 +1557,10 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 0.89571315, y: 1.9404645, z: 1}
-  m_Center: {x: 0.052143425, y: 0.7941706, z: 0}
+  serializedVersion: 4
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &7607716511167995292
 GameObject:
   m_ObjectHideFlags: 0
