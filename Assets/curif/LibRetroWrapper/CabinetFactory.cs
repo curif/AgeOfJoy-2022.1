@@ -19,6 +19,7 @@ public static class CabinetFactory
     CabinetStyles.Add("pacmancabaret", Resources.Load<GameObject>($"Cabinets/PreFab/PacManCabaret"));
     CabinetStyles.Add("frogger", Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
     CabinetStyles.Add("defender", Resources.Load<GameObject>($"Cabinets/PreFab/Defender"));
+    CabinetStyles.Add("donkeykong", Resources.Load<GameObject>($"Cabinets/PreFab/DonkeyKong"));
 
     foreach (KeyValuePair<string, GameObject> cab in CabinetStyles)
     {
@@ -40,26 +41,33 @@ public static class CabinetFactory
   public static Cabinet fromInformation(CabinetInformation cbinfo, Vector3 position, Quaternion rotation, Transform parent)
   {
     Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, position, rotation, parent);
-    cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
+    if (cbinfo.material != null)
+    {
+      cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
+    }
+    else if (cbinfo.color != null)
+    {
+      Material mat = new Material(CabinetMaterials.Base);
+      mat.SetColor("_Color", cbinfo.color.getColor());
+      cabinet.SetMaterial(mat);
+    }
 
     //process each part
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
     foreach (CabinetInformation.Part p in cbinfo.Parts)
     {
-      Material mat = CabinetMaterials.Base;
       if (p.material != null)
+        cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
+      else if (p.art != null)
+        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
+      else if (p.color != null)
       {
-        mat = CabinetMaterials.fromName(p.material);
-      }
-
-      if (p.art != null)
-      {
-        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
+        Material matColor = new Material(CabinetMaterials.Base);
+        matColor.SetColor("_Color", cbinfo.color.getColor());
+        cabinet.SetMaterial(p.name, matColor);
       }
       else
-      {
-        cabinet.SetMaterial(p.name, mat);
-      }
+        cabinet.SetMaterial(p.name, CabinetMaterials.Black);
     }
 
     if (cbinfo.bezel != null)

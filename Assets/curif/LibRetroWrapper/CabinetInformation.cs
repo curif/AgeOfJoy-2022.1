@@ -15,7 +15,8 @@ public class CabinetInformation {
     public Marquee marquee;
     public CRT crt;
     public string style = "generic";
-    public string material = "black";
+    public string material;
+    public RGBColor color;
     public int year;
     public string coinslot = "coin-slot-double";
     public int timetoload = 3;
@@ -64,6 +65,7 @@ public class CabinetInformation {
         public string name;
         public string material;
         public Art art;
+        public RGBColor color;
     }
     public class CRT {
         public string type;
