@@ -32,6 +32,10 @@ public class CoinSlotController : MonoBehaviour
         return coins > 0;
     }
 
+    public void clean() {
+        coins = 0;
+    }
+
     public override string ToString() {
         return $"{coins} in the bucket";
     }
