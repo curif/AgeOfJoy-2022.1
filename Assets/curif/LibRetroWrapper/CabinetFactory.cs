@@ -27,20 +27,20 @@ public static class CabinetFactory
     }
   }
 
-  public static Cabinet Factory(string style, string name, Vector3 position, Quaternion rotation, Transform parent)
+  public static Cabinet Factory(string style, string name, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
   {
     if (!CabinetStyles.ContainsKey(style) || CabinetStyles[style] == null)
     {
       Debug.LogError($"[Cabinet.Factory]: style {style} unknown or not loaded, falls to 'generic' cabinet");
       style = "generic";
     }
-
-    return new Cabinet(name, position, rotation, parent, go: CabinetStyles[style]);
+    string cabinetName = $"cabinet-{name}-{room}-{number}";
+    return new Cabinet(cabinetName, position, rotation, parent, go: CabinetStyles[style]);
   }
-
-  public static Cabinet fromInformation(CabinetInformation cbinfo, Vector3 position, Quaternion rotation, Transform parent)
+  
+  public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, Vector3 position, Quaternion rotation, Transform parent)
   {
-    Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, position, rotation, parent);
+    Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, number, room, position, rotation, parent);
     if (cbinfo.material != null)
     {
       cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));

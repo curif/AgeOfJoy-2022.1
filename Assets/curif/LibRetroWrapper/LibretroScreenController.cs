@@ -17,148 +17,164 @@ using System;
 //[AddComponentMenu("curif/LibRetroWrapper/VideoPlayer")]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(GameVideoPlayer))]
-public class LibretroScreenController : MonoBehaviour {
-    [SerializeField]
-    public string GameFile = "1942.zip";
+public class LibretroScreenController : MonoBehaviour
+{
+  [SerializeField]
+  public string GameFile = "1942.zip";
 
-    [SerializeField]
-    public string GameVideoFile;
-    [SerializeField]
-    public bool GameVideoInvertX = false;
-    [SerializeField]
-    public bool GameVideoInvertY = false;
+  [SerializeField]
+  public string GameVideoFile;
+  [SerializeField]
+  public bool GameVideoInvertX = false;
+  [SerializeField]
+  public bool GameVideoInvertY = false;
 
-    [SerializeField]
-    public bool GameInvertX = false;
-    [SerializeField]
-    public bool GameInvertY = false;
+  [SerializeField]
+  public bool GameInvertX = false;
+  [SerializeField]
+  public bool GameInvertY = false;
 
-    [SerializeField]
-    public GameObject Player;
-    [Tooltip("The minimal distance between the player and the screen to start the game.")]
-    [SerializeField]
-    public float DistanceMinToPlayerToStartGame = 0.9f;
-    [Tooltip("The time in secs that the player has to look to another side to exit the game and recover mobility.")]
-    [SerializeField]
-    public int SecondsToWaitToExitGame = 2;
+  [SerializeField]
+  public GameObject Player;
+  [Tooltip("The minimal distance between the player and the screen to be active.")]
+  [SerializeField]
+  public float DistanceMinToPlayerToActivate = 2f;
+  [Tooltip("The time in secs that the player has to look to another side to exit the game and recover mobility.")]
+  [SerializeField]
+  public int SecondsToWaitToExitGame = 2;
 
-    [SerializeField]
-    public int SecondsToWaitToFinishLoad = 2;
+  [SerializeField]
+  public int SecondsToWaitToFinishLoad = 2;
 
-    [Tooltip("Adjust Gamma from 1.0 to 2.0")]
-    [SerializeField]
-    public LibretroMameCore.GammaOptions Gamma = LibretroMameCore.GammaOptions.GAMA_1;
-    [Tooltip("Adjust bright from 0.2 to 2.0")]
-    [SerializeField]
-    public LibretroMameCore.BrightnessOptions Brightness = LibretroMameCore.BrightnessOptions.BRIGHT_1;
+  [Tooltip("Adjust Gamma from 1.0 to 2.0")]
+  [SerializeField]
+  public LibretroMameCore.GammaOptions Gamma = LibretroMameCore.GammaOptions.GAMA_1;
+  [Tooltip("Adjust bright from 0.2 to 2.0")]
+  [SerializeField]
+  public LibretroMameCore.BrightnessOptions Brightness = LibretroMameCore.BrightnessOptions.BRIGHT_1;
 
-    private CoinSlotController CoinSlot;
-    private GameObject Camera;
-    private LibretroMameCore.Waiter SecsForCheqClose = new(2);
-    private Renderer Display;
-    private bool isVisible = false;
-    private GameVideoPlayer videoPlayer;
+  private CoinSlotController CoinSlot;
+  private GameObject Camera;
+  private Renderer Display;
+  private bool isVisible = false;
+  private GameVideoPlayer videoPlayer;
 
-    private CoinSlotController getCoinSlotController() {
-        Transform coinslot = gameObject.transform.parent.Find("coin-slot-added");
-        if (! coinslot) {
-            return null;
-        }
-        return coinslot.gameObject.GetComponent<CoinSlotController>();
-    }
+  private CoinSlotController getCoinSlotController()
+  {
+    Transform coinslot = gameObject.transform.parent.Find("coin-slot-added");
 
-    // Start is called before the first frame update
-    void Start() {
-        LibretroMameCore.WriteConsole($"{gameObject.name} Start");
+    if (!coinslot)
+      return null;
 
-        Camera = GameObject.Find("CenterEyeAnchor");
-        if (Camera == null) {
-            throw new Exception("Camera not found in GameObject Tree");
-        }
-        Display = GetComponent<Renderer>();
-        Player = GameObject.Find("OVRPlayerControllerGalery");
+    return coinslot.gameObject.GetComponent<CoinSlotController>();
+  }
 
-        CoinSlot = getCoinSlotController();
-        if (CoinSlot == null) {
-            Debug.LogError("Coin Slot not found in cabinet !!!! no one can play this game.");
-        }
+  // Start is called before the first frame update
+  void Start()
+  {
+    LibretroMameCore.WriteConsole($"{gameObject.name} Start");
 
-        videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
-        videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
+    Display = GetComponent<Renderer>();
 
-    }
+    Player = GameObject.Find("OVRPlayerControllerGalery");
 
-    public void Update() {
-        // LibretroMameCore.WriteConsole($"Mame Started? {MameStarted}");
-        if (! isVisible) {
-            videoPlayer?.Pause();
-            return;
-        }
+    CoinSlot = getCoinSlotController();
+    if (CoinSlot == null)
+      Debug.LogError("Coin Slot not found in cabinet !!!! no one can play this game.");
 
-        // doing nothing without payment!
-        if (! LibretroMameCore.GameLoaded) {
-            if (SecsForCheqClose.Finished()) {
-                SecsForCheqClose.reset();
+    videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
+    videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
 
-                if (LibretroMameCore.isPlayerClose(Camera, Display, DistanceMinToPlayerToStartGame) && 
-                        CoinSlot.hasCoins() /*&& 
-                        LibretroMameCore.isPlayerLookingAtScreen(Camera, Display, DistanceMinToPlayerToStartGame)*/) {
+    StartCoroutine(loop());
 
-                    videoPlayer?.Stop();
+    return;
+  }
 
-                    //set the position of the video in the shader after stop the video player
-                    Display.materials[1].SetFloat("MirrorX", GameInvertX? 1f:0f);
-                    Display.materials[1].SetFloat("MirrorY", GameInvertY? 1f:0f);
+  public void Update()
+  {
+    // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
+    LibretroMameCore.Run(name, GameFile); //only runs if this game is running
+    return;
+  }
 
-                    //start mame
-                    LibretroMameCore.WriteConsole(string.Format("MAME Start game: {0} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_", GameFile));
-                    LibretroMameCore.DistanceMinToPlayerToStartGame = DistanceMinToPlayerToStartGame;
-                    LibretroMameCore.Speaker = GetComponent<AudioSource>();
-                    LibretroMameCore.Player = Player;
-                    LibretroMameCore.Display = Display;
-                    LibretroMameCore.Camera = Camera;
-                    LibretroMameCore.SecondsToWaitToExitGame = SecondsToWaitToExitGame;
-                    LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
-                    LibretroMameCore.Brightness = Brightness;
-                    LibretroMameCore.Gamma = Gamma;
-                    LibretroMameCore.CoinSlot = CoinSlot;
-                    LibretroMameCore.Start(GameFile);
+  void playVideo()
+  {
+    if (LibretroMameCore.isRunning(name, GameFile))
+      //stop video when game is running
+      videoPlayer?.Stop();
+    else if (!enabled)
+      //pause when not visibile
+      videoPlayer?.Pause();
+    else if (LibretroMameCore.GameLoaded)
+      //pause when other game is running
+      videoPlayer?.Pause();
+    else
+      videoPlayer?.Play();
+    return;
+  }
 
-                    var inputDevices = new List<UnityEngine.XR.InputDevice>();
-                    UnityEngine.XR.InputDevices.GetDevices(inputDevices);
-                    foreach (var device in inputDevices) {
-                        LibretroMameCore.WriteConsole(string.Format("Device found with name '{0}' ", device.name));
-                    }
-                }
-            }
-        }
-
-        //only Runs when my game is loaded
-        // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
-        if (LibretroMameCore.isRunning(GameFile)) {
-            LibretroMameCore.Run(GameFile);
-        }
-        else {
-            videoPlayer?.Play();
-        }
-    }
-
-    private void OnAudioFilterRead(float[] data, int channels) {
-        LibretroMameCore.MoveAudioStreamTo(GameFile, data);
-    }
-
-    private void OnDestroy() {
-        LibretroMameCore.End(GameFile);
-    }
-
-     void OnBecameVisible()
+  IEnumerator loop()
+  {
+    while (true)
     {
-        isVisible = true;
-        SecsForCheqClose.reset();
-        //fpsDebug.Reset();
+      LibretroMameCore.WriteConsole($" LOOP {name} {GameFile}: enabled:{enabled} is running: {LibretroMameCore.isRunning(name, GameFile)} has coins: {CoinSlot.hasCoins()} some Game is Loaded: {LibretroMameCore.GameLoaded} ");
+      StartIfHasCoin();
+      playVideo();
+      yield return new WaitForSeconds(0.5f);
     }
-    void OnBecameInvisible()
-    {
-        isVisible = false;
-    }
+  }
+
+  private void StartIfHasCoin()
+  {
+
+    if (!enabled)
+      return;
+
+    if (LibretroMameCore.GameLoaded)
+      return;
+
+    // doing nothing without payment!
+    if (CoinSlot == null || !CoinSlot.hasCoins())
+      return;
+
+    Display.materials[1].SetFloat("MirrorX", GameInvertX ? 1f : 0f);
+    Display.materials[1].SetFloat("MirrorY", GameInvertY ? 1f : 0f);
+
+    //start mame
+    LibretroMameCore.WriteConsole($"MAME Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
+    // LibretroMameCore.DistanceMinToPlayerToStartGame = DistanceMinToPlayerToActivate;
+    LibretroMameCore.Speaker = GetComponent<AudioSource>();
+    LibretroMameCore.Player = Player;
+    LibretroMameCore.Display = Display;
+    // LibretroMameCore.Camera = Camera;
+    LibretroMameCore.SecondsToWaitToExitGame = SecondsToWaitToExitGame;
+    LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
+    LibretroMameCore.Brightness = Brightness;
+    LibretroMameCore.Gamma = Gamma;
+    LibretroMameCore.CoinSlot = CoinSlot;
+    LibretroMameCore.Start(name, GameFile);
+
+    return;
+  }
+
+  private void OnAudioFilterRead(float[] data, int channels)
+  {
+    LibretroMameCore.MoveAudioStreamTo(GameFile, data);
+  }
+
+  private void OnDestroy()
+  {
+    LibretroMameCore.End(name, GameFile);
+  }
+
+  void OnBecameVisible()
+  {
+    enabled = true;
+    playVideo();
+  }
+  void OnBecameInvisible()
+  {
+    enabled = false;
+    playVideo();
+  }
 }

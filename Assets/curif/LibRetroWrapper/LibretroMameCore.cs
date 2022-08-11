@@ -278,11 +278,11 @@ public static unsafe class LibretroMameCore
     //image ===========    
     static FpsControl FPSControl;
     public static Texture2D GameTexture;
-    public static GameObject Camera;
+    // public static GameObject Camera;
 
     //parameters ================
     
-    public static float DistanceMinToPlayerToStartGame = 0.9f;
+    // public static float DistanceMinToPlayerToStartGame = 0.9f;
     public static int SecondsToWaitToExitGame = 2;
     public static int SecondsToWaitToFinishLoad = 2;
     
@@ -298,6 +298,7 @@ public static unsafe class LibretroMameCore
     public static retro_system_info SystemInfo = new();
     public static retro_system_av_info GameAVInfo = new();
     static string GameFileName = "";
+    static string ScreenName = ""; //name of the screen of the cabinet where is running the game
 
     //Status flags
     public static bool GameLoaded = false;
@@ -361,13 +362,12 @@ public static unsafe class LibretroMameCore
     
     private static MarshalHelpPtrVault PtrVault = new();
 
-    public static void Start(string _gameFileName) {
+    public static void Start(string screenName, string gameFileName) {
 
         if (! Initialized) {
             WriteConsole("---------------------------------------------------------");
             WriteConsole("------------------- LIBRETRO INIT -----------------------");
             WriteConsole("---------------------------------------------------------");
-
 
             //Audio configuration
             var audioConfig = AudioSettings.GetConfiguration();
@@ -404,15 +404,16 @@ public static unsafe class LibretroMameCore
         if (GameLoaded) {
             WriteConsole($"[curif.LibRetroMameCore.Start] the Start method was called, but a Game is loaded ({GameFileName}), it's neccesary to call End() before the Start()");
             throw new Exception("Inconsistent behaviour, a Game is loaded during a Start");
-            return;
         }
 
-        if (GameFileName != "" && _gameFileName != GameFileName) {
-            throw new ArgumentException($"MAME previously initalized with [{GameFileName}], End() is needed");
+        if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName)) {
+            throw new ArgumentException($"MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
         }
-        GameFileName = _gameFileName;
 
-        WriteConsole($"------------------- retro_load_game {GameFileName}");
+        GameFileName = gameFileName;
+        ScreenName = screenName;
+
+        WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
         if (SystemInfo.need_fullpath) {
 
             retro_game_info game = new retro_game_info();
@@ -469,6 +470,8 @@ public static unsafe class LibretroMameCore
             Speaker.Play();
 
         }
+        WriteConsole($"[LibRetroMameCore.Start] Initialized {GameFileName} in {ScreenName} Game Loaded: {GameLoaded}");
+        return;
     }
 
     public static void LockControls(bool takeControls)
@@ -479,16 +482,15 @@ public static unsafe class LibretroMameCore
         Player.GetComponent<OVRPlayerController>().EnableRotation = !takeControls;
     }
 
-    public static bool isRunning(string thisGameFile) {
-        return GameLoaded && GameFileName == thisGameFile;
+    public static bool isRunning(string screenName, string gameFileName) {
+        return GameLoaded && GameFileName == gameFileName && screenName == ScreenName;
     }
 
-    public static async void Run(string _gameFileName) {
-        // WriteConsole(String.Format("[curif.LibRetroMameCore.Run] Run - GameLoaded:{0}", GameLoaded));
-        if (!isRunning(_gameFileName)) {
-            //It is neccesary to call Run() method for the game in the parameter?
+    public static async void Run(string screenName, string gameFileName) {
+        if (!isRunning(screenName, gameFileName)) {
             return;
         }
+        WriteConsole($"[LibRetroMameCore.Run] running screen: {screenName} game:{gameFileName}");
         
         // https://docs.unity3d.com/ScriptReference/Time-deltaTime.html
         FPSControl.CountTimeFrame();
@@ -522,10 +524,10 @@ public static unsafe class LibretroMameCore
 #endif
             if (OVRInput.Get(OVRInput.RawButton.LHandTrigger) /*isPlayerLookingAtScreen(Camera, Display, DistanceMinToPlayerToStartGame)*/) {
                 WriteConsole("[curif.LibRetroMameCore.Run] The Player wants to abandon the game");
-                WaitToExitGame = WaitToExitGame??  new Waiter(SecondsToWaitToExitGame);
+                WaitToExitGame = WaitToExitGame?? new Waiter(SecondsToWaitToExitGame);
                 if (WaitToExitGame.Finished()) {
                     LibretroMameCore.WriteConsole("[curif.LibRetroMameCore.Run] The Player wants to exit the game");
-                    End(GameFileName);
+                    End(ScreenName, GameFileName);
                 }
             }
             else {
@@ -538,8 +540,8 @@ public static unsafe class LibretroMameCore
         return;
     }
 
-    public static void End(string _gameFileName)     {
-        if (_gameFileName != GameFileName) {
+    public static void End(string screenName, string gameFileName)     {
+        if (gameFileName != GameFileName || screenName != ScreenName) {
             return;
         }
 
@@ -578,7 +580,11 @@ public static unsafe class LibretroMameCore
         }
 
         GameFileName = "";
+        ScreenName = "";
         GameLoaded = false;
+
+        CoinSlot?.clean();
+        CoinSlot = null;
         
         WriteConsole("[curif.LibRetroMameCore.ClearAll] Unloaded and clear  *************************************************");
     }
@@ -787,7 +793,7 @@ public static unsafe class LibretroMameCore
                 IntPtr typesPtr = controllerInfo.types;
                 retro_controller_description typesDesc = (retro_controller_description)Marshal.PtrToStructure<retro_controller_description>(typesPtr);
                 while (typesDesc.id != 0) {
-                    WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_CONTROLLER_INFO  description: {typesDesc.desc} id: {typesDesc.id}");
+                    // WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_CONTROLLER_INFO  description: {typesDesc.desc} id: {typesDesc.id}");
                     typesPtr += Marshal.SizeOf<retro_controller_description>();
                     typesDesc = (retro_controller_description)Marshal.PtrToStructure<retro_controller_description>(typesPtr);
                 }
@@ -1252,9 +1258,9 @@ public static unsafe class LibretroMameCore
         m.GetObjectAndFree(SystemInfo);
         WriteConsole(SystemInfo.ToString());
     }
-    
+    /*
     //I think this is less computational intensive than isPlayerLookingScreen
-    public static bool isPlayerClose(GameObject _camera, Renderer _display, float _distanceMinToPlayerToStartGame) {
+    public static bool isPlayerCloser(GameObject _camera, Renderer _display, float _distanceMinToPlayerToStartGame) {
         float d = Vector3.Distance(_camera.transform.position, _display.transform.position);
         // WriteConsole($"[curif.LibRetroMameCore.isPlayerClose] distance: {d} < {_distanceMinToPlayerToStartGame} {d < _distanceMinToPlayerToStartGame}");
         return d < _distanceMinToPlayerToStartGame;
@@ -1269,14 +1275,11 @@ public static unsafe class LibretroMameCore
             // WriteConsole($"[curif.LibRetroMameCore.isPlayerLookingScreen] {_hit.collider} ");
             ret = _hit.collider == _display.GetComponent<MeshCollider>();
         }
-        /*
-        else {
-            WriteConsole($"[curif.LibRetroMameCore.isPlayerLookingScreen] no colissions ");
-            Debug.DrawRay(_camera.transform.position, dir * _distanceMinToPlayerToStartGame, Color.yellow);
-        }
-        */
+
         return ret;
     }
+    */
+    
      //storage pointers to unmanaged memory
     public class MarshalHelpPtrVault {
         private List<IntPtr> vault = new();

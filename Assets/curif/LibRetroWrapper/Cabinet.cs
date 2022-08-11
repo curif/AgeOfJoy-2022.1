@@ -232,6 +232,10 @@ public class Cabinet
     return this;
   }
 
+  public static string CRTName(string cabinetName, string gameFile) {
+    return "screen-" + cabinetName + "-" + gameFile;
+  }
+
   public Cabinet addCRT(string type, string orientation, string GameFile, string GameVideoFile, int timeToLoad,
                            bool invertX = false, bool invertY = false,
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false
@@ -253,7 +257,7 @@ public class Cabinet
     }
 
     //LibretroScreenController will find the object using this name:
-    newCRT.name = "screen";
+    newCRT.name = CRTName(Name, GameFile);
     Parts.Add("screen", newCRT);
 
     Parts["screen"].GetComponent<MeshRenderer>().materials = ms;

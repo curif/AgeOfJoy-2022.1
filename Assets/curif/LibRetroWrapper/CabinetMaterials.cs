@@ -38,13 +38,11 @@ public static class CabinetMaterials {
         materialList.Add("lightwood", LightWood);
         materialList.Add("darkwood", DarkWood);
 
-        TVBorder = Resources.Load<Material>("Cabinets/Materials/TVBorder");
-        Marquee = Resources.Load<Material>("Cabinets/Materials/Marquee");
-        Screen = Resources.Load<Material>("Cabinets/Materials/Screen");
-        FrontGlassWithBezel = Resources.Load<Material>("Cabinets/Materials/FrontGlass");
+        TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
+        Screen = Resources.Load<Material>("Cabinets/PreFab/CRTs/Screen");
 
-        // CoinSlotPlastic = Resources.Load<Material>("Cabinets/Materials/CoinSlotPlastic");
-        // CoinSlotPlasticDouble = Resources.Load<Material>("Cabinets/Materials/CoinSlotPlasticDouble");
+        Marquee = Resources.Load<Material>("Cabinets/Materials/Marquee");
+        FrontGlassWithBezel = Resources.Load<Material>("Cabinets/Materials/FrontGlass");
 
     }
 
