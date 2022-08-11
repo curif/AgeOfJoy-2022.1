@@ -117,7 +117,7 @@ public class LibretroScreenController : MonoBehaviour
   {
     while (true)
     {
-      LibretroMameCore.WriteConsole($" LOOP {name} {GameFile}: enabled:{enabled} is running: {LibretroMameCore.isRunning(name, GameFile)} has coins: {CoinSlot.hasCoins()} some Game is Loaded: {LibretroMameCore.GameLoaded} ");
+    //   LibretroMameCore.WriteConsole($" LOOP {name} {GameFile}: enabled:{enabled} is running: {LibretroMameCore.isRunning(name, GameFile)} has coins: {CoinSlot.hasCoins()} some Game is Loaded: {LibretroMameCore.GameLoaded} ");
       StartIfHasCoin();
       playVideo();
       yield return new WaitForSeconds(0.5f);

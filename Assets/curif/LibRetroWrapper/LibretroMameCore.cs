@@ -490,7 +490,7 @@ public static unsafe class LibretroMameCore
         if (!isRunning(screenName, gameFileName)) {
             return;
         }
-        WriteConsole($"[LibRetroMameCore.Run] running screen: {screenName} game:{gameFileName}");
+        // WriteConsole($"[LibRetroMameCore.Run] running screen: {screenName} game:{gameFileName}");
         
         // https://docs.unity3d.com/ScriptReference/Time-deltaTime.html
         FPSControl.CountTimeFrame();
