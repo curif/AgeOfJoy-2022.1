@@ -486,7 +486,7 @@ public static unsafe class LibretroMameCore
         return GameLoaded && GameFileName == gameFileName && screenName == ScreenName;
     }
 
-    public static async void Run(string screenName, string gameFileName) {
+    public static void Run(string screenName, string gameFileName) {
         if (!isRunning(screenName, gameFileName)) {
             return;
         }

@@ -10,7 +10,7 @@ using System.IO;
 
 public class Init {
 
-    static string testedCabinetName = "TestedCabinet";
+    // static string testedCabinetName = "TestedCabinet";
 
     //https://docs.unity3d.com/ScriptReference/RuntimeInitializeOnLoadMethodAttribute-ctor.html
     [RuntimeInitializeOnLoadMethod]

@@ -56,7 +56,7 @@ public class LibretroScreenController : MonoBehaviour
   private CoinSlotController CoinSlot;
   private GameObject Camera;
   private Renderer Display;
-  private bool isVisible = false;
+  // private bool isVisible = false;
   private GameVideoPlayer videoPlayer;
 
   private CoinSlotController getCoinSlotController()

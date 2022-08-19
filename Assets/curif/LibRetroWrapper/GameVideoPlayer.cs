@@ -25,7 +25,7 @@ public class GameVideoPlayer : MonoBehaviour {
     public GameVideoPlayer setVideo(string path, bool invertX = false, bool invertY = false) {
         videoPath = path;
         invertx = invertX;
-        inverty = inverty;
+        inverty = invertY;
         if (videoPlayer != null && Display != null && !string.IsNullOrEmpty(path)) {
             //gameObject.GetComponent<MeshRenderer>().material =  Resources.Load<Material>("Cabinets/Materials/Screen");
             videoPlayer.url = videoPath;

@@ -10,7 +10,7 @@ public class MoviePoster : MonoBehaviour
   Texture2D texture;
 
   // Start is called before the first frame update
-  async void Start()
+  void Start()
   {
     if (texture != null) {
         GetComponent<Renderer>().material.SetTexture("_MainTex", texture);
