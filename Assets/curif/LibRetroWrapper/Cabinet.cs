@@ -55,12 +55,8 @@ public class Cabinet
     get
     {
       foreach (string key in RequiredParts)
-      {
         if (!Parts.ContainsKey(key))
-        {
           return false;
-        }
-      }
       return true;
     }
   }
@@ -73,13 +69,11 @@ public class Cabinet
       // Assets/Resources/Cabinets/PreFab/xxx.prefab
       go = Resources.Load<GameObject>($"Cabinets/PreFab/{model}");
       if (go == null)
-      {
         throw new System.Exception($"Cabinet {Name} not found or doesn't load");
-      }
     }
 
     //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
-    gameObject = GameObject.Instantiate(go, position, rotation, parent) as GameObject;
+    gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
 
     // https://stackoverflow.com/questions/40752083/how-to-find-child-of-a-gameobject-or-the-script-attached-to-child-gameobject-via
     for (int i = 0; i < gameObject.transform.childCount; i++)
@@ -92,46 +86,21 @@ public class Cabinet
       }
     }
     if (!IsValid)
-    {
       throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
-    }
-
-    //BoxCollider bc = gameObject.AddComponent(typeof(BoxCollider)) as BoxCollider;
 
     SetMaterial(CabinetMaterials.Black);
     if (Parts.ContainsKey("bezel"))
-    {
       SetMaterial("bezel", CabinetMaterials.FrontGlassWithBezel);
-    }
-    // SetMaterial("screen", CabinetMaterials.TVBorder);
-    // SetMaterial("screen-border", CabinetMaterials.TVBorder);
 
-    /*
-    var tFront = gameObject.transform.Find("front");
-    var tJoystick = gameObject.transform.Find("joystick");
-    var tCenter = gameObject.transform.Find("Center");
-    var tLeft = gameObject.transform.Find("left");
-    var tMarquee = gameObject.transform.Find("Marquee");
-    var tRight = gameObject.transform.Find("right");
-    var tScreen = gameObject.transform.Find("screen");
-    var tGlass = gameObject.transform.Find("Glass");
+    //Player position
+    //GameObject playerPosition = GameObject.Instantiate<GameObject>(new GameObject("PlayerPosition"), position, rotation, gameObject.transform);
+    // GameObject playerPosition = new GameObject("PlayerPosition");
+    // playerPosition.transform.position = position;
+    // playerPosition.transform.rotation = rotation;
+    // playerPosition.transform.parent =  gameObject.transform;
+    // playerPosition.transform.position += playerPosition.transform.forward * 2;
+    // Parts.Add(playerPosition.name, playerPosition);
 
-    if (tFront == null || tJoystick == null || tCenter == null || tLeft == null || tRight == null || tScreen == null) {
-        throw new System.Exception("Malformed Cabinet, some meshes are missing.");
-    }
-    parts.Add("Center", tCenter.gameObject);
-    parts.Add("front", tFront.gameObject);
-    parts.Add("joystick", tJoystick.gameObject);
-    parts.Add("left", tLeft.gameObject);
-    parts.Add("right", tRight.gameObject);
-    parts.Add("screen", tScreen.gameObject);
-    if (tMarquee != null) {
-        parts.Add("Marquee", tMarquee.gameObject);
-    }
-    if (tGlass != null) {
-        parts.Add("Glass", tGlass.gameObject);
-    }
-    */
   }
   public GameObject this[string part]
   {
@@ -147,26 +116,18 @@ public class Cabinet
   {
 
     if (!Parts.ContainsKey(cabinetPart))
-    {
       // throw new System.Exception($"Unrecognized part: {cabinetPart} adding the texture: {textureFile}");
       return this;
-    }
     if (mat == null && string.IsNullOrEmpty(textureFile))
-    {
       return this;
-    }
 
     Material m = new Material(mat);
     //tiling
     Vector2 mainTextureScale = new Vector2(1, 1);
     if (invertX)
-    {
       mainTextureScale.x = -1;
-    }
     if (invertY)
-    {
       mainTextureScale.y = -1;
-    }
     m.mainTextureScale = mainTextureScale;
 
     if (!string.IsNullOrEmpty(textureFile))
@@ -179,13 +140,12 @@ public class Cabinet
         return this;
       }
       else
-      {
         m.SetTexture("_MainTex", t);
-      }
     }
 
     Renderer r = Parts[cabinetPart].GetComponent<Renderer>();
-    r.material = m;
+    if (r != null)
+      r.material = m;
 
     return this;
   }
@@ -197,11 +157,13 @@ public class Cabinet
     {
       Renderer r = Parts["marquee"].GetComponent<Renderer>();
       // Debug.Log($"SetMarquee color: {color}");
-      r.material.SetColor("_EmissionColor", color);
+      if (r != null)
+        r.material.SetColor("_EmissionColor", color);
     }
 
     return this;
   }
+
   public Cabinet SetBezel(string texturePath, bool invertX = false, bool invertY = false)
   {
     SetTextureTo("bezel", texturePath, CabinetMaterials.FrontGlassWithBezel, invertX: invertX, invertY: invertY);
@@ -213,10 +175,8 @@ public class Cabinet
   {
     foreach (KeyValuePair<string, GameObject> part in Parts)
     {
-      if (!NonStandardParts.Contains(part.Key))
-      {
+      if (!NonStandardParts.Contains(part.Key) && part.Value.GetComponent<Renderer>() != null)
         part.Value.GetComponent<Renderer>().material = mat;
-      }
     }
     return this;
   }
@@ -225,10 +185,12 @@ public class Cabinet
   public Cabinet SetMaterial(string part, Material mat)
   {
     if (!Parts.ContainsKey(part))
-    {
       throw new System.Exception($"Unknown part {part} to set material in cabinet {Name}");
-    }
-    Parts[part].GetComponent<Renderer>().material = mat;
+    
+    Renderer r = Parts[part].GetComponent<Renderer>();
+    if (r != null)
+      r.material = mat;
+
     return this;
   }
 
@@ -252,9 +214,7 @@ public class Cabinet
     GameObject CRT = Parts[CRTType];
     GameObject newCRT = CRTsFactory.Instantiate(type, CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
     if (newCRT == null)
-    {
       throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
-    }
 
     //LibretroScreenController will find the object using this name:
     newCRT.name = CRTName(Name, GameFile);
@@ -269,9 +229,6 @@ public class Cabinet
     //mr.receiveShadows = false;
 
     LibretroScreenController libretroScreenController = Parts["screen"].AddComponent<LibretroScreenController>();
-    // Parts["screen"].AddComponent(typeof(MeshRenderer)); added by default (as sound)
-    // Parts["screen"].AddComponent(typeof(MeshCollider));
-    // AudioSource audioSource = Parts["screen"].AddComponent(typeof(AudioSource)) as AudioSource;
 
     libretroScreenController.GameFile = GameFile;
     libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;

@@ -8,23 +8,6 @@ using System.Linq;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 
-
-[Serializable]
-public class PlaceInformation
-{
-  public GameObject Place;
-  public int MaxTimeSpentThere = 120;
-  public int MinTimeSpentThere = 1;
-  public float MinimalDistanceToReachObject = 1.5f;
-
-  private System.Random random = new System.Random(DateTime.Now.Millisecond);
-
-  public DateTime getDateTimeUntilWait()
-  {
-    return DateTime.Now.AddSeconds(random.Next(MinTimeSpentThere, MaxTimeSpentThere));
-  }
-}
-
 [RequireComponent(typeof(NavMeshAgent))]
 // [RequireComponent(typeof(Rigidbody))]
 public class IntroGalleryBehaviour : MonoBehaviour
@@ -34,6 +17,9 @@ public class IntroGalleryBehaviour : MonoBehaviour
   [Tooltip("Where to go if all destinations are in use")]
   public PlaceInformation DefaultDestination;
 
+  [Tooltip("The Animator needs JumpAndPlay, War, Fight triggers to play")]
+  public bool ableToPlay;
+
   [SerializeField]
   public BehaviorTree tree;
 
@@ -42,13 +28,13 @@ public class IntroGalleryBehaviour : MonoBehaviour
 
   private NavMeshAgent agent;
   private PlaceInformation destination, selectedDestination;
-  private GameObject Player;
   private Animator animator;
 
   private System.Random random = new System.Random(DateTime.Now.Millisecond);
   // private bool onCollisionWithOtherNPC = false;
   private DateTime timeout, timeToSpentInPlace;
   private List<IntroGalleryBehaviour> othersNPC;
+  private String[] playTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
 
   public PlaceInformation Destination { get => destination; }
 
@@ -56,8 +42,6 @@ public class IntroGalleryBehaviour : MonoBehaviour
   {
     agent = gameObject.GetComponent<NavMeshAgent>();
     animator = gameObject.GetComponent<Animator>();
-
-    Player = GameObject.Find("OVRPlayerControllerGalery");
 
     StartCoroutine(runBT());
   }
@@ -80,7 +64,8 @@ public class IntroGalleryBehaviour : MonoBehaviour
 
   private BehaviorTree buildBT()
   {
-    return new BehaviorTreeBuilder(gameObject)
+
+    BehaviorTree walkBT = new BehaviorTreeBuilder(gameObject)
       //.Condition("Has Destination objects", () => Destinations.Count > 0 && animator != null)
       .Sequence()
         .Do("Set random destination", () =>
@@ -94,7 +79,7 @@ public class IntroGalleryBehaviour : MonoBehaviour
             .Condition("Destination taken by other NPC?", () =>
               DefaultDestination != null
               && othersNPC.FirstOrDefault(npc =>
-                                          npc.Destination != null &&
+                                          npc?.Destination != null &&
                                           UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null)
             .Do("Use the default destination", () =>
             {
@@ -104,14 +89,11 @@ public class IntroGalleryBehaviour : MonoBehaviour
             })
           .End()
         .End()
+
         .Do("Start walking", () =>
         {
           destination = selectedDestination; //others NPCs can see this
-          animator.ResetTrigger("Idle");
-          animator.SetTrigger("Walk");
-          timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
-          agent.SetDestination(destination.Place.transform.position); //trace path
-          Debug.Log($"[IntroGalleryBehaviour] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds}secs {timeout.ToString()}");
+          walkToDestination();// Debug.Log($"[IntroGalleryBehaviour] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds}secs {timeout.ToString()}");
           return TaskStatus.Success;
         })
         .RepeatUntilSuccess()
@@ -122,12 +104,11 @@ public class IntroGalleryBehaviour : MonoBehaviour
         .End()
         .Do("Stop walking", () =>
         {
-          agent.ResetPath();
-          animator.ResetTrigger("Walk");
-          animator.SetTrigger("Idle");
+          Idle();
           timeToSpentInPlace = DateTime.Now > timeout ? DateTime.Now.AddSeconds(1) : destination.getDateTimeUntilWait();
           return TaskStatus.Success;
         })
+
         .RepeatUntilSuccess()
             .Condition("wait some time there", () => DateTime.Now > timeToSpentInPlace)
         .End()
@@ -138,16 +119,79 @@ public class IntroGalleryBehaviour : MonoBehaviour
         })
       .End()
       .Build();
+
+    BehaviorTree playBT = new BehaviorTreeBuilder(gameObject)
+        .Sequence()
+          .Do("Goto default destination", () =>
+          {
+            selectedDestination = DefaultDestination;
+            return TaskStatus.Success;
+          })
+          .Do("Start walking", () =>
+          {
+            destination = selectedDestination; //others NPCs can see this
+            walkToDestination(); // Debug.Log($"[IntroGalleryBehaviour] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds}secs {timeout.ToString()}");
+            return TaskStatus.Success;
+          })
+          .RepeatUntilSuccess()
+            .Condition("Arrived", () => Vector3.Distance(destination.Place.transform.position, transform.position) <= destination.MinimalDistanceToReachObject)
+          .End()
+          .Do("Stop walking", () =>
+          {
+            Idle();
+            return TaskStatus.Success;
+          })
+          .Do("play", () =>
+          {
+            int index = random.Next(0, playTriggers.Length - 1);
+            animator.SetTrigger(playTriggers[index]);
+            timeToSpentInPlace = DateTime.Now.AddSeconds(30);
+            return TaskStatus.Success;
+          })
+          .RepeatUntilSuccess()
+              .Condition("wait some time playing", () => DateTime.Now > timeToSpentInPlace)
+          .End()
+        .End()
+        .Build();
+
+    return new BehaviorTreeBuilder(gameObject)
+        .Selector()
+          .Sequence()
+            .Condition("Able to play", () => ableToPlay)
+            .RandomChance(1, 2)
+            .Splice(playBT)
+          .End()
+          .Splice(walkBT)
+        .End()
+        .Build();
+
   }
 
-  // //https://stackoverflow.com/questions/15039185/collision-detection-between-two-character-controllers
-  // void OnControllerColliderHit(ControllerColliderHit col)
+  // private void animator.SetTrigger(String trigger)
   // {
-  //   Debug.Log($"[OnControllerColliderHit] {name} hit to {col.gameObject.name}");
-  //   if (col.gameObject.tag == "NPC")
-  //   {
-  //     onCollisionWithOtherNPC = true;
-  //     Debug.Log($"[OnControllerColliderHit] {name} Collision with NPC {col.gameObject.name}");
-  //   }
+  //   if (!String.IsNullOrEmpty(lastTrigger))
+  //     GetComponent<Animator>().Reanimator.SetTrigger(lastTrigger);
+  //   // Debug.Log($"-----------------");
+  //   // foreach (AnimatorControllerParameter p in animator.parameters)
+  //   // {
+  //   //   Debug.Log($"{p.name} is {p.type.ToString()}");
+  //   // }
+  //   // Debug.Log($"-----------------");
+
+  //   lastTrigger = trigger;
+  //   GetComponent<Animator>().animator.SetTrigger(trigger);
   // }
+  private void Idle()
+  {
+    agent.ResetPath();
+    animator.SetTrigger("Idle");
+  }
+
+  private void walkToDestination()
+  {
+    animator.SetTrigger("Walk");
+
+    timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
+    agent.SetDestination(destination.Place.transform.position); //trace path
+  }
 }

@@ -6,39 +6,56 @@ You should have received a copy of the GNU General Public License along with thi
 using UnityEngine;
 using System.IO;
 
-public static class ConfigManager {
-    //paths
-    public static string BaseDir = "/sdcard/Android/data/com.curif.AgeOfJoy";
-    public static string Cabinets = $"{BaseDir}/cabinets"; //compressed
-    public static string CabinetsDB = $"{BaseDir}/cabinetsdb"; //uncompressed cabinets
-    public static string SystemDir = $"{BaseDir}/system";
-    public static string RomsDir = $"{BaseDir}/downloads";
-    public static string GameSaveDir = $"{BaseDir}/save";
+public static class ConfigManager
+{
+  //paths
+#if UNITY_EDITOR
+    //https://docs.unity3d.com/ScriptReference/Application-dataPath.html
+    //Unity Editor: <path to project folder>/Assets
+//   public static string BaseDir = Application.dataPath + "/cabs";
+//$HOME don't work
+  public static string BaseDir = "/home/fabio.curi/cabs";
+#else
+  public static string BaseDir = "/sdcard/Android/data/com.curif.AgeOfJoy";
+#endif
+  public static string Cabinets = $"{BaseDir}/cabinets"; //compressed
+  public static string CabinetsDB = $"{BaseDir}/cabinetsdb"; //uncompressed cabinets
+  public static string SystemDir = $"{BaseDir}/system";
+  public static string RomsDir = $"{BaseDir}/downloads";
+  public static string GameSaveDir = $"{BaseDir}/save";
 
-    public static bool GameVideosStopped = false;
 
-    static ConfigManager() {
-         
-        if (!Directory.Exists(ConfigManager.Cabinets)) {
-            // Directory.CreateDirectory(BaseDir);
-            Directory.CreateDirectory(ConfigManager.Cabinets);
-        }
-        if (!Directory.Exists(ConfigManager.CabinetsDB)) {
-            // Directory.CreateDirectory(BaseDir);
-            Directory.CreateDirectory(ConfigManager.CabinetsDB);
-        }
-        if (!Directory.Exists(ConfigManager.SystemDir)) {
-            Directory.CreateDirectory(ConfigManager.SystemDir);
-            Directory.CreateDirectory(ConfigManager.RomsDir);
-            Directory.CreateDirectory(ConfigManager.GameSaveDir);
-        }
+  public static bool GameVideosStopped = false;
 
+  static ConfigManager()
+  {
+      Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
+
+    if (!Directory.Exists(ConfigManager.Cabinets))
+    {
+      // Directory.CreateDirectory(BaseDir);
+      Directory.CreateDirectory(ConfigManager.Cabinets);
     }
-    public static void WriteConsole(string st) {
-        UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, st);
+    if (!Directory.Exists(ConfigManager.CabinetsDB))
+    {
+      // Directory.CreateDirectory(BaseDir);
+      Directory.CreateDirectory(ConfigManager.CabinetsDB);
+    }
+    if (!Directory.Exists(ConfigManager.SystemDir))
+    {
+      Directory.CreateDirectory(ConfigManager.SystemDir);
+      Directory.CreateDirectory(ConfigManager.RomsDir);
+      Directory.CreateDirectory(ConfigManager.GameSaveDir);
     }
 
-    public static void SignalToStopVideos() {
-        GameVideosStopped = true;
-    }
+  }
+  public static void WriteConsole(string st)
+  {
+    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, st);
+  }
+
+  public static void SignalToStopVideos()
+  {
+    GameVideosStopped = true;
+  }
 }
