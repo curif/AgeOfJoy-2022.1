@@ -42,6 +42,8 @@ public class ArcadeRoomBehaviour : MonoBehaviour
   private DateTime timeout, timeToSpentInPlace;
   private List<ArcadeRoomBehaviour> othersNPC;
   private List<PlaceInformation> totalDestinationsList = new List<PlaceInformation>();
+  private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
+  private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
 
   public PlaceInformation Destination { get => destination; }
 
@@ -63,15 +65,16 @@ public class ArcadeRoomBehaviour : MonoBehaviour
                  where npc != gameObject
                  select npc.GetComponent<ArcadeRoomBehaviour>()).
                  ToList<ArcadeRoomBehaviour>();
-    Debug.Log($"{gameObject.name} found {othersNPC.Count} NPCs active");
 
+    if (PlayerPositions != null)
+        //The cabinets where not loaded when this code runs
+        totalDestinationsList.AddRange(
+            (from Transform playerPosition in PlayerPositions.transform
+            select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
+                                        MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine)
+            ).ToList());
 
-    //at that time the cabinets where not loaded.
-    totalDestinationsList.AddRange(
-        (from Transform playerPosition in PlayerPositions.transform
-        select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming, MinimalDistanceToReachArcade)
-        ).ToList());
-    Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name} added cabinets destinations with PlayerPosition, totalDestinationsList: {totalDestinationsList.Count}");
+    Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name}  destinations totalDestinationsList: {totalDestinationsList.Count}");
 
     tree = buildBT();
     while (true)
@@ -121,18 +124,34 @@ public class ArcadeRoomBehaviour : MonoBehaviour
             .Condition("Player found", () => AvoidPlayer && Vector3.Distance(player.transform.position, transform.position) <= 1f)
           .End()
         .End()
-        .Do("Stop walking", () =>
+        .Do("Stop", () =>
         {
-          Idle();
-          timeToSpentInPlace = DateTime.Now > timeout ? DateTime.Now.AddSeconds(1) : destination.getDateTimeUntilWait();
-          FaceTarget(destination.Place.transform.position);
+          stop();
+          return TaskStatus.Success;
+        })
+        .Do("Do something there", () =>
+        {
+          if (DateTime.Now > timeout)
+          {
+            idle();
+            timeToSpentInPlace = DateTime.Now.AddSeconds(1);
+          }
+          else
+          {
+            runDestinationAnimation();
+            timeToSpentInPlace = destination.getWaitingDateTime();
+          }
 
           return TaskStatus.Success;
         })
 
         .RepeatUntilSuccess()
-            .Condition("wait some time there", () => DateTime.Now > timeToSpentInPlace)
+            .Selector()
+                .Condition("Wait some time there", () => DateTime.Now > timeToSpentInPlace)
+                .Condition("Player is near", () => AvoidPlayer && Vector3.Distance(player.transform.position, transform.position) <= 1f)
+            .End()
         .End()
+
         .Do("Clean", () =>
         {
           destination = null;
@@ -143,50 +162,39 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
   }
 
-  // private void animator.SetTrigger(String trigger)
-  // {
-  //   if (!String.IsNullOrEmpty(lastTrigger))
-  //     GetComponent<Animator>().Reanimator.SetTrigger(lastTrigger);
-  //   // Debug.Log($"-----------------");
-  //   // foreach (AnimatorControllerParameter p in animator.parameters)
-  //   // {
-  //   //   Debug.Log($"{p.name} is {p.type.ToString()}");
-  //   // }
-  //   // Debug.Log($"-----------------");
-
-  //   lastTrigger = trigger;
-  //   GetComponent<Animator>().animator.SetTrigger(trigger);
-  // }
-  private void Idle()
+  private void stop()
   {
+    agent.Stop();
     agent.ResetPath();
+  }
+
+  private void idle()
+  {
     animator.SetTrigger("Idle");
   }
-  //   private Vector3 positionDestination()
-  //   {
-  //     Transform playerPosition = destination.Place.transform.Find("PlayerPosition");
-  //     Debug.Log($"[ArcadeRoomBehaviour] destination PlayerPosition: {playerPosition?.ToString()}");
 
-  //     //trace path
-  //     if (playerPosition != null)
-  //       return playerPosition.position;
+  private void runDestinationAnimation()
+  {
+    transform.position = new Vector3(destination.Place.transform.position.x, 
+                                     transform.position.y, 
+                                     destination.Place.transform.position.z);
+    transform.rotation = destination.Place.transform.rotation;
 
-  //     return destination.Place.transform.position;
-  //   }
+    if (destination.Type == PlaceInformation.PlaceType.BoyPlay) {
+        //special behaviour
+        int index = UnityEngine.Random.Range(0, boyPlayTriggers.Length - 1);
+        animator.SetTrigger(boyPlayTriggers[index]);
+    }
+    else
+        animator.SetTrigger(animatorTriggers[(int)destination.Type]);
+
+  }
+
   private void walkToDestination()
   {
     animator.SetTrigger("Walk");
-
     timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
     agent.SetDestination(destination.Place.transform.position);
-
-  }
-  private void FaceTarget(Vector3 positionToLook)
-  {
-    Vector3 lookPos = positionToLook - transform.position;
-    lookPos.y = 0;
-    Quaternion rotation = Quaternion.LookRotation(lookPos);
-    transform.rotation = Quaternion.Slerp(transform.rotation, rotation, 1);
   }
 
 }

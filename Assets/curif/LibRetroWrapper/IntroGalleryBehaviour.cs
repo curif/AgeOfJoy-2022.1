@@ -105,7 +105,7 @@ public class IntroGalleryBehaviour : MonoBehaviour
         .Do("Stop walking", () =>
         {
           Idle();
-          timeToSpentInPlace = DateTime.Now > timeout ? DateTime.Now.AddSeconds(1) : destination.getDateTimeUntilWait();
+          timeToSpentInPlace = DateTime.Now > timeout ? DateTime.Now.AddSeconds(1) : destination.getWaitingDateTime();
           return TaskStatus.Success;
         })
 
