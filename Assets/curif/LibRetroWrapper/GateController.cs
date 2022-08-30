@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
+using CleverCrow.Fluid.BTs.Tasks;
+using CleverCrow.Fluid.BTs.Trees;
 
 public class GateController : MonoBehaviour
 {
@@ -26,13 +28,20 @@ public class GateController : MonoBehaviour
   [Tooltip("Names of the scenes to unload, comma separated.")]
   [SerializeField]
   public string[] SceneToUnloadNames;
+  [SerializeField]
+  public GameObject[] BlockingUnLoadObjects;  
   [Tooltip("The minimal distance between the player and the gate to unload the scene.")]
   [SerializeField]
   public float MinimalDistanceToUnload = 3f;
 
+  [SerializeField]
+  public BehaviorTree treeLoad, treeUnLoad;
 
   private GameObject centerCamera;
   private Bounds floorBounds;
+
+  int loadSceneIdx = 0, unloadSceneIdx = 0;
+  Scene controledSceneToLoad, controledSceneToUnLoad;
 
   // Start is called before the first frame update
   void Start()
@@ -45,10 +54,33 @@ public class GateController : MonoBehaviour
       floorBounds = new Bounds(Floor.transform.position, new Vector3(Floor.transform.localScale.x, 100f, Floor.transform.localScale.z));
       ////ConfigManager.WriteConsole($"[GateController]{SceneToLoadNames} floor bounds: [{floorBounds.ToString()}]");
     }
-    StartCoroutine(Evaluate());
+    // StartCoroutine(Evaluate());
+    StartCoroutine(runBT());
   }
 
-  bool isPlayerCloseToTheGate()
+
+  IEnumerator runBT()
+  {
+    treeLoad = buildLoadScenesBT();
+    treeUnLoad = buildUnLoadScenesBT();
+
+    if (SceneToLoadNames.Length > 0)
+      controledSceneToLoad = SceneManager.GetSceneByName(SceneToLoadNames[loadSceneIdx]);
+
+    if (SceneToUnloadNames.Length > 0)
+      controledSceneToUnLoad = SceneManager.GetSceneByName(SceneToUnloadNames[unloadSceneIdx]);
+
+    while (true)
+    {
+      if (SceneToLoadNames.Length > 0)
+        treeLoad.Tick();
+      if (SceneToUnloadNames.Length > 0)
+        treeUnLoad.Tick();
+      yield return new WaitForSeconds(1f / 4f);
+    }
+  }
+
+  bool isPlayerCloseToController()
   {
     float d = Vector3.Distance(centerCamera.transform.position, gameObject.transform.position);
     // WriteConsole($"[curif.LibRetroMameCore.isPlayerClose] distance: {d} < {_distanceMinToPlayerToStartGame} {d < _distanceMinToPlayerToStartGame}");
@@ -63,9 +95,7 @@ public class GateController : MonoBehaviour
   void BlockLoadGate(int idx, bool block)
   {
     if (BlockingLoadObjects.Length > idx && BlockingLoadObjects[idx] != null)
-    {
       BlockingLoadObjects[idx].SetActive(block);
-    }
 
   }
 
@@ -73,12 +103,88 @@ public class GateController : MonoBehaviour
   {
     //https://docs.unity3d.com/ScriptReference/Bounds.html
     if (floorBounds == null)
-    {
       return false;
-    }
     return floorBounds.Contains(centerCamera.transform.position);
   }
 
+  private BehaviorTree buildUnLoadScenesBT()
+  {
+    return new BehaviorTreeBuilder(gameObject)
+    .Sequence()
+      .Condition("Is evaluated scene loaded?", () => !String.IsNullOrEmpty(controledSceneToUnLoad.name) && controledSceneToUnLoad.isLoaded)
+      .Condition("Is the player far from the controller?", () => isPlayerFar())
+      .Sequence()
+        .Condition("Exists the scene to unload?", () => controledSceneToUnLoad != null)
+        .Do("Unload Scene", () =>
+        {
+          ConfigManager.WriteConsole($"[GateController] UNLOAD SCENE: {controledSceneToUnLoad.name} is loaded, but the player is away ******.");
+          BlockLoadGate(unloadSceneIdx, true);
+          SceneManager.UnloadSceneAsync(controledSceneToUnLoad.name);
+          return TaskStatus.Success;
+        })
+      .End()
+      .Do("Next Scene to unload", () =>
+      {
+        unloadSceneIdx++;
+        if (unloadSceneIdx >= SceneToUnloadNames.Length)
+          unloadSceneIdx = 0;
+        controledSceneToUnLoad = SceneManager.GetSceneByName(SceneToUnloadNames[unloadSceneIdx]);
+        return TaskStatus.Success;
+      })
+    .End()
+    .Build();
+  }
+
+  private BehaviorTree buildLoadScenesBT()
+  {
+    return new BehaviorTreeBuilder(gameObject)
+    .Sequence()
+      .Condition("Player is in the room", () => PlayerIsInMyRoom())
+      .Condition("Is player close to the gate", () => isPlayerCloseToController())
+      .Sequence()
+        .Condition("Exist the scene to load", () => controledSceneToLoad != null)
+        .Condition("Scene is not loaded", () => String.IsNullOrEmpty(controledSceneToLoad.name))
+        // .Do("Block the door", () =>
+        // {
+        //   BlockLoadGate(loadSceneIdx, true);
+        //   return TaskStatus.Success;
+        // })
+        .Do("Load the scene (async)", () =>
+        {
+          SceneManager.LoadSceneAsync(SceneToLoadNames[loadSceneIdx], LoadSceneMode.Additive);
+          ConfigManager.WriteConsole($"[GateController] LOAD Scene: {SceneToLoadNames[loadSceneIdx]}");
+          return TaskStatus.Success;
+        })
+        .RepeatUntilSuccess("Repeat until the scene is loaded")
+          .Sequence()
+            .Condition("Scene is loaded?", () =>
+            {
+              controledSceneToLoad = SceneManager.GetSceneByName(SceneToLoadNames[loadSceneIdx]);
+              return controledSceneToLoad.isLoaded;
+            })
+            .Do("Unlock gate", () =>
+            {
+              //the engine loaded the scene
+              ConfigManager.WriteConsole($"[GateController] Scene: {controledSceneToLoad.name} is loaded, unlock the gate");
+              BlockLoadGate(loadSceneIdx, false);
+              return TaskStatus.Success;
+            })
+          .End()
+        .End()
+      .End()
+      .Do("Next Scene to evaluate", () =>
+      {
+        loadSceneIdx++;
+        if (loadSceneIdx >= SceneToLoadNames.Length)
+          loadSceneIdx = 0;
+        controledSceneToLoad = SceneManager.GetSceneByName(SceneToLoadNames[loadSceneIdx]);
+        return TaskStatus.Success;
+      })
+    .End()
+    .Build();
+  }
+
+  /// ====================================================================================
   IEnumerator Evaluate()
   {
     while (true)
@@ -111,7 +217,7 @@ public class GateController : MonoBehaviour
         //the scene is not loaded
         // //ConfigManager.WriteConsole($"[GateController] Scene: {sceneToLoadName} is not loaded");
         BlockLoadGate(idx, true);
-        if (isPlayerCloseToTheGate())
+        if (isPlayerCloseToController())
         {
           SceneManager.LoadSceneAsync(sceneToLoadName, LoadSceneMode.Additive);
           //ConfigManager.WriteConsole($"[GateController] ask to LOAD Scene: {sceneToLoadName}");
