@@ -8,7 +8,6 @@ You should have received a copy of the GNU General Public License along with thi
 //#define _debug_audio_
 #define _debug_
 
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -16,11 +15,8 @@ using System.Runtime.InteropServices;
 using System;
 using System.IO;
 using Unity.Jobs;
-// using Unity.Burst;
 using Unity.Collections;
 using System.Diagnostics;
-
-
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -189,7 +185,6 @@ public static unsafe class LibretroMameCore
     static uint AudioBufferMaxOccupancy = 1024 * 8;
     static int QuestAudioFrequency = 44100;
 
-
 #endregion
 
     // retro_init -------------------------------
@@ -270,7 +265,6 @@ public static unsafe class LibretroMameCore
     public static retro_pixel_format pixelFormat;
     
     // user control
-    private static Waiter WaitToExitGame = null;
     //games have to initialize and then they can accept controls.
     private static Waiter WaitToFinishedGameLoad = null;
     private static FpsControl controlForAskIfTimeToExitGame;
@@ -282,19 +276,14 @@ public static unsafe class LibretroMameCore
 
     //parameters ================
     
-    // public static float DistanceMinToPlayerToStartGame = 0.9f;
-    public static int SecondsToWaitToExitGame = 2;
     public static int SecondsToWaitToFinishLoad = 2;
     
     //components parameters
     public static Renderer Display;
-    public static GameObject Player;
     public static AudioSource Speaker;
     public static CoinSlotController CoinSlot; 
 
     //game info and storage.
-    // private static string GamePath = "/storage/emulated/0/RetroArch/downloads/";
-    // private static string BaseDir = "/sdcard/Android/data/com.curif.Mametemplate2";
     public static retro_system_info SystemInfo = new();
     public static retro_system_av_info GameAVInfo = new();
     static string GameFileName = "";
@@ -389,7 +378,6 @@ public static unsafe class LibretroMameCore
             WriteConsole("retro_set_input_state");
             retro_set_input_state(new inputStateHandler(inputStateCB));
 
-
             WriteConsole("------------------- retro_init");
             retro_init();
 
@@ -449,11 +437,9 @@ public static unsafe class LibretroMameCore
         if (GameLoaded) {
             getAVGameInfo();
 
-            //To ask 3 times in a sec if the period complete to exit.
-            controlForAskIfTimeToExitGame = new LibretroMameCore.FpsControl(2f);
             FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
-            LockControls(true);
+            // LockControls(true);
 
             /* It's impossible to change the Sample Rate, fix in 48000
             audioConfig.sampleRate = sampleRate;
@@ -472,14 +458,6 @@ public static unsafe class LibretroMameCore
         }
         WriteConsole($"[LibRetroMameCore.Start] Initialized {GameFileName} in {ScreenName} Game Loaded: {GameLoaded}");
         return;
-    }
-
-    public static void LockControls(bool takeControls)
-    {
-        //lock controls, if takeControls is true the Player can't move.
-        WriteConsole($"[LibRetroMameCore.LockControls] {takeControls}");
-        Player.GetComponent<OVRPlayerController>().EnableLinearMovement = !takeControls;
-        Player.GetComponent<OVRPlayerController>().EnableRotation = !takeControls;
     }
 
     public static bool isRunning(string screenName, string gameFileName) {
@@ -515,25 +493,6 @@ public static unsafe class LibretroMameCore
             Speaker.Play(); //why is this neccesary?
         }
 
-        //Is the Player looking outside the game?
-        controlForAskIfTimeToExitGame.CountTimeFrame();
-        if (controlForAskIfTimeToExitGame.isTime()) {
-#if _debug_fps_
-            WriteConsole($"[Run] {FPSControl.ToString()}");
-            // WriteConsole($"[curif.LibRetroMameCore.Run] Check if Player looks the screen {Camera} {Display}");
-#endif
-            if (OVRInput.Get(OVRInput.RawButton.LHandTrigger) /*isPlayerLookingAtScreen(Camera, Display, DistanceMinToPlayerToStartGame)*/) {
-                WriteConsole("[curif.LibRetroMameCore.Run] The Player wants to abandon the game");
-                WaitToExitGame = WaitToExitGame?? new Waiter(SecondsToWaitToExitGame);
-                if (WaitToExitGame.Finished()) {
-                    LibretroMameCore.WriteConsole("[curif.LibRetroMameCore.Run] The Player wants to exit the game");
-                    End(ScreenName, GameFileName);
-                }
-            }
-            else {
-                WaitToExitGame = null;
-            }
-        }
 #if _debug_fps_
         WriteConsole($"[Run] {FPSControl.ToString()} ");
 #endif
@@ -551,7 +510,7 @@ public static unsafe class LibretroMameCore
 
         ClearAll();
 
-        LockControls(false);
+        //LockControls(false);
 
         WriteConsole("[curif.LibRetroMameCore.Run] End *************************************************");
     }
@@ -562,8 +521,6 @@ public static unsafe class LibretroMameCore
         FPSControl = null;
         GameTexture = null;
         AudioBatch =  new List<float>();
-        WaitToExitGame = null;
-        controlForAskIfTimeToExitGame = null;
         // SystemInfo = new();
         GameAVInfo = new();
 
@@ -1258,27 +1215,6 @@ public static unsafe class LibretroMameCore
         m.GetObjectAndFree(SystemInfo);
         WriteConsole(SystemInfo.ToString());
     }
-    /*
-    //I think this is less computational intensive than isPlayerLookingScreen
-    public static bool isPlayerCloser(GameObject _camera, Renderer _display, float _distanceMinToPlayerToStartGame) {
-        float d = Vector3.Distance(_camera.transform.position, _display.transform.position);
-        // WriteConsole($"[curif.LibRetroMameCore.isPlayerClose] distance: {d} < {_distanceMinToPlayerToStartGame} {d < _distanceMinToPlayerToStartGame}");
-        return d < _distanceMinToPlayerToStartGame;
-    }
-    public static bool isPlayerLookingAtScreen(GameObject _camera, Renderer _display, float _distanceMinToPlayerToStartGame) {
-        RaycastHit _hit = new RaycastHit();
-        Vector3 dir = _camera.transform.TransformDirection(Vector3.forward);
-        bool ret = false;
-            
-        if (Physics.Raycast(_camera.transform.position, dir, out _hit, _distanceMinToPlayerToStartGame)) {
-            // Debug.DrawRay(_camera.transform.position, dir * _hit.distance, Color.red);
-            // WriteConsole($"[curif.LibRetroMameCore.isPlayerLookingScreen] {_hit.collider} ");
-            ret = _hit.collider == _display.GetComponent<MeshCollider>();
-        }
-
-        return ret;
-    }
-    */
     
      //storage pointers to unmanaged memory
     public class MarshalHelpPtrVault {
