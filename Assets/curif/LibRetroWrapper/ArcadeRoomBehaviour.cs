@@ -164,7 +164,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
   private void stop()
   {
-    agent.Stop();
+    agent.isStopped = true;
     agent.ResetPath();
   }
 
@@ -195,6 +195,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
     animator.SetTrigger("Walk");
     timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
     agent.SetDestination(destination.Place.transform.position);
+    agent.isStopped = false;
   }
 
 }
