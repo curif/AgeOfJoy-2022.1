@@ -19,7 +19,7 @@ public class GateController : MonoBehaviour
   [Tooltip("Object that block the gate")]
   [SerializeField]
   public GameObject[] BlockingLoadObjects;
-  [Tooltip("The floor object in the scene where the gate is")]
+  [Tooltip("The GameObject parent of the floor child objects in the scene where the gate is")]
   [SerializeField]
   public GameObject Floor;
 
@@ -29,7 +29,7 @@ public class GateController : MonoBehaviour
   [SerializeField]
   public string[] SceneToUnloadNames;
   [SerializeField]
-  public GameObject[] BlockingUnLoadObjects;  
+  public GameObject[] BlockingUnLoadObjects;
   [Tooltip("The minimal distance between the player and the gate to unload the scene.")]
   [SerializeField]
   public float MinimalDistanceToUnload = 3f;
@@ -50,14 +50,15 @@ public class GateController : MonoBehaviour
     //ConfigManager.WriteConsole($"[GateController] -Starting- Scenes to control, load: {SceneToLoadNames} unload: {SceneToUnloadNames}");
     if (Floor != null)
     {
-      var bounds = Floor.GetComponent<Renderer>().bounds;
-      floorBounds = new Bounds(Floor.transform.position, new Vector3(Floor.transform.localScale.x, 100f, Floor.transform.localScale.z));
-      ////ConfigManager.WriteConsole($"[GateController]{SceneToLoadNames} floor bounds: [{floorBounds.ToString()}]");
+      floorBounds = new Bounds(Floor.transform.position, Vector3.zero);
+      foreach (Transform floor in Floor.transform)
+      {
+          floorBounds.Encapsulate(new Bounds(floor.position, new Vector3(floor.localScale.x, 100f, floor.localScale.z)));
+      }
     }
     // StartCoroutine(Evaluate());
     StartCoroutine(runBT());
   }
-
 
   IEnumerator runBT()
   {
