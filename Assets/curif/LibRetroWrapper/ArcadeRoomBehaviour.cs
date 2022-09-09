@@ -54,7 +54,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
     player = GameObject.Find("OVRPlayerControllerGalery");
 
     totalDestinationsList.AddRange(Destinations);
-    Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
+    // Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
 
     StartCoroutine(runBT());
   }
@@ -74,7 +74,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
                                         MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine)
             ).ToList());
 
-    Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name}  destinations totalDestinationsList: {totalDestinationsList.Count}");
+    // Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name}  destinations totalDestinationsList: {totalDestinationsList.Count}");
 
     tree = buildBT();
     while (true)
