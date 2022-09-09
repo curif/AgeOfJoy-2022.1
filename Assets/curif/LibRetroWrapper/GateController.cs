@@ -55,25 +55,29 @@ public class GateController : MonoBehaviour
   [Header("Scene Load settings")]
   [Tooltip("Names of the scenes to load.")]
   [SerializeField]
-  public SceneGate[] ScenesToLoad;
+  public SceneReference[] ScenesToLoad;
 
   [Tooltip("The GameObject parent of the floor child objects in the scene where the gate is")]
   [SerializeField]
   public GameObject Floor;
 
-
   [Header("Scene Unload settings")]
   [SerializeField]
-  public SceneGate[] ScenesToUnload;
+  public SceneReference[] ScenesToUnload;
+
+
+  [Header("Scene Blockers")]
+  [SerializeField]
+  public SceneGate[] SceneBlockers;
 
   [SerializeField]
-  public BehaviorTree treeLoad, treeUnLoad;
+  public BehaviorTree treeLoad, treeUnLoad, treeBlockers;
 
   private GameObject centerCamera;
   private Bounds floorBounds;
 
-  int loadSceneIdx = 0, unloadSceneIdx = 0;
-  SceneReference controledSceneToLoad, controledSceneToUnLoad;
+  int loadSceneIdx = 0, unloadSceneIdx = 0, blockerIdx = 0;
+  SceneReference controledSceneToLoad, controledSceneToUnLoad, controledSceneBlocker;
 
   // Start is called before the first frame update
   void Start()
@@ -96,19 +100,27 @@ public class GateController : MonoBehaviour
   {
     treeLoad = buildLoadScenesBT();
     treeUnLoad = buildUnLoadScenesBT();
+    treeBlockers = buildBlockersBT();
 
     if (ScenesToLoad.Length > 0)
-      controledSceneToLoad = ScenesToLoad[loadSceneIdx].SceneRef;
+      controledSceneToLoad = ScenesToLoad[loadSceneIdx];
 
     if (ScenesToUnload.Length > 0)
-      controledSceneToUnLoad = ScenesToUnload[unloadSceneIdx].SceneRef;
+      controledSceneToUnLoad = ScenesToUnload[unloadSceneIdx];
+    
+    if (SceneBlockers.Length > 0)
+      controledSceneToUnLoad = SceneBlockers[unloadSceneIdx].SceneRef;
 
     while (true)
     {
       if (ScenesToLoad.Length > 0)
         treeLoad.Tick();
+
       if (ScenesToUnload.Length > 0)
         treeUnLoad.Tick();
+
+      if (SceneBlockers.Length > 0)
+        treeBlockers.Tick();
 
       yield return new WaitForSeconds(1f);
     }
@@ -157,20 +169,12 @@ public class GateController : MonoBehaviour
             return TaskStatus.Success;
           })
         .End()
-        .Sequence("Control the gate")
-          .Condition("Scene registered?", () => controledSceneToUnLoad != null)
-          .Do("lock/unlock the gate", () =>
-          {
-            LockGate(ScenesToUnload[unloadSceneIdx], !controledSceneToUnLoad.IsSafeToUse);
-            return TaskStatus.Success;
-          })
-        .End()
         .Do("Next Scene", () =>
         {
           unloadSceneIdx++;
           if (unloadSceneIdx >= ScenesToUnload.Length)
             unloadSceneIdx = 0;
-          controledSceneToUnLoad = ScenesToUnload[unloadSceneIdx].SceneRef;
+          controledSceneToUnLoad = ScenesToUnload[unloadSceneIdx];
           return TaskStatus.Success;
         })
     .End()
@@ -199,22 +203,12 @@ public class GateController : MonoBehaviour
               .Condition("Is scene loaded?", () => SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
             .End()
           .End()
-
-          .Sequence("Control the gate")
-            .Condition("Scene registered?", () => controledSceneToLoad != null)
-            .Do("lock/unlock the gate", () =>
-            {
-              LockGate(ScenesToLoad[loadSceneIdx], !controledSceneToLoad.IsSafeToUse);
-              return TaskStatus.Success;
-            })
-          .End()
-
           .Do("Next Scene to evaluate", () =>
           {
             loadSceneIdx++;
             if (loadSceneIdx >= ScenesToLoad.Length)
               loadSceneIdx = 0;
-            controledSceneToLoad = ScenesToLoad[loadSceneIdx].SceneRef;
+            controledSceneToLoad = ScenesToLoad[loadSceneIdx];
             return TaskStatus.Success;
           })
         .End()
@@ -222,69 +216,29 @@ public class GateController : MonoBehaviour
       .Build();
   }
 
-  /// ====================================================================================
-  /*IEnumerator Evaluate()
-  {
-    while (true)
-    {
-      int idx = 0;
-      bool playerInTheRoom = PlayerIsInTheRoom();
-      foreach (string scnName in SceneToLoadNames)
-      {
-        loadScene(idx, scnName, playerInTheRoom);
-        idx++;
-      }
-      foreach (string scnName in SceneToUnloadNames)
-      {
-        unloadScene(scnName);
-      }
-      yield return new WaitForSeconds(1f);
-    }
-  }
 
-  private void loadScene(int idx, string sceneToLoadName, bool playerIsInMyRoom)
+  private BehaviorTree buildBlockersBT()
   {
-    //https://docs.unity3d.com/ScriptReference/SceneManagement.SceneManager.GetSceneByName.html
-    // If you use SceneManager.GetSceneByName(), after loading the scene in additive mode, then a valid scene is returned.
-    Scene controledScene = SceneManager.GetSceneByName(sceneToLoadName);
-    ////ConfigManager.WriteConsole($"[GateController] Evaluate Scene to load: [{sceneToLoadName} {controledScene.name}]");
-    if (playerIsInMyRoom)
-    {
-      if (String.IsNullOrEmpty(controledScene.name))
-      {
-        //the scene is not loaded
-        // //ConfigManager.WriteConsole($"[GateController] Scene: {sceneToLoadName} is not loaded");
-        LockGate(idx, true);
-        if (isPlayerCloseToController())
+    return new BehaviorTreeBuilder(gameObject)
+      .ExecuteAllSequence()
+        .Sequence("Control the gate")
+          .Condition("Scene registered?", () => controledSceneBlocker != null)
+          .Do("lock/unlock the gate", () =>
+          {
+            LockGate(SceneBlockers[blockerIdx], !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
+            return TaskStatus.Success;
+          })
+        .End()
+        .Do("Next Scene to evaluate", () =>
         {
-          SceneManager.LoadSceneAsync(sceneToLoadName, LoadSceneMode.Additive);
-          //ConfigManager.WriteConsole($"[GateController] ask to LOAD Scene: {sceneToLoadName}");
-        }
-      }
-      else if (controledScene.isLoaded)
-      {
-        //the engine loaded the scene
-        //ConfigManager.WriteConsole($"[GateController] Scene: {sceneToLoadName} is loaded, unlock the gate");
-        LockGate(idx, false);
-      }
-    }
+          blockerIdx++;
+          if (blockerIdx >= SceneBlockers.Length)
+            blockerIdx = 0;
+          controledSceneBlocker = SceneBlockers[blockerIdx].SceneRef;
+          return TaskStatus.Success;
+        })
+        .End()
+      .End()
+      .Build();
   }
-
-  private void unloadScene(string sceneToUnloadName)
-  {
-    //https://docs.unity3d.com/ScriptReference/SceneManagement.SceneManager.GetSceneByName.html
-    // If you use SceneManager.GetSceneByName(), after loading the scene in additive mode, then a valid scene is returned.
-    Scene controledScene = SceneManager.GetSceneByName(sceneToUnloadName);
-    // //ConfigManager.WriteConsole($"[GateController] Evaluate Scene to unload: [{sceneToUnloadName} {controledScene.name}]");
-    if (!String.IsNullOrEmpty(controledScene.name) && controledScene.isLoaded)
-    {
-      //the scene is loaded
-      if (isPlayerCloseToController())
-      {
-        //ConfigManager.WriteConsole($"[GateController] UNLOAD SCENE: {sceneToUnloadName} is loaded, but the player is away ******.");
-        SceneManager.UnloadSceneAsync(sceneToUnloadName);
-      }
-    }
-  }
-*/
 }
