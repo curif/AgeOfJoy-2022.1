@@ -20,11 +20,7 @@ public static class CabinetFactory
     CabinetStyles.Add("frogger", Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
     CabinetStyles.Add("defender", Resources.Load<GameObject>($"Cabinets/PreFab/Defender"));
     CabinetStyles.Add("donkeykong", Resources.Load<GameObject>($"Cabinets/PreFab/DonkeyKong"));
-
-    // foreach (KeyValuePair<string, GameObject> cab in CabinetStyles)
-    // {
-    //   cab.Value.AddComponent<MeshCollider>();
-    // }
+    CabinetStyles.Add("xevious", Resources.Load<GameObject>($"Cabinets/PreFab/Xevious"));
   }
 
   public static Cabinet Factory(string style, string name, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
