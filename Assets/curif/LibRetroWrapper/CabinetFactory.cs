@@ -52,20 +52,42 @@ public static class CabinetFactory
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
     foreach (CabinetInformation.Part p in cbinfo.Parts)
     {
-      if (p.material != null)
-        cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
-      else if (p.art != null)
-        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
-      else if (p.color != null)
+      switch (p.type)
       {
-        Material matColor = new Material(CabinetMaterials.Base);
-        matColor.SetColor("_Color", cbinfo.color.getColor());
-        cabinet.SetMaterial(p.name, matColor);
-      }
-      else
-        cabinet.SetMaterial(p.name, CabinetMaterials.Black);
-    }
+        case "bezel" : {
+          ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
+          cabinet.SetBezel(p.name, cbinfo.getPath(p.art.file));
+        }
+        break;
+        
+        case "marquee" : {
+          ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
+          cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
+          if (p.color != null) 
+            cabinet.SetMarqueeEmissionColor(p.name, p.color.getColor());
+        }
+        break;
 
+        default:
+        {
+          if (p.material != null)
+            cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
+          else if (p.art != null)
+            cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
+          else if (p.color != null)
+          {
+            Material matColor = new Material(CabinetMaterials.Base);
+            matColor.SetColor("_Color", p.color.getColor());
+            cabinet.SetMaterial(p.name, matColor);
+          }
+          else
+            cabinet.SetMaterial(p.name, CabinetMaterials.Black);
+        }
+        break;
+      }
+      
+    }
+    /*
     if (cbinfo.bezel != null)
     {
       ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
@@ -79,6 +101,7 @@ public static class CabinetFactory
     }
     else
       cabinet.SetMarquee("", Color.white);
+    */
 
     if (!string.IsNullOrEmpty(cbinfo.coinslot))
     {

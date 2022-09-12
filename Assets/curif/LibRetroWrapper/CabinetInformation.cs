@@ -11,8 +11,8 @@ public class CabinetInformation {
     public List<Part> Parts { get; set; }
     public string type = "TimePilot";
     public Screen screen;
-    public Bezel bezel;
-    public Marquee marquee;
+    // public Bezel bezel;
+    // public Marquee marquee;
     public CRT crt;
     public string style = "generic";
     public string material;
@@ -52,6 +52,7 @@ public class CabinetInformation {
         public string file;
         public bool invertx = false; 
         public bool inverty = false;
+
         public System.Exception validate(string pathBase) {
             string filePath = $"{pathBase}/{file}";
             if (!File.Exists(filePath)) {
@@ -66,7 +67,9 @@ public class CabinetInformation {
         public string material;
         public Art art;
         public RGBColor color;
+        public string type = "normal"; // or bezel or marquee
     }
+
     public class CRT {
         public string type;
         public string orientation = "vertical";
@@ -86,6 +89,7 @@ public class CabinetInformation {
         public bool invertx = false; 
         public bool inverty = false;
     }
+    /*
     public class Bezel {
         public Art art;
     }
@@ -93,6 +97,7 @@ public class CabinetInformation {
         public Art art;
         public RGBColor lightcolor = new RGBColor();
     }
+    */
     //   lightcolor:
     // r: 255
     // g: 194
@@ -124,6 +129,7 @@ public class CabinetInformation {
             return cf;
         }
     }
+
     public class Video {
         public string file;
         public bool invertx = false; 
@@ -148,9 +154,11 @@ public class CabinetInformation {
             if (string.IsNullOrEmpty(name)) {
                 exceptions.Add($"Part #{number}",  new System.Exception($"Doesn't have a name"));
             }
+            /*
             else if (! cabinetPartNames.Contains(p.name)) {
                 exceptions.Add($"Part #{number}: {p.name}", new System.Exception($"The part name is not a part of the cabinet"));
             }
+            */
             exceptions.Add($"Part #{number}: {p.name} ART", p.art != null? p.art.validate(pathBase) : null);
             exceptions.Add($"Part #{number}: {p.name} MATERIAL", 
                 !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)? 
@@ -159,8 +167,8 @@ public class CabinetInformation {
                     new System.Exception("Can't assign a material and ART to the same part") : null);
             number++;
         }
-        exceptions.Add($"Bezel ART", bezel != null && bezel.art != null? bezel.art.validate(pathBase) : null);
-        exceptions.Add($"Marquee ART", marquee != null && marquee.art != null? marquee.art.validate(pathBase) : null);
+        // exceptions.Add($"Bezel ART", bezel != null && bezel.art != null? bezel.art.validate(pathBase) : null);
+        // exceptions.Add($"Marquee ART", marquee != null && marquee.art != null? marquee.art.validate(pathBase) : null);
         // exceptions.Add($"Marquee Light Color", marquee != null? marquee.lightcolor.checkForProblems() : null);
         exceptions.Add($"Year", year >= 1970 && year < 2010? null : new System.ArgumentException("Year out of range"));
         exceptions.Add($"Style", cabinetStyles.Contains(style)? null : new System.ArgumentException($"Unknown cabinet style: {style}"));
