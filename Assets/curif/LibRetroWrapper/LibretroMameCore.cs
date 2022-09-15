@@ -361,9 +361,8 @@ public static unsafe class LibretroMameCore
             //Audio configuration
             var audioConfig = AudioSettings.GetConfiguration();
             QuestAudioFrequency = audioConfig.sampleRate;
-            WriteConsole($"[curif.LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency}");
+            WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency}");
             
-
             WriteConsole("------------------- SETs");
             WriteConsole("retro_set_environment");
             retro_set_environment(new EnvironmentHandler(environmentCB));
@@ -390,12 +389,13 @@ public static unsafe class LibretroMameCore
         }
 
         if (GameLoaded) {
-            WriteConsole($"[curif.LibRetroMameCore.Start] the Start method was called, but a Game is loaded ({GameFileName}), it's neccesary to call End() before the Start()");
-            throw new Exception("Inconsistent behaviour, a Game is loaded during a Start");
+            WriteConsole($"[LibRetroMameCore.Start] ERROR the Start method was called, but a Game was loaded previously ({GameFileName}), it's neccesary to call End() before the Start()");
+            return;
         }
 
         if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName)) {
-            throw new ArgumentException($"MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
+            WriteConsole($"[LibRetroMameCore.Start] ERROR: MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
+            return;
         }
 
         GameFileName = gameFileName;
@@ -403,60 +403,54 @@ public static unsafe class LibretroMameCore
 
         WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
         if (SystemInfo.need_fullpath) {
-
-            retro_game_info game = new retro_game_info();
-            MarshalHelpPtrVault p = new();
             string path = ConfigManager.RomsDir + "/" + GameFileName;
-            // game.path = RomsDir + GameFileName;
-            if (! File.Exists(path) ) {
-                throw new FileLoadException($"{path} don't exists or inaccesible.");
-            }
-            game.path = (char*)p.GetPtr(path);
-            game.size = 0;
-            game.data = (char*)IntPtr.Zero;
+            if (File.Exists(path) ) {
+                retro_game_info game = new retro_game_info();
+                MarshalHelpPtrVault p = new();
+                game.path = (char*)p.GetPtr(path);
+                game.size = 0;
+                game.data = (char*)IntPtr.Zero;
 
-            // MarshalHelpCalls<retro_game_info> gameInfo = new();
-            //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L740
-            //in this instance MAME call the needed callbacks to establish the game parameters.
-            // IntPtr p = gameInfo.Copy(game);
-            WriteConsole($"[curif.LibRetroMameCore.Start] loading:{path}");
-            GameLoaded = retro_load_game(ref game);
-            p.Free();
-            if (! GameLoaded) {
-                ClearAll();
+                // MarshalHelpCalls<retro_game_info> gameInfo = new();
+                //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L740
+                //in this instance MAME call the needed callbacks to establish the game parameters.
+                WriteConsole($"[LibRetroMameCore.Start] loading:{path}");
+                GameLoaded = retro_load_game(ref game);
+                p.Free();
 
-                throw new Exception($"[curif.LibRetroMameCore.Start] {path} MAME can't start the game, please check if it is the correct version and is supported in MAME2000 in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
+                if (! GameLoaded) {
+                    ClearAll();
+                    WriteConsole($"[LibRetroMameCore.Start] ERROR {path} MAME can't start the game, please check if it is the correct version and is supported in MAME2003+ in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
+                }
+                else 
+                    WriteConsole($"[LibRetroMameCore.Start] Game Loaded:{path}");
             }
-            // gameInfo.free();
-            WriteConsole($"[curif.LibRetroMameCore.Start] Game Loaded:{path}");
+            else 
+                WriteConsole($"[LibRetroMameCore.Start] ERROR {path} don't exists or inaccesible.");
         }
-        else {
-            throw new Exception("[curif.LibRetroMameCore.Start] no need full path, not implemented");
-        }
+        else
+            WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
 
         if (GameLoaded) {
             getAVGameInfo();
 
             FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
-            // LockControls(true);
-
             /* It's impossible to change the Sample Rate, fix in 48000
             audioConfig.sampleRate = sampleRate;
             AudioSettings.Reset(audioConfig);
             audioConfig = AudioSettings.GetConfiguration();
-            WriteConsole($"[curif.LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
+            WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
             */
             
-            WriteConsole($"[curif.LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
+            WriteConsole($"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
 
             // Audioclips are not sinchronized with the video.
             //Speaker.clip = AudioClip.Create("MameAudioSource", sampleRate * 2, 2, sampleRate, true, OnAudioRead /*, onAudioChangePosition*/);
             
             Speaker.Play();
-
+            WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
         }
-        WriteConsole($"[LibRetroMameCore.Start] Initialized {GameFileName} in {ScreenName} Game Loaded: {GameLoaded}");
         return;
     }
 
@@ -504,7 +498,7 @@ public static unsafe class LibretroMameCore
             return;
         }
 
-        WriteConsole($"[curif.LibRetroMameCore.Run] Unload game: {GameFileName}");
+        WriteConsole($"[LibRetroMameCore.Run] Unload game: {GameFileName}");
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         retro_unload_game();
 
@@ -512,12 +506,12 @@ public static unsafe class LibretroMameCore
 
         //LockControls(false);
 
-        WriteConsole("[curif.LibRetroMameCore.Run] End *************************************************");
+        WriteConsole("[LibRetroMameCore.Run] End *************************************************");
     }
 
     private static void ClearAll() {
         //TODO
-        WriteConsole("[curif.LibRetroMameCore.ClearAll]  *************************************************");
+        WriteConsole("[LibRetroMameCore.ClearAll]  *************************************************");
         FPSControl = null;
         GameTexture = null;
         AudioBatch =  new List<float>();
@@ -525,13 +519,13 @@ public static unsafe class LibretroMameCore
         GameAVInfo = new();
 
         if (Speaker != null && Speaker.isPlaying) {
-            WriteConsole("[curif.LibRetroMameCore.ClearAll] Pause Speaker");
+            WriteConsole("[LibRetroMameCore.ClearAll] Pause Speaker");
             Speaker.Pause();
             Speaker = null;
         }
 
         if (PtrVault != null) {
-            WriteConsole("[curif.LibRetroMameCore.ClearAll] Free Pointers");
+            WriteConsole("[LibRetroMameCore.ClearAll] Free Pointers");
             PtrVault.Free();
             PtrVault = new();
         }
@@ -543,7 +537,7 @@ public static unsafe class LibretroMameCore
         CoinSlot?.clean();
         CoinSlot = null;
         
-        WriteConsole("[curif.LibRetroMameCore.ClearAll] Unloaded and clear  *************************************************");
+        WriteConsole("[LibRetroMameCore.ClearAll] Unloaded and clear  *************************************************");
     }
 
     //#define RETRO_ENVIRONMENT_EXPERIMENTAL 65536 0x10000
@@ -600,7 +594,7 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback (typeof(retro_audio_buffer_status_callback))]
     public static void audioBufferStatusCB(bool active, uint occupancy, bool underrun_likely)
     {
-        WriteConsole("[curif.LibRetroMameCore.audioBufferStatusCB] active " + active);
+        WriteConsole("[LibRetroMameCore.audioBufferStatusCB] active " + active);
     }
     */
     
@@ -910,7 +904,7 @@ public static unsafe class LibretroMameCore
 */
     [AOT.MonoPInvokeCallback (typeof(videoRefreshHandler))]
     static void videoRefreshCB(IntPtr data, uint width, uint height, uint pitch) {
-        // WriteConsole($"[curif.LibRetroMameCore.videoRefreshCB] w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
+        // WriteConsole($"[LibRetroMameCore.videoRefreshCB] w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
         if (data == IntPtr.Zero) {
             //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L699
             return;
@@ -935,7 +929,7 @@ public static unsafe class LibretroMameCore
                     material = new Material(shader);
                     WriteConsole($"[videoRefreshCB]shader {material.shader}");
                     */
-                    WriteConsole($"[curif.LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
+                    WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
                     GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
                     GameTexture.filterMode = FilterMode.Point;
                     /*
@@ -944,7 +938,7 @@ public static unsafe class LibretroMameCore
                     var size = Vector3.Scale(bounds.size, Display.transform.localScale);
                     if (size.y < .001)
                         size.y = size.z;
-                    WriteConsole($"[curif.LibRetroMameCore.videoRefreshCB] scale: {size} bounds: {bounds} localscale: {Display.transform.localScale}");
+                    WriteConsole($"[LibRetroMameCore.videoRefreshCB] scale: {size} bounds: {bounds} localscale: {Display.transform.localScale}");
                     Display.material.mainTextureScale = size;
                     */
                     Display.materials[1].SetTexture("_MainTex", GameTexture);
@@ -1045,7 +1039,7 @@ public static unsafe class LibretroMameCore
         /*
         Mame2003+ don't use buttons masks.
         static Func<OVRInput.RawButton, uint, Int16> TransBits = (Btn, retroId) => (Int16)(OVRInput.Get(Btn)? (1 << (Int16)retroId) : 0);
-         WriteConsole($"[curif.LibRetroMameCore.inputStateCB] id {id} | device {device} | port {port}");
+         WriteConsole($"[LibRetroMameCore.inputStateCB] id {id} | device {device} | port {port}");
         if (port == 0 && device == RETRO_DEVICE_JOYPAD && id == RETRO_DEVICE_ID_JOYPAD_MASK) {
 
             Int16 bits = 0;
@@ -1060,7 +1054,7 @@ public static unsafe class LibretroMameCore
             bits |= TransBits(OVRInput.RawButton.Start, RETRO_DEVICE_ID_JOYPAD_START);
             bits |= TransBits(OVRInput.RawButton.LIndexTrigger, RETRO_DEVICE_ID_JOYPAD_SELECT);
 
-            WriteConsole($"[curif.LibRetroMameCore.inputStateCB] RETRO_DEVICE_ID_JOYPAD_MASK returns {bits}");
+            WriteConsole($"[LibRetroMameCore.inputStateCB] RETRO_DEVICE_ID_JOYPAD_MASK returns {bits}");
             return bits;
         }
         */
@@ -1075,7 +1069,7 @@ public static unsafe class LibretroMameCore
   
     [AOT.MonoPInvokeCallback (typeof(audioSampleHandler))]
     static void audioSampleCB(Int16 left, Int16 right) {
-        WriteConsole("[curif.LibRetroMameCore.audioSampleCB] left: " + left + " right: " + right);
+        WriteConsole("[LibRetroMameCore.audioSampleCB] left: " + left + " right: " + right);
         return;
     }
 
@@ -1093,7 +1087,7 @@ public static unsafe class LibretroMameCore
         }
 
 #if _debug_audio_
-        WriteConsole($"[curif.LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
+        WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
 #endif
         if (AudioBatch.Count > AudioBufferMaxOccupancy) {
             //overrun
@@ -1119,7 +1113,7 @@ public static unsafe class LibretroMameCore
     
     [AOT.MonoPInvokeCallback (typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames) {
-        WriteConsole($"[curif.LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
+        WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
         
         int frequency = 44100;
 
@@ -1165,7 +1159,7 @@ public static unsafe class LibretroMameCore
     //         return;
     //     }
     //     int toCopy = AudioBatch.Count >= data.Length? data.Length : AudioBatch.Count;   
-    //     WriteConsole($"[curif.LibRetroMameCore.OnAudioRead] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
+    //     WriteConsole($"[LibRetroMameCore.OnAudioRead] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
     //     if (toCopy > 0) {
     //         AudioBatch.CopyTo(0, data, 0, toCopy);
     //         AudioBatch.RemoveRange(0, toCopy);
@@ -1188,7 +1182,7 @@ public static unsafe class LibretroMameCore
             AudioBatch.RemoveRange(0, toCopy);
         }
 #if _debug_audio_
-        WriteConsole($"[curif.LibRetroMameCore.LoadAudio] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
+        WriteConsole($"[LibRetroMameCore.LoadAudio] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
 #endif
 
     }
@@ -1201,7 +1195,7 @@ public static unsafe class LibretroMameCore
 
     private static void getAVGameInfo() {
         MarshalHelpCalls<retro_system_av_info> m = new();
-        WriteConsole("[curif.LibRetroMameCore.getAVGameInfo] retro_get_system_av_info: ");
+        WriteConsole("[LibRetroMameCore.getAVGameInfo] retro_get_system_av_info: ");
         retro_get_system_av_info(m.PtrFrom(new retro_system_av_info()));
         GameAVInfo = m.GetObjectAndFree(GameAVInfo);
         WriteConsole(GameAVInfo.ToString());
@@ -1209,7 +1203,7 @@ public static unsafe class LibretroMameCore
 
     private static void GetSystemInfo() {
         MarshalHelpCalls<retro_system_info> m = new();
-        WriteConsole("[curif.LibRetroMameCore.GetSystemInfo] retro_get_system_info: ");
+        WriteConsole("[LibRetroMameCore.GetSystemInfo] retro_get_system_info: ");
         SystemInfo = new retro_system_info();
         retro_get_system_info(m.PtrFrom(SystemInfo));
         m.GetObjectAndFree(SystemInfo);
