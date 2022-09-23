@@ -259,16 +259,12 @@ public class LibretroScreenController : MonoBehaviour
     }
     */
     //https://docs.unity3d.com/ScriptReference/Physics.Linecast.html
-    if (Physics.Linecast(cameraComponentCenterEye.transform.position, display.bounds.center, out hit))
-    {
-      // LibretroMameCore.WriteConsole(display.name + " occluded by " + hit.transform.name);
-      if (hit.transform == display.transform.parent) {
-        //special case when the screen is blocked with the cabine's box collider (it's own parent)
-        return true;
-      }
-      return false;
-    }
-    return true;
+    if (! Physics.Linecast(cameraComponentCenterEye.transform.position, display.bounds.center, out hit))
+      return true; 
+     
+    // LibretroMameCore.WriteConsole(display.name + " occluded by " + hit.transform.name);
+    //special case when the screen is blocked with the cabine's box collider (it's own parent)
+    return hit.transform == display.transform.parent
   }
 
   private void OnAudioFilterRead(float[] data, int channels)
