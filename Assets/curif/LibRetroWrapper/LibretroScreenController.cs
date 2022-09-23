@@ -264,7 +264,7 @@ public class LibretroScreenController : MonoBehaviour
      
     // LibretroMameCore.WriteConsole(display.name + " occluded by " + hit.transform.name);
     //special case when the screen is blocked with the cabine's box collider (it's own parent)
-    return hit.transform == display.transform.parent
+    return hit.transform == display.transform.parent;
   }
 
   private void OnAudioFilterRead(float[] data, int channels)
