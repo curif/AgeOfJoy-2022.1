@@ -39,4 +39,5 @@ public class CoinSlotController : MonoBehaviour
     public override string ToString() {
         return $"{coins} in the bucket";
     }
+
 }

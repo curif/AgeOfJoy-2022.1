@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -137,6 +138,8 @@ public class CabinetInformation {
     }
 
     public string getPath(string file) {
+        if (String.IsNullOrEmpty(file))
+            return null;
         return $"{pathBase}/{file}";
     }
 

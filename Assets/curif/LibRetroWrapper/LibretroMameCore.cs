@@ -351,7 +351,7 @@ public static unsafe class LibretroMameCore
     
     private static MarshalHelpPtrVault PtrVault = new();
 
-    public static void Start(string screenName, string gameFileName) {
+    public static bool Start(string screenName, string gameFileName) {
 
         if (! Initialized) {
             WriteConsole("---------------------------------------------------------");
@@ -390,12 +390,12 @@ public static unsafe class LibretroMameCore
 
         if (GameLoaded) {
             WriteConsole($"[LibRetroMameCore.Start] ERROR the Start method was called, but a Game was loaded previously ({GameFileName}), it's neccesary to call End() before the Start()");
-            return;
+            return false;
         }
 
         if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName)) {
             WriteConsole($"[LibRetroMameCore.Start] ERROR: MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
-            return;
+            return false;
         }
 
         GameFileName = gameFileName;
@@ -421,16 +421,22 @@ public static unsafe class LibretroMameCore
                 if (! GameLoaded) {
                     ClearAll();
                     WriteConsole($"[LibRetroMameCore.Start] ERROR {path} MAME can't start the game, please check if it is the correct version and is supported in MAME2003+ in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
+                    return false;
                 }
                 else 
                     WriteConsole($"[LibRetroMameCore.Start] Game Loaded:{path}");
             }
-            else 
+            else {
+                ClearAll();
                 WriteConsole($"[LibRetroMameCore.Start] ERROR {path} don't exists or inaccesible.");
+                return false;
+            }
         }
-        else
+        else {
+            ClearAll();
             WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
-
+            return false;
+        }
         if (GameLoaded) {
             getAVGameInfo();
 
@@ -451,7 +457,7 @@ public static unsafe class LibretroMameCore
             Speaker.Play();
             WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
         }
-        return;
+        return true;
     }
 
     public static bool isRunning(string screenName, string gameFileName) {

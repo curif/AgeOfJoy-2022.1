@@ -227,6 +227,7 @@ public class Cabinet
     Parts.Remove("screen-mock-vertical");
     //mr.receiveShadows = false;
 
+    //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
     LibretroScreenController libretroScreenController = Parts["screen"].AddComponent<LibretroScreenController>();
 
     libretroScreenController.GameFile = GameFile;
