@@ -105,6 +105,7 @@ public static class CabinetFactory
     else
       cabinet.SetMarquee("", Color.white);
     */
+    */
 
     if (!string.IsNullOrEmpty(cbinfo.coinslot))
     {

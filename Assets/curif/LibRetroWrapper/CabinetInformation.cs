@@ -152,27 +152,24 @@ public class CabinetInformation {
         Dictionary<string, System.Exception> exceptions = new();
         exceptions.Add("Cabinet", string.IsNullOrEmpty(name)? new System.Exception("Cabinet doesn't have a name") : null);
         int number = 1;
-        if (Parts != null) {
-            foreach(Part p in Parts) {
-                if (string.IsNullOrEmpty(name)) {
-                    exceptions.Add($"Part #{number}",  new System.Exception($"Doesn't have a name"));
-                }
-                /*
-                else if (! cabinetPartNames.Contains(p.name)) {
-                    exceptions.Add($"Part #{number}: {p.name}", new System.Exception($"The part name is not a part of the cabinet"));
-                }
-                */
-                exceptions.Add($"Part #{number}: {p.name} ART", p.art != null? p.art.validate(pathBase) : null);
-                exceptions.Add($"Part #{number}: {p.name} MATERIAL", 
-                    !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)? 
-                        new System.Exception($"Unknown material {p.material}") : null);
-                exceptions.Add($"Part #{number}: {p.name} MATERIAL/ART", !string.IsNullOrEmpty(p.material) && p.art != null ? 
-                        new System.Exception("Can't assign a material and ART to the same part") : null);
-                number++;
+
+        foreach(Part p in Parts) {
+            if (string.IsNullOrEmpty(name)) {
+                exceptions.Add($"Part #{number}",  new System.Exception($"Doesn't have a name"));
             }
+            else if (! cabinetPartNames.Contains(p.name)) {
+                exceptions.Add($"Part #{number}: {p.name}", new System.Exception($"The part name is not a part of the cabinet"));
+            }
+            exceptions.Add($"Part #{number}: {p.name} ART", p.art != null? p.art.validate(pathBase) : null);
+            exceptions.Add($"Part #{number}: {p.name} MATERIAL", 
+                !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)? 
+                    new System.Exception($"Unknown material {p.material}") : null);
+            exceptions.Add($"Part #{number}: {p.name} MATERIAL/ART", !string.IsNullOrEmpty(p.material) && p.art != null ? 
+                    new System.Exception("Can't assign a material and ART to the same part") : null);
+            number++;
         }
-        // exceptions.Add($"Bezel ART", bezel != null && bezel.art != null? bezel.art.validate(pathBase) : null);
-        // exceptions.Add($"Marquee ART", marquee != null && marquee.art != null? marquee.art.validate(pathBase) : null);
+        exceptions.Add($"Bezel ART", bezel != null && bezel.art != null? bezel.art.validate(pathBase) : null);
+        exceptions.Add($"Marquee ART", marquee != null && marquee.art != null? marquee.art.validate(pathBase) : null);
         // exceptions.Add($"Marquee Light Color", marquee != null? marquee.lightcolor.checkForProblems() : null);
         exceptions.Add($"Year", year >= 1970 && year < 2010? null : new System.ArgumentException("Year out of range"));
         exceptions.Add($"Style", cabinetStyles.Contains(style)? null : new System.ArgumentException($"Unknown cabinet style: {style}"));
