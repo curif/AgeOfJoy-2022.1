@@ -7,6 +7,7 @@ using System;
 public class CabinetController : MonoBehaviour
 {
   public CabinetPosition game;
+  // public int priority;
 
   void Start()
   {
@@ -21,7 +22,7 @@ public class CabinetController : MonoBehaviour
 
     try
     {
-      //cabinet inseption
+      //cabinet inception
       ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
       Cabinet cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, transform.parent);
       // UnityEngine.Object.Destroy(gameObject);
