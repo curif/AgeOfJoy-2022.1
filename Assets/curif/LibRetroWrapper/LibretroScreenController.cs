@@ -19,6 +19,7 @@ using CleverCrow.Fluid.BTs.Trees;
 //[AddComponentMenu("curif/LibRetroWrapper/VideoPlayer")]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(GameVideoPlayer))]
+// [RequireComponent(typeof(BoxCollider))]
 public class LibretroScreenController : MonoBehaviour
 {
   [SerializeField]
@@ -64,7 +65,6 @@ public class LibretroScreenController : MonoBehaviour
   private GameObject centerEyeCamera;
   private Camera cameraComponentCenterEye;
   private Renderer display;
-  // private bool isVisible = false;
   private GameVideoPlayer videoPlayer;
   private bool isVisible;
   private DateTime timeToExit = DateTime.MinValue;
@@ -82,7 +82,7 @@ public class LibretroScreenController : MonoBehaviour
   // Start is called before the first frame update
   void Start()
   {
-    LibretroMameCore.WriteConsole($"{gameObject.name} Start");
+    LibretroMameCore.WriteConsole($"[LibretroScreenController.Start] {gameObject.name}");
 
     display = GetComponent<Renderer>();
 
@@ -98,9 +98,11 @@ public class LibretroScreenController : MonoBehaviour
     if (CoinSlot == null)
       Debug.LogError("Coin Slot not found in cabinet !!!! no one can play this game.");
 
-    videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
-    videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
-
+    if (! String.IsNullOrEmpty(GameVideoFile)) {
+      videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
+      videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
+    }
+    
     //StartCoroutine(loop());
     StartCoroutine(runBT());
 
@@ -111,10 +113,13 @@ public class LibretroScreenController : MonoBehaviour
   IEnumerator runBT()
   {
     tree = buildScreenBT();
+    // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
+
     while (true)
     {
       tree.Tick();
-      yield return new WaitForSeconds(1f / 4f);
+      // LibretroMameCore.WriteConsole($"[runBT] {gameObject.name} Is visible: {isVisible} Not running any game: {!LibretroMameCore.GameLoaded} There are coins: {CoinSlot.hasCoins()} Player looking screen: {isPlayerLookingAtScreen()}");
+      yield return new WaitForSeconds(1f / 2f);
     }
   }
 
@@ -123,7 +128,7 @@ public class LibretroScreenController : MonoBehaviour
   {
     return new BehaviorTreeBuilder(gameObject).
       Selector()
-        .Sequence("Running the game")
+        .Sequence("Start the game")
           .Condition("CoinSlot is present", () => CoinSlot != null)
           .Condition("Is visible", () => isVisible)
           .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
@@ -145,12 +150,18 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.Brightness = Brightness;
             LibretroMameCore.Gamma = Gamma;
             LibretroMameCore.CoinSlot = CoinSlot;
-            LibretroMameCore.Start(name, GameFile);
+            if (!LibretroMameCore.Start(name, GameFile)) {
+              CoinSlot.clean();
+              return TaskStatus.Failure;  
+            }
 
             LockControls(true);
 
             return TaskStatus.Success;
           })
+        .End()
+        .Sequence("Game Started")
+          .Condition("Game is running?", () => LibretroMameCore.isRunning(name, GameFile))
           .RepeatUntilSuccess("Run until player exit")
             .Sequence()
               // .Condition("Game running", () => LibretroMameCore.isRunning(name, GameFile))
@@ -192,6 +203,7 @@ public class LibretroScreenController : MonoBehaviour
               .Condition("Is visible", () => isVisible)
               // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
               .Condition("Player looking screen", () => isPlayerLookingAtScreen())
+              .Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
               .Do("Play video player", () =>
               {
                 videoPlayer.Play();
@@ -236,20 +248,23 @@ public class LibretroScreenController : MonoBehaviour
   private bool isPlayerLookingAtScreen()
   {
     RaycastHit hit = new RaycastHit();
-    var planes = GeometryUtility.CalculateFrustumPlanes(cameraComponentCenterEye);
+    //var planes = GeometryUtility.CalculateFrustumPlanes(cameraComponentCenterEye);
     
     //Debug.DrawLine(cam.transform.position, Display.bounds.center, Color.red);
     
-    if (!GeometryUtility.TestPlanesAABB(planes, display.bounds))
-      return false;
-
-    //screen inside fustrum
-    if (Physics.Linecast(cameraComponentCenterEye.transform.position, display.bounds.center, out hit))
-    {
-      // Debug.Log(Display.name + " occluded by " + hit.transform.name);
+    /*//screen inside fustrum
+    if (!GeometryUtility.TestPlanesAABB(planes, display.bounds)) {
+      LibretroMameCore.WriteConsole(display.name + " TestPlanesAABB fail");
       return false;
     }
-    return true;
+    */
+    //https://docs.unity3d.com/ScriptReference/Physics.Linecast.html
+    if (! Physics.Linecast(cameraComponentCenterEye.transform.position, display.bounds.center, out hit))
+      return true; 
+     
+    // LibretroMameCore.WriteConsole(display.name + " occluded by " + hit.transform.name);
+    //special case when the screen is blocked with the cabine's box collider (it's own parent)
+    return hit.transform == display.transform.parent;
   }
 
   private void OnAudioFilterRead(float[] data, int channels)
@@ -260,6 +275,9 @@ public class LibretroScreenController : MonoBehaviour
   private void OnDestroy()
   {
     LibretroMameCore.End(name, GameFile);
+
+    if (LibretroMameCore.isRunning(name, GameFile))
+      LockControls(false);
   }
 
   void OnBecameVisible()
@@ -271,65 +289,4 @@ public class LibretroScreenController : MonoBehaviour
     isVisible = false;
   }
 
-  /*
-    void playVideo()
-    {
-      if (LibretroMameCore.isRunning(name, GameFile))
-        //stop video when game is running
-        videoPlayer?.Stop();
-      else if (!isVisible)
-        //pause when not visibile
-        videoPlayer?.Pause();
-      else if (LibretroMameCore.GameLoaded)
-        //pause when other game is running
-        videoPlayer?.Pause();
-      else
-        videoPlayer?.Play();
-      return;
-    }
-
-    IEnumerator loop()
-    {
-      while (true)
-      {
-        //   LibretroMameCore.WriteConsole($" LOOP {name} {GameFile}: isVisible:{isVisible} is running: {LibretroMameCore.isRunning(name, GameFile)} has coins: {CoinSlot.hasCoins()} some Game is Loaded: {LibretroMameCore.GameLoaded} ");
-        StartIfHasCoin();
-        playVideo();
-        yield return new WaitForSeconds(0.5f);
-      }
-    }
-
-    private void StartIfHasCoin()
-    {
-
-      if (!isVisible)
-        return;
-
-      if (LibretroMameCore.GameLoaded)
-        return;
-
-      // doing nothing without payment!
-      if (CoinSlot == null || !CoinSlot.hasCoins())
-        return;
-
-      Display.materials[1].SetFloat("MirrorX", GameInvertX ? 1f : 0f);
-      Display.materials[1].SetFloat("MirrorY", GameInvertY ? 1f : 0f);
-
-      //start mame
-      LibretroMameCore.WriteConsole($"MAME Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
-      // LibretroMameCore.DistanceMinToPlayerToStartGame = DistanceMinToPlayerToActivate;
-      LibretroMameCore.Speaker = GetComponent<AudioSource>();
-      LibretroMameCore.Player = Player;
-      LibretroMameCore.Display = Display;
-      // LibretroMameCore.Camera = Camera;
-      LibretroMameCore.SecondsToWaitToExitGame = SecondsToWaitToExitGame;
-      LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
-      LibretroMameCore.Brightness = Brightness;
-      LibretroMameCore.Gamma = Gamma;
-      LibretroMameCore.CoinSlot = CoinSlot;
-      LibretroMameCore.Start(name, GameFile);
-
-      return;
-    }
-  */
 }

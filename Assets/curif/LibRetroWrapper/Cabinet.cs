@@ -150,23 +150,22 @@ public class Cabinet
     return this;
   }
 
-  public Cabinet SetMarquee(string texturePath, Color color, bool invertX = false, bool invertY = false)
+  public Cabinet SetMarquee(string part, string texturePath, bool invertX = false, bool invertY = false)
   {
-    SetTextureTo("marquee", texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
-    if (color != null)
-    {
-      Renderer r = Parts["marquee"].GetComponent<Renderer>();
-      // Debug.Log($"SetMarquee color: {color}");
-      if (r != null)
-        r.material.SetColor("_EmissionColor", color);
-    }
-
+    SetTextureTo(part, texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
+    return this;
+  }
+  public Cabinet SetMarqueeEmissionColor(string part, Color color) {
+    Renderer r = Parts[part].GetComponent<Renderer>();
+    // Debug.Log($"SetMarquee color: {color}");
+    if (r != null)
+      r.material.SetColor("_EmissionColor", color);
     return this;
   }
 
-  public Cabinet SetBezel(string texturePath, bool invertX = false, bool invertY = false)
+  public Cabinet SetBezel(string part, string texturePath, bool invertX = false, bool invertY = false)
   {
-    SetTextureTo("bezel", texturePath, CabinetMaterials.FrontGlassWithBezel, invertX: invertX, invertY: invertY);
+    SetTextureTo(part, texturePath, CabinetMaterials.FrontGlassWithBezel, invertX: invertX, invertY: invertY);
     return this;
   }
 
@@ -228,6 +227,7 @@ public class Cabinet
     Parts.Remove("screen-mock-vertical");
     //mr.receiveShadows = false;
 
+    //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
     LibretroScreenController libretroScreenController = Parts["screen"].AddComponent<LibretroScreenController>();
 
     libretroScreenController.GameFile = GameFile;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.IO.Compression;
+using System;
 
 public static class CabinetDBAdmin
 {
@@ -27,23 +28,26 @@ public static class CabinetDBAdmin
   }
 
   // create a new cabinet from an unnasigned rom and return its name (not used)
-  public static string CreateGenericForUnnasignedRom(string rom)
+  public static string CreateGenericForUnnasignedRom(string rom, string path = "", string cabinetModel = "galaga")
   {
+    path = String.IsNullOrEmpty(path)? ConfigManager.CabinetsDB : path;
+
     string cabName = Path.GetFileNameWithoutExtension(rom);
-    string pathDest = $"{ConfigManager.CabinetsDB}/{cabName}/";
+    string pathDest =  $"{path}/{cabName}/";
 
     if (Directory.Exists(pathDest))
       return null;
 
     Directory.CreateDirectory(pathDest);
+
     string[] lines =
         {
           "---",
           $"name: {cabName}",
-          $"rom: {rom}",
+          $"rom: {Path.GetFileName(rom)}",
           "timetoload: 8",
           "year: 1980",
-          "style: galaga",
+          $"style: {cabinetModel}",
           "material: black",
           "crt:",
           "  type: 19i",

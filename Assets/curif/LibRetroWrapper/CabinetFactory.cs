@@ -20,11 +20,8 @@ public static class CabinetFactory
     CabinetStyles.Add("frogger", Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
     CabinetStyles.Add("defender", Resources.Load<GameObject>($"Cabinets/PreFab/Defender"));
     CabinetStyles.Add("donkeykong", Resources.Load<GameObject>($"Cabinets/PreFab/DonkeyKong"));
-
-    // foreach (KeyValuePair<string, GameObject> cab in CabinetStyles)
-    // {
-    //   cab.Value.AddComponent<MeshCollider>();
-    // }
+    CabinetStyles.Add("xevious", Resources.Load<GameObject>($"Cabinets/PreFab/Xevious"));
+    CabinetStyles.Add("1942", Resources.Load<GameObject>($"Cabinets/PreFab/1942"));
   }
 
   public static Cabinet Factory(string style, string name, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
@@ -53,23 +50,47 @@ public static class CabinetFactory
     }
 
     //process each part
-    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
-    foreach (CabinetInformation.Part p in cbinfo.Parts)
-    {
-      if (p.material != null)
-        cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
-      else if (p.art != null)
-        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
-      else if (p.color != null)
+    if (cbinfo.Parts != null) {
+      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
+      foreach (CabinetInformation.Part p in cbinfo.Parts)
       {
-        Material matColor = new Material(CabinetMaterials.Base);
-        matColor.SetColor("_Color", cbinfo.color.getColor());
-        cabinet.SetMaterial(p.name, matColor);
-      }
-      else
-        cabinet.SetMaterial(p.name, CabinetMaterials.Black);
-    }
+        switch (p.type)
+        {
+          case "bezel" : {
+            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
+            cabinet.SetBezel(p.name, cbinfo.getPath(p.art.file));
+          }
+          break;
+          
+          case "marquee" : {
+            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
+            cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
+            if (p.color != null) 
+              cabinet.SetMarqueeEmissionColor(p.name, p.color.getColor());
+          }
+          break;
 
+          default:
+          {
+            if (p.material != null)
+              cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
+            else if (p.art != null)
+              cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
+            else if (p.color != null)
+            {
+              Material matColor = new Material(CabinetMaterials.Base);
+              matColor.SetColor("_Color", p.color.getColor());
+              cabinet.SetMaterial(p.name, matColor);
+            }
+            else
+              cabinet.SetMaterial(p.name, CabinetMaterials.Black);
+          }
+          break;
+        }
+      }
+      
+    }
+    /*
     if (cbinfo.bezel != null)
     {
       ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
@@ -83,6 +104,7 @@ public static class CabinetFactory
     }
     else
       cabinet.SetMarquee("", Color.white);
+    */
 
     if (!string.IsNullOrEmpty(cbinfo.coinslot))
     {

@@ -14,14 +14,9 @@ public class CabinetsController : MonoBehaviour
   {
     gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
     if (gameRegistry != null)
-    {
       StartCoroutine(load());
-
-    }
     else
-    {
       ConfigManager.WriteConsole("[CabinetsController] ERROR gameregistry component not found");
-    }
   }
 
   IEnumerator load()
@@ -29,6 +24,8 @@ public class CabinetsController : MonoBehaviour
     List<CabinetPosition> games = gameRegistry.GetCabinetsAssignedToRoom(Room, transform.childCount); //persist registry with the new assignation if any.
     ConfigManager.WriteConsole($"[CabinetsController] Assigned {games.Count} cabinets to room {Room}");
     int idx = 0;
+    //games.Sort((x, y) => random.Next() > random.Next() ? 1 : -1);
+
     foreach (CabinetPosition g in games)
     {
       CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
@@ -39,9 +36,8 @@ public class CabinetsController : MonoBehaviour
         yield return new WaitForSeconds(1f / 2f);
       }
       else
-      {
         ConfigManager.WriteConsole($"[CabinetsController] ERROR child #{idx} don´t have a CabinetController component");
-      }
+      
       idx++;
     }
   }
