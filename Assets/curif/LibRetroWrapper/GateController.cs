@@ -122,7 +122,7 @@ public class GateController : MonoBehaviour
       if (SceneBlockers.Length > 0)
         treeBlockers.Tick();
 
-      yield return new WaitForSeconds(1f);
+      yield return new WaitForSeconds(1f / 3f);
     }
   }
 
