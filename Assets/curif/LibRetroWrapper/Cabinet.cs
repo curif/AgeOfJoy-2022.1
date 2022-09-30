@@ -74,6 +74,8 @@ public class Cabinet
 
     //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
     gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
+    
+    gameObject.AddComponent<Rigidbody>();
 
     // https://stackoverflow.com/questions/40752083/how-to-find-child-of-a-gameobject-or-the-script-attached-to-child-gameobject-via
     for (int i = 0; i < gameObject.transform.childCount; i++)
