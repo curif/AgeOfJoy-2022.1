@@ -20,7 +20,8 @@ public class ExecuteAllSequence : CompositeBase
     {
       var child = Children[ChildIndex];
 
-      child.Update();
+      if (child.Update() == TaskStatus.Continue)
+        return TaskStatus.Continue;
 
       ChildIndex++;
     }
@@ -78,6 +79,7 @@ public class GateController : MonoBehaviour
 
   int loadSceneIdx = 0, unloadSceneIdx = 0, blockerIdx = 0;
   SceneReference controledSceneToLoad, controledSceneToUnLoad, controledSceneBlocker;
+  AsyncOperation[] asyncLoad;
 
   // Start is called before the first frame update
   void Start()
@@ -102,8 +104,10 @@ public class GateController : MonoBehaviour
     treeUnLoad = buildUnLoadScenesBT();
     treeBlockers = buildBlockersBT();
 
-    if (ScenesToLoad.Length > 0)
+    if (ScenesToLoad.Length > 0) {
       controledSceneToLoad = ScenesToLoad[loadSceneIdx];
+      asyncLoad = new AsyncOperation[ScenesToLoad.Length];
+    }
 
     if (ScenesToUnload.Length > 0)
       controledSceneToUnLoad = ScenesToUnload[unloadSceneIdx];
@@ -194,13 +198,20 @@ public class GateController : MonoBehaviour
             .Condition("Is scene not loaded?", () => !SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
             .Do("Load the scene (async)", () =>
             {
-              SceneManager.LoadSceneAsync(controledSceneToLoad.Name, LoadSceneMode.Additive);
-              ConfigManager.WriteConsole($"[GateController] LOAD Scene: {controledSceneToLoad.Name}");
+              asyncLoad[loadSceneIdx] = SceneManager.LoadSceneAsync(controledSceneToLoad.Name, LoadSceneMode.Additive);
+              ConfigManager.WriteConsole($"[GateController] LOAD SCENE: {controledSceneToLoad.Name}");
               return TaskStatus.Success;
             })
             .RepeatUntilSuccess("Repeat until the scene is loaded")
-              .Condition("Scene is safe?", () => controledSceneToLoad.IsSafeToUse)
-              .Condition("Is scene loaded?", () => SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
+              // .Condition("Scene is safe?", () => controledSceneToLoad.IsSafeToUse)
+              .Sequence()
+                .Condition("Scene loaded background?", () => asyncLoad[loadSceneIdx].isDone)
+                .Condition("Is scene loaded?", () => SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
+                .Do("msg", () => {
+                  ConfigManager.WriteConsole($"[GateController] LOAD SCENE: {controledSceneToLoad.Name} DONE");
+                  return TaskStatus.Success;
+                })
+              .End()
             .End()
           .End()
           .Do("Next Scene to evaluate", () =>
