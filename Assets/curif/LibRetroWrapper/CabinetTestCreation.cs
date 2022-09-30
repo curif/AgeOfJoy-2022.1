@@ -57,18 +57,19 @@ public class CabinetTestCreation : MonoBehaviour
     {
         if (GUILayout.Button("Generate Cabinets"))
         {
+            string img;
+
             ConfigManager.WriteConsole($"Generate cabinets in dir {PathDest} from {RomsPath}");
 
             if (!Directory.Exists(PathDest))
                  Directory.CreateDirectory(PathDest);
-            
-            string img;
             
             string[] roms = Directory.GetFiles(RomsPath, "*.zip");
             foreach (string rom in roms)
             {
                 if (File.Exists(rom)) {
                     string cabName = CabinetDBAdmin.CreateGenericForUnnasignedRom(rom, PathDest);
+                    //create marquee
                     img = $"{PathDest}/{cabName}/marquee.png";
                     txtMesh.text = cabName;
                     Texture2D t = RTImage();
