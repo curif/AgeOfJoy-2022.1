@@ -62,7 +62,7 @@ public class CabinetTestCreation : MonoBehaviour
             ConfigManager.WriteConsole($"Generate cabinets in dir {PathDest} from {RomsPath}");
 
             if (!Directory.Exists(PathDest))
-                 Directory.CreateDirectory(PathDest);
+                Directory.CreateDirectory(PathDest);
             
             string[] roms = Directory.GetFiles(RomsPath, "*.zip");
             foreach (string rom in roms)
@@ -75,10 +75,7 @@ public class CabinetTestCreation : MonoBehaviour
                     Texture2D t = RTImage();
                     Save(t, img);
                 }
-            }   
-            
+            }
         }
-
     }
-
 }
