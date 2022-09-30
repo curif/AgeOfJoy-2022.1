@@ -49,6 +49,16 @@ public static class CabinetDBAdmin
           "year: 1980",
           $"style: {cabinetModel}",
           "material: black",
+          "parts:",
+          "  - name: marquee",
+          "    type: marquee",
+          "    art:",
+          "       file: marquee.png",
+          "    color:",
+          "       r: 238",
+          "       g: 232",
+          "       b: 176",
+          "       intensity: -2",
           "crt:",
           "  type: 19i",
           "  orientation: vertical",
@@ -80,13 +90,9 @@ public static class CabinetDBAdmin
     string cabZipFileName = GetNameFromPath(path);
     string pathDest = $"{ConfigManager.CabinetsDB}/{cabZipFileName}/";
     if (!Directory.Exists(pathDest))
-    {
       Directory.CreateDirectory(pathDest);
-    }
     else
-    {
       emptyDir(pathDest);
-    }
 
     // Object.ZipUtility.UncompressFromZip(path, null, $"{ConfigManager.CabinetsDB}/{cabZipFileName}");
     DecompressFile(path, $"{ConfigManager.CabinetsDB}/{cabZipFileName}/");
