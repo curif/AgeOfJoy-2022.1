@@ -61,6 +61,22 @@ public class Cabinet
     }
   }
 
+  private void addRigidBody() {
+    
+    Rigidbody cabRB = gameObject.AddComponent<Rigidbody>(); //this will excecute Start().
+    cabRB.freezeRotation = true;
+    cabRB.isKinematic = true;
+    cabRB.useGravity = false;
+    cabRB.constraints = RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationZ
+                        | RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationX
+                        | RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
+    
+  }
+
+  private void toFloor() {
+    gameObject.AddComponent<PutOnFloor>();
+  }
+
   public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent, GameObject go = null, string model = "Generic")
   {
     Name = name;
@@ -74,8 +90,10 @@ public class Cabinet
 
     //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
     gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
-    
-    gameObject.AddComponent<Rigidbody>();
+
+    //add neccesary components
+    addRigidBody();
+    toFloor();
 
     // https://stackoverflow.com/questions/40752083/how-to-find-child-of-a-gameobject-or-the-script-attached-to-child-gameobject-via
     for (int i = 0; i < gameObject.transform.childCount; i++)
