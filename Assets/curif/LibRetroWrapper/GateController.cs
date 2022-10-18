@@ -204,14 +204,8 @@ public class GateController : MonoBehaviour
             })
             .RepeatUntilSuccess("Repeat until the scene is loaded")
               // .Condition("Scene is safe?", () => controledSceneToLoad.IsSafeToUse)
-              .Sequence()
-                .Condition("Scene loaded background?", () => asyncLoad[loadSceneIdx].isDone)
-                .Condition("Is scene loaded?", () => SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
-                .Do("msg", () => {
-                  ConfigManager.WriteConsole($"[GateController] LOAD SCENE: {controledSceneToLoad.Name} DONE");
-                  return TaskStatus.Success;
-                })
-              .End()
+              .Condition("Scene loaded background?", () => asyncLoad[loadSceneIdx].isDone)
+              .Condition("Is scene loaded?", () => SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
             .End()
           .End()
           .Do("Next Scene to evaluate", () =>
