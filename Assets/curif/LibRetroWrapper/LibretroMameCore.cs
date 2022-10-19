@@ -107,11 +107,13 @@ public static unsafe class LibretroMameCore
     private delegate void inputPollHander();
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_input_poll(inputPollHander iph);
+    static int hot_delay_select_cicles = 0;
     
     // retro_set_input_state -------------------------------
     private delegate Int16 inputStateHandler(uint port, uint device, uint index, uint id);
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_input_state(inputStateHandler ish);
+
 
 #endregion
 #region LOG
@@ -631,11 +633,12 @@ public static unsafe class LibretroMameCore
     {
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c
         switch ((envCmds)cmd) {
-            case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE: 
+            case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE:
+            {
                 // WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE ");
-                if (data == IntPtr.Zero) {
+                if (data == IntPtr.Zero)
                     return false;
-                }
+
                 // retro_variable gvar = (retro_variable)Marshal.PtrToStructure(data, typeof(retro_variable));
                 retro_variable_pointers *gvp = (retro_variable_pointers*)data; //Marshal.PtrToStructure(data, typeof(retro_variable_pointers));
                 string key = Marshal.PtrToStringAnsi(new IntPtr(gvp->key));
@@ -687,39 +690,41 @@ public static unsafe class LibretroMameCore
                     //     WriteConsole("value to return:" + ShowGameInfo);
                     //     break;
                 }
-                
+
                 return false;
-           
-           case envCmds.RETRO_ENVIRONMENT_SET_VARIABLES:
+            }
+            case envCmds.RETRO_ENVIRONMENT_SET_VARIABLES:
+            {
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_VARIABLES");
 
-                if (data == IntPtr.Zero) {
+                if (data == IntPtr.Zero)
                     return false;
-                }
 
-                //show control variables in the log 
-                retro_variable_pointers *gvpSetVar = (retro_variable_pointers*)data; 
+                //show control variables in the log
+                retro_variable_pointers *gvpSetVar = (retro_variable_pointers*)data;
                 if (gvpSetVar->key != null) {
                     do {
                         string MameVar = Marshal.PtrToStringAnsi(new IntPtr(gvpSetVar->key));
                         string MameOptions = Marshal.PtrToStringAnsi(new IntPtr(gvpSetVar->value));
                         WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_VARIABLES key " + MameVar + " set to value:" + MameOptions);
                         data += Marshal.SizeOf<retro_variable_pointers>();
-                        gvpSetVar = (retro_variable_pointers*)data; 
-                    } while (gvpSetVar->key != null);   
-                    WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_VARIABLES END");  
+                        gvpSetVar = (retro_variable_pointers*)data;
+                    } while (gvpSetVar->key != null);
+                    WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_VARIABLES END");
                 }
                 return true;
-            
+            }
             case envCmds.RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY {ConfigManager.SystemDir}");
                 if (data != IntPtr.Zero) {
                     //even in C this is obscure.
                     *(char**)data = (char *)PtrVault.GetPtr(ConfigManager.SystemDir);
                 }
                 return true;
-
+            }
             case envCmds.RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY {ConfigManager.GameSaveDir}");
                 // https://www.quora.com/Do-arcades-ever-reset-high-scores-on-their-machines
                 //  most coin-operated video games and pinball machines have the option of being adjusted to reset the high scores after a certain number of plays or after a certain amount of time.
@@ -728,8 +733,9 @@ public static unsafe class LibretroMameCore
                     *(char**)data = (char *)PtrVault.GetPtr(ConfigManager.GameSaveDir);
                 }
                 return true;
-            
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
+            {
                 WriteConsole("[environmentCB] RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS  ");
                 if (data != IntPtr.Zero) {
                     retro_input_descriptor inputDesc = (retro_input_descriptor)Marshal.PtrToStructure(data, typeof(retro_input_descriptor));
@@ -740,8 +746,9 @@ public static unsafe class LibretroMameCore
                     }
                 }
                 return true;
-
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
+            {
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_CONTROLLER_INFO  ");
                 if (data == IntPtr.Zero) {
                     return false;
@@ -750,28 +757,30 @@ public static unsafe class LibretroMameCore
                 IntPtr typesPtr = controllerInfo.types;
                 retro_controller_description typesDesc = (retro_controller_description)Marshal.PtrToStructure<retro_controller_description>(typesPtr);
                 while (typesDesc.id != 0) {
-                    // WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_CONTROLLER_INFO  description: {typesDesc.desc} id: {typesDesc.id}");
+                    WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_CONTROLLER_INFO  description: {typesDesc.desc} id: {typesDesc.id}");
                     typesPtr += Marshal.SizeOf<retro_controller_description>();
                     typesDesc = (retro_controller_description)Marshal.PtrToStructure<retro_controller_description>(typesPtr);
                 }
                 return true;
-            
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
+            {
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT");
-                if (data == IntPtr.Zero) {
+                if (data == IntPtr.Zero)
                     return false;
-                }
+
                 pixelFormat = (retro_pixel_format)Marshal.ReadInt32(data);
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT pixelformat: " + pixelFormat);
                 if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565 &&
-                    pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888) {
+                        pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888) {
                     WriteConsole("[LibRetroMameCore.environmentCB] ERROR == pixel format not supported ==" );
                     return false;
                 }
                 return true;
-
+            }
 
             case envCmds.RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK:
+            {
                 //https://github.com/libretro/RetroArch/blob/37c56d0d09a1d455353c14a3e0860b7834f9c4b8/runloop.c#L2382
                 if (data == IntPtr.Zero) {
                     WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK disabled - core don't specify data structure");
@@ -789,29 +798,33 @@ public static unsafe class LibretroMameCore
 
                 //Notifies a libretro core of the current occupancy level of the frontend audio buffer.
                 return true;
-            
+            }
             case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+            {
                 //calls every frame or so.
                 //to tell to the core that a variable change (by the user)
                 // WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE (not implemented)");
                 //Marshal.WriteByte(data, 0, Convert.ToByte(0));
                 return false;
-            
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY:
+            {
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY (not implemented)");
                 // WriteConsole(String.Format("[LibRetroMameCore.environmentCB] NOT IMPLEMENTED - RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY: {0}", (uint)Marshal.ReadInt32(data)));
                 return false;
-
+            }
             
             //not in Mame2003+
             case envCmds.RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES:
+            {
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_INPUT_DEVICE_CAPABILITIES only RETRO_DEVICE_JOYPAD");
-                if (data == IntPtr.Zero) {
+                if (data == IntPtr.Zero)
                     return false;
-                }
                 ulong mask = 1 << (int)RETRO_DEVICE_JOYPAD;
                 *(ulong*)data = mask ;
-                break;
+                return true;
+            }
+
             // case envCmds.RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
             //     // https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L603
             //     bool AcceptBitmaps = true;
@@ -827,30 +840,37 @@ public static unsafe class LibretroMameCore
             
             
             case envCmds.RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_LOG_INTERFACE");
-                if (data == IntPtr.Zero) {
+                if (data == IntPtr.Zero)
                     return false;
-                }
                 ((retro_log_callback*)data)->log = Marshal.GetFunctionPointerForDelegate(new logHandler(MamePrintf));
                 return true;
-                
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL:
+            {
                 //as of June 2021, the libretro performance profile callback is not known
                 // * to be implemented by any frontends including RetroArch
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL (not implemented)");
                 return false;
-
+            }
             case envCmds.RETRO_ENVIRONMENT_GET_VFS_INTERFACE:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VFS_INTERFACE (not implemented, relay on M2003 own implimentation)");
                 return false;
-
+            }
             case envCmds.RETRO_ENVIRONMENT_GET_LED_INTERFACE:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_LED_INTERFACE (not implemented)");
                 return false;
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_MESSAGE:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_MESSAGE (not implemented)");
                 return false;
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_ROTATION:
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_ROTATION");
                 if (data != IntPtr.Zero) {
                     //Message from MAME: This port of RetroArch does not support rotation or it has been disabled. Mame will rotate internally
@@ -858,61 +878,33 @@ public static unsafe class LibretroMameCore
                     WriteConsole($"[LibRetroMameCore.environmentCB] please set the screen with rotation {rotation} in the Unity scene to avoid rotations in CPU.");
                 }
                 return true;
+            }
             case envCmds.RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
-
+            {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION (not implemented)");
                 return false;
+            }
             case envCmds.RETRO_ENVIRONMENT_SET_GEOMETRY:
+            {
                 if (data != IntPtr.Zero) {
                     WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_GEOMETRY");
                     GameAVInfo.geometry = (retro_game_geometry)Marshal.PtrToStructure<retro_game_geometry>(data);
                     WriteConsole($"[LibRetroMameCore.environmentCB] {GameAVInfo.ToString()}");
+                    return true;
                 }
 
-                return true;
-
+                return false;
+            }
             default:
+            {
                 WriteConsole("[LibRetroMameCore.environmentCB] Unknown cmd " + cmd);
                 return false;
+            }
         }
 
         return true;
     }
-/*
-    //https://docs.unity3d.com/Packages/com.unity.burst@0.2-preview.20/manual/index.html
-    //CRASHES with  Unity   : Failed to load native plugin: Unable to lookup library path for '_burst_0_0'.
-    [BurstCompile]
-    private unsafe struct ProcessFrameRGB565Job : IJob
-    {
-        [ReadOnly] public ushort* SourceData;
-        public int Width;
-        public int Height;
-        public int PitchPixels;
-        [WriteOnly] public NativeArray<uint> TextureData;
 
-        public void Execute()
-        {
-            ushort* line = SourceData;
-            for (int y = Height - 1; y >= 0; --y)
-            {
-                for (int x = 0; x < Width; ++x)
-                    TextureData[(y * Width) + x] = RGB565toBGRA32(line[x]);
-                line += PitchPixels;
-
-            }
-        }
-    }
-    private static uint RGB565toBGRA32(ushort packed)
-        {
-            uint r = ((uint)packed >> 11) & 0x1f;
-            uint g = ((uint)packed >> 5) & 0x3f;
-            uint b = ((uint)packed >> 0) & 0x1f;
-            r      = (r << 3) | (r >> 2);
-            g      = (g << 2) | (g >> 4);
-            b      = (b << 3) | (b >> 2);
-            return (0xffu << 24) | (r << 16) | (g << 8) | (b << 0);
-        }
-*/
     [AOT.MonoPInvokeCallback (typeof(videoRefreshHandler))]
     static void videoRefreshCB(IntPtr data, uint width, uint height, uint pitch) {
         // WriteConsole($"[LibRetroMameCore.videoRefreshCB] w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
@@ -992,7 +984,7 @@ public static unsafe class LibretroMameCore
     // https://github.com/RetroPie/RetroPie-Docs/blob/219c93ca6a81309eed937bb5b7a79b8c71add41b/docs/RetroArch-Configuration.md
     // https://docs.libretro.com/library/mame2003_plus/#default-retropad-layouts
     [AOT.MonoPInvokeCallback (typeof(inputStateHandler))]
-    static Int16 inputStateCB(uint port, uint device, uint index, uint id) {
+    static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
         Int16 ret = 0;
 
         if (!WaitToFinishedGameLoad.Finished()) {
@@ -1001,7 +993,15 @@ public static unsafe class LibretroMameCore
 
 #if _debug_fps_
         Profiling.input.Start();
-#endif        
+#endif
+        //port: 0 device: 1 index: 0 id: 2 (select) Coin
+
+//        if (id == RETRO_DEVICE_ID_JOYPAD_SELECT)
+//        {
+//            WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: dev {device} port {port}");
+//            ret = (CoinSlot != null && CoinSlot.takeCoin()) ? (Int16)1:(Int16)0;
+//            return ret;
+//        }
         if (device == RETRO_DEVICE_JOYPAD && port == 0) {
             switch (id) {
                 case RETRO_DEVICE_ID_JOYPAD_B:
@@ -1029,8 +1029,15 @@ public static unsafe class LibretroMameCore
                     ret =  OVRInput.Get(OVRInput.RawButton.LThumbstickLeft)? (Int16)1:(Int16)0;
                     break;
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                    //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
                     ret = (CoinSlot != null && CoinSlot.takeCoin()) ? (Int16)1:(Int16)0;
+                    if (ret == 1)
+                        hot_delay_select_cicles = 5;
+                    if (hot_delay_select_cicles > 0 && ret != (Int16)1) {
+                        hot_delay_select_cicles--;
+                        ret = (Int16)1;
+                    }
+
                     break;
                 case RETRO_DEVICE_ID_JOYPAD_START:
                     ret =  OVRInput.Get(OVRInput.RawButton.Start)? (Int16)1:(Int16)0;
