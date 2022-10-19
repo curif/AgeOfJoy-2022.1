@@ -763,7 +763,8 @@ public static unsafe class LibretroMameCore
                 }
                 pixelFormat = (retro_pixel_format)Marshal.ReadInt32(data);
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT pixelformat: " + pixelFormat);
-                if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565) {
+                if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565 &&
+                    pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888) {
                     WriteConsole("[LibRetroMameCore.environmentCB] ERROR == pixel format not supported ==" );
                     return false;
                 }
@@ -921,55 +922,58 @@ public static unsafe class LibretroMameCore
         }
 
         //just one pixel format is recognized in the actual implemetation. Conversion to other formats are expensive in C#
-        if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565) {
+        if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565 &&
+            pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888)
             return;
-        }
 
 #if _debug_fps_
         Profiling.video.Start();
 #endif
-        switch (pixelFormat) {
-           
-            case retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565:
-                if (GameTexture == null) {
-                    /*
-                    the material must to be setted in the GUI
-                    Material material;
-                    string shaderName = "Hidden/CrtPostProcess";
-                    Shader shader = Shader.Find(shaderName);
-                    if (shader == null || shader.ToString() == "Hidden/InternalErrorShader (UnityEngine.Shader)") {
-                        UnityEngine.Debug.LogError($"Internal error, Shader not found: {shaderName}");
-                        shader = Shader.Find("Standard");
-                    }
-                    material = new Material(shader);
-                    WriteConsole($"[videoRefreshCB]shader {material.shader}");
-                    */
-                    WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
+        if (GameTexture == null) {
+            WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
+            // https://docs.unity3d.com/ScriptReference/TextureFormat.html
+            switch (pixelFormat) {
+                case retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565:
                     GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
                     GameTexture.filterMode = FilterMode.Point;
-                    /*
-                    MeshFilter viewedModelFilter = (MeshFilter)Display.GetComponent("MeshFilter");
-                    var bounds = viewedModelFilter.mesh.bounds;
-                    var size = Vector3.Scale(bounds.size, Display.transform.localScale);
-                    if (size.y < .001)
-                        size.y = size.z;
-                    WriteConsole($"[LibRetroMameCore.videoRefreshCB] scale: {size} bounds: {bounds} localscale: {Display.transform.localScale}");
-                    Display.material.mainTextureScale = size;
-                    */
-                    Display.materials[1].SetTexture("_MainTex", GameTexture);
-
-                    // Display.material.SetTexture("_MainTex", GameTexture);
-                    // Display.material = material;
-                }
-                // Display.material.SetFloat("u_time", Time.fixedTime);
-                Display.materials[1].SetFloat("u_time", Time.fixedTime);
-                GameTexture.LoadRawTextureData(data, (int)height*(int)pitch);
-                GameTexture.Apply(false, false);
-                break;
-
-            // default:
-            //     throw new Exception($"{pixelFormat} not supported");
+                    break;
+                case retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888:
+                    GameTexture = new Texture2D((int)width, (int)height, TextureFormat.BGRA32, false);
+                    GameTexture.filterMode = FilterMode.Point;
+                    break;
+            }
+            Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
+                /*
+                the material must to be setted in the GUI
+                Material material;
+                string shaderName = "Hidden/CrtPostProcess";
+                Shader shader = Shader.Find(shaderName);
+                if (shader == null || shader.ToString() == "Hidden/InternalErrorShader (UnityEngine.Shader)") {
+                    UnityEngine.Debug.LogError($"Internal error, Shader not found: {shaderName}");
+                    shader = Shader.Find("Standard");
+                }
+                material = new Material(shader);
+                WriteConsole($"[videoRefreshCB]shader {material.shader}");
+                */
+
+                /*
+                MeshFilter viewedModelFilter = (MeshFilter)Display.GetComponent("MeshFilter");
+                var bounds = viewedModelFilter.mesh.bounds;
+                var size = Vector3.Scale(bounds.size, Display.transform.localScale);
+                if (size.y < .001)
+                    size.y = size.z;
+                WriteConsole($"[LibRetroMameCore.videoRefreshCB] scale: {size} bounds: {bounds} localscale: {Display.transform.localScale}");
+                Display.material.mainTextureScale = size;
+                */
+
+                // Display.material.SetTexture("_MainTex", GameTexture);
+                // Display.material = material;
+
+        // Display.material.SetFloat("u_time", Time.fixedTime);
+        Display.materials[1].SetFloat("u_time", Time.fixedTime);
+        GameTexture.LoadRawTextureData(data, (int)height*(int)pitch);
+        GameTexture.Apply(false, false);
 
 #if _debug_fps_
         Profiling.video.Stop();
