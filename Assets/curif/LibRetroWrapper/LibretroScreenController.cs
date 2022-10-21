@@ -157,7 +157,7 @@ public class LibretroScreenController : MonoBehaviour
               return TaskStatus.Failure;  
             }
 
-            LockControls(true);
+            PreparePlayerToPlayGame(true);
 
             return TaskStatus.Success;
           })
@@ -191,7 +191,7 @@ public class LibretroScreenController : MonoBehaviour
           {
             videoPlayer?.Play();
             LibretroMameCore.End(name, GameFile);
-            LockControls(false);
+            PreparePlayerToPlayGame(false);
             timeToExit = DateTime.MinValue;
 
             return TaskStatus.Success;
@@ -222,7 +222,7 @@ public class LibretroScreenController : MonoBehaviour
     .Build();
   }
 
-  void LockControls(bool takeControls)
+  void PreparePlayerToPlayGame(bool takeControls)
   {
     //lock controls, if takeControls is true the Player can't move.
     LibretroMameCore.WriteConsole($"[LibRetroMameCore.LockControls] lock controls & lower backgroun volume audio: {takeControls}");
@@ -282,7 +282,7 @@ public class LibretroScreenController : MonoBehaviour
     LibretroMameCore.End(name, GameFile);
 
     if (LibretroMameCore.isRunning(name, GameFile))
-      LockControls(false);
+      PreparePlayerToPlayGame(false);
   }
 
   void OnBecameVisible()
