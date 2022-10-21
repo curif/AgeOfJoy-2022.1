@@ -68,6 +68,7 @@ public class LibretroScreenController : MonoBehaviour
   private GameVideoPlayer videoPlayer;
   private bool isVisible;
   private DateTime timeToExit = DateTime.MinValue;
+  private AudioSource BackgroundAudio;
 
   private CoinSlotController getCoinSlotController()
   {
@@ -93,6 +94,7 @@ public class LibretroScreenController : MonoBehaviour
 
     player = GameObject.Find("OVRPlayerControllerGalery");
     playerController = player.GetComponent<OVRPlayerController>();
+    BackgroundAudio = player.transform.Find("BackGroundSound").GetComponent<AudioSource>();
 
     CoinSlot = getCoinSlotController();
     if (CoinSlot == null)
@@ -223,9 +225,12 @@ public class LibretroScreenController : MonoBehaviour
   void LockControls(bool takeControls)
   {
     //lock controls, if takeControls is true the Player can't move.
-    LibretroMameCore.WriteConsole($"[LibRetroMameCore.LockControls] {takeControls}");
+    LibretroMameCore.WriteConsole($"[LibRetroMameCore.LockControls] lock controls & lower backgroun volume audio: {takeControls}");
     playerController.EnableLinearMovement = !takeControls;
     playerController.EnableRotation = !takeControls;
+
+    BackgroundAudio.volume = takeControls? 0.2f : 0.6f;
+
   }
 
   public void Update()
