@@ -5,7 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 //#define _debug_fps_
-//#define _debug_audio_
+#define _debug_audio_
 #define _debug_
 
 using System.Collections;
@@ -185,7 +185,7 @@ public static unsafe class LibretroMameCore
     // audio buffer ===============
     public static List<float> AudioBatch = new List<float>();
     static uint AudioBufferMaxOccupancy = 1024 * 8;
-    static int QuestAudioFrequency = 44100;
+    static int QuestAudioFrequency = 48000; //Quest 2 standar, can change at start
 
 #endregion
 
@@ -363,7 +363,7 @@ public static unsafe class LibretroMameCore
             //Audio configuration
             var audioConfig = AudioSettings.GetConfiguration();
             QuestAudioFrequency = audioConfig.sampleRate;
-            WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency}");
+            WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
             
             WriteConsole("------------------- SETs");
             WriteConsole("retro_set_environment");
@@ -444,7 +444,7 @@ public static unsafe class LibretroMameCore
 
             FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
-            /* It's impossible to change the Sample Rate, fix in 48000
+            /* It's impossible to change the Sample Rate, fixed in 48000
             audioConfig.sampleRate = sampleRate;
             AudioSettings.Reset(audioConfig);
             audioConfig = AudioSettings.GetConfiguration();
@@ -644,7 +644,7 @@ public static unsafe class LibretroMameCore
                 string key = Marshal.PtrToStringAnsi(new IntPtr(gvp->key));
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + key);
                 switch (key) {
-                    //mame2000-sample_rate = 22050 default
+                    //mame2000-sample_rate = 48000 default
                     //mame2000-stereo = true default
                     case "mame2003-plus_frameskip":
                         gvp->value = (char *)PtrVault.GetPtr(FrameSkip);
@@ -657,6 +657,17 @@ public static unsafe class LibretroMameCore
                     case "mame2003-plus_skip_warnings":
                         gvp->value = (char *)PtrVault.GetPtr(SkipWarnings);
                         WriteConsole("SkipWarnings value to return:" + SkipWarnings);
+                        return true;
+                    //audio
+                    case "mame2003-plus_use_samples":
+                        string use_samples = "enabled";
+                        gvp->value = (char *)PtrVault.GetPtr(use_samples);
+                        WriteConsole("use_samples value to return:" + use_samples);
+                        return true;
+                    case "mame2003-plus_machine_timing":
+                        string machine_timing = "disabled";
+                        gvp->value = (char *)PtrVault.GetPtr(machine_timing);
+                        WriteConsole("input_interface value to return:" + machine_timing);
                         return true;
                     case "mame2003-plus_sample_rate":
                         string _freq = QuestAudioFrequency.ToString();
@@ -750,6 +761,7 @@ public static unsafe class LibretroMameCore
             case envCmds.RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
             {
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_CONTROLLER_INFO  ");
+                /*
                 if (data == IntPtr.Zero) {
                     return false;
                 }
@@ -761,6 +773,7 @@ public static unsafe class LibretroMameCore
                     typesPtr += Marshal.SizeOf<retro_controller_description>();
                     typesDesc = (retro_controller_description)Marshal.PtrToStructure<retro_controller_description>(typesPtr);
                 }
+                */
                 return true;
             }
             case envCmds.RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
@@ -1105,6 +1118,8 @@ public static unsafe class LibretroMameCore
     * Only one of the audio callbacks must ever be used.
     */
     
+    -
+    /*
     [AOT.MonoPInvokeCallback (typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames) {
 
@@ -1117,6 +1132,7 @@ public static unsafe class LibretroMameCore
 #endif
         if (AudioBatch.Count > AudioBufferMaxOccupancy) {
             //overrun
+            WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN OVERRUN");
             return 0;
         }
 #if _debug_fps_
@@ -1124,7 +1140,7 @@ public static unsafe class LibretroMameCore
 #endif
         
         for (ulong i = 0; i < frames*2; ++i) {
-            // float value = Mathf.Clamp(data[i]  / 32768f, -1.0f, 1.0f); // 0.000030517578125f o 0.00048828125; //to convert from 16 to fp 
+            //float value = Mathf.Clamp(data[i]  / 32768f, -1.0f, 1.0f); // 0.000030517578125f o 0.00048828125; //to convert from 16 to fp 
             float value = data[i] * 0.000030517578125f; 
             AudioBatch.Add(value);
         }
@@ -1134,15 +1150,14 @@ public static unsafe class LibretroMameCore
 #endif
         return frames;
     }
+    * */
 
-    /*
+    
     
     [AOT.MonoPInvokeCallback (typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames) {
         WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
         
-        int frequency = 44100;
-
         if (data == (short*)IntPtr.Zero) {
             return 0;
         }
@@ -1159,17 +1174,18 @@ public static unsafe class LibretroMameCore
         var inBuffer = new List<float>();
         for (ulong i = 0; i < frames*2; ++i) {
             // float value = Mathf.Clamp(data[i]  / 32768f, -1.0f, 1.0f); // 0.000030517578125f o 0.00048828125; //to convert from 16 to fp 
-            float value = data[i]  / 32768f; 
+            float value = data[i] / 32768f; 
             inBuffer.Add(value);
         }
+        
         double ratio = (double) GameAVInfo.timing.sample_rate / QuestAudioFrequency;
         int outSample = 0;
         while (true) {
             int inBufferIndex = (int)(outSample++ * ratio);
-            if (inBufferIndex < frames*2)
+            if (inBufferIndex < (int)frames*2)
                 AudioBatch.Add(inBuffer[inBufferIndex]);
             else
-                break;    
+                break;
         }
 
 #if _debug_fps_
@@ -1177,7 +1193,7 @@ public static unsafe class LibretroMameCore
 #endif
         return frames;
     }
-    */
+    
     
     
     // public static void OnAudioRead(float[] data) {
