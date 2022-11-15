@@ -1118,7 +1118,6 @@ public static unsafe class LibretroMameCore
     * Only one of the audio callbacks must ever be used.
     */
     
-    -
     /*
     [AOT.MonoPInvokeCallback (typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames) {
