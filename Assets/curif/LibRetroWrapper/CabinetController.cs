@@ -24,7 +24,7 @@ public class CabinetController : MonoBehaviour
     {
       //cabinet inception
       ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
-      Cabinet cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, transform.parent);
+      CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, transform.parent);
       // UnityEngine.Object.Destroy(gameObject);
       gameObject.SetActive(false);
     }

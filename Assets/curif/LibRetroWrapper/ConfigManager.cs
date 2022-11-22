@@ -23,12 +23,13 @@ public static class ConfigManager
   public static string SystemDir = $"{BaseDir}/system";
   public static string RomsDir = $"{BaseDir}/downloads";
   public static string GameSaveDir = $"{BaseDir}/save";
+  public static string GameStatesDir = $"{BaseDir}/startstates";
 
   public static bool GameVideosStopped = false;
 
   static ConfigManager()
   {
-      Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
+    Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
 
     if (!Directory.Exists(ConfigManager.Cabinets))
       // Directory.CreateDirectory(BaseDir);
@@ -36,13 +37,13 @@ public static class ConfigManager
     if (!Directory.Exists(ConfigManager.CabinetsDB))
       // Directory.CreateDirectory(BaseDir);
       Directory.CreateDirectory(ConfigManager.CabinetsDB);
+
     if (!Directory.Exists(ConfigManager.SystemDir))
     {
       Directory.CreateDirectory(ConfigManager.SystemDir);
       Directory.CreateDirectory(ConfigManager.RomsDir);
       Directory.CreateDirectory(ConfigManager.GameSaveDir);
     }
-
   }
   public static void WriteConsole(string st)
   {

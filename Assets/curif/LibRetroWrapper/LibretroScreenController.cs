@@ -69,10 +69,12 @@ public class LibretroScreenController : MonoBehaviour
   private bool isVisible;
   private DateTime timeToExit = DateTime.MinValue;
   private AudioSource BackgroundAudio;
+  private GameObject cabinet;
+  private CabinetInformationHolder dbInfoHolder;
 
   private CoinSlotController getCoinSlotController()
   {
-    Transform coinslot = gameObject.transform.parent.Find("coin-slot-added");
+    Transform coinslot = cabinet.transform.Find("coin-slot-added");
 
     if (!coinslot)
       return null;
@@ -86,6 +88,8 @@ public class LibretroScreenController : MonoBehaviour
     LibretroMameCore.WriteConsole($"[LibretroScreenController.Start] {gameObject.name}");
 
     display = GetComponent<Renderer>();
+    cabinet = gameObject.transform.parent.gameObject;
+    dbInfoHolder = cabinet.GetComponent<CabinetInformationHolder>();
 
     centerEyeCamera = GameObject.Find("CenterEyeAnchor");
     if (centerEyeCamera == null)
@@ -152,6 +156,7 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.Brightness = Brightness;
             LibretroMameCore.Gamma = Gamma;
             LibretroMameCore.CoinSlot = CoinSlot;
+            LibretroMameCore.cabinetDBPath = dbInfoHolder.pathBase;
             if (!LibretroMameCore.Start(name, GameFile)) {
               CoinSlot.clean();
               return TaskStatus.Failure;  

@@ -25,7 +25,8 @@ public class CabinetInformation
     public int timetoload = 3;
     public Video video = new();
 
-    private string pathBase;
+    [YamlIgnore]
+    public string pathBase;
 
     //[YamlIgnore] public List<System.Exception> problems;
 

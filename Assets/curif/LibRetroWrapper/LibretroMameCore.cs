@@ -211,6 +211,14 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_unload_game();
     
+    // serialization -------------------
+    [DllImport ("mame2003_plus_libretro_android")]
+    private static extern uint retro_serialize_size();
+    [DllImport ("mame2003_plus_libretro_android")]
+    private static extern bool retro_serialize(IntPtr info, uint size);
+    [DllImport ("mame2003_plus_libretro_android")]
+    private static extern bool retro_unserialize(IntPtr info, uint size);
+
     [StructLayout(LayoutKind.Sequential)]
     public class retro_game_geometry
     {
@@ -271,6 +279,17 @@ public static unsafe class LibretroMameCore
     private static Waiter WaitToFinishedGameLoad = null;
     private static FpsControl controlForAskIfTimeToExitGame;
 
+    //serialization control
+    private static Waiter WaitToSerialize = null;
+    public enum SerializationState
+    {
+      Analize,
+      Load,
+      Serialize,
+      Serialized
+    }
+    private static SerializationState SerializationStatus = SerializationState.Analize;
+
     //image ===========    
     static FpsControl FPSControl;
     public static Texture2D GameTexture;
@@ -290,6 +309,7 @@ public static unsafe class LibretroMameCore
     public static retro_system_av_info GameAVInfo = new();
     static string GameFileName = "";
     static string ScreenName = ""; //name of the screen of the cabinet where is running the game
+    public static string cabinetDBPath = "";
 
     //Status flags
     public static bool GameLoaded = false;
@@ -386,8 +406,13 @@ public static unsafe class LibretroMameCore
             retro_set_controller_port_device(port: 0, device: RETRO_DEVICE_JOYPAD);
 
             GetSystemInfo();
+
+            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 1); //for first coin check
+            WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad); //for serialization
+            SerializationStatus = SerializationState.Analize;
+
             Initialized = true;
-            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad);
+
         }
 
         if (GameLoaded) {
@@ -458,6 +483,15 @@ public static unsafe class LibretroMameCore
             
             Speaker.Play();
             WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
+
+            if (AlreadySerialized()) {
+              SerializationStatus = SerializationState.Load;
+              //SerializationStatus = SerializationState.Serialized;
+              //UnSerialize();
+            }
+            else
+              SerializationStatus = SerializationState.Serialize;
+
         }
         return true;
     }
@@ -487,7 +521,22 @@ public static unsafe class LibretroMameCore
             Profiling.retroRun.Stop();
             WriteConsole($"[Run] {Profiling.ToString() | Audio occupancy {AudioPercentOccupancy}%}");
 #else
+
             retro_run();
+
+            if (SerializationStatus == SerializationState.Serialize ) {
+                if (WaitToSerialize.Finished()) {
+                  Serialize();
+                  SerializationStatus = SerializationState.Serialized;
+                }
+            }
+            else if (SerializationStatus == SerializationState.Load)
+            {
+              UnSerialize();
+              WaitToFinishedGameLoad = null;
+              SerializationStatus = SerializationState.Serialized;
+            }
+
 #endif
         }
 
@@ -1000,7 +1049,7 @@ public static unsafe class LibretroMameCore
     static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
         Int16 ret = 0;
 
-        if (!WaitToFinishedGameLoad.Finished()) {
+        if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished()) {
             return ret;
         }
 
@@ -1228,11 +1277,55 @@ public static unsafe class LibretroMameCore
 
     }
 
+#region serialization
+    private static string SerializedFileName()
+    {
+      return cabinetDBPath + "/" + GameFileName + ".dat";
+    }
+    private static bool AlreadySerialized()
+    {
+      return File.Exists(SerializedFileName());
+    }
+
+    private static void UnSerialize()
+    {
+      int size = (int)retro_serialize_size();
+      WriteConsole($"[LibRetroMameCore.serialize] Unserialize {size} bytes");
+
+      byte[] buffer = new byte[size];
+      using (var file = File.OpenRead(SerializedFileName()))
+        file.Read(buffer, 0, size);
+      var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+      if (!retro_unserialize(ptr, (uint)size))
+        WriteConsole($"[LibRetroMameCore.serialize] ERROR Libretro can't unserialize game memory of {size} bytes");
+
+      return;
+    }
+
+    private static void Serialize()
+    {
+      int size = (int)retro_serialize_size();
+
+      WriteConsole($"[LibRetroMameCore.serialize] serialize {size} bytes");
+      byte[] buffer = new byte[size];
+      var ptr = Marshal.UnsafeAddrOfPinnedArrayElement(buffer, 0);
+      if (retro_serialize(ptr, (uint)size))
+      {
+        using (var file = File.OpenWrite(SerializedFileName()))
+          file.Write(buffer, 0, size);
+      }
+      else
+        WriteConsole($"[LibRetroMameCore.serialize] Libretro can't serialize game memory");
+
+      return;
+    }
+
+#endregion
+
     /*
     public static void onAudioChangePosition(uint newPos) {
         AudioBufferPosition = newPos;
-    }
-    */
+1265    */
 
     private static void getAVGameInfo() {
         MarshalHelpCalls<retro_system_av_info> m = new();

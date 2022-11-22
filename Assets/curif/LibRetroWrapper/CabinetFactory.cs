@@ -40,6 +40,7 @@ public static class CabinetFactory
   public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, Vector3 position, Quaternion rotation, Transform parent)
   {
     Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, number, room, position, rotation, parent);
+
     if (cbinfo.material != null)
     {
       cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
@@ -119,6 +120,11 @@ public static class CabinetFactory
                     GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty
                     );
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
+
+    cabinet.gameObject.AddComponent<CabinetInformationHolder>();
+    CabinetInformationHolder cbInfoHolder = cabinet.gameObject.GetComponent<CabinetInformationHolder>();
+    cbInfoHolder.pathBase = cbinfo.pathBase;
+    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] loaded from path: {cbInfoHolder.pathBase}");
 
     return cabinet;
   }
