@@ -121,8 +121,7 @@ public static class CabinetFactory
                     );
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
-    cabinet.gameObject.AddComponent<CabinetInformationHolder>();
-    CabinetInformationHolder cbInfoHolder = cabinet.gameObject.GetComponent<CabinetInformationHolder>();
+    CabinetInformationHolder cbInfoHolder = cabinet.gameObject.AddComponent<CabinetInformationHolder>();
     cbInfoHolder.pathBase = cbinfo.pathBase;
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] loaded from path: {cbInfoHolder.pathBase}");
 
