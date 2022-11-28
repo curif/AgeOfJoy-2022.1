@@ -107,7 +107,7 @@ public static unsafe class LibretroMameCore
     private delegate void inputPollHander();
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_input_poll(inputPollHander iph);
-    static int hot_delay_select_cicles = 0;
+    static int HotDelaySelectCycles = 0;
     
     // retro_set_input_state -------------------------------
     private delegate Int16 inputStateHandler(uint port, uint device, uint index, uint id);
@@ -283,12 +283,14 @@ public static unsafe class LibretroMameCore
     private static Waiter WaitToSerialize = null;
     public enum SerializationState
     {
+      None,
       Analize,
       Load,
       Serialize,
-      Serialized
+      Done
     }
     private static SerializationState SerializationStatus = SerializationState.Analize;
+    public static bool EnableSaveState = true;
 
     //image ===========    
     static FpsControl FPSControl;
@@ -309,7 +311,7 @@ public static unsafe class LibretroMameCore
     public static retro_system_av_info GameAVInfo = new();
     static string GameFileName = "";
     static string ScreenName = ""; //name of the screen of the cabinet where is running the game
-    public static string cabinetDBPath = "";
+    public static string PathBase = "";
 
     //Status flags
     public static bool GameLoaded = false;
@@ -406,11 +408,7 @@ public static unsafe class LibretroMameCore
             retro_set_controller_port_device(port: 0, device: RETRO_DEVICE_JOYPAD);
 
             GetSystemInfo();
-
-            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 1); //for first coin check
-            WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad); //for serialization
-            SerializationStatus = SerializationState.Analize;
-
+            
             Initialized = true;
 
         }
@@ -484,14 +482,24 @@ public static unsafe class LibretroMameCore
             Speaker.Play();
             WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
-            if (AlreadySerialized()) {
-              SerializationStatus = SerializationState.Load;
-              //SerializationStatus = SerializationState.Serialized;
-              //UnSerialize();
+            if (EnableSaveState)
+            {
+              WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 2); //for first coin check
+              WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad); //for serialization
+//              SerializationStatus = SerializationState.Analize;
+              if (AlreadySerialized()) {
+                SerializationStatus = SerializationState.Load;
+                //SerializationStatus = SerializationState.Serialized;
+                //UnSerialize();
+              }
+              else
+                SerializationStatus = SerializationState.Serialize;
             }
             else
-              SerializationStatus = SerializationState.Serialize;
-
+            {
+              WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
+              SerializationStatus = SerializationState.None;
+            }
         }
         return true;
     }
@@ -524,20 +532,20 @@ public static unsafe class LibretroMameCore
 
             retro_run();
 
-            if (SerializationStatus == SerializationState.Serialize ) {
-                if (WaitToSerialize.Finished()) {
-                  Serialize();
-                  SerializationStatus = SerializationState.Serialized;
-                }
-            }
-            else if (SerializationStatus == SerializationState.Load)
-            {
-              UnSerialize();
-              WaitToFinishedGameLoad = null;
-              SerializationStatus = SerializationState.Serialized;
-            }
-
 #endif
+        }
+
+        if (SerializationStatus == SerializationState.Serialize) {
+          if (WaitToSerialize.Finished()) {
+            Serialize();
+            SerializationStatus = SerializationState.Done;
+          }
+        }
+        else if (SerializationStatus == SerializationState.Load)
+        {
+          UnSerialize();
+          WaitToFinishedGameLoad = new Waiter(1); //for first coin check
+          SerializationStatus = SerializationState.Done;
         }
 
         if (!Speaker.isPlaying) {
@@ -1049,7 +1057,7 @@ public static unsafe class LibretroMameCore
     static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
         Int16 ret = 0;
 
-        if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished()) {
+        if (!WaitToFinishedGameLoad.Finished()) {
             return ret;
         }
 
@@ -1094,9 +1102,9 @@ public static unsafe class LibretroMameCore
                     //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
                     ret = (CoinSlot != null && CoinSlot.takeCoin()) ? (Int16)1:(Int16)0;
                     if (ret == 1)
-                        hot_delay_select_cicles = 5;
-                    if (hot_delay_select_cicles > 0 && ret != (Int16)1) {
-                        hot_delay_select_cicles--;
+                        HotDelaySelectCycles = 5;
+                    if (HotDelaySelectCycles > 0 && ret != (Int16)1) {
+                        HotDelaySelectCycles--;
                         ret = (Int16)1;
                     }
 
@@ -1280,7 +1288,7 @@ public static unsafe class LibretroMameCore
 #region serialization
     private static string SerializedFileName()
     {
-      return cabinetDBPath + "/" + GameFileName + ".dat";
+      return PathBase + "/" + GameFileName + ".dat";
     }
     private static bool AlreadySerialized()
     {

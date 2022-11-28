@@ -20,9 +20,9 @@ You will need a [Sidequest](https://sidequestvr.com/) working installation with 
 
 1. Download the last apk from the [Releases](releases) page.
 2. Install the apk and run the game. This should create a directory tree in `/sdcard/Android/data/com.curif.AgeOfJoy/`
-3. Download the `realCabs.zip` file, uncompress it. You will get a zip file for each cabinet after descompression.
-4. Exit the game in the headset. Copy the zips files that you want to the  `/sdcard/Android/data/com.curif.AgeOfJoy/cabinets` path.
-5. To play the games, you will need the roms also. If you owns the roms, copy them to `/sdcard/Android/data/com.curif.AgeOfJoy/downloads`
+3. Download the `realCabs.zip` file, uncompress it. You will get a zip file for each cabinet.
+4. Exit the game in the headset. Copy the zips files that you want to the `/sdcard/Android/data/com.curif.AgeOfJoy/cabinets` path.
+5. You will also need the roms to play the games. If you owns the roms, copy them to `/sdcard/Android/data/com.curif.AgeOfJoy/downloads`
 6. Run the game again and enjoy it!
 7. Read more information [here](https://curif.notion.site/AGE-of-Joy-Arcade-Game-Experience-285ccb3a7165474a910ecc3523f80dbe)
 8. Register to get news in [this google form](https://docs.google.com/forms/d/e/1FAIpQLSfveNK4RdApDIM2_SJ5-XR1lggLZDJ66jl7KhicFHdlpnJQ8g/viewform)

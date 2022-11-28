@@ -115,15 +115,14 @@ public static class CabinetFactory
       cabinet.AddCoinSlot(cbinfo.coinslot);
     }
 
-    cabinet.addCRT(cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file), cbinfo.timetoload,
-                    invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
-                    GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty
-                    );
+    cabinet.addCRT(
+      cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
+      cbinfo.timetoload, cbinfo.pathBase,
+      invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
+      GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty,
+      EnableSaveState: cbinfo.enablesavestate
+    );
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
-
-    CabinetInformationHolder cbInfoHolder = cabinet.gameObject.AddComponent<CabinetInformationHolder>();
-    cbInfoHolder.pathBase = cbinfo.pathBase;
-    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] loaded from path: {cbInfoHolder.pathBase}");
 
     return cabinet;
   }

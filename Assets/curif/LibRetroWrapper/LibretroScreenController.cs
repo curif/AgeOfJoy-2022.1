@@ -51,6 +51,8 @@ public class LibretroScreenController : MonoBehaviour
 
   [SerializeField]
   public int SecondsToWaitToFinishLoad = 2;
+  [Tooltip("Save game state after load (Seconds to wait to finish load) for first time, and recover the state every time next.")]
+  public bool EnableSaveState = true;
 
   [Tooltip("Adjust Gamma from 1.0 to 2.0")]
   [SerializeField]
@@ -58,6 +60,9 @@ public class LibretroScreenController : MonoBehaviour
   [Tooltip("Adjust bright from 0.2 to 2.0")]
   [SerializeField]
   public LibretroMameCore.BrightnessOptions Brightness = LibretroMameCore.BrightnessOptions.BRIGHT_1;
+  [SerializeField]
+  [Tooltip("Path that holds cabinet information, save states there.")]
+  public string PathBase;
 
   private GameObject player;
   private OVRPlayerController playerController;
@@ -70,7 +75,6 @@ public class LibretroScreenController : MonoBehaviour
   private DateTime timeToExit = DateTime.MinValue;
   private AudioSource BackgroundAudio;
   private GameObject cabinet;
-  private CabinetInformationHolder dbInfoHolder;
 
   private CoinSlotController getCoinSlotController()
   {
@@ -89,7 +93,6 @@ public class LibretroScreenController : MonoBehaviour
 
     display = GetComponent<Renderer>();
     cabinet = gameObject.transform.parent.gameObject;
-    dbInfoHolder = cabinet.GetComponent<CabinetInformationHolder>();
 
     centerEyeCamera = GameObject.Find("CenterEyeAnchor");
     if (centerEyeCamera == null)
@@ -153,10 +156,11 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.Speaker = GetComponent<AudioSource>();
             LibretroMameCore.Display = display;
             LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
+            LibretroMameCore.EnableSaveState = EnableSaveState;
             LibretroMameCore.Brightness = Brightness;
             LibretroMameCore.Gamma = Gamma;
             LibretroMameCore.CoinSlot = CoinSlot;
-            LibretroMameCore.cabinetDBPath = dbInfoHolder.pathBase;
+            LibretroMameCore.PathBase = PathBase;
             if (!LibretroMameCore.Start(name, GameFile)) {
               CoinSlot.clean();
               return TaskStatus.Failure;  

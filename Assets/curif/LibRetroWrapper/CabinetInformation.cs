@@ -17,12 +17,13 @@ public class CabinetInformation
     // public Bezel bezel;
     // public Marquee marquee;
     public CRT crt;
-    public string style = "generic";
+    public string style = "galaga";
     public string material;
     public RGBColor color;
     public int year;
     public string coinslot = "coin-slot-double";
     public int timetoload = 3;
+    public bool enablesavestate = true;
     public Video video = new();
 
     [YamlIgnore]
