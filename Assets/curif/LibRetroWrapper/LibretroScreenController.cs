@@ -51,8 +51,10 @@ public class LibretroScreenController : MonoBehaviour
 
   [SerializeField]
   public int SecondsToWaitToFinishLoad = 2;
-  [Tooltip("Save game state after load (Seconds to wait to finish load) for first time, and recover the state every time next.")]
+  [Tooltip("Save game state after load (Seconds to wait to finish load) for first time if the file (State File) doesn't exist.")]
   public bool EnableSaveState = true;
+  [Tooltip("Name of the state file used to save/load the memory game state.")]
+  public string StateFile = "state.nv";
 
   [Tooltip("Adjust Gamma from 1.0 to 2.0")]
   [SerializeField]
@@ -157,6 +159,7 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.Display = display;
             LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
             LibretroMameCore.EnableSaveState = EnableSaveState;
+            LibretroMameCore.StateFile = StateFile;
             LibretroMameCore.Brightness = Brightness;
             LibretroMameCore.Gamma = Gamma;
             LibretroMameCore.CoinSlot = CoinSlot;

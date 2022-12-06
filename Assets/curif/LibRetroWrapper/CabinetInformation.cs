@@ -29,7 +29,8 @@ public class CabinetInformation
     public int year;
     public string coinslot = "coin-slot-double";
     public int timetoload = 3;
-    public bool enablesavestate = true;
+    public bool enablesavestate = false; //false to fix #34
+    public string statefile = "state.nv"; 
     public Video video = new();
 
     [YamlIgnore]

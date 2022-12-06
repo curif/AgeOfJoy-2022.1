@@ -220,7 +220,7 @@ public class Cabinet
   public Cabinet addCRT(string type, string orientation, string GameFile, string GameVideoFile, int timeToLoad, string pathBase,
                            bool invertX = false, bool invertY = false,
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
-                           bool EnableSaveState = true
+                           bool EnableSaveState = true, string StateFile = "state.nv"
                            )
   {
 
@@ -254,6 +254,7 @@ public class Cabinet
     libretroScreenController.GameFile = GameFile;
     libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
     libretroScreenController.EnableSaveState = EnableSaveState;
+    libretroScreenController.StateFile = StateFile;
     libretroScreenController.PathBase = pathBase;
     libretroScreenController.GameInvertX = invertX;
     libretroScreenController.GameInvertY = invertY;
