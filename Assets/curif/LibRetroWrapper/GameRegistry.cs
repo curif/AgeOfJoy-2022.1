@@ -217,7 +217,8 @@ public class GameRegistry : MonoBehaviour
     foreach (CabinetPosition cab in cabs.Where(g => g.CabInfo == null))
     {
       cab.CabInfo = CabinetInformation.fromName(cab.CabinetDBName);
-      cab.Rom = cab.CabInfo.rom;
+      if (cab.CabInfo != null)
+        cab.Rom = cab.CabInfo.rom;
     }
 
     return cabs;

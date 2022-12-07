@@ -49,19 +49,28 @@ public class CabinetInformation
 
         if (!File.Exists(yamlPath))
         {
-            throw new System.Exception("Description YAML file (description.yaml) don't exists in cabinet subdir");
+            LibretroMameCore.WriteConsole($"[ERROR] Description YAML file (description.yaml) don't exists in cabinet subdir {cabPath}");
+            return null;
         }
 
-        var input = File.OpenText(yamlPath);
+        try
+        {
+          var input = File.OpenText(yamlPath);
 
-        var deserializer = new DeserializerBuilder()
+          var deserializer = new DeserializerBuilder()
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
 
-        var cabInfo = deserializer.Deserialize<CabinetInformation>(input);
-        cabInfo.pathBase = cabPath;
+          var cabInfo = deserializer.Deserialize<CabinetInformation>(input);
+          cabInfo.pathBase = cabPath;
 
-        return cabInfo;
+          return cabInfo;
+        }
+        catch (Exception e)
+        {
+          LibretroMameCore.WriteConsole($"[ERROR] Description YAML file in cabinet subdir {cabPath} - {e}");
+        }
+        return null;
     }
 
     public class Art
