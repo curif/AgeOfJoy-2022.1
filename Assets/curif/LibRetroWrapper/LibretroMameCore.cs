@@ -296,6 +296,7 @@ public static unsafe class LibretroMameCore
     }
     private static SerializationState SerializationStatus = SerializationState.Analize;
     public static bool EnableSaveState = true;
+    public static string StateFile = "state.nv";
 
     //image ===========    
     static FpsControl FPSControl;
@@ -467,44 +468,44 @@ public static unsafe class LibretroMameCore
             WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
             return false;
         }
-        if (GameLoaded) {
-            getAVGameInfo();
 
-            FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
+        if (GameLoaded)
+        {
+          getAVGameInfo();
 
-            /* It's impossible to change the Sample Rate, fixed in 48000
-            audioConfig.sampleRate = sampleRate;
-            AudioSettings.Reset(audioConfig);
-            audioConfig = AudioSettings.GetConfiguration();
-            WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
-            */
-            
-            WriteConsole($"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
+          FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
-            // Audioclips are not sinchronized with the video.
-            //Speaker.clip = AudioClip.Create("MameAudioSource", sampleRate * 2, 2, sampleRate, true, OnAudioRead /*, onAudioChangePosition*/);
-            
-            Speaker.Play();
-            WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
+          /* It's impossible to change the Sample Rate, fixed in 48000
+          audioConfig.sampleRate = sampleRate;
+          AudioSettings.Reset(audioConfig);
+          audioConfig = AudioSettings.GetConfiguration();
+          WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
+          */
 
-            if (EnableSaveState)
-            {
-              WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 2); //for first coin check
-              WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad); //for serialization
-//              SerializationStatus = SerializationState.Analize;
-              if (AlreadySerialized()) {
-                SerializationStatus = SerializationState.Load;
-                //SerializationStatus = SerializationState.Serialized;
-                //UnSerialize();
-              }
-              else
-                SerializationStatus = SerializationState.Serialize;
-            }
-            else
-            {
-              WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
-              SerializationStatus = SerializationState.None;
-            }
+          WriteConsole(
+            $"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
+
+          // Audioclips are not sinchronized with the video.
+          //Speaker.clip = AudioClip.Create("MameAudioSource", sampleRate * 2, 2, sampleRate, true, OnAudioRead /*, onAudioChangePosition*/);
+
+          Speaker.Play();
+          WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
+
+          if (AlreadySerialized())
+          {
+            SerializationStatus = SerializationState.Load;
+          }
+          else if (EnableSaveState)
+          {
+            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 2); //for first coin check
+            WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad); //for serialization
+            SerializationStatus = SerializationState.Serialize;
+          }
+          else
+          {
+            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
+            SerializationStatus = SerializationState.None;
+          }
         }
         return true;
     }
@@ -1293,8 +1294,9 @@ public static unsafe class LibretroMameCore
 #region serialization
     private static string SerializedFileName()
     {
-      return PathBase + "/" + GameFileName + ".dat";
+      return PathBase + "/" + StateFile;
     }
+
     private static bool AlreadySerialized()
     {
       return File.Exists(SerializedFileName());

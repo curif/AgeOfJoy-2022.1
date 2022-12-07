@@ -122,7 +122,7 @@ public static class CabinetFactory
       cbinfo.timetoload, cbinfo.pathBase,
       invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
       GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty,
-      EnableSaveState: cbinfo.enablesavestate
+      EnableSaveState: cbinfo.enablesavestate, StateFile: cbinfo.statefile
     );
     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 

@@ -42,16 +42,24 @@ public class CabinetsController : MonoBehaviour
     */
     foreach (CabinetPosition g in games)
     {
-      CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
-      if (cc != null)
+      if (g.CabInfo != null)
       {
-        ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
-        cc.game = g;
-        yield return new WaitForSeconds(1f / 2f);
+        CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
+        if (cc != null)
+        {
+          ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
+          cc.game = g;
+          yield return new WaitForSeconds(1f / 2f);
+        }
+        else
+          ConfigManager.WriteConsole(
+            $"[CabinetsController.load] ERROR child #{idx} don´t have a CabinetController component");
       }
       else
-        ConfigManager.WriteConsole($"[CabinetsController] ERROR child #{idx} don´t have a CabinetController component");
-      
+      {
+        ConfigManager.WriteConsole($"[CabinetsController.load] ERROR Assigned {g.CabinetDBName} in #{idx} doesn't have a Cabinet Information assigned, possible error when load cabinet.");
+      }
+
       idx++;
     }
   }

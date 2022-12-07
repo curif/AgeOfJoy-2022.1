@@ -119,13 +119,30 @@ public static class CabinetDBAdmin
         File.Delete(path);
     }
 
+
+    public static bool ZipFileContainsDescriptionYaml(string zipFilePath)
+    {
+      using (ZipArchive zip = ZipFile.OpenRead(zipFilePath))
+      {
+        foreach (ZipArchiveEntry entry in zip.Entries)
+        {
+          if (entry.FullName == "description.yaml")
+          {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+
     // check for new zip files, decompress and storage them into the cabinet DB
     public static void loadCabinets()
     {
         string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
         foreach (string file in files)
         {
-            if (File.Exists(file) && !file.EndsWith("/test.zip"))
+          if (File.Exists(file) && !file.EndsWith("/test.zip") && ZipFileContainsDescriptionYaml(file))
             {
                 try
                 {
