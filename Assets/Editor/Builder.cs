@@ -12,7 +12,7 @@ class AndroidBuilder
       "Assets/Scenes/Room003.unity",
       "Assets/Scenes/Room004.unity",
     };
-    buildPlayerOptions.locationPathName = "/home/fabio.curi/desarr/AgeOfJoy-2022.1/AgeOfJOy.apk";
+    buildPlayerOptions.locationPathName = "/home/fabio.curi/desarr/AgeOfJoy-2022.1/AgeOfJoy.apk";
     buildPlayerOptions.target = BuildTarget.Android;
     buildPlayerOptions.options = BuildOptions.None;
     BuildPipeline.BuildPlayer(buildPlayerOptions);
