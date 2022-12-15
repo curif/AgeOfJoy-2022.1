@@ -32,7 +32,8 @@ public class CabinetInformation
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv"; 
     public Video video = new();
-
+    public string md5sum = "";
+    
     [YamlIgnore]
     public string pathBase;
 
