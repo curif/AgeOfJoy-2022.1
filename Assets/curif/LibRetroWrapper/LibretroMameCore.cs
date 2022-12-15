@@ -23,6 +23,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using System.Diagnostics;
 
+
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
 you can manage callbacks from the libretro api in methods not static.
@@ -79,6 +80,8 @@ public static unsafe class LibretroMameCore
     public const int RETRO_DEVICE_MASK       = (1 << RETRO_DEVICE_TYPE_SHIFT) - 1;
     public const uint RETRO_DEVICE_NONE     = 0;
     public const uint RETRO_DEVICE_JOYPAD   = 1;
+    public const uint RETRO_DEVICE_MOUSE    = 2;
+    public const uint RETRO_DEVICE_ANALOG   = 5;
     // public const uint RETRO_DEVICE_KEYBOARD   = 3;
     // public const uint RETROK_5              = 53;
     // public const uint RETRO_DEVICE_ANALOG   = 5;
@@ -105,6 +108,14 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_ID_JOYPAD_L3     = 14;
     public const uint RETRO_DEVICE_ID_JOYPAD_R3     = 15;
     public const uint RETRO_DEVICE_ID_JOYPAD_MASK   = 256;
+
+    public const uint RETRO_DEVICE_ID_ANALOG_X = 0;
+    public const uint RETRO_DEVICE_ID_ANALOG_Y = 1;
+
+    public const uint RETRO_DEVICE_ID_MOUSE_X = 0;
+    public const uint RETRO_DEVICE_ID_MOUSE_Y = 1;
+    public const uint RETRO_DEVICE_ID_MOUSE_LEFT = 2;
+    public const uint RETRO_DEVICE_ID_MOUSE_RIGHT = 3;
 
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_controller_port_device(uint port, uint device);
@@ -491,15 +502,18 @@ public static unsafe class LibretroMameCore
           Speaker.Play();
           WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
-          if (AlreadySerialized())
+          if (EnableSaveState)
           {
-            SerializationStatus = SerializationState.Load;
-          }
-          else if (EnableSaveState)
-          {
-            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 2); //for first coin check
-            WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad); //for serialization
-            SerializationStatus = SerializationState.Serialize;
+            if (AlreadySerialized())
+            {
+              WaitToSerialize = new Waiter(3);
+              SerializationStatus = SerializationState.Load;
+            }
+            else {
+              WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 3); //for first coin check
+              WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad);
+              SerializationStatus = SerializationState.Serialize;
+            }
           }
           else
           {
@@ -727,6 +741,12 @@ public static unsafe class LibretroMameCore
                         gvp->value = (char *)PtrVault.GetPtr(use_samples);
                         WriteConsole("use_samples value to return:" + use_samples);
                         return true;
+                    case "mame2003-plus_xy_device":
+                        //https://github.com/libretro/mame2003-plus-libretro/blob/15349c45296e16f9385a90002018d920e8f3f872/src/mame2003/core_options.c#L66
+                        string xyDevice = "mouse";
+                        gvp->value = (char *)PtrVault.GetPtr(xyDevice);
+                        WriteConsole("xy_device value to return:" + xyDevice);
+                        return true;
                     case "mame2003-plus_machine_timing":
                         string machine_timing = "disabled";
                         gvp->value = (char *)PtrVault.GetPtr(machine_timing);
@@ -750,7 +770,7 @@ public static unsafe class LibretroMameCore
                         WriteConsole("plus_gamma value to return:" + optionGa);
                         return true;
                     case "mame2003-plus_input_interface":
-                        string retropad = "retropad";
+                        string retropad = "simultaneous";
                         gvp->value = (char *)PtrVault.GetPtr(retropad);
                         WriteConsole("input_interface value to return:" + retropad);
                         return true;
@@ -1063,9 +1083,14 @@ public static unsafe class LibretroMameCore
     static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
         Int16 ret = 0;
 
-        if (!WaitToFinishedGameLoad.Finished()) {
-            return ret;
-        }
+        if (!WaitToFinishedGameLoad.Finished())
+          return ret;
+
+        //WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{id}");
+
+        if (port != 0)
+          return ret;
+
 
 #if _debug_fps_
         Profiling.input.Start();
@@ -1078,7 +1103,8 @@ public static unsafe class LibretroMameCore
 //            ret = (CoinSlot != null && CoinSlot.takeCoin()) ? (Int16)1:(Int16)0;
 //            return ret;
 //        }
-        if (device == RETRO_DEVICE_JOYPAD && port == 0) {
+
+        else if (device == RETRO_DEVICE_JOYPAD) {
             switch (id) {
                 case RETRO_DEVICE_ID_JOYPAD_B:
                     ret = OVRInput.Get(OVRInput.RawButton.B)? (Int16)1:(Int16)0;
@@ -1138,8 +1164,49 @@ public static unsafe class LibretroMameCore
                     break;            
                 }
         }
+            /*
+        else if (device == RETRO_DEVICE_ANALOG) {
+          Vector2 thumbstickPosition = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
+
+          switch (id) {
+            case RETRO_DEVICE_ID_ANALOG_X:
+              //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+              ret =  (Int16)(thumbstickPosition.x * 32768); // X-coordinate of the thumbstick position
+              break;
+            case RETRO_DEVICE_ID_ANALOG_Y:
+              ret =  (Int16)(thumbstickPosition.y * 32768); // y-coordinate of the thumbstick position
+              break;
+          }
+          WriteConsole($"[inputStateCB] ANALOG port: {port} device: {device} index: {index} id: {id} ret: {ret}");
+        }*/
+        else if (device == RETRO_DEVICE_MOUSE) {
+          Vector2 thumbstickPosition = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
+
+          switch (id) {
+            case RETRO_DEVICE_ID_MOUSE_X:
+              //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+              if (thumbstickPosition.x > 0)
+                ret = (Int16)10;
+              else if (thumbstickPosition.x < 0)
+                ret = (Int16)(-10);
+              break;
+            case RETRO_DEVICE_ID_MOUSE_Y:
+              if (thumbstickPosition.y > 0)
+                ret = (Int16)10;
+              else if (thumbstickPosition.y < 0)
+                ret = (Int16)(-10);
+              break;
+            case RETRO_DEVICE_ID_MOUSE_LEFT:
+              ret = OVRInput.Get(OVRInput.RawButton.B)? (Int16)1:(Int16)0;
+              break;
+            case RETRO_DEVICE_ID_MOUSE_RIGHT:
+              ret =  OVRInput.Get(OVRInput.RawButton.A)? (Int16)1:(Int16)0;
+              break;
+          }
+          //WriteConsole($"[inputStateCB] MOUSE port: {port} device: {device} index: {index} id: {id} ret: {ret}");
+        }
         /*
-        Mame2003+ don't use buttons masks.
+        Mame2003+ didn't use buttons masks.
         static Func<OVRInput.RawButton, uint, Int16> TransBits = (Btn, retroId) => (Int16)(OVRInput.Get(Btn)? (1 << (Int16)retroId) : 0);
          WriteConsole($"[LibRetroMameCore.inputStateCB] id {id} | device {device} | port {port}");
         if (port == 0 && device == RETRO_DEVICE_JOYPAD && id == RETRO_DEVICE_ID_JOYPAD_MASK) {
@@ -1164,7 +1231,7 @@ public static unsafe class LibretroMameCore
 #if _debug_fps_
         Profiling.input.Stop();
 #endif
-        // WriteConsole($"[inputStateCB] port: {port} device: {device} index: {index} id: {id} ret: {ret}");
+        //WriteConsole($"[inputStateCB] port: {port} device: {device} index: {index} id: {id} ret: {ret}");
 
         return ret;
     }
