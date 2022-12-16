@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System;
-using YamlDotNet.Serialization;
+using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 
 public class CabinetInformation
@@ -18,10 +18,7 @@ public class CabinetInformation
     public string rom;
     public List<Part> Parts { get; set; }
 
-//    public string type = "TimePilot";
-//    public Screen screen;
-    // public Bezel bezel;
-    // public Marquee marquee;
+
     public CRT crt;
     public string style = "galaga";
     public string material;
@@ -32,7 +29,8 @@ public class CabinetInformation
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv"; 
     public Video video = new();
-    public string md5sum = "";
+    //[DefaultValue("")]
+    public string md5sum;
     
     [YamlIgnore]
     public string pathBase;
@@ -59,7 +57,8 @@ public class CabinetInformation
           var input = File.OpenText(yamlPath);
 
           var deserializer = new DeserializerBuilder()
-            .WithNamingConvention(CamelCaseNamingConvention.Instance)
+              .WithNamingConvention(CamelCaseNamingConvention.Instance)
+              .IgnoreUnmatchedProperties()
             .Build();
 
           var cabInfo = deserializer.Deserialize<CabinetInformation>(input);
