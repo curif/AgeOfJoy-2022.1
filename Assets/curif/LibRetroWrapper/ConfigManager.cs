@@ -5,16 +5,13 @@ You should have received a copy of the GNU General Public License along with thi
 */
 using UnityEngine;
 using System.IO;
+using System;
 
 public static class ConfigManager
 {
   //paths
 #if UNITY_EDITOR
-    //https://docs.unity3d.com/ScriptReference/Application-dataPath.html
-    //Unity Editor: <path to project folder>/Assets
-//   public static string BaseDir = Application.dataPath + "/cabs";
-//$HOME don't work
-  public static string BaseDir = "/home/fabio.curi/cabs";
+  public static string BaseDir = Environment.GetEnvironmentVariable("HOME") + "/cabs";
 #else
   public static string BaseDir = "/sdcard/Android/data/com.curif.AgeOfJoy";
 #endif
