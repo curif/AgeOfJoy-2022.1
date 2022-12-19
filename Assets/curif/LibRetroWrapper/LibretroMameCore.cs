@@ -1107,7 +1107,7 @@ public static unsafe class LibretroMameCore
         else if (device == RETRO_DEVICE_JOYPAD) {
             switch (id) {
                 case RETRO_DEVICE_ID_JOYPAD_B:
-                    ret = OVRInput.Get(OVRInput.RawButton.B)? (Int16)1:(Int16)0;
+                    ret = OVRInput.Get(OVRInput.RawButton.B) || OVRInput.Get(OVRInput.RawButton.RIndexTrigger)? (Int16)1:(Int16)0;
                     break;
                 case RETRO_DEVICE_ID_JOYPAD_A:
                     ret =  OVRInput.Get(OVRInput.RawButton.A)? (Int16)1:(Int16)0;
