@@ -49,7 +49,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
   private List<PlaceInformation> totalDestinationsList = new List<PlaceInformation>();
   private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
   private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
-
+  private bool collisionWithPlayer = false;
   public PlaceInformation Destination { get => destination; }
 
   void Start()
@@ -63,6 +63,65 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
     StartCoroutine(runBT());
   }
+
+  bool detectPlayer() {
+    float distance = 5f; // distance to detect objects
+    float angleIncrement = 20f; // angle increment between rays
+    float startAngle = -45f; // starting angle of the rays
+    float endAngle = 45f; // ending angle of the rays
+    
+    collisionWithPlayer = false; 
+    
+    for (float angle = startAngle; angle <= endAngle; angle += angleIncrement)
+    {
+	// calculate direction of the ray based on angle
+        Vector3 direction = Quaternion.AngleAxis(angle, transform.up) * transform.forward;
+    	//Ray ray = new Ray(transform.position, direction);
+        
+	RaycastHit hit;
+        if (Physics.Raycast(transform.position, direction, out hit, distance))
+        {
+	    if (hit.collider.gameObject == player)
+            {
+                ConfigManager.WriteConsole($"[DetectPlayerInPath] {gameObject} Player in collision path!");
+		Debug.DrawRay(transform.position, direction, Color.red, 0);
+		collisionWithPlayer = true; 
+                return true;
+                // The ray hit the player, so do something (e.g. change direction)
+            }
+	    else {
+		Debug.DrawRay(transform.position, direction, Color.yellow, 0);
+	    }
+        }
+    
+    }
+    return false;
+  
+  }
+    // Update is called once per frame
+    bool playerInPath()
+    {
+        // Cast a ray from the NPC's position in the forward direction
+ 	float maxRaycastDistance = 10f;
+        RaycastHit hit;
+	collisionWithPlayer = false; 
+        if (Physics.Raycast(transform.position, transform.forward, out hit, maxRaycastDistance))
+        {
+            // Check if the ray hit the player
+            if (hit.collider.gameObject == player)
+            {
+                ConfigManager.WriteConsole($"[DetectPlayerInPath] {gameObject} Player in collision path!");
+		Debug.DrawRay(transform.position, transform.forward, Color.red, 2f);
+		collisionWithPlayer = true; 
+                return true;
+                // The ray hit the player, so do something (e.g. change direction)
+            }
+	    else {
+		Debug.DrawRay(transform.position, transform.forward, Color.yellow, 2f);
+	    }
+        }
+    	return false;
+    }
 
   IEnumerator runBT()
   {
@@ -126,7 +185,8 @@ public class ArcadeRoomBehaviour : MonoBehaviour
           .Selector()
             .Condition("Timeout", () => DateTime.Now > timeout)
             .Condition("Arrived", () => Vector3.Distance(destination.Place.transform.position, transform.position) <= destination.MinimalDistanceToReachObject)
-            .Condition("Player found", () => AvoidPlayer && Vector3.Distance(player.transform.position, transform.position) <= 1f)
+            .Condition("Player found or blocked", () => AvoidPlayer && detectPlayer())
+            //.Condition("Player found or blocked", () => AvoidPlayer && (agent.pathStatus == NavMeshPathStatus.PathInvalid || Vector3.Distance(player.transform.position, transform.position) <= 2f))
           .End()
         .End()
         .Do("Stop", () =>
@@ -136,12 +196,17 @@ public class ArcadeRoomBehaviour : MonoBehaviour
         })
         .Do("Do something there", () =>
         {
-          if (DateTime.Now > timeout)
+          if (DateTime.Now > timeout) 
           {
             idle();
             timeToSpentInPlace = DateTime.Now.AddSeconds(1);
           }
-          else
+          else if (collisionWithPlayer)
+	  {
+	    rotateAndWalk();
+	    timeToSpentInPlace = DateTime.Now.AddSeconds(2);
+	  }
+	  else
           {
             runDestinationAnimation();
             timeToSpentInPlace = destination.getWaitingDateTime();
@@ -153,7 +218,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
         .RepeatUntilSuccess()
             .Selector()
                 .Condition("Wait some time there", () => DateTime.Now > timeToSpentInPlace)
-                .Condition("Player is near", () => AvoidPlayer && Vector3.Distance(player.transform.position, transform.position) <= 1f)
+                //.Condition("Player is near", () => AvoidPlayer && Vector3.Distance(player.transform.position, transform.position) <= 1f)
             .End()
         .End()
 
@@ -202,5 +267,9 @@ public class ArcadeRoomBehaviour : MonoBehaviour
     agent.SetDestination(destination.Place.transform.position);
     agent.isStopped = false;
   }
-
+  private void rotateAndWalk()
+  {
+    stop();
+    animator.SetTrigger("Turn");
+  }
 }
