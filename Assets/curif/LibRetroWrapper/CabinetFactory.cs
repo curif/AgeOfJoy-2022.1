@@ -26,6 +26,7 @@ public static class CabinetFactory
     CabinetStyles.Add("junofrst", Resources.Load<GameObject>($"Cabinets/PreFab/JunoFirst"));
     CabinetStyles.Add("digdug", Resources.Load<GameObject>($"Cabinets/PreFab/DigDug"));
     CabinetStyles.Add("tron", Resources.Load<GameObject>($"Cabinets/PreFab/Tron"));
+    CabinetStyles.Add("joust", Resources.Load<GameObject>($"Cabinets/PreFab/Joust"));
   }
 
   public static Cabinet Factory(string style, string name, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
