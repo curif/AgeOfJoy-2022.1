@@ -21,22 +21,24 @@ public class CabinetInformation
 
     public CRT crt;
     public string style = "galaga";
+    public string modelfile = "";
     public string material;
     public RGBColor color;
     public int year;
     public string coinslot = "coin-slot-double";
+    public Geometry coinslotgeometry = new();
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv"; 
     public Video video = new();
     //[DefaultValue("")]
     public string md5sum;
-    
+
     [YamlIgnore]
     public string pathBase;
 
     //[YamlIgnore] public List<System.Exception> problems;
-
+    
     public static CabinetInformation fromName(string cabName)
     {
         return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
@@ -73,6 +75,19 @@ public class CabinetInformation
         return null;
     }
 
+    public class Rotation
+    {
+	    public float x = 0;
+	    public float y = 0;
+	    public float z = 0;
+    }
+    public class Geometry
+    {
+	    public Rotation rotation = new Rotation();
+			// 100% maintain the same scale
+			// 50% half. 200% double.
+			public float scalepercentaje = 100;
+    }
     public class Art
     {
         public string file;
@@ -98,6 +113,7 @@ public class CabinetInformation
         public Art art;
         public RGBColor color;
         public string type = "normal"; // or bezel or marquee
+	    	public Geometry geometry = new();
     }
 
     public class CRT
@@ -105,7 +121,7 @@ public class CabinetInformation
         public string type;
         public string orientation = "vertical";
         public Screen screen;
-
+				public Geometry geometry = new();
         public System.Exception validate(List<string> crtTypes)
         {
             if (!crtTypes.Contains(type))
