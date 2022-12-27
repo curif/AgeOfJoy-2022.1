@@ -77,7 +77,7 @@ public class Cabinet
     gameObject.AddComponent<PutOnFloor>();
   }
 
-  public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent, GameObject go = null, string model = "Generic")
+  public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent, GameObject go = null, string model = "galaga")
   {
     Name = name;
     if (go == null)
@@ -85,7 +85,7 @@ public class Cabinet
       // Assets/Resources/Cabinets/PreFab/xxx.prefab
       go = Resources.Load<GameObject>($"Cabinets/PreFab/{model}");
       if (go == null)
-        throw new System.Exception($"Cabinet {Name} not found or doesn't load");
+        throw new System.Exception($"Cabinet tyle {Name} not found or doesn't load");
     }
 
     //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
@@ -130,7 +130,22 @@ public class Cabinet
     }
   }
 
-
+	public Cabinet ScalePart(string cabinetPart , float percentage) {
+	 	if (!Parts.ContainsKey(cabinetPart))
+      return this;
+    
+		float scale = percentage / 100f;
+    Parts[cabinetPart].transform.localScale *= scale;
+		return this;
+	}
+  public Cabinet RotatePart(string cabinetPart, float angleX, float angleY, float angleZ) {
+	 	if (!Parts.ContainsKey(cabinetPart))
+      return this;
+    
+    Parts[cabinetPart].transform.Rotate(angleX, angleY, angleZ);
+		return this;
+	}
+ 
   //change a material, and
   public Cabinet SetTextureTo(string cabinetPart, string textureFile, Material mat, bool invertX = false, bool invertY = false)
   {
@@ -220,8 +235,9 @@ public class Cabinet
   public Cabinet addCRT(string type, string orientation, string GameFile, string GameVideoFile, int timeToLoad, string pathBase,
                            bool invertX = false, bool invertY = false,
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
-                           bool EnableSaveState = true, string StateFile = "state.nv"
-                           )
+                           bool EnableSaveState = true, string StateFile = "state.nv",
+                           float rotationAngleX = 0, float rotationAngleY = 0, float rotationAngleZ = 0, 
+													 float scalePercentage = 0)
   {
 
     //the order is important
@@ -238,7 +254,13 @@ public class Cabinet
 
     //LibretroScreenController will find the object using this name:
     newCRT.name = CRTName(Name, GameFile);
-    Parts.Add("screen", newCRT);
+   
+		// rotate and scale
+		float scale = scalePercentage / 100f;
+    newCRT.transform.localScale *= scale;
+    newCRT.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
+
+		Parts.Add("screen", newCRT);
 
     Parts["screen"].GetComponent<MeshRenderer>().materials = ms;
 
@@ -246,7 +268,6 @@ public class Cabinet
     Object.Destroy(Parts["screen-mock-vertical"]);
     Parts.Remove("screen-mock-horizontal");
     Parts.Remove("screen-mock-vertical");
-    //mr.receiveShadows = false;
 
     //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
     LibretroScreenController libretroScreenController = Parts["screen"].AddComponent<LibretroScreenController>();
@@ -272,7 +293,7 @@ public class Cabinet
     return this;
   }
 
-  public Cabinet AddCoinSlot(string type)
+  public Cabinet AddCoinSlot(string type, float rotationAngleX, float rotationAngleY, float rotationAngleZ, float scalePercentage)
   {
     if (!Parts.ContainsKey("coin-slot"))
     {
@@ -292,7 +313,12 @@ public class Cabinet
     else
       ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] ERROR {Name}: can't create the new coin-slot type: {type}");
 
-    Object.Destroy(Parts["coin-slot"]);
+		// rotate and scale
+		float scale = scalePercentage / 100f;
+    newCoinSlot.transform.localScale *= scale;
+    newCoinSlot.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
+
+		Object.Destroy(Parts["coin-slot"]);
     //Parts["coin-slot"].SetActive(false);
     Parts.Remove("coin-slot");
     ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] {Name}: old coin-slot part unactive");
