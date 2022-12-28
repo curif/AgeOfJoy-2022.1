@@ -21,7 +21,7 @@ public class CabinetInformation
 
     public CRT crt;
     public string style = "galaga";
-    public string modelfile = "";
+    public Model model = new();
     public string material;
     public RGBColor color;
     public int year;
@@ -74,19 +74,23 @@ public class CabinetInformation
         }
         return null;
     }
-
+    public class Model
+    {
+        public string style = ""; //can refer to other cabinet. Set the cabinet Name here. Empty means actual 'file' model in pack
+        public string file = ""; //empty falls to main 'style' cabinet
+    }
     public class Rotation
     {
-	    public float x = 0;
-	    public float y = 0;
-	    public float z = 0;
+        public float x = 0;
+        public float y = 0;
+        public float z = 0;
     }
     public class Geometry
     {
-	    public Rotation rotation = new Rotation();
-			// 100% maintain the same scale
-			// 50% half. 200% double.
-			public float scalepercentaje = 100;
+        public Rotation rotation = new Rotation();
+        // 100% maintain the same scale
+        // 50% half. 200% double.
+        public float scalepercentaje = 100;
     }
     public class Art
     {
@@ -113,7 +117,7 @@ public class CabinetInformation
         public Art art;
         public RGBColor color;
         public string type = "normal"; // or bezel or marquee
-	    	public Geometry geometry = new();
+        public Geometry geometry = new();
     }
 
     public class CRT
@@ -121,7 +125,7 @@ public class CabinetInformation
         public string type;
         public string orientation = "vertical";
         public Screen screen;
-				public Geometry geometry = new();
+        public Geometry geometry = new();
         public System.Exception validate(List<string> crtTypes)
         {
             if (!crtTypes.Contains(type))

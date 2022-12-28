@@ -15,29 +15,29 @@ using Siccity.GLTFUtility;
 //store Cabinets resources
 public static class CabinetFactory
 {
-  public static Dictionary<string, GameObject> CabinetStyles = new();
+	public static Dictionary<string, GameObject> CabinetStyles = new();
 
-  static CabinetFactory()
-  {
-    ConfigManager.WriteConsole($"[CabinetFactory] read Models Resources");
-    CabinetStyles.Add("generic", Resources.Load<GameObject>($"Cabinets/PreFab/Generic"));
-    CabinetStyles.Add("timeplt", Resources.Load<GameObject>($"Cabinets/PreFab/TimePilot"));
-    CabinetStyles.Add("galaga", Resources.Load<GameObject>($"Cabinets/PreFab/Galaga"));
-    CabinetStyles.Add("pacmancabaret", Resources.Load<GameObject>($"Cabinets/PreFab/PacManCabaret"));
-    CabinetStyles.Add("frogger", Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
-    CabinetStyles.Add("defender", Resources.Load<GameObject>($"Cabinets/PreFab/Defender"));
-    CabinetStyles.Add("donkeykong", Resources.Load<GameObject>($"Cabinets/PreFab/DonkeyKong"));
-    CabinetStyles.Add("xevious", Resources.Load<GameObject>($"Cabinets/PreFab/Xevious"));
-    CabinetStyles.Add("1942", Resources.Load<GameObject>($"Cabinets/PreFab/1942"));
-    CabinetStyles.Add("stargate", Resources.Load<GameObject>($"Cabinets/PreFab/Stargate"));
-    CabinetStyles.Add("junofrst", Resources.Load<GameObject>($"Cabinets/PreFab/JunoFirst"));
-    CabinetStyles.Add("digdug", Resources.Load<GameObject>($"Cabinets/PreFab/DigDug"));
-    CabinetStyles.Add("tron", Resources.Load<GameObject>($"Cabinets/PreFab/Tron"));
-    CabinetStyles.Add("joust", Resources.Load<GameObject>($"Cabinets/PreFab/Joust"));
- }
+	static CabinetFactory()
+	{
+		ConfigManager.WriteConsole($"[CabinetFactory] read Models Resources");
+		CabinetStyles.Add("generic", Resources.Load<GameObject>($"Cabinets/PreFab/Generic"));
+		CabinetStyles.Add("timeplt", Resources.Load<GameObject>($"Cabinets/PreFab/TimePilot"));
+		CabinetStyles.Add("galaga", Resources.Load<GameObject>($"Cabinets/PreFab/Galaga"));
+		CabinetStyles.Add("pacmancabaret", Resources.Load<GameObject>($"Cabinets/PreFab/PacManCabaret"));
+		CabinetStyles.Add("frogger", Resources.Load<GameObject>($"Cabinets/PreFab/Frogger"));
+		CabinetStyles.Add("defender", Resources.Load<GameObject>($"Cabinets/PreFab/Defender"));
+		CabinetStyles.Add("donkeykong", Resources.Load<GameObject>($"Cabinets/PreFab/DonkeyKong"));
+		CabinetStyles.Add("xevious", Resources.Load<GameObject>($"Cabinets/PreFab/Xevious"));
+		CabinetStyles.Add("1942", Resources.Load<GameObject>($"Cabinets/PreFab/1942"));
+		CabinetStyles.Add("stargate", Resources.Load<GameObject>($"Cabinets/PreFab/Stargate"));
+		CabinetStyles.Add("junofrst", Resources.Load<GameObject>($"Cabinets/PreFab/JunoFirst"));
+		CabinetStyles.Add("digdug", Resources.Load<GameObject>($"Cabinets/PreFab/DigDug"));
+		CabinetStyles.Add("tron", Resources.Load<GameObject>($"Cabinets/PreFab/Tron"));
+		CabinetStyles.Add("joust", Resources.Load<GameObject>($"Cabinets/PreFab/Joust"));
+	}
 
-  public static Cabinet Factory(string style, string name, string modelFilePath, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
-  {
+	public static Cabinet Factory(string style, string name, string modelFilePath, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
+	{
 		GameObject model; 
 		if (! String.IsNullOrEmpty(modelFilePath)) 
 		{
@@ -53,30 +53,41 @@ public static class CabinetFactory
 		}
 		string cabinetName = $"cabinet-{name}-{room}-{number}";
 		return new Cabinet(cabinetName, position, rotation, parent, go: model);
-  }
+	}
   
 	public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, Vector3 position, Quaternion rotation, Transform parent)
-  {
+	{
 		string modelFilePath = "";
-	  if (!String.IsNullOrEmpty(cbinfo.modelfile)) 
-			modelFilePath = cbinfo.pathBase + "/" + cbinfo.modelfile;
-	  
-	  Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, modelFilePath, number, room, position, rotation, parent);
+		if (!String.IsNullOrEmpty(cbinfo.model.file)) 
+		{
+			if (! String.IsNullOrEmpty(cbinfo.model.style))
+				modelFilePath = ConfigManager.CabinetsDB + "/" + cbinfo.model.style + "/" + cbinfo.model.file;
+			else
+				modelFilePath = cbinfo.pathBase + "/" + cbinfo.model.file;
+			
+			if (!File.Exists(modelFilePath)) 
+			{
+				ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] ERROR {modelFilePath} model don't exists, falls to standar cabinet model");
+				modelFilePath = "";
+			}
+		}
+		
+		Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, modelFilePath, number, room, position, rotation, parent);
 
-    if (cbinfo.material != null)
-    {
-      cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
-    }
-    else if (cbinfo.color != null)
-    {
-      Material mat = new Material(CabinetMaterials.Base);
-      mat.SetColor("_Color", cbinfo.color.getColor());
-      cabinet.SetMaterial(mat);
-    }
+		if (cbinfo.material != null)
+		{
+			cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
+		}
+		else if (cbinfo.color != null)
+		{
+			Material mat = new Material(CabinetMaterials.Base);
+			mat.SetColor("_Color", cbinfo.color.getColor());
+			cabinet.SetMaterial(mat);
+		}
 
-    //process each part
-    if (cbinfo.Parts != null) {
-      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
+		//process each part
+		if (cbinfo.Parts != null) {
+			ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
 			foreach (CabinetInformation.Part p in cbinfo.Parts)
 			{
 				switch (p.type)
@@ -119,24 +130,24 @@ public static class CabinetFactory
 				cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
 			}
 
-    }
-    /*
-    if (cbinfo.bezel != null)
-    {
-      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
-      cabinet.SetBezel(cbinfo.getPath(cbinfo.bezel.art.file));
-    }
+		}
+		/*
+		   if (cbinfo.bezel != null)
+		   {
+		   ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
+		   cabinet.SetBezel(cbinfo.getPath(cbinfo.bezel.art.file));
+		   }
 
-    if (cbinfo.marquee != null)
-    {
-      ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {cbinfo.marquee.art.file}");
-      cabinet.SetMarquee(cbinfo.getPath(cbinfo.marquee.art.file), cbinfo.marquee.lightcolor.getColor());
-    }
-    else
-      cabinet.SetMarquee("", Color.white);
-    */
+		   if (cbinfo.marquee != null)
+		   {
+		   ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {cbinfo.marquee.art.file}");
+		   cabinet.SetMarquee(cbinfo.getPath(cbinfo.marquee.art.file), cbinfo.marquee.lightcolor.getColor());
+		   }
+		   else
+		   cabinet.SetMarquee("", Color.white);
+		   */
 
-    if (!string.IsNullOrEmpty(cbinfo.coinslot))
+		if (!string.IsNullOrEmpty(cbinfo.coinslot))
 		{
 			ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
 			cabinet.AddCoinSlot(cbinfo.coinslot, 
@@ -154,6 +165,6 @@ public static class CabinetFactory
 				cbinfo.crt.geometry.scalepercentaje);
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
-    return cabinet;
-  }
+		return cabinet;
+	}
 }
