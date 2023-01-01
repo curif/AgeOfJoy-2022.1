@@ -72,6 +72,45 @@ public class Cabinet
                         | RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezeRotationY;
     
   }
+  private void addBoxCollider() 
+  {
+    BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
+    if (boxCollider != null) 
+      return;
+
+    boxCollider = gameObject.AddComponent<BoxCollider>();
+    
+    // Get the width of the parent game object
+    float minX = float.MaxValue;
+    float maxX = float.MinValue;
+    float minY = float.MaxValue;
+    float maxY = float.MinValue;
+    float minZ = float.MaxValue;
+    float maxZ = float.MinValue;
+    foreach (Transform child in gameObject.transform)
+    {
+        float childX = child.position.x;
+        float childY = child.position.y;
+        float childZ = child.position.z;
+        if (childX < minX)
+            minX = childX;
+        if (childX > maxX)
+            maxX = childX;
+        if (childY < minY)
+            minY = childY;
+        if (childY > maxY)
+            maxY = childY;
+        if (childZ < minZ)
+            minZ = childZ;
+        if (childZ > maxZ)
+            maxZ = childZ;
+    }
+    float widthX = maxX - minX + 0.05f;
+    float widthY = maxY - minY + 0.05f;
+    float widthZ = maxZ - minZ + 0.05f;
+    boxCollider.size = new Vector3(widthX, widthY, widthZ);
+    boxCollider.center = new Vector3(0, widthY/2, 0);
+  }
 
   private void toFloor() {
     gameObject.AddComponent<PutOnFloor>();
@@ -94,6 +133,7 @@ public class Cabinet
     //add neccesary components
     addRigidBody();
     toFloor();
+    addBoxCollider();
 
     // https://stackoverflow.com/questions/40752083/how-to-find-child-of-a-gameobject-or-the-script-attached-to-child-gameobject-via
     for (int i = 0; i < gameObject.transform.childCount; i++)
