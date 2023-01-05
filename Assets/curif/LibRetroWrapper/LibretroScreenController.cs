@@ -249,6 +249,7 @@ public class LibretroScreenController : MonoBehaviour
   {
     // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
     LibretroMameCore.Run(name, GameFile); //only runs if this game is running
+    display.materials[1].SetFloat("u_time", Time.fixedTime);
     return;
   }
 
