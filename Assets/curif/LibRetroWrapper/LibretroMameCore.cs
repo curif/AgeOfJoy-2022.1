@@ -281,6 +281,7 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android")]       
     private static extern void retro_get_system_av_info(IntPtr info);
     
+    // pixel formats
     public enum retro_pixel_format
     {
         RETRO_PIXEL_FORMAT_0RGB1555 = 0,
@@ -289,6 +290,11 @@ public static unsafe class LibretroMameCore
         RETRO_PIXEL_FORMAT_UNKNOWN  = Int32.MaxValue
     }
     public static retro_pixel_format pixelFormat;
+    private static List<retro_pixel_format> acceptedPixelFormats = new List<retro_pixel_format> { 
+        retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555,
+        retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888,
+        retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565
+    };
     
     // user control
     //games have to initialize and then they can accept controls.
@@ -867,8 +873,7 @@ public static unsafe class LibretroMameCore
 
                 pixelFormat = (retro_pixel_format)Marshal.ReadInt32(data);
                 WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_SET_PIXEL_FORMAT pixelformat: " + pixelFormat);
-                if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565 &&
-                        pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888) {
+                if (! acceptedPixelFormats.Contains(pixelFormat)) {
                     WriteConsole("[LibRetroMameCore.environmentCB] ERROR == pixel format not supported ==" );
                     return false;
                 }
@@ -1043,10 +1048,7 @@ public static unsafe class LibretroMameCore
         }
 
         //just one pixel format is recognized in the actual implemetation. Conversion to other formats are expensive in C#
-        if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565 &&
-            pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888 && 
-            pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555 
-            )
+        if (! acceptedPixelFormats.Contains(pixelFormat)) 
             return;
 
 #if _debug_fps_
@@ -1056,6 +1058,7 @@ public static unsafe class LibretroMameCore
             WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
             // https://docs.unity3d.com/ScriptReference/TextureFormat.html
             switch (pixelFormat) {
+                case retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555:
                 case retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565:
                     GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
                     GameTexture.filterMode = FilterMode.Point;
@@ -1064,18 +1067,9 @@ public static unsafe class LibretroMameCore
                     GameTexture = new Texture2D((int)width, (int)height, TextureFormat.BGRA32, false);
                     GameTexture.filterMode = FilterMode.Point;
                     break;
-                case retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555:
-                    //int paddedWidth = GetNextPowerOfTwo( Mathf.RoundToInt(width));
-                    //int paddedHeight = GetNextPowerOfTwo( Mathf.RoundToInt(height));
-                    // the TextureFormat.ARGB4444 format, which is equivalent to the ARGB1555 format
-                    //GameTexture = new Texture2D(paddedWidth, paddedHeight, TextureFormat.RGB565, false);
-                    GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
-                    GameTexture.filterMode = FilterMode.Point;
-                    break;
             }
             Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
-//        Display.materials[1].SetFloat("u_time", Time.fixedTime);
 
         if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555) 
         {
@@ -1093,16 +1087,6 @@ public static unsafe class LibretroMameCore
         
         return;
     }
-    private static int GetNextPowerOfTwo(int value)
-{
-    int result = 1;
-    while (result < value)
-    {
-        result *= 2;
-    }
-    return result;
-}
-
 
     [AOT.MonoPInvokeCallback (typeof(inputPollHander))]
     static void inputPollCB()
