@@ -1001,6 +1001,39 @@ public static unsafe class LibretroMameCore
         return true;
     }
 
+    private static void CopyImageData0RGB1555toRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
+    {
+        // Get the pointer to the image data as a byte array
+        byte[] data = new byte[pitch * height];
+        Marshal.Copy(imageData, data, 0, data.Length);
+
+        // Lock the texture data and set the pixels directly
+        Color[] pixels = texture.GetPixels();
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                // Get the 0RGB1555 pixel value
+                ushort pixel = BitConverter.ToUInt16(data, y * pitch + x * 2);
+
+                // Extract the 0RGB components from the pixel
+                byte r = (byte)((pixel >> 10) & 0x1F);
+                byte g = (byte)((pixel >> 5) & 0x1F);
+                byte b = (byte)(pixel & 0x1F);
+
+                // Convert the 0RGB values to RGB565 format
+                ushort newPixel = (ushort)((r << 11) | (g << 6) | b);
+
+                // Set the pixel in the texture
+                pixels[y * (int)width + x] = new Color((float)r / 31.0f, (float)g / 31.0f, (float)b / 31.0f);
+            }
+        }
+
+        // Apply the changes to the texture
+        texture.SetPixels(pixels);
+        texture.Apply();
+    }
+
     [AOT.MonoPInvokeCallback (typeof(videoRefreshHandler))]
     static void videoRefreshCB(IntPtr data, uint width, uint height, uint pitch) {
         // WriteConsole($"[LibRetroMameCore.videoRefreshCB] w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
@@ -1011,7 +1044,9 @@ public static unsafe class LibretroMameCore
 
         //just one pixel format is recognized in the actual implemetation. Conversion to other formats are expensive in C#
         if (pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565 &&
-            pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888)
+            pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888 && 
+            pixelFormat != retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555 
+            )
             return;
 
 #if _debug_fps_
@@ -1029,39 +1064,28 @@ public static unsafe class LibretroMameCore
                     GameTexture = new Texture2D((int)width, (int)height, TextureFormat.BGRA32, false);
                     GameTexture.filterMode = FilterMode.Point;
                     break;
+                case retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555:
+                    //int paddedWidth = GetNextPowerOfTwo( Mathf.RoundToInt(width));
+                    //int paddedHeight = GetNextPowerOfTwo( Mathf.RoundToInt(height));
+                    // the TextureFormat.ARGB4444 format, which is equivalent to the ARGB1555 format
+                    //GameTexture = new Texture2D(paddedWidth, paddedHeight, TextureFormat.RGB565, false);
+                    GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
+                    GameTexture.filterMode = FilterMode.Point;
+                    break;
             }
             Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
-                /*
-                the material must to be setted in the GUI
-                Material material;
-                string shaderName = "Hidden/CrtPostProcess";
-                Shader shader = Shader.Find(shaderName);
-                if (shader == null || shader.ToString() == "Hidden/InternalErrorShader (UnityEngine.Shader)") {
-                    UnityEngine.Debug.LogError($"Internal error, Shader not found: {shaderName}");
-                    shader = Shader.Find("Standard");
-                }
-                material = new Material(shader);
-                WriteConsole($"[videoRefreshCB]shader {material.shader}");
-                */
+//        Display.materials[1].SetFloat("u_time", Time.fixedTime);
 
-                /*
-                MeshFilter viewedModelFilter = (MeshFilter)Display.GetComponent("MeshFilter");
-                var bounds = viewedModelFilter.mesh.bounds;
-                var size = Vector3.Scale(bounds.size, Display.transform.localScale);
-                if (size.y < .001)
-                    size.y = size.z;
-                WriteConsole($"[LibRetroMameCore.videoRefreshCB] scale: {size} bounds: {bounds} localscale: {Display.transform.localScale}");
-                Display.material.mainTextureScale = size;
-                */
-
-                // Display.material.SetTexture("_MainTex", GameTexture);
-                // Display.material = material;
-
-        // Display.material.SetFloat("u_time", Time.fixedTime);
-        Display.materials[1].SetFloat("u_time", Time.fixedTime);
-        GameTexture.LoadRawTextureData(data, (int)height*(int)pitch);
-        GameTexture.Apply(false, false);
+        if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555) 
+        {
+            CopyImageData0RGB1555toRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
+        }
+        else 
+        {
+            GameTexture.LoadRawTextureData(data, Mathf.RoundToInt(height*pitch));
+            GameTexture.Apply(false, false);
+        }
 
 #if _debug_fps_
         Profiling.video.Stop();
@@ -1069,6 +1093,16 @@ public static unsafe class LibretroMameCore
         
         return;
     }
+    private static int GetNextPowerOfTwo(int value)
+{
+    int result = 1;
+    while (result < value)
+    {
+        result *= 2;
+    }
+    return result;
+}
+
 
     [AOT.MonoPInvokeCallback (typeof(inputPollHander))]
     static void inputPollCB()
