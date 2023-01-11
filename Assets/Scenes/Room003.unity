@@ -425,6 +425,7 @@ GameObject:
   m_Component:
   - component: {fileID: 46644642}
   - component: {fileID: 46644641}
+  - component: {fileID: 46644643}
   m_Layer: 0
   m_Name: GateController
   m_TagString: door
@@ -479,6 +480,19 @@ Transform:
   m_Father: {fileID: 1629989100}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &46644643
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 46644640}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1.3223404, z: 0.6062994}
+  m_Center: {x: 0, y: -0.16117018, z: 0.021761417}
 --- !u!1001 &63642551
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5719,6 +5733,18 @@ PrefabInstance:
     serializedVersion: 2
     m_TransformParent: {fileID: 1781860467}
     m_Modifications:
+    - target: {fileID: 1622717363174855649, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.624
+      objectReference: {fileID: 0}
+    - target: {fileID: 1622717363207942950, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.6358082
+      objectReference: {fileID: 0}
+    - target: {fileID: 1622717363207942950, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.939
+      objectReference: {fileID: 0}
     - target: {fileID: 3547093813852289138, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
       propertyPath: m_Name
       value: EllectricalInstallation
@@ -5770,6 +5796,14 @@ PrefabInstance:
     - target: {fileID: 3547093813852289139, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3574904564523963794, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.6212007
+      objectReference: {fileID: 0}
+    - target: {fileID: 3705363382018926433, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.6212007
       objectReference: {fileID: 0}
     - target: {fileID: 3866113982725314816, guid: 37064286768228cf3ab539fbf9bb9ab6, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -5845,7 +5879,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -3.476
+      value: -3.662
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalRotation.w

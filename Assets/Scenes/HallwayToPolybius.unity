@@ -467,6 +467,7 @@ GameObject:
   m_Component:
   - component: {fileID: 73669589}
   - component: {fileID: 73669590}
+  - component: {fileID: 73669591}
   m_Layer: 0
   m_Name: GateController (1)
   m_TagString: door
@@ -515,6 +516,19 @@ MonoBehaviour:
       sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
     Blockers:
     - {fileID: 1794290910}
+--- !u!65 &73669591
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 73669588}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1.269035, z: 1.1069431}
+  m_Center: {x: 0, y: -0.13451761, z: 0.053471565}
 --- !u!1001 &96358850
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -879,6 +893,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1029897860}
   - component: {fileID: 1029897859}
+  - component: {fileID: 1029897861}
   m_Layer: 0
   m_Name: GateController
   m_TagString: door
@@ -2632,6 +2647,19 @@ Transform:
   m_Father: {fileID: 1280276495}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1029897861
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 230955755}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.11022, y: 1.5751697, z: 1.1315308}
+  m_Center: {x: -0.055109978, y: 0.0258798, z: 0.06576538}
 --- !u!1001 &1071251070
 PrefabInstance:
   m_ObjectHideFlags: 0

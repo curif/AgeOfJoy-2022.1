@@ -554,7 +554,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 76297461}
   m_LocalRotation: {x: -0, y: -0.9655149, z: -0, w: 0.2603478}
-  m_LocalPosition: {x: -0.301, y: -0.41508412, z: 3.904}
+  m_LocalPosition: {x: -0.237, y: -0.39, z: 4.145}
   m_LocalScale: {x: 0.08709389, y: 0.025362205, z: 0.09696736}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2151,6 +2151,7 @@ GameObject:
   m_Component:
   - component: {fileID: 486031749}
   - component: {fileID: 486031750}
+  - component: {fileID: 486031751}
   m_Layer: 0
   m_Name: ToHallwayWorkshop
   m_TagString: door
@@ -2201,6 +2202,19 @@ MonoBehaviour:
       sceneAssetGuidHex: fc564c28b98efdfa1b9d858d6b8e0b88
     Blockers:
     - {fileID: 1369115204}
+--- !u!65 &486031751
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 486031748}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.065259, y: 1.9420936, z: 1.1354606}
+  m_Center: {x: -0.03262949, y: -0.4710468, z: -0.06773031}
 --- !u!1 &491316376
 GameObject:
   m_ObjectHideFlags: 0
@@ -2418,7 +2432,7 @@ NavMeshAgent:
   m_AutoRepath: 1
   m_Height: 1.6
   m_BaseOffset: 0
-  m_WalkableMask: 4294967295
+  m_WalkableMask: 1
   m_ObstacleAvoidanceType: 4
 --- !u!114 &517459346
 MonoBehaviour:
@@ -5982,8 +5996,8 @@ NavMeshAgent:
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 1.7
-  m_BaseOffset: -0.06
-  m_WalkableMask: 4294967295
+  m_BaseOffset: 0
+  m_WalkableMask: 1
   m_ObstacleAvoidanceType: 4
 --- !u!95 &868527581
 Animator:
@@ -6579,7 +6593,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: ce816f2e6abb0504092c23ed9b970dfd, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.45045006
+      value: 0.596
       objectReference: {fileID: 0}
     - target: {fileID: 400006, guid: ce816f2e6abb0504092c23ed9b970dfd, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6687,7 +6701,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 11493974, guid: ce816f2e6abb0504092c23ed9b970dfd, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 14300000, guid: ce816f2e6abb0504092c23ed9b970dfd, type: 3}
       propertyPath: m_Height
@@ -6711,7 +6725,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 114814064252544740, guid: ce816f2e6abb0504092c23ed9b970dfd, type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_AddedGameObjects:
@@ -6784,7 +6798,7 @@ NavMeshObstacle:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 955887855}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Shape: 1
   m_Extents: {x: 0.5, y: 1, z: 0.5}
@@ -6804,8 +6818,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1.0818529, y: 2.9217708, z: 1.0422618}
-  m_Center: {x: 0.043901563, y: -0.09554124, z: -0.033349186}
+  m_Size: {x: 1.1812385, y: 2.159037, z: 0.9031165}
+  m_Center: {x: 0.0062305927, y: -0.09407282, z: -0.024299353}
 --- !u!1001 &983433291
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13015,6 +13029,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1462192046}
   - component: {fileID: 1462192047}
+  - component: {fileID: 1462192048}
   m_Layer: 0
   m_Name: ToRoom001
   m_TagString: door
@@ -13067,6 +13082,19 @@ MonoBehaviour:
       sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
     Blockers:
     - {fileID: 355405237}
+--- !u!65 &1462192048
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1462192045}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.2390847, y: 1.960869, z: 1.4742863}
+  m_Center: {x: 0.73104835, y: -0.48043448, z: -0.04928446}
 --- !u!1 &1474981852
 GameObject:
   m_ObjectHideFlags: 0
@@ -15607,7 +15635,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 18ebe0e6b4fa2e100aa6c1a81dc1e9ea, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.222
+      value: -0.19
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 18ebe0e6b4fa2e100aa6c1a81dc1e9ea, type: 3}
       propertyPath: m_LocalPosition.z
