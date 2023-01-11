@@ -63,14 +63,9 @@ public class GateController : MonoBehaviour
   [SerializeField]
   public SceneReference[] ScenesToLoad;
 
-  [Tooltip("The GameObject parent of the floor child objects in the scene where the gate is")]
-  [SerializeField]
-  public GameObject Floor;
-
   [Header("Scene Unload settings")]
   [SerializeField]
   public SceneReference[] ScenesToUnload;
-
 
   [Header("Scene Blockers")]
   [SerializeField]
@@ -79,27 +74,16 @@ public class GateController : MonoBehaviour
   [SerializeField]
   public BehaviorTree treeLoad, treeUnLoad, treeBlockers;
 
-  private GameObject centerCamera;
-  private Bounds floorBounds;
+  private GameObject player;
+  private bool playerIsOnTheGate = false;
 
   int loadSceneIdx = 0, unloadSceneIdx = 0, blockerIdx = 0;
   SceneReference controledSceneToLoad, controledSceneToUnLoad, controledSceneBlocker;
   AsyncOperation[] asyncLoad;
 
-  // Start is called before the first frame update
   void Start()
   {
-    centerCamera = GameObject.Find("CenterEyeAnchor");
-    //ConfigManager.WriteConsole($"[GateController] -Starting- Scenes to control, load: {SceneToLoadNames} unload: {SceneToUnloadNames}");
-    if (Floor != null)
-    {
-      floorBounds = new Bounds(Floor.transform.position, Vector3.zero);
-      foreach (Transform floor in Floor.transform)
-      {
-        floorBounds.Encapsulate(new Bounds(floor.position, new Vector3(floor.localScale.x, 100f, floor.localScale.z)));
-      }
-    }
-    // StartCoroutine(Evaluate());
+    player = GameObject.Find("OVRPlayerControllerGalery");
     StartCoroutine(runBT());
   }
 
@@ -134,14 +118,6 @@ public class GateController : MonoBehaviour
       yield return new WaitForSeconds(1f / 3f);
     }
   }
-
-  bool isPlayerCloseToController()
-  {
-    float d = Vector3.Distance(centerCamera.transform.position, gameObject.transform.position);
-    // WriteConsole($"[curif.LibRetroMameCore.isPlayerClose] distance: {d} < {_distanceMinToPlayerToStartGame} {d < _distanceMinToPlayerToStartGame}");
-    return d < MinimalDistance;
-  }
-
   void LockGate(SceneGate scn, bool block)
   {
     foreach (GameObject blocker in scn.Blockers)
@@ -151,20 +127,28 @@ public class GateController : MonoBehaviour
     }
   }
 
-  bool PlayerIsInTheRoom()
+  private void OnTriggerEnter(Collider other)
   {
-    //https://docs.unity3d.com/ScriptReference/Bounds.html
-    if (floorBounds == null)
-      return false;
-    return floorBounds.Contains(centerCamera.transform.position);
+    if (other.gameObject == player)
+    {
+      playerIsOnTheGate = true; 
+    }
   }
+
+  private void OnTriggerExit(Collider other)
+  {
+      if (other.gameObject == player)
+      {
+        playerIsOnTheGate = false; 
+      }
+  }
+
 
   private BehaviorTree buildUnLoadScenesBT()
   {
     return new BehaviorTreeBuilder(gameObject)
     .Sequence()
-      .Condition("Is the player close to the controller?", () => isPlayerCloseToController())
-      .Condition("Player is in the room", () => PlayerIsInTheRoom())
+      .Condition("Is the player on the gate?", () => playerIsOnTheGate)
 
       .ExecuteAllSequence()
         .Sequence()
@@ -194,8 +178,7 @@ public class GateController : MonoBehaviour
   {
     return new BehaviorTreeBuilder(gameObject)
       .Sequence()
-        .Condition("Player is in the room", () => PlayerIsInTheRoom())
-        .Condition("Is player close to the controller", () => isPlayerCloseToController())
+        .Condition("Is the player on the gate?", () => playerIsOnTheGate)
         .ExecuteAllSequence()
           .Sequence("load the scene if not loaded")
             .Condition("registered?", () => controledSceneToLoad != null)
