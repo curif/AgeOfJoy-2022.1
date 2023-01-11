@@ -1081,6 +1081,8 @@ public static unsafe class LibretroMameCore
             GameTexture.Apply(false, false);
         }
 
+//        Display.materials[1].SetFloat("u_time", Time.fixedTime);
+
 #if _debug_fps_
         Profiling.video.Stop();
 #endif
@@ -1101,7 +1103,7 @@ public static unsafe class LibretroMameCore
     static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
         Int16 ret = 0;
 
-        if (!WaitToFinishedGameLoad.Finished())
+        if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
           return ret;
 
         //WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{id}");
