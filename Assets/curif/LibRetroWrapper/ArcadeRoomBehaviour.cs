@@ -37,6 +37,10 @@ public class ArcadeRoomBehaviour : MonoBehaviour
   [Tooltip("Max time to spent walking to a place before abort")]
   public int TimeoutSeconds = 5;
 
+  public PlaceInformation Destination { get => destination; }
+
+  public Vector3 centerRaycastPlayerDetection = new Vector3(0,1,0);
+
   private NavMeshAgent agent;
   private PlaceInformation destination, selectedDestination;
   private Animator animator;
@@ -50,7 +54,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
   private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
   private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
   private bool collisionWithPlayer = false;
-  public PlaceInformation Destination { get => destination; }
+
 
   void Start()
   {
@@ -63,7 +67,12 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
     StartCoroutine(runBT());
   }
-
+  /*
+   * Detects collision against the Character Controller that acts as collider
+   * The character controller is like a capsule collider, the detection needs to 
+   * be at center or higher than the floor level, the property cetnerRaycastPlayerDetection
+   * is used to move the center of the Raycast.
+   * */
   bool detectPlayer() {
     float distance = 5f; // distance to detect objects
     float angleIncrement = 20f; // angle increment between rays
@@ -76,21 +85,20 @@ public class ArcadeRoomBehaviour : MonoBehaviour
     {
 	// calculate direction of the ray based on angle
         Vector3 direction = Quaternion.AngleAxis(angle, transform.up) * transform.forward;
-    	//Ray ray = new Ray(transform.position, direction);
-        
+        Vector3 center =  transform.position + centerRaycastPlayerDetection;
 	RaycastHit hit;
-        if (Physics.Raycast(transform.position, direction, out hit, distance))
+        if (Physics.Raycast(center, direction, out hit, distance))
         {
 	    if (hit.collider.gameObject == player)
             {
                 ConfigManager.WriteConsole($"[DetectPlayerInPath] {gameObject} Player in collision path!");
-		Debug.DrawRay(transform.position, direction, Color.red, 0);
+		Debug.DrawRay(center, direction, Color.red, 0);
 		collisionWithPlayer = true; 
                 return true;
                 // The ray hit the player, so do something (e.g. change direction)
             }
 	    else {
-		Debug.DrawRay(transform.position, direction, Color.yellow, 0);
+		Debug.DrawRay(center, direction, Color.yellow, 0);
 	    }
         }
     
