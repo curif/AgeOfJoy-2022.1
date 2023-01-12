@@ -295,12 +295,12 @@ public class Cabinet
     //LibretroScreenController will find the object using this name:
     newCRT.name = CRTName(Name, GameFile);
    
-		// rotate and scale
-		float scale = scalePercentage / 100f;
+    // rotate and scale
+    float scale = scalePercentage / 100f;
     newCRT.transform.localScale *= scale;
     newCRT.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
 
-		Parts.Add("screen", newCRT);
+    Parts.Add("screen", newCRT);
 
     Parts["screen"].GetComponent<MeshRenderer>().materials = ms;
 
@@ -310,7 +310,7 @@ public class Cabinet
     Parts.Remove("screen-mock-vertical");
 
     //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
-    LibretroScreenController libretroScreenController = Parts["screen"].AddComponent<LibretroScreenController>();
+    LibretroScreenController libretroScreenController = Parts["screen"].GetComponent<LibretroScreenController>();
 
     libretroScreenController.GameFile = GameFile;
     libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
@@ -323,12 +323,6 @@ public class Cabinet
     libretroScreenController.GameVideoFile = GameVideoFile;
     libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
     libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
-
-    //it's very basic, but the spatializer wont work, so may be it's the only alternative.
-    AudioSource audio = Parts["screen"].GetComponent<AudioSource>();
-    audio.minDistance = 0.6f; //max sound inside this range
-    audio.maxDistance = 1f;
-    audio.rolloffMode = AudioRolloffMode.Linear;
 
     return this;
   }

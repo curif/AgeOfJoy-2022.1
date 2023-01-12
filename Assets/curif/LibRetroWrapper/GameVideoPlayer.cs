@@ -18,6 +18,7 @@ public class GameVideoPlayer : MonoBehaviour {
     public bool invertx = false; 
     public bool inverty = false;
     private Renderer videoPlayerRenderer;
+    private bool isPreparing = false;
 
     // Start is called before the first frame update
     void Start() {
@@ -28,6 +29,7 @@ public class GameVideoPlayer : MonoBehaviour {
         videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.MaterialOverride;
         videoPlayer.targetMaterialRenderer = Display;
         videoPlayerRenderer = Display.GetComponent<Renderer>();
+        isPreparing = false;
     }
 
     public GameVideoPlayer setVideo(string path, bool invertX = false, bool invertY = false) {
@@ -38,24 +40,33 @@ public class GameVideoPlayer : MonoBehaviour {
         invertx = invertX;
         inverty = invertY;
         //gameObject.GetComponent<MeshRenderer>().material =  Resources.Load<Material>("Cabinets/Materials/Screen");
-        videoPlayer.url = videoPath;
+        //videoPlayer.url = videoPath;
         //videoPlayer.Prepare();
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
         return this;
     }
 
+    private void PrepareVideo()
+    {
+        isPreparing = true;
+        videoPlayer.Prepare();
+    }
+
     public GameVideoPlayer Play() {
-        if (string.IsNullOrEmpty(videoPath))
+        if (videoPlayer == null || string.IsNullOrEmpty(videoPath) || isPreparing)
             return this;
         
         Display.materials[1].SetFloat("MirrorX", invertx? 1f:0f);
         Display.materials[1].SetFloat("MirrorY", inverty? 1f:0f);
 
+        if (videoPlayer.url != videoPath)
+            videoPlayer.url = videoPath;
+
         if (! videoPlayer.isPrepared) {
             videoPlayer.prepareCompleted += PrepareCompleted;
             videoPlayer.errorReceived += ErrorReceived;
             ConfigManager.WriteConsole($"[videoPlayer] prepare {videoPath} ====");
-            videoPlayer.Prepare(); //plays in prepareCompleted event
+            PrepareVideo();
         }
         else if (videoPlayer.isPaused) {
             videoPlayer.isLooping = true;
@@ -70,7 +81,7 @@ public class GameVideoPlayer : MonoBehaviour {
     }
 
     public GameVideoPlayer Pause() {
-        if (string.IsNullOrEmpty(videoPath) || ! videoPlayer.isPrepared || videoPlayer.isPaused)
+        if (videoPlayer == null || string.IsNullOrEmpty(videoPath) || ! videoPlayer.isPrepared || videoPlayer.isPaused || isPreparing)
             return this;
 
         //is is necessary because the VideoPlayer.Pause method only works if isLooping is set to false. If isLooping is set to true, the Pause method will have no effect and the video will continue to play.
@@ -94,6 +105,8 @@ public class GameVideoPlayer : MonoBehaviour {
     {
         ConfigManager.WriteConsole($"[videoPlayer] PrepareCompleted play {videoPath} ====");
         vp.Play();
+        // The video is ready to play
+        isPreparing = false;
     }
 
     void ErrorReceived(VideoPlayer vp, string message)

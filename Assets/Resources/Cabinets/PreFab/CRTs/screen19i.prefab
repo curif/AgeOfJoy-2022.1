@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 245838673134088757}
   - component: {fileID: 2633923747280914175}
   - component: {fileID: 7395208051691149763}
+  - component: {fileID: -6857671861487439488}
+  - component: {fileID: 9020261596928811661}
   m_Layer: 0
   m_Name: screen19i
   m_TagString: Untagged
@@ -94,7 +96,7 @@ AudioSource:
   m_GameObject: {fileID: 4579439272377624362}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 24300001, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
@@ -105,8 +107,8 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 58
   DopplerLevel: 0
-  MinDistance: 3
-  MaxDistance: 10
+  MinDistance: 1
+  MaxDistance: 5
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -226,3 +228,44 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &-6857671861487439488
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0027d8d2fcba6e5468c17d37a3c16018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  videoPath: 
+  invertx: 0
+  inverty: 0
+--- !u!114 &9020261596928811661
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3720c6f0ee1b1c264bd64ff0fc7180a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GameFile: 1942.zip
+  GameVideoFile: 
+  GameVideoInvertX: 0
+  GameVideoInvertY: 0
+  GameInvertX: 0
+  GameInvertY: 0
+  DistanceMinToPlayerToActivate: 2
+  SecondsToWaitToExitGame: 2
+  SecondsToWaitToFinishLoad: 2
+  EnableSaveState: 1
+  StateFile: state.nv
+  Gamma: 5
+  Brightness: 8
+  PathBase: 
