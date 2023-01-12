@@ -3796,7 +3796,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinimalDistance: 0.9
   ScenesToLoad: []
-  Floor: {fileID: 444468598}
   ScenesToUnload: []
   SceneBlockers: []
 --- !u!4 &430369709
@@ -13016,6 +13015,7 @@ MonoBehaviour:
   MaxTimeSpentGaming: 30
   MinTimeSpentGaming: 5
   TimeoutSeconds: 15
+  centerRaycastPlayerDetection: {x: 0, y: 1, z: 0}
 --- !u!95 &1303032307
 Animator:
   serializedVersion: 4
@@ -13051,7 +13051,7 @@ NavMeshAgent:
   avoidancePriority: 50
   m_AngularSpeed: 120
   m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
+  m_AutoTraverseOffMeshLink: 0
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 1.6
@@ -13175,6 +13175,7 @@ MonoBehaviour:
   MaxTimeSpentGaming: 30
   MinTimeSpentGaming: 5
   TimeoutSeconds: 15
+  centerRaycastPlayerDetection: {x: 0, y: 1, z: 0}
 --- !u!195 &1305314741
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -13190,7 +13191,7 @@ NavMeshAgent:
   avoidancePriority: 50
   m_AngularSpeed: 120
   m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
+  m_AutoTraverseOffMeshLink: 0
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 1.6
@@ -13752,6 +13753,7 @@ MonoBehaviour:
   MaxTimeSpentGaming: 30
   MinTimeSpentGaming: 5
   TimeoutSeconds: 15
+  centerRaycastPlayerDetection: {x: 0, y: 1, z: 0}
 --- !u!195 &1419345625
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -13767,7 +13769,7 @@ NavMeshAgent:
   avoidancePriority: 50
   m_AngularSpeed: 120
   m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
+  m_AutoTraverseOffMeshLink: 0
   m_AutoBraking: 1
   m_AutoRepath: 1
   m_Height: 1.7
