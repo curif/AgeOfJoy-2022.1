@@ -41,7 +41,33 @@ public static class CabinetFactory
 		GameObject model; 
 		if (! String.IsNullOrEmpty(modelFilePath)) 
 		{
-			model = Importer.LoadFromFile(modelFilePath);
+			if (CabinetStyles.ContainsKey(modelFilePath))
+			{
+				ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
+				model = CabinetStyles[modelFilePath];
+			}
+			else 
+			{
+				try 
+				{
+					model = Importer.LoadFromFile(modelFilePath);
+				}
+				catch (Exception e)
+				{
+					ConfigManager.WriteConsole($"[CabinetFactory] ERROR loading model {modelFilePath}: {e}");
+					model = null;
+				}
+				if (model == null)
+				{
+					ConfigManager.WriteConsole($"[CabinetFactory] can't get model, falls to Galaga: {modelFilePath}");
+					model = CabinetStyles["galaga"]; 
+				}
+				else
+				{
+					ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
+					CabinetStyles.Add(modelFilePath, model);
+				}
+			}
 		}
 		else if (!CabinetStyles.ContainsKey(style) || CabinetStyles[style] == null)
 		{
