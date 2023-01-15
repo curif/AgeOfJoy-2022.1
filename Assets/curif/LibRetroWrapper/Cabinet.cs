@@ -12,9 +12,6 @@ public class Cabinet
 {
   public string Name = "";
   public GameObject gameObject;
-  // private GameObject Center, Front, Joystick, Left, Marquee, Right, Screen;
-  // private Material sharedMaterial;
-  Dictionary<string, GameObject> Parts = new();
 
   //Al the parts in the gabinet that must exists, can be others.
   static List<string> RequiredParts = new List<string>() { "front", "left", "right", "joystick", "screen-base", "screen-mock-vertical", "screen-mock-horizontal" };
@@ -37,7 +34,6 @@ public class Cabinet
   // load a texture from disk.
   private static Texture2D LoadTexture(string filePath)
   {
-
     Texture2D tex = null;
     byte[] fileData;
 
@@ -55,7 +51,7 @@ public class Cabinet
     get
     {
       foreach (string key in RequiredParts)
-        if (!Parts.ContainsKey(key))
+        if (!PartsExist(key))
           return false;
       return true;
     }
@@ -135,65 +131,60 @@ public class Cabinet
     toFloor();
     addBoxCollider();
 
-    // https://stackoverflow.com/questions/40752083/how-to-find-child-of-a-gameobject-or-the-script-attached-to-child-gameobject-via
-    for (int i = 0; i < gameObject.transform.childCount; i++)
-    {
-      GameObject child = gameObject.transform.GetChild(i).gameObject;
-      if (child != null)
-      {
-        Parts.Add(child.name, child);
-        ConfigManager.WriteConsole($"[Cabinet] Cabinet {name} part {child.name} added");
-      }
-    }
     if (!IsValid)
       throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
 
     SetMaterial(CabinetMaterials.Black);
-    if (Parts.ContainsKey("bezel"))
+    if (PartsExist("bezel"))
       SetMaterial("bezel", CabinetMaterials.FrontGlassWithBezel);
-
-    //Player position
-    //GameObject playerPosition = GameObject.Instantiate<GameObject>(new GameObject("PlayerPosition"), position, rotation, gameObject.transform);
-    // GameObject playerPosition = new GameObject("PlayerPosition");
-    // playerPosition.transform.position = position;
-    // playerPosition.transform.rotation = rotation;
-    // playerPosition.transform.parent =  gameObject.transform;
-    // playerPosition.transform.position += playerPosition.transform.forward * 2;
-    // Parts.Add(playerPosition.name, playerPosition);
 
   }
   public GameObject this[string part]
   {
     get
     {
-      return Parts[part];
+      return Parts(part);
     }
   }
+  public GameObject Parts(string part)
+  {
+    Transform childTransform = gameObject.transform.Find(part);
+    if (childTransform == null)
+      return null;
+    return childTransform.gameObject;
+  }
+  public bool PartsExist(string part)
+  {
+    return gameObject.transform.Find(part) != null;
+  }
 
-	public Cabinet ScalePart(string cabinetPart , float percentage) {
-	 	if (!Parts.ContainsKey(cabinetPart))
+  public Cabinet ScalePart(string cabinetPart , float percentage) {
+    if (!PartsExist(cabinetPart))
       return this;
     
-		float scale = percentage / 100f;
-    Parts[cabinetPart].transform.localScale *= scale;
-		return this;
-	}
+    float scale = percentage / 100f;
+    Parts(cabinetPart).transform.localScale *= scale;
+    return this;
+  }
   public Cabinet RotatePart(string cabinetPart, float angleX, float angleY, float angleZ) {
-	 	if (!Parts.ContainsKey(cabinetPart))
+    if (!PartsExist(cabinetPart))
       return this;
     
-    Parts[cabinetPart].transform.Rotate(angleX, angleY, angleZ);
-		return this;
-	}
+    Parts(cabinetPart).transform.Rotate(angleX, angleY, angleZ);
+    return this;
+  }
  
   //change a material, and
   public Cabinet SetTextureTo(string cabinetPart, string textureFile, Material mat, bool invertX = false, bool invertY = false)
   {
 
-    if (!Parts.ContainsKey(cabinetPart))
-      // throw new System.Exception($"Unrecognized part: {cabinetPart} adding the texture: {textureFile}");
+    if (!PartsExist(cabinetPart))
       return this;
     if (mat == null && string.IsNullOrEmpty(textureFile))
+      return this;
+
+    Renderer r = Parts(cabinetPart).GetComponent<Renderer>();
+    if (r == null)
       return this;
 
     Material m = new Material(mat);
@@ -218,21 +209,19 @@ public class Cabinet
         m.SetTexture("_MainTex", t);
     }
 
-    Renderer r = Parts[cabinetPart].GetComponent<Renderer>();
-    if (r != null)
-      r.material = m;
+    r.material = m;
 
     return this;
   }
 
   public Cabinet SetMarquee(string part, string texturePath, bool invertX = false, bool invertY = false)
   {
-    SetTextureTo(part, texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
-    return this;
+    return SetTextureTo(part, texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
   }
   public Cabinet SetMarqueeEmissionColor(string part, Color color) {
-    Renderer r = Parts[part].GetComponent<Renderer>();
-    // Debug.Log($"SetMarquee color: {color}");
+    if (!PartsExist(part))
+      return this;
+    Renderer r = Parts(part).GetComponent<Renderer>();
     if (r != null)
       r.material.SetColor("_EmissionColor", color);
     return this;
@@ -240,17 +229,19 @@ public class Cabinet
 
   public Cabinet SetBezel(string part, string texturePath, bool invertX = false, bool invertY = false)
   {
-    SetTextureTo(part, texturePath, CabinetMaterials.FrontGlassWithBezel, invertX: invertX, invertY: invertY);
-    return this;
+    return SetTextureTo(part, texturePath, CabinetMaterials.FrontGlassWithBezel, invertX: invertX, invertY: invertY);
   }
 
   //set the same material to all components.
   public Cabinet SetMaterial(Material mat)
   {
-    foreach (KeyValuePair<string, GameObject> part in Parts)
+    Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
+    foreach (Renderer renderer in renderers)
     {
-      if (!NonStandardParts.Contains(part.Key) && part.Value.GetComponent<Renderer>() != null)
-        part.Value.GetComponent<Renderer>().material = mat;
+      if (!NonStandardParts.Contains(renderer.gameObject.name))
+      {
+          renderer.material = mat;
+      }
     }
     return this;
   }
@@ -258,10 +249,10 @@ public class Cabinet
   //set the material to a component. Don't create new.
   public Cabinet SetMaterial(string part, Material mat)
   {
-    if (!Parts.ContainsKey(part))
+    if (!PartsExist(part))
       throw new System.Exception($"Unknown part {part} to set material in cabinet {Name}");
     
-    Renderer r = Parts[part].GetComponent<Renderer>();
+    Renderer r = Parts(part).GetComponent<Renderer>();
     if (r != null)
       r.material = mat;
 
@@ -287,7 +278,9 @@ public class Cabinet
         };
 
     string CRTType = $"screen-mock-{orientation}";
-    GameObject CRT = Parts[CRTType];
+    GameObject CRT = Parts(CRTType);
+    if (CRT == null)
+      throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
     GameObject newCRT = CRTsFactory.Instantiate(type, CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
     if (newCRT == null)
       throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
@@ -300,17 +293,13 @@ public class Cabinet
     newCRT.transform.localScale *= scale;
     newCRT.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
 
-    Parts.Add("screen", newCRT);
+    newCRT.GetComponent<MeshRenderer>().materials = ms;
 
-    Parts["screen"].GetComponent<MeshRenderer>().materials = ms;
-
-    Object.Destroy(Parts["screen-mock-horizontal"]);
-    Object.Destroy(Parts["screen-mock-vertical"]);
-    Parts.Remove("screen-mock-horizontal");
-    Parts.Remove("screen-mock-vertical");
+    Object.Destroy(Parts("screen-mock-horizontal"));
+    Object.Destroy(Parts("screen-mock-vertical"));
 
     //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
-    LibretroScreenController libretroScreenController = Parts["screen"].GetComponent<LibretroScreenController>();
+    LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
     libretroScreenController.GameFile = GameFile;
     libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
@@ -329,33 +318,29 @@ public class Cabinet
 
   public Cabinet AddCoinSlot(string type, float rotationAngleX, float rotationAngleY, float rotationAngleZ, float scalePercentage)
   {
-    if (!Parts.ContainsKey("coin-slot"))
+    GameObject coinSlotMock = Parts("coin-slot");
+    if (coinSlotMock == null)
     {
       ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] ERROR coin-slot part not present in cabinet {Name}");
       return this;
     }
 
-    GameObject coinSlotMock = Parts["coin-slot"];
     GameObject newCoinSlot = CoinSlotsFactory.Instantiate(type, coinSlotMock.transform.position, coinSlotMock.transform.rotation, coinSlotMock.transform.parent);
     if (newCoinSlot != null)
     {
       //LibretroScreenController will find the coinslot using this name:
       newCoinSlot.name = "coin-slot-added";
-      Parts.Add("coin-slot-added", newCoinSlot);
       ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] {Name} added part coin-slot-added");
     }
     else
       ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] ERROR {Name}: can't create the new coin-slot type: {type}");
 
-		// rotate and scale
-		float scale = scalePercentage / 100f;
+    // rotate and scale
+    float scale = scalePercentage / 100f;
     newCoinSlot.transform.localScale *= scale;
     newCoinSlot.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
 
-		Object.Destroy(Parts["coin-slot"]);
-    //Parts["coin-slot"].SetActive(false);
-    Parts.Remove("coin-slot");
-    ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] {Name}: old coin-slot part unactive");
+    Object.Destroy(coinSlotMock);
 
     return this;
   }
