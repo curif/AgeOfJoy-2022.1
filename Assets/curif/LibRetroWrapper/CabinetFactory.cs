@@ -157,21 +157,6 @@ public static class CabinetFactory
 			}
 
 		}
-		/*
-		   if (cbinfo.bezel != null)
-		   {
-		   ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
-		   cabinet.SetBezel(cbinfo.getPath(cbinfo.bezel.art.file));
-		   }
-
-		   if (cbinfo.marquee != null)
-		   {
-		   ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {cbinfo.marquee.art.file}");
-		   cabinet.SetMarquee(cbinfo.getPath(cbinfo.marquee.art.file), cbinfo.marquee.lightcolor.getColor());
-		   }
-		   else
-		   cabinet.SetMarquee("", Color.white);
-		   */
 
 		if (!string.IsNullOrEmpty(cbinfo.coinslot))
 		{

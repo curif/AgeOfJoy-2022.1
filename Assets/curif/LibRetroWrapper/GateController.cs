@@ -81,6 +81,9 @@ public class GateController : MonoBehaviour
                 yield return null;
               ConfigManager.WriteConsole($"[GateController] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
             }
+            AsyncOperation resourceUnloadOp = Resources.UnloadUnusedAssets();
+            while (!resourceUnloadOp.isDone)
+              yield return null;
           }
         }
 
