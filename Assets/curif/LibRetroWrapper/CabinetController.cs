@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Threading.Tasks;
 
 
 public class CabinetController : MonoBehaviour
@@ -25,18 +26,30 @@ public class CabinetController : MonoBehaviour
     while (game == null || game.CabInfo == null)
       yield return new WaitForSeconds(1f);
 
+    Cabinet cab;
     try
     {
       //cabinet inception
       ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
-      CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, transform.parent);
-      // UnityEngine.Object.Destroy(gameObject);
-      gameObject.SetActive(false);
+      cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, transform.parent);
     }
     catch (System.Exception ex)
     {
       ConfigManager.WriteConsole($"[CabinetController] ERROR loading cabinet from description {game.CabInfo.name}: {ex}");
+      cab = null;
     }
+    if (cab != null && game.CabInfo.Parts != null) 
+    {
+//      var t = Task.Run(async() => await CabinetFactory.skinFromInformationAsync(cab, game.CabInfo));
+//      yield return new WaitUntil(() => t.IsCompleted);
+      ConfigManager.WriteConsole($"[CabinetControlle] {game.CabInfo.name} texture parts");
+      foreach (CabinetInformation.Part part in game.CabInfo.Parts)
+      {
+        CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
+        yield return null;
+      }
+    }
+    gameObject.SetActive(false);
     ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
   }
 }
