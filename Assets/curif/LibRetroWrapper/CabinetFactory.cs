@@ -11,6 +11,7 @@ using System.IO;
 using System;
 //using UnityEngine.Networking;
 using Siccity.GLTFUtility;
+using System.Threading.Tasks;
 
 //store Cabinets resources
 public static class CabinetFactory
@@ -81,6 +82,63 @@ public static class CabinetFactory
 		return new Cabinet(cabinetName, position, rotation, parent, go: model);
 	}
   
+	public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo, CabinetInformation.Part p)
+	{
+		switch (p.type)
+		{
+			case "bezel" : 
+				{
+					ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
+					cabinet.SetBezel(p.name, cbinfo.getPath(p.art.file));
+				}
+				break;
+
+			case "marquee" : 
+				{
+					ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
+					cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
+					if (p.color != null) 
+						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColor());
+				}
+				break;
+
+			default:													 
+				{
+					if (p.material != null)
+						cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
+					else if (p.art != null)
+						cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
+					else if (p.color != null)
+					{
+						Material matColor = new Material(CabinetMaterials.Base);
+						matColor.SetColor("_Color", p.color.getColor());
+						cabinet.SetMaterial(p.name, matColor);
+					}
+					else
+						cabinet.SetMaterial(p.name, CabinetMaterials.Black);
+				}
+				break;
+		}
+		// Part scale and rotation
+		cabinet.ScalePart(p.name, p.geometry.scalepercentaje);
+		cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
+		return cabinet;
+	}
+
+	public static Cabinet skinFromInformation(Cabinet cabinet, CabinetInformation cbinfo) {
+
+		//process each part
+		if (cbinfo.Parts != null) {
+			ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
+			foreach (CabinetInformation.Part p in cbinfo.Parts)
+			{
+				skinCabinetPart(cabinet, cbinfo, p);
+			}
+		}
+
+		return cabinet;
+	}
+
 	public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, Vector3 position, Quaternion rotation, Transform parent)
 	{
 		string modelFilePath = "";
@@ -110,68 +168,6 @@ public static class CabinetFactory
 			mat.SetColor("_Color", cbinfo.color.getColor());
 			cabinet.SetMaterial(mat);
 		}
-
-		//process each part
-		if (cbinfo.Parts != null) {
-			ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
-			foreach (CabinetInformation.Part p in cbinfo.Parts)
-			{
-				switch (p.type)
-				{
-					case "bezel" : 
-						{
-							ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
-							cabinet.SetBezel(p.name, cbinfo.getPath(p.art.file));
-						}
-						break;
-
-					case "marquee" : 
-						{
-							ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
-							cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
-							if (p.color != null) 
-								cabinet.SetMarqueeEmissionColor(p.name, p.color.getColor());
-						}
-						break;
-
-					default:													 
-						{
-							if (p.material != null)
-								cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
-							else if (p.art != null)
-								cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
-							else if (p.color != null)
-							{
-								Material matColor = new Material(CabinetMaterials.Base);
-								matColor.SetColor("_Color", p.color.getColor());
-								cabinet.SetMaterial(p.name, matColor);
-							}
-							else
-								cabinet.SetMaterial(p.name, CabinetMaterials.Black);
-						}
-						break;
-				}
-				// Part scale and rotation
-				cabinet.ScalePart(p.name, p.geometry.scalepercentaje);
-				cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
-			}
-
-		}
-		/*
-		   if (cbinfo.bezel != null)
-		   {
-		   ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {cbinfo.bezel.art.file}");
-		   cabinet.SetBezel(cbinfo.getPath(cbinfo.bezel.art.file));
-		   }
-
-		   if (cbinfo.marquee != null)
-		   {
-		   ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {cbinfo.marquee.art.file}");
-		   cabinet.SetMarquee(cbinfo.getPath(cbinfo.marquee.art.file), cbinfo.marquee.lightcolor.getColor());
-		   }
-		   else
-		   cabinet.SetMarquee("", Color.white);
-		   */
 
 		if (!string.IsNullOrEmpty(cbinfo.coinslot))
 		{
