@@ -15,8 +15,9 @@ using Eflatun.SceneReference;
 [Serializable]
 public class SceneGate
 {
+  [Tooltip("Room blocked by the gate")]
   public SceneReference SceneRef;
-  [Tooltip("Objects that block the gate")]
+  [Tooltip("Objects that block the gate, the object should be in the actual room, not in the blocked one.")]
   public GameObject[] Blockers;
 }
 
