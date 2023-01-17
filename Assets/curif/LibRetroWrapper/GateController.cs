@@ -71,6 +71,7 @@ public class GateController : MonoBehaviour
         }
         if (ScenesToUnload.Length > 0)
         {
+          bool unloadUnusedAssets = false;
           foreach (SceneReference controledSceneToUnLoad in ScenesToUnload)   
           {
             if(controledSceneToUnLoad != null && controledSceneToUnLoad.IsSafeToUse && 
@@ -80,24 +81,27 @@ public class GateController : MonoBehaviour
               while (!asyncLoad.isDone)
                 yield return null;
               ConfigManager.WriteConsole($"[GateController] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
+              unloadUnusedAssets = true;
             }
+          }
+          if (unloadUnusedAssets)
+          {
             AsyncOperation resourceUnloadOp = Resources.UnloadUnusedAssets();
             while (!resourceUnloadOp.isDone)
               yield return null;
           }
         }
-
-        if (SceneBlockers.Length > 0)
-        {
-          int idx;
-          for (idx = 0; idx < SceneBlockers.Length; idx ++)
-          {
-            SceneReference controledSceneBlocker = SceneBlockers[idx].SceneRef;
-            if (controledSceneBlocker != null)
-              LockGate(SceneBlockers[idx], !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
-          }
-        } 
       }
+      if (SceneBlockers.Length > 0)
+      {
+        int idx;
+        for (idx = 0; idx < SceneBlockers.Length; idx ++)
+        {
+          SceneReference controledSceneBlocker = SceneBlockers[idx].SceneRef;
+          if (controledSceneBlocker != null)
+            LockGate(SceneBlockers[idx], !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
+        }
+      } 
       yield return new WaitForSeconds(1f / 3f);
     }
   }
