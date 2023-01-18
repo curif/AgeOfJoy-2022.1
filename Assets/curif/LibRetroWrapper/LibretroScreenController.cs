@@ -5,6 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 
+//#define _serialize_
 #define _debug_
 
 using System.Collections;
@@ -73,7 +74,6 @@ public class LibretroScreenController : MonoBehaviour
   private Camera cameraComponentCenterEye;
   private Renderer display;
   private GameVideoPlayer videoPlayer;
-  private bool isVisible;
   private DateTime timeToExit = DateTime.MinValue;
   private AudioSource BackgroundAudio;
   private GameObject cabinet;
@@ -156,8 +156,10 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.Speaker = GetComponent<AudioSource>();
             LibretroMameCore.Display = display;
             LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
+#if _serialize_
             LibretroMameCore.EnableSaveState = EnableSaveState;
             LibretroMameCore.StateFile = StateFile;
+#endif
             LibretroMameCore.Brightness = Brightness;
             LibretroMameCore.Gamma = Gamma;
             LibretroMameCore.CoinSlot = CoinSlot;
@@ -299,7 +301,7 @@ public class LibretroScreenController : MonoBehaviour
     }
     */
     //https://docs.unity3d.com/ScriptReference/Physics.Linecast.html
-		Debug.DrawRay(transform.position, transform.forward, Color.red, 2f);
+    Debug.DrawRay(transform.position, transform.forward, Color.red, 2f);
     if (! Physics.Linecast(cameraComponentCenterEye.transform.position, display.bounds.center, out hit))
       return true; 
      
@@ -326,15 +328,5 @@ public class LibretroScreenController : MonoBehaviour
       PreparePlayerToPlayGame(false);
   }
 
-  void OnBecameVisible()
-  {
-    //LibretroMameCore.WriteConsole($"[onBecameVisible] {gameObject.name} now is VISIBLE");
-    isVisible = true;
-  }
-  void OnBecameInvisible()
-  {
-    //LibretroMameCore.WriteConsole($"[onBecameInvisible] {gameObject.name} INVISIBLE");
-    isVisible = false;
-  }
 
 }
