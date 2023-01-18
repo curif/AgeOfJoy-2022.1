@@ -142,7 +142,7 @@ public static unsafe class LibretroMameCore
         RETRO_LOG_WARN  = 2,
         RETRO_LOG_ERROR = 3
     }
-    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_INFO;
+    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_DEBUG;
 
     public delegate void logHandler(retro_log_level level, [In, MarshalAs(UnmanagedType.LPStr)] string format, IntPtr arg1, IntPtr arg2, IntPtr arg3, IntPtr arg4, IntPtr arg5, IntPtr arg6, IntPtr arg7, IntPtr arg8, IntPtr arg9, IntPtr arg10, IntPtr arg11, IntPtr arg12);
     [StructLayout(LayoutKind.Sequential)]
@@ -492,6 +492,16 @@ public static unsafe class LibretroMameCore
         if (GameLoaded)
         {
           getAVGameInfo();
+          if (GameAVInfo.geometry.base_width  > 1000 || 
+              GameAVInfo.geometry.base_height > 1000 ||
+              GameAVInfo.geometry.max_width   > 1000 ||
+              GameAVInfo.geometry.max_height  > 1000 ||
+              GameAVInfo.timing.fps == 0)
+          {
+            WriteConsole("[LibRetroMameCore.Start] ERROR inconsistent game information from MAME");
+            ClearAll();
+            return false;
+          }
 
           FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
@@ -502,8 +512,7 @@ public static unsafe class LibretroMameCore
           WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
           */
 
-          WriteConsole(
-            $"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
+          WriteConsole($"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
 
           // Audioclips are not sinchronized with the video.
           //Speaker.clip = AudioClip.Create("MameAudioSource", sampleRate * 2, 2, sampleRate, true, OnAudioRead /*, onAudioChangePosition*/);
@@ -604,12 +613,12 @@ public static unsafe class LibretroMameCore
 
         //LockControls(false);
 
-        WriteConsole("[LibRetroMameCore.Run] End *************************************************");
+        WriteConsole("[LibRetroMameCore.End] END  *************************************************");
     }
 
     private static void ClearAll() {
         //TODO
-        WriteConsole("[LibRetroMameCore.ClearAll]  *************************************************");
+        WriteConsole("[LibRetroMameCore.ClearAll]");
         FPSControl = null;
         GameTexture = null;
         AudioBatch =  new List<float>();
@@ -1053,7 +1062,6 @@ public static unsafe class LibretroMameCore
             return;
         }
 
-        //just one pixel format is recognized in the actual implemetation. Conversion to other formats are expensive in C#
         if (! acceptedPixelFormats.Contains(pixelFormat)) 
             return;
 
@@ -1311,7 +1319,7 @@ public static unsafe class LibretroMameCore
     
     [AOT.MonoPInvokeCallback (typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames) {
-        //WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
+        WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
         
         if (data == (short*)IntPtr.Zero) {
             return 0;
