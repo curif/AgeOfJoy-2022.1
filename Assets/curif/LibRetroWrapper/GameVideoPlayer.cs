@@ -27,6 +27,8 @@ public class GameVideoPlayer : MonoBehaviour {
         videoPlayer.playOnAwake = true;
         videoPlayer.isLooping = true;
         videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.MaterialOverride;
+        videoPlayer.prepareCompleted += PrepareCompleted;
+        videoPlayer.errorReceived += ErrorReceived;
         videoPlayer.targetMaterialRenderer = Display;
         videoPlayerRenderer = Display.GetComponent<Renderer>();
         isPreparing = false;
@@ -39,9 +41,6 @@ public class GameVideoPlayer : MonoBehaviour {
         videoPath = path;
         invertx = invertX;
         inverty = invertY;
-        //gameObject.GetComponent<MeshRenderer>().material =  Resources.Load<Material>("Cabinets/Materials/Screen");
-        //videoPlayer.url = videoPath;
-        //videoPlayer.Prepare();
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
         return this;
     }
@@ -63,8 +62,6 @@ public class GameVideoPlayer : MonoBehaviour {
             videoPlayer.url = videoPath;
 
         if (! videoPlayer.isPrepared) {
-            videoPlayer.prepareCompleted += PrepareCompleted;
-            videoPlayer.errorReceived += ErrorReceived;
             ConfigManager.WriteConsole($"[videoPlayer] prepare {videoPath} ====");
             PrepareVideo();
         }
@@ -75,10 +72,10 @@ public class GameVideoPlayer : MonoBehaviour {
         return this;
     }
 
-    public bool isVisible() {
+    /*public bool isVisible() {
         // don't works very well, some time you are looking at the video and its paused.
         return videoPlayerRenderer.isVisible;
-    }
+    }*/
 
     public GameVideoPlayer Pause() {
         if (videoPlayer == null || string.IsNullOrEmpty(videoPath) || ! videoPlayer.isPrepared || videoPlayer.isPaused || isPreparing)
@@ -114,11 +111,4 @@ public class GameVideoPlayer : MonoBehaviour {
         ConfigManager.WriteConsole($"[videoPlayer] ERROR {videoPath} - {message}");
     }
 
-/*    
-    void Update() {
-        if (Display != null && videoPlayer != null && videoPlayer.isPlaying && !videoPlayer.isPaused ) {
-            Display.materials[1].SetFloat("u_time", Time.fixedTime);
-        }
-    }
-*/
 }

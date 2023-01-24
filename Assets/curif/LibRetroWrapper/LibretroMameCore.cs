@@ -7,6 +7,7 @@ You should have received a copy of the GNU General Public License along with thi
 //#define _debug_fps_
 //#define _debug_audio_
 #define _debug_
+//#define _serialize_
 
 /*
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -226,7 +227,8 @@ public static unsafe class LibretroMameCore
     private static extern bool retro_load_game(ref retro_game_info game);
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_unload_game();
-    
+   
+#if _serialize_
     // serialization -------------------
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern uint retro_serialize_size();
@@ -234,7 +236,7 @@ public static unsafe class LibretroMameCore
     private static extern bool retro_serialize(IntPtr info, uint size);
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern bool retro_unserialize(IntPtr info, uint size);
-
+#endif
     [StructLayout(LayoutKind.Sequential)]
     public class retro_game_geometry
     {
@@ -281,7 +283,6 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android")]       
     private static extern void retro_get_system_av_info(IntPtr info);
     
-    // pixel formats
     public enum retro_pixel_format
     {
         RETRO_PIXEL_FORMAT_0RGB1555 = 0,
@@ -301,6 +302,7 @@ public static unsafe class LibretroMameCore
     private static Waiter WaitToFinishedGameLoad = null;
     private static FpsControl controlForAskIfTimeToExitGame;
 
+#if _serialize_
     //serialization control
     private static Waiter WaitToSerialize = null;
     public enum SerializationState
@@ -314,6 +316,7 @@ public static unsafe class LibretroMameCore
     private static SerializationState SerializationStatus = SerializationState.Analize;
     public static bool EnableSaveState = true;
     public static string StateFile = "state.nv";
+#endif
 
     //image ===========    
     static FpsControl FPSControl;
@@ -489,6 +492,16 @@ public static unsafe class LibretroMameCore
         if (GameLoaded)
         {
           getAVGameInfo();
+          if (GameAVInfo.geometry.base_width  > 1000 || 
+              GameAVInfo.geometry.base_height > 1000 ||
+              GameAVInfo.geometry.max_width   > 1000 ||
+              GameAVInfo.geometry.max_height  > 1000 ||
+              GameAVInfo.timing.fps == 0)
+          {
+            WriteConsole("[LibRetroMameCore.Start] ERROR inconsistent game information from MAME");
+            End(screenName, gameFileName);
+            return false;
+          }
 
           FPSControl = new FpsControl((float)GameAVInfo.timing.fps);
 
@@ -499,8 +512,7 @@ public static unsafe class LibretroMameCore
           WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
           */
 
-          WriteConsole(
-            $"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
+          WriteConsole($"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {GameAVInfo.timing.sample_rate} | Quest: {QuestAudioFrequency}");
 
           // Audioclips are not sinchronized with the video.
           //Speaker.clip = AudioClip.Create("MameAudioSource", sampleRate * 2, 2, sampleRate, true, OnAudioRead /*, onAudioChangePosition*/);
@@ -508,6 +520,7 @@ public static unsafe class LibretroMameCore
           Speaker.Play();
           WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
+#if _serialize_
           if (EnableSaveState)
           {
             if (AlreadySerialized())
@@ -526,6 +539,9 @@ public static unsafe class LibretroMameCore
             WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
             SerializationStatus = SerializationState.None;
           }
+#else
+            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
+#endif
         }
         return true;
     }
@@ -560,7 +576,7 @@ public static unsafe class LibretroMameCore
 
 #endif
         }
-
+#if _serialize_
         if (SerializationStatus == SerializationState.Serialize) {
           if (WaitToSerialize.Finished()) {
             Serialize();
@@ -573,6 +589,7 @@ public static unsafe class LibretroMameCore
           WaitToFinishedGameLoad = new Waiter(1); //for first coin check
           SerializationStatus = SerializationState.Done;
         }
+#endif
 
         if (!Speaker.isPlaying) {
             Speaker.Play(); //why is this neccesary?
@@ -597,12 +614,12 @@ public static unsafe class LibretroMameCore
 
         //LockControls(false);
 
-        WriteConsole("[LibRetroMameCore.Run] End *************************************************");
+        WriteConsole("[LibRetroMameCore.End] END  *************************************************");
     }
 
     private static void ClearAll() {
         //TODO
-        WriteConsole("[LibRetroMameCore.ClearAll]  *************************************************");
+        WriteConsole("[LibRetroMameCore.ClearAll]");
         FPSControl = null;
         GameTexture = null;
         AudioBatch =  new List<float>();
@@ -1002,8 +1019,6 @@ public static unsafe class LibretroMameCore
                 return false;
             }
         }
-
-        return true;
     }
 
     private static void CopyImageData0RGB1555toRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
@@ -1047,7 +1062,6 @@ public static unsafe class LibretroMameCore
             return;
         }
 
-        //just one pixel format is recognized in the actual implemetation. Conversion to other formats are expensive in C#
         if (! acceptedPixelFormats.Contains(pixelFormat)) 
             return;
 
@@ -1070,6 +1084,7 @@ public static unsafe class LibretroMameCore
             }
             Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
+
 
         if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555) 
         {
@@ -1378,7 +1393,7 @@ public static unsafe class LibretroMameCore
 
     }
 
-#region serialization
+#if _serialize_
     private static string SerializedFileName()
     {
       return PathBase + "/" + StateFile;
@@ -1422,8 +1437,7 @@ public static unsafe class LibretroMameCore
       return;
     }
 
-#endregion
-
+#endif
     /*
     public static void onAudioChangePosition(uint newPos) {
         AudioBufferPosition = newPos;
