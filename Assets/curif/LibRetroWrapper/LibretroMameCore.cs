@@ -142,7 +142,7 @@ public static unsafe class LibretroMameCore
         RETRO_LOG_WARN  = 2,
         RETRO_LOG_ERROR = 3
     }
-    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_DEBUG;
+    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_INFO;
 
     public delegate void logHandler(retro_log_level level, [In, MarshalAs(UnmanagedType.LPStr)] string format, IntPtr arg1, IntPtr arg2, IntPtr arg3, IntPtr arg4, IntPtr arg5, IntPtr arg6, IntPtr arg7, IntPtr arg8, IntPtr arg9, IntPtr arg10, IntPtr arg11, IntPtr arg12);
     [StructLayout(LayoutKind.Sequential)]
@@ -227,7 +227,8 @@ public static unsafe class LibretroMameCore
     private static extern bool retro_load_game(ref retro_game_info game);
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_unload_game();
-    
+   
+#if _serialize_
     // serialization -------------------
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern uint retro_serialize_size();
@@ -235,7 +236,7 @@ public static unsafe class LibretroMameCore
     private static extern bool retro_serialize(IntPtr info, uint size);
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern bool retro_unserialize(IntPtr info, uint size);
-
+#endif
     [StructLayout(LayoutKind.Sequential)]
     public class retro_game_geometry
     {
@@ -282,7 +283,6 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android")]       
     private static extern void retro_get_system_av_info(IntPtr info);
     
-    // pixel formats
     public enum retro_pixel_format
     {
         RETRO_PIXEL_FORMAT_0RGB1555 = 0,
@@ -499,7 +499,7 @@ public static unsafe class LibretroMameCore
               GameAVInfo.timing.fps == 0)
           {
             WriteConsole("[LibRetroMameCore.Start] ERROR inconsistent game information from MAME");
-            ClearAll();
+            End(screenName, gameFileName);
             return false;
           }
 
@@ -539,11 +539,12 @@ public static unsafe class LibretroMameCore
             WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
             SerializationStatus = SerializationState.None;
           }
+#else
+            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
 #endif
         }
         return true;
     }
-
 
     public static bool isRunning(string screenName, string gameFileName) {
         return GameLoaded && GameFileName == gameFileName && screenName == ScreenName;
@@ -1018,7 +1019,6 @@ public static unsafe class LibretroMameCore
                 return false;
             }
         }
-
     }
 
     private static void CopyImageData0RGB1555toRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
@@ -1084,6 +1084,7 @@ public static unsafe class LibretroMameCore
             }
             Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
+
 
         if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555) 
         {
@@ -1319,7 +1320,7 @@ public static unsafe class LibretroMameCore
     
     [AOT.MonoPInvokeCallback (typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames) {
-        WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
+        //WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
         
         if (data == (short*)IntPtr.Zero) {
             return 0;
@@ -1340,13 +1341,8 @@ public static unsafe class LibretroMameCore
             float value = data[i] / 32768f; 
             inBuffer.Add(value);
         }
-        double sampleRate = (double)GameAVInfo.timing.sample_rate;
-        if (sampleRate < 1000)
-        {
-            //workarround: the sample_rate is badformed.
-            sampleRate = (double)QuestAudioFrequency;
-        }
-        double ratio = (double) sampleRate / QuestAudioFrequency;
+        
+        double ratio = (double) GameAVInfo.timing.sample_rate / QuestAudioFrequency;
         int outSample = 0;
         while (true) {
             int inBufferIndex = (int)(outSample++ * ratio);
