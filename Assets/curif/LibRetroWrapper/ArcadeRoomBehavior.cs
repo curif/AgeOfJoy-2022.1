@@ -15,21 +15,25 @@ using CleverCrow.Fluid.BTs.Trees;
 
 [RequireComponent(typeof(NavMeshAgent))]
 // [RequireComponent(typeof(Rigidbody))]
-public class ArcadeRoomBehaviour : MonoBehaviour
+public class ArcadeRoomBehavior : MonoBehaviour
 {
   public List<PlaceInformation> Destinations;
-  [Tooltip("Parent group arcade cabinets. Each cabinet needs a PlayerPosition Gameobject as destination")]
-  public GameObject PlayerPositions;
-  public float MinimalDistanceToReachArcade = 1.5f;
 
   [Tooltip("Where to go if all destinations are in use")]
   public PlaceInformation DefaultDestination;
 
-  public bool AvoidPlayer;
-
+  [Header("Arcade Positions")]
+  [Tooltip("Parent group arcade cabinets. Each cabinet needs a PlayerPosition Gameobject as destination")]
+  public GameObject PlayerPositions;
+  public float MinimalDistanceToReachArcade = 1.5f;
   [Tooltip("Time max to spent in a game")]
   public int MaxTimeSpentGaming = 10;
   public int MinTimeSpentGaming = 3;
+
+  [Header("Avoid Player")]
+  public bool AvoidPlayer;
+  public float distanceToDetectPlayer = 5f; // distance to detect objects
+  public Vector3 centerRaycastPlayerDetection = new Vector3(0,1,0);
 
   [SerializeField]
   public BehaviorTree tree;
@@ -39,8 +43,6 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
   public PlaceInformation Destination { get => destination; }
 
-  public Vector3 centerRaycastPlayerDetection = new Vector3(0,1,0);
-
   private NavMeshAgent agent;
   private PlaceInformation destination, selectedDestination;
   private Animator animator;
@@ -49,7 +51,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
   private System.Random random = new System.Random(DateTime.Now.Millisecond);
   // private bool onCollisionWithOtherNPC = false;
   private DateTime timeout, timeToSpentInPlace;
-  private List<ArcadeRoomBehaviour> othersNPC;
+  private List<ArcadeRoomBehavior> othersNPC;
   private List<PlaceInformation> totalDestinationsList = new List<PlaceInformation>();
   private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
   private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
@@ -63,7 +65,7 @@ public class ArcadeRoomBehaviour : MonoBehaviour
     player = GameObject.Find("OVRPlayerControllerGalery");
 
     totalDestinationsList.AddRange(Destinations);
-    // Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
+    // ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
 
     StartCoroutine(runBT());
   }
@@ -74,7 +76,6 @@ public class ArcadeRoomBehaviour : MonoBehaviour
    * is used to move the center of the Raycast.
    * */
   bool detectPlayer() {
-    float distance = 5f; // distance to detect objects
     float angleIncrement = 20f; // angle increment between rays
     float startAngle = -45f; // starting angle of the rays
     float endAngle = 45f; // ending angle of the rays
@@ -87,18 +88,18 @@ public class ArcadeRoomBehaviour : MonoBehaviour
         Vector3 direction = Quaternion.AngleAxis(angle, transform.up) * transform.forward;
         Vector3 center =  transform.position + centerRaycastPlayerDetection;
 	RaycastHit hit;
-        if (Physics.Raycast(center, direction, out hit, distance))
+        if (Physics.Raycast(center, direction, out hit, distanceToDetectPlayer))
         {
 	    if (hit.collider.gameObject == player)
             {
-                ConfigManager.WriteConsole($"[DetectPlayerInPath] {gameObject} Player in collision path!");
-		Debug.DrawRay(center, direction, Color.red, 0);
+                //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.DetectPlayerInPath] {gameObject} Player in collision path!");
+		Debug.DrawRay(center, direction * distanceToDetectPlayer, Color.red, 0);
 		collisionWithPlayer = true; 
                 return true;
                 // The ray hit the player, so do something (e.g. change direction)
             }
 	    else {
-		Debug.DrawRay(center, direction, Color.yellow, 0);
+		Debug.DrawRay(center, direction * distanceToDetectPlayer, Color.yellow, 0);
 	    }
         }
     
@@ -106,37 +107,13 @@ public class ArcadeRoomBehaviour : MonoBehaviour
     return false;
   
   }
-    // Update is called once per frame
-    bool playerInPath()
-    {
-        // Cast a ray from the NPC's position in the forward direction
- 	float maxRaycastDistance = 10f;
-        RaycastHit hit;
-	collisionWithPlayer = false; 
-        if (Physics.Raycast(transform.position, transform.forward, out hit, maxRaycastDistance))
-        {
-            // Check if the ray hit the player
-            if (hit.collider.gameObject == player)
-            {
-                ConfigManager.WriteConsole($"[DetectPlayerInPath] {gameObject} Player in collision path!");
-		Debug.DrawRay(transform.position, transform.forward, Color.red, 2f);
-		collisionWithPlayer = true; 
-                return true;
-                // The ray hit the player, so do something (e.g. change direction)
-            }
-	    else {
-		Debug.DrawRay(transform.position, transform.forward, Color.yellow, 2f);
-	    }
-        }
-    	return false;
-    }
 
   IEnumerator runBT()
   {
     othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
                  where npc != gameObject
-                 select npc.GetComponent<ArcadeRoomBehaviour>()).
-                 ToList<ArcadeRoomBehaviour>();
+                 select npc.GetComponent<ArcadeRoomBehavior>()).
+                 ToList<ArcadeRoomBehavior>();
 
     if (PlayerPositions != null)
         //The cabinets where not loaded when this code runs
@@ -145,8 +122,6 @@ public class ArcadeRoomBehaviour : MonoBehaviour
             select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
                                         MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine)
             ).ToList());
-
-    // Debug.Log($"[ArcadeRoomBehaviour] {gameObject.name}  destinations totalDestinationsList: {totalDestinationsList.Count}");
 
     tree = buildBT();
     while (true)
@@ -158,26 +133,31 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
   private BehaviorTree buildBT()
   {
-
     return new BehaviorTreeBuilder(gameObject)
       .Sequence()
         .Do("Set random destination", () =>
         {
           int index = random.Next(totalDestinationsList.Count);
           selectedDestination = totalDestinationsList[index];
+          if (destination != null && UnityEngine.Object.ReferenceEquals(selectedDestination.Place, destination.Place))
+          {
+            ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
+            return TaskStatus.Failure;
+          }
+          destination = null;
           return TaskStatus.Success;
         })
         .ReturnSuccess()
           .Sequence()
+            .Condition("NPC has a default destination configured?", () => DefaultDestination != null)
             .Condition("Destination taken by other NPC?", () =>
-              DefaultDestination != null
-              && othersNPC.FirstOrDefault(npc =>
+                othersNPC.FirstOrDefault(npc =>
                                           npc?.Destination != null &&
                                           UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null)
             .Do("Use the default destination", () =>
             {
               selectedDestination = DefaultDestination;
-              // Debug.Log($"{gameObject.name} falls into the default destination: {DefaultDestination.Place.name}");
+              ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder]{gameObject.name} falls into the default destination: {DefaultDestination.Place.name}");
               return TaskStatus.Success;
             })
           .End()
@@ -186,33 +166,43 @@ public class ArcadeRoomBehaviour : MonoBehaviour
         .Do("Start walking", () =>
         {
           destination = selectedDestination; //others NPCs can see this
-          walkToDestination();// Debug.Log($"[IntroGalleryBehaviour] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds}secs {timeout.ToString()}");
+          if (! walkToDestination())
+          {
+            stop();
+            destination = null;
+            return TaskStatus.Failure;
+          }
           return TaskStatus.Success;
         })
+
+        .RepeatUntilSuccess()
+          .Condition("Agent path is ready?", () => !agent.pathPending) 
+        .End()
+
         .RepeatUntilSuccess()
           .Selector()
             .Condition("Timeout", () => DateTime.Now > timeout)
             .Condition("Arrived", () => Vector3.Distance(destination.Place.transform.position, transform.position) <= destination.MinimalDistanceToReachObject)
             .Condition("Player found or blocked", () => AvoidPlayer && detectPlayer())
-            //.Condition("Player found or blocked", () => AvoidPlayer && (agent.pathStatus == NavMeshPathStatus.PathInvalid || Vector3.Distance(player.transform.position, transform.position) <= 2f))
           .End()
         .End()
+        
         .Do("Stop", () =>
         {
           stop();
           return TaskStatus.Success;
         })
+        
         .Do("Do something there", () =>
         {
           if (DateTime.Now > timeout) 
           {
-            idle();
             timeToSpentInPlace = DateTime.Now.AddSeconds(1);
           }
           else if (collisionWithPlayer)
 	  {
 	    rotateAndWalk();
-	    timeToSpentInPlace = DateTime.Now.AddSeconds(2);
+	    timeToSpentInPlace = DateTime.Now.AddSeconds(1.5);
 	  }
 	  else
           {
@@ -226,13 +216,13 @@ public class ArcadeRoomBehaviour : MonoBehaviour
         .RepeatUntilSuccess()
             .Selector()
                 .Condition("Wait some time there", () => DateTime.Now > timeToSpentInPlace)
-                //.Condition("Player is near", () => AvoidPlayer && Vector3.Distance(player.transform.position, transform.position) <= 1f)
             .End()
         .End()
 
         .Do("Clean", () =>
         {
           destination = null;
+          stop();
           return TaskStatus.Success;
         })
       .End()
@@ -242,12 +232,9 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
   private void stop()
   {
+    //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
     agent.isStopped = true;
     agent.ResetPath();
-  }
-
-  private void idle()
-  {
     animator.SetTrigger("Idle");
   }
 
@@ -268,16 +255,26 @@ public class ArcadeRoomBehaviour : MonoBehaviour
 
   }
 
-  private void walkToDestination()
+  private bool walkToDestination()
   {
-    animator.SetTrigger("Walk");
     timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
-    agent.SetDestination(destination.Place.transform.position);
+    if (!agent.SetDestination(destination.Place.transform.position))
+    {
+      //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] ERROR {gameObject.name} to {destination.Place.name} not possible");
+      return false;
+    }
+
+    animator.SetTrigger("Walk");
     agent.isStopped = false;
+
+    ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds} secs {timeout.ToString()}");
+    
+    return true;
   }
+
   private void rotateAndWalk()
   {
-    stop();
+    //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.rotateAndWalk] {gameObject.name} ");
     animator.SetTrigger("Turn");
   }
 }
