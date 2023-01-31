@@ -365,19 +365,18 @@ public static unsafe class LibretroMameCore
 #endif
 
     //Mame configuration
-    private static MarshalHelpPtrVault PtrVaultNoFreed = new();
-    private static IntPtr ptrDefault = PtrVaultNoFreed.GetPtr("default");
+    //private static IntPtr ptrDefault = PtrVaultNoFreed.GetPtr("default");
     //private static IntPtr ptrEnabled = PtrVaultNoFreed.GetPtr("enabled");
-    private static IntPtr ptrDisabled = PtrVaultNoFreed.GetPtr("disabled");
-    private static IntPtr ptrMouse = PtrVaultNoFreed.GetPtr("mouse");
-    private static IntPtr ptrSimultaneous = PtrVaultNoFreed.GetPtr("simultaneous");
+    //private static IntPtr ptrDisabled = PtrVaultNoFreed.GetPtr("disabled");
+    //private static IntPtr ptrMouse = PtrVaultNoFreed.GetPtr("mouse");
+    //private static IntPtr ptrSimultaneous = PtrVaultNoFreed.GetPtr("simultaneous");
     
-    //private static MarshalHelpPtrVault PtrVaultNoFreed = new();
+    private static MarshalHelpPtrVault PtrVaultNoFreed = new();
     private static IntPtr ptrSystemDir = PtrVaultNoFreed.GetPtr(ConfigManager.SystemDir);
     private static IntPtr ptrGameSaveDir = PtrVaultNoFreed.GetPtr(ConfigManager.GameSaveDir);
-    private static string mameOptionGamma;
-    private static string mameOptionBright;
-    private static string mameAudioFrequency;
+    //private static string mameOptionGamma;
+    //private static string mameOptionBright;
+    //private static string mameAudioFrequency;
     public enum GammaOptions {
         GAMA_0_5,
         GAMA_0_6,
@@ -691,13 +690,6 @@ public static unsafe class LibretroMameCore
         RETRO_ENVIRONMENT_GET_INPUT_BITMASKS = (51 | 0x10000)
     }
 
-/*
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi), Serializable]
-    public class retro_variable {
-        [MarshalAs(UnmanagedType.LPTStr)] public string key;
-        [MarshalAs(UnmanagedType.LPTStr)] public string value;
-    }
-    */
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
     private class retro_input_descriptor
     {
@@ -750,27 +742,26 @@ public static unsafe class LibretroMameCore
     }
     //private static fixed string auto = "auto";
     //private static fixed string enabled = "enabled";
-    private static IntPtr ptrAuto = Marshal.StringToHGlobalAnsi("auto");
-    private static IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi("enabled");
+    //private static IntPtr ptrAuto = Marshal.StringToHGlobalAnsi("auto");
+    //private static IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi("enabled");
     //https://github.com/libretro/mame2003-plus-libretro/blob/a3c987880c4342a0ca3b9a03340ed97defa4d387/src/mame2003/core_options.c
     [AOT.MonoPInvokeCallback (typeof(EnvironmentHandler))]
     static unsafe bool environmentCB(uint cmd, IntPtr data)
     {
         switch ((envCmds)cmd) {
-            case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE:
-            {
-                if (data == IntPtr.Zero)
-                    return false;
+            //case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE:
+            //{
+                //if (data == IntPtr.Zero)
+                //    return false;
                 
-                retro_variable* gvp = (retro_variable*) data.ToPointer();
+                //retro_variable* gvp = (retro_variable*) data.ToPointer();
                 //retro_variable gvp = Marshal.PtrToStructure<retro_variable>(data);
-                string key = Marshal.PtrToStringAnsi(gvp->key);
+                //string key = Marshal.PtrToStringAnsi(gvp->key);
             
                 //retro_variable gvp = new();
                 //Marshal.PtrToStructure(data, gvp);
                 //WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key);
-                byte[] stringBytes ;
-                switch (key) {
+                //switch (key) {
                     /*
                     case "mame2003-plus_frameskip":
                         //gvp.value = "auto";
@@ -872,11 +863,11 @@ public static unsafe class LibretroMameCore
                     //     gvp.value = (char *)PtrVault.GetPtr(ShowGameInfo);
                     //     WriteConsole("value to return:" + ShowGameInfo);
                     //     break;
-                    default:
+                    //default:
                         //WriteConsole("not implemented");
-                        return false;
-                }
-            }
+                    //    return false;
+                //}
+            //}
             case envCmds.RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
             {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY {ConfigManager.SystemDir}");
@@ -968,19 +959,6 @@ public static unsafe class LibretroMameCore
                 return false;
             }
             /*
-            case envCmds.RETRO_ENVIRONMENT_SET_PERFORMANCE_LEVEL:
-            case envCmds.RETRO_ENVIRONMENT_SET_VARIABLES:
-            case envCmds.RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
-            case envCmds.RETRO_ENVIRONMENT_SET_MINIMUM_AUDIO_LATENCY:
-            case envCmds.RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS:
-            case envCmds.RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
-            case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
-            case envCmds.RETRO_ENVIRONMENT_GET_VFS_INTERFACE:
-            case envCmds.RETRO_ENVIRONMENT_GET_LED_INTERFACE:
-            case envCmds.RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
-            {
-                return false;
-            }
             case envCmds.RETRO_ENVIRONMENT_SET_AUDIO_BUFFER_STATUS_CALLBACK:
             {
                 //https://github.com/libretro/RetroArch/blob/37c56d0d09a1d455353c14a3e0860b7834f9c4b8/runloop.c#L2382
