@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 33f7370878377ba18bf1811fc2535f92, type: 2}
+  m_LightingDataAsset: {fileID: 112000010, guid: edd3d8dfb18fc8864869dbc915bbcbcc, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -1593,19 +1593,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 20
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 12
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5347497587485064072, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -4385,11 +4385,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 34
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 10
+      value: 12
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_AddedGameObjects: []
@@ -6675,7 +6675,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 3e-45, y: 8.744e-42, z: 6e-44, w: 2.524355e-29}
+  m_BoundingSphereOverride: {x: 4e-45, y: 1.3943e-41, z: 6e-44, w: 2.524355e-29}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -8751,19 +8751,19 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     Type: 1
-  PlayerPositions: {fileID: 68383148}
-  MinimalDistanceToReachArcade: 0.5
   DefaultDestination:
     Place: {fileID: 108282750}
     MaxTimeSpentThere: 30
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     Type: 0
+  PlayerPositions: {fileID: 68383148}
+  MinimalDistanceToReachArcade: 0.5
+  MaxTimeSpentGaming: 30
+  MinTimeSpentGaming: 5
   AvoidPlayer: 1
   distanceToDetectPlayer: 5
   centerRaycastPlayerDetection: {x: 0, y: 1, z: 0}
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
   TimeoutSeconds: 15
 --- !u!95 &1303032307
 Animator:
@@ -9169,19 +9169,19 @@ MonoBehaviour:
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     Type: 1
-  PlayerPositions: {fileID: 68383148}
-  MinimalDistanceToReachArcade: 0.5
   DefaultDestination:
     Place: {fileID: 1282868784}
     MaxTimeSpentThere: 30
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     Type: 0
+  PlayerPositions: {fileID: 68383148}
+  MinimalDistanceToReachArcade: 0.5
+  MaxTimeSpentGaming: 30
+  MinTimeSpentGaming: 5
   AvoidPlayer: 1
   distanceToDetectPlayer: 5
   centerRaycastPlayerDetection: {x: 0, y: 1, z: 0}
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
   TimeoutSeconds: 15
 --- !u!195 &1419345625
 NavMeshAgent:
