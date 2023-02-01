@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 764198056405970432}
   - component: {fileID: 919002614269573026}
   - component: {fileID: 4260507974422600581}
+  - component: {fileID: 8949881237207756826}
   m_Layer: 0
   m_Name: CoinSlotPlasticDoublePrefab
   m_TagString: CoinSlot
@@ -95,11 +96,11 @@ CapsuleCollider:
   m_GameObject: {fileID: 4847301083316440228}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.007560314
-  m_Height: 0.0237826
+  m_Enabled: 0
+  m_Radius: 0.023704242
+  m_Height: 0.03686744
   m_Direction: 1
-  m_Center: {x: -0.0005398324, y: 4.0378855e-18, z: -0.010009112}
+  m_Center: {x: 0.0014105381, y: 4.0379053e-18, z: -0.010009103}
 --- !u!82 &919002614269573026
 AudioSource:
   m_ObjectHideFlags: 0
@@ -208,3 +209,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b52373b09ce4a4f088a17163eeefbee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!65 &8949881237207756826
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4847301083316440228}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.09553428, y: 0.085568324, z: 0.03783178}
+  m_Center: {x: 0.0009887159, y: 0.032784026, z: -0.0015687146}

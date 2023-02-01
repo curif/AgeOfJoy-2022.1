@@ -46,9 +46,13 @@ public class UsdCoin : MonoBehaviour
 
     void OnTriggerEnter(Collider col) {
         //Debug.Log($" OnTriggerEnter Collision with  {col.gameObject.name}");
-        if (col.gameObject.tag == "CoinSlot" && grabbable.isGrabbed) {
-            CoinSlot = col.gameObject;
-            // Debug.Log($"Coin on {CoinSlot.name}");
+        if (col.gameObject.tag == "CoinSlot" && grabbable.isGrabbed)
+        {
+            OVRGrabber grabber = grabbable.grabbedBy;
+            //Debug.Log($"Coin grabbed by {grabber.gameObject.name}");
+
+            if (grabber != null && grabber.gameObject.name == "CustomHandRight")
+                CoinSlot = col.gameObject;
         }
     }
 }
