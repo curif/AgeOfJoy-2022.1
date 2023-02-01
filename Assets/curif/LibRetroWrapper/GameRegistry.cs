@@ -19,24 +19,7 @@ public class CabinetPosition //: IEquatable<Part>
   [NonSerialized]
   public CabinetInformation CabInfo;
 
-  // public Game(string cabinetDBName = null, string rom = null, string room = null, int position = 0, CabinetInformation cabInfo = null)
-  // {
-  //   CabinetDBName = cabinetDBName;
-  //   Rom = rom;
-  //   Room = room;
-  //   Position = position;
-  //   CabInfo = cabInfo;
-  // }
-
-  // public override bool Equals(object obj) {
-  //   if (obj == null) return false;
-  //   Game g = obj as Game;
-  //   return g.Rom = Rom && g.Position == Position && g.Room == Room && CabinetDBName = g.CabinetDBName;
-  // }
-
-
 }
-
 
 [Serializable]
 public class CabinetsPosition
@@ -50,6 +33,7 @@ public class CabinetsPosition
     Registry.Add(g);
     return g;
   }
+
   public CabinetPosition Remove(CabinetPosition g)
   {
     Registry.Remove(g);
@@ -83,17 +67,11 @@ public class GameRegistry : MonoBehaviour
 {
 
   CabinetsPosition cabinetsPosition;
-
-  // List<string> UnasignedRoms;
   List<string> UnassignedCabinets;
 
   void Start()
   {
     //Init.OnRuntimeMethodLoad runs before
-
-
-    // Scene[] rooms = SceneManager.GetAllScenes().Where(room => room.name.StartsWith("Room") && room.buildIndex != -1);
-    // ConfigManager.WriteConsole($"[GameRegistry] Rooms in build: {rooms.Length} ----------------");
 
     Recover().Show();
   }
@@ -115,6 +93,7 @@ public class GameRegistry : MonoBehaviour
   {
     return cabinetsPosition.Add(g);
   }
+
   public CabinetPosition Remove(CabinetPosition g)
   {
     return cabinetsPosition.Remove(g);
@@ -144,12 +123,6 @@ public class GameRegistry : MonoBehaviour
       ConfigManager.WriteConsole($"{g.Rom} asigned to: {g.Room} cab: {g.CabinetDBName} pos #{g.Position}");
     }
 
-    // ConfigManager.WriteConsole("[GameRegistry] Unassigned roms");
-    // foreach (string rom in UnasignedRoms)
-    // {
-    //   ConfigManager.WriteConsole($"{rom}");
-    // }
-
     ConfigManager.WriteConsole("[GameRegistry] Unassigned cabinets");
     foreach (string cab in UnassignedCabinets)
     {
@@ -158,6 +131,7 @@ public class GameRegistry : MonoBehaviour
 
     return this;
   }
+
   public GameRegistry LoadUnnasigned()
   {
     UnassignedCabinets = (from path in System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
@@ -169,18 +143,6 @@ public class GameRegistry : MonoBehaviour
   public GameRegistry Recover()
   {
     cabinetsPosition = CabinetsPosition.ReadFromFile();
-    // UnasignedRoms = from dir in System.IO.Directory.GetDirectories(ConfigManager.RomsDir) where !Registry.Contains(new Game(rom: dir)) select dir;
-
-    //roms that hasn't been assigned to any cabinet/Room yet.
-    // UnasignedRoms = System.IO.Directory.GetFiles(ConfigManager.RomsDir).
-    //                           Select(rom => System.IO.Path.GetFileName(rom)).
-    //                           Where(rom => !RomInRoom(rom)).
-    //                           ToList();
-
-    //check for new cabinets not assigned to any Room
-    // UnassignedCabinets = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB).
-    //                           Where(cab => !CabinetInRoom(cab)).
-    //                           ToList();
     LoadUnnasigned();
     return this;
   }
@@ -204,9 +166,13 @@ public class GameRegistry : MonoBehaviour
       foreach (CabinetPosition cab in cabs.Where(g => g.Position >= quantity))
       {
         Remove(cab); //from registry
-        cabs.Remove(cab); //from list
         ConfigManager.WriteConsole($"[GetCabinetsAssignedToRoom] Room: {room} - removed #{cab.Position} {cab.CabinetDBName}");
       }
+      cabs = (
+            from game in cabinetsPosition.Registry
+            where game.Room == room
+            select game
+      ).ToList();
       LoadUnnasigned();
       dirty = true;
     }
