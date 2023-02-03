@@ -59,10 +59,12 @@ public class LibretroScreenController : MonoBehaviour
 
   [Tooltip("Adjust Gamma from 1.0 to 2.0")]
   [SerializeField]
-  public LibretroMameCore.GammaOptions Gamma = LibretroMameCore.GammaOptions.GAMA_1;
+  public string Gamma = "1.0";
+
   [Tooltip("Adjust bright from 0.2 to 2.0")]
   [SerializeField]
-  public LibretroMameCore.BrightnessOptions Brightness = LibretroMameCore.BrightnessOptions.BRIGHT_1;
+  public string Brightness = "1.0";
+
   [SerializeField]
   [Tooltip("Path that holds cabinet information, save states there.")]
   public string PathBase;

@@ -234,13 +234,17 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 }
 
 int age_of_joy_sample_rate = 0; 
-float age_of_joy_gamma = 0; 
-float age_of_joy_brightness = 0; 
-RETRO_API void retro_set_age_of_joy_parameters(int age_sample_rate, float age_gamma, float age_brightness)
+float age_of_joy_gamma = 1.0; 
+float age_of_joy_brightness = 1.0; 
+RETRO_API void retro_set_age_of_joy_parameters(int age_sample_rate, char* age_gamma, char* age_brightness)
 {
+  log_cb(RETRO_LOG_ERROR, LOGPRE "curif retro_set_age_of_joy_parameters %i,  %s, %s\n", age_sample_rate, age_gamma, age_brightness);
+
   age_of_joy_sample_rate = age_sample_rate;
-  age_of_joy_gamma = age_gamma;
-  age_of_joy_brightness = age_brightness;
+  age_of_joy_gamma = atof(age_gamma);
+  age_of_joy_brightness = atof(age_brightness);
+
+  return;
 }
 bool retro_load_game(const struct retro_game_info *game)
 {
@@ -346,17 +350,26 @@ bool retro_load_game(const struct retro_game_info *game)
     return 0;
   }
   //age of joy configuration.
-  log_cb(RETRO_LOG_INFO, LOGPRE " curif age of joy config\n");
+  log_cb(RETRO_LOG_INFO, LOGPRE " curif age of joy config -----\n");
+  //IMPORTANT: 2023/02 never use log_cb to show other types than char*, the LibretroMameCore implementation will show erroneous data.
+  char fmt[100];
+  snprintf(fmt, 100, "sample rate: %i,  gamma: %f, brightness: %f", age_of_joy_sample_rate, age_of_joy_gamma, age_of_joy_brightness);
+  log_cb(RETRO_LOG_INFO, LOGPRE "         %s\n", fmt);
+
   options.skip_warnings = true;
   options.skip_disclaimer = true;
   options.input_interface = RETRO_DEVICE_JOYPAD;
   options.xy_device = RETRO_DEVICE_MOUSE;
   options.samplerate = age_of_joy_sample_rate;
-  options.gamma = age_of_joy_gamma;
+    
   options.brightness = age_of_joy_brightness;
+  options.gamma = age_of_joy_gamma;
+
+  options.mame_remapping = true;
 
   options.frameskip = 12;
   retro_set_audio_buff_status_cb();
+  log_cb(RETRO_LOG_INFO, LOGPRE " curif age of joy config end ----\n");
 
   configure_cyclone_mode(driverIndex);
   if (Machine->drv == 0) 
