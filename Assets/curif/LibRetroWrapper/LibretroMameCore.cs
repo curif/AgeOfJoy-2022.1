@@ -18,7 +18,24 @@ using System.IO;
 using Unity.Jobs;
 using Unity.Collections;
 using System.Diagnostics;
+using System.Linq;
+using System.ComponentModel;
 
+/*
+public static T GetEnumValueFromString<T>(string enumString) where T : struct, IConvertible
+{
+    if (!typeof(T).IsEnum)
+        throw new ArgumentException("T must be an enumerated type");
+
+    foreach (T enumValue in Enum.GetValues(typeof(T)))
+    {
+        if (enumString.Equals(enumValue.ToString(), StringComparison.OrdinalIgnoreCase))
+            return enumValue;
+    }
+
+    throw new ArgumentException("The string does not match any enumerated values");
+}
+*/
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -238,9 +255,7 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern bool retro_load_game(ref retro_game_info game);
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_set_age_of_joy_parameters(int age_sample_rate, float age_gamma, float age_brightness);
-    [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void sararasa();
+    private static extern void retro_set_age_of_joy_parameters(int age_sample_rate, IntPtr age_gamma, IntPtr age_brightness);
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern void retro_unload_game();
    
@@ -364,66 +379,22 @@ public static unsafe class LibretroMameCore
     static StopWatches Profiling;
 #endif
 
-    //Mame configuration
-    //private static IntPtr ptrDefault = PtrVaultNoFreed.GetPtr("default");
-    //private static IntPtr ptrEnabled = PtrVaultNoFreed.GetPtr("enabled");
-    //private static IntPtr ptrDisabled = PtrVaultNoFreed.GetPtr("disabled");
-    //private static IntPtr ptrMouse = PtrVaultNoFreed.GetPtr("mouse");
-    //private static IntPtr ptrSimultaneous = PtrVaultNoFreed.GetPtr("simultaneous");
-    
+    // pointer vault
+    private static MarshalHelpPtrVault PtrVault = new();
     private static MarshalHelpPtrVault PtrVaultNoFreed = new();
+
     private static IntPtr ptrSystemDir = PtrVaultNoFreed.GetPtr(ConfigManager.SystemDir);
     private static IntPtr ptrGameSaveDir = PtrVaultNoFreed.GetPtr(ConfigManager.GameSaveDir);
-    //private static string mameOptionGamma;
-    //private static string mameOptionBright;
-    //private static string mameAudioFrequency;
-    public enum GammaOptions {
-        GAMA_0_5,
-        GAMA_0_6,
-        GAMA_0_7,
-        GAMA_0_8,
-        GAMA_0_9,
-        GAMA_1,
-        GGAMA_1_1,
-        GGAMA_1_2,
-        GGAMA_1_3,
-        GGAMA_1_4,
-        GGAMA_1_5,
-        GGAMA_1_6,
-        GGAMA_1_7,
-        GGAMA_1_8,
-        GGAMA_1_9,
-        GAMA_2
-    }
-    public enum BrightnessOptions {
-        BRIGHT_0_2,
-        BRIGHT_0_3,
-        BRIGHT_0_4,
-        BRIGHT_0_5,
-        BRIGHT_0_6,
-        BRIGHT_0_7,
-        BRIGHT_0_8,
-        BRIGHT_0_9,
-        BRIGHT_1,
-        GBRIGHT_1_1,
-        GBRIGHT_1_2,
-        GBRIGHT_1_3,
-        GBRIGHT_1_4,
-        GBRIGHT_1_5,
-        GBRIGHT_1_6,
-        GBRIGHT_1_7,
-        GBRIGHT_1_8,
-        GBRIGHT_1_9,
-        BRIGHT_2
-    }
-    public static GammaOptions Gamma = GammaOptions.GAMA_1;
-    private static string[] GammaOptionsList = "0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.0|1.1|1.2|1.3|1.4|1.5|1.6|1.7|1.8|1.9|2.0".Split("|");
-    public static BrightnessOptions Brightness = BrightnessOptions.BRIGHT_1;
-    private static string[] BrightnessOptionsList = "0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.0|1.1|1.2|1.3|1.4|1.5|1.6|1.7|1.8|1.9|2.0".Split("|");
+    public static string[] GammaOptionsList = new string[] {"0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0","1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","2.0"};
+    public static string[] BrightnessOptionsList = new string[] {"0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0","1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","2.0"};
+    public static readonly string DefaultGamma = "0.5"; //tested feb/2023
+    public static readonly string DefaultBrightness = "1.0";
+    public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input, StringComparison.OrdinalIgnoreCase));
+    public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input, StringComparison.OrdinalIgnoreCase));
+    //parameters gama and brightness
+    public static string Gamma = DefaultGamma; 
+    public static string Brightness = DefaultBrightness;
 
-    // private static string ShowGameInfo = "disabled";
-    
-    private static MarshalHelpPtrVault PtrVault = new();
 
     public static bool Start(string screenName, string gameFileName) {
 
@@ -498,13 +469,13 @@ public static unsafe class LibretroMameCore
 
         // MarshalHelpCalls<retro_game_info> gameInfo = new();
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L740
-        //in this instance MAME call the needed callbacks to establish the game parameters.
-        WriteConsole($"[LibRetroMameCore.Start] set_age_of_joy_parameters");
-        string gameOptionGamma = GammaOptionsList[(int)Gamma];
-        string mameOptionBright = BrightnessOptionsList[(int)Brightness];
-        float age_gamma = float.Parse(gameOptionGamma);
-        float age_brightness = float.Parse(mameOptionBright);
-        retro_set_age_of_joy_parameters(QuestAudioFrequency, age_gamma, age_brightness);
+        //in this instance MAME call the needed callbacks to establish the game paramet:waers.
+        //float age_gamma = float.Parse(Gamma);
+        //float age_brightness = float.Parse(Brightness);
+        WriteConsole($"[LibRetroMameCore.Start] set_age_of_joy_parameters: audio freq: {QuestAudioFrequency} - gamma: {Gamma} - brightness: {Brightness}");
+        IntPtr ptrGamma = PtrVault.GetPtr(Gamma);
+        IntPtr ptrBrightness = PtrVault.GetPtr(Brightness);
+        retro_set_age_of_joy_parameters(QuestAudioFrequency, ptrGamma, ptrBrightness); //before retro_load_game
 
         WriteConsole($"[LibRetroMameCore.Start] retro_load_game - loading:{path}");
         GameLoaded = retro_load_game(ref game);

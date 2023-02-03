@@ -184,7 +184,7 @@ public static class CabinetFactory
 				GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty,
 				EnableSaveState: cbinfo.enablesavestate, StateFile: cbinfo.statefile,
 				cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z,
-				cbinfo.crt.geometry.scalepercentaje);
+				cbinfo.crt.geometry.scalepercentaje, cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness);
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
 		return cabinet;

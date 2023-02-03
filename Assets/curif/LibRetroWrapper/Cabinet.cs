@@ -268,7 +268,8 @@ public class Cabinet
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
                            bool EnableSaveState = true, string StateFile = "state.nv",
                            float rotationAngleX = 0, float rotationAngleY = 0, float rotationAngleZ = 0, 
-													 float scalePercentage = 0)
+                           float scalePercentage = 0, 
+                           string gamma = "1.0", string brightness = "1.0")
   {
 
     //the order is important
@@ -308,6 +309,8 @@ public class Cabinet
     libretroScreenController.PathBase = pathBase;
     libretroScreenController.GameInvertX = invertX;
     libretroScreenController.GameInvertY = invertY;
+    libretroScreenController.Gamma = gamma;
+    libretroScreenController.Brightness = brightness;
 
     libretroScreenController.GameVideoFile = GameVideoFile;
     libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
