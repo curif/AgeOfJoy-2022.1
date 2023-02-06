@@ -236,10 +236,11 @@ public class ArcadeRoomBehavior : MonoBehaviour
     agent.isStopped = true;
     agent.ResetPath();
     animator.SetTrigger("Idle");
+    animator.applyRootMotion = false;
   }
 
   private void runDestinationAnimation()
-  {
+  { 
     transform.position = new Vector3(destination.Place.transform.position.x, 
                                      transform.position.y, 
                                      destination.Place.transform.position.z);
@@ -253,6 +254,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     else
         animator.SetTrigger(animatorTriggers[(int)destination.Type]);
 
+    animator.applyRootMotion = false;
   }
 
   private bool walkToDestination()
@@ -264,6 +266,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
       return false;
     }
 
+    animator.applyRootMotion = true;
     animator.SetTrigger("Walk");
     agent.isStopped = false;
 
@@ -275,6 +278,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
   private void rotateAndWalk()
   {
     //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.rotateAndWalk] {gameObject.name} ");
+    animator.applyRootMotion = true;
     animator.SetTrigger("Turn");
   }
 }
