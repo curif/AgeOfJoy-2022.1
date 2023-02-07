@@ -92,7 +92,7 @@ public class CabinetInformation
         public Rotation rotation = new Rotation();
         // 100% maintain the same scale
         // 50% half. 200% double.
-        public float scalepercentaje = 100;
+        public float scalepercentage = 100;
     }
     public class Art
     {
