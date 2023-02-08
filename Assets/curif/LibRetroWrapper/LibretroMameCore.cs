@@ -8,6 +8,7 @@ You should have received a copy of the GNU General Public License along with thi
 //#define _debug_audio_
 #define _debug_
 //#define _serialize_
+//#define curif_mame_version
 
 using System.Collections;
 using System.Collections.Generic;
@@ -255,8 +256,10 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern bool retro_load_game(ref retro_game_info game);
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
+#if curif_mame_version
     private static extern void retro_set_age_of_joy_parameters(int age_sample_rate, IntPtr age_gamma, IntPtr age_brightness);
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
+#endif
     private static extern void retro_unload_game();
    
 #if _serialize_
@@ -472,11 +475,12 @@ public static unsafe class LibretroMameCore
         //in this instance MAME call the needed callbacks to establish the game paramet:waers.
         //float age_gamma = float.Parse(Gamma);
         //float age_brightness = float.Parse(Brightness);
+#if curif_mame_version
         WriteConsole($"[LibRetroMameCore.Start] set_age_of_joy_parameters: audio freq: {QuestAudioFrequency} - gamma: {Gamma} - brightness: {Brightness}");
         IntPtr ptrGamma = PtrVault.GetPtr(Gamma);
         IntPtr ptrBrightness = PtrVault.GetPtr(Brightness);
         retro_set_age_of_joy_parameters(QuestAudioFrequency, ptrGamma, ptrBrightness); //before retro_load_game
-
+#endif
         WriteConsole($"[LibRetroMameCore.Start] retro_load_game - loading:{path}");
         GameLoaded = retro_load_game(ref game);
 
@@ -711,134 +715,162 @@ public static unsafe class LibretroMameCore
         public IntPtr key;
         public IntPtr value;
     }
-    //private static fixed string auto = "auto";
-    //private static fixed string enabled = "enabled";
-    //private static IntPtr ptrAuto = Marshal.StringToHGlobalAnsi("auto");
-    //private static IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi("enabled");
+        //must to be struct to be unmanaged?
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    public struct retro_variable_pointers {
+        public char *key;
+        public char *value;
+    }
+    private static string auto = "auto";
+    private static string enabled = "enabled";
+    private static string strDefault = "default";
+    private static string xyDevice = "mouse";
+    private static string FrameSkip = "default"; //"auto_aggressive"; //10"; //"auto";
+    private static string SkipDisclaimer = "enabled";
+    private static string SkipWarnings = "enabled";
+    private static string use_samples = "enabled";
+    private static IntPtr ptrAuto = Marshal.StringToHGlobalAnsi(auto);
+    private static IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi(enabled);
+    private static IntPtr ptrDefault = Marshal.StringToHGlobalAnsi(strDefault);
+    private static IntPtr ptrXYDevice = Marshal.StringToHGlobalAnsi(xyDevice);
     //https://github.com/libretro/mame2003-plus-libretro/blob/a3c987880c4342a0ca3b9a03340ed97defa4d387/src/mame2003/core_options.c
+    /*
+    private static string FrameSkip = "default"; //"auto_aggressive"; //10"; //"auto";
+    private static string SkipDisclaimer = "enabled";
+    private static string SkipWarnings = "enabled";
+    private static string xyDevice = "mouse";
+    private static string machine_timing = "disabled";
+    private static string use_samples = "enabled";
+    private static string retropad = "simultaneous";
+    private static string clockScale = "default";
+    private static string strDefault = "default";
+    private static string enabled = "enabled";
+    private static GCHandle enabledHC = GCHandle.Alloc(enabled, GCHandleType.Normal);
+    private static IntPtr ptrEnabled =  GCHandle.ToIntPtr(enabledHC );
+    private static GCHandle defaultHC = GCHandle.Alloc(strDefault, GCHandleType.Normal);
+    private static IntPtr ptrDefault = GCHandle.ToIntPtr(defaultHC);
+    private static GCHandle retropadHC = GCHandle.Alloc(retropad, GCHandleType.Normal);
+    private static IntPtr ptrRetropad = GCHandle.ToIntPtr(retropadHC);
+    private static GCHandle xyDeviceHC = GCHandle.Alloc(xyDevice, GCHandleType.Normal);
+    private static IntPtr ptrXYDevice = GCHandle.ToIntPtr(xyDeviceHC);
+*/
     [AOT.MonoPInvokeCallback (typeof(EnvironmentHandler))]
     static unsafe bool environmentCB(uint cmd, IntPtr data)
     {
         switch ((envCmds)cmd) {
-            //case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE:
-            //{
-                //if (data == IntPtr.Zero)
-                //    return false;
-                
-                //retro_variable* gvp = (retro_variable*) data.ToPointer();
-                //retro_variable gvp = Marshal.PtrToStructure<retro_variable>(data);
-                //string key = Marshal.PtrToStringAnsi(gvp->key);
-            
-                //retro_variable gvp = new();
-                //Marshal.PtrToStructure(data, gvp);
-                //WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key);
-                //switch (key) {
-                    /*
-                    case "mame2003-plus_frameskip":
-                        //gvp.value = "auto";
-                        //Marshal.StructureToPtr(gvp, data, false);
-                        //WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key + " " + gvp.value);
-                        //gvp->value = ptrAuto;
-                        
-                        //stringBytes = System.Text.Encoding.ASCII.GetBytes("auto" + "\0");
-                        //gvp->value = Marshal.AllocHGlobal(stringBytes.Length);
-                        //Marshal.Copy(stringBytes, 0, gvp->value, stringBytes.Length);
+#if !curif_mame_version
+            case envCmds.RETRO_ENVIRONMENT_GET_VARIABLE:
+            {
+                //retro_variable retroVariable = (retro_variable)Marshal.PtrToStructure(data, typeof(retro_variable));
+                retro_variable_pointers* retroVariable= (retro_variable_pointers*)data;
 
-                        //gvp.value = Marshal.StringToHGlobalAnsi("auto"); 
-                        //Marshal.StructureToPtr(gvp, data, true);
-                        //gvp->value = (char*)ptrAuto.ToPointer(); 
-                        Marshal.WriteIntPtr(new IntPtr(&gvp->value), ptrAuto);
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + key + " auto");
+                //string key = Marshal.PtrToStringAnsi(new IntPtr(gvp->key));
+                //string key = Marshal.PtrToStringAnsi(retroVariable.key);
+                string key = Marshal.PtrToStringAnsi((IntPtr)retroVariable->key);
+                WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + key);
+                switch (key) {
+                    //mame2000-sample_rate = 48000 default
+                    //mame2000-stereo = true default
+                    case "mame2003-plus_frameskip":
+                        {
+                            //gvp->value = (char *)ptrDefault;
+                        IntPtr ptrDefault = Marshal.StringToHGlobalAnsi(strDefault);
+                        retroVariable->value = (char*)ptrDefault.ToPointer();
+                        //Marshal.StructureToPtr(retroVariable, data, false);
+                        WriteConsole("FrameSkip value to return:" + FrameSkip);
                         return true;
+                        }
                     case "mame2003-plus_skip_disclaimer":
-                        //gvp.value = "enabled"; 
-                        //WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key  + " " + gvp.value);
-                        //Marshal.StructureToPtr(gvp, data, false);
-                        //gvp->value = ptrEnabled;
-                        
-                        //stringBytes = System.Text.Encoding.ASCII.GetBytes("enabled" + "\0");
-                        //gvp->value = Marshal.AllocHGlobal(stringBytes.Length);
-                        //Marshal.Copy(stringBytes, 0, gvp->value, stringBytes.Length);
-                        
-                        //gvp.value = Marshal.StringToHGlobalAnsi("enabled"); 
-                        //Marshal.StructureToPtr(gvp, data, true);
-                        //gvp.value = "enabled"; 
-                        //gvp->value = (char*)ptrEnabled.ToPointer(); 
-                        Marshal.WriteIntPtr(new IntPtr(&gvp->value), ptrEnabled);
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + key + " enabled");
+                        {//gvp->value = (char *)PtrVault.GetPtr(SkipDisclaimer);
+                        //gvp->value = (char *)ptrEnabled;
+                        IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi(enabled);
+                        retroVariable->value = (char*)ptrEnabled.ToPointer();
+                        //Marshal.StructureToPtr(retroVariable, data, false);
+                        WriteConsole("SkipDisclaimer value to return:" + SkipDisclaimer);
                         return true;
+                        }
                     case "mame2003-plus_skip_warnings":
-                        //gvp.value = "enabled"; 
-                        //WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key + " " + gvp.value);
-                        //Marshal.StructureToPtr(gvp, data, false);
-                        //gvp->value = ptrEnabled;
-                        
-                        //stringBytes = System.Text.Encoding.ASCII.GetBytes("enabled" + "\0");
-                        //gvp->value = Marshal.AllocHGlobal(stringBytes.Length);
-                        //Marshal.Copy(stringBytes, 0, gvp->value, stringBytes.Length);
-                        
-                        //gvp.value = Marshal.StringToHGlobalAnsi("enabled"); 
-                        //Marshal.StructureToPtr(gvp, data, true);
-                        //gvp.value = "enabled"; 
-                        //gvp->value = (char*)ptrEnabled.ToPointer(); 
-                        Marshal.WriteIntPtr(new IntPtr(&gvp->value), ptrEnabled);
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + key + " enabled");
+                        {
+                        //gvp->value = (char *)ptrEnabled;
+                        IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi(enabled);
+                        retroVariable->value = (char*)ptrEnabled.ToPointer();
+                        WriteConsole("SkipWarnings value to return:" + SkipWarnings);
                         return true;
-                    */
-                    /*case "mame2003-plus_xy_device":
-                        //https://github.com/libretro/mame2003-plus-libretro/blob/15349c45296e16f9385a90002018d920e8f3f872/src/mame2003/core_options.c#L66
-                        gvp.value = "mouse";
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key + " " + gvp.value);
-                        Marshal.StructureToPtr(gvp, data, false);
+                        }
+                    //audio
+                    case "mame2003-plus_use_samples":
+                        {
+                        IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi(enabled);
+                        retroVariable->value = (char*)ptrEnabled.ToPointer();
+                        WriteConsole("use_samples value to return:" + use_samples);
+                        return true;
+                        }
+                    case "mame2003-plus_xy_device":
+                        {
+                            //https://github.com/libretro/mame2003-plus-libretro/blob/15349c45296e16f9385a90002018d920e8f3f872/src/mame2003/core_options.c#L66
+                        IntPtr ptrXYDevice = Marshal.StringToHGlobalAnsi(enabled);
+                        retroVariable->value = (char*)ptrXYDevice.ToPointer();
+                        WriteConsole("xy_device value to return:" + xyDevice);
+                        return true;
+                        }
+                    case "mame2003-plus_brightness":
+                        {
+                        //mame2003-plus_brightness set to value:Brightness; 1.0|0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.1|1.2|1.3|1.4|1.5|1.6|1.7|1.8|1.9|2.0
+                        IntPtr ptrBrigthness = Marshal.StringToHGlobalAnsi(Brightness);
+                        retroVariable->value = (char*)ptrBrigthness.ToPointer();
+                        WriteConsole("plus_brightness value to return:" + Brightness);
+                        return true;
+                        }
+                    case "mame2003-plus_gamma":
+                        {
+                            //mame2003-plus_gamma set to value:Gamma Correction; 1.0|0.5|0.6|0.7|0.8|0.9|1.1|1.2|1.3|1.4|1.5|1.6|1.7|1.8|1.9|2.0
+                        IntPtr ptrGamma = Marshal.StringToHGlobalAnsi(Gamma);
+                        retroVariable->value = (char*)ptrGamma.ToPointer();
+                        WriteConsole("plus_gamma value to return:" + Gamma);
+                        return true;
+                        }
+                    case "mame2003-plus_sample_rate":
+                        {
+                        string _freq = QuestAudioFrequency.ToString();
+                        IntPtr ptrFreq = Marshal.StringToHGlobalAnsi(_freq);
+                        retroVariable->value = (char*)ptrFreq.ToPointer();
+                        WriteConsole("AudioSampleRate value to return:" + _freq);
+                        return true;
+                        }
+                    /*case "mame2003-plus_machine_timing":
+                        gvp->value = (char *)PtrVault.GetPtr(machine_timing);
+                        WriteConsole("input_interface value to return:" + machine_timing);
                         return true;
                     case "mame2003-plus_sample_rate":
-                        mameAudioFrequency = QuestAudioFrequency.ToString();
-                        gvp.value = mameAudioFrequency;
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key + " audioSampleRate: " + mameAudioFrequency);
-                        Marshal.StructureToPtr(gvp, data, false);
+                        string _freq = QuestAudioFrequency.ToString();
+                        gvp->value = (char *)PtrVault.GetPtr(_freq);
+                        WriteConsole("AudioSampleRate value to return:" + _freq);
                         return true;
                     case "mame2003-plus_brightness":
                         //mame2003-plus_brightness set to value:Brightness; 1.0|0.2|0.3|0.4|0.5|0.6|0.7|0.8|0.9|1.1|1.2|1.3|1.4|1.5|1.6|1.7|1.8|1.9|2.0
-                        mameOptionBright = BrightnessOptionsList[(int)Brightness];
-                        gvp.value = mameOptionBright;
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key + " bright: " + mameOptionBright);
-                        Marshal.StructureToPtr(gvp, data, false);
+                        gvp->value = (char *)PtrVault.GetPtr(Brightness);
+                        WriteConsole("plus_brightness value to return:" + Brightness);
                         return true;
                     case "mame2003-plus_gamma":
                         //mame2003-plus_gamma set to value:Gamma Correction; 1.0|0.5|0.6|0.7|0.8|0.9|1.1|1.2|1.3|1.4|1.5|1.6|1.7|1.8|1.9|2.0
-                        mameOptionGamma = GammaOptionsList[(int)Gamma];
-                        gvp.value = mameOptionGamma;
-                        WriteConsole("[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_VARIABLE key " + gvp.key + " gamma: " + mameOptionGamma);
-                        Marshal.StructureToPtr(gvp, data, false);
+                        gvp->value = (char *)PtrVault.GetPtr(Gamma);
+                        WriteConsole("plus_gamma value to return:" + Gamma);
                         return true;
-                    */
-                        /*
-                    is the default:
                     case "mame2003-plus_input_interface":
-                        gvp.value = "simultaneous";
-                        WriteConsole("input_interface");
-                        Marshal.StructureToPtr(gvp, data, false);
-                        return true;
-                    //audio
-                    case "mame2003-plus_use_samples":
-                        gvp.value = "enabled";
-                        WriteConsole("use_samples");
-                        Marshal.StructureToPtr(gvp, data, false);
+                        gvp->value = (char *)PtrVault.GetPtr(retropad);
+                        WriteConsole("input_interface value to return:" + retropad);
                         return true;
                     case "mame2003-plus_cpu_clock_scale":
-                        gvp.value = ptrDefault; //(char *)PtrVault.GetPtr(mameClockScale);
-                        WriteConsole("cpu_clock_scale");
+                        gvp->value = (char *)PtrVault.GetPtr(clockScale);
+                        WriteConsole("cpu_clock_scale value to return:" + clockScale);
                         return true;
                     */
-                    // case "mame2000-show_gameinfo": why hangs?
-                    //     gvp.value = (char *)PtrVault.GetPtr(ShowGameInfo);
-                    //     WriteConsole("value to return:" + ShowGameInfo);
-                    //     break;
-                    //default:
-                        //WriteConsole("not implemented");
-                    //    return false;
-                //}
-            //}
+                    default:
+                        WriteConsole("not implemented");
+                        return false;
+                }
+            }
+#endif
             case envCmds.RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
             {
                 WriteConsole($"[LibRetroMameCore.environmentCB] RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY {ConfigManager.SystemDir}");
