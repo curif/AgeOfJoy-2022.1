@@ -120,7 +120,7 @@ public static class CabinetFactory
 				break;
 		}
 		// Part scale and rotation
-		cabinet.ScalePart(p.name, p.geometry.scalepercentaje);
+		cabinet.ScalePart(p.name, p.geometry.scalepercentage);
 		cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
 		return cabinet;
 	}
@@ -174,7 +174,7 @@ public static class CabinetFactory
 			ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
 			cabinet.AddCoinSlot(cbinfo.coinslot, 
 					cbinfo.coinslotgeometry.rotation.x, cbinfo.coinslotgeometry.rotation.y, cbinfo.coinslotgeometry.rotation.z,
-					cbinfo.coinslotgeometry.scalepercentaje);
+					cbinfo.coinslotgeometry.scalepercentage);
 		}
 
 		cabinet.addCRT(
@@ -184,7 +184,7 @@ public static class CabinetFactory
 				GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty,
 				EnableSaveState: cbinfo.enablesavestate, StateFile: cbinfo.statefile,
 				cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z,
-				cbinfo.crt.geometry.scalepercentaje, cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness);
+				cbinfo.crt.geometry.scalepercentage, cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness);
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
 		return cabinet;
