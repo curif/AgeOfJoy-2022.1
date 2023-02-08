@@ -8,7 +8,7 @@ You should have received a copy of the GNU General Public License along with thi
 //#define _debug_audio_
 #define _debug_
 //#define _serialize_
-//#define curif_mame_version
+#define curif_mame_version
 
 using System.Collections;
 using System.Collections.Generic;
@@ -709,6 +709,7 @@ public static unsafe class LibretroMameCore
         public uint num_types;
     };
 
+#if ! curif_mame_version
     [StructLayout(LayoutKind.Sequential)]
     private struct retro_variable
     {
@@ -733,6 +734,7 @@ public static unsafe class LibretroMameCore
     private static IntPtr ptrEnabled = Marshal.StringToHGlobalAnsi(enabled);
     private static IntPtr ptrDefault = Marshal.StringToHGlobalAnsi(strDefault);
     private static IntPtr ptrXYDevice = Marshal.StringToHGlobalAnsi(xyDevice);
+#endif
     //https://github.com/libretro/mame2003-plus-libretro/blob/a3c987880c4342a0ca3b9a03340ed97defa4d387/src/mame2003/core_options.c
     /*
     private static string FrameSkip = "default"; //"auto_aggressive"; //10"; //"auto";
