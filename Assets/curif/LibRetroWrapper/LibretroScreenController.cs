@@ -145,7 +145,7 @@ public class LibretroScreenController : MonoBehaviour
           .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
           .Condition("There are coins", () => CoinSlot.hasCoins())
           // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
-          .Condition("Player looking screen", () => isPlayerLookingAtScreen3())
+          //.Condition("Player looking screen", () => isPlayerLookingAtScreen3()) if coinslot is present with coins is sufficient
           .Do("Start game", () =>
           {
             videoPlayer.Stop();
@@ -269,6 +269,24 @@ public class LibretroScreenController : MonoBehaviour
   }
   */
 
+  private bool isPlayerLookingAtScreen4()
+  {
+    Vector3 viewportPoint = cameraComponentCenterEye.WorldToViewportPoint(gameObject.transform.position);
+
+    if (viewportPoint.x >= 0 && viewportPoint.x <= 1 &&
+        viewportPoint.y >= 0 && viewportPoint.y <= 1 &&
+        viewportPoint.z > 0)
+    {
+      // The target object is within the viewport bounds
+      // check for the occlusion
+      RaycastHit hit = new RaycastHit();
+      if (!Physics.Linecast(cameraComponentCenterEye.transform.position, gameObject.transform.position, out hit))
+        return false;
+      //special case when the screen is blocked with the cabine's box collider (it's own parent)
+      return hit.transform == display.transform.parent;
+    }
+    return false;
+  }
   private bool isPlayerLookingAtScreen3()
   {
     Vector3 viewportPoint = cameraComponentCenterEye.WorldToViewportPoint(gameObject.transform.position);
