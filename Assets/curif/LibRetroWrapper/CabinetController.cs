@@ -27,11 +27,12 @@ public class CabinetController : MonoBehaviour
       yield return new WaitForSeconds(1f);
 
     Cabinet cab;
+    Transform parent = transform.parent;
     try
     {
       //cabinet inception
       ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
-      cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, transform.parent);
+      cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent);
     }
     catch (System.Exception ex)
     {
@@ -49,6 +50,23 @@ public class CabinetController : MonoBehaviour
         yield return null;
       }
     }
+/*   Not neccesary bcz GateController recalculate teselation
+ *
+ *   // assign ligthprobes
+    if (parent != null)
+    {
+      LightProbeGroup closestLightProbeGroup = parent.GetComponent<CabinetsController>()?.ClosestLightProbeGroup;
+      if (closestLightProbeGroup != null)
+      {
+        Renderer[] renderers = cab.gameObject.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+          renderer.probeAnchor = closestLightProbeGroup.transform;
+        }
+        ConfigManager.WriteConsole($"[CabinetController] {game.CabInfo.name} ligthprobe assigned to {renderers.Length} parts");
+      }
+    }
+    */
     gameObject.SetActive(false);
     ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
   }

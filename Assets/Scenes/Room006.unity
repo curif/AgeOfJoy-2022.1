@@ -1321,6 +1321,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Room: Room006
+  ClosestLightProbeGroup: {fileID: 679449335}
 --- !u!1001 &547917942
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1733,6 +1734,64 @@ Transform:
   - {fileID: 576067406}
   m_Father: {fileID: 1624279458}
   m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &679449334
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 679449336}
+  - component: {fileID: 679449335}
+  m_Layer: 0
+  m_Name: Light Probe Group
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!220 &679449335
+LightProbeGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 679449334}
+  m_Enabled: 1
+  m_SourcePositions:
+  - {x: 1, y: 1, z: 2.4023514}
+  - {x: 1, y: 1, z: -2.0893822}
+  - {x: 0.9268608, y: -1, z: 2.4023514}
+  - {x: 1, y: -1, z: -2.0893822}
+  - {x: -1, y: 1, z: 2.4023514}
+  - {x: -1, y: 1, z: -2.0893822}
+  - {x: -1, y: -1, z: 2.4023514}
+  - {x: -1, y: -1, z: -2.0893822}
+  - {x: 1, y: 1, z: -0.421093}
+  - {x: 1, y: -1, z: -0.421093}
+  - {x: -1, y: 1, z: -0.421093}
+  - {x: -1, y: -1, z: -0.421093}
+  - {x: 1, y: 1, z: 1}
+  - {x: 0.8185482, y: -1, z: 1}
+  - {x: -1, y: 1, z: 1}
+  - {x: -1, y: -1, z: 1}
+  m_Dering: 1
+--- !u!4 &679449336
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 679449334}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -17.434, y: 0.94, z: 32.65665}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &716135466
 PrefabInstance:

@@ -69,6 +69,10 @@ public class GateController : MonoBehaviour
               ConfigManager.WriteConsole($"[GateController] LOADED SCENE: {controledSceneToLoad.Name}");
             }
           }
+          // time to calculate blend probes teselation
+          // Force Unity to asynchronously regenerate the tetrahedral tesselation for all loaded Scenes
+          // https://docs.unity3d.com/Manual/light-probes-and-scene-loading.html  
+          LightProbes.TetrahedralizeAsync();
         }
         if (ScenesToUnload.Length > 0)
         {
