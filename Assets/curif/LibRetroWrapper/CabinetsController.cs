@@ -13,6 +13,7 @@ using System.Linq;
 public class CabinetsController : MonoBehaviour
 {
   public string Room;
+  //public LightProbeGroup ClosestLightProbeGroup = null;
 
   GameRegistry gameRegistry;
 

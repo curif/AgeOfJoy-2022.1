@@ -29,10 +29,8 @@ public static class ConfigManager
     Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
 
     if (!Directory.Exists(ConfigManager.Cabinets))
-      // Directory.CreateDirectory(BaseDir);
       Directory.CreateDirectory(ConfigManager.Cabinets);
     if (!Directory.Exists(ConfigManager.CabinetsDB))
-      // Directory.CreateDirectory(BaseDir);
       Directory.CreateDirectory(ConfigManager.CabinetsDB);
 
     if (!Directory.Exists(ConfigManager.SystemDir))

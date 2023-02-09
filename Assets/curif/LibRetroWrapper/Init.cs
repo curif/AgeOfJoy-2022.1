@@ -14,7 +14,7 @@ public class Init {
 
     //https://docs.unity3d.com/ScriptReference/RuntimeInitializeOnLoadMethodAttribute-ctor.html
     [RuntimeInitializeOnLoadMethod]
-    static async void OnRuntimeMethodLoad() {
+    static void OnRuntimeMethodLoad() {
         // bool isWorkshop = true; //look for a process to detect if this is a workshop or not.
         ConfigManager.WriteConsole("+++++++++++++++++++++  Initialize Cabinet Database +++++++++++++++++++++");
 

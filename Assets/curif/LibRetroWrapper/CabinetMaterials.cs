@@ -13,6 +13,7 @@ public static class CabinetMaterials {
     public static Material Black; 
     public static Material LightWood;
     public static Material DarkWood;
+    public static Material Plastic;
     public static Material TVBorder;
     public static Material Screen;
     public static Material FrontGlassWithBezel;
@@ -32,11 +33,13 @@ public static class CabinetMaterials {
         Black = Resources.Load<Material>("Cabinets/Materials/CabinetBlack");
         LightWood = Resources.Load<Material>("Cabinets/Materials/LightWood");
         DarkWood = Resources.Load<Material>("Cabinets/Materials/DarkWood");
+        Plastic = Resources.Load<Material>("Cabinets/Materials/Plastic");
 
         materialList.Add("black", Black);
         materialList.Add("base", Base);
         materialList.Add("lightwood", LightWood);
         materialList.Add("darkwood", DarkWood);
+        materialList.Add("plastic", Plastic);
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
         Screen = Resources.Load<Material>("Cabinets/PreFab/CRTs/Screen");

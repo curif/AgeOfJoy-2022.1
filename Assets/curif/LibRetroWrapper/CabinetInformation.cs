@@ -17,26 +17,25 @@ public class CabinetInformation
     public string name;
     public string rom;
     public List<Part> Parts { get; set; }
-
-
     public CRT crt;
     public string style = "galaga";
+    public Model model = new();
     public string material;
     public RGBColor color;
     public int year;
     public string coinslot = "coin-slot-double";
+    public Geometry coinslotgeometry = new();
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv"; 
     public Video video = new();
-    //[DefaultValue("")]
     public string md5sum;
-    
+
     [YamlIgnore]
     public string pathBase;
 
     //[YamlIgnore] public List<System.Exception> problems;
-
+    
     public static CabinetInformation fromName(string cabName)
     {
         return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
@@ -45,10 +44,11 @@ public class CabinetInformation
     public static CabinetInformation fromYaml(string cabPath)
     {
         string yamlPath = $"{cabPath}/description.yaml";
+        LibretroMameCore.WriteConsole($"[CabinetInformation]: {yamlPath}");
 
         if (!File.Exists(yamlPath))
         {
-            LibretroMameCore.WriteConsole($"[ERROR] Description YAML file (description.yaml) don't exists in cabinet subdir {cabPath}");
+            LibretroMameCore.WriteConsole($"[CabinetInformation]: ERROR Description YAML file (description.yaml) don't exists in cabinet subdir {cabPath}");
             return null;
         }
 
@@ -62,17 +62,38 @@ public class CabinetInformation
             .Build();
 
           var cabInfo = deserializer.Deserialize<CabinetInformation>(input);
+          if (cabInfo == null)
+              throw new IOException();
+
           cabInfo.pathBase = cabPath;
 
           return cabInfo;
         }
         catch (Exception e)
         {
-          LibretroMameCore.WriteConsole($"[ERROR] Description YAML file in cabinet subdir {cabPath} - {e}");
+          LibretroMameCore.WriteConsole($"[CabinetInformation]:ERROR Description YAML file in cabinet subdir {cabPath} - {e}");
+
         }
         return null;
     }
-
+    public class Model
+    {
+        public string style = ""; //can refer to other cabinet. Set the cabinet Name here. Empty means actual 'file' model in pack
+        public string file = ""; //empty falls to main 'style' cabinet
+    }
+    public class Rotation
+    {
+        public float x = 0;
+        public float y = 0;
+        public float z = 0;
+    }
+    public class Geometry
+    {
+        public Rotation rotation = new Rotation();
+        // 100% maintain the same scale
+        // 50% half. 200% double.
+        public float scalepercentage = 100;
+    }
     public class Art
     {
         public string file;
@@ -98,6 +119,7 @@ public class CabinetInformation
         public Art art;
         public RGBColor color;
         public string type = "normal"; // or bezel or marquee
+        public Geometry geometry = new();
     }
 
     public class CRT
@@ -105,6 +127,7 @@ public class CabinetInformation
         public string type;
         public string orientation = "vertical";
         public Screen screen;
+        public Geometry geometry = new();
 
         public System.Exception validate(List<string> crtTypes)
         {
@@ -119,31 +142,33 @@ public class CabinetInformation
                     $"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
             }
 
-            return null;
+            return screen.validate();
         }
     }
 
     public class Screen
     {
-        public string damage;
+        public string damage = "low";
         public bool invertx = false;
         public bool inverty = false;
+        public string gamma = LibretroMameCore.DefaultGamma;
+        public string brightness = LibretroMameCore.DefaultBrightness;
+        public System.Exception validate()
+        {
+            if (! LibretroMameCore.IsGammaValid(gamma))
+            {
+                return new System.ArgumentException($"Erroneous Gamma {gamma}");
+            }
+
+            if (! LibretroMameCore.IsBrightnessValid(brightness))
+            {
+                return new System.ArgumentException($"Erroneous Brightness {brightness}");
+            }
+
+            return null;
+        }
     }
 
-    /*
-    public class Bezel {
-        public Art art;
-    }
-    public class Marquee {
-        public Art art;
-        public RGBColor lightcolor = new RGBColor();
-    }
-    */
-    //   lightcolor:
-    // r: 255
-    // g: 194
-    // b: 71
-    // intensity: 0
     public class RGBColor
     {
         public byte r = 255;
@@ -170,7 +195,7 @@ public class CabinetInformation
             float factor = Mathf.Pow(2, intensity);
             Color c = new Color32(r, g, b, a);
             Color cf = new Color(c.r * factor, c.g * factor, c.b * factor, a);
-            // Debug.Log($" marquee color: {cf}");
+            // LibretroMameCore.WriteConsole($" marquee color: {cf}");
             return cf;
         }
     }
