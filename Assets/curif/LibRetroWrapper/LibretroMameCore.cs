@@ -1269,10 +1269,10 @@ public static unsafe class LibretroMameCore
                     ret =  OVRInput.Get(OVRInput.RawButton.RHandTrigger)? (Int16)1:(Int16)0;
                     break;
                 case RETRO_DEVICE_ID_JOYPAD_L3:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstick) && OVRInput.Get(OVRInput.RawButton.RHandTrigger)? (Int16)1:(Int16)0;
+                    ret =  OVRInput.Get(OVRInput.RawButton.RThumbstick) && OVRInput.Get(OVRInput.RawButton.RHandTrigger)? (Int16)1:(Int16)0;
                     break;
                 case RETRO_DEVICE_ID_JOYPAD_R3:
-                    ret =  OVRInput.Get(OVRInput.RawButton.RThumbstick)? (Int16)1:(Int16)0;
+                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstick)? (Int16)1:(Int16)0;
                     break;            
                 }
         }
