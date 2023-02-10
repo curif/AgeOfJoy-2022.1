@@ -14,7 +14,8 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 
 [RequireComponent(typeof(NavMeshAgent))]
-// [RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(Rigidbody))]
+[RequireComponent(typeof(CapsuleCollider))]
 public class ArcadeRoomBehavior : MonoBehaviour
 {
   public List<PlaceInformation> Destinations;
@@ -34,6 +35,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
   public bool AvoidPlayer;
   public float distanceToDetectPlayer = 5f; // distance to detect objects
   public Vector3 centerRaycastPlayerDetection = new Vector3(0,1,0);
+  public float pushForce = 10.0f;
 
   [SerializeField]
   public BehaviorTree tree;
@@ -55,8 +57,10 @@ public class ArcadeRoomBehavior : MonoBehaviour
   private List<PlaceInformation> totalDestinationsList = new List<PlaceInformation>();
   private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
   private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
+  private bool inPathToCollisionWithPlayer = false;
   private bool collisionWithPlayer = false;
-
+  private DateTime avoidCollisionAnalysis = DateTime.Now;
+  private Rigidbody npcRigidbody;
 
   void Start()
   {
@@ -66,8 +70,22 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     totalDestinationsList.AddRange(Destinations);
     // ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
+    
+    configureCollider();
 
     StartCoroutine(runBT());
+  }
+  void configureCollider() 
+  {
+    GetComponent<CapsuleCollider>().isTrigger = false;
+    GetComponent<CapsuleCollider>().center = new Vector3(0f, 0.7f, 0f);
+    GetComponent<CapsuleCollider>().radius = 0.4f;
+    GetComponent<CapsuleCollider>().height = 1f;
+    npcRigidbody = GetComponent<Rigidbody>();
+    npcRigidbody.useGravity = false;
+    npcRigidbody.isKinematic = true;
+    npcRigidbody.mass = 0.5f; //player is 1.0, NPC can't push the player
+
   }
   /*
    * Detects collision against the Character Controller that acts as collider
@@ -80,29 +98,28 @@ public class ArcadeRoomBehavior : MonoBehaviour
     float startAngle = -45f; // starting angle of the rays
     float endAngle = 45f; // ending angle of the rays
     
-    collisionWithPlayer = false; 
+    inPathToCollisionWithPlayer = false; 
     
     for (float angle = startAngle; angle <= endAngle; angle += angleIncrement)
     {
-	// calculate direction of the ray based on angle
-        Vector3 direction = Quaternion.AngleAxis(angle, transform.up) * transform.forward;
-        Vector3 center =  transform.position + centerRaycastPlayerDetection;
-	RaycastHit hit;
-        if (Physics.Raycast(center, direction, out hit, distanceToDetectPlayer))
+      // calculate direction of the ray based on angle
+      Vector3 direction = Quaternion.AngleAxis(angle, transform.up) * transform.forward;
+      Vector3 center =  transform.position + centerRaycastPlayerDetection;
+      RaycastHit hit;
+      if (Physics.Raycast(center, direction, out hit, distanceToDetectPlayer))
+      {
+        if (hit.collider.gameObject == player)
         {
-	    if (hit.collider.gameObject == player)
-            {
-                //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.DetectPlayerInPath] {gameObject} Player in collision path!");
-		Debug.DrawRay(center, direction * distanceToDetectPlayer, Color.red, 0);
-		collisionWithPlayer = true; 
-                return true;
-                // The ray hit the player, so do something (e.g. change direction)
-            }
-	    else {
-		Debug.DrawRay(center, direction * distanceToDetectPlayer, Color.yellow, 0);
-	    }
+          //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.DetectPlayerInPath] {gameObject} Player in collision path!");
+          // The ray hit the player, so do something (e.g. change direction)
+          Debug.DrawRay(center, direction * distanceToDetectPlayer, Color.red, 0);
+          inPathToCollisionWithPlayer = true; 
+          return true;
         }
-    
+        else {
+          Debug.DrawRay(center, direction * distanceToDetectPlayer, Color.yellow, 0);
+        }
+      }
     }
     return false;
   
@@ -183,7 +200,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
           .Selector()
             .Condition("Timeout", () => DateTime.Now > timeout)
             .Condition("Arrived", () => Vector3.Distance(destination.Place.transform.position, transform.position) <= destination.MinimalDistanceToReachObject)
-            .Condition("Player found or blocked", () => AvoidPlayer && detectPlayer())
+            .Condition("Player found or blocked", () => AvoidPlayer && (collisionWithPlayer || detectPlayer())) 
           .End()
         .End()
         
@@ -199,12 +216,14 @@ public class ArcadeRoomBehavior : MonoBehaviour
           {
             timeToSpentInPlace = DateTime.Now.AddSeconds(1);
           }
-          else if (collisionWithPlayer)
-	  {
-	    rotateAndWalk();
-	    timeToSpentInPlace = DateTime.Now.AddSeconds(1.5);
-	  }
-	  else
+          else if (collisionWithPlayer || inPathToCollisionWithPlayer)
+          {
+            rotateAndWalk();
+            collisionWithPlayer = false;
+            avoidCollisionAnalysis = DateTime.Now.AddSeconds(2); //give some time to the NPC to reach the destination before check for collisions again 
+            timeToSpentInPlace = DateTime.Now.AddSeconds(2);
+          }
+          else
           {
             runDestinationAnimation();
             timeToSpentInPlace = destination.getWaitingDateTime();
@@ -215,7 +234,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
         .RepeatUntilSuccess()
             .Selector()
-                .Condition("Wait some time there", () => DateTime.Now > timeToSpentInPlace)
+                .Condition("Wait some time there (or hit player)", () => DateTime.Now > timeToSpentInPlace || collisionWithPlayer)
             .End()
         .End()
 
@@ -257,6 +276,13 @@ public class ArcadeRoomBehavior : MonoBehaviour
     animator.applyRootMotion = false;
   }
 
+  private void walk()
+  {
+    animator.applyRootMotion = true;
+    animator.SetTrigger("Walk");
+    agent.isStopped = false;
+  }
+  
   private bool walkToDestination()
   {
     timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
@@ -266,10 +292,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
       return false;
     }
 
-    animator.applyRootMotion = true;
-    animator.SetTrigger("Walk");
-    agent.isStopped = false;
-
+    walk();
+ 
     ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds} secs {timeout.ToString()}");
     
     return true;
@@ -281,4 +305,56 @@ public class ArcadeRoomBehavior : MonoBehaviour
     animator.applyRootMotion = true;
     animator.SetTrigger("Turn");
   }
+  private void OnTriggerEnter(Collider collision)
+  {
+    //ConfigManager.WriteConsole($"[OnTriggerEnter] {collision.gameObject.name} is {player.name}?");
+    if ((collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall" || collision.gameObject.name == "GrabVolumeBig")
+        && DateTime.Now > avoidCollisionAnalysis)
+    {
+      ConfigManager.WriteConsole($"[OnTriggerEnter] {name}: {collision.gameObject.name}");
+      collisionWithPlayer = true;
+    }
+  }
+/*
+  private void walkLeftOrRightOfPlayer()
+  {
+    // Setting linear velocity of a kinematic body is not supported.
+    //npcRigidbody.velocity = Vector3.zero;
+    //npcRigidbody.angularVelocity = Vector3.zero;
+    //Vector3 pushDirection = (transform.position - player.transform.position).normalized;
+    //npcRigidbody.AddForce(pushDirection * pushForce, ForceMode.Impulse);
+    //move left or right
+    //
+    Transform playerTransform = player.GetComponent<Transform>();
+
+    Vector3 dest = playerTransform.position;
+    dest.x += UnityEngine.Random.Range(-3f, 3f);
+    dest.z += -3f;
+    ConfigManager.WriteConsole($"[walkLeftOrRightOfPlayer] {name} range: {dest.x}");
+    agent.SetDestination(dest);
+  
+    walk();
+    avoidCollisionAnalysis = DateTime.Now.AddSeconds(2); //give some time to the NPC to reach the destination before check for collisions again 
+    collisionWithPlayer = false;
+  }
+  private void OnTriggerStay(Collider collision)
+  {
+    //ConfigManager.WriteConsole($"[OnTriggerEnter] {collision.gameObject.name} is {player.name}?");
+    if ((collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall")
+        && DateTime.Now > avoidCollisionAnalysis)
+    {
+      ConfigManager.WriteConsole($"[OnTriggerStay] {name}: {collision.gameObject.name}");
+      collisionWithPlayer = true;
+    }
+  }
+  private void OnTriggerExit(Collider collision)
+  {
+    if ((collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall")
+        && DateTime.Now > avoidCollisionAnalysis)
+    {
+      ConfigManager.WriteConsole($"[OnTriggerExit] {name}: {collision.gameObject.name}");
+      collisionWithPlayer = false;
+    }
+  }
+  */
 }
