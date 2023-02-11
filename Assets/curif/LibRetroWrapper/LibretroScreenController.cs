@@ -221,7 +221,7 @@ public class LibretroScreenController : MonoBehaviour
               .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
               //.Condition("Is visible", () => display.isVisible)
               // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
-              .Condition("Player looking screen", () => isPlayerLookingAtScreen3())
+              .Condition("Player looking screen", () => isPlayerLookingAtScreen4())
               //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
               .Do("Play video player", () =>
               {
@@ -271,68 +271,19 @@ public class LibretroScreenController : MonoBehaviour
 
   private bool isPlayerLookingAtScreen4()
   {
-    Vector3 viewportPoint = cameraComponentCenterEye.WorldToViewportPoint(gameObject.transform.position);
-
-    if (viewportPoint.x >= 0 && viewportPoint.x <= 1 &&
-        viewportPoint.y >= 0 && viewportPoint.y <= 1 &&
-        viewportPoint.z > 0)
+    Vector3 screenPos = cameraComponentCenterEye.WorldToViewportPoint(transform.position);
+    if (screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1 && screenPos.z > 0)
     {
-      // The target object is within the viewport bounds
-      // check for the occlusion
-      RaycastHit hit = new RaycastHit();
-      if (!Physics.Linecast(cameraComponentCenterEye.transform.position, gameObject.transform.position, out hit))
-        return false;
-      //special case when the screen is blocked with the cabine's box collider (it's own parent)
-      return hit.transform == display.transform.parent;
+        // The target object is within the viewport bounds
+        RaycastHit hitInfo;
+        if (Physics.Linecast(cameraComponentCenterEye.transform.position, transform.position, out hitInfo))
+        {
+            // The linecast hit something, check if it was the target object
+            //special case when the screen is blocked with the cabine's box collider (it's own parent)
+            return hitInfo.transform == transform || hitInfo.transform == display.transform.parent;
+        }
     }
     return false;
-  }
-  private bool isPlayerLookingAtScreen3()
-  {
-    Vector3 viewportPoint = cameraComponentCenterEye.WorldToViewportPoint(gameObject.transform.position);
-
-    if (viewportPoint.x >= 0 && viewportPoint.x <= 1 &&
-        viewportPoint.y >= 0 && viewportPoint.y <= 1 &&
-        viewportPoint.z > 0)
-    {
-      // The target object is within the viewport bounds
-      // check for the occlusion
-      RaycastHit hit = new RaycastHit();
-      if (!Physics.Linecast(cameraComponentCenterEye.transform.position, gameObject.transform.position, out hit))
-        return false;
-      //special case when the screen is blocked with the cabine's box collider (it's own parent)
-      return hit.transform == display.transform.parent;
-    }
-    return false;
-  }
-
-  // https://answers.unity.com/questions/8003/how-can-i-know-if-a-gameobject-is-seen-by-a-partic.html?page=1&pageSize=5&sort=votes
-  private bool isPlayerLookingAtScreen()
-  {
-    RaycastHit hit = new RaycastHit();
-    //var planes = GeometryUtility.CalculateFrustumPlanes(cameraComponentCenterEye);
-    
-    //Debug.DrawLine(cam.transform.position, Display.bounds.center, Color.red);
-    
-    /*//screen inside fustrum
-    if (!GeometryUtility.TestPlanesAABB(planes, display.bounds)) {
-      LibretroMameCore.WriteConsole(display.name + " TestPlanesAABB fail");
-      return false;
-    }
-    */
-    //https://docs.unity3d.com/ScriptReference/Physics.Linecast.html
-    Debug.DrawRay(transform.position, transform.forward, Color.red, 2f);
-    if (! Physics.Linecast(cameraComponentCenterEye.transform.position, display.bounds.center, out hit))
-      return true; 
-     
-    // LibretroMameCore.WriteConsole(display.name + " occluded by " + hit.transform.name);
-    //special case when the screen is blocked with the cabine's box collider (it's own parent)
-    return hit.transform == display.transform.parent;
-  }
-  private bool isPlayerLookingAtScreen2()
-  {
-    Ray cameraRay = new Ray(cameraComponentCenterEye.transform.position, cameraComponentCenterEye.transform.forward);
-    return Physics.Linecast(cameraRay.origin, gameObject.transform.position);
   }
 
   private void OnAudioFilterRead(float[] data, int channels)
