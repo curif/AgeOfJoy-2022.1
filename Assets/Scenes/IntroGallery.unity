@@ -638,7 +638,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!1 &86811018 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
@@ -2243,8 +2246,8 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1.065259, y: 1.9420936, z: 1.1354606}
-  m_Center: {x: -0.03262949, y: -0.4710468, z: -0.06773031}
+  m_Size: {x: 0.8785849, y: 1.9420936, z: 1.1354606}
+  m_Center: {x: 0.06070754, y: -0.4710468, z: -0.06773031}
 --- !u!1 &491316376
 GameObject:
   m_ObjectHideFlags: 0
@@ -2451,7 +2454,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 517459341}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.5
+  m_Radius: 0.3
   m_Speed: 0.1
   m_Acceleration: 8
   avoidancePriority: 50
@@ -2514,7 +2517,7 @@ MonoBehaviour:
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     Type: 0
-  AnimationControlled: 1
+  AnimationControlled: 0
   PlayerPositions: {fileID: 0}
   MinimalDistanceToReachArcade: 1.5
   MaxTimeSpentGaming: 10
@@ -6106,7 +6109,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 647687270}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.5
+  m_Radius: 0.3
   m_Speed: 0.1
   m_Acceleration: 8
   avoidancePriority: 50
@@ -6183,7 +6186,7 @@ MonoBehaviour:
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     Type: 0
-  AnimationControlled: 1
+  AnimationControlled: 0
   PlayerPositions: {fileID: 0}
   MinimalDistanceToReachArcade: 1.5
   MaxTimeSpentGaming: 10
@@ -6991,7 +6994,7 @@ NavMeshObstacle:
   m_Enabled: 1
   serializedVersion: 3
   m_Shape: 0
-  m_Extents: {x: 1, y: 1, z: 1}
+  m_Extents: {x: 0.4, y: 1, z: 0.4}
   m_MoveThreshold: 0.1
   m_Carve: 1
   m_CarveOnlyStationary: 0
@@ -7881,7 +7884,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!114 &1086381196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7894,7 +7900,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!65 &1086381197
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8201,7 +8210,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 1151057703}
   m_Enabled: 1
   m_AgentTypeID: 0
-  m_Radius: 0.5
+  m_Radius: 0.3
   m_Speed: 0.1
   m_Acceleration: 8
   avoidancePriority: 50
@@ -8246,7 +8255,7 @@ MonoBehaviour:
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     Type: 0
-  AnimationControlled: 1
+  AnimationControlled: 0
   PlayerPositions: {fileID: 0}
   MinimalDistanceToReachArcade: 1.5
   MaxTimeSpentGaming: 10
@@ -8402,7 +8411,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!1001 &1156434106
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10420,8 +10432,8 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 6.1090918, y: 14.403066, z: 6.496179}
-  m_Center: {x: 0.19781233, y: 6.7015333, z: -0.19649446}
+  m_Size: {x: 6.1090918, y: 30.072668, z: 6.496179}
+  m_Center: {x: 0.19781233, y: 14.536333, z: -0.19649446}
 --- !u!114 &1188394951
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10434,7 +10446,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!1001 &1201474453
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10705,7 +10720,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!65 &1283412765
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13019,7 +13037,7 @@ BoxCollider:
   m_GameObject: {fileID: 1369115204}
   m_Material: {fileID: 0}
   m_IsTrigger: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Size: {x: 0.002939243, y: 0.0075315805, z: 0.014427563}
   m_Center: {x: -0.00000002560035, y: 0.00056163064, z: 0.00721459}
@@ -14892,8 +14910,8 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 6.3081455, y: 15.667644, z: 4.022834}
-  m_Center: {x: 0.040786196, y: 7.333823, z: -0.0033535825}
+  m_Size: {x: 6.3081455, y: 40.71118, z: 4.022834}
+  m_Center: {x: 0.040786196, y: 19.855585, z: -0.0033535839}
 --- !u!114 &1780507669
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14906,7 +14924,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!1001 &1804037929
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15080,7 +15101,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
+  BoxColliderHeight: 35
 --- !u!65 &1808233429
 BoxCollider:
   m_ObjectHideFlags: 0
