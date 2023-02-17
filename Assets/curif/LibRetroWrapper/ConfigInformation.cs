@@ -42,6 +42,7 @@ public class ConfigInformation
   { 
     [YamlMember(Alias = "volume-percent", ApplyNamingConventions = false)]
     public uint? volume;
+    public bool? muted;
 
     public override bool IsValid()
     {
@@ -53,27 +54,48 @@ public class ConfigInformation
   public class Audio : ConfigInformationBase
   {
     public Background background;
+    [YamlMember(Alias = "in-game-background", ApplyNamingConventions = false)]
+    public Background inGameBackground;
+
     public override bool IsValid()
     {
-      if (background != null)
-      {
-        return background.IsValid();
-      }
+      if (background != null && !background.IsValid())
+        return false;
+      if (inGameBackground != null && !inGameBackground.IsValid())
+        return false;
+
       return true;
     }
   }
 
+  // defaults ===================================================
+  public static Background BackgroundInGameDefault()
+  {
+    Background bg = new();
+    bg.volume = 20;
+    bg.muted = false;
+    return bg;
+  }
+  public static Background BackgroundDefault()
+  {
+    Background bg = new();
+    bg.volume = 70;
+    bg.muted = false;
+    return bg;
+  }
   public static ConfigInformation newDefault()
   {
     ConfigInformation configuration = new();
     configuration.audio = new();
-    configuration.audio.background = new();
-    configuration.audio.background.volume = 100;
+    configuration.audio.background = BackgroundDefault();
+    configuration.audio.inGameBackground = BackgroundInGameDefault();
 
     configuration.npc = new();
     configuration.npc.status = "enabled";
     return configuration;
   }
+  // =============================================================
+
   public static ConfigInformation fromYaml(string yamlPath)
   {
     ConfigManager.WriteConsole($"[ConfigInformation]: {yamlPath}");
