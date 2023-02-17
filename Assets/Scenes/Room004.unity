@@ -589,6 +589,55 @@ PrefabInstance:
     m_RemovedComponents: []
     m_AddedGameObjects: []
   m_SourcePrefab: {fileID: 100100000, guid: d4d1629744a74739aa5522bad4a47913, type: 3}
+--- !u!1 &62110610
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 62110611}
+  - component: {fileID: 62110612}
+  m_Layer: 0
+  m_Name: RoomConfiguration
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &62110611
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 62110610}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2106624054}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &62110612
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 62110610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileMonitorGameObject: {fileID: 2128013668}
+  GlobalConfigurationGameObject: {fileID: 0}
+  OnRoomConfigChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &68383148
 GameObject:
   m_ObjectHideFlags: 0
@@ -813,6 +862,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &108282755
@@ -1912,6 +1963,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &279108382
@@ -2531,6 +2584,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &356969979
@@ -3377,6 +3432,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &432313555
@@ -4057,6 +4114,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &472604361
@@ -6076,6 +6135,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &694505085
@@ -7400,6 +7461,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &882978865
@@ -9066,6 +9129,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1117604850
@@ -9178,6 +9243,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1118422249
@@ -10593,6 +10660,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1282868789
@@ -12873,6 +12942,8 @@ MonoBehaviour:
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     Type: 0
+  RoomConfiguration: {fileID: 62110610}
+  IsStatic: 0
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
@@ -12961,6 +13032,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1303032311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1303032305}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b62d711de2e621264aaede552ae23270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isEnabled: 1
 --- !u!1001 &1305314737
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13086,6 +13170,8 @@ MonoBehaviour:
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     Type: 0
+  RoomConfiguration: {fileID: 62110610}
+  IsStatic: 0
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
@@ -13154,6 +13240,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1305314744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1305314739}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b62d711de2e621264aaede552ae23270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isEnabled: 1
 --- !u!1 &1321392934
 GameObject:
   m_ObjectHideFlags: 0
@@ -13836,6 +13935,8 @@ MonoBehaviour:
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     Type: 0
+  RoomConfiguration: {fileID: 62110610}
+  IsStatic: 0
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
@@ -13904,6 +14005,19 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1419345628
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1419345623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b62d711de2e621264aaede552ae23270, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isEnabled: 1
 --- !u!4 &1437950767 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
@@ -14247,6 +14361,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1501754496
@@ -14304,6 +14420,90 @@ Transform:
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1504787715
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 2
+    m_TransformParent: {fileID: 2106624054}
+    m_Modifications:
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_RootOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -11.397
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -10.465
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1105622225370428778, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_Name
+      value: controlPannel
+      objectReference: {fileID: 0}
+    - target: {fileID: 1105622225370428778, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 4655918226810191465, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 6091590494524787433, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 6bb1ad68f255ef2be91f0b623d8f1fb7, type: 2}
+    - target: {fileID: 7923659868739697586, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 8991026616763683598, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_AddedGameObjects: []
+  m_SourcePrefab: {fileID: 100100000, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+--- !u!4 &1504787716 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 296152506752004048, guid: b76a9346a54e95407a827c6dffb0bc02, type: 3}
+  m_PrefabInstance: {fileID: 1504787715}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1508158128
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14645,6 +14845,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1535934521
@@ -15248,6 +15450,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1608465556
@@ -15938,6 +16142,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1693930869
@@ -16134,6 +16340,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1714072623
@@ -16893,6 +17101,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 2106624054}
   - {fileID: 1502047631}
   - {fileID: 238278363}
   - {fileID: 187289936}
@@ -17475,6 +17684,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1901165420
@@ -17743,6 +17954,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &1941433771
@@ -18214,6 +18427,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &2022803589
@@ -18697,6 +18912,40 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1593038524014086401, guid: 2d66723206fdd84d3adea673919bd0e6, type: 3}
   m_PrefabInstance: {fileID: 2106093855}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2106624053
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2106624054}
+  m_Layer: 0
+  m_Name: Configuration
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2106624054
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2106624053}
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 6.6074576, y: 0.6877964, z: -19.18835}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 62110611}
+  - {fileID: 2128013669}
+  - {fileID: 1504787716}
+  m_Father: {fileID: 1862072339}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!1001 &2109068750
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19077,6 +19326,55 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4209322778780550609, guid: d78eb9e865306377a835208badd01160, type: 3}
   m_PrefabInstance: {fileID: 2125233499}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2128013668
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2128013669}
+  - component: {fileID: 2128013670}
+  m_Layer: 0
+  m_Name: RoomFileMonitor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2128013669
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2128013668}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2106624054}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2128013670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2128013668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ConfigFileName: room004.yaml
+  Interval: 2
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &2132604451
 GameObject:
   m_ObjectHideFlags: 0
@@ -19174,6 +19472,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
 --- !u!65 &2132604456
