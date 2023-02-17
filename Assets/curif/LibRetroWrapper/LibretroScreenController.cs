@@ -77,7 +77,6 @@ public class LibretroScreenController : MonoBehaviour
   private Renderer display;
   private GameVideoPlayer videoPlayer;
   private DateTime timeToExit = DateTime.MinValue;
-  private AudioSource BackgroundAudio;
   private GameObject cabinet;
 
   private CoinSlotController getCoinSlotController()
@@ -106,7 +105,6 @@ public class LibretroScreenController : MonoBehaviour
 
     player = GameObject.Find("OVRPlayerControllerGalery");
     playerController = player.GetComponent<OVRPlayerController>();
-    BackgroundAudio = player.transform.Find("BackGroundSound").GetComponent<AudioSource>();
 
     CoinSlot = getCoinSlotController();
     if (CoinSlot == null)
@@ -248,8 +246,14 @@ public class LibretroScreenController : MonoBehaviour
     playerController.EnableLinearMovement = !takeControls;
     playerController.EnableRotation = !takeControls;
 
-    BackgroundAudio.volume = takeControls? 0.2f : 0.6f;
-
+    //change sound configuration
+    GameObject[] allSpeakers = GameObject.FindGameObjectsWithTag("speaker");
+    foreach (GameObject speaker in allSpeakers)
+    {
+      BackgroundSoundController bsc = speaker.GetComponent<BackgroundSoundController>();
+      if (bsc)
+        bsc.InGame(takeControls);
+    }
   }
 
   public void Update()
