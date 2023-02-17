@@ -16,12 +16,19 @@ using CleverCrow.Fluid.BTs.Trees;
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
+[RequireComponent(typeof(EnableDisableRenderers))]
 public class ArcadeRoomBehavior : MonoBehaviour
 {
   public List<PlaceInformation> Destinations;
 
   [Tooltip("Where to go if all destinations are in use")]
   public PlaceInformation DefaultDestination;
+
+  [Tooltip("Room configuration object")]
+  public GameObject RoomConfiguration;
+
+  [Tooltip("A static NPC stay in the default position all the time.")]
+  public bool IsStatic = false;
 
   [Tooltip("Movement controlled by Animation or by the Nav Mesh Agent")]
   public bool AnimationControlled = false;
@@ -59,6 +66,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
   private Animator animator;
   private GameObject player;
   private NavMeshObstacle obstacle;
+  private RoomConfiguration roomConfiguration;
+  private EnableDisableRenderers enableDisableRenderers;
 
   private System.Random random = new System.Random(DateTime.Now.Millisecond);
   // private bool onCollisionWithOtherNPC = false;
@@ -77,9 +86,10 @@ public class ArcadeRoomBehavior : MonoBehaviour
     agent = gameObject.GetComponent<NavMeshAgent>();
     animator = gameObject.GetComponent<Animator>();
     player = GameObject.Find("OVRPlayerControllerGalery");
+    roomConfiguration = RoomConfiguration.GetComponent<RoomConfiguration>();
+    enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
 
     totalDestinationsList.AddRange(Destinations);
-    // ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
     
     configureCollider();
     configureNavMesh();
@@ -176,6 +186,22 @@ public class ArcadeRoomBehavior : MonoBehaviour
     tree = buildBT();
     while (true)
     {
+      if (roomConfiguration != null && roomConfiguration.Configuration?.npc != null)
+      {
+        //ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} STATUS: {roomConfiguration.Configuration.npc.status}");
+
+        if (roomConfiguration.Configuration.npc.status == "disabled")
+        {
+          enableDisableRenderers.SetRenderers(false); //disable Renderers
+          yield return new WaitForSeconds(2f);
+          continue;
+        }
+
+        enableDisableRenderers.SetRenderers(true); //enable Renderers
+
+        IsStatic = roomConfiguration.Configuration.npc.status == "static";
+      }
+
       if (!AnimationControlled)
         animator.SetFloat("Speed", agent.velocity.magnitude);
 
@@ -202,12 +228,13 @@ public class ArcadeRoomBehavior : MonoBehaviour
         })
         .ReturnSuccess()
           .Sequence()
-            .Condition("NPC has a default destination configured?", () => DefaultDestination != null)
-            .Condition("Destination taken by other NPC or Player?", () => selectedDestination.IsTaken)
-            .Condition("Destination selected by other NPC?", () =>
-                othersNPC.FirstOrDefault(npc =>
-                                          npc?.Destination != null &&
-                                          UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null)
+            .Condition("NPC should go to default destination?", () => 
+                DefaultDestination != null
+                && (IsStatic || 
+                    selectedDestination.IsTaken ||
+                    othersNPC.FirstOrDefault(npc =>
+                                              npc?.Destination != null &&
+                                              UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null))
             .Do("Use the default destination", () =>
             {
               selectedDestination = DefaultDestination;
@@ -366,7 +393,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     if ((collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall" || collision.gameObject.name == "GrabVolumeBig")
         && DateTime.Now > avoidCollisionAnalysis)
     {
-      ConfigManager.WriteConsole($"[OnTriggerEnter] agentBehavior collision with player{name}: {collision.gameObject.name}");
+      //ConfigManager.WriteConsole($"[OnTriggerEnter] agentBehavior collision with player{name}: {collision.gameObject.name}");
       collisionWithPlayer = true;
     }
   }
@@ -374,7 +401,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
   {
     if (collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall"|| collision.gameObject.name == "GrabVolumeBig")
     {
-      ConfigManager.WriteConsole($"[OnTriggerExit] agentBehavior collision with player no more {name}: {collision.gameObject.name}");
+      //ConfigManager.WriteConsole($"[OnTriggerExit] agentBehavior collision with player no more {name}: {collision.gameObject.name}");
       collisionWithPlayer = false;
     }
   }
