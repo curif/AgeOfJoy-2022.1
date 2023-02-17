@@ -90,7 +90,6 @@ public class ArcadeRoomBehavior : MonoBehaviour
     enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
 
     totalDestinationsList.AddRange(Destinations);
-    // ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
     
     configureCollider();
     configureNavMesh();
