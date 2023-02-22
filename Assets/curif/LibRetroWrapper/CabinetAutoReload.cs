@@ -9,9 +9,11 @@ using UnityEngine;
 using System.IO;
 using System;
 
-
 public class CabinetAutoReload : MonoBehaviour
 {
+  [Tooltip("Positions where the player can stay to load the cabinet")]
+  public List<GameObject> AgentPlayerPositions;
+
   static string testCabinetDir = ConfigManager.CabinetsDB + "/test";
   static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
   static string testFile = ConfigManager.Cabinets + "/test.zip";
@@ -73,10 +75,11 @@ public class CabinetAutoReload : MonoBehaviour
 
       //cabinet inseption
       ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
-      Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position, transform.rotation, transform.parent);
+      Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position, transform.rotation, transform.parent, AgentPlayerPositions);
       CabinetFactory.skinFromInformation(cab, cbInfo);
       UnityEngine.Object.Destroy(gameObject);
-      cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
+      CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
+      cba.AgentPlayerPositions = AgentPlayerPositions;
 
       ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
     }

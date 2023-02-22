@@ -267,9 +267,9 @@ public class Cabinet
                            bool invertX = false, bool invertY = false,
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
                            bool EnableSaveState = true, string StateFile = "state.nv",
-                           float rotationAngleX = 0, float rotationAngleY = 0, float rotationAngleZ = 0, 
-                           float scalePercentage = 0, 
-                           string gamma = "1.0", string brightness = "1.0")
+                           Vector3? rotation = null, float scalePercentage = 0, 
+                           string gamma = "1.0", string brightness = "1.0",
+                           List<GameObject> agentPlayerPositions = null)
   {
 
     //the order is important
@@ -292,7 +292,8 @@ public class Cabinet
     // rotate and scale
     float scale = scalePercentage / 100f;
     newCRT.transform.localScale *= scale;
-    newCRT.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
+    if (rotation != null)
+      newCRT.transform.Rotate((Vector3)rotation);
 
     newCRT.GetComponent<MeshRenderer>().materials = ms;
 
@@ -312,6 +313,7 @@ public class Cabinet
     libretroScreenController.Gamma = gamma;
     libretroScreenController.Brightness = brightness;
 
+    libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
     libretroScreenController.GameVideoFile = GameVideoFile;
     libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
     libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;

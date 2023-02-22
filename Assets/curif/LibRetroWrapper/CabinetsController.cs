@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System;
 
 //distribute cabinets games in the room for respawn.
 
@@ -46,7 +47,7 @@ public class CabinetsController : MonoBehaviour
       if (g.CabInfo != null)
       {
         CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
-        if (cc != null)
+        if (cc != null && (cc.game == null || String.IsNullOrEmpty(cc.game.CabinetDBName)))
         {
           ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
           cc.game = g;

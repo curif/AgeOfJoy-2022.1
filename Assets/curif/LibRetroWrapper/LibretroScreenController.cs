@@ -68,6 +68,10 @@ public class LibretroScreenController : MonoBehaviour
   [SerializeField]
   [Tooltip("Path that holds cabinet information, save states there.")]
   public string PathBase;
+  [Tooltip("Positions where the player can stay to activate atraction videos")]
+  public List<GameObject> AgentPlayerPositions;
+
+  private List<AgentScenePosition> agentPlayerPositionComponents;
 
   private GameObject player;
   private OVRPlayerController playerController;
@@ -87,6 +91,19 @@ public class LibretroScreenController : MonoBehaviour
       return null;
 
     return coinslot.gameObject.GetComponent<CoinSlotController>();
+  }
+
+  private bool playerIsInSomePosition()
+  {
+    if (agentPlayerPositionComponents == null)
+      return false;
+
+    foreach (AgentScenePosition asp in agentPlayerPositionComponents)
+    {
+      if (asp.IsPlayerPresent)
+        return true;
+    }
+    return false;
   }
 
   // Start is called before the first frame update
@@ -110,9 +127,18 @@ public class LibretroScreenController : MonoBehaviour
     if (CoinSlot == null)
       Debug.LogError("Coin Slot not found in cabinet !!!! no one can play this game.");
 
-    videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
-    videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
-    
+    agentPlayerPositionComponents = new();
+    if (AgentPlayerPositions != null)
+    {
+      foreach (GameObject playerPos in AgentPlayerPositions)
+      {
+        AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();
+        if (asp != null)
+          agentPlayerPositionComponents.Add(asp);
+      }
+      videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
+      videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
+    }
     StartCoroutine(runBT());
 
     return;
@@ -219,7 +245,8 @@ public class LibretroScreenController : MonoBehaviour
               .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
               //.Condition("Is visible", () => display.isVisible)
               // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
-              .Condition("Player looking screen", () => isPlayerLookingAtScreen4())
+              //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
+              .Condition("Player in the zone?", () => playerIsInSomePosition())
               //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
               .Do("Play video player", () =>
               {

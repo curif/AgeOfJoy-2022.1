@@ -13,11 +13,31 @@ using System.Threading.Tasks;
 public class CabinetController : MonoBehaviour
 {
   public CabinetPosition game;
-  // public int priority;
+  [Tooltip("Positions where the player can stay to load the cabinet")]
+  public List<GameObject> AgentPlayerPositions;
+
+  private List<AgentScenePosition> AgentPlayerPositionComponents;
 
   void Start()
   {
+    AgentPlayerPositionComponents = new();
+    foreach (GameObject playerPos in AgentPlayerPositions)
+    {
+      AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();
+      if (asp != null)
+        AgentPlayerPositionComponents.Add(asp);
+    }
     StartCoroutine(load());
+  }
+  
+  private bool playerIsInSomePosition()
+  {
+    foreach (AgentScenePosition asp in AgentPlayerPositionComponents)
+    {
+      if (asp.IsPlayerPresent)
+        return true;
+    }
+    return false;
   }
 
   IEnumerator load()
@@ -26,13 +46,16 @@ public class CabinetController : MonoBehaviour
     while (game == null || game.CabInfo == null)
       yield return new WaitForSeconds(1f);
 
+    while (!playerIsInSomePosition())
+      yield return new WaitForSeconds(0.5f);
+
     Cabinet cab;
     Transform parent = transform.parent;
     try
     {
       //cabinet inception
       ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
-      cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent);
+      cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent, AgentPlayerPositions);
     }
     catch (System.Exception ex)
     {
@@ -41,8 +64,6 @@ public class CabinetController : MonoBehaviour
     }
     if (cab != null && game.CabInfo.Parts != null) 
     {
-//      var t = Task.Run(async() => await CabinetFactory.skinFromInformationAsync(cab, game.CabInfo));
-//      yield return new WaitUntil(() => t.IsCompleted);
       ConfigManager.WriteConsole($"[CabinetControlle] {game.CabInfo.name} texture parts");
       foreach (CabinetInformation.Part part in game.CabInfo.Parts)
       {
@@ -50,23 +71,6 @@ public class CabinetController : MonoBehaviour
         yield return null;
       }
     }
-/*   Not neccesary bcz GateController recalculate teselation
- *
- *   // assign ligthprobes
-    if (parent != null)
-    {
-      LightProbeGroup closestLightProbeGroup = parent.GetComponent<CabinetsController>()?.ClosestLightProbeGroup;
-      if (closestLightProbeGroup != null)
-      {
-        Renderer[] renderers = cab.gameObject.GetComponentsInChildren<Renderer>();
-        foreach (Renderer renderer in renderers)
-        {
-          renderer.probeAnchor = closestLightProbeGroup.transform;
-        }
-        ConfigManager.WriteConsole($"[CabinetController] {game.CabInfo.name} ligthprobe assigned to {renderers.Length} parts");
-      }
-    }
-    */
     gameObject.SetActive(false);
     ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
   }
