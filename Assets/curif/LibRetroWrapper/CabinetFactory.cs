@@ -139,7 +139,9 @@ public static class CabinetFactory
 		return cabinet;
 	}
 
-	public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, Vector3 position, Quaternion rotation, Transform parent)
+	public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, 
+      Vector3 position, Quaternion rotation, Transform parent,
+      List<GameObject> agentPlayerPositions)
 	{
 		string modelFilePath = "";
 		if (!String.IsNullOrEmpty(cbinfo.model.file)) 
@@ -177,14 +179,18 @@ public static class CabinetFactory
 					cbinfo.coinslotgeometry.scalepercentage);
 		}
 
+    Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
+
 		cabinet.addCRT(
 				cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
 				cbinfo.timetoload, cbinfo.pathBase,
 				invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
-				GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty,
+				GameVideoFileInvertX: cbinfo.video.invertx, 
+        GameVideoFileInvertY: cbinfo.video.inverty,
 				EnableSaveState: cbinfo.enablesavestate, StateFile: cbinfo.statefile,
-				cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z,
-				cbinfo.crt.geometry.scalepercentage, cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness);
+        CRTrotation, cbinfo.crt.geometry.scalepercentage, 
+        cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
+        agentPlayerPositions);
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
 		return cabinet;
