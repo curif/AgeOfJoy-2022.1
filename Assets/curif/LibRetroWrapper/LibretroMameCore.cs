@@ -1094,11 +1094,60 @@ public static unsafe class LibretroMameCore
         }
     }
 
+    private static byte[] outputData;
+    public static void ConvertXRGB8888ToRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
+    {
+     // Allocate the output buffer if it hasn't been allocated yet
+        //WriteConsole($"[ConvertXRGB8888ToRGB565] width: {width} height:{height}");
+        if (outputData == null || outputData.Length < width * height * 2)
+        {
+            outputData = new byte[width * height * 2];
+        }
+        int inputOffset = 0;
+        int outputOffset = 0;
+        fixed (byte* outputDataPtr = outputData)
+        {
+          ushort* outputRow = (ushort*)(outputDataPtr + outputOffset);
+
+          for (int y = 0; y < height; y++)
+          {
+              byte* inputRow = (byte*)imageData + inputOffset;
+
+              for (int x = 0; x < width; x++)
+              {
+                  byte r = inputRow[2];
+                  byte g = inputRow[1];
+                  byte b = inputRow[0];
+
+                  // Pack the RGB565 values
+                  ushort rgb565 = (ushort)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
+
+                  // Store the packed RGB565 value in the output buffer
+                  *outputRow++ = rgb565;
+
+                  // Move to the next pixel
+                  inputRow += 4;
+              }
+
+              // Move to the next row
+              inputOffset += pitch;
+              outputOffset += width * 2;
+          }
+        }
+        // Unlock the input image data
+        texture.LoadRawTextureData(outputData);
+        texture.Apply();
+    }
+            
+
     private static void CopyImageData0RGB1555toRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
     {
         // Get the pointer to the image data as a byte array
-        byte[] data = new byte[pitch * height];
-        Marshal.Copy(imageData, data, 0, data.Length);
+        if (outputData == null || outputData.Length < width * height * 2)
+        {
+            outputData = new byte[pitch * height];
+        }
+        Marshal.Copy(imageData, outputData, 0, outputData.Length);
 
         // Lock the texture data and set the pixels directly
         Color[] pixels = texture.GetPixels();
@@ -1107,7 +1156,7 @@ public static unsafe class LibretroMameCore
             for (int x = 0; x < width; x++)
             {
                 // Get the 0RGB1555 pixel value
-                ushort pixel = BitConverter.ToUInt16(data, y * pitch + x * 2);
+                ushort pixel = BitConverter.ToUInt16(outputData, y * pitch + x * 2);
 
                 // Extract the 0RGB components from the pixel
                 byte r = (byte)((pixel >> 10) & 0x1F);
@@ -1146,35 +1195,46 @@ public static unsafe class LibretroMameCore
 #if _debug_fps_
         Profiling.video.Start();
 #endif
-        if (GameTexture == null) {
-            WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
-            // https://docs.unity3d.com/ScriptReference/TextureFormat.html
-            switch (pixelFormat) {
-                case retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555:
-                case retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565:
-                    GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
-                    GameTexture.filterMode = FilterMode.Point;
-                    break;
-                case retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888:
-                    GameTexture = new Texture2D((int)width, (int)height, TextureFormat.BGRA32, false);
-                    GameTexture.filterMode = FilterMode.Point;
-                    break;
-            }
-            Display.materials[1].SetTexture("_MainTex", GameTexture);
+        if (GameTexture == null)
+        {
+          WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
+          GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
+          GameTexture.filterMode = FilterMode.Point;
+          /*
+          // https://docs.unity3d.com/ScriptReference/TextureFormat.html
+          switch (pixelFormat) {
+            case retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555:
+            case retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888:
+            case retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565:
+                GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
+                GameTexture.filterMode = FilterMode.Point;
+                break;
+             the XRG8888 doesn't adjust to any Unity Texture format. 
+            case retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888:
+                //GameTexture = new Texture2D((int)width, (int)height, TextureFormat.BGRA32, false);
+                //GameTexture = new Texture2D((int)width, (int)height, TextureFormat.ARGB32, false);
+                GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
+                GameTexture.filterMode = FilterMode.Point;
+                break;
+          }
+            */
+          Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
-
 
         if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555) 
         {
-            CopyImageData0RGB1555toRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
+          CopyImageData0RGB1555toRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
+        }
+        else if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888)
+        {
+          //WriteConsole($"[LibRetroMameCore.videoRefreshCB] new RETRO_PIXEL_FORMAT_XRGB8888 image");
+          ConvertXRGB8888ToRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
         }
         else 
         {
-            GameTexture.LoadRawTextureData(data, Mathf.RoundToInt(height*pitch));
-            GameTexture.Apply(false, false);
+          GameTexture.LoadRawTextureData(data, Mathf.RoundToInt(height*pitch));
+          GameTexture.Apply(false, false);
         }
-
-//        Display.materials[1].SetFloat("u_time", Time.fixedTime);
 
 #if _debug_fps_
         Profiling.video.Stop();
