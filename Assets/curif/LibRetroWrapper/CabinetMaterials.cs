@@ -18,6 +18,7 @@ public static class CabinetMaterials {
     public static Material Screen;
     public static Material FrontGlassWithBezel;
     public static Material Marquee;
+    public static Material BacklitImage;
     // public static Material CoinSlotPlastic;
     // public static Material CoinSlotPlasticDouble;
     // public static Material LeftOrRight; //the material used with stickers in the sides of the cabinet.
@@ -45,6 +46,8 @@ public static class CabinetMaterials {
         Screen = Resources.Load<Material>("Cabinets/PreFab/CRTs/Screen");
 
         Marquee = Resources.Load<Material>("Cabinets/Materials/Marquee");
+        BacklitImage = Resources.Load<Material>("Cabinets/Materials/BacklitImage");
+        //MarqueeStandardShader = Resources.Load<Material>("Cabinets/Materials/MarqueeStandardShader");
         FrontGlassWithBezel = Resources.Load<Material>("Cabinets/Materials/FrontGlass");
 
     }

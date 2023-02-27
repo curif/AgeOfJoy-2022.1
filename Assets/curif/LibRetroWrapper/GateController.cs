@@ -87,6 +87,7 @@ public class GateController : MonoBehaviour
                 yield return null;
               ConfigManager.WriteConsole($"[GateController] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
               unloadUnusedAssets = true;
+              LightProbes.TetrahedralizeAsync();
             }
           }
           if (unloadUnusedAssets)
