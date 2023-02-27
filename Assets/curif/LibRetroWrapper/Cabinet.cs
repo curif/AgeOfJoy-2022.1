@@ -149,6 +149,7 @@ public class Cabinet
   public GameObject Parts(string part)
   {
     Transform childTransform = gameObject.transform.Find(part);
+    //ConfigManager.WriteConsole($"Part: {childTransform}");
     if (childTransform == null)
       return null;
     return childTransform.gameObject;
@@ -216,14 +217,20 @@ public class Cabinet
 
   public Cabinet SetMarquee(string part, string texturePath, bool invertX = false, bool invertY = false)
   {
-    return SetTextureTo(part, texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
+    return SetTextureTo(part, texturePath, CabinetMaterials.BacklitImage, invertX: invertX, invertY: invertY);
   }
-  public Cabinet SetMarqueeEmissionColor(string part, Color color) {
+  public Cabinet SetMarqueeEmissionColor(string part, Color color, float intensity) {
     if (!PartsExist(part))
       return this;
+
     Renderer r = Parts(part).GetComponent<Renderer>();
     if (r != null)
+    {
       r.material.SetColor("_EmissionColor", color);
+      float oldToNewIntensity = (intensity + 5) / 10;
+      r.material.SetFloat("_EmissionIntensity", oldToNewIntensity);
+    }
+
     return this;
   }
 

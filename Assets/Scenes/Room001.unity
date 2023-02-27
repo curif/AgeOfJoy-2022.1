@@ -122,7 +122,7 @@ NavMeshSettings:
     preserveTilesOutsideBounds: 0
     debug:
       m_Flags: 0
-  m_NavMeshData: {fileID: 23800000, guid: d43629565624d6bc5a4bd1751bec181b, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 5439d5a0c0ac68d9eb9b90c55f27a2ec, type: 2}
 --- !u!1001 &33391955
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2004,70 +2004,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2293283817227712297, guid: 795d656843f5b1c1aac52e926dfeb27f, type: 3}
   m_PrefabInstance: {fileID: 358827771}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &398894180
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 398894181}
-  - component: {fileID: 398894183}
-  - component: {fileID: 398894182}
-  m_Layer: 0
-  m_Name: GateController007 (1)
-  m_TagString: door
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &398894181
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 398894180}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.742, y: 1.012, z: -2.51}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1388098676}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &398894182
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 398894180}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 2.447917, y: 1.7841265, z: 0.71053886}
-  m_Center: {x: 0.5417924, y: -0.15865791, z: -0.14473057}
---- !u!114 &398894183
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 398894180}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  MinimalDistance: 0.9
-  ScenesToLoad: []
-  ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
-  SceneBlockers: []
 --- !u!1001 &405369747
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2194,7 +2130,7 @@ GameObject:
   - component: {fileID: 430369708}
   - component: {fileID: 430369710}
   m_Layer: 0
-  m_Name: GateController
+  m_Name: GateControllerTo002
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2216,6 +2152,8 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
     sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+  - sceneAsset: {fileID: 102900000, guid: ab16ecd832b3bbd58b73c184034e5e90, type: 3}
+    sceneAssetGuidHex: ab16ecd832b3bbd58b73c184034e5e90
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
     sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
@@ -9999,7 +9937,6 @@ Transform:
   m_Children:
   - {fileID: 430369709}
   - {fileID: 1896868958}
-  - {fileID: 398894181}
   - {fileID: 830623736}
   - {fileID: 1548461728}
   - {fileID: 1360235616}
@@ -12526,7 +12463,7 @@ GameObject:
   - component: {fileID: 1896868960}
   - component: {fileID: 1896868959}
   m_Layer: 0
-  m_Name: GateController007
+  m_Name: GateControllerToHallway001
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12574,15 +12511,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinimalDistance: 0.9
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-    sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
+  - sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
+    sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
     sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-      sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
+      sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
+      sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
     Blockers:
     - {fileID: 1548461729}
 --- !u!1001 &1899705367

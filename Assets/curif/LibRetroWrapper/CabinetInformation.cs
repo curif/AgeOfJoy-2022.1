@@ -198,6 +198,10 @@ public class CabinetInformation
             // LibretroMameCore.WriteConsole($" marquee color: {cf}");
             return cf;
         }
+        public virtual Color getColorNoIntensity()
+        {
+          return new Color32(r, g, b, a);
+        }
     }
 
     public class Video

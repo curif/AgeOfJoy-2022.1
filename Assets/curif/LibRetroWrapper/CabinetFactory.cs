@@ -98,7 +98,7 @@ public static class CabinetFactory
 					ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
 					cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
 					if (p.color != null) 
-						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColor());
+						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColorNoIntensity(), p.color.intensity);
 				}
 				break;
 

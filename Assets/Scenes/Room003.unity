@@ -320,7 +320,7 @@ GameObject:
   - component: {fileID: 46644641}
   - component: {fileID: 46644643}
   m_Layer: 0
-  m_Name: GateController
+  m_Name: GateControllerToPolibius
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -340,11 +340,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinimalDistance: 2
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
   - sceneAsset: {fileID: 102900000, guid: b072882af3739f929bc4252c490ccef1, type: 3}
     sceneAssetGuidHex: b072882af3739f929bc4252c490ccef1
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
+    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+  - sceneAsset: {fileID: 102900000, guid: ab16ecd832b3bbd58b73c184034e5e90, type: 3}
+    sceneAssetGuidHex: ab16ecd832b3bbd58b73c184034e5e90
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: b072882af3739f929bc4252c490ccef1, type: 3}
@@ -1126,6 +1128,79 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4298955583021570582, guid: 553de4abe7620eb378737204678971d5, type: 3}
   m_PrefabInstance: {fileID: 198594864}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &219805414
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 219805415}
+  - component: {fileID: 219805417}
+  - component: {fileID: 219805416}
+  m_Layer: 0
+  m_Name: GateControllerToRoom002
+  m_TagString: door
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &219805415
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219805414}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.438, y: -2.075, z: -7.585}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 963537145}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &219805416
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219805414}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1.754303, y: 1.3223404, z: 0.6062994}
+  m_Center: {x: 0.004720688, y: -0.16117018, z: 0.021761417}
+--- !u!114 &219805417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219805414}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MinimalDistance: 2
+  ScenesToLoad:
+  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
+    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+  - sceneAsset: {fileID: 102900000, guid: ab16ecd832b3bbd58b73c184034e5e90, type: 3}
+    sceneAssetGuidHex: ab16ecd832b3bbd58b73c184034e5e90
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: b072882af3739f929bc4252c490ccef1, type: 3}
+    sceneAssetGuidHex: b072882af3739f929bc4252c490ccef1
+  SceneBlockers:
+  - SceneRef:
+      sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
+      sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+    Blockers:
+    - {fileID: 1113745213}
 --- !u!1001 &220820032
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4741,6 +4816,7 @@ Transform:
   - {fileID: 46644642}
   - {fileID: 1759774750}
   - {fileID: 1113745212}
+  - {fileID: 219805415}
   m_Father: {fileID: 1629989100}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
