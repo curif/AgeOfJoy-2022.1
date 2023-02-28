@@ -113,8 +113,8 @@ public class CabinetInformation
     }
     public class Marquee
     {
-      [YamlMember(Alias = "ilumination-type", ApplyNamingConventions = false)]
-      public string iluminationType = "one-lamp";
+      [YamlMember(Alias = "illumination-type", ApplyNamingConventions = false)]
+      public string illuminationType = "one-lamp";
     }
     public class Part
     {

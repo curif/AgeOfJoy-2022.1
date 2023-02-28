@@ -99,11 +99,11 @@ public static class CabinetFactory
           Material mat = CabinetMaterials.MarqueeOneLamp;
           if (p.marquee != null) 
           {
-            if (p.marquee.iluminationType == "two-lamps")
+            if (p.marquee.illuminationType == "two-lamps")
               mat = CabinetMaterials.MarqueeTwoLamps;
-            else if (p.marquee.iluminationType == "one-tube")
+            else if (p.marquee.illuminationType == "one-tube")
               mat = CabinetMaterials.MarqueeOneTube;
-            else if (p.marquee.iluminationType == "two-tubes")
+            else if (p.marquee.illuminationType == "two-tubes")
               mat = CabinetMaterials.MarqueeTwoTubes;
             else
               mat = CabinetMaterials.MarqueeOneLamp;
