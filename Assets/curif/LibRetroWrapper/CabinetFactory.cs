@@ -105,6 +105,8 @@ public static class CabinetFactory
               mat = CabinetMaterials.MarqueeOneTube;
             else if (p.marquee.illuminationType == "two-tubes")
               mat = CabinetMaterials.MarqueeTwoTubes;
+            else if (p.marquee.illuminationType == "none")
+              mat = CabinetMaterials.MarqueeNoLamps;
             else
               mat = CabinetMaterials.MarqueeOneLamp;
           }
@@ -115,7 +117,7 @@ public static class CabinetFactory
             cabinet.SetMaterial(p.name, mat);
           
           //after
-					if (p.color != null) 
+					if (p.color != null && p.marquee.illuminationType != "none") 
 						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColorNoIntensity(), p.color.intensity);
 				}
 				break;
