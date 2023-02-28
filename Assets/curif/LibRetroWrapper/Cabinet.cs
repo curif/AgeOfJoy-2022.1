@@ -188,6 +188,9 @@ public class Cabinet
     if (r == null)
       return this;
 
+    if (mat == null)
+      mat = CabinetMaterials.Base;
+
     Material m = new Material(mat);
     //tiling
     Vector2 mainTextureScale = new Vector2(1, 1);
@@ -215,9 +218,9 @@ public class Cabinet
     return this;
   }
 
-  public Cabinet SetMarquee(string part, string texturePath, bool invertX = false, bool invertY = false)
+  public Cabinet SetMarquee(string part, string texturePath, Material marqueeMaterial, bool invertX = false, bool invertY = false)
   {
-    return SetTextureTo(part, texturePath, CabinetMaterials.BacklitImage, invertX: invertX, invertY: invertY);
+    return SetTextureTo(part, texturePath, marqueeMaterial, invertX: invertX, invertY: invertY);
   }
   public Cabinet SetMarqueeEmissionColor(string part, Color color, float intensity) {
     if (!PartsExist(part))

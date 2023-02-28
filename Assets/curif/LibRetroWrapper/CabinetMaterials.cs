@@ -17,8 +17,11 @@ public static class CabinetMaterials {
     public static Material TVBorder;
     public static Material Screen;
     public static Material FrontGlassWithBezel;
-    public static Material Marquee;
-    public static Material BacklitImage;
+    public static Material MarqueeNoLamps;
+    public static Material MarqueeOneLamp;
+    public static Material MarqueeTwoLamps;
+    public static Material MarqueeOneTube;
+    public static Material MarqueeTwoTubes;
     // public static Material CoinSlotPlastic;
     // public static Material CoinSlotPlasticDouble;
     // public static Material LeftOrRight; //the material used with stickers in the sides of the cabinet.
@@ -45,8 +48,12 @@ public static class CabinetMaterials {
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
         Screen = Resources.Load<Material>("Cabinets/PreFab/CRTs/Screen");
 
-        Marquee = Resources.Load<Material>("Cabinets/Materials/Marquee");
-        BacklitImage = Resources.Load<Material>("Cabinets/Materials/BacklitImage");
+        MarqueeNoLamps = Resources.Load<Material>("Cabinets/Materials/MarqueeNoLamps");
+        MarqueeOneLamp = Resources.Load<Material>("Cabinets/Materials/MarqueeOneLamp");
+        MarqueeTwoLamps = Resources.Load<Material>("Cabinets/Materials/MarqueeTwoLamps");
+        MarqueeOneTube = Resources.Load<Material>("Cabinets/Materials/MarqueeOneTube");
+        MarqueeTwoTubes = Resources.Load<Material>("Cabinets/Materials/MarqueeTwoTubes");
+
         //MarqueeStandardShader = Resources.Load<Material>("Cabinets/Materials/MarqueeStandardShader");
         FrontGlassWithBezel = Resources.Load<Material>("Cabinets/Materials/FrontGlass");
 

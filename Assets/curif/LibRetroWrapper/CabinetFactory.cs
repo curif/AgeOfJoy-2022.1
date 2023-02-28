@@ -96,7 +96,25 @@ public static class CabinetFactory
 			case "marquee" : 
 				{
 					ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
-					cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
+          Material mat = CabinetMaterials.MarqueeOneLamp;
+          if (p.marquee != null) 
+          {
+            if (p.marquee.iluminationType == "two-lamps")
+              mat = CabinetMaterials.MarqueeTwoLamps;
+            else if (p.marquee.iluminationType == "one-tube")
+              mat = CabinetMaterials.MarqueeOneTube;
+            else if (p.marquee.iluminationType == "two-tubes")
+              mat = CabinetMaterials.MarqueeTwoTubes;
+            else
+              mat = CabinetMaterials.MarqueeOneLamp;
+          }
+
+					if (p.art != null)
+						cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
+          else
+            cabinet.SetMaterial(p.name, mat);
+          
+          //after
 					if (p.color != null) 
 						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColorNoIntensity(), p.color.intensity);
 				}

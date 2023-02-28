@@ -111,7 +111,11 @@ public class CabinetInformation
             return null;
         }
     }
-
+    public class Marquee
+    {
+      [YamlMember(Alias = "ilumination-type", ApplyNamingConventions = false)]
+      public string iluminationType = "one-lamp";
+    }
     public class Part
     {
         public string name;
@@ -120,6 +124,7 @@ public class CabinetInformation
         public RGBColor color;
         public string type = "normal"; // or bezel or marquee
         public Geometry geometry = new();
+        public Marquee marquee = new();
     }
 
     public class CRT
