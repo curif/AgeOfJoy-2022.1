@@ -7,6 +7,7 @@ You should have received a copy of the GNU General Public License along with thi
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine.Experimental.Rendering;
 
 public class Cabinet
 {
@@ -44,6 +45,203 @@ public class Cabinet
       tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
     }
     return tex;
+  }
+
+  //https://docs.unity3d.com/ScriptReference/Experimental.Rendering.GraphicsFormat.html
+  public static Texture2D LoadAndConvertTextureOld(string filename)
+  {
+      byte[] astcBytes ;
+      Texture2D astcTexture;
+      Texture2D originalTexture;
+
+      // ASTC_RGBA_8x8
+      // ASTC_8x8
+      string astcFilename = Path.ChangeExtension(filename, ".astc");
+      if (File.Exists(astcFilename))
+      {
+          // Load the ASTC texture from disk
+          astcBytes = File.ReadAllBytes(astcFilename);
+          astcTexture = new Texture2D(2, 2, TextureFormat.ASTC_8x8, false);
+          astcTexture.LoadImage(astcBytes);
+          return astcTexture;
+      }
+
+      originalTexture = LoadTexture(filename);
+      if (originalTexture == null)
+        return null;
+
+      // Create a new ASTC texture with the same dimensions as the original texture
+      astcTexture = new Texture2D(originalTexture.width, originalTexture.height, TextureFormat.ASTC_8x8, false);
+
+
+      // Convert the original texture to the ASTC format
+      Graphics.ConvertTexture(originalTexture, astcTexture);    
+
+      ConfigManager.WriteConsole($"[LoadAndConvertTexture] source ({originalTexture.width}, {originalTexture.height}) -> ({astcTexture.width}, {astcTexture.height})");
+      // Save the ASTC texture to disk
+      byte[] bytes = astcTexture.GetRawTextureData();
+      File.WriteAllBytes(astcFilename, bytes);
+
+      // Return the ASTC texture
+      return astcTexture;
+  }
+
+  private static TextureFormat getSupportedTextureFormat() 
+  {
+    TextureFormat[] supportedTextureFormats = {TextureFormat.ASTC_8x8, TextureFormat.ASTC_6x6, TextureFormat.ASTC_4x4};
+    foreach (TextureFormat txtfmt in supportedTextureFormats)
+    {
+      if (SystemInfo.SupportsTextureFormat(txtfmt))
+        return txtfmt;
+    }
+
+    return TextureFormat.RGB565;
+  }
+  /*
+  public Texture2D ScaleTextureToClosestMultipleOf4(Texture2D texture)
+  {
+      int originalWidth = texture.width;
+      int originalHeight = texture.height;
+
+      // Check if dimensions are already a multiple of 4
+      if (originalWidth % 4 == 0 && originalHeight % 4 == 0)
+      {
+          return texture;
+      }
+
+      int newWidth = Mathf.RoundToInt(originalWidth / 4f) * 4;
+      int newHeight = Mathf.RoundToInt(originalHeight / 4f) * 4;
+
+      float originalAspect = (float)originalWidth / originalHeight;
+      float newAspect = (float)newWidth / newHeight;
+      float newWidthDif = (float)Mathf.Abs(originalWidth - newWidth);
+      float newHeightDif = (float)Mathf.Abs(originalHeight - newHeight);
+
+      // Check if changing both width and height maintains aspect ratio
+      if (!Mathf.Approximately(originalAspect, newAspect))
+      {
+        if (newWidthDif > newHeightDif)
+        {
+          //eight is closest to the original 
+          newWidth 
+
+        }
+          if (originalAspect > newAspect)
+          {
+              newHeight = Mathf.RoundToInt((float)newWidth / originalAspect);
+          }
+          else
+          {
+              newWidth = Mathf.RoundToInt((float)newHeight * originalAspect);
+          }
+      }
+
+      Texture2D scaledTexture = new Texture2D(newWidth, newHeight);
+      Graphics.ConvertTexture(texture, scaledTexture);
+      return scaledTexture;
+  }
+  */
+  public static Texture2D ScaleTextureToClosestMultipleOf4(Texture2D texture)
+  {
+      int originalWidth = texture.width;
+      int originalHeight = texture.height;
+      // Check if dimensions are already a multiple of 4
+      if (originalWidth % 4 == 0 && originalHeight % 4 == 0)
+      {
+          return texture;
+      }
+
+      int newWidth = Mathf.RoundToInt(originalWidth / 4f) * 4;
+      int newHeight = Mathf.RoundToInt(originalHeight / 4f) * 4;
+
+      Texture2D scaledTexture = new Texture2D(newWidth, newHeight);
+      Graphics.ConvertTexture(texture, scaledTexture);
+      return scaledTexture;
+    }
+  /*public static Texture2D ScaleTextureToClosestMultipleOf4(Texture2D texture)
+  {
+      int originalWidth = texture.width;
+      int originalHeight = texture.height;
+      // Check if dimensions are already a multiple of 4
+        if (originalWidth % 4 == 0 && originalHeight % 4 == 0)
+        {
+            return texture;
+        }
+
+      int newWidth = Mathf.RoundToInt(originalWidth / 4f) * 4;
+      int newHeight = Mathf.RoundToInt(originalHeight / 4f) * 4;
+
+      float widthRatio = (float)newWidth / originalWidth;
+      float heightRatio = (float)newHeight / originalHeight;
+      float ratio = Mathf.Min(widthRatio, heightRatio);
+
+      int finalWidth = Mathf.RoundToInt(originalWidth * ratio);
+      int finalHeight = Mathf.RoundToInt(originalHeight * ratio);
+
+      Texture2D scaledTexture = new Texture2D(finalWidth, finalHeight);
+      Graphics.ConvertTexture(texture, scaledTexture);
+      return scaledTexture;
+  }*/
+  public static Texture2D LoadAndConvertTexture(string filename)
+  {
+      byte[] astcBytes;
+      Texture2D astcTexture;
+      Texture2D originalTexture;
+
+      // ASTC_RGBA_8x8
+      // ASTC_8x8
+      string astcFilename = Path.ChangeExtension(filename, ".raw");
+      /*
+      if (File.Exists(astcFilename))
+      {
+          // Load the ASTC texture from disk
+          astcBytes = File.ReadAllBytes(astcFilename);
+          astcTexture = new Texture2D(2, 2, TextureFormat.ASTC_8x8, false);
+          astcTexture.LoadImage(astcBytes);
+          return astcTexture;
+      }
+      */
+
+      originalTexture = LoadTexture(filename);
+      if (originalTexture == null)
+          return null;
+
+      // Create a new ASTC texture with the same dimensions as the original texture
+      TextureFormat txtfmt = getSupportedTextureFormat();
+      if (txtfmt == TextureFormat.RGB565)
+      {
+        ConfigManager.WriteConsole($"[LoadAndConvertTexture]  ERROR I can get an ASTC supportedTextureFormat");
+        return null;
+      }
+
+      //astcTexture = new Texture2D(originalTexture.width, originalTexture.height, txtfmt, false);
+      // Convert the original texture to the ASTC format
+      /*
+       * Unsupported destination format in Graphics.ConvertTexture (135). This is likely because the device does not support this format as a rendertarget format.
+      Graphics.ConvertTexture(originalTexture, astcTexture);    
+
+      This function works only on (most) uncompressed texture formats. If the Texture format is not RGBA32, ARGB32 or any other 8 bit/channel format, then this function converts the data. This extra conversion makes the function slower. For other formats SetPixels32 fails. Texture.isReadable must be true.
+      astcTexture.SetPixels32(originalTexture.GetPixels32());
+      astcTexture.Apply(true); // This generates mip maps
+      */    
+      ConfigManager.WriteConsole($"[LoadAndConvertTexture] source ({originalTexture.width}, {originalTexture.height}) fmt:{originalTexture.format.ToString()} mipmaps: {originalTexture.mipmapCount}");
+      originalTexture = ScaleTextureToClosestMultipleOf4(originalTexture);
+      ConfigManager.WriteConsole($"[LoadAndConvertTexture] source scaled ({originalTexture.width}, {originalTexture.height} {originalTexture.format.ToString()} mipmaps: {originalTexture.mipmapCount}");
+      astcTexture = originalTexture;
+      // Texture '' has dimensions (1031 x 771) which are not multiples of 4. Compress will not work.
+      astcTexture.Compress(true);
+
+      ConfigManager.WriteConsole($"[LoadAndConvertTexture] ({originalTexture.width}, {originalTexture.height}) -> ({astcTexture.width}, {astcTexture.height}) {astcTexture} {astcTexture.format.ToString()}mipmaps: {astcTexture.mipmapCount}");
+/*
+      // Save the compressed texture to disk
+      // ERROR the EncodeTo functions don't work with compressedData.
+      byte[] compressedData = astcTexture.EncodeToPNG();
+      File.WriteAllBytes(astcFilename, compressedData);
+*/
+      //byte[] rawBytes = astcTexture.GetRawTextureData();
+      //  File.WriteAllBytes(astcFilename, rawBytes);
+      // Return the ASTC texture
+      return astcTexture;
   }
 
   public bool IsValid
@@ -203,7 +401,8 @@ public class Cabinet
     if (!string.IsNullOrEmpty(textureFile))
     {
       //main texture
-      Texture2D t = LoadTexture(textureFile);
+      //Texture2D t = LoadTexture(textureFile);
+      Texture2D t = LoadAndConvertTexture(textureFile);
       if (t == null)
       {
         ConfigManager.WriteConsole($"ERROR Cabinet {Name} texture error {textureFile}");
