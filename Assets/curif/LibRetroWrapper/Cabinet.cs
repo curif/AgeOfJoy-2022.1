@@ -141,9 +141,9 @@ public class Cabinet
       return scaledTexture;
   }
   */
-  public static Texture2D ScaleTextureToClosestMultipleOf4(Texture2D texture)
-  {
-      int originalWidth = texture.width;
+    public static Texture2D ScaleTextureToClosestMultipleOf4(Texture2D texture)
+    {
+        int originalWidth = texture.width;
       int originalHeight = texture.height;
       // Check if dimensions are already a multiple of 4
       if (originalWidth % 4 == 0 && originalHeight % 4 == 0)
@@ -238,8 +238,8 @@ public class Cabinet
       byte[] compressedData = astcTexture.EncodeToPNG();
       File.WriteAllBytes(astcFilename, compressedData);
 */
-      //byte[] rawBytes = astcTexture.GetRawTextureData();
-      //  File.WriteAllBytes(astcFilename, rawBytes);
+      byte[] rawBytes = astcTexture.GetRawTextureData();
+      File.WriteAllBytes(astcFilename, rawBytes);
       // Return the ASTC texture
       return astcTexture;
   }
