@@ -282,16 +282,12 @@ public class Cabinet
                            List<GameObject> agentPlayerPositions = null)
   {
 
-    //the order is important
-    Material[] ms = new Material[] {
-            new Material(CabinetMaterials.TVBorder),
-            new Material(CabinetMaterials.Screen)
-        };
 
     string CRTType = $"screen-mock-{orientation}";
     GameObject CRT = Parts(CRTType);
     if (CRT == null)
       throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
+
     GameObject newCRT = CRTsFactory.Instantiate(type, CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
     if (newCRT == null)
       throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
@@ -305,8 +301,13 @@ public class Cabinet
     if (rotation != null)
       newCRT.transform.Rotate((Vector3)rotation);
 
+    //the order is important
+    Material[] ms = new Material[] {
+            new Material(CabinetMaterials.TVBorder),
+            new Material(CabinetMaterials.Screen) //TODO: a new parameter to select the shader
+    };
     newCRT.GetComponent<MeshRenderer>().materials = ms;
-
+    
     Object.Destroy(Parts("screen-mock-horizontal"));
     Object.Destroy(Parts("screen-mock-vertical"));
 

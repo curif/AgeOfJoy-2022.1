@@ -8,7 +8,7 @@ You should have received a copy of the GNU General Public License along with thi
 //#define _debug_audio_
 #define _debug_
 //#define _serialize_
-#define curif_mame_version
+//#define curif_mame_version
 
 using System.Collections;
 using System.Collections.Generic;
@@ -84,7 +84,7 @@ public static unsafe class LibretroMameCore
     private static extern void retro_set_environment(EnvironmentHandler env);
 
     // retro_set_video_refresh -------------------------------
-    private delegate void videoRefreshHandler(IntPtr data, uint width, uint height, uint pitch);
+    private delegate void videoRefreshHandler(IntPtr data, uint width, uint height, UIntPtr pitch);
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_video_refresh(videoRefreshHandler vrh);
     
@@ -399,6 +399,9 @@ public static unsafe class LibretroMameCore
     public static string Brightness = DefaultBrightness;
 
 
+    [DllImport ("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void printtest();
+
     public static bool Start(string screenName, string gameFileName) {
 
         string path = ConfigManager.RomsDir + "/" + gameFileName;
@@ -444,6 +447,7 @@ public static unsafe class LibretroMameCore
 
             WriteConsole("[LibRetroMameCore.Start] call retro_init");
             retro_init(); //do almost nothing https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
+            
 
             WriteConsole("[LibRetroMameCore.Start] retro_set_controller_port_device");
             retro_set_controller_port_device(port: 0, device: RETRO_DEVICE_JOYPAD);
@@ -1095,7 +1099,7 @@ public static unsafe class LibretroMameCore
     }
 
     private static byte[] outputData;
-    public static void ConvertXRGB8888ToRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
+    public static void ConvertXRGB8888ToRGB565(byte *imageData, int width, int height, int pitch, Texture2D texture)
     {
      // Allocate the output buffer if it hasn't been allocated yet
         //WriteConsole($"[ConvertXRGB8888ToRGB565] width: {width} height:{height}");
@@ -1140,14 +1144,14 @@ public static unsafe class LibretroMameCore
     }
             
 
-    private static void CopyImageData0RGB1555toRGB565(IntPtr imageData, int width, int height, int pitch, Texture2D texture)
+    private static void CopyImageData0RGB1555toRGB565(byte *imageData, int width, int height, int pitch, Texture2D texture)
     {
         // Get the pointer to the image data as a byte array
         if (outputData == null || outputData.Length < width * height * 2)
         {
             outputData = new byte[pitch * height];
         }
-        Marshal.Copy(imageData, outputData, 0, outputData.Length);
+        Marshal.Copy((IntPtr)imageData, outputData, 0, outputData.Length);
 
         // Lock the texture data and set the pixels directly
         Color[] pixels = texture.GetPixels();
@@ -1175,14 +1179,44 @@ public static unsafe class LibretroMameCore
         texture.SetPixels(pixels);
         texture.Apply();
     }
+    /*
+    unsafe static int sum(byte *data, uint width, uint height, uint pitch)
+    {
+        int sum = 0;
+        //byte* pData = (byte*)data.ToPointer(); // this isn't working, why???
+
+        for (int row = 0; row < height; row++)
+        {
+            byte* pRow = (byte*)data+ (row * pitch);
+
+            for (int col = 0; col < width; col++)
+            {
+                //sum += pRow[col];
+                sum += (int)*pRow;
+                pRow++;
+            }
+        }
+
+        return sum;
+    }
+    */
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int sum(IntPtr data, uint width, uint height, UIntPtr pitch);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr wrapper_image_conversion_convertXRGB8888ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr wrapper_image_conversion_convert0RGB1555ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
 
     [AOT.MonoPInvokeCallback (typeof(videoRefreshHandler))]
-    static void videoRefreshCB(IntPtr data, uint width, uint height, uint pitch) {
-        // WriteConsole($"[LibRetroMameCore.videoRefreshCB] w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
-        if (data == IntPtr.Zero) {
+    static void videoRefreshCB(IntPtr data, uint width, uint height, UIntPtr pitch) {
+        if (data == null /*IntPtr.Zero*/) {
             //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L699
             return;
         }
+        int s = sum(data, width, height,  pitch);
+        if (s>0)
+          WriteConsole($"[LibRetroMameCore.videoRefreshCB] w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat} sum: {s}");
 
         if (! acceptedPixelFormats.Contains(pixelFormat)) 
             return;
@@ -1200,39 +1234,35 @@ public static unsafe class LibretroMameCore
           WriteConsole($"[LibRetroMameCore.videoRefreshCB] create new texture w: {width}  h: {height} pitch: {pitch} fmt: {pixelFormat}");
           GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
           GameTexture.filterMode = FilterMode.Point;
-          /*
-          // https://docs.unity3d.com/ScriptReference/TextureFormat.html
-          switch (pixelFormat) {
-            case retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555:
-            case retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888:
-            case retro_pixel_format.RETRO_PIXEL_FORMAT_RGB565:
-                GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
-                GameTexture.filterMode = FilterMode.Point;
-                break;
-             the XRG8888 doesn't adjust to any Unity Texture format. 
-            case retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888:
-                //GameTexture = new Texture2D((int)width, (int)height, TextureFormat.BGRA32, false);
-                //GameTexture = new Texture2D((int)width, (int)height, TextureFormat.ARGB32, false);
-                GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
-                GameTexture.filterMode = FilterMode.Point;
-                break;
-          }
-            */
           Display.materials[1].SetTexture("_MainTex", GameTexture);
         }
 
+        IntPtr outputDataPtr = IntPtr.Zero;
         if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_0RGB1555) 
         {
-          CopyImageData0RGB1555toRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
+          //CopyImageData0RGB1555toRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
+          outputDataPtr = wrapper_image_conversion_convert0RGB1555ToRGB565(data, width, height, pitch);
+          if (outputDataPtr != IntPtr.Zero)
+          {
+            GameTexture.LoadRawTextureData(outputDataPtr, (int)(width * height * 2));
+            GameTexture.Apply(false, false);
+          }
         }
         else if (pixelFormat == retro_pixel_format.RETRO_PIXEL_FORMAT_XRGB8888)
         {
           //WriteConsole($"[LibRetroMameCore.videoRefreshCB] new RETRO_PIXEL_FORMAT_XRGB8888 image");
-          ConvertXRGB8888ToRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
+          // Convert the data to RGB565 format
+          outputDataPtr = wrapper_image_conversion_convertXRGB8888ToRGB565(data, width, height, pitch);
+          if (outputDataPtr != IntPtr.Zero)
+          {
+            GameTexture.LoadRawTextureData(outputDataPtr, (int)(width * height * 2));
+            GameTexture.Apply(false, false);
+          }
+          //aConvertXRGB8888ToRGB565(data, (int)width, (int)height, (int)pitch, GameTexture);
         }
         else 
         {
-          GameTexture.LoadRawTextureData(data, Mathf.RoundToInt(height*pitch));
+          GameTexture.LoadRawTextureData((IntPtr)data, Mathf.RoundToInt(height*(int)pitch));
           GameTexture.Apply(false, false);
         }
 
