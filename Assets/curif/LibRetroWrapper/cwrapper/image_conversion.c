@@ -1,4 +1,3 @@
-#include <stddef.h>
 
 #include "image_conversion.h"
 

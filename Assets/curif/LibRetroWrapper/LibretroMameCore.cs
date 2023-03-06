@@ -382,6 +382,29 @@ public static unsafe class LibretroMameCore
     static StopWatches Profiling;
 #endif
 
+    // C Wrappers 
+    //
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int sum(IntPtr data, uint width, uint height, UIntPtr pitch);
+    //[DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    //private static extern IntPtr wrapper_image_conversion_convertXRGB8888ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
+    //[DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    //private static extern IntPtr wrapper_image_conversion_convert0RGB1555ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
+    //[DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    //private static extern IntPtr wrapper_image_conversion_convert0RGB1555ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_image_prev_load_game();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_image_init();
+
+    private delegate void CreateTextureHandler(uint width, uint height);
+    private delegate void LoadTextureDataHandler(IntPtr data, uint size);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_image_set_texture_cb(CreateTextureHandler CreateTexture, LoadTextureDataHandler LoadTextureData);
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_image_set_pixel_format(retro_pixel_format pxf);
+
     // pointer vault
     private static MarshalHelpPtrVault PtrVault = new();
     private static MarshalHelpPtrVault PtrVaultNoFreed = new();
@@ -434,8 +457,13 @@ public static unsafe class LibretroMameCore
             
             WriteConsole("[LibRetroMameCore.Start] retro_set_environment");
             retro_set_environment(new EnvironmentHandler(environmentCB));
-            WriteConsole("[LibRetroMameCore.Start] retro_set_video_refresh");
-            retro_set_video_refresh(new videoRefreshHandler(videoRefreshCB));
+
+            WriteConsole("[LibRetroMameCore.Start] wrapper_image_init");
+            wrapper_image_init();
+            wrapper_image_set_texture_cb(new CreateTextureHandler(CreateTexture), new LoadTextureDataHandler(LoadTextureData));
+            //WriteConsole("[LibRetroMameCore.Start] retro_set_video_refresh");
+            //retro_set_video_refresh(new videoRefreshHandler(videoRefreshCB));
+            
             WriteConsole("[LibRetroMameCore.Start] retro_set_audio_sample");
             retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
             WriteConsole("[LibRetroMameCore.Start] retro_set_audio_sample_batch");
@@ -485,7 +513,8 @@ public static unsafe class LibretroMameCore
         IntPtr ptrBrightness = PtrVault.GetPtr(Brightness);
         retro_set_age_of_joy_parameters(QuestAudioFrequency, ptrGamma, ptrBrightness); //before retro_load_game
 #endif
-        WriteConsole($"[LibRetroMameCore.Start] retro_load_game - loading:{path}");
+        WriteConsole($"[LibRetroMameCore.Start] wrapper_image_prev_load_game/retro_load_game - loading:{path}");
+        wrapper_image_prev_load_game(); //in order...
         GameLoaded = retro_load_game(ref game);
 
         if (! GameLoaded) 
@@ -909,6 +938,7 @@ public static unsafe class LibretroMameCore
                     WriteConsole("[LibRetroMameCore.environmentCB] ERROR == pixel format not supported ==" );
                     return false;
                 }
+                wrapper_image_set_pixel_format(pixelFormat);
                 return true;
             }
 
@@ -1098,119 +1128,25 @@ public static unsafe class LibretroMameCore
         }
     }
 
-    private static byte[] outputData;
-    public static void ConvertXRGB8888ToRGB565(byte *imageData, int width, int height, int pitch, Texture2D texture)
+    [AOT.MonoPInvokeCallback (typeof(CreateTextureHandler))]
+    static void CreateTexture(uint width, uint height)
     {
-     // Allocate the output buffer if it hasn't been allocated yet
-        //WriteConsole($"[ConvertXRGB8888ToRGB565] width: {width} height:{height}");
-        if (outputData == null || outputData.Length < width * height * 2)
-        {
-            outputData = new byte[width * height * 2];
-        }
-        int inputOffset = 0;
-        int outputOffset = 0;
-        fixed (byte* outputDataPtr = outputData)
-        {
-          ushort* outputRow = (ushort*)(outputDataPtr + outputOffset);
-
-          for (int y = 0; y < height; y++)
-          {
-              byte* inputRow = (byte*)imageData + inputOffset;
-
-              for (int x = 0; x < width; x++)
-              {
-                  byte r = inputRow[2];
-                  byte g = inputRow[1];
-                  byte b = inputRow[0];
-
-                  // Pack the RGB565 values
-                  ushort rgb565 = (ushort)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
-
-                  // Store the packed RGB565 value in the output buffer
-                  *outputRow++ = rgb565;
-
-                  // Move to the next pixel
-                  inputRow += 4;
-              }
-
-              // Move to the next row
-              inputOffset += pitch;
-              outputOffset += width * 2;
-          }
-        }
-        // Unlock the input image data
-        texture.LoadRawTextureData(outputData);
-        texture.Apply();
+      WriteConsole($"[CreateTexture] {width}, {height}");
+      GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
+      GameTexture.filterMode = FilterMode.Point;
+      Display.materials[1].SetTexture("_MainTex", GameTexture);
     }
-            
-
-    private static void CopyImageData0RGB1555toRGB565(byte *imageData, int width, int height, int pitch, Texture2D texture)
+    [AOT.MonoPInvokeCallback (typeof(LoadTextureDataHandler))]
+    static void LoadTextureData(IntPtr data, uint size)
     {
-        // Get the pointer to the image data as a byte array
-        if (outputData == null || outputData.Length < width * height * 2)
-        {
-            outputData = new byte[pitch * height];
-        }
-        Marshal.Copy((IntPtr)imageData, outputData, 0, outputData.Length);
-
-        // Lock the texture data and set the pixels directly
-        Color[] pixels = texture.GetPixels();
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                // Get the 0RGB1555 pixel value
-                ushort pixel = BitConverter.ToUInt16(outputData, y * pitch + x * 2);
-
-                // Extract the 0RGB components from the pixel
-                byte r = (byte)((pixel >> 10) & 0x1F);
-                byte g = (byte)((pixel >> 5) & 0x1F);
-                byte b = (byte)(pixel & 0x1F);
-
-                // Convert the 0RGB values to RGB565 format
-                ushort newPixel = (ushort)((r << 11) | (g << 6) | b);
-
-                // Set the pixel in the texture
-                pixels[y * (int)width + x] = new Color((float)r / 31.0f, (float)g / 31.0f, (float)b / 31.0f);
-            }
-        }
-
-        // Apply the changes to the texture
-        texture.SetPixels(pixels);
-        texture.Apply();
+      //WriteConsole($"[LoadTextureData] {size} bytes");
+      GameTexture.LoadRawTextureData(data, (int)size);
+      GameTexture.Apply(false, false);
     }
     /*
-    unsafe static int sum(byte *data, uint width, uint height, uint pitch)
-    {
-        int sum = 0;
-        //byte* pData = (byte*)data.ToPointer(); // this isn't working, why???
-
-        for (int row = 0; row < height; row++)
-        {
-            byte* pRow = (byte*)data+ (row * pitch);
-
-            for (int col = 0; col < width; col++)
-            {
-                //sum += pRow[col];
-                sum += (int)*pRow;
-                pRow++;
-            }
-        }
-
-        return sum;
-    }
-    */
-
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int sum(IntPtr data, uint width, uint height, UIntPtr pitch);
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr wrapper_image_conversion_convertXRGB8888ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr wrapper_image_conversion_convert0RGB1555ToRGB565(IntPtr data, uint width, uint height, UIntPtr pitch);
-
     [AOT.MonoPInvokeCallback (typeof(videoRefreshHandler))]
     static void videoRefreshCB(IntPtr data, uint width, uint height, UIntPtr pitch) {
-        if (data == null /*IntPtr.Zero*/) {
+        if (data == null) {
             //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L699
             return;
         }
@@ -1272,6 +1208,7 @@ public static unsafe class LibretroMameCore
         
         return;
     }
+    */
 
     [AOT.MonoPInvokeCallback (typeof(inputPollHander))]
     static void inputPollCB()
