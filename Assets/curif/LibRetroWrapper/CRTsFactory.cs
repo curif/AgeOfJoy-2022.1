@@ -17,7 +17,8 @@ public static class CRTsFactory {
 
     public static GameObject Instantiate(string type, Vector3 position, Quaternion rotation, Transform parent) {
         if (objects.ContainsKey(type)) {
-            return GameObject.Instantiate<GameObject>(objects[type], position, rotation, parent);
+          ConfigManager.WriteConsole($"[CRTsFactory] {type}");
+          return GameObject.Instantiate<GameObject>(objects[type], position, rotation, parent);
         }
         Debug.LogError($"CRTsFactory Factory don't have a {type} object in list: {objects.Keys.ToString()}");
         return null;

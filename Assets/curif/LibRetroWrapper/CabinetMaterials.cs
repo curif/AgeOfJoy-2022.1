@@ -16,6 +16,7 @@ public static class CabinetMaterials {
     public static Material Plastic;
     public static Material TVBorder;
     public static Material Screen;
+    public static Material ScreenStandard;
     public static Material FrontGlassWithBezel;
     public static Material MarqueeNoLamps;
     public static Material MarqueeOneLamp;
@@ -47,6 +48,7 @@ public static class CabinetMaterials {
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
         Screen = Resources.Load<Material>("Cabinets/PreFab/CRTs/Screen");
+        ScreenStandard = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenStandard");
 
         MarqueeNoLamps = Resources.Load<Material>("Cabinets/Materials/MarqueeNoLamps");
         MarqueeOneLamp = Resources.Load<Material>("Cabinets/Materials/MarqueeOneLamp");
