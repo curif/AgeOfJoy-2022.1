@@ -60,10 +60,13 @@ public class LibretroScreenController : MonoBehaviour
   [Tooltip("Adjust Gamma from 1.0 to 2.0")]
   [SerializeField]
   public string Gamma = "1.0";
-
+ 
   [Tooltip("Adjust bright from 0.2 to 2.0")]
   [SerializeField]
   public string Brightness = "1.0";
+
+  [SerializeField]
+  public string ShaderName = "damage";
 
   [SerializeField]
   [Tooltip("Path that holds cabinet information, save states there.")]
@@ -71,8 +74,11 @@ public class LibretroScreenController : MonoBehaviour
   [Tooltip("Positions where the player can stay to activate atraction videos")]
   public List<GameObject> AgentPlayerPositions;
 
-  private List<AgentScenePosition> agentPlayerPositionComponents;
+  //non-serializable
+  public Dictionary<string, string> ShaderConfig = new();
 
+  private ShaderScreenBase shader;
+  private List<AgentScenePosition> agentPlayerPositionComponents;
   private GameObject player;
   private OVRPlayerController playerController;
   private CoinSlotController CoinSlot;
@@ -113,6 +119,7 @@ public class LibretroScreenController : MonoBehaviour
 
     display = GetComponent<Renderer>();
     cabinet = gameObject.transform.parent.gameObject;
+    videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
 
     //camera
     centerEyeCamera = GameObject.Find("CenterEyeAnchor");
@@ -125,7 +132,7 @@ public class LibretroScreenController : MonoBehaviour
 
     CoinSlot = getCoinSlotController();
     if (CoinSlot == null)
-      Debug.LogError("Coin Slot not found in cabinet !!!! no one can play this game.");
+      Debug.LogError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
 
     agentPlayerPositionComponents = new();
     if (AgentPlayerPositions != null)
@@ -136,18 +143,22 @@ public class LibretroScreenController : MonoBehaviour
         if (asp != null)
           agentPlayerPositionComponents.Add(asp);
       }
-      videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
-      videoPlayer.setVideo(GameVideoFile, invertX: GameVideoInvertX, invertY: GameVideoInvertY);
     }
+
     StartCoroutine(runBT());
 
     return;
   }
 
-
   IEnumerator runBT()
   {
     tree = buildScreenBT();
+
+    //material and shader
+    shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
+    ConfigManager.WriteConsole($"[LibretroScreenController.Start] shader created: {shader}");
+
+    videoPlayer.setVideo(GameVideoFile, shader, GameVideoInvertX, GameVideoInvertY);
     // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
 
     while (true)
@@ -174,8 +185,8 @@ public class LibretroScreenController : MonoBehaviour
           {
             videoPlayer.Stop();
 
-            display.materials[1].SetFloat("MirrorX", GameInvertX ? 1f : 0f);
-            display.materials[1].SetFloat("MirrorY", GameInvertY ? 1f : 0f);
+            // core do it: shader.texture = LibretroMameCore.GameTexture;
+            shader.Invert(GameInvertX, GameInvertY);
 
             //start mame
             LibretroMameCore.WriteConsole($"MAME Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
@@ -190,7 +201,10 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.Gamma = Gamma;
             LibretroMameCore.CoinSlot = CoinSlot;
             LibretroMameCore.PathBase = PathBase;
-            if (!LibretroMameCore.Start(name, GameFile)) {
+            LibretroMameCore.shader = shader;
+
+            if (!LibretroMameCore.Start(name, GameFile)) 
+            {
               CoinSlot.clean();
               return TaskStatus.Failure;  
             }
@@ -287,7 +301,7 @@ public class LibretroScreenController : MonoBehaviour
   {
     // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
     LibretroMameCore.Run(name, GameFile); //only runs if this game is running
-    display.materials[1].SetFloat("u_time", Time.fixedTime);
+    shader.Update();
     return;
   }
 
@@ -329,6 +343,5 @@ public class LibretroScreenController : MonoBehaviour
     if (LibretroMameCore.isRunning(name, GameFile))
       PreparePlayerToPlayGame(false);
   }
-
 
 }
