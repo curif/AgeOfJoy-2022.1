@@ -17,7 +17,7 @@ public class CabinetInformation
     public string name;
     public string rom;
     public List<Part> Parts { get; set; }
-    public CRT crt;
+    public CRT crt = new();
     public string style = "galaga";
     public Model model = new();
     public string material;
@@ -34,11 +34,9 @@ public class CabinetInformation
     [YamlIgnore]
     public string pathBase;
 
-    //[YamlIgnore] public List<System.Exception> problems;
-    
     public static CabinetInformation fromName(string cabName)
     {
-        return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
+      return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
     }
 
     public static CabinetInformation fromYaml(string cabPath)
@@ -96,20 +94,20 @@ public class CabinetInformation
     }
     public class Art
     {
-        public string file;
-        public bool invertx = false;
-        public bool inverty = false;
+      public string file;
+      public bool invertx = false;
+      public bool inverty = false;
 
-        public System.Exception validate(string pathBase)
+      public System.Exception validate(string pathBase)
+      {
+        string filePath = $"{pathBase}/{file}";
+        if (!File.Exists(filePath))
         {
-            string filePath = $"{pathBase}/{file}";
-            if (!File.Exists(filePath))
-            {
-                return new System.IO.FileNotFoundException($"{filePath}");
-            }
-
-            return null;
+            return new System.IO.FileNotFoundException($"{filePath}");
         }
+
+        return null;
+      }
     }
     public class Marquee
     {
@@ -118,60 +116,73 @@ public class CabinetInformation
     }
     public class Part
     {
-        public string name;
-        public string material;
-        public Art art;
-        public RGBColor color;
-        public string type = "normal"; // or bezel or marquee
-        public Geometry geometry = new();
-        public Marquee marquee = new();
+      public string name;
+      public string material;
+      public Art art;
+      public RGBColor color;
+      public string type = "normal"; // or bezel or marquee
+      public Geometry geometry = new();
+      public Marquee marquee = new();
     }
 
     public class CRT
     {
-        public string type;
-        public string orientation = "vertical";
-        public Screen screen;
-        public Geometry geometry = new();
+      public string type = "19i";
+      public string orientation = "vertical";
+      public Screen screen = new();
+      public Geometry geometry = new();
 
-        public System.Exception validate(List<string> crtTypes)
+      public System.Exception validate(List<string> crtTypes)
+      {
+        if (!crtTypes.Contains(type))
         {
-            if (!crtTypes.Contains(type))
-            {
-                return new System.ArgumentException($"{type} is not a known CRT type");
-            }
-
-            if (orientation != "vertical" && orientation != "horizontal")
-            {
-                return new System.ArgumentException(
-                    $"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
-            }
-
-            return screen.validate();
+          return new System.ArgumentException($"{type} is not a known CRT type");
         }
+
+        if (orientation != "vertical" && orientation != "horizontal")
+        {
+          return new System.ArgumentException($"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
+        }
+
+        return screen.validate();
+      }
     }
 
     public class Screen
     {
-        public string damage = "low";
-        public bool invertx = false;
-        public bool inverty = false;
-        public string gamma = LibretroMameCore.DefaultGamma;
-        public string brightness = LibretroMameCore.DefaultBrightness;
-        public System.Exception validate()
+      public string shader = "damage";
+      public string damage = "low";
+      public bool invertx = false;
+      public bool inverty = false;
+      public string gamma = LibretroMameCore.DefaultGamma;
+      public string brightness = LibretroMameCore.DefaultBrightness;
+
+      public Dictionary<string, string> config() 
+      {
+        Dictionary<string, string> dic = new();
+        dic["damage"] = damage;
+        return dic;
+      }
+
+      public System.Exception validate()
+      {
+        if (shader != "damage" && shader != "clean")
         {
-            if (! LibretroMameCore.IsGammaValid(gamma))
-            {
-                return new System.ArgumentException($"Erroneous Gamma {gamma}");
-            }
-
-            if (! LibretroMameCore.IsBrightnessValid(brightness))
-            {
-                return new System.ArgumentException($"Erroneous Brightness {brightness}");
-            }
-
-            return null;
+          return new System.ArgumentException($"Erroneous Shader {shader}");
         }
+
+        if (! LibretroMameCore.IsGammaValid(gamma))
+        {
+            return new System.ArgumentException($"Erroneous Gamma {gamma}");
+        }
+
+        if (! LibretroMameCore.IsBrightnessValid(brightness))
+        {
+            return new System.ArgumentException($"Erroneous Brightness {brightness}");
+        }
+
+        return null;
+      }
     }
 
     public class RGBColor

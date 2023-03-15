@@ -272,6 +272,7 @@ public static unsafe class LibretroMameCore
     //image ===========    
     static FpsControl FPSControl;
     public static Texture2D GameTexture;
+    public static ShaderScreenBase shader;
     // public static GameObject Camera;
 
     //parameters ================
@@ -572,7 +573,7 @@ public static unsafe class LibretroMameCore
       WriteConsole($"[CreateTexture] {width}, {height}");
       GameTexture = new Texture2D((int)width, (int)height, TextureFormat.RGB565, false);
       GameTexture.filterMode = FilterMode.Point;
-      Display.materials[1].SetTexture("_MainTex", GameTexture);
+      shader.Texture = GameTexture;
     }
     [AOT.MonoPInvokeCallback (typeof(LoadTextureDataHandler))]
     static void LoadTextureData(IntPtr data, uint size)

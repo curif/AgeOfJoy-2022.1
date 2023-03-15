@@ -20,16 +20,6 @@ public class Cabinet
   //those parts that the user can configure, but is not limited to.
   public static List<string> userStandarConfigurableParts = new List<string>() { "front", "left", "right", "joystick", "joystick-down", "screen-base" };
 
-  public static Shader GetShader(string name)
-  {
-    Shader shader = Shader.Find(name);
-    if (shader == null || shader.ToString() == "Hidden/InternalErrorShader (UnityEngine.Shader)")
-    {
-      UnityEngine.Debug.LogError($"Internal error, Shader not found: {name}");
-      shader = Shader.Find("Standard");
-    }
-    return shader;
-  }
 
   // load a texture from disk.
   private static Texture2D LoadTexture(string filePath)
@@ -273,16 +263,15 @@ public class Cabinet
     return "screen-" + cabinetName + "-" + gameFile;
   }
 
-  public Cabinet addCRT(string type, string orientation, string GameFile, string GameVideoFile, int timeToLoad, string pathBase,
+  public Cabinet addCRT(string type, string orientation, string gameFile, string GameVideoFile, int timeToLoad, string pathBase,
                            bool invertX = false, bool invertY = false,
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
                            bool EnableSaveState = true, string StateFile = "state.nv",
                            Vector3? rotation = null, float scalePercentage = 0, 
                            string gamma = "1.0", string brightness = "1.0",
-                           List<GameObject> agentPlayerPositions = null)
+                           List<GameObject> agentPlayerPositions = null,
+                           string shaderName = "damage", Dictionary<string,string> shaderConfig = null)
   {
-
-
     string CRTType = $"screen-mock-{orientation}";
     GameObject CRT = Parts(CRTType);
     if (CRT == null)
@@ -293,7 +282,7 @@ public class Cabinet
       throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
 
     //LibretroScreenController will find the object using this name:
-    newCRT.name = CRTName(Name, GameFile);
+    newCRT.name = CRTName(Name, gameFile);
    
     // rotate and scale
     float scale = scalePercentage / 100f;
@@ -301,30 +290,29 @@ public class Cabinet
     if (rotation != null)
       newCRT.transform.Rotate((Vector3)rotation);
 
-    //the order is important
-    Material[] ms = new Material[] {
-            new Material(CabinetMaterials.TVBorder),
-            new Material(CabinetMaterials.Screen) //TODO: a new parameter to select the shader
-    };
-    newCRT.GetComponent<MeshRenderer>().materials = ms;
-    
     Object.Destroy(Parts("screen-mock-horizontal"));
     Object.Destroy(Parts("screen-mock-vertical"));
 
     //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
     LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
-    libretroScreenController.GameFile = GameFile;
+    libretroScreenController.GameFile = gameFile;
     libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
     libretroScreenController.EnableSaveState = EnableSaveState;
     libretroScreenController.StateFile = StateFile;
     libretroScreenController.PathBase = pathBase;
+
     libretroScreenController.GameInvertX = invertX;
     libretroScreenController.GameInvertY = invertY;
     libretroScreenController.Gamma = gamma;
     libretroScreenController.Brightness = brightness;
 
+    libretroScreenController.ShaderName = shaderName;
+    libretroScreenController.ShaderConfig = shaderConfig;
+
     libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
+
+    //video
     libretroScreenController.GameVideoFile = GameVideoFile;
     libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
     libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
@@ -361,3 +349,4 @@ public class Cabinet
     return this;
   }
 }
+

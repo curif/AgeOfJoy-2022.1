@@ -204,13 +204,17 @@ public static class CabinetFactory
 		cabinet.addCRT(
 				cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
 				cbinfo.timetoload, cbinfo.pathBase,
-				invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
+				invertX: cbinfo.crt.screen.invertx, 
+        invertY: cbinfo.crt.screen.inverty,
 				GameVideoFileInvertX: cbinfo.video.invertx, 
         GameVideoFileInvertY: cbinfo.video.inverty,
-				EnableSaveState: cbinfo.enablesavestate, StateFile: cbinfo.statefile,
-        CRTrotation, cbinfo.crt.geometry.scalepercentage, 
+				EnableSaveState: cbinfo.enablesavestate, 
+        StateFile: cbinfo.statefile,
+        rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage, 
         cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
-        agentPlayerPositions);
+        agentPlayerPositions,
+        cbinfo.crt.screen.shader, cbinfo.crt.screen.config());
+
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
 		return cabinet;
