@@ -43,7 +43,12 @@ public class ArcadeRoomBehavior : MonoBehaviour
   public int MinTimeSpentGaming = 3;
 
   [Header("Avoid Player")]
-  public bool AvoidPlayer;
+  public bool AvoidPlayer = true;
+  [Tooltip("Use raycast analysis plus the NavMesh carv obstacle in the player")]
+  public bool UseRayCastToAvoidPlayer = false;
+  [Tooltip("Shows when the NPC hits the player")]
+  public bool collisionWithPlayer = false;
+
   public float distanceToDetectPlayer = 5f; // distance to detect objects
   public Vector3 centerRaycastPlayerDetection = new Vector3(0,1,0);
   //public float pushForce = 10.0f;
@@ -77,7 +82,6 @@ public class ArcadeRoomBehavior : MonoBehaviour
   private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
   private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
   private bool inPathToCollisionWithPlayer = false;
-  private bool collisionWithPlayer = false;
   private DateTime avoidCollisionAnalysis = DateTime.Now;
   private Rigidbody npcRigidbody;
 
@@ -109,10 +113,11 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
   void configureCollider() 
   {
-    GetComponent<CapsuleCollider>().isTrigger = false;
+    GetComponent<CapsuleCollider>().isTrigger = true;
     GetComponent<CapsuleCollider>().center = new Vector3(0f, 0.7f, 0f);
     GetComponent<CapsuleCollider>().radius = 0.3f;
     GetComponent<CapsuleCollider>().height = 1.7f;
+    
     npcRigidbody = GetComponent<Rigidbody>();
     npcRigidbody.useGravity = false;
     npcRigidbody.isKinematic = true;
@@ -129,11 +134,11 @@ public class ArcadeRoomBehavior : MonoBehaviour
     float angleIncrement = 20f; // angle increment between rays
     float startAngle = -45f; // starting angle of the rays
     float endAngle = 45f; // ending angle of the rays
+
+    if (! UseRayCastToAvoidPlayer || ! AvoidPlayer)
+      return false;
     
     inPathToCollisionWithPlayer = false; 
-    if (!AvoidPlayer) {
-      return false;
-    }
     
     for (float angle = startAngle; angle <= endAngle; angle += angleIncrement)
     {
