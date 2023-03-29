@@ -16,6 +16,7 @@ using CleverCrow.Fluid.BTs.Trees;
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
+[RequireComponent(typeof(EnableDisableRenderers))]
 public class ArcadeRoomBehavior : MonoBehaviour
 {
   public List<PlaceInformation> Destinations;
@@ -23,32 +24,55 @@ public class ArcadeRoomBehavior : MonoBehaviour
   [Tooltip("Where to go if all destinations are in use")]
   public PlaceInformation DefaultDestination;
 
+  [Tooltip("Room configuration object")]
+  public GameObject RoomConfiguration;
+
+  [Tooltip("A static NPC stay in the default position all the time.")]
+  public bool IsStatic = false;
+
+  [Tooltip("Movement controlled by Animation or by the Nav Mesh Agent")]
+  public bool AnimationControlled = false;
+
   [Header("Arcade Positions")]
   [Tooltip("Parent group arcade cabinets. Each cabinet needs a PlayerPosition Gameobject as destination")]
   public GameObject PlayerPositions;
   public float MinimalDistanceToReachArcade = 1.5f;
-  [Tooltip("Time max to spent in a game")]
+
+  [Tooltip("Time min/max to spent in a game")]
   public int MaxTimeSpentGaming = 10;
   public int MinTimeSpentGaming = 3;
 
   [Header("Avoid Player")]
-  public bool AvoidPlayer;
+  public bool AvoidPlayer = true;
+  [Tooltip("Use raycast analysis plus the NavMesh carv obstacle in the player")]
+  public bool UseRayCastToAvoidPlayer = false;
+  [Tooltip("Shows when the NPC hits the player")]
+  public bool collisionWithPlayer = false;
+
   public float distanceToDetectPlayer = 5f; // distance to detect objects
   public Vector3 centerRaycastPlayerDetection = new Vector3(0,1,0);
-  public float pushForce = 10.0f;
+  //public float pushForce = 10.0f;
 
+  [Header("Tree")]
   [SerializeField]
   public BehaviorTree tree;
 
   [Tooltip("Max time to spent walking to a place before abort")]
   public int TimeoutSeconds = 5;
 
+  [Tooltip("Next Destination asigned")]
+  public PlaceInformation destination;
+
+  [SerializeField]
   public PlaceInformation Destination { get => destination; }
 
   private NavMeshAgent agent;
-  private PlaceInformation destination, selectedDestination;
+  private PlaceInformation selectedDestination;
   private Animator animator;
   private GameObject player;
+  private NavMeshObstacle obstacle;
+  private RoomConfiguration roomConfiguration;
+  private EnableDisableRenderers enableDisableRenderers;
 
   private System.Random random = new System.Random(DateTime.Now.Millisecond);
   // private bool onCollisionWithOtherNPC = false;
@@ -58,7 +82,6 @@ public class ArcadeRoomBehavior : MonoBehaviour
   private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
   private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
   private bool inPathToCollisionWithPlayer = false;
-  private bool collisionWithPlayer = false;
   private DateTime avoidCollisionAnalysis = DateTime.Now;
   private Rigidbody npcRigidbody;
 
@@ -67,20 +90,34 @@ public class ArcadeRoomBehavior : MonoBehaviour
     agent = gameObject.GetComponent<NavMeshAgent>();
     animator = gameObject.GetComponent<Animator>();
     player = GameObject.Find("OVRPlayerControllerGalery");
+    roomConfiguration = RoomConfiguration.GetComponent<RoomConfiguration>();
+    enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
 
     totalDestinationsList.AddRange(Destinations);
-    // ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} added configured destinations totalDestinationsList: {totalDestinationsList.Count}");
     
     configureCollider();
+    configureNavMesh();
 
     StartCoroutine(runBT());
   }
+  void configureNavMesh() 
+  {
+    /*
+     * where root motion is used to drive the NavMeshAgent's movement, the NavMeshAgent's velocity is automatically calculated based on the animation's root motion, and it is not directly controlled by the script.
+     * So, while the animator is controlling the movement, the NavMeshAgent's velocity is still being calculated and updated by the NavMesh system based on the object's position, destination, and other factors. The NavMeshAgent will try to move the object to the desired location at a speed that is consistent with the animation's root motion.
+     * Therefore, in this case, you don't need to manually control the NavMeshAgent's velocity. Instead, you can use the animator to control the movement and the NavMeshAgent will automatically calculate the appropriate velocity to reach the destination.
+    */
+    //GetComponent<NavMeshAgent>().speed = 0.1f; //bcz is controlled by the RootMotion
+    GetComponent<NavMeshAgent>().radius = 0.3f;
+  }
+
   void configureCollider() 
   {
-    GetComponent<CapsuleCollider>().isTrigger = false;
+    GetComponent<CapsuleCollider>().isTrigger = true;
     GetComponent<CapsuleCollider>().center = new Vector3(0f, 0.7f, 0f);
-    GetComponent<CapsuleCollider>().radius = 0.4f;
-    GetComponent<CapsuleCollider>().height = 1f;
+    GetComponent<CapsuleCollider>().radius = 0.3f;
+    GetComponent<CapsuleCollider>().height = 1.7f;
+    
     npcRigidbody = GetComponent<Rigidbody>();
     npcRigidbody.useGravity = false;
     npcRigidbody.isKinematic = true;
@@ -97,6 +134,9 @@ public class ArcadeRoomBehavior : MonoBehaviour
     float angleIncrement = 20f; // angle increment between rays
     float startAngle = -45f; // starting angle of the rays
     float endAngle = 45f; // ending angle of the rays
+
+    if (! UseRayCastToAvoidPlayer || ! AvoidPlayer)
+      return false;
     
     inPathToCollisionWithPlayer = false; 
     
@@ -128,21 +168,48 @@ public class ArcadeRoomBehavior : MonoBehaviour
   IEnumerator runBT()
   {
     othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
-                 where npc != gameObject
-                 select npc.GetComponent<ArcadeRoomBehavior>()).
-                 ToList<ArcadeRoomBehavior>();
-
+                  where npc != gameObject
+                  select npc.GetComponent<ArcadeRoomBehavior>()).
+                  ToList<ArcadeRoomBehavior>();
     if (PlayerPositions != null)
         //The cabinets where not loaded when this code runs
         totalDestinationsList.AddRange(
             (from Transform playerPosition in PlayerPositions.transform
             select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
-                                        MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine)
+                                        MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine,
+                                        playerPosition.gameObject.GetComponent<AgentScenePosition>())
             ).ToList());
+    //get the agent ScenePosition Component for all the places
+    foreach (PlaceInformation place in totalDestinationsList)
+    {
+      if (place.ScenePosition == null)
+          place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
+    }
+
+    DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
 
     tree = buildBT();
     while (true)
     {
+      if (roomConfiguration != null && roomConfiguration.Configuration?.npc != null)
+      {
+        //ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} STATUS: {roomConfiguration.Configuration.npc.status}");
+
+        if (roomConfiguration.Configuration.npc.status == "disabled")
+        {
+          enableDisableRenderers.SetRenderers(false); //disable Renderers
+          yield return new WaitForSeconds(2f);
+          continue;
+        }
+
+        enableDisableRenderers.SetRenderers(true); //enable Renderers
+
+        IsStatic = roomConfiguration.Configuration.npc.status == "static";
+      }
+
+      if (!AnimationControlled)
+        animator.SetFloat("Speed", agent.velocity.magnitude);
+
       tree.Tick();
       yield return new WaitForSeconds(1f / 3f);
     }
@@ -166,11 +233,13 @@ public class ArcadeRoomBehavior : MonoBehaviour
         })
         .ReturnSuccess()
           .Sequence()
-            .Condition("NPC has a default destination configured?", () => DefaultDestination != null)
-            .Condition("Destination taken by other NPC?", () =>
-                othersNPC.FirstOrDefault(npc =>
-                                          npc?.Destination != null &&
-                                          UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null)
+            .Condition("NPC should go to default destination?", () => 
+                DefaultDestination != null
+                && (IsStatic || 
+                    selectedDestination.IsTaken ||
+                    othersNPC.FirstOrDefault(npc =>
+                                              npc?.Destination != null &&
+                                              UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null))
             .Do("Use the default destination", () =>
             {
               selectedDestination = DefaultDestination;
@@ -199,8 +268,9 @@ public class ArcadeRoomBehavior : MonoBehaviour
         .RepeatUntilSuccess()
           .Selector()
             .Condition("Timeout", () => DateTime.Now > timeout)
-            .Condition("Arrived", () => Vector3.Distance(destination.Place.transform.position, transform.position) <= destination.MinimalDistanceToReachObject)
-            .Condition("Player found or blocked", () => AvoidPlayer && (collisionWithPlayer || detectPlayer())) 
+            .Condition("Arrived", () => destination.ScenePosition.NPCIsPresent(name))
+            .Condition("Player found or blocked", () => collisionWithPlayer || detectPlayer()) 
+            .Condition("Destination taken by other NPC or Player?", () => destination.ScenePosition.IsTaken)
           .End()
         .End()
         
@@ -216,12 +286,16 @@ public class ArcadeRoomBehavior : MonoBehaviour
           {
             timeToSpentInPlace = DateTime.Now.AddSeconds(1);
           }
-          else if (collisionWithPlayer || inPathToCollisionWithPlayer)
+          else if (AvoidPlayer && (collisionWithPlayer || detectPlayer()))
           {
             rotateAndWalk();
-            collisionWithPlayer = false;
             avoidCollisionAnalysis = DateTime.Now.AddSeconds(2); //give some time to the NPC to reach the destination before check for collisions again 
+            collisionWithPlayer = false;
             timeToSpentInPlace = DateTime.Now.AddSeconds(2);
+          }
+          else if (collisionWithPlayer)
+          {
+            timeToSpentInPlace = DateTime.Now.AddSeconds(1);
           }
           else
           {
@@ -234,7 +308,9 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
         .RepeatUntilSuccess()
             .Selector()
-                .Condition("Wait some time there (or hit player)", () => DateTime.Now > timeToSpentInPlace || collisionWithPlayer)
+              .Condition("Wait some time there (or hit player)", () => DateTime.Now > timeToSpentInPlace)
+              .Condition("hit player", () => collisionWithPlayer)
+              //.Condition("Other NPC got the position", () => !destination.ScenePosition.ItsMe(name))
             .End()
         .End()
 
@@ -249,21 +325,38 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
   }
 
+  private void SetMovementController()
+  {
+    animator.applyRootMotion = AnimationControlled;
+    GetComponent<NavMeshAgent>().speed = 1f; //bcz is controlled by the RootMotion
+  }
+
   private void stop()
   {
     //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
-    agent.isStopped = true;
-    agent.ResetPath();
     animator.SetTrigger("Idle");
-    animator.applyRootMotion = false;
+    agent.updateRotation = false;
+    SetMovementController();
+  }
+  private void walk()
+  {
+    agent.updateRotation = true;
+    animator.SetTrigger("Walk");
+    SetMovementController();
   }
 
+  private void faceToDestination() 
+  {
+    agent.updateRotation = false;
+    transform.position = new Vector3(destination.Place.transform.position.x, 
+                                    transform.position.y, 
+                                    destination.Place.transform.position.z);
+    transform.rotation = destination.Place.transform.rotation;
+  }
   private void runDestinationAnimation()
   { 
-    transform.position = new Vector3(destination.Place.transform.position.x, 
-                                     transform.position.y, 
-                                     destination.Place.transform.position.z);
-    transform.rotation = destination.Place.transform.rotation;
+
+    faceToDestination();
 
     if (destination.Type == PlaceInformation.PlaceType.BoyPlay) {
         //special behaviour
@@ -273,16 +366,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
     else
         animator.SetTrigger(animatorTriggers[(int)destination.Type]);
 
-    animator.applyRootMotion = false;
   }
 
-  private void walk()
-  {
-    animator.applyRootMotion = true;
-    animator.SetTrigger("Walk");
-    agent.isStopped = false;
-  }
-  
   private bool walkToDestination()
   {
     timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
@@ -302,17 +387,27 @@ public class ArcadeRoomBehavior : MonoBehaviour
   private void rotateAndWalk()
   {
     //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.rotateAndWalk] {gameObject.name} ");
+    // TODO change for a new path to avoid the player.
     animator.applyRootMotion = true;
     animator.SetTrigger("Turn");
   }
+
   private void OnTriggerEnter(Collider collision)
   {
-    //ConfigManager.WriteConsole($"[OnTriggerEnter] {collision.gameObject.name} is {player.name}?");
+    //ConfigManager.WriteConsole($"[OnTriggerEnter] agentBehavior {name}: collision with {collision.gameObject.name}");
     if ((collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall" || collision.gameObject.name == "GrabVolumeBig")
         && DateTime.Now > avoidCollisionAnalysis)
     {
-      ConfigManager.WriteConsole($"[OnTriggerEnter] {name}: {collision.gameObject.name}");
+      //ConfigManager.WriteConsole($"[OnTriggerEnter] agentBehavior collision with player{name}: {collision.gameObject.name}");
       collisionWithPlayer = true;
+    }
+  }
+  private void OnTriggerExit(Collider collision)
+  {
+    if (collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall"|| collision.gameObject.name == "GrabVolumeBig")
+    {
+      //ConfigManager.WriteConsole($"[OnTriggerExit] agentBehavior collision with player no more {name}: {collision.gameObject.name}");
+      collisionWithPlayer = false;
     }
   }
 /*
@@ -345,15 +440,6 @@ public class ArcadeRoomBehavior : MonoBehaviour
     {
       ConfigManager.WriteConsole($"[OnTriggerStay] {name}: {collision.gameObject.name}");
       collisionWithPlayer = true;
-    }
-  }
-  private void OnTriggerExit(Collider collision)
-  {
-    if ((collision.gameObject.name == "OVRPlayerControllerGalery" || collision.gameObject.name == "GrabVolumeSmall")
-        && DateTime.Now > avoidCollisionAnalysis)
-    {
-      ConfigManager.WriteConsole($"[OnTriggerExit] {name}: {collision.gameObject.name}");
-      collisionWithPlayer = false;
     }
   }
   */

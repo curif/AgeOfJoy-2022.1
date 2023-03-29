@@ -20,16 +20,6 @@ public class Cabinet
   //those parts that the user can configure, but is not limited to.
   public static List<string> userStandarConfigurableParts = new List<string>() { "front", "left", "right", "joystick", "joystick-down", "screen-base" };
 
-  public static Shader GetShader(string name)
-  {
-    Shader shader = Shader.Find(name);
-    if (shader == null || shader.ToString() == "Hidden/InternalErrorShader (UnityEngine.Shader)")
-    {
-      UnityEngine.Debug.LogError($"Internal error, Shader not found: {name}");
-      shader = Shader.Find("Standard");
-    }
-    return shader;
-  }
 
   // load a texture from disk.
   private static Texture2D LoadTexture(string filePath)
@@ -149,6 +139,7 @@ public class Cabinet
   public GameObject Parts(string part)
   {
     Transform childTransform = gameObject.transform.Find(part);
+    //ConfigManager.WriteConsole($"Part: {childTransform}");
     if (childTransform == null)
       return null;
     return childTransform.gameObject;
@@ -187,6 +178,9 @@ public class Cabinet
     if (r == null)
       return this;
 
+    if (mat == null)
+      mat = CabinetMaterials.Base;
+
     Material m = new Material(mat);
     //tiling
     Vector2 mainTextureScale = new Vector2(1, 1);
@@ -214,16 +208,22 @@ public class Cabinet
     return this;
   }
 
-  public Cabinet SetMarquee(string part, string texturePath, bool invertX = false, bool invertY = false)
+  public Cabinet SetMarquee(string part, string texturePath, Material marqueeMaterial, bool invertX = false, bool invertY = false)
   {
-    return SetTextureTo(part, texturePath, CabinetMaterials.Marquee, invertX: invertX, invertY: invertY);
+    return SetTextureTo(part, texturePath, marqueeMaterial, invertX: invertX, invertY: invertY);
   }
-  public Cabinet SetMarqueeEmissionColor(string part, Color color) {
+  public Cabinet SetMarqueeEmissionColor(string part, Color color, float intensity) {
     if (!PartsExist(part))
       return this;
+
     Renderer r = Parts(part).GetComponent<Renderer>();
     if (r != null)
+    {
       r.material.SetColor("_EmissionColor", color);
+      float oldToNewIntensity = (intensity + 5) / 10;
+      r.material.SetFloat("_EmissionIntensity", oldToNewIntensity);
+    }
+
     return this;
   }
 
@@ -263,38 +263,32 @@ public class Cabinet
     return "screen-" + cabinetName + "-" + gameFile;
   }
 
-  public Cabinet addCRT(string type, string orientation, string GameFile, string GameVideoFile, int timeToLoad, string pathBase,
+  public Cabinet addCRT(string type, string orientation, string gameFile, string GameVideoFile, int timeToLoad, string pathBase,
                            bool invertX = false, bool invertY = false,
                            bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
                            bool EnableSaveState = true, string StateFile = "state.nv",
-                           float rotationAngleX = 0, float rotationAngleY = 0, float rotationAngleZ = 0, 
-                           float scalePercentage = 0, 
-                           string gamma = "1.0", string brightness = "1.0")
+                           Vector3? rotation = null, float scalePercentage = 0, 
+                           string gamma = "1.0", string brightness = "1.0",
+                           List<GameObject> agentPlayerPositions = null,
+                           string shaderName = "damage", Dictionary<string,string> shaderConfig = null)
   {
-
-    //the order is important
-    Material[] ms = new Material[] {
-            new Material(CabinetMaterials.TVBorder),
-            new Material(CabinetMaterials.Screen)
-        };
-
     string CRTType = $"screen-mock-{orientation}";
     GameObject CRT = Parts(CRTType);
     if (CRT == null)
       throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
+
     GameObject newCRT = CRTsFactory.Instantiate(type, CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
     if (newCRT == null)
       throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
 
     //LibretroScreenController will find the object using this name:
-    newCRT.name = CRTName(Name, GameFile);
+    newCRT.name = CRTName(Name, gameFile);
    
     // rotate and scale
     float scale = scalePercentage / 100f;
     newCRT.transform.localScale *= scale;
-    newCRT.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
-
-    newCRT.GetComponent<MeshRenderer>().materials = ms;
+    if (rotation != null)
+      newCRT.transform.Rotate((Vector3)rotation);
 
     Object.Destroy(Parts("screen-mock-horizontal"));
     Object.Destroy(Parts("screen-mock-vertical"));
@@ -302,16 +296,23 @@ public class Cabinet
     //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
     LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
-    libretroScreenController.GameFile = GameFile;
+    libretroScreenController.GameFile = gameFile;
     libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
     libretroScreenController.EnableSaveState = EnableSaveState;
     libretroScreenController.StateFile = StateFile;
     libretroScreenController.PathBase = pathBase;
+
     libretroScreenController.GameInvertX = invertX;
     libretroScreenController.GameInvertY = invertY;
     libretroScreenController.Gamma = gamma;
     libretroScreenController.Brightness = brightness;
 
+    libretroScreenController.ShaderName = shaderName;
+    libretroScreenController.ShaderConfig = shaderConfig;
+
+    libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
+
+    //video
     libretroScreenController.GameVideoFile = GameVideoFile;
     libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
     libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
@@ -348,3 +349,4 @@ public class Cabinet
     return this;
   }
 }
+

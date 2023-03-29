@@ -21,8 +21,12 @@ public static class ConfigManager
   public static string RomsDir = $"{BaseDir}/downloads";
   public static string GameSaveDir = $"{BaseDir}/save";
   public static string GameStatesDir = $"{BaseDir}/startstates";
+  public static string ConfigDir = $"{BaseDir}/configuration";
 
   public static bool GameVideosStopped = false;
+
+  public static ConfigInformation configuration;
+
 
   static ConfigManager()
   {
@@ -32,6 +36,8 @@ public static class ConfigManager
       Directory.CreateDirectory(ConfigManager.Cabinets);
     if (!Directory.Exists(ConfigManager.CabinetsDB))
       Directory.CreateDirectory(ConfigManager.CabinetsDB);
+    if (!Directory.Exists(ConfigManager.ConfigDir))
+      Directory.CreateDirectory(ConfigManager.ConfigDir);
 
     if (!Directory.Exists(ConfigManager.SystemDir))
     {
@@ -39,6 +45,7 @@ public static class ConfigManager
       Directory.CreateDirectory(ConfigManager.RomsDir);
       Directory.CreateDirectory(ConfigManager.GameSaveDir);
     }
+
   }
   public static void WriteConsole(string st)
   {
@@ -50,3 +57,5 @@ public static class ConfigManager
     GameVideosStopped = true;
   }
 }
+
+

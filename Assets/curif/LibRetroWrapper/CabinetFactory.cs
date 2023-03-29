@@ -96,9 +96,29 @@ public static class CabinetFactory
 			case "marquee" : 
 				{
 					ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} marquee {p.art.file}");
-					cabinet.SetMarquee(p.name, cbinfo.getPath(p.art.file));
-					if (p.color != null) 
-						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColor());
+          Material mat = CabinetMaterials.MarqueeOneLamp;
+          if (p.marquee != null) 
+          {
+            if (p.marquee.illuminationType == "two-lamps")
+              mat = CabinetMaterials.MarqueeTwoLamps;
+            else if (p.marquee.illuminationType == "one-tube")
+              mat = CabinetMaterials.MarqueeOneTube;
+            else if (p.marquee.illuminationType == "two-tubes")
+              mat = CabinetMaterials.MarqueeTwoTubes;
+            else if (p.marquee.illuminationType == "none")
+              mat = CabinetMaterials.MarqueeNoLamps;
+            else
+              mat = CabinetMaterials.MarqueeOneLamp;
+          }
+
+					if (p.art != null)
+						cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
+          else
+            cabinet.SetMaterial(p.name, mat);
+          
+          //after
+					if (p.color != null && p.marquee.illuminationType != "none") 
+						cabinet.SetMarqueeEmissionColor(p.name, p.color.getColorNoIntensity(), p.color.intensity);
 				}
 				break;
 
@@ -139,7 +159,9 @@ public static class CabinetFactory
 		return cabinet;
 	}
 
-	public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, Vector3 position, Quaternion rotation, Transform parent)
+	public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number, 
+      Vector3 position, Quaternion rotation, Transform parent,
+      List<GameObject> agentPlayerPositions)
 	{
 		string modelFilePath = "";
 		if (!String.IsNullOrEmpty(cbinfo.model.file)) 
@@ -177,14 +199,22 @@ public static class CabinetFactory
 					cbinfo.coinslotgeometry.scalepercentage);
 		}
 
+    Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
+
 		cabinet.addCRT(
 				cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
 				cbinfo.timetoload, cbinfo.pathBase,
-				invertX: cbinfo.crt.screen.invertx, invertY: cbinfo.crt.screen.inverty,
-				GameVideoFileInvertX: cbinfo.video.invertx, GameVideoFileInvertY: cbinfo.video.inverty,
-				EnableSaveState: cbinfo.enablesavestate, StateFile: cbinfo.statefile,
-				cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z,
-				cbinfo.crt.geometry.scalepercentage, cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness);
+				invertX: cbinfo.crt.screen.invertx, 
+        invertY: cbinfo.crt.screen.inverty,
+				GameVideoFileInvertX: cbinfo.video.invertx, 
+        GameVideoFileInvertY: cbinfo.video.inverty,
+				EnableSaveState: cbinfo.enablesavestate, 
+        StateFile: cbinfo.statefile,
+        rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage, 
+        cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
+        agentPlayerPositions,
+        cbinfo.crt.screen.shader, cbinfo.crt.screen.config());
+
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 
 		return cabinet;

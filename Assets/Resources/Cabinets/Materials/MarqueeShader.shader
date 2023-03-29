@@ -13,9 +13,12 @@ Shader "Custom/MarqueeShader"
         _EmissionMap ("Emission Map", 2D) = "black" {}
         //[PowerSlider(5.0)] _Shininess ("Shininess", Range (0.03, 1)) = 0.078125
         [HDR] _EmissionColor ("Emission Color", Color) = (0,0,0)
+        _MainTex_TilingX ("Tiling X", Range(1, 10)) = 1
+        _MainTex_TilingY ("Tiling Y", Range(1, 10)) = 1
     }
     SubShader
     {
+
         //Tags { "RenderType"="Opaque" }
         LOD 200
 
@@ -39,27 +42,35 @@ Shader "Custom/MarqueeShader"
         //fixed4 _Color;
         fixed4 _EmissionColor;
         //half _Shininess;
+        float _MainTex_TilingX;
+        float _MainTex_TilingY;
         
         // Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
         // See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
         // #pragma instancing_options assumeuniformscaling
-        UNITY_INSTANCING_BUFFER_START(Props)
+        //UNITY_INSTANCING_BUFFER_START(Props)
             // put more per-instance properties here
-        UNITY_INSTANCING_BUFFER_END(Props)
+        //UNITY_INSTANCING_BUFFER_END(Props)
+
 
         void surf (Input IN, inout SurfaceOutputStandard o) {
             // Albedo comes from a texture tinted by color
-            fixed4 c = tex2D(_MainTex, IN.uv_MainTex); //* _Color;
-            o.Albedo = c.rgb;
+            //fixed4 c = tex2D(_MainTex, IN.uv_MainTex); //* _Color;
+            //o.Albedo = c.rgb;
             // Metallic and smoothness come from slider variables
+            //o.Metallic = _Metallic;
+            //o.Smoothness = _Glossiness;
+            //o.Alpha = c.a;
+
+            float2 uv = IN.uv_MainTex;
+            uv *= float2(_MainTex_TilingX, _MainTex_TilingY);
+            uv = frac(uv);
+            fixed4 c = tex2D(_MainTex, uv);
+            o.Albedo = c.rgb;
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
             o.Alpha = c.a;
-
-            //half4 emission = ;// * _EmissionColor;
             o.Emission = c.rgb  * tex2D(_EmissionMap, IN.uv_MainTex) * _EmissionColor;
-            //o.Specular = _Shininess;
-            //o.rgb += emission.rgb;
         }
         ENDCG
     }
