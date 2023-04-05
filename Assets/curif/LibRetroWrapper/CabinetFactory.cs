@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 //store Cabinets resources
 public static class CabinetFactory
 {
-	public static Dictionary<string, GameObject> CabinetStyles = new();
+	public static Dictionary<string, GameObject> CabinetStyles = new Dictionary<string, GameObject>();
 
 	static CabinetFactory()
 	{

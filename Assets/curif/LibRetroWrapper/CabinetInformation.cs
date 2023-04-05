@@ -17,18 +17,18 @@ public class CabinetInformation
     public string name;
     public string rom;
     public List<Part> Parts { get; set; }
-    public CRT crt = new();
+    public CRT crt = new CRT();
     public string style = "galaga";
-    public Model model = new();
+    public Model model = new Model();
     public string material;
     public RGBColor color;
     public int year;
     public string coinslot = "coin-slot-double";
-    public Geometry coinslotgeometry = new();
+    public Geometry coinslotgeometry = new Geometry();
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv"; 
-    public Video video = new();
+    public Video video = new Video();
     public string md5sum;
 
     [YamlIgnore]
@@ -121,16 +121,16 @@ public class CabinetInformation
       public Art art;
       public RGBColor color;
       public string type = "normal"; // or bezel or marquee
-      public Geometry geometry = new();
-      public Marquee marquee = new();
+      public Geometry geometry = new Geometry();
+      public Marquee marquee = new Marquee();
     }
 
     public class CRT
     {
       public string type = "19i";
       public string orientation = "vertical";
-      public Screen screen = new();
-      public Geometry geometry = new();
+      public Screen screen = new Screen();
+      public Geometry geometry = new Geometry();
 
       public System.Exception validate(List<string> crtTypes)
       {
@@ -159,7 +159,7 @@ public class CabinetInformation
 
       public Dictionary<string, string> config() 
       {
-        Dictionary<string, string> dic = new();
+        Dictionary<string, string> dic = new Dictionary<string, string>();
         dic["damage"] = damage;
         return dic;
       }
@@ -241,7 +241,7 @@ public class CabinetInformation
         List<string> crtTypes
     )
     {
-        Dictionary<string, System.Exception> exceptions = new();
+        Dictionary<string, System.Exception> exceptions = new Dictionary<string, System.Exception>();
         exceptions.Add("Cabinet",
             string.IsNullOrEmpty(name) ? new System.Exception("Cabinet doesn't have a name") : null);
         int number = 1;
@@ -298,7 +298,7 @@ public class CabinetInformation
             new List<string>(CRTsFactory.objects.Keys));
         foreach (KeyValuePair<string, System.Exception> error in exceptions)
         {
-            ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value)}");
+          ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
         }
 
         ConfigManager.WriteConsole("===================");

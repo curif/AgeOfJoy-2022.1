@@ -24,7 +24,7 @@ public class CabinetPosition //: IEquatable<Part>
 [Serializable]
 public class CabinetsPosition
 {
-  public List<CabinetPosition> Registry = new();
+  public List<CabinetPosition> Registry = new List<CabinetPosition>();
 
   static string file = ConfigManager.CabinetsDB + "/registry.json";
 
@@ -79,7 +79,7 @@ public class GameRegistry : MonoBehaviour
 
   public CabinetPosition Add(string cabinetDBName = null, string rom = null, string room = null, int position = 0, CabinetInformation cabInfo = null)
   {
-    CabinetPosition g = new();
+    CabinetPosition g = new CabinetPosition();
     g.Room = room;
     g.CabinetDBName = cabinetDBName;
     g.Rom = rom;
@@ -156,7 +156,7 @@ public class GameRegistry : MonoBehaviour
                       select game).
                       ToList();
     if (cabs == null)
-      cabs = new();
+      cabs = new List<CabinetPosition>();
 
     ConfigManager.WriteConsole($"[GetCabinetsAssignedToRoom] {cabs.Count} cabinets from Registry in room {room}");
 

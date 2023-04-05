@@ -285,7 +285,7 @@ public static unsafe class LibretroMameCore
     public static CoinSlotController CoinSlot; 
 
     //game info and storage.
-    public static retro_system_info SystemInfo = new();
+    public static retro_system_info SystemInfo = new retro_system_info();
     static string GameFileName = "";
     static string ScreenName = ""; //name of the screen of the cabinet where is running the game
     public static string PathBase = "";
@@ -325,15 +325,15 @@ public static unsafe class LibretroMameCore
 
 
     // pointer vault
-    private static MarshalHelpPtrVault PtrVault = new();
-    private static MarshalHelpPtrVault PtrVaultNoFreed = new();
+    private static MarshalHelpPtrVault PtrVault = new MarshalHelpPtrVault();
+    private static MarshalHelpPtrVault PtrVaultNoFreed = new MarshalHelpPtrVault();
 
     public static string[] GammaOptionsList = new string[] {"0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0","1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","2.0"};
     public static string[] BrightnessOptionsList = new string[] {"0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0","1.1","1.2","1.3","1.4","1.5","1.6","1.7","1.8","1.9","2.0"};
     public static readonly string DefaultGamma = "0.5"; //tested feb/2023
     public static readonly string DefaultBrightness = "1.0";
-    public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input, StringComparison.OrdinalIgnoreCase));
-    public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input, StringComparison.OrdinalIgnoreCase));
+    public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
+    public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
     //parameters gama and brightness
     public static string Gamma = DefaultGamma; 
     public static string Brightness = DefaultBrightness;
@@ -490,7 +490,7 @@ public static unsafe class LibretroMameCore
             // https://github.com/libretro/mame2003-plus-libretro/blob/6de44ee0a37b32a85e0aec013924bef34996ef35/src/mame2003/video.c#L400
             // https://github.com/libretro/mame2003-plus-libretro/issues/1323
             uint AudioPercentOccupancy = (uint)AudioBatch.Count * (uint)100 / AudioBufferMaxOccupancy; 
-            Profiling = new();
+            Profiling = new StopWatches();
             Profiling.retroRun.Start();
             retro_run();
             Profiling.retroRun.Stop();
@@ -553,7 +553,7 @@ public static unsafe class LibretroMameCore
         {
             WriteConsole("[LibRetroMameCore.ClearAll] Free Pointers");
             PtrVault.Free();
-            PtrVault = new();
+            PtrVault = new MarshalHelpPtrVault();
         }
 
         GameFileName = "";
@@ -839,8 +839,8 @@ public static unsafe class LibretroMameCore
 #endif
     private static void getSystemInfo() {
         WriteConsole("[LibRetroMameCore.getSystemInfo] retro_get_system_info ");
-        SystemInfo = new();
-        MarshalHelpCalls<retro_system_info> m = new();
+        SystemInfo = new retro_system_info();
+        MarshalHelpCalls<retro_system_info> m = new MarshalHelpCalls<retro_system_info>();
         retro_get_system_info(m.GetPtr(SystemInfo));
         m.CopyTo(SystemInfo).Free();
         WriteConsole(SystemInfo.ToString());
@@ -848,7 +848,7 @@ public static unsafe class LibretroMameCore
     
      //storage pointers to unmanaged memory
     public class MarshalHelpPtrVault {
-        private List<IntPtr> vault = new();
+        private List<IntPtr> vault = new List<IntPtr>();
 
         public IntPtr GetPtr(string str) {
             IntPtr p = Marshal.StringToHGlobalAnsi(str);
@@ -992,16 +992,16 @@ public static unsafe class LibretroMameCore
     }
 #if _debug_fps_
     public class StopWatches {
-        public Stopwatch audio = new();
-        public Stopwatch video = new();
-        public Stopwatch input = new();
-        public Stopwatch retroRun = new();
+        public Stopwatch audio = new Stopwatch();
+        public Stopwatch video = new Stopwatch();
+        public Stopwatch input = new Stopwatch();
+        public Stopwatch retroRun = new Stopwatch();
 
         public StopWatches() {
-            audio = new();
-            video = new();
-            input = new();
-            retroRun = new();
+            audio = new Stopwatch();
+            video = new Stopwatch();
+            input = new Stopwatch();
+            retroRun = new Stopwatch();
         }
 
         public double RetroRunReal() {

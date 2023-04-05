@@ -10,7 +10,7 @@ using System;
 
 public static class CoinSlotsFactory
 {
-  public static Dictionary<string, GameObject> objects = new();
+  public static Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
 
   static CoinSlotsFactory()
   {

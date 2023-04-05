@@ -20,7 +20,7 @@ public class CabinetController : MonoBehaviour
 
   void Start()
   {
-    AgentPlayerPositionComponents = new();
+    AgentPlayerPositionComponents = new List<AgentScenePosition>();
     foreach (GameObject playerPos in AgentPlayerPositions)
     {
       AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();

@@ -23,7 +23,7 @@ public class GameCompatibilityList : MonoBehaviour
     {
         //compatibilityList = File.ReadAllLines(compatibilityListTextFile).ToHashSet<string>(StringComparer.OrdinalIgnoreCase);
         // compatibilityList = File.ReadAllLines(Path.Combine(Application.streamingAssetsPath, compatibilityListTextFile)).ToHashSet<string>(StringComparer.OrdinalIgnoreCase);
-        compatibilityList = new HashSet<string>(CompatibilityTextList.text.Split("\n"));
+        compatibilityList = new HashSet<string>(CompatibilityTextList.text.Split('\n'));
         ConfigManager.WriteConsole($"[GameCompatibilityList] {compatibilityList.Count} roms are compatible.");
     }
 

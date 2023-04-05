@@ -26,7 +26,7 @@ public static class CabinetMaterials {
     // public static Material LeftOrRight; //the material used with stickers in the sides of the cabinet.
     
     //list of the materials by his name, usefull in serialization
-    public static Dictionary<string, Material> materialList = new();
+    public static Dictionary<string, Material> materialList = new Dictionary<string, Material>();
 
     static CabinetMaterials() {
         // the material base for stickers

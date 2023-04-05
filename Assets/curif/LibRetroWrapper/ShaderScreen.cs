@@ -24,7 +24,7 @@ public abstract class ShaderScreenBase
 //Factory
 public static class ShaderScreen
 {
-  private static Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>> dic = new();
+  private static Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>> dic = new Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>>();
   
   static ShaderScreen()
   {

@@ -71,26 +71,26 @@ public class ConfigInformation
   // defaults ===================================================
   public static Background BackgroundInGameDefault()
   {
-    Background bg = new();
+    Background bg = new Background();
     bg.volume = 20;
     bg.muted = false;
     return bg;
   }
   public static Background BackgroundDefault()
   {
-    Background bg = new();
+    Background bg = new Background();
     bg.volume = 70;
     bg.muted = false;
     return bg;
   }
   public static ConfigInformation newDefault()
   {
-    ConfigInformation configuration = new();
-    configuration.audio = new();
+    ConfigInformation configuration = new ConfigInformation();
+    configuration.audio = new Audio();
     configuration.audio.background = BackgroundDefault();
     configuration.audio.inGameBackground = BackgroundInGameDefault();
 
-    configuration.npc = new();
+    configuration.npc = new NPC();
     configuration.npc.status = "enabled";
     return configuration;
   }
@@ -128,7 +128,6 @@ public class ConfigInformation
       ConfigManager.WriteConsole($"[ConfigInformation]:ERROR reading configuration YAML file {yamlPath} - {e}");
       return null;
     }
-    return null;
   }
 
   public bool toYaml(string yamlPath)
@@ -194,7 +193,7 @@ public class ConfigInformation
     if (ci1 == null && ci2 != null) return ci2;
     if (ci1 != null && ci2 == null) return ci1;
 
-    ConfigInformation ret = new();
+    ConfigInformation ret = new ConfigInformation();
 
     ret.audio = change<Audio>(ci1.audio, ci2.audio);
     if (ret.audio != ci2.audio)

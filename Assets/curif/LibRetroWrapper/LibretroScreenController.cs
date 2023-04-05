@@ -75,7 +75,7 @@ public class LibretroScreenController : MonoBehaviour
   public List<GameObject> AgentPlayerPositions;
 
   //non-serializable
-  public Dictionary<string, string> ShaderConfig = new();
+  public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
   private ShaderScreenBase shader;
   private List<AgentScenePosition> agentPlayerPositionComponents;
@@ -134,7 +134,7 @@ public class LibretroScreenController : MonoBehaviour
     if (CoinSlot == null)
       Debug.LogError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
 
-    agentPlayerPositionComponents = new();
+    agentPlayerPositionComponents = new List<AgentScenePosition>();
     if (AgentPlayerPositions != null)
     {
       foreach (GameObject playerPos in AgentPlayerPositions)
