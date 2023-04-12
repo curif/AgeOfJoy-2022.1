@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 
-[RequireComponent(typeof(OVRGrabbable))]
+
+//[RequireComponent(typeof(OVRGrabbable))]
 public class UsdCoin : MonoBehaviour
 {
     // [SerializeField]
@@ -28,6 +30,9 @@ public class UsdCoin : MonoBehaviour
     }
 
     void Update() {
+      if (grabbable == null)
+        return;
+
         if (!grabbable.isGrabbed) {
             if (CoinSlot != null) {
                 ConfigManager.WriteConsole($"Dropped coin on {CoinSlot.name}");
@@ -43,7 +48,7 @@ public class UsdCoin : MonoBehaviour
         //     ConfigManager.WriteConsole("Coin grabbed");
         // }
     }
-
+/*
     void OnTriggerEnter(Collider col) {
         //Debug.Log($" OnTriggerEnter Collision with  {col.gameObject.name}");
         if (col.gameObject.tag == "CoinSlot" && grabbable.isGrabbed)
@@ -55,5 +60,6 @@ public class UsdCoin : MonoBehaviour
                 CoinSlot = col.gameObject;
         }
     }
+*/
 }
 
