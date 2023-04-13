@@ -122,7 +122,7 @@ public class LibretroScreenController : MonoBehaviour
     videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
 
     //camera
-    centerEyeCamera = GameObject.Find("CenterEyeAnchor");
+    centerEyeCamera = GameObject.Find("Main Camera");
     if (centerEyeCamera == null)
       throw new Exception("Camera not found in GameObject Tree");
     cameraComponentCenterEye = centerEyeCamera.GetComponent<Camera>();
