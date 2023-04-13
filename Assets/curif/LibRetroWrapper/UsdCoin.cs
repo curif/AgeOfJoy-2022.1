@@ -4,23 +4,33 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
 
-//[RequireComponent(typeof(OVRGrabbable))]
+[RequireComponent(typeof(XRGrabInteractable))]
 public class UsdCoin : MonoBehaviour
 {
-    // [SerializeField]
-    // GameObject hand;
 
-    // private Vector3 offset = new Vector3(0.05f, 0.05f, 0f);
-    OVRGrabbable grabbable;
+    [SerializeField]
+    bool isGrabbed = false;
+
+    XRGrabInteractable grabbable;
     GameObject CoinSlot;
     //this object must be attached to a hand
     Transform originalParent;
     Vector3 originalLocalPosition;
     Quaternion originalLocalRotation;
+    
+    // called from the SelectEventArgs in the XRGrabInteractable Interactable events.
+    public void Selected()
+    {
+      isGrabbed = true;
+    }
+    public void UnSelected()
+    {
+      isGrabbed = false;
+    }
 
     void Start() {
 
-        grabbable = gameObject.GetComponent<OVRGrabbable>();
+        grabbable = gameObject.GetComponent<XRGrabInteractable>();
         // Debug.Log($"obtained grabbable: {grabbable}");
         CoinSlot = null;
 
@@ -30,36 +40,27 @@ public class UsdCoin : MonoBehaviour
     }
 
     void Update() {
-      if (grabbable == null)
-        return;
 
-        if (!grabbable.isGrabbed) {
-            if (CoinSlot != null) {
-                ConfigManager.WriteConsole($"Dropped coin on {CoinSlot.name}");
-                var ctrl = CoinSlot.GetComponent<CoinSlotController>();
-                ctrl.insertCoin();
-                CoinSlot = null;
-            }
-            gameObject.transform.parent = originalParent;
-            gameObject.transform.localPosition = originalLocalPosition;
-            gameObject.transform.localRotation = originalLocalRotation;
+      if (!isGrabbed) {
+        if (CoinSlot != null) {
+            ConfigManager.WriteConsole($"Dropped coin on {CoinSlot.name}");
+            var ctrl = CoinSlot.GetComponent<CoinSlotController>();
+            ctrl.insertCoin();
+            CoinSlot = null;
         }
-        // else {
-        //     ConfigManager.WriteConsole("Coin grabbed");
-        // }
+        gameObject.transform.parent = originalParent;
+        gameObject.transform.localPosition = originalLocalPosition;
+        gameObject.transform.localRotation = originalLocalRotation;
+      }
     }
-/*
+
     void OnTriggerEnter(Collider col) {
-        //Debug.Log($" OnTriggerEnter Collision with  {col.gameObject.name}");
-        if (col.gameObject.tag == "CoinSlot" && grabbable.isGrabbed)
-        {
-            OVRGrabber grabber = grabbable.grabbedBy;
-            //Debug.Log($"Coin grabbed by {grabber.gameObject.name}");
-
-            if (grabber != null && grabber.gameObject.name == "CustomHandRight")
-                CoinSlot = col.gameObject;
-        }
+      //Debug.Log($" OnTriggerEnter Collision with  {col.gameObject.name}");
+      if (col.gameObject.tag == "CoinSlot" && isGrabbed)
+      {
+        CoinSlot = col.gameObject;
+      }
     }
-*/
+
 }
 
