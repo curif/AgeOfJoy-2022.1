@@ -80,7 +80,7 @@ public class LibretroScreenController : MonoBehaviour
   private ShaderScreenBase shader;
   private List<AgentScenePosition> agentPlayerPositionComponents;
   private GameObject player;
-  private OVRPlayerController playerController;
+  private ChangeControls playerController;
   private CoinSlotController CoinSlot;
   private GameObject centerEyeCamera;
   private Camera cameraComponentCenterEye;
@@ -88,6 +88,9 @@ public class LibretroScreenController : MonoBehaviour
   private GameVideoPlayer videoPlayer;
   private DateTime timeToExit = DateTime.MinValue;
   private GameObject cabinet;
+
+  //hands
+  private GameObject leftHand, rightHand, rightControl, leftControl;
 
   private CoinSlotController getCoinSlotController()
   {
@@ -128,7 +131,12 @@ public class LibretroScreenController : MonoBehaviour
     cameraComponentCenterEye = centerEyeCamera.GetComponent<Camera>();
 
     player = GameObject.Find("OVRPlayerControllerGalery");
-    playerController = player.GetComponent<OVRPlayerController>();
+    playerController = player.GetComponent<ChangeControls>();
+    
+    leftHand = GameObject.Find("LeftHand");
+    rightHand = GameObject.Find("RightHand");
+    rightControl = GameObject.Find("RightControl");
+    leftControl = GameObject.Find("LeftControl");
 
     CoinSlot = getCoinSlotController();
     if (CoinSlot == null)
@@ -280,12 +288,16 @@ public class LibretroScreenController : MonoBehaviour
     .Build();
   }
 
-  void PreparePlayerToPlayGame(bool takeControls)
+  void PreparePlayerToPlayGame(bool isPlaying)
   {
-    //lock controls, if takeControls is true the Player can't move.
+    /*//lock controls, if takeControls is true the Player can't move.
     LibretroMameCore.WriteConsole($"[LibRetroMameCore.LockControls] lock controls & lower background volume audio: {takeControls}");
     playerController.EnableLinearMovement = !takeControls;
     playerController.EnableRotation = !takeControls;
+    */
+
+    LibretroMameCore.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
+    playerController.PlayerMode(isPlaying);
 
     //change sound configuration
     GameObject[] allSpeakers = GameObject.FindGameObjectsWithTag("speaker");
@@ -293,7 +305,7 @@ public class LibretroScreenController : MonoBehaviour
     {
       BackgroundSoundController bsc = speaker.GetComponent<BackgroundSoundController>();
       if (bsc)
-        bsc.InGame(takeControls);
+        bsc.InGame(isPlaying);
     }
   }
 
