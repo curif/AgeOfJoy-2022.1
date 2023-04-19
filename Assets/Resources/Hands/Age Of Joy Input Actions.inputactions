@@ -2328,6 +2328,65 @@
                     "isPartOfComposite": false
                 }
             ]
+        },
+        {
+            "name": "Libretro",
+            "id": "80d6e693-24c8-4bcb-ac0b-3a999a46ecd3",
+            "actions": [
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "a6651f6c-e2d2-4f97-a659-a58ffae5410e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "JOYPAD_B",
+                    "type": "Button",
+                    "id": "cdfa96be-1be1-438e-8ec7-c1e2a78c9b7b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "711f7bde-c9d5-4aa5-9a3f-829bc3e0e493",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7b5377cf-61a2-4d55-aba7-d280f2bfc880",
+                    "path": "<XRController>{RightHand}/secondaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "JOYPAD_B",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cee8038f-2740-4ebf-a915-71ebf67b9a75",
+                    "path": "<XRController>{RightHand}/triggerPressed",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "JOYPAD_B",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": [
