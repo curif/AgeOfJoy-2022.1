@@ -30,6 +30,8 @@ public class CabinetInformation
     public string statefile = "state.nv"; 
     public Video video = new Video();
     public string md5sum;
+    [YamlMember(Alias = "control-map", ApplyNamingConventions = false)]
+    public ControlMapConfiguration ControlMap;
 
     [YamlIgnore]
     public string pathBase;

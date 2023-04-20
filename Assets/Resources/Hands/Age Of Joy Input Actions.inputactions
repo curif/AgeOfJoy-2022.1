@@ -2350,6 +2350,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "LeftSick",
+                    "type": "Button",
+                    "id": "0f5e1648-b6dd-4709-b84d-965960f30c9a",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2383,6 +2392,39 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "JOYPAD_B",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "62a735f8-b498-4d49-bd84-8c50cb682a66",
+                    "path": "<AndroidGamepad>/leftStick/left",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "JOYPAD_B",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8098e8f6-fb5a-4a5d-be40-5871161353dd",
+                    "path": "<Joystick>/stick/down",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "JOYPAD_B",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "26379564-2baf-467d-b6a0-e1de4eb77de2",
+                    "path": "<XRController>{LeftHand}/thumbstickClicked",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "LeftSick",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

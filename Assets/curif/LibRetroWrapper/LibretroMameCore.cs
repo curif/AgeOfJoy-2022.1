@@ -33,6 +33,7 @@ public static unsafe class LibretroMameCore
        //IL2CPP does not support marshaling delegates that point to instance methods to native code
     //NotSupportedException: To marshal a managed method, please add an attribute named 'MonoPInvokeCallback' to the method definition. 
     
+
     [StructLayout(LayoutKind.Sequential)]
     public class retro_system_info
     {
@@ -103,6 +104,17 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_ID_MOUSE_Y = 1;
     public const uint RETRO_DEVICE_ID_MOUSE_LEFT = 2;
     public const uint RETRO_DEVICE_ID_MOUSE_RIGHT = 3;
+    public const uint RETRO_DEVICE_ID_MOUSE_WHEELUP = 4;
+    public const uint RETRO_DEVICE_ID_MOUSE_WHEELDOWN = 5;
+    public const uint RETRO_DEVICE_ID_MOUSE_MIDDLE = 6;
+    public const uint RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP = 7;
+    public const uint RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN = 8;
+    public const uint RETRO_DEVICE_ID_MOUSE_BUTTON_4 = 9;
+    public const uint RETRO_DEVICE_ID_MOUSE_BUTTON_5 = 10;
+
+    public static string[] deviceIdsJoypad = new string[257];
+    public static string[] deviceIdsMouse = new string[11];
+
 
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_controller_port_device(uint port, uint device);
@@ -338,6 +350,36 @@ public static unsafe class LibretroMameCore
     public static string Gamma = DefaultGamma; 
     public static string Brightness = DefaultBrightness;
 
+    static LibretroMameCore() 
+    {
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_B] = "B";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_Y] = "Y";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_SELECT] = "SELECT";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_START] = "START";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_UP] = "UP";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_DOWN] = "DOWN";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_LEFT] = "LEFT";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_RIGHT] = "RIGHT";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_A] = "A";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_X] = "X";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L] = "L";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R] = "R";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R2] = "R2";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L2] = "L2";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R3] = "R3";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_MASK] = "MASK";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_X] = "X";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_Y] = "Y";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_LEFT] = "LEFT";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_RIGHT] = "RIGHT";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELUP] = "WHEELUP";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELDOWN] = "WHEELDOWN";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_MIDDLE] = "MIDDLE";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP] = "HORIZ_WHEELUP";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN] = "HORIZ_WHEELDOWN";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_4] = "BUTTON_4";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_5] = "BUTTON_5";
+    }
 
     public static bool Start(string screenName, string gameFileName) {
 
@@ -363,6 +405,7 @@ public static unsafe class LibretroMameCore
             WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
             WriteConsole("[LibRetroMameCore.Start] ------------------- LIBRETRO INIT -----------------------");
             WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
+
 
             //Audio configuration
             var audioConfig = AudioSettings.GetConfiguration();
