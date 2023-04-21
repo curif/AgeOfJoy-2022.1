@@ -350,9 +350,24 @@ public static unsafe class LibretroMameCore
     public static string Gamma = DefaultGamma; 
     public static string Brightness = DefaultBrightness;
 
+    public static string getDeviceNameFromID(string controlType, uint id)
+    {
+      if (controlType == "joypad")
+      {
+        return deviceIdsJoypad[id];
+      }
+      else if (controlType == "mouse")
+      {
+        return deviceIdsMouse[id];
+      }
+      return "";
+    }
+
     static LibretroMameCore() 
     {
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_B] = "B";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_A] = "A";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_X] = "X";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_Y] = "Y";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_SELECT] = "SELECT";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_START] = "START";
@@ -360,13 +375,12 @@ public static unsafe class LibretroMameCore
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_DOWN] = "DOWN";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_LEFT] = "LEFT";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_RIGHT] = "RIGHT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_A] = "A";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_X] = "X";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L] = "L";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R] = "R";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R2] = "R2";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L2] = "L2";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R3] = "R3";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L3] = "L3";
       deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_MASK] = "MASK";
       deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_X] = "X";
       deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_Y] = "Y";

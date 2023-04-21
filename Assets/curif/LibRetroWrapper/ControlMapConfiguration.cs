@@ -5,6 +5,7 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
+using System.Text;
 
 
 
@@ -14,9 +15,9 @@ public class ControlMapConfiguration
   
   public class Action
   {
-    public string control;
-    public string action;
-    public string path;
+    public string control = "";
+    public string action = "";
+    public string path = "";
     public Action ()
     {
 
@@ -28,7 +29,6 @@ public class ControlMapConfiguration
       this.path = path;
     }
   }
-
 
   public class Map {
     public string mame_control;
@@ -42,36 +42,114 @@ public class ControlMapConfiguration
       this.mame_control = mame_control;
       this.actions = new();
     }
-    public Action addAction(string control, string action)
+    public Action addAction(string control, string action, string path = "")
     {
-      Action act = new(control, action);
+      Action act = new(control, action, path);
       actions.Add(act);
       return act;
     }
+
+  }
+  public string asMarkdown()
+  {
+    StringBuilder sb = new StringBuilder();
+    sb.Append("| MAME | Control map | Action | Unity Path |\n");
+    sb.Append("| --- | --- | --- | --- |\n");
+    foreach (ControlMapConfiguration.Map m in maps)
+    {
+      foreach (ControlMapConfiguration.Action a in m.actions)
+      {
+        sb.Append($"| {m.mame_control} | {a.control} | {a.action} | `{a.path}` |\n");
+      }
+    }
+    return sb.ToString();
+  }
+  
+  public ControlMapConfiguration.Map GetMap(string mame_control)
+  {
+    foreach (var map in maps)
+    {
+      if (map.mame_control == mame_control)
+        return map;
+    }
+    return null;
   }
 
+  public void addMap(uint libretroMameCoreID, string controlType, string configAction, string[] mapsToAssign)
+  {
+    ControlMapConfiguration.Map map;
+    string mame_control = LibretroMameCore.getDeviceNameFromID(controlType, libretroMameCoreID);
+    if (mame_control == "")
+    {
+      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR controlType unknown : {controlType}");
+      return;
+    }
+
+    map = GetMap(mame_control);
+    if (map == null)
+    {
+      map = new(mame_control);
+      maps.Add(map);
+    }
+    
+    foreach (string item in mapsToAssign)
+    {
+      string path = ControlMapPathDictionary.GetInputPath(item, configAction);
+      if (string.IsNullOrEmpty(path))
+        ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR path unknown MAME action:{controlType}/{mame_control} mapped control action:{configAction} maped control: {item}");
+      else
+        map.addAction(item, configAction, path);
+    }
+    return;
+  }
 }
 
-public static class DefaultControlMap
+public class DefaultControlMap : ControlMapConfiguration
 {
-  static ControlMapConfiguration instance = null;
+  static DefaultControlMap instance = null;
 
-  public static ControlMapConfiguration map()
+  private DefaultControlMap() : base()
   {
-    if (instance != null)
+    maps = new();
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "b-button", new string[] {"gamepad", "vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_A, "joypad", "a-button", new string[] {"gamepad", "vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_X, "joypad", "x-button", new string[] {"gamepad", "vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "y-button", new string[] {"gamepad", "vr-left"});
+    // can't be select because the coin is used.
+    //addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "select-button", new string[] {"gamepad", "vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_START, "joypad", "start-button", new string[] {"gamepad", "vr-left"});
+
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", "thumbstick-up", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", "left-thumbstick-up", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", "thumbstick-down", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", "left-thumbstick-down", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", "thumbstick-left", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", "left-thumbstick-left", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", "thumbstick-right", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", "left-thumbstick-right", new string[] {"gamepad"});
+
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L, "joypad", "trigger", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L, "joypad", "left-trigger", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R, "joypad", "trigger", new string[] {"vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R, "joypad", "right-trigger", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L2, "joypad", "grip", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L2, "joypad", "left-bumper", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R2, "joypad", "grip", new string[] {"vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R2, "joypad", "right-bumper", new string[] {"gamepad"});
+
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", "thumbstick-press", new string[] {"vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", "left-thumbstick-press", new string[] {"gamepad"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", "thumbstick-press", new string[] {"vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", "right-thumbstick-press", new string[] {"gamepad"});
+  }
+
+  public static DefaultControlMap Instance { 
+    get
+    {
+      if (instance == null)
+        instance = new();
       return instance;
-
-    ControlMapConfiguration config = new();
-    config.maps = new();
-
-    ControlMapConfiguration.Map map = new(LibretroMameCore.deviceIdsJoypad[LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B]);
-    map.addAction("gamepad", "b-button");
-    map.addAction("vr-right","b-button");
-    config.maps.Add(map);
-
-
-    instance = config;
-    return config;
+    }
   }
 }
 
@@ -92,7 +170,7 @@ public static class ControlMapInputAction
      return false;
   }
 
-  public static InputActionMap inputActionMap(ControlMapConfiguration mapConfig)
+  public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
   {
     InputActionMap inputActionMap = new();
     foreach (var map in mapConfig.maps)
