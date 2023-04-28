@@ -129,7 +129,7 @@ public static unsafe class LibretroMameCore
     [DllImport ("mame2003_plus_libretro_android")]
     private static extern void retro_set_input_state(inputStateHandler ish);
 
-
+    public static LibretroControlMap ControlMap;
 #endregion
 #region LOG
     // LibRetro log callback implementation ----------------------------------------
@@ -640,6 +640,35 @@ public static unsafe class LibretroMameCore
       GameTexture.Apply(false, false);
     }
 
+    static public void InputControlDebugJoyPad()
+    {
+      foreach (uint id in new uint[] {
+        RETRO_DEVICE_ID_JOYPAD_B,
+        RETRO_DEVICE_ID_JOYPAD_A,
+        RETRO_DEVICE_ID_JOYPAD_X,
+        RETRO_DEVICE_ID_JOYPAD_Y,
+        RETRO_DEVICE_ID_JOYPAD_SELECT,
+        RETRO_DEVICE_ID_JOYPAD_START,
+        RETRO_DEVICE_ID_JOYPAD_UP,
+        RETRO_DEVICE_ID_JOYPAD_DOWN,
+        RETRO_DEVICE_ID_JOYPAD_LEFT,
+        RETRO_DEVICE_ID_JOYPAD_RIGHT,
+        RETRO_DEVICE_ID_JOYPAD_L,
+        RETRO_DEVICE_ID_JOYPAD_R,
+        RETRO_DEVICE_ID_JOYPAD_R2,
+        RETRO_DEVICE_ID_JOYPAD_L2,
+        RETRO_DEVICE_ID_JOYPAD_R3,
+        RETRO_DEVICE_ID_JOYPAD_L3
+      })
+      {
+        string actionName = getDeviceNameFromID("joypad", id);
+        bool ret = ControlMap.buttonPressed(actionName);
+        if (ret)
+          ConfigManager.WriteConsole($"[InputControlDebugJoystick] id:{id} name:{actionName} ret:{ret}");
+      }
+      //ConfigManager.WriteConsole($"[InputControlDebugJoystick] --------------------------------");
+    }
+
     [AOT.MonoPInvokeCallback (typeof(inputPollHander))]
     static void inputPollCB()
     {
@@ -652,6 +681,7 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback (typeof(inputStateHandler))]
     static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
         Int16 ret = 0;
+        string actionName = "";
 
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
           return ret;
@@ -666,88 +696,38 @@ public static unsafe class LibretroMameCore
 #endif
         //port: 0 device: 1 index: 0 id: 2 (select) Coin
 
-//        if (id == RETRO_DEVICE_ID_JOYPAD_SELECT)
-//        {
-//            WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: dev {device} port {port}");
-//            ret = (CoinSlot != null && CoinSlot.takeCoin()) ? (Int16)1:(Int16)0;
-//            return ret;
-//        }
-
-        else if (device == RETRO_DEVICE_JOYPAD) {
-            switch (id) {
-                case RETRO_DEVICE_ID_JOYPAD_B:
-                    ret = OVRInput.Get(OVRInput.RawButton.B) || OVRInput.Get(OVRInput.RawButton.RIndexTrigger)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_A:
-                    ret =  OVRInput.Get(OVRInput.RawButton.A)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_X:
-                    ret =  OVRInput.Get(OVRInput.RawButton.X)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_Y:
-                    ret =  OVRInput.Get(OVRInput.RawButton.Y)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_UP:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstickUp)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_DOWN:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstickDown)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_RIGHT:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstickRight)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_LEFT:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstickLeft)? (Int16)1:(Int16)0;
-                    break;
+        if (device == RETRO_DEVICE_JOYPAD) {
+            InputControlDebugJoyPad();
+            actionName = getDeviceNameFromID("joypad", id);
+            if (actionName != "")
+            {
+              switch (id) {
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
-                    //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                    ret = (CoinSlot != null && CoinSlot.takeCoin()) ? (Int16)1:(Int16)0;
-                    if (ret == 1)
-                        HotDelaySelectCycles = 5;
-                    if (HotDelaySelectCycles > 0 && ret != (Int16)1) {
-                        HotDelaySelectCycles--;
-                        ret = (Int16)1;
-                    }
+                  //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                  ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.buttonPressed("INSERT") ? (Int16)1:(Int16)0;
+                  if (ret == 0) //hack for pacman and others.
+                      HotDelaySelectCycles = 4;
+                  if (HotDelaySelectCycles > -1 && ret != (Int16)1) {
+                      HotDelaySelectCycles--;
+                      ret = (Int16)1;
+                  }
+                  break;
 
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_START:
-                    ret =  OVRInput.Get(OVRInput.RawButton.Start)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_L:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LIndexTrigger)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_R:
-                    ret =  OVRInput.Get(OVRInput.RawButton.RIndexTrigger)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_L2:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LHandTrigger)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_R2:
-                    ret =  OVRInput.Get(OVRInput.RawButton.RHandTrigger)? (Int16)1:(Int16)0;
-                    break;
                 case RETRO_DEVICE_ID_JOYPAD_L3:
-                    ret =  OVRInput.Get(OVRInput.RawButton.RThumbstick) && OVRInput.Get(OVRInput.RawButton.RHandTrigger)? (Int16)1:(Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_JOYPAD_R3:
-                    ret =  OVRInput.Get(OVRInput.RawButton.LThumbstick)? (Int16)1:(Int16)0;
-                    break;            
-                }
-        }
-            /*
-        else if (device == RETRO_DEVICE_ANALOG) {
-          Vector2 thumbstickPosition = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
+                  //thumbstick-press
+                  //mame menu: joystick right press and grip
+                  string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L);
+                  ret = (ControlMap.buttonPressed(actionName)) || (id2 != "" && ControlMap.buttonPressed(id2)) ? (Int16)1:(Int16)0;
+                  break;
 
-          switch (id) {
-            case RETRO_DEVICE_ID_ANALOG_X:
-              //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-              ret =  (Int16)(thumbstickPosition.x * 32768); // X-coordinate of the thumbstick position
-              break;
-            case RETRO_DEVICE_ID_ANALOG_Y:
-              ret =  (Int16)(thumbstickPosition.y * 32768); // y-coordinate of the thumbstick position
-              break;
-          }
-          WriteConsole($"[inputStateCB] ANALOG port: {port} device: {device} index: {index} id: {id} ret: {ret}");
-        }*/
+                default:
+                  ret = ControlMap.buttonPressed(actionName) ? (Int16)1:(Int16)0;
+                  break;
+
+                }
+            }    
+        }
+        /*
         else if (device == RETRO_DEVICE_MOUSE) {
           Vector2 thumbstickPosition = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
 
@@ -773,7 +753,7 @@ public static unsafe class LibretroMameCore
               break;
           }
           //WriteConsole($"[inputStateCB] MOUSE port: {port} device: {device} index: {index} id: {id} ret: {ret}");
-        }
+        }*/
 
 #if _debug_fps_
         Profiling.input.Stop();

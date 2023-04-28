@@ -20,6 +20,7 @@ using CleverCrow.Fluid.BTs.Trees;
 //[AddComponentMenu("curif/LibRetroWrapper/VideoPlayer")]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(GameVideoPlayer))]
+[RequireComponent(typeof(LibretroControlMap))]
 // [RequireComponent(typeof(BoxCollider))]
 public class LibretroScreenController : MonoBehaviour
 {
@@ -88,6 +89,7 @@ public class LibretroScreenController : MonoBehaviour
   private GameVideoPlayer videoPlayer;
   private DateTime timeToExit = DateTime.MinValue;
   private GameObject cabinet;
+  private LibretroControlMap controlMap;
 
   //hands
   private GameObject leftHand, rightHand, rightControl, leftControl;
@@ -123,6 +125,7 @@ public class LibretroScreenController : MonoBehaviour
     display = GetComponent<Renderer>();
     cabinet = gameObject.transform.parent.gameObject;
     videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
+    controlMap = GetComponent<LibretroControlMap>();
 
     //camera
     centerEyeCamera = GameObject.Find("Main Camera");
@@ -140,7 +143,7 @@ public class LibretroScreenController : MonoBehaviour
 
     CoinSlot = getCoinSlotController();
     if (CoinSlot == null)
-      Debug.LogError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
+      ConfigManager.WriteConsoleError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
 
     agentPlayerPositionComponents = new List<AgentScenePosition>();
     if (AgentPlayerPositions != null)
@@ -210,6 +213,7 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.CoinSlot = CoinSlot;
             LibretroMameCore.PathBase = PathBase;
             LibretroMameCore.shader = shader;
+            LibretroMameCore.ControlMap = controlMap;
 
             if (!LibretroMameCore.Start(name, GameFile)) 
             {
@@ -229,15 +233,15 @@ public class LibretroScreenController : MonoBehaviour
             .Sequence()
               //.Condition("Player looking screen", () => isPlayerLookingAtScreen3())
               //.Condition("Is visible", () => display.isVisible)
-              .Condition("Left trigger", () =>
+              .Condition("user EXIT pressed?", () =>
               {
-                if (OVRInput.Get(OVRInput.RawButton.LHandTrigger))
+                if (controlMap.buttonPressed("EXIT"))
                   return true;
 
                 timeToExit = DateTime.MinValue;
                 return false;
               })
-              .Condition("N secs pass with trigger pressed", () =>
+              .Condition("N secs pass with user EXIT pressed", () =>
               {
                 if (timeToExit == DateTime.MinValue)
                   timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
@@ -307,6 +311,9 @@ public class LibretroScreenController : MonoBehaviour
       if (bsc)
         bsc.InGame(isPlaying);
     }
+
+    //eable inputMap
+    controlMap.Enable(isPlaying);
   }
 
   public void Update()

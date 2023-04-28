@@ -19,12 +19,42 @@ public class LibretroControlMap : MonoBehaviour
     ConfigManager.WriteConsole($"[LibretroControlMap] load default config {conf}");
     //ConfigManager.WriteConsole(conf.asMarkdown());
     Debug.Log(conf.asMarkdown());
+    conf.ToDebug();
 
     actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
   }
 
-  // Update is called once per frame
-  void Update()
+  public bool buttonPressed(string controlName)
   {
+    //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
+    if (actionMap[controlName].IsPressed())
+    {
+      ConfigManager.WriteConsole($"[buttonPressed] {controlName} pressed");
+      return true;
+    }
+    if (actionMap[controlName].WasPerformedThisFrame())
+    {
+      ConfigManager.WriteConsole("[LibretroControlMap] Fire WAS pressed [WasPerformedThisFrame]");
+      return true;
+    }
+    float val = actionMap[controlName].ReadValue<float>();
+    if (val > 0f)
+    {
+      ConfigManager.WriteConsole($"[LibretroControlMap] Fire {val}");
+      return true;
+    }
+    return false;
   }
+
+  public void Enable(bool enable)
+  {
+    if (enable)
+    {
+      actionMap.Enable(); 
+      return;
+    }
+    actionMap.Disable();
+    return;
+  }
+
 }

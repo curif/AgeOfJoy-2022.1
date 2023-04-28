@@ -31,15 +31,15 @@ public class ControlMapConfiguration
   }
 
   public class Map {
-    public string mame_control;
+    public string controlID;
     public List<Action> actions { get; set; }
     public Map()
     {
 
     }
-    public Map(string mame_control)
+    public Map(string controlID)
     {
-      this.mame_control = mame_control;
+      this.controlID = controlID;
       this.actions = new();
     }
     public Action addAction(string control, string action, string path = "")
@@ -50,6 +50,17 @@ public class ControlMapConfiguration
     }
 
   }
+  public void ToDebug()
+  {
+    ConfigManager.WriteConsole("ID \t Control map \t Action \t Unity Path ");
+    foreach (ControlMapConfiguration.Map m in maps)
+    {
+      foreach (ControlMapConfiguration.Action a in m.actions)
+      {
+        ConfigManager.WriteConsole($"{m.controlID} \t {a.control} \t {a.action} \t {a.path} ");
+      }
+    }
+  }
   public string asMarkdown()
   {
     StringBuilder sb = new StringBuilder();
@@ -59,47 +70,55 @@ public class ControlMapConfiguration
     {
       foreach (ControlMapConfiguration.Action a in m.actions)
       {
-        sb.Append($"| {m.mame_control} | {a.control} | {a.action} | `{a.path}` |\n");
+        sb.Append($"| {m.controlID} | {a.control} | {a.action} | `{a.path}` |\n");
       }
     }
     return sb.ToString();
   }
   
-  public ControlMapConfiguration.Map GetMap(string mame_control)
+  public ControlMapConfiguration.Map GetMap(string controlID)
   {
     foreach (var map in maps)
     {
-      if (map.mame_control == mame_control)
+      if (map.controlID == controlID)
         return map;
     }
     return null;
   }
 
-  public void addMap(uint libretroMameCoreID, string controlType, string configAction, string[] mapsToAssign)
+  public void addMap(string controlID, string configAction, string[] mapsToAssign)
   {
     ControlMapConfiguration.Map map;
-    string mame_control = LibretroMameCore.getDeviceNameFromID(controlType, libretroMameCoreID);
-    if (mame_control == "")
-    {
-      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR controlType unknown : {controlType}");
-      return;
-    }
-
-    map = GetMap(mame_control);
+    map = GetMap(controlID);
     if (map == null)
     {
-      map = new(mame_control);
+      map = new(controlID);
       maps.Add(map);
     }
-    
+
     foreach (string item in mapsToAssign)
     {
       string path = ControlMapPathDictionary.GetInputPath(item, configAction);
       if (string.IsNullOrEmpty(path))
-        ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR path unknown MAME action:{controlType}/{mame_control} mapped control action:{configAction} maped control: {item}");
+        ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR path unknown action:{controlID} mapped control action:{configAction} maped control: {item}");
       else
         map.addAction(item, configAction, path);
     }
+
+    return;
+  }
+
+  public void addMap(uint libretroMameCoreID, string controlType, string configAction, string[] mapsToAssign)
+  {
+    ControlMapConfiguration.Map map;
+    string controlID = LibretroMameCore.getDeviceNameFromID(controlType, libretroMameCoreID);
+    if (controlID == "")
+    {
+      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR controlType unknown : {controlType}");
+      return;
+    }
+    addMap(controlID, configAction, mapsToAssign);
+
     return;
   }
 }
@@ -111,13 +130,19 @@ public class DefaultControlMap : ControlMapConfiguration
   private DefaultControlMap() : base()
   {
     maps = new();
+
+    //fire with b-button and trigger.
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "b-button", new string[] {"gamepad", "vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "trigger", new string[] {"vr-right"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "right-trigger", new string[] {"gamepad"});
+
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_A, "joypad", "a-button", new string[] {"gamepad", "vr-right"});
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_X, "joypad", "x-button", new string[] {"gamepad", "vr-left"});
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "y-button", new string[] {"gamepad", "vr-left"});
     // can't be select because the coin is used.
     //addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "select-button", new string[] {"gamepad", "vr-right"});
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_START, "joypad", "start-button", new string[] {"gamepad", "vr-left"});
+    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_SELECT, "joypad", "select-button", new string[] {"gamepad"});
 
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", "thumbstick-up", new string[] {"vr-left"});
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", "left-thumbstick-up", new string[] {"gamepad"});
@@ -141,6 +166,11 @@ public class DefaultControlMap : ControlMapConfiguration
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", "left-thumbstick-press", new string[] {"gamepad"});
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", "thumbstick-press", new string[] {"vr-right"});
     addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", "right-thumbstick-press", new string[] {"gamepad"});
+
+    addMap("EXIT", "grip", new string[] {"vr-left"});
+    addMap("EXIT", "left-bumper", new string[] {"gamepad"}); //L2
+    addMap("INSERT", "select-button", new string[] {"gamepad"});
+
   }
 
   public static DefaultControlMap Instance { 
@@ -153,48 +183,3 @@ public class DefaultControlMap : ControlMapConfiguration
   }
 }
 
-public static class ControlMapInputAction
-{
-  static bool hasMameControl(string control)
-  {
-     foreach (var item in LibretroMameCore.deviceIdsJoypad)
-     {
-       if (item == control)
-         return true;
-     }
-     foreach (var item in LibretroMameCore.deviceIdsMouse)
-     {
-       if (item == control)
-         return true;
-     }
-     return false;
-  }
-
-  public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
-  {
-    InputActionMap inputActionMap = new();
-    foreach (var map in mapConfig.maps)
-    {
-      if (hasMameControl(map.mame_control))
-      {
-        //the control is one of the MAME required
-        var action = inputActionMap.AddAction(map.mame_control);
-        foreach (var mapAction in map.actions)
-        {
-          var bind = new InputBinding
-          {
-            path = ControlMapPathDictionary.GetInputPath(mapAction.control, mapAction.action),
-            action = map.mame_control
-          };
-          action.AddBinding(bind);
-        }
-      }
-      else {
-        ConfigManager.WriteConsole($"[ControlMapConfiguration.ControlMapInputAction.inputActionMap] ERROR MAME control does not exists: {map.mame_control}");
-      }
-    }
-    inputActionMap.Enable();
-    return inputActionMap;
-  }
-
-}

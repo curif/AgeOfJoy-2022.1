@@ -12,30 +12,41 @@ public static class ControlMapPathDictionary
     map.Add("vr-left", new());
     map.Add("vr-right", new());
     map.Add("gamepad", new());
+    
+    /*
+     * secondaryButton [LeftHand XR Controller] = Y button
+        primaryButton [LeftHand XR Controller] = X button
+        secondaryButton [RightHand XR Controller] = B button
+        primaryButton [RightHand XR Controller] = A buttonsecondaryButton [LeftHand XR Controller] = Y button
+        primaryButton [LeftHand XR Controller] = X button
+        secondaryButton [RightHand XR Controller] = B button
+        primaryButton [RightHand XR Controller] = A button
+    */
 
     // Left VR controller mappings
-    map["vr-left"].Add("x-button", "<XRController>{LeftHand}/gripButton");
-    map["vr-left"].Add("y-button", "<XRController>{LeftHand}/menuButton");
+    //map["vr-left"].Add("x-button", "<XRController>{LeftHand}/gripButton"); //primaryButton
+    map["vr-left"].Add("x-button", "<XRController>{LeftHand}/primaryButton"); //primaryButton
+    map["vr-left"].Add("y-button", "<XRController>{LeftHand}/secondaryButton");
     map["vr-left"].Add("start-button", "<XRController>{LeftHand}/startButton");
-    map["vr-left"].Add("grip", "<XRController>{LeftHand}/gripPressed");
-    map["vr-left"].Add("trigger", "<XRController>{LeftHand}/triggerPressed");
+    map["vr-left"].Add("grip", "<XRController>{LeftHand}/gripButton");
+    map["vr-left"].Add("trigger", "<XRController>{LeftHand}/triggerButton");
     map["vr-left"].Add("thumbstick-down", "<XRController>{LeftHand}/thumbstick/down");
     map["vr-left"].Add("thumbstick-up", "<XRController>{LeftHand}/thumbstick/up");
     map["vr-left"].Add("thumbstick-left", "<XRController>{LeftHand}/thumbstick/left");
     map["vr-left"].Add("thumbstick-right", "<XRController>{LeftHand}/thumbstick/right");
-    map["vr-left"].Add("thumbstick-press", "<XRController>{LeftHand}/thumbstickButton");
+    map["vr-left"].Add("thumbstick-press", "<XRController>{LeftHand}/thumbstickClicked");
 
     // Right VR controller mappings
     map["vr-right"].Add("a-button", "<XRController>{RightHand}/primaryButton");
     map["vr-right"].Add("b-button", "<XRController>{RightHand}/secondaryButton");
     map["vr-right"].Add("select-button", "<XRController>{RightHand}/selectButton");
-    map["vr-right"].Add("grip", "<XRController>{RightHand}/gripPressed");
-    map["vr-right"].Add("trigger", "<XRController>{RightHand}/triggerPressed");
+    map["vr-right"].Add("grip", "<XRController>{RightHand}/gripButton");
+    map["vr-right"].Add("trigger", "<XRController>{RightHand}/triggerButton");
     map["vr-right"].Add("thumbstick-down", "<XRController>{RightHand}/thumbstick/down");
     map["vr-right"].Add("thumbstick-up", "<XRController>{RightHand}/thumbstick/up");
     map["vr-right"].Add("thumbstick-left", "<XRController>{RightHand}/thumbstick/left");
     map["vr-right"].Add("thumbstick-right", "<XRController>{RightHand}/thumbstick/right");
-    map["vr-right"].Add("thumbstick-press", "<XRController>{RightHand}/thumbstickButton");
+    map["vr-right"].Add("thumbstick-press", "<XRController>{RightHand}/thumbstickClicked");
 
     map["gamepad"].Add("a-button", "<Gamepad>/buttonSouth");
     map["gamepad"].Add("b-button", "<Gamepad>/buttonEast");

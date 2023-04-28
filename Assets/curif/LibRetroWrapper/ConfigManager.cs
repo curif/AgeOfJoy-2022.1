@@ -49,7 +49,13 @@ public static class ConfigManager
   }
   public static void WriteConsole(string st)
   {
-    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, st);
+    string formattedMessage = $"[AGE] {st}";
+    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}", formattedMessage);
+  }
+  public static void WriteConsoleError(string st)
+  {
+    string formattedMessage = $"[AGE ERROR] {st}";
+    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.None, null, "{0}", formattedMessage);
   }
 
   public static void SignalToStopVideos()
