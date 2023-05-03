@@ -11,113 +11,116 @@ using System.Text;
 
 public class ControlMapConfiguration 
 {
-  public List<Map> maps { get; set; }
+  public List<Maps> MapList { get; set; }
   
-  public class Action
+  public class ControlMap
   {
-    public string control = "";
-    public string action = "";
-    public string path = "";
-    public Action ()
-    {
+    public string RealControl = ""; //quest-x-button
+    public string Path = "";
 
-    }
-    public Action(string control, string action, string path = "")
+    public ControlMap ()
     {
-      this.control = control;
-      this.action = action;
-      this.path = path;
+    }
+    public ControlMap(string realControl, string path = "")
+    {
+      RealControl = realControl;
+      Path = path;
     }
   }
 
-  public class Map {
-    public string controlID;
-    public List<Action> actions { get; set; }
-    public Map()
+  public class Maps {
+    public string MAMEControl;
+    public string behavior = "button"; // or axis 
+    public List<ControlMap> ControlMaps { get; set; }
+    public Maps()
     {
 
     }
-    public Map(string controlID)
+    public Maps(string mameControl, string behavior = "button")
     {
-      this.controlID = controlID;
-      this.actions = new();
+      this.MAMEControl = mameControl;
+      this.behavior = behavior;
+      this.ControlMaps = new();
     }
-    public Action addAction(string control, string action, string path = "")
+    public ControlMap AddAction(string realControl, string path = "")
     {
-      Action act = new(control, action, path);
-      actions.Add(act);
+      ControlMap act = new(realControl, path);
+      ControlMaps.Add(act);
       return act;
     }
 
   }
   public void ToDebug()
   {
-    ConfigManager.WriteConsole("ID \t Control map \t Action \t Unity Path ");
-    foreach (ControlMapConfiguration.Map m in maps)
+    ConfigManager.WriteConsole("MAME \t Control \t behavior \t Unity Path ");
+    foreach (ControlMapConfiguration.Maps m in MapList)
     {
-      foreach (ControlMapConfiguration.Action a in m.actions)
+      foreach (ControlMapConfiguration.ControlMap a in m.ControlMaps)
       {
-        ConfigManager.WriteConsole($"{m.controlID} \t {a.control} \t {a.action} \t {a.path} ");
+        ConfigManager.WriteConsole($"{m.MAMEControl} \t {a.RealControl} \t {m.behavior} \t {a.Path} ");
       }
     }
   }
-  public string asMarkdown()
+
+  public string AsMarkdown()
   {
     StringBuilder sb = new StringBuilder();
-    sb.Append("| MAME | Control map | Action | Unity Path |\n");
+    sb.Append("| MAME | Control | Behavior | Unity Path |\n");
     sb.Append("| --- | --- | --- | --- |\n");
-    foreach (ControlMapConfiguration.Map m in maps)
+    foreach (ControlMapConfiguration.Maps m in MapList)
     {
-      foreach (ControlMapConfiguration.Action a in m.actions)
+      foreach (ControlMapConfiguration.ControlMap a in m.ControlMaps)
       {
-        sb.Append($"| {m.controlID} | {a.control} | {a.action} | `{a.path}` |\n");
+        sb.Append($"| {m.MAMEControl} | {a.RealControl} | {m.behavior} | `{a.Path}` |\n");
       }
     }
     return sb.ToString();
   }
   
-  public ControlMapConfiguration.Map GetMap(string controlID)
+  public ControlMapConfiguration.Maps GetMap(string mameControl)
   {
-    foreach (var map in maps)
+    foreach (var map in MapList)
     {
-      if (map.controlID == controlID)
+      if (map.MAMEControl == mameControl)
         return map;
     }
     return null;
   }
-
-  public void addMap(string controlID, string configAction, string[] mapsToAssign)
-  {
-    ControlMapConfiguration.Map map;
-    map = GetMap(controlID);
+  public void AddMap(string mameControl, string realControl, string behavior = "button")
+  {  
+    ControlMapConfiguration.Maps map;
+    map = GetMap(mameControl);
     if (map == null)
     {
-      map = new(controlID);
-      maps.Add(map);
+      map = new(mameControl, behavior);
+      MapList.Add(map);
     }
+    string path = ControlMapPathDictionary.GetInputPath(realControl);
+    if (string.IsNullOrEmpty(path))
+      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR path unknown action:{mameControl} maped control: {realControl}");
+    else
+      map.AddAction(realControl, path);
+  }
 
-    foreach (string item in mapsToAssign)
+  public void AddMap(string mameControl, string[] realControlsToAssign, string behavior = "button")
+  {
+    foreach (string realControl in realControlsToAssign)
     {
-      string path = ControlMapPathDictionary.GetInputPath(item, configAction);
-      if (string.IsNullOrEmpty(path))
-        ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR path unknown action:{controlID} mapped control action:{configAction} maped control: {item}");
-      else
-        map.addAction(item, configAction, path);
+      AddMap(mameControl, realControl, behavior);      
     }
 
     return;
   }
 
-  public void addMap(uint libretroMameCoreID, string controlType, string configAction, string[] mapsToAssign)
+  public void AddMap(uint libretroMameCoreID, string libretroMameControlType, string[] realControlsToAssign, string behavior = "button")
   {
-    ControlMapConfiguration.Map map;
-    string controlID = LibretroMameCore.getDeviceNameFromID(controlType, libretroMameCoreID);
-    if (controlID == "")
+    string mameControl = LibretroMameCore.getDeviceNameFromID(libretroMameControlType, libretroMameCoreID);
+    if (mameControl == "")
     {
-      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR controlType unknown : {controlType}");
+      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR MAME control type unknown : {libretroMameControlType}-{libretroMameCoreID}");
       return;
     }
-    addMap(controlID, configAction, mapsToAssign);
+    AddMap(mameControl, realControlsToAssign, behavior);
 
     return;
   }
@@ -129,47 +132,38 @@ public class DefaultControlMap : ControlMapConfiguration
 
   private DefaultControlMap() : base()
   {
-    maps = new();
+    MapList = new();
 
     //fire with b-button and trigger.
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "b-button", new string[] {"gamepad", "vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "trigger", new string[] {"vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", "right-trigger", new string[] {"gamepad"});
-
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_A, "joypad", "a-button", new string[] {"gamepad", "vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_X, "joypad", "x-button", new string[] {"gamepad", "vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "y-button", new string[] {"gamepad", "vr-left"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", new string[] {"quest-b", "gamepad-b", "quest-right-trigger"});
+    
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_A, "joypad", new string[] {"gamepad-a", "quest-a"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_X, "joypad", new string[] {"gamepad-x", "quest-x"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", new string[] {"gamepad-y", "quest-y"});
     // can't be select because the coin is used.
-    //addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "select-button", new string[] {"gamepad", "vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_START, "joypad", "start-button", new string[] {"gamepad", "vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_SELECT, "joypad", "select-button", new string[] {"gamepad"});
+    //addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", "select-button", new string[] {"gamepad", "vr-right"}, "button");
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_START, "joypad", new string[] {"gamepad-start", "quest-start"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_SELECT, "joypad", new string[] {"gamepad-select", "quest-select"});
 
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", "thumbstick-up", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", "left-thumbstick-up", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", "thumbstick-down", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", "left-thumbstick-down", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", "thumbstick-left", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", "left-thumbstick-left", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", "thumbstick-right", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", "left-thumbstick-right", new string[] {"gamepad"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", new string[] {"quest-left-thumbstick"}, "axis");
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", new string[] {"gamepad-left-thumbstick-up"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", new string[] {"quest-left-thumbstick"}, "axis");
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", new string[] {"gamepad-left-thumbstick-down"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", new string[] {"quest-left-thumbstick"}, "axis");
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", new string[] {"gamepad-left-thumbstick-left"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", new string[] {"quest-left-thumbstick"}, "axis");
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", new string[] {"gamepad-left-thumbstick-right"});
 
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L, "joypad", "trigger", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L, "joypad", "left-trigger", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R, "joypad", "trigger", new string[] {"vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R, "joypad", "right-trigger", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L2, "joypad", "grip", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L2, "joypad", "left-bumper", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R2, "joypad", "grip", new string[] {"vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R2, "joypad", "right-bumper", new string[] {"gamepad"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L, "joypad", new string[] {"quest-left-trigger", "gamepad-left-trigger"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R, "joypad", new string[] {"quest-right-trigger", "gamepad-right-trigger"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L2, "joypad", new string[] {"quest-left-grip", "gamepad-left-bumper"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R2, "joypad", new string[] {"quest-right-grip", "gamepad-right-bumper"});
 
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", "thumbstick-press", new string[] {"vr-left"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", "left-thumbstick-press", new string[] {"gamepad"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", "thumbstick-press", new string[] {"vr-right"});
-    addMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", "right-thumbstick-press", new string[] {"gamepad"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", new string[] {"quest-left-thumbstick-press", "gamepad-left-thumbstick-press"});
+    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", new string[] {"quest-right-thumbstick-press", "gamepad-right-thumbstick-press"});
 
-    addMap("EXIT", "grip", new string[] {"vr-left"});
-    addMap("EXIT", "left-bumper", new string[] {"gamepad"}); //L2
-    addMap("INSERT", "select-button", new string[] {"gamepad"});
+    AddMap("EXIT", new string[] {"quest-left-grip", "gamepad-left-bumper"});
+    AddMap("INSERT", "gamepad-select");
 
   }
 

@@ -2371,8 +2371,80 @@
                 },
                 {
                     "name": "New action2",
-                    "type": "Button",
+                    "type": "Value",
                     "id": "bd3bd474-976a-4094-aece-98d74b898828",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "New action3",
+                    "type": "Value",
+                    "id": "63dc6835-4f57-4680-9a5c-0a177e74da25",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "New action4",
+                    "type": "Button",
+                    "id": "8c664ab0-10ca-48fd-85d2-903f0c710ee3",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "New action5",
+                    "type": "Value",
+                    "id": "3a6b1f02-2816-481f-b896-55ed2d489da2",
+                    "expectedControlType": "Analog",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "New action6",
+                    "type": "Button",
+                    "id": "5e05f74b-e744-4ffa-92cf-29af4b5241c0",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "New action7",
+                    "type": "Button",
+                    "id": "78014555-c321-494a-a6cd-81dbf85c0e15",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "New action8",
+                    "type": "Button",
+                    "id": "2a0f6448-9e63-4c02-b0b9-9fd41961d6d5",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "New action9",
+                    "type": "Button",
+                    "id": "150d005a-b32c-4664-b3f0-3064e101f090",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "New action10",
+                    "type": "Button",
+                    "id": "c01afc3e-2ad4-4a5d-8b7c-ecfde9b0b89c",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -2438,7 +2510,7 @@
                 {
                     "name": "",
                     "id": "26379564-2baf-467d-b6a0-e1de4eb77de2",
-                    "path": "<XRController>{LeftHand}/thumbstickClicked",
+                    "path": "<XRController>{LeftHand}/menuButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -2449,7 +2521,7 @@
                 {
                     "name": "",
                     "id": "f08ef3de-2ab4-4228-90b1-345b9e782751",
-                    "path": "<XRController>{LeftHand}/joystickClicked",
+                    "path": "<XRController>{LeftHand}/primary2DAxisClick",
                     "interactions": "",
                     "processors": "",
                     "groups": "Generic XR Controller",
@@ -2460,7 +2532,7 @@
                 {
                     "name": "",
                     "id": "39c58fc8-b96a-4622-b0ea-402a669d8708",
-                    "path": "",
+                    "path": "<XRSimulatedController>{LeftHand}/primary2DAxis",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -2500,6 +2572,171 @@
                     "action": "New action2",
                     "isComposite": false,
                     "isPartOfComposite": true
+                },
+                {
+                    "name": "1D Axis",
+                    "id": "bbc50a6e-dc54-433d-95da-b2108cf96510",
+                    "path": "1DAxis",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action2",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "47560bd1-0464-4104-870d-38e03666e181",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action2",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "699dc9e4-3e9e-416d-beac-344d25fd97fd",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action2",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "One Modifier",
+                    "id": "9ef1082f-304d-40c0-8981-2145789a33d2",
+                    "path": "OneModifier",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action2",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "modifier",
+                    "id": "fa248cb3-6b75-4d41-86cd-2bb144e67510",
+                    "path": "<XRController>{LeftHand}/primary2DAxisClick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action2",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "binding",
+                    "id": "38511c77-169d-4fbd-908a-c2b6f92cb493",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action2",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "",
+                    "id": "bbfe39df-1e05-4c39-8226-d814a1d77fe5",
+                    "path": "<XRController>{LeftHand}/thumbstick",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Generic XR Controller",
+                    "action": "New action3",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "22a7c22c-022f-477c-bd64-7a0b83b0c9a4",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action4",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "14b9453a-005f-4092-aaaf-ad66eb260aeb",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action4",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b54a4f5c-a2ad-46c1-b946-7143551e5b5b",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action5",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "ade376b3-0cef-4558-88da-4bbad93e003b",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action6",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "75162003-7ffc-4750-bdd7-20034a2eea72",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action7",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "919214df-aedf-4c36-9c15-7eba6fb1ef38",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action8",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "77584277-4808-4f2a-9cde-91d163d1316a",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action9",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "3564d622-0998-4f54-8688-a982c848ea21",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "New action10",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         }

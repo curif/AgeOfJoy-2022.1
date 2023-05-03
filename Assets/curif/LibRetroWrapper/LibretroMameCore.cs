@@ -365,34 +365,34 @@ public static unsafe class LibretroMameCore
 
     static LibretroMameCore() 
     {
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_B] = "B";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_A] = "A";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_X] = "X";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_Y] = "Y";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_SELECT] = "SELECT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_START] = "START";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_UP] = "UP";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_DOWN] = "DOWN";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_LEFT] = "LEFT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_RIGHT] = "RIGHT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L] = "L";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R] = "R";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R2] = "R2";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L2] = "L2";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R3] = "R3";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L3] = "L3";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_MASK] = "MASK";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_X] = "X";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_Y] = "Y";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_LEFT] = "LEFT";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_RIGHT] = "RIGHT";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELUP] = "WHEELUP";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELDOWN] = "WHEELDOWN";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_MIDDLE] = "MIDDLE";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP] = "HORIZ_WHEELUP";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN] = "HORIZ_WHEELDOWN";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_4] = "BUTTON_4";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_5] = "BUTTON_5";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_B] = "JOYPAD-B";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_A] = "JOYPAD-A";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_X] = "JOYPAD-X";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_Y] = "JOYPAD-Y";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_SELECT] = "JOYPAD-SELECT";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_START] = "JOYPAD-START";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_UP] = "JOYPAD-UP";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_DOWN] = "JOYPAD-DOWN";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_LEFT] = "JOYPAD-LEFT";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_RIGHT] = "JOYPAD-RIGHT";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L] = "JOYPAD-L";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R] = "JOYPAD-R";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R2] = "JOYPAD-R2";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L2] = "JOYPAD-L2";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R3] = "JOYPAD-R3";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L3] = "JOYPAD-L3";
+      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_MASK] = "JOYPAD-MASK";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_X] = "MOUSE-X";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_Y] = "MOUSE-Y";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_LEFT] = "MOUSE-LEFT";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_RIGHT] = "MOUSE-RIGHT";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELUP] = "MOUSE-WHEELUP";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELDOWN] = "MOUSE-WHEELDOWN";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_MIDDLE] = "MOUSE-MIDDLE";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP] = "MOUSE-HORIZ-WHEELUP";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN] = "MOUSE-HORIZ-WHEELDOWN";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_4] = "MOUSE-BUTTON-4";
+      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_5] = "MOUSE-BUTTON-5";
     }
 
     public static bool Start(string screenName, string gameFileName) {
@@ -696,36 +696,39 @@ public static unsafe class LibretroMameCore
 #endif
         //port: 0 device: 1 index: 0 id: 2 (select) Coin
 
-        if (device == RETRO_DEVICE_JOYPAD) {
-            InputControlDebugJoyPad();
-            actionName = getDeviceNameFromID("joypad", id);
-            if (actionName != "")
+        if (device == RETRO_DEVICE_JOYPAD) 
+        {
+          InputControlDebugJoyPad();
+          actionName = getDeviceNameFromID("joypad", id);
+          if (actionName != "")
+          {
+            switch (id) 
             {
-              switch (id) {
-                case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
-                  //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                  ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.buttonPressed("INSERT") ? (Int16)1:(Int16)0;
-                  if (ret == 0) //hack for pacman and others.
-                      HotDelaySelectCycles = 4;
-                  if (HotDelaySelectCycles > -1 && ret != (Int16)1) {
-                      HotDelaySelectCycles--;
-                      ret = (Int16)1;
-                  }
-                  break;
-
-                case RETRO_DEVICE_ID_JOYPAD_L3:
-                  //thumbstick-press
-                  //mame menu: joystick right press and grip
-                  string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L);
-                  ret = (ControlMap.buttonPressed(actionName)) || (id2 != "" && ControlMap.buttonPressed(id2)) ? (Int16)1:(Int16)0;
-                  break;
-
-                default:
-                  ret = ControlMap.buttonPressed(actionName) ? (Int16)1:(Int16)0;
-                  break;
-
+              case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
+                //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.buttonPressed("INSERT") ? (Int16)1:(Int16)0;
+                if (ret == 0) //hack for pacman and others.
+                  HotDelaySelectCycles = 4;
+                if (HotDelaySelectCycles > -1 && ret != (Int16)1) 
+                {
+                  HotDelaySelectCycles--;
+                  ret = (Int16)1;
                 }
-            }    
+                break;
+
+              case RETRO_DEVICE_ID_JOYPAD_L3:
+                //thumbstick-press
+                //mame menu: joystick right press and grip
+                string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L);
+                ret = (ControlMap.buttonPressed(actionName)) && (id2 != "" && ControlMap.buttonPressed(id2)) ? (Int16)1:(Int16)0;
+                break;
+
+              default:
+                ret = ControlMap.buttonPressed(actionName) ? (Int16)1:(Int16)0;
+                break;
+
+            }
+          }    
         }
         /*
         else if (device == RETRO_DEVICE_MOUSE) {

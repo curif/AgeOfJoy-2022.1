@@ -11,16 +11,16 @@ using System.Text;
 
 public static class ControlMapInputAction
 {
-  public static bool hasMameControl(string control)
+  public static bool HasMameControl(string mameControl)
   {
      foreach (var item in LibretroMameCore.deviceIdsJoypad)
      {
-       if (item == control)
+       if (item == mameControl)
          return true;
      }
      foreach (var item in LibretroMameCore.deviceIdsMouse)
      {
-       if (item == control)
+       if (item == mameControl)
          return true;
      }
      return false;
@@ -29,22 +29,27 @@ public static class ControlMapInputAction
   public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
   {
     InputActionMap inputActionMap = new();
-    foreach (var map in mapConfig.maps)
+    foreach (var map in mapConfig.MapList)
     {
-      var action = inputActionMap.AddAction(map.controlID);
-      foreach (var mapAction in map.actions)
+      InputActionType t = InputActionType.Button;
+      if (map.behavior == "axis")
       {
-        string path = ControlMapPathDictionary.GetInputPath(mapAction.control, mapAction.action);
+        t = InputActionType.Value;
+      }
+      InputAction action = inputActionMap.AddAction(map.MAMEControl, type: t);
+      foreach (var controlMap in map.ControlMaps)
+      {
+        string path = ControlMapPathDictionary.GetInputPath(controlMap.RealControl);
         if (string.IsNullOrEmpty(path))
         {
-          ConfigManager.WriteConsoleError($"[inputActionMapFromConfiguration] control {mapAction.control} doesn't have a path. ");
+          ConfigManager.WriteConsoleError($"[inputActionMapFromConfiguration] control {controlMap.RealControl} doesn't have a path. ");
         }
         else
         {
           var bind = new InputBinding
           {
             path = path, 
-            action = map.controlID
+            action = map.MAMEControl
           };
           action.AddBinding(bind);
         }
