@@ -1,4 +1,13 @@
-pushd /home/fabio.curi/Unity/Hub/Editor/2022.1.7f1/Editor
-./Unity -batchmode -quit -projectPath "/home/fabio.curi/desarr/AgeOfJoy-2022.1/" -buildTarget Android -executeMethod AndroidBuilder.Build -logfile "/home/fabio.curi/desarr/AgeOfJoy-2022.1/build.log"
-ll *.apk
-popd
+#!/bin/bash
+
+# Set environment variables
+UNITY_EDITOR_PATH="${UNITY_EDITOR_PATH:-/Applications/Unity/Hub/Editor/2021.3.22f1/Editor}"
+UNITY_BUILD_PATH="${UNITY_BUILD_PATH:-Build}"
+LOGFILE_PATH="${LOGFILE_PATH:-$UNITY_BUILD_PATH/build.log}"
+
+# Run Unity in batch mode
+"$UNITY_EDITOR_PATH/Unity" -batchmode -quit -projectPath "$(pwd)" -buildTarget Android -executeMethod AndroidBuilder.Build -logfile "$LOGFILE_PATH" -outputPath="$UNITY_BUILD_PATH" "$@"
+
+# List and echo the generated APK path
+APK_PATH=$(find "$UNITY_BUILD_PATH" -name '*.apk' -print)
+echo "Generated APK: $APK_PATH"
