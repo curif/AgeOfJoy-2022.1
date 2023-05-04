@@ -719,8 +719,8 @@ public static unsafe class LibretroMameCore
               case RETRO_DEVICE_ID_JOYPAD_L3:
                 //thumbstick-press
                 //mame menu: joystick right press and grip
-                string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L);
-                ret = (ControlMap.buttonPressed(actionName)) && (id2 != "" && ControlMap.buttonPressed(id2)) ? (Int16)1:(Int16)0;
+                string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L3);
+                ret = ControlMap.buttonPressed(actionName) && id2 != "" && ControlMap.buttonPressed(id2) ? (Int16)1:(Int16)0;
                 break;
 
               default:

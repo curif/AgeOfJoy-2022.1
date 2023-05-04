@@ -81,7 +81,7 @@ public class LibretroScreenController : MonoBehaviour
   private ShaderScreenBase shader;
   private List<AgentScenePosition> agentPlayerPositionComponents;
   private GameObject player;
-  private ChangeControls playerController;
+  private ChangeControls changeControls;
   private CoinSlotController CoinSlot;
   private GameObject centerEyeCamera;
   private Camera cameraComponentCenterEye;
@@ -134,7 +134,7 @@ public class LibretroScreenController : MonoBehaviour
     cameraComponentCenterEye = centerEyeCamera.GetComponent<Camera>();
 
     player = GameObject.Find("OVRPlayerControllerGalery");
-    playerController = player.GetComponent<ChangeControls>();
+    changeControls = player.GetComponent<ChangeControls>();
     
     leftHand = GameObject.Find("LeftHand");
     rightHand = GameObject.Find("RightHand");
@@ -296,12 +296,12 @@ public class LibretroScreenController : MonoBehaviour
   {
     /*//lock controls, if takeControls is true the Player can't move.
     LibretroMameCore.WriteConsole($"[LibRetroMameCore.LockControls] lock controls & lower background volume audio: {takeControls}");
-    playerController.EnableLinearMovement = !takeControls;
-    playerController.EnableRotation = !takeControls;
+    changeControls.EnableLinearMovement = !takeControls;
+    changeControls.EnableRotation = !takeControls;
     */
 
     LibretroMameCore.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
-    playerController.PlayerMode(isPlaying);
+    changeControls.PlayerMode(isPlaying);
 
     //change sound configuration
     GameObject[] allSpeakers = GameObject.FindGameObjectsWithTag("speaker");

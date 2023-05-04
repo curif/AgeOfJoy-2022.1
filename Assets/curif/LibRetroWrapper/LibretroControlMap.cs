@@ -64,14 +64,14 @@ public class LibretroControlMap : MonoBehaviour
             return true;
           }
           break;
-        case "JOYPAD-LEFT":
+        case "JOYPAD-RIGHT":
           if (val.x > 0.5)
           {
             ConfigManager.WriteConsole($"{mameControl}: val: {val} true");
             return true;
           }
           break;
-        case "JOYPAD-RIGHT":
+        case "JOYPAD-LEFT":
           if (val.x < -0.5)
           {
             ConfigManager.WriteConsole($"{mameControl}: val: {val} true");

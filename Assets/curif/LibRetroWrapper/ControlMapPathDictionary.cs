@@ -48,17 +48,11 @@ public static class ControlMapPathDictionary
         { "gamepad-right-bumper", "<Gamepad>/rightShoulder" },
         { "gamepad-left-trigger", "<Gamepad>/leftTrigger" },
         { "gamepad-right-trigger", "<Gamepad>/rightTrigger" },
-        { "gamepad-left-thumbstick-down", "<Gamepad>/leftStick/down" },
-        { "gamepad-left-thumbstick-up", "<Gamepad>/leftStick/up" },
-        { "gamepad-left-thumbstick-left", "<Gamepad>/leftStick/left" },
-        { "gamepad-left-thumbstick-right", "<Gamepad>/leftStick/right" },
+        { "gamepad-left-thumbstick", "<Gamepad>/leftStick" },
+        { "gamepad-right-thumbstick", "<Gamepad>/rightStick" },
         { "gamepad-left-thumbstick-press", "<Gamepad>/leftStickPress" },
-        { "gamepad-right-thumbstick-down", "<Gamepad>/rightStick/down" },
-        { "gamepad-right-thumbstick-up", "<Gamepad>/rightStick/up" },
-        { "gamepad-right-thumbstick-left", "<Gamepad>/rightStick/left" },
-        { "gamepad-right-thumbstick-right", "<Gamepad>/rightStick/right" },
         { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" }
-    };
+      };
 }
 
   public static string GetInputPath(string realControl) {
