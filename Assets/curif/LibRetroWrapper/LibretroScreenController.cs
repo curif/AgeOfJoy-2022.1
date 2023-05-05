@@ -235,7 +235,7 @@ public class LibretroScreenController : MonoBehaviour
               //.Condition("Is visible", () => display.isVisible)
               .Condition("user EXIT pressed?", () =>
               {
-                if (controlMap.buttonPressed("EXIT"))
+                if (controlMap.JoypadActive("EXIT"))
                   return true;
 
                 timeToExit = DateTime.MinValue;

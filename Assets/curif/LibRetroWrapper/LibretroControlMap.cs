@@ -24,14 +24,14 @@ public class LibretroControlMap : MonoBehaviour
     actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
   }
 
-  public bool buttonPressed(string mameControl)
+  public bool JoypadActive(string mameControl)
   {
     //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
     if (actionMap[mameControl].type == InputActionType.Button)
     {
       if (actionMap[mameControl].IsPressed())
       {
-        ConfigManager.WriteConsole($"[buttonPressed] {mameControl} pressed");
+        ConfigManager.WriteConsole($"[JoypadActive] {mameControl} pressed");
         return true;
       }
       return false;

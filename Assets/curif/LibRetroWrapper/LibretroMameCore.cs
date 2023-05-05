@@ -662,7 +662,7 @@ public static unsafe class LibretroMameCore
       })
       {
         string actionName = getDeviceNameFromID("joypad", id);
-        bool ret = ControlMap.buttonPressed(actionName);
+        bool ret = ControlMap.JoypadActive(actionName);
         if (ret)
           ConfigManager.WriteConsole($"[InputControlDebugJoystick] id:{id} name:{actionName} ret:{ret}");
       }
@@ -698,7 +698,7 @@ public static unsafe class LibretroMameCore
 
         if (device == RETRO_DEVICE_JOYPAD) 
         {
-          InputControlDebugJoyPad();
+          //InputControlDebugJoyPad();
           actionName = getDeviceNameFromID("joypad", id);
           if (actionName != "")
           {
@@ -706,25 +706,31 @@ public static unsafe class LibretroMameCore
             {
               case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
                 //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.buttonPressed("INSERT") ? (Int16)1:(Int16)0;
-                if (ret == 0) //hack for pacman and others.
-                  HotDelaySelectCycles = 4;
-                if (HotDelaySelectCycles > -1 && ret != (Int16)1) 
+                ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.JoypadActive("INSERT") ? (Int16)1:(Int16)0;
+                if (ret == 1)
+                { //hack for pacman and others.
+                  HotDelaySelectCycles = 5;
+                }
+
+                if (HotDelaySelectCycles > 0 && ret != (Int16)1) 
                 {
                   HotDelaySelectCycles--;
                   ret = (Int16)1;
+                  ConfigManager.WriteConsole($"[inputStateCB] TakeCoin JOYPAD_SELECT: ret: {ret} cycle# {HotDelaySelectCycles}");
                 }
                 break;
 
               case RETRO_DEVICE_ID_JOYPAD_L3:
-                //thumbstick-press
                 //mame menu: joystick right press and grip
-                string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L3);
-                ret = ControlMap.buttonPressed(actionName) && id2 != "" && ControlMap.buttonPressed(id2) ? (Int16)1:(Int16)0;
+                if (ControlMap.JoypadActive(actionName))
+                {
+                  string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L);
+                  ret = id2 != "" && ControlMap.JoypadActive(id2) ? (Int16)1:(Int16)0;
+                }
                 break;
 
               default:
-                ret = ControlMap.buttonPressed(actionName) ? (Int16)1:(Int16)0;
+                ret = ControlMap.JoypadActive(actionName) ? (Int16)1:(Int16)0;
                 break;
 
             }
