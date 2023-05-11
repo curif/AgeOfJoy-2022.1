@@ -11,6 +11,7 @@ using System.Text;
 
 public static class ControlMapInputAction
 {
+  /*
   public static bool HasMameControl(string mameControl)
   {
      foreach (var item in LibretroMameCore.deviceIdsJoypad)
@@ -25,6 +26,7 @@ public static class ControlMapInputAction
      }
      return false;
   }
+  */
 
   public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
   {

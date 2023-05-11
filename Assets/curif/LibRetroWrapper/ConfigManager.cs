@@ -57,6 +57,11 @@ public static class ConfigManager
     string formattedMessage = $"[AGE ERROR] {st}";
     UnityEngine.Debug.LogFormat(LogType.Log, LogOption.None, null, "{0}", formattedMessage);
   }
+  public static void WriteConsoleException(string st, Exception e)
+  {
+    string formattedMessage = $"[AGE ERROR EXCEPTION] {st}";
+    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.None, null, "{0} Exception {1} StackTrace: \n {2}", formattedMessage, e, e.StackTrace);
+  }
 
   public static void SignalToStopVideos()
   {

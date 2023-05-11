@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 public class LibretroControlMap : MonoBehaviour
 {
   public InputActionMap actionMap;
+  private const int wheelDelta = 120;
 
   // Start is called before the first frame update
   void Start()
@@ -24,64 +25,99 @@ public class LibretroControlMap : MonoBehaviour
     actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
   }
 
-  public bool JoypadActive(string mameControl)
+  public int Active(string mameControl)
   {
-    //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
-    if (actionMap[mameControl].type == InputActionType.Button)
+    int ret = 0;
+    InputAction action = actionMap.FindAction(mameControl);
+    if (action == null)
     {
-      if (actionMap[mameControl].IsPressed())
-      {
-        ConfigManager.WriteConsole($"[JoypadActive] {mameControl} pressed");
-        return true;
-      }
-      return false;
+      //ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{mameControl}] not found in controlMap");
+      return 0;
     }
-    
-    /*
-    if (actionMap[controlName].WasPerformedThisFrame())
-    {
-      ConfigManager.WriteConsole("[LibretroControlMap] Fire WAS pressed [WasPerformedThisFrame]");
-      return true;
-    }
-    */
 
-    if (actionMap[mameControl].type == InputActionType.Value)
+    //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
+    if (action.type == InputActionType.Button)
     {
-      Vector2 val = actionMap[mameControl].ReadValue<Vector2>();
+      if (action.IsPressed())
+      {
+        ConfigManager.WriteConsole($"[LibretroControlMap.Active] {mameControl} pressed");
+        return 1;
+      }
+      return 0;
+    }
+
+    else if (action.type == InputActionType.Value)
+    {
+      Vector2 val = action.ReadValue<Vector2>();
       switch (mameControl)
       {
-        case "JOYPAD-UP":
+        case "JOYPAD_UP":
           if (val.y > 0.5)
           {
-            ConfigManager.WriteConsole($"{mameControl}: val: {val} true");
-            return true;
+            ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+            return 1;
           }
           break;
-        case "JOYPAD-DOWN":
+        case "JOYPAD_DOWN":
           if (val.y < -0.5)
           {
-            ConfigManager.WriteConsole($"{mameControl}: val: {val} true");
-            return true;
+            ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+            return 1;
           }
           break;
-        case "JOYPAD-RIGHT":
+        case "JOYPAD_RIGHT":
           if (val.x > 0.5)
           {
-            ConfigManager.WriteConsole($"{mameControl}: val: {val} true");
-            return true;
+            ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+            return 1;
           }
           break;
-        case "JOYPAD-LEFT":
+        case "JOYPAD_LEFT":
           if (val.x < -0.5)
           {
-            ConfigManager.WriteConsole($"{mameControl}: val: {val} true");
-            return true;
+            ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+            return 1;
           }
+          break;
+        case "MOUSE_X":
+          //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+          if (val.x > 0.5)
+            ret = 10;
+          else if (val.x < -0.5)
+            ret = -10;
+          break;
+        case "MOUSE_Y":
+          //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+          if (val.y > 0.5)
+            ret = 10;
+          else if (val.y < -0.5)
+            ret = -10;
+          break;
+        case "MOUSE_WHEELUP":
+          //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+          if (val.y > wheelDelta)
+            ret = 10;
+          break;
+        case "MOUSE_WHEELDOWN":
+          //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+          if (val.y < -wheelDelta)
+            ret = -10;
+          break;
+        case "MOUSE_HORIZ_WHEELUP":
+          //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+          if (val.x > wheelDelta)
+            ret = 10;
+          break;
+        case "MOUSE_HORIZ_WHEELDOWN":
+          //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
+          if (val.x < -wheelDelta)
+            ret = -10;
           break;
       }
     }
-    return false;
+    return ret;
   }
+
 
   public void Enable(bool enable)
   {

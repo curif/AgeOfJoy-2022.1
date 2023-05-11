@@ -12,6 +12,7 @@ using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 
+
 public class CabinetInformation
 {
     public string name;
@@ -30,12 +31,20 @@ public class CabinetInformation
     public string statefile = "state.nv"; 
     public Video video = new Video();
     public string md5sum;
+
     [YamlMember(Alias = "control-map", ApplyNamingConventions = false)]
     public ControlMapConfiguration ControlMap;
 
     [YamlIgnore]
     public string pathBase;
 
+    private static IDeserializer deserializer = new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
+
+    public CabinetInformation() {}
+    
     public static CabinetInformation fromName(string cabName)
     {
       return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
@@ -43,39 +52,37 @@ public class CabinetInformation
 
     public static CabinetInformation fromYaml(string cabPath)
     {
-        string yamlPath = $"{cabPath}/description.yaml";
-        LibretroMameCore.WriteConsole($"[CabinetInformation]: {yamlPath}");
-
-        if (!File.Exists(yamlPath))
-        {
-            LibretroMameCore.WriteConsole($"[CabinetInformation]: ERROR Description YAML file (description.yaml) don't exists in cabinet subdir {cabPath}");
-            return null;
-        }
-
-        try
-        {
-          var input = File.OpenText(yamlPath);
-
-          var deserializer = new DeserializerBuilder()
-              .WithNamingConvention(CamelCaseNamingConvention.Instance)
-              .IgnoreUnmatchedProperties()
-            .Build();
-
-          var cabInfo = deserializer.Deserialize<CabinetInformation>(input);
-          if (cabInfo == null)
-              throw new IOException();
-
-          cabInfo.pathBase = cabPath;
-
-          return cabInfo;
-        }
-        catch (Exception e)
-        {
-          LibretroMameCore.WriteConsole($"[CabinetInformation]:ERROR Description YAML file in cabinet subdir {cabPath} - {e}");
-
-        }
+      string yamlPath = $"{cabPath}/description.yaml";
+      ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
+      
+      if (!File.Exists(yamlPath))
+      {
+        ConfigManager.WriteConsoleError($"[CabinetInformation]: Description YAML file (description.yaml) doesn't exists in cabinet folder: {cabPath}");
         return null;
+      }
+
+      try
+      {
+        var input = File.OpenText(yamlPath);
+        var yaml = input.ReadToEnd();
+        input.Close();
+
+        //ConfigManager.WriteConsole($"[CabinetInformation]: {yamlPath} \n {yaml}");
+        var cabInfo = deserializer.Deserialize<CabinetInformation>(yaml);
+        if (cabInfo == null)
+          throw new IOException();
+
+        cabInfo.pathBase = cabPath;
+
+        return cabInfo;
+      }
+      catch (Exception e)
+      {
+        ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
+      }
+      return null;
     }
+
     public class Model
     {
         public string style = ""; //can refer to other cabinet. Set the cabinet Name here. Empty means actual 'file' model in pack

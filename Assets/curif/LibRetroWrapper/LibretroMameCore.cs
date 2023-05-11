@@ -112,8 +112,8 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_ID_MOUSE_BUTTON_4 = 9;
     public const uint RETRO_DEVICE_ID_MOUSE_BUTTON_5 = 10;
 
-    public static string[] deviceIdsJoypad = new string[257];
-    public static string[] deviceIdsMouse = new string[11];
+    private static mameControls deviceIdsJoypad = null;
+    private static mameControls deviceIdsMouse = null;
 
 
     [DllImport ("mame2003_plus_libretro_android")]
@@ -350,49 +350,86 @@ public static unsafe class LibretroMameCore
     public static string Gamma = DefaultGamma; 
     public static string Brightness = DefaultBrightness;
 
-    public static string getDeviceNameFromID(string controlType, uint id)
+
+    static void initializeControls() 
     {
-      if (controlType == "joypad")
-      {
-        return deviceIdsJoypad[id];
+      if (ControlMap == null) {
+        throw new Exception("[LibretroMameCore.initializeControls] the ControlMap should be assigned previous to the start of the game.");
       }
-      else if (controlType == "mouse")
+
+      if (deviceIdsMouse == null) 
       {
-        return deviceIdsMouse[id];
+        ConfigManager.WriteConsole($"[initializeControls] MOUSE: naming MAME controls (mapping libretro ids to control name)");
+        deviceIdsMouse = new(ControlMap);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, "MOUSE_X");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, "MOUSE_Y");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, "MOUSE_LEFT");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_RIGHT, "MOUSE_RIGHT");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELUP, "MOUSE_WHEELUP");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELDOWN, "MOUSE_WHEELDOWN");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_MIDDLE, "MOUSE_MIDDLE");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP, "MOUSE_HORIZ_WHEELUP");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN, "MOUSE_HORIZ_WHEELDOWN");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_4, "MOUSE_BUTTON_4");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_5, "MOUSE_BUTTON_5");
       }
-      return "";
+
+      if (deviceIdsJoypad == null) 
+      {
+        ConfigManager.WriteConsole($"[initializeControls] JOYPAD: naming MAME controls (mapping libretro ids to control name)");
+        deviceIdsJoypad = new(ControlMap);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_B,"JOYPAD_B");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_A, "JOYPAD_A");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_X, "JOYPAD_X");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_Y, "JOYPAD_Y");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_SELECT, "JOYPAD_SELECT");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_START, "JOYPAD_START");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_UP, "JOYPAD_UP");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_DOWN, "JOYPAD_DOWN");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_LEFT, "JOYPAD_LEFT");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_RIGHT, "JOYPAD_RIGHT");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L, "JOYPAD_L");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R, "JOYPAD_R");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, "JOYPAD_R2");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, "JOYPAD_L2");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, "JOYPAD_R3");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, "JOYPAD_L3");
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_MASK, "JOYPAD_MASK");
+      }
     }
 
-    static LibretroMameCore() 
+    private class mameControls
     {
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_B] = "JOYPAD-B";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_A] = "JOYPAD-A";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_X] = "JOYPAD-X";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_Y] = "JOYPAD-Y";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_SELECT] = "JOYPAD-SELECT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_START] = "JOYPAD-START";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_UP] = "JOYPAD-UP";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_DOWN] = "JOYPAD-DOWN";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_LEFT] = "JOYPAD-LEFT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_RIGHT] = "JOYPAD-RIGHT";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L] = "JOYPAD-L";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R] = "JOYPAD-R";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R2] = "JOYPAD-R2";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L2] = "JOYPAD-L2";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_R3] = "JOYPAD-R3";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_L3] = "JOYPAD-L3";
-      deviceIdsJoypad[RETRO_DEVICE_ID_JOYPAD_MASK] = "JOYPAD-MASK";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_X] = "MOUSE-X";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_Y] = "MOUSE-Y";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_LEFT] = "MOUSE-LEFT";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_RIGHT] = "MOUSE-RIGHT";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELUP] = "MOUSE-WHEELUP";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_WHEELDOWN] = "MOUSE-WHEELDOWN";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_MIDDLE] = "MOUSE-MIDDLE";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP] = "MOUSE-HORIZ-WHEELUP";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN] = "MOUSE-HORIZ-WHEELDOWN";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_4] = "MOUSE-BUTTON-4";
-      deviceIdsMouse[RETRO_DEVICE_ID_MOUSE_BUTTON_5] = "MOUSE-BUTTON-5";
+      private Dictionary<uint, string> ids = new();
+      LibretroControlMap controlMap;
+
+      public mameControls(LibretroControlMap ctrl)
+      {
+        controlMap = ctrl;
+      }
+
+      public void addMap(uint mameId, string gameId)
+      {
+        ids[mameId] = gameId;
+      }
+
+      public string Id(uint mameId)
+      {
+        if (ids.ContainsKey(mameId))
+          return ids[mameId];
+        return "";
+      }
+
+      public Int16 Active(uint mameId)
+      {
+        string gameId = Id(mameId);
+        if (gameId == "")
+        {
+          ConfigManager.WriteConsoleError($"[mameControls] libretro is asking for a control id that is not mapped: {mameId}");
+          return 0;
+        }
+        return (Int16)controlMap.Active(gameId);
+      }
     }
 
     public static bool Start(string screenName, string gameFileName) {
@@ -420,6 +457,8 @@ public static unsafe class LibretroMameCore
             WriteConsole("[LibRetroMameCore.Start] ------------------- LIBRETRO INIT -----------------------");
             WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
 
+            //controls
+            initializeControls();
 
             //Audio configuration
             var audioConfig = AudioSettings.GetConfiguration();
@@ -640,7 +679,7 @@ public static unsafe class LibretroMameCore
       GameTexture.Apply(false, false);
     }
 
-    static public void InputControlDebugJoyPad()
+    static public void InputControlDebug()
     {
       foreach (uint id in new uint[] {
         RETRO_DEVICE_ID_JOYPAD_B,
@@ -661,10 +700,28 @@ public static unsafe class LibretroMameCore
         RETRO_DEVICE_ID_JOYPAD_L3
       })
       {
-        string actionName = getDeviceNameFromID("joypad", id);
-        bool ret = ControlMap.JoypadActive(actionName);
-        if (ret)
-          ConfigManager.WriteConsole($"[InputControlDebugJoystick] id:{id} name:{actionName} ret:{ret}");
+        int ret = deviceIdsJoypad.Active(id);
+        if (ret != 0)
+          ConfigManager.WriteConsole($"[InputControlDebug] id:{id} name:{deviceIdsJoypad.Id(id)} ret:{ret}");
+      }
+
+      foreach (uint id in new uint[] {
+        RETRO_DEVICE_ID_MOUSE_X,
+        RETRO_DEVICE_ID_MOUSE_Y,
+        RETRO_DEVICE_ID_MOUSE_LEFT,
+        RETRO_DEVICE_ID_MOUSE_RIGHT,
+        RETRO_DEVICE_ID_MOUSE_WHEELUP,
+        RETRO_DEVICE_ID_MOUSE_WHEELDOWN,
+        RETRO_DEVICE_ID_MOUSE_MIDDLE,
+        RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP,
+        RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN,
+        RETRO_DEVICE_ID_MOUSE_BUTTON_4,
+        RETRO_DEVICE_ID_MOUSE_BUTTON_5
+      })
+      {
+        int ret = deviceIdsMouse.Active(id);
+        if (ret != 0)
+          ConfigManager.WriteConsole($"[InputControlDebug] id:{id} name:{deviceIdsJoypad.Id(id)} ret:{ret}");
       }
       //ConfigManager.WriteConsole($"[InputControlDebugJoystick] --------------------------------");
     }
@@ -698,43 +755,41 @@ public static unsafe class LibretroMameCore
 
         if (device == RETRO_DEVICE_JOYPAD) 
         {
-          //InputControlDebugJoyPad();
-          actionName = getDeviceNameFromID("joypad", id);
-          if (actionName != "")
+          InputControlDebug();
+          switch (id) 
           {
-            switch (id) 
-            {
-              case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
-                //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.JoypadActive("INSERT") ? (Int16)1:(Int16)0;
-                if (ret == 1)
-                { //hack for pacman and others.
-                  HotDelaySelectCycles = 5;
-                }
+            case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
+              //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+              ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.Active("INSERT") != 0 ? (Int16)1:(Int16)0;
+              if (ret == 1)
+              { //hack for pacman and others.
+                HotDelaySelectCycles = 5;
+              }
 
-                if (HotDelaySelectCycles > 0 && ret != (Int16)1) 
-                {
-                  HotDelaySelectCycles--;
-                  ret = (Int16)1;
-                  ConfigManager.WriteConsole($"[inputStateCB] TakeCoin JOYPAD_SELECT: ret: {ret} cycle# {HotDelaySelectCycles}");
-                }
-                break;
+              if (HotDelaySelectCycles > 0 && ret != (Int16)1) 
+              {
+                HotDelaySelectCycles--;
+                ret = (Int16)1;
+                //ConfigManager.WriteConsole($"[inputStateCB] TakeCoin JOYPAD_SELECT: ret: {ret} cycle# {HotDelaySelectCycles}");
+              }
+              break;
 
-              case RETRO_DEVICE_ID_JOYPAD_L3:
-                //mame menu: joystick right press and grip
-                if (ControlMap.JoypadActive(actionName))
-                {
-                  string id2 = getDeviceNameFromID("joypad", RETRO_DEVICE_ID_JOYPAD_L);
-                  ret = id2 != "" && ControlMap.JoypadActive(id2) ? (Int16)1:(Int16)0;
-                }
-                break;
+            case RETRO_DEVICE_ID_JOYPAD_L3:
+              //mame menu: joystick right button press and right grip
+              ret = ControlMap.Active("JOYPAD_R3") != 0 && ControlMap.Active("JOYPAD_R") != 0 ? (Int16)1:(Int16)0;
+              break;
 
-              default:
-                ret = ControlMap.JoypadActive(actionName) ? (Int16)1:(Int16)0;
-                break;
+            default:
+              ret = (Int16)deviceIdsJoypad.Active(id);
+              break;
 
-            }
-          }    
+          }
+        }
+
+        else if (device == RETRO_DEVICE_MOUSE) 
+        {
+          InputControlDebug();
+          ret = (Int16)deviceIdsMouse.Active(id);
         }
         /*
         else if (device == RETRO_DEVICE_MOUSE) {
@@ -767,7 +822,8 @@ public static unsafe class LibretroMameCore
 #if _debug_fps_
         Profiling.input.Stop();
 #endif
-        //WriteConsole($"[inputStateCB] port: {port} device: {device} index: {index} id: {id} ret: {ret}");
+        if (ret == (Int16)1)
+          ConfigManager.WriteConsole($"[inputStateCB] port: {port} device: {device} index: {index} id: {id} actionName: {actionName} ret: {ret}");
         return ret;
     }
   

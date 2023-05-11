@@ -111,19 +111,6 @@ public class ControlMapConfiguration
 
     return;
   }
-
-  public void AddMap(uint libretroMameCoreID, string libretroMameControlType, string[] realControlsToAssign, string behavior = "button")
-  {
-    string mameControl = LibretroMameCore.getDeviceNameFromID(libretroMameControlType, libretroMameCoreID);
-    if (mameControl == "")
-    {
-      ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR MAME control type unknown : {libretroMameControlType}-{libretroMameCoreID}");
-      return;
-    }
-    AddMap(mameControl, realControlsToAssign, behavior);
-
-    return;
-  }
 }
 
 public class DefaultControlMap : ControlMapConfiguration
@@ -135,31 +122,44 @@ public class DefaultControlMap : ControlMapConfiguration
     MapList = new();
 
     //fire with b-button and trigger.
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_B, "joypad", new string[] {"quest-b", "gamepad-b", "quest-right-trigger"});
+    AddMap("JOYPAD_B",  new string[] {"quest-b", "gamepad-b", "quest-right-trigger"});
     
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_A, "joypad", new string[] {"gamepad-a", "quest-a"});
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_X, "joypad", new string[] {"gamepad-x", "quest-x"});
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_Y, "joypad", new string[] {"gamepad-y", "quest-y"});
-    // can't be select because the coin is used.
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_START, "joypad", new string[] {"gamepad-start", "quest-start"});
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_SELECT, "joypad", new string[] {"gamepad-select", "quest-select"});
+    AddMap("JOYPAD_A",  new string[] {"gamepad-a", "quest-a"});
+    AddMap("JOYPAD_X",  new string[] {"gamepad-x", "quest-x"});
+    AddMap("JOYPAD_Y",  new string[] {"gamepad-y", "quest-y"});
+    // can'sed.
+    AddMap("JOYPAD_START",  new string[] {"gamepad-start", "quest-start"});
+    AddMap("JOYPAD_SELECT",  new string[] {"gamepad-select", "quest-select"});
 
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_UP, "joypad", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_DOWN, "joypad", new string[] {"quest-left-thumbstick","gamepad-left-thumbstick"}, "axis");
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_LEFT, "joypad", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_RIGHT, "joypad", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("JOYPAD_UP",  new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("JOYPAD_DOWN",  new string[] {"quest-left-thumbstick","gamepad-left-thumbstick"}, "axis");
+    AddMap("JOYPAD_LEFT",  new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("JOYPAD_RIGHT",  new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
 
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L, "joypad", new string[] {"quest-left-trigger", "gamepad-left-trigger"});
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R, "joypad", new string[] {"quest-right-trigger", "gamepad-right-trigger"});
+    AddMap("JOYPAD_L",  new string[] {"quest-left-trigger", "gamepad-left-trigger"});
+    AddMap("JOYPAD_R",  new string[] {"quest-right-trigger", "gamepad-right-trigger"});
 
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L2, "joypad", new string[] {"quest-left-grip", "gamepad-left-bumper"});
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R2, "joypad", new string[] {"quest-right-grip", "gamepad-right-bumper"});
+    AddMap("JOYPAD_L2",  new string[] {"quest-left-grip", "gamepad-left-bumper"});
+    AddMap("JOYPAD_R2",  new string[] {"quest-right-grip", "gamepad-right-bumper"});
 
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3, "joypad", new string[] {"quest-left-thumbstick-press", "gamepad-left-thumbstick-press"});
-    AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_R3, "joypad", new string[] {"quest-right-thumbstick-press", "gamepad-right-thumbstick-press"});
+    // mapped por mame menu in LibretroMameCore
+    //AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3,  new string[] {"quest-left-thumbstick-press", "gamepad-left-thumbstick-press"});
+    AddMap("JOYPAD_R3", new string[] {"quest-right-thumbstick-press", "gamepad-right-thumbstick-press"});
 
     AddMap("EXIT", new string[] {"quest-left-grip", "gamepad-left-bumper"});
     AddMap("INSERT", "gamepad-select");
+
+    AddMap("MOUSE_X", new string[] {"quest-right-thumbstick", "gamepad-right-thumbstick"}, "axis");
+    AddMap("MOUSE_Y", new string[] {"quest-right-thumbstick", "gamepad-right-thumbstick"}, "axis");
+    AddMap("MOUSE_LEFT", new string[] {"quest-b", "gamepad-b"});
+    AddMap("MOUSE_RIGHT", new string[] {"quest-a", "gamepad-a"});
+    AddMap("MOUSE_MIDDLE", new string[] {"quest-x", "gamepad-x"});
+    AddMap("MOUSE_WHEELUP", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("MOUSE_WHEELDOWN", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("MOUSE_HORIZ_WHEELUP", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("MOUSE_HORIZ_WHEELDOWN", new string[] {"quest-left-thumbstick", "gamepad-left-thumbstick"}, "axis");
+    AddMap("MOUSE_BUTTON_4", new string[] {"quest-left-thumbstick-press", "gamepad-left-thumbstick-press"});
+    AddMap("MOUSE_BUTTON_5", new string[] {"quest-right-thumbstick-press", "gamepad-right-thumbstick-press"});
 
   }
 

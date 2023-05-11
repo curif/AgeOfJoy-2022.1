@@ -26,7 +26,7 @@ public static class ControlMapPathDictionary
         { "quest-left-grip", "<XRController>{LeftHand}/gripButton" },
         { "quest-left-trigger", "<XRController>{LeftHand}/triggerButton" },
         { "quest-left-thumbstick", "<XRController>{LeftHand}/Primary2DAxis" },
-        { "quest-left-thumbstick-press", "<XRController>{LeftHand}/Primary2DAxisClick" },
+        { "quest-left-thumbstick-press", "<XRController>{LeftHand}/thumbstickClicked" },
         
         // Right VR controller mappings
         { "quest-a", "<XRController>{RightHand}/primaryButton" },
@@ -35,7 +35,7 @@ public static class ControlMapPathDictionary
         { "quest-right-grip", "<XRController>{RightHand}/gripButton" },
         { "quest-right-trigger", "<XRController>{RightHand}/triggerButton" },
         { "quest-right-thumbstick", "<XRController>{RightHand}/Primary2DAxis" },
-        { "quest-right-thumbstick-press", "<XRController>{RightHand}/Primary2DAxisClick" },
+        { "quest-right-thumbstick-press", "<XRController>{RightHand}/thumbstickClicked" },
 
         //Gamepad mappings
         { "gamepad-a", "<Gamepad>/buttonSouth" },
@@ -52,6 +52,17 @@ public static class ControlMapPathDictionary
         { "gamepad-right-thumbstick", "<Gamepad>/rightStick" },
         { "gamepad-left-thumbstick-press", "<Gamepad>/leftStickPress" },
         { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" }
+        /*
+        { "gamepad-left-thumbstick-down", "<Gamepad>/leftStick/down" },
+        { "gamepad-left-thumbstick-up", "<Gamepad>/leftStick/up" },
+        { "gamepad-left-thumbstick-left", "<Gamepad>/leftStick/left" },
+        { "gamepad-left-thumbstick-right", "<Gamepad>/leftStick/right" },
+        { "gamepad-right-thumbstick-down", "<Gamepad>/rightStick/down" },
+        { "gamepad-right-thumbstick-up", "<Gamepad>/rightStick/up" },
+        { "gamepad-right-thumbstick-left", "<Gamepad>/rightStick/left" },
+        { "gamepad-right-thumbstick-right", "<Gamepad>/rightStick/right" },
+        { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" }
+        */
       };
 }
 
