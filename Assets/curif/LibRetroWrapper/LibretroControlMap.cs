@@ -12,12 +12,14 @@ public class LibretroControlMap : MonoBehaviour
   public InputActionMap actionMap;
   private const int wheelDelta = 120;
 
-  // Start is called before the first frame update
-  void Start()
+  public void LoadConfigurationFromFile(string filename)
   {
-    DefaultControlMap conf = DefaultControlMap.Instance;
-
-    ConfigManager.WriteConsole($"[LibretroControlMap] load default config {conf}");
+    ControlMapConfiguration conf = ControlMapConfiguration.LoadFromYaml(filename);
+    if (conf == null)
+    {
+      conf = DefaultControlMap.Instance;
+    }
+    ConfigManager.WriteConsole($"[LoadConfigurationFromFile] load config {conf}");
     //ConfigManager.WriteConsole(conf.asMarkdown());
     Debug.Log(conf.AsMarkdown());
     conf.ToDebug();
@@ -25,6 +27,32 @@ public class LibretroControlMap : MonoBehaviour
     actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
   }
 
+  //load the control map from the cabinet configuration, if not found fall to the default one.
+  //in fact merge any other control map with the default. 
+  public void CreateFromConfiguration(ControlMapConfiguration cabMapConfiguration, string fileNameToSaveOrEmpty = "")
+  {
+    ControlMapConfiguration conf;
+    if (cabMapConfiguration == null) 
+    {
+      conf = DefaultControlMap.Instance;
+      ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] cabinet information (description.yaml) doen't have a control configuration, fall to deafult: {conf}");
+    }
+    else {
+      conf = new DefaultControlMap();
+      conf.Merge(cabMapConfiguration);
+      ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from cabinet information (description.yaml): {conf}");
+    }
+    //ConfigManager.WriteConsole(conf.asMarkdown());
+    Debug.Log(conf.AsMarkdown());
+    conf.ToDebug();
+
+    if (fileNameToSaveOrEmpty != "")
+    {
+      conf.SaveAsYaml(fileNameToSaveOrEmpty);
+    }
+
+    actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
+  }
   public int Active(string mameControl)
   {
     int ret = 0;

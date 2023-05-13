@@ -31,15 +31,15 @@ public static class ControlMapInputAction
   public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
   {
     InputActionMap inputActionMap = new();
-    foreach (var map in mapConfig.MapList)
+    foreach (var map in mapConfig.mapList)
     {
       InputActionType t = InputActionType.Button;
       if (map.behavior == "axis")
       {
         t = InputActionType.Value;
       }
-      InputAction action = inputActionMap.AddAction(map.MAMEControl, type: t);
-      foreach (var controlMap in map.ControlMaps)
+      InputAction action = inputActionMap.AddAction(map.mameControl, type: t);
+      foreach (var controlMap in map.controlMaps)
       {
         string path = ControlMapPathDictionary.GetInputPath(controlMap.RealControl);
         if (string.IsNullOrEmpty(path))
@@ -51,7 +51,7 @@ public static class ControlMapInputAction
           var bind = new InputBinding
           {
             path = path, 
-            action = map.MAMEControl
+            action = map.mameControl
           };
           action.AddBinding(bind);
         }

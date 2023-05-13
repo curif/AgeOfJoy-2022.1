@@ -213,7 +213,8 @@ public static class CabinetFactory
         rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage, 
         cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
         agentPlayerPositions,
-        cbinfo.crt.screen.shader, cbinfo.crt.screen.config());
+        cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
+        cbinfo.ControlMap);
 
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 

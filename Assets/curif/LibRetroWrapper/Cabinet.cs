@@ -270,7 +270,8 @@ public class Cabinet
                            Vector3? rotation = null, float scalePercentage = 0, 
                            string gamma = "1.0", string brightness = "1.0",
                            List<GameObject> agentPlayerPositions = null,
-                           string shaderName = "damage", Dictionary<string,string> shaderConfig = null)
+                           string shaderName = "damage", Dictionary<string,string> shaderConfig = null,
+                           ControlMapConfiguration controlMap = null)
   {
     string CRTType = $"screen-mock-{orientation}";
     GameObject CRT = Parts(CRTType);
@@ -316,6 +317,9 @@ public class Cabinet
     libretroScreenController.GameVideoFile = GameVideoFile;
     libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
     libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
+
+    //control mapping
+    libretroScreenController.controlMapConfig = controlMap;
 
     return this;
   }

@@ -89,10 +89,13 @@ public class LibretroScreenController : MonoBehaviour
   private GameVideoPlayer videoPlayer;
   private DateTime timeToExit = DateTime.MinValue;
   private GameObject cabinet;
-  private LibretroControlMap controlMap;
 
   //hands
   private GameObject leftHand, rightHand, rightControl, leftControl;
+
+  //controls
+  private LibretroControlMap libretroControlMap;
+  public ControlMapConfiguration controlMapConfig;
 
   private CoinSlotController getCoinSlotController()
   {
@@ -125,7 +128,7 @@ public class LibretroScreenController : MonoBehaviour
     display = GetComponent<Renderer>();
     cabinet = gameObject.transform.parent.gameObject;
     videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
-    controlMap = GetComponent<LibretroControlMap>();
+    libretroControlMap = GetComponent<LibretroControlMap>();
 
     //camera
     centerEyeCamera = GameObject.Find("Main Camera");
@@ -155,6 +158,9 @@ public class LibretroScreenController : MonoBehaviour
           agentPlayerPositionComponents.Add(asp);
       }
     }
+
+    // map configuration
+    libretroControlMap.CreateFromConfiguration(controlMapConfig /*, ConfigManager.CabinetsDB + "/" + GameFile + ".yaml"*/);
 
     StartCoroutine(runBT());
 
@@ -213,7 +219,7 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.CoinSlot = CoinSlot;
             LibretroMameCore.PathBase = PathBase;
             LibretroMameCore.shader = shader;
-            LibretroMameCore.ControlMap = controlMap;
+            LibretroMameCore.ControlMap = libretroControlMap;
 
             if (!LibretroMameCore.Start(name, GameFile)) 
             {
@@ -235,7 +241,7 @@ public class LibretroScreenController : MonoBehaviour
               //.Condition("Is visible", () => display.isVisible)
               .Condition("user EXIT pressed?", () =>
               {
-                if (controlMap.Active("EXIT") == 1)
+                if (libretroControlMap.Active("EXIT") == 1)
                   return true;
 
                 timeToExit = DateTime.MinValue;
@@ -309,7 +315,7 @@ public class LibretroScreenController : MonoBehaviour
 
     //eable inputMap
     ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
-    controlMap.Enable(isPlaying);
+    libretroControlMap.Enable(isPlaying);
   }
 
   public void Update()
