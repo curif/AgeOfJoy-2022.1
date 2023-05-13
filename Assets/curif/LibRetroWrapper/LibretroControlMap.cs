@@ -28,6 +28,7 @@ public class LibretroControlMap : MonoBehaviour
   public int Active(string mameControl)
   {
     int ret = 0;
+
     InputAction action = actionMap.FindAction(mameControl);
     if (action == null)
     {

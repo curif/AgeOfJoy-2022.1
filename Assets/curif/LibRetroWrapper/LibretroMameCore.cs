@@ -737,94 +737,69 @@ public static unsafe class LibretroMameCore
     // https://docs.libretro.com/library/mame2003_plus/#default-retropad-layouts
     [AOT.MonoPInvokeCallback (typeof(inputStateHandler))]
     static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id) {
-        Int16 ret = 0;
-        string actionName = "";
+      Int16 ret = 0;
 
-        if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
-          return ret;
-
-        //WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{id}");
-
-        if (port != 0)
-          return ret;
-
-#if _debug_fps_
-        Profiling.input.Start();
-#endif
-        //port: 0 device: 1 index: 0 id: 2 (select) Coin
-
-        if (device == RETRO_DEVICE_JOYPAD) 
-        {
-          InputControlDebug();
-          switch (id) 
-          {
-            case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
-              //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-              ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.Active("INSERT") != 0 ? (Int16)1:(Int16)0;
-              if (ret == 1)
-              { //hack for pacman and others.
-                HotDelaySelectCycles = 5;
-              }
-
-              if (HotDelaySelectCycles > 0 && ret != (Int16)1) 
-              {
-                HotDelaySelectCycles--;
-                ret = (Int16)1;
-                //ConfigManager.WriteConsole($"[inputStateCB] TakeCoin JOYPAD_SELECT: ret: {ret} cycle# {HotDelaySelectCycles}");
-              }
-              break;
-
-            case RETRO_DEVICE_ID_JOYPAD_L3:
-              //mame menu: joystick right button press and right grip
-              ret = ControlMap.Active("JOYPAD_R3") != 0 && ControlMap.Active("JOYPAD_R") != 0 ? (Int16)1:(Int16)0;
-              break;
-
-            default:
-              ret = (Int16)deviceIdsJoypad.Active(id);
-              break;
-
-          }
-        }
-
-        else if (device == RETRO_DEVICE_MOUSE) 
-        {
-          InputControlDebug();
-          ret = (Int16)deviceIdsMouse.Active(id);
-        }
-        /*
-        else if (device == RETRO_DEVICE_MOUSE) {
-          Vector2 thumbstickPosition = OVRInput.Get(OVRInput.RawAxis2D.RThumbstick);
-
-          switch (id) {
-            case RETRO_DEVICE_ID_MOUSE_X:
-              //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-              if (thumbstickPosition.x > 0)
-                ret = (Int16)10;
-              else if (thumbstickPosition.x < 0)
-                ret = (Int16)(-10);
-              break;
-            case RETRO_DEVICE_ID_MOUSE_Y:
-              if (thumbstickPosition.y > 0)
-                ret = (Int16)10;
-              else if (thumbstickPosition.y < 0)
-                ret = (Int16)(-10);
-              break;
-            case RETRO_DEVICE_ID_MOUSE_LEFT:
-              ret = OVRInput.Get(OVRInput.RawButton.B)? (Int16)1:(Int16)0;
-              break;
-            case RETRO_DEVICE_ID_MOUSE_RIGHT:
-              ret =  OVRInput.Get(OVRInput.RawButton.A)? (Int16)1:(Int16)0;
-              break;
-          }
-          //WriteConsole($"[inputStateCB] MOUSE port: {port} device: {device} index: {index} id: {id} ret: {ret}");
-        }*/
-
-#if _debug_fps_
-        Profiling.input.Stop();
-#endif
-        if (ret == (Int16)1)
-          ConfigManager.WriteConsole($"[inputStateCB] port: {port} device: {device} index: {index} id: {id} actionName: {actionName} ret: {ret}");
+      if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
         return ret;
+
+      //WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{id}");
+
+      if (port != 0)
+        return ret;
+
+#if _debug_fps_
+      Profiling.input.Start();
+#endif
+      //port: 0 device: 1 index: 0 id: 2 (select) Coin
+
+      if (device == RETRO_DEVICE_JOYPAD) 
+      {
+        //InputControlDebug();
+        switch (id) 
+        {
+          case RETRO_DEVICE_ID_JOYPAD_SELECT:                    
+            //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+            ret = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.Active("INSERT") != 0 ? (Int16)1:(Int16)0;
+            if (ret == 1)
+            { //hack for pacman and others.
+              HotDelaySelectCycles = 5;
+            }
+
+            if (HotDelaySelectCycles > 0 && ret != (Int16)1) 
+            {
+              HotDelaySelectCycles--;
+              ret = (Int16)1;
+              //ConfigManager.WriteConsole($"[inputStateCB] TakeCoin JOYPAD_SELECT: ret: {ret} cycle# {HotDelaySelectCycles}");
+            }
+            break;
+
+          case RETRO_DEVICE_ID_JOYPAD_L3:
+            //mame menu: joystick right button press and right grip
+            ret = (ControlMap.Active("JOYPAD_R3") != 0 && ControlMap.Active("JOYPAD_R") != 0) ? (Int16)1:(Int16)0;
+            break;
+
+          default:
+            ret = (Int16)deviceIdsJoypad.Active(id);
+            break;
+        }
+        if (ret != 0)
+          ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
+      }
+
+      else if (device == RETRO_DEVICE_MOUSE) 
+      {
+        //InputControlDebug();
+        ret = (Int16)deviceIdsMouse.Active(id);
+        if (ret != 0)
+          ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
+
+      }
+
+#if _debug_fps_
+      Profiling.input.Stop();
+#endif
+
+      return ret;
     }
   
     [AOT.MonoPInvokeCallback (typeof(audioSampleHandler))]

@@ -294,13 +294,8 @@ public class LibretroScreenController : MonoBehaviour
 
   void PreparePlayerToPlayGame(bool isPlaying)
   {
-    /*//lock controls, if takeControls is true the Player can't move.
-    LibretroMameCore.WriteConsole($"[LibRetroMameCore.LockControls] lock controls & lower background volume audio: {takeControls}");
-    changeControls.EnableLinearMovement = !takeControls;
-    changeControls.EnableRotation = !takeControls;
-    */
 
-    LibretroMameCore.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
+    ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
     changeControls.PlayerMode(isPlaying);
 
     //change sound configuration
@@ -313,6 +308,7 @@ public class LibretroScreenController : MonoBehaviour
     }
 
     //eable inputMap
+    ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
     controlMap.Enable(isPlaying);
   }
 
