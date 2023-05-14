@@ -228,3 +228,23 @@ public class DefaultControlMap : ControlMapConfiguration
   }
 }
 
+public class GlobalControlMap 
+{
+  private static ControlMapConfiguration config = null;
+  private static bool loaded = false;
+
+  public static ControlMapConfiguration Configuration{ 
+    get
+    {
+      if (config == null)
+      {
+        if (!loaded)
+        {
+          loaded = true;
+          config = ControlMapConfiguration.LoadFromYaml(ConfigManager.ConfigControllersDir + "/global.yaml");
+        }
+      }
+      return config;
+    }
+  }
+}
