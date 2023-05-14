@@ -12,10 +12,12 @@ using YamlDotNet.Serialization.NamingConventions;
 
 public class ControlMapConfiguration 
 {
+  [YamlMember(Alias = "maps", ApplyNamingConventions = false)]
   public List<Maps> mapList { get; set; }
   
   public class ControlMap
   {
+    [YamlMember(Alias = "control", ApplyNamingConventions = false)]
     public string RealControl = ""; //quest-x-button
     public string Path = "";
 
@@ -30,8 +32,10 @@ public class ControlMapConfiguration
   }
 
   public class Maps {
+    [YamlMember(Alias = "libretro-id", ApplyNamingConventions = false)]
     public string mameControl;
     public string behavior = "button"; // or axis 
+    [YamlMember(Alias = "maps-to", ApplyNamingConventions = false)]
     public List<ControlMap> controlMaps { get; set; }
     public Maps()
     {

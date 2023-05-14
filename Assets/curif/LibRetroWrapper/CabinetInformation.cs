@@ -32,7 +32,7 @@ public class CabinetInformation
     public Video video = new Video();
     public string md5sum;
 
-    [YamlMember(Alias = "control-map", ApplyNamingConventions = false)]
+    [YamlMember(Alias = "controllers", ApplyNamingConventions = false)]
     public ControlMapConfiguration ControlMap;
 
     [YamlIgnore]
