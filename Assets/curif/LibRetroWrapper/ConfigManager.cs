@@ -22,6 +22,7 @@ public static class ConfigManager
   public static string GameSaveDir = $"{BaseDir}/save";
   public static string GameStatesDir = $"{BaseDir}/startstates";
   public static string ConfigDir = $"{BaseDir}/configuration";
+  public static string ConfigControllersDir = $"{BaseDir}/configuration/controllers";
 
   public static bool GameVideosStopped = false;
 
@@ -38,6 +39,8 @@ public static class ConfigManager
       Directory.CreateDirectory(ConfigManager.CabinetsDB);
     if (!Directory.Exists(ConfigManager.ConfigDir))
       Directory.CreateDirectory(ConfigManager.ConfigDir);
+    if (!Directory.Exists(ConfigManager.ConfigControllersDir))
+      Directory.CreateDirectory(ConfigManager.ConfigControllersDir);
 
     if (!Directory.Exists(ConfigManager.SystemDir))
     {

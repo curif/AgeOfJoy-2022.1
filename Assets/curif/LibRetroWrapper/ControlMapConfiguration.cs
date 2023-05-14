@@ -157,6 +157,7 @@ public class ControlMapConfiguration
     {
         return null;
     }
+    ConfigManager.WriteConsole($"[ControlMapConfiguration.LoadFromYaml] {fileName}");
     var deserializer = new DeserializerBuilder()
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();

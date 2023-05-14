@@ -95,7 +95,9 @@ public class LibretroScreenController : MonoBehaviour
 
   //controls
   private LibretroControlMap libretroControlMap;
-  public ControlMapConfiguration controlMapConfig;
+  public ControlMapConfiguration CabinetControlMapConfig = null;
+  public ControlMapConfiguration GlobalControlMapConfig = null;
+  public ControlMapConfiguration UserControlMapConfig = null;
 
   private CoinSlotController getCoinSlotController()
   {
@@ -160,7 +162,11 @@ public class LibretroScreenController : MonoBehaviour
     }
 
     // map configuration
-    libretroControlMap.CreateFromConfiguration(controlMapConfig /*, ConfigManager.CabinetsDB + "/" + GameFile + ".yaml"*/);
+    libretroControlMap.CreateFromConfiguration(
+        CabinetControlMapConfig,
+        UserControlMapConfig,
+        GlobalControlMapConfig/*, ConfigManager.CabinetsDB + "/" + GameFile + ".yaml"*/
+        );
 
     StartCoroutine(runBT());
 

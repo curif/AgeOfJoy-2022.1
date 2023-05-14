@@ -201,6 +201,10 @@ public static class CabinetFactory
 
     Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
 
+    //load control map configuration
+    string gameName = Path.GetFileNameWithoutExtension(cbinfo.rom);
+    ControlMapConfiguration userControlMap = ControlMapConfiguration.LoadFromYaml(ConfigManager.ConfigControllersDir + "/" + gameName + ".yaml");
+
 		cabinet.addCRT(
 				cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
 				cbinfo.timetoload, cbinfo.pathBase,
@@ -214,7 +218,7 @@ public static class CabinetFactory
         cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
         agentPlayerPositions,
         cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
-        cbinfo.ControlMap);
+        cbinfo.ControlMap, userControlMap, null);
 
 		ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 

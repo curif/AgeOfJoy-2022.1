@@ -29,18 +29,35 @@ public class LibretroControlMap : MonoBehaviour
 
   //load the control map from the cabinet configuration, if not found fall to the default one.
   //in fact merge any other control map with the default. 
-  public void CreateFromConfiguration(ControlMapConfiguration cabMapConfiguration, string fileNameToSaveOrEmpty = "")
+  public void CreateFromConfiguration(
+      ControlMapConfiguration cabMapConfiguration, 
+      ControlMapConfiguration userConfiguration, 
+      ControlMapConfiguration globalConfiguration, 
+      string fileNameToSaveOrEmpty = "")
   {
     ControlMapConfiguration conf;
-    if (cabMapConfiguration == null) 
+
+    if (userConfiguration != null)
     {
-      conf = DefaultControlMap.Instance;
-      ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] cabinet information (description.yaml) doen't have a control configuration, fall to deafult: {conf}");
+      conf = new DefaultControlMap();
+      conf.Merge(userConfiguration);
+      ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from USER configuration: {conf}");
     }
-    else {
+    else if (globalConfiguration != null)
+    {
+      conf = new DefaultControlMap();
+      conf.Merge(globalConfiguration);
+      ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from GLOBAL configuration: {conf}");
+    }
+    else if (cabMapConfiguration != null) 
+    {
       conf = new DefaultControlMap();
       conf.Merge(cabMapConfiguration);
       ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from cabinet information (description.yaml): {conf}");
+    }
+    else {
+      conf = DefaultControlMap.Instance;
+      ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] fall to deafult control configuration: {conf}");
     }
     //ConfigManager.WriteConsole(conf.asMarkdown());
     Debug.Log(conf.AsMarkdown());
