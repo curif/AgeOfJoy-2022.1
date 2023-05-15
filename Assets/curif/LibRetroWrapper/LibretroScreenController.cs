@@ -75,7 +75,7 @@ public class LibretroScreenController : MonoBehaviour
   [Tooltip("Positions where the player can stay to activate atraction videos")]
   public List<GameObject> AgentPlayerPositions;
 
-  //non-serializable
+  [SerializeField]
   public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
   private ShaderScreenBase shader;

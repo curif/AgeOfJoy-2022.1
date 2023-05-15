@@ -12,10 +12,8 @@ GameObject:
   - component: {fileID: 245838673134088757}
   - component: {fileID: 2633923747280914175}
   - component: {fileID: 7395208051691149763}
-  - component: {fileID: -6857671861487439488}
-  - component: {fileID: 9020261596928811661}
-  - component: {fileID: 3607137671920533558}
-  - component: {fileID: 2500690833502563729}
+  - component: {fileID: 3962870371555651789}
+  - component: {fileID: 4703797651494189707}
   m_Layer: 0
   m_Name: screen19i
   m_TagString: Untagged
@@ -230,7 +228,7 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &-6857671861487439488
+--- !u!114 &3962870371555651789
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -239,74 +237,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 4579439272377624362}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0027d8d2fcba6e5468c17d37a3c16018, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a2731fefec8e827e9f6363295839b2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  videoPath: 
---- !u!114 &9020261596928811661
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4579439272377624362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3720c6f0ee1b1c264bd64ff0fc7180a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GameFile: 1942.zip
-  GameVideoFile: 
-  GameVideoInvertX: 0
-  GameVideoInvertY: 0
-  GameInvertX: 0
-  GameInvertY: 0
-  DistanceMinToPlayerToActivate: 2
-  SecondsToWaitToExitGame: 2
-  SecondsToWaitToFinishLoad: 2
-  EnableSaveState: 1
-  StateFile: state.nv
-  Gamma: 5
-  Brightness: 8
+  c64Font: {fileID: 2800000, guid: 27b74844601859509959e3914b4b6f01, type: 3}
+  ScreenWidth: 320
+  ScreenHeight: 200
+  BackgroundColor: {r: 0, g: 0, b: 1, a: 0}
   ShaderName: damage
-  PathBase: 
-  AgentPlayerPositions: []
---- !u!328 &3607137671920533558
-VideoPlayer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4579439272377624362}
-  m_Enabled: 1
-  m_VideoClip: {fileID: 0}
-  m_TargetCameraAlpha: 1
-  m_TargetCamera3DLayout: 0
-  m_TargetCamera: {fileID: 0}
-  m_TargetTexture: {fileID: 8400000, guid: 151fbf00d54bb0dcaa1d98ed729b7e0d, type: 2}
-  m_TimeReference: 0
-  m_TargetMaterialRenderer: {fileID: 0}
-  m_TargetMaterialProperty: _EmissionMap
-  m_RenderMode: 3
-  m_AspectRatio: 2
-  m_DataSource: 0
-  m_PlaybackSpeed: 1
-  m_AudioOutputMode: 1
-  m_TargetAudioSources:
-  - {fileID: 7395208051691149763}
-  m_DirectAudioVolumes:
-  - 1
-  m_Url: 
-  m_EnabledAudioTracks: 01
-  m_DirectAudioMutes: 00
-  m_ControlledAudioTrackCount: 1
-  m_PlayOnAwake: 1
-  m_SkipOnDrop: 1
-  m_Looping: 0
-  m_WaitForFirstFrame: 1
-  m_FrameReadyEventEnabled: 0
-  m_VideoShaders: []
---- !u!114 &2500690833502563729
+  characterListOrder: -ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?@#$%&*()[]{}<>+-=/\"'
+  characterListOrderAlternate: -abcdefghijklmnopqrstuvwxyz----+ !"#$%&'()*+,-./0123456789:;<=>?--|-
+--- !u!114 &4703797651494189707
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -315,12 +256,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 4579439272377624362}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79a1812a17a2dd284b99a56f0cecdcac, type: 3}
+  m_Script: {fileID: 11500000, guid: df968a728f2775a9290ef6d393ba86a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  actionMap:
-    m_Name: Action Map
-    m_Id: e0bf8106-255c-499c-a4f6-b0f93d2e2607
-    m_Asset: {fileID: 0}
-    m_Actions: []
-    m_Bindings: []
+  scr: {fileID: 3962870371555651789}
