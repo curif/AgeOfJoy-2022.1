@@ -11,7 +11,7 @@ public class RoomConfiguration : MonoBehaviour
   public GameObject GlobalConfigurationGameObject;
   public UnityEvent OnRoomConfigChanged;
 
-  private string yamlPath;
+  public string yamlPath;
   private FileMonitor fileMonitor;
   private GlobalConfiguration globalConfiguration;
 

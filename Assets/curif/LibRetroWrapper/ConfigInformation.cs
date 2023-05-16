@@ -28,7 +28,7 @@ public class ConfigInformation
 
   public class NPC : ConfigInformationBase
   {
-    private string[] validStatus = new string[] {"enabled", "static", "disabled"};
+    public static string[] validStatus = new string[] {"enabled", "static", "disabled"};
     public string status;
 
     public override bool IsValid()

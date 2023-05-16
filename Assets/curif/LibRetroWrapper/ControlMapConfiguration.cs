@@ -177,7 +177,7 @@ public class DefaultControlMap : ControlMapConfiguration
     mapList = new();
 
     //fire with b-button and trigger.
-    AddMap("JOYPAD_B",  new string[] {"quest-b", "gamepad-b", "quest-right-trigger"});
+    AddMap("JOYPAD_B",  new string[] {"quest-b", "gamepad-b", "quest-right-trigger", "keyboard-enter"});
     
     AddMap("JOYPAD_A",  new string[] {"gamepad-a", "quest-a"});
     AddMap("JOYPAD_X",  new string[] {"gamepad-x", "quest-x"});
@@ -201,7 +201,7 @@ public class DefaultControlMap : ControlMapConfiguration
     //AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3,  new string[] {"quest-left-thumbstick-press", "gamepad-left-thumbstick-press"});
     AddMap("JOYPAD_R3", new string[] {"quest-right-thumbstick-press", "gamepad-right-thumbstick-press"});
 
-    AddMap("EXIT", new string[] {"quest-left-grip", "gamepad-left-bumper"});
+    AddMap("EXIT", new string[] {"quest-left-grip", "gamepad-left-bumper", "keyboard-esc"});
     AddMap("INSERT", "gamepad-select");
 
     AddMap("MOUSE_X", new string[] {"quest-right-thumbstick", "gamepad-right-thumbstick"}, "axis");

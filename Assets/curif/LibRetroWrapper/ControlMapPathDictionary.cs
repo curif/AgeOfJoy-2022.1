@@ -51,7 +51,14 @@ public static class ControlMapPathDictionary
         { "gamepad-left-thumbstick", "<Gamepad>/leftStick" },
         { "gamepad-right-thumbstick", "<Gamepad>/rightStick" },
         { "gamepad-left-thumbstick-press", "<Gamepad>/leftStickPress" },
-        { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" }
+        { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" },
+        { "keyboard-a", "<keyboard>/a"},
+        { "keyboard-w", "<keyboard>/w"},
+        { "keyboard-s", "<keyboard>/s"},
+        { "keyboard-d", "<keyboard>/d"},
+        { "keyboard-space", "<keyboard>/space"},
+        { "keyboard-esc", "<keyboard>/escape"},
+        { "keyboard-enter", "<keyboard>/enter"}
         /*
         { "gamepad-left-thumbstick-down", "<Gamepad>/leftStick/down" },
         { "gamepad-left-thumbstick-up", "<Gamepad>/leftStick/up" },
