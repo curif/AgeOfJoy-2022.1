@@ -60,10 +60,16 @@ public class GlobalConfiguration : MonoBehaviour
     else {
       ConfigManager.WriteConsole($"[GlobalConfiguration] file doesn't exists, create default: {yamlPath}");
       Configuration = ConfigInformation.newDefault();
-      configuration.toYaml(yamlPath);
+      Save();
       ConfigManager.WriteConsole($"[GlobalConfiguration] ");
       ConfigManager.WriteConsole(configuration.ToString());
     }
+  }
+
+  public void Save()
+  {
+    ConfigManager.WriteConsole($"[GlobalConfiguration] writing configuration: {yamlPath}");
+    configuration.ToYaml(yamlPath);
   }
 
   private void OnFileChanged()

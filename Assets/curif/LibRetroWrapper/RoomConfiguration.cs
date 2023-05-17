@@ -74,6 +74,12 @@ public class RoomConfiguration : MonoBehaviour
     ConfigManager.WriteConsole(configuration.ToString());
   }
 
+  public void Save()
+  {
+    ConfigManager.WriteConsole($"[RoomConfiguration] writing configuration: {yamlPath}");
+    configuration.ToYaml(yamlPath);
+  }
+
   void OnEnable()
   {
     // Listen for the config reload message

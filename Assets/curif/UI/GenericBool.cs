@@ -1,33 +1,41 @@
-
 using System;
 
-class GenericBool
+// A class to show a bool value with a label that extends the widget class
+class GenericBool : GenericWidget
 {
-    // A field to store the ScreenGenerator object
-    private ScreenGenerator screen;
-
     // A field to store the label text
     private string label;
 
     // A field to store the bool value
     private bool value;
 
-    // A constructor that takes a ScreenGenerator object, a label text and an initial bool value
-    public GenericBool(ScreenGenerator screen, string label, bool value)
+    // A constructor that takes a ScreenGenerator object, a name, a label text and an initial bool value
+    public GenericBool(ScreenGenerator screen, string name, string label, bool value, int x, int y, bool isSelectable = true) : 
+      base(screen, x, y, name, isSelectable)
     {
-      this.screen = screen;
-      this.label = label + " [ ]"; // Add the square brackets to the label text
+      this.label = label + " ( )"; // Add the square brackets to the label text
       this.value = value;
+    }
+    public GenericBool SetValue(bool value)
+    {
+      this.value = value;
+      return this;
     }
 
     // A method to toggle the bool value
-    public void Toggle()
+    public GenericBool Toggle()
     {
       value = !value;
+      Draw(); // Show the new value
+      return this;
+    }
+    public override void Action()
+    {
+      Toggle();
     }
 
-    // A method to draw the GenericBool object on the screen
-    public void Print(int x, int y)
+    // A method to draw this widget on screen. Override from GenericWidget.
+    public override void Draw()
     {
       // Print the label text with the square brackets
       screen.Print(x, y, label);
@@ -35,7 +43,7 @@ class GenericBool
       // Print an X or a space depending on the bool value
       if (value)
       {
-        screen.Print(x + label.Length - 2, y, "X", true);
+        screen.Print(x + label.Length - 2, y, "*", true);
       }
       else
       {

@@ -130,7 +130,7 @@ public class ConfigInformation
     }
   }
 
-  public bool toYaml(string yamlPath)
+  public bool ToYaml(string yamlPath)
   {
     try
     {
