@@ -5,9 +5,10 @@ using System.Threading;
 class C64BootScreen {
     private ScreenGenerator screen;
     private string[] messages = {
-        "**** COMMODORE 64 BASIC V2 ****",
-        "64K RAM SYSTEM 38911 BASIC BYTES FREE",
+        "    **** COMMODORE 64 BASIC V2 ****",
+        " 64K RAM SYSTEM 38911 BASIC BYTES FREE",
         "READY.",
+        "LOAD '*.*', 8, 1"
     };
     private int currentLine = 0;
 
@@ -20,9 +21,14 @@ class C64BootScreen {
             return true;
         }
 
-        screen.Print(0, currentLine + 5, messages[currentLine], false);
+        screen.Print(0, currentLine, messages[currentLine], false);
         currentLine++;
 
         return false;
+    }
+
+    public void Reset()
+    {
+      currentLine = 0;
     }
 }

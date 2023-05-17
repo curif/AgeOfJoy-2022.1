@@ -37,7 +37,8 @@ public class ConfigurationController : MonoBehaviour
       waitingForCoin,
       onMainMenu,
       onBoot,
-      onNPCMenu
+      onNPCMenu,
+      exit
     }
     private StatusOptions status;
     private C64BootScreen bootScreen;
@@ -45,6 +46,8 @@ public class ConfigurationController : MonoBehaviour
 
     private string NPCStatus;
     private GenericOptions NPCStatusOptions; 
+    private GenericWindow npcWindow;
+
     private DefaultControlMap map;
     private GlobalConfiguration globalConfiguration;
     private RoomConfiguration roomConfiguration;
@@ -87,9 +90,6 @@ public class ConfigurationController : MonoBehaviour
 
     public void NPCScreen()
     {
-      scr.Clear();
-      scr.PrintCentered(9, "-- NPC configuration --");
-
       //set the init value
       string actualNPCStatus = "UNDEFINED";
       if (isRoomConfiguration())
@@ -102,6 +102,14 @@ public class ConfigurationController : MonoBehaviour
         if (globalConfiguration.Configuration?.npc != null)
           actualNPCStatus = globalConfiguration.Configuration.npc.status;
       }
+
+      scr.Clear();
+      npcWindow.Draw();
+      
+      //some help
+      scr.Print(2,16, "left/right to change");
+      scr.Print(2,17, "b to select and exit");
+
       ConfigManager.WriteConsole($"[ConfigurationController.GoToNPCConfiguration] NPC status: {actualNPCStatus}");
       NPCStatusOptions.SetCurrent(actualNPCStatus);
       NPCStatusOptions.Print();
@@ -111,20 +119,22 @@ public class ConfigurationController : MonoBehaviour
       ControlEnable(true);
       status = StatusOptions.onBoot;
       scr.Clear();
+      bootScreen.Reset();
     }
 
     IEnumerator run()
     {
-      float timeBetweenCycles = 1f/3f;
-      string[] options = new string[] {"Sound configuration", "NPC configuration", "Controllers"};
-      string[] helpText = new string[] { "Change sound volume", "To change the NPC behavior", "Map your control to play games" };
+      float timeBetweenCycles = 1f/5f;
+      string[] options = new string[] {"Sound configuration", "NPC configuration", "Controllers", "exit"};
+      string[] helpText = new string[] { "Change sound volume", "To change the NPC behavior", "Map your control to play games", "exit configuration" };
 
       mainMenu = new(scr, "AGE of Joy - Main configuration", options, helpText);
       bootScreen = new(scr);
 
       //NPC configuration options.
       // take the statuses from the static value options in the information NPC class.
-      NPCStatusOptions = new(scr, "NPC Behavior:", new List<string>(ConfigInformation.NPC.validStatus), 1, 20);
+      npcWindow = new(scr, 2, 8, 36, 6, " NPC Configuration ", true);
+      NPCStatusOptions = new(scr, "NPC Behavior:", new List<string>(ConfigInformation.NPC.validStatus), 4, 10);
 
       yield return new WaitForSeconds(2f);
 
@@ -165,7 +175,7 @@ public class ConfigurationController : MonoBehaviour
 
           .Sequence("Boot")
             .Condition("Booting", () => status == StatusOptions.onBoot)
-            .WaitTime(0.25f)
+            .WaitTime(0.1f)
             .Condition("Finished lines", () => bootScreen.PrintNextLine())
             .Do("Start main menu", () => 
               {
@@ -179,6 +189,7 @@ public class ConfigurationController : MonoBehaviour
             .Do("Init", () =>
               {
                 scr.Clear();
+                mainMenu.Deselect();
                 mainMenu.DrawMenu();
                 return TaskStatus.Success;
               })
@@ -198,6 +209,10 @@ public class ConfigurationController : MonoBehaviour
                 if (mainMenu.GetSelectedOption() == "NPC configuration")
                 {
                   status = StatusOptions.onNPCMenu;
+                }
+                else if (mainMenu.GetSelectedOption() == "exit")
+                {
+                  status = StatusOptions.exit;
                 }
                 mainMenu.Deselect();
                 return TaskStatus.Success;
@@ -246,7 +261,8 @@ public class ConfigurationController : MonoBehaviour
           .End() 
 
           .Sequence("EXIT")
-            .Condition("Exit button", () => ControlActive("EXIT"))
+            //.Condition("Exit button", () => ControlActive("EXIT"))
+            .Condition("Exit", () => status == StatusOptions.exit)
             .Do("exit", () =>
             {
               ConfigManager.WriteConsole($"[ConfigurationController] EXIT ");

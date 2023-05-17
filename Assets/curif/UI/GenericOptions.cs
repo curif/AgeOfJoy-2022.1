@@ -18,7 +18,8 @@ class GenericOptions
 
     // The label to show before the options
     private string label; 
-
+    // The maximum length of the options
+    private int maxLength;
     // The constructor that takes a list of options, the coordinates and the screen generator
     public GenericOptions(ScreenGenerator screen, string label, List<string> options, int x, int y)
     {
@@ -28,12 +29,23 @@ class GenericOptions
         this.screen = screen;
         this.label = label;
         this.current = 0; // Start with the first option
+        this.maxLength = 0; // Initialize the maximum length to zero
+        foreach (string option in options) // Loop through the options
+        {
+            if (option.Length > maxLength) // If the current option is longer than the previous maximum
+            {
+                maxLength = option.Length; // Update the maximum length
+            }
+        }  
     }
 
     // A method to show the current option
     public void Print()
     {
-        screen.Print(x, y, label + " <" + options[current] + ">", true); // Print the label and the option with inverted colors
+        string paddedOption = options[current].PadLeft(maxLength / 2 + 1).PadRight(maxLength + 1); // Add spaces to the left and right of the current option to make it the same length as the longest option
+        screen.Print(x, y, label + " <", false); // Print the label with normal colors
+        screen.Print(x + label.Length + 2, y, paddedOption, true); // Print the option with inverted colors
+        screen.Print(x + label.Length + 2 + paddedOption.Length, y, ">", false); // Print the closing bracket with normal colors
     }
     // A method to move to the next option
     public void NextOption()
