@@ -142,7 +142,7 @@ public class ConfigInformation
     }
     catch (Exception e)
     {
-      ConfigManager.WriteConsole($"[ConfigInformation]:ERROR configuration YAML file in configuration subdir {yamlPath} - {e}");
+      ConfigManager.WriteConsoleError($"[ConfigInformation] configuration YAML file in configuration subdir {yamlPath} - {e}");
       return false;
     }
     return true;

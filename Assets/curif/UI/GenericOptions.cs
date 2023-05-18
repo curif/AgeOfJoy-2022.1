@@ -36,6 +36,8 @@ class GenericOptions : GenericWidget
     // A method to draw this widget on screen. Override from GenericWidget.
     public override void Draw()
     {
+        if (!enabled)
+          return;
         string paddedOption = options[current].PadLeft(maxLength / 2 + 1).PadRight(maxLength + 1); // Add spaces to the left and right of the current option to make it the same length as the longest option
         screen.Print(x, y, label + " <", false); // Print the label with normal colors
         screen.Print(x + label.Length + 2, y, paddedOption, true); // Print the option with inverted colors

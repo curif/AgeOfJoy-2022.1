@@ -18,6 +18,8 @@ class GenericLabel : GenericWidget // Inherit from GenericWidget
     // A method to print the label
     public override void Draw()
     {
-        screen.Print(x, y, label, inverted); // Print the label with the inverted property
+      if (!enabled)
+        return;
+      screen.Print(x, y, label, inverted); // Print the label with the inverted property
     }
 }

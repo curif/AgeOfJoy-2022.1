@@ -10,6 +10,7 @@ abstract class GenericWidget
     public int y; // The y coordinate of the widget in characters
     public string name; // The name of the widget
     public bool isSelectable = true; //labels arent isSelectable for example
+    public bool enabled = true;
 
     // A field for the screen generator
     protected ScreenGenerator screen; // The screen generator to use

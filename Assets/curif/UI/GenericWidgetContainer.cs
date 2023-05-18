@@ -35,7 +35,7 @@ class GenericWidgetContainer : GenericWidget
       widgets.Add(widget);
 
       // If this is the first widget, set it as the current one
-      if (index == -1 && widget.isSelectable)
+      if (index == -1 && widget.isSelectable && widget.enabled)
       {
         index = widgets.Count - 1;
       }
@@ -47,16 +47,16 @@ class GenericWidgetContainer : GenericWidget
     {
       // Check if there are any widgets in the list
       if (widgets.Count == 0)
-      {
           return;
-      }
 
       for (int i = index + 1; i < widgets.Count; i++)
       {
-        if (widgets[i].isSelectable)
+        if (widgets[i].isSelectable && widgets[i].enabled)
         {
           index = i;
-          widgets[index].Draw();
+          //widgets[index].Draw();
+          DrawAll();
+          ConfigManager.WriteConsole($"[GenericWidgetContainer.NextOption] {widgets[i].name} idx: {index}");
           return;
         }
       }
@@ -74,10 +74,12 @@ class GenericWidgetContainer : GenericWidget
       // Decrement the index and wrap around if needed
       for (int i = index - 1; i >= 0; i--)
       {
-        if (widgets[i].isSelectable)
+        if (widgets[i].isSelectable && widgets[i].enabled)
         {
           index = i;
-          widgets[index].Draw();
+          //widgets[index].Draw();
+          DrawAll();
+          ConfigManager.WriteConsole($"[GenericWidgetContainer.PreviousOption] {widgets[i].name} idx: {index}");
           return;
         }
       }
@@ -90,17 +92,17 @@ class GenericWidgetContainer : GenericWidget
         // Check if the name is valid
         if (string.IsNullOrEmpty(name))
         {
-            throw new ArgumentException("The name must not be null or empty");
+          throw new ArgumentException("The name must not be null or empty");
         }
 
         // Loop through the list of widgets
         foreach (GenericWidget widget in widgets)
         {
-            // If the name matches, return the widget
-            if (widget.name == name)
-            {
-                return widget;
-            }
+          // If the name matches, return the widget
+          if (widget.name == name)
+          {
+              return widget;
+          }
         }
 
         // If no widget is found, return null
@@ -117,18 +119,24 @@ class GenericWidgetContainer : GenericWidget
     // A method to draw all the widgets
     public void DrawAll()
     {
+      if (!enabled)
+        return;
+
       for (int i = 0; i < widgets.Count; i++) // Loop through the widgets
       {
         GenericWidget widget = widgets[i]; // Get the current widget
-        if (i == index) // If it is the selected widget
+        if (widget.enabled)
         {
-          screen.Print(widget.x - 1, widget.y, ">", true); // Print a ">" character before its x coordinate with normal colors
+          if (i == index) // If it is the selected widget
+          {
+            screen.Print(widget.x - 1, widget.y, ">", true); // Print a ">" character before its x coordinate with normal colors
+          }
+          else 
+          {
+            screen.Print(widget.x - 1, widget.y, " ", false); // Print a space character before its x coordinate with normal colors
+          }
+          widget.Draw(); // Print the widget itself
         }
-        else 
-        {
-          screen.Print(widget.x - 1, widget.y, " ", false); // Print a space character before its x coordinate with normal colors
-        }
-        widget.Draw(); // Print the widget itself
       }
     }
 

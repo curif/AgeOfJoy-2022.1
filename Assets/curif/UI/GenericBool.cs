@@ -7,7 +7,7 @@ class GenericBool : GenericWidget
     private string label;
 
     // A field to store the bool value
-    private bool value;
+    public bool value;
 
     // A constructor that takes a ScreenGenerator object, a name, a label text and an initial bool value
     public GenericBool(ScreenGenerator screen, string name, string label, bool value, int x, int y, bool isSelectable = true) : 
@@ -25,8 +25,11 @@ class GenericBool : GenericWidget
     // A method to toggle the bool value
     public GenericBool Toggle()
     {
-      value = !value;
-      Draw(); // Show the new value
+      if (enabled)
+      {
+        value = !value;
+        Draw(); // Show the new value
+      }
       return this;
     }
     public override void Action()
@@ -37,6 +40,9 @@ class GenericBool : GenericWidget
     // A method to draw this widget on screen. Override from GenericWidget.
     public override void Draw()
     {
+      if (!enabled)
+        return;
+
       // Print the label text with the square brackets
       screen.Print(x, y, label);
 

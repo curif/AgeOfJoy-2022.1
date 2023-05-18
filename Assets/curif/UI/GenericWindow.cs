@@ -2,7 +2,7 @@
 using System;
 
 // A class to draw character windows in the screen
-class GenericWindow
+class GenericWindow : GenericWidget
 {
     // Constants for the border characters
     private const int LEFT_UPPER_CORNER = 85;
@@ -17,18 +17,15 @@ class GenericWindow
     private const bool DEFAULT_INVERTED = true;
 
     // Fields for the window properties
-    private int x; // The x coordinate of the window in characters
-    private int y; // The y coordinate of the window in characters
     private int width; // The width of the window in characters
     private int height; // The height of the window in characters
     private string title; // The title of the window
     private bool inverted; // Whether the title is inverted or not
 
-    // A field for the screen generator
-    private ScreenGenerator screen; // The screen generator to use
 
     // A constructor that takes the screen generator, the x and y coordinates, the width and height of the window and an optional title and inverted flag
-    public GenericWindow(ScreenGenerator screen, int x, int y, int width, int height, string title = DEFAULT_TITLE, bool inverted = DEFAULT_INVERTED)
+    public GenericWindow(ScreenGenerator screen, int x, int y, string name,int width, int height,  string title = DEFAULT_TITLE, bool inverted = DEFAULT_INVERTED) :
+      base(screen, x, y, name, false)
     {
         // Check if the screen generator is valid
         if (screen == null)
@@ -59,10 +56,6 @@ class GenericWindow
             throw new ArgumentException("The title must not be longer than the window width minus 2");
         }
 
-        // Assign the fields
-        this.screen = screen;
-        this.x = x;
-        this.y = y;
         this.width = width;
         this.height = height;
         this.title = title;
@@ -70,8 +63,10 @@ class GenericWindow
     }
 
     // A method to draw the window on the screen
-    public void Draw()
+    public override void Draw()
     {
+        if (!enabled)
+          return;
         // Draw the top border with the title
         screen.PrintChar(x, y, LEFT_UPPER_CORNER, false);
         

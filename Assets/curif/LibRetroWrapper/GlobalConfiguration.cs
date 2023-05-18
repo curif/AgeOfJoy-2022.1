@@ -15,7 +15,7 @@ public class GlobalConfiguration : MonoBehaviour
   //[Tooltip("Global Configuration should use the first File Monitor in attached to the gameobject if there are more than one.")]
 
   private FileMonitor fileMonitor;
-  public static string yamlPath;
+  public string yamlPath;
   private ConfigInformation configuration;
   public  ConfigInformation Configuration
   {
