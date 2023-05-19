@@ -48,6 +48,22 @@ public class RoomConfiguration : MonoBehaviour
     Configuration = (ConfigInformation)ConfigInformation.Merge(globalConfiguration.Configuration, config);
   }
 
+  public void Reset()
+  {
+    try
+    {
+        if (File.Exists(yamlPath))
+        {
+            File.Delete(yamlPath);
+            Load();
+        }
+    }
+    catch (IOException e)
+    {
+      ConfigManager.WriteConsoleError($"[RoomConfiguration.Delete] {yamlPath} - {e}");
+    }
+  }
+
   private void Load()
   {
     ConfigInformation config;

@@ -17,18 +17,20 @@ public class ConfigurationHelper
   private GlobalConfiguration globalConfiguration = null;
   private RoomConfiguration roomConfiguration = null;
 
-  public ConfigurationHelper(GameObject RoomConfigurationGameObject, GameObject GlobalConfigurationGameObject)
+  public ConfigurationHelper(GlobalConfiguration globalConfiguration, RoomConfiguration roomConfiguration)
   {
-    if (GlobalConfigurationGameObject == null) 
-    {
-      GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
-      globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
-    }
+    this.roomConfiguration = roomConfiguration;
+    this.globalConfiguration = globalConfiguration;
 
-    if (RoomConfigurationGameObject != null) 
+    if (globalConfiguration == null) 
     {
-      roomConfiguration = RoomConfigurationGameObject.GetComponent<RoomConfiguration>();
+      GameObject GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+      this.globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
     }
+    if (this.globalConfiguration == null)
+      throw new ArgumentException("[ConfigurationHelper] global configuration not found.");
+
+    ConfigManager.WriteConsole($"[ConfigurationHelper] global: {this.globalConfiguration.yamlPath} room: {this.roomConfiguration?.yamlPath}");
   }
 
   public ConfigInformation getConfigInformation(bool isGlobal)
@@ -44,8 +46,10 @@ public class ConfigurationHelper
 
   public bool CanConfigureRoom()
   {
+    ConfigManager.WriteConsole($"[ConfigurationHelper.CanConfigureRoom] room: {roomConfiguration?.yamlPath}");
     return roomConfiguration != null;
   }
+
   public void Save(bool saveGlobal)
   {
     string yamlPath;
@@ -66,6 +70,18 @@ public class ConfigurationHelper
 
     return;
   }
+
+  public void Reset(bool isGlobal)
+  {
+    if (isGlobal)
+    {
+      globalConfiguration.Reset();
+    }
+    else
+    {
+      roomConfiguration.Reset();
+    }
+  }
 }
 
 public class ConfigurationController : MonoBehaviour
@@ -76,12 +92,9 @@ public class ConfigurationController : MonoBehaviour
     public ChangeControls changeControls;
 
     [Tooltip("Set only to change room configuration, if not setted will use the Global")]
-    public GameObject RoomConfigurationGameObject;
+    public RoomConfiguration roomConfiguration;
     [Tooltip("Set to change the Global or the system will find it")]
-    public GameObject GlobalConfigurationGameObject;
-
-    [Tooltip("Set room or Global configuration")]
-    public ConfigInformation Configuration;
+    public GlobalConfiguration globalConfiguration;
 
     [Header("Tree")]
     [SerializeField]
@@ -97,6 +110,7 @@ public class ConfigurationController : MonoBehaviour
       onNPCMenu,
       onAudio,
       onChangeMode,
+      onReset,
       exit
     }
     private StatusOptions status;
@@ -113,6 +127,8 @@ public class ConfigurationController : MonoBehaviour
     private GenericWindow audioWindow;
     private GenericWidgetContainer audioContainer;
 
+    private GenericWidgetContainer resetContainer;
+
     private DefaultControlMap map;
 
     private ConfigurationHelper configHelper;
@@ -128,9 +144,6 @@ public class ConfigurationController : MonoBehaviour
       conf.AddMap("KEYB-RIGHT", "keyboard-d");
 
       actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
-
-      configHelper = new ConfigurationHelper(GlobalConfigurationGameObject, RoomConfigurationGameObject);
-      
 
       StartCoroutine(run());
     }
@@ -166,6 +179,33 @@ public class ConfigurationController : MonoBehaviour
         config.npc = new();
       config.npc.status = NPCStatusOptions.GetSelectedOption();
       configHelper.Save(isGlobal);
+    }
+
+    public void resetWindowDraw()
+    {
+      scr.Clear();
+      resetContainer.Draw();
+      if (isGlobalConfigurationWidget.value)
+      {
+        scr.Print(2,1, "Back global configuration");
+        scr.Print(2,2, "to default.");
+        scr.Print(2,3, "Lost all configured data.");
+      }
+      else
+      {
+        scr.Print(2,1, "Room configuration will");
+        scr.Print(2,2, "be deleted.");
+        scr.Print(2,3, "You will lost all room configured data");
+        scr.Print(2,4, "except controllers information.");
+      }
+      scr.Print(2,16, "up/down to change");
+      scr.Print(2,17, "b to select and exit");
+    }
+    
+    public void resetSave()
+    {
+      configHelper.Reset(isGlobalConfigurationWidget.value);
+      ConfigManager.WriteConsole($"[ConfigurationController.resetSave] Reset to default Global: {isGlobalConfigurationWidget.value}");
     }
 
     private void audioScreen()
@@ -223,15 +263,15 @@ public class ConfigurationController : MonoBehaviour
       bootScreen.Reset();
     }
 
-    public void MainMenuDraw()
+    public void mainMenuDraw()
     {
       scr.Clear();
       mainMenu.Deselect();
       mainMenu.DrawMenu();
-      if (!configHelper.CanConfigureRoom() || isGlobalConfigurationWidget.value)
+      if (isGlobalConfigurationWidget.value)
       {
         scr.PrintCentered(4, "- global Configuration mode -");
-        scr.PrintCentered(5, "(for all rooms)");
+        scr.PrintCentered(5, "(changes affects all rooms)");
       }
       else 
       {
@@ -242,9 +282,9 @@ public class ConfigurationController : MonoBehaviour
     public void changeModeWindowDraw()
     {
       scr.Clear();
-      isGlobalConfigurationWidget.enabled = configHelper.CanConfigureRoom();
-      if (isGlobalConfigurationWidget.enabled)
+      if (configHelper.CanConfigureRoom())
       {
+        isGlobalConfigurationWidget.enabled = true;
         scr.Print(2,1, "select the configuration mode:");
         scr.Print(2,2, "- global for all rooms");
         scr.Print(2,3, "- or for this room only.");
@@ -252,9 +292,11 @@ public class ConfigurationController : MonoBehaviour
       }
       else
       {
-        scr.Print(2,1, "you can only configure global options");
-        scr.Print(2,2, "for room configuration go to");
-        scr.Print(2,3, "a gallery room");
+        isGlobalConfigurationWidget.enabled = false;
+        scr.Print(2,1, "only global configuration.");
+        scr.Print(2,2, "configure all rooms/games.");
+        scr.Print(2,3, "for one room configuration go to");
+        scr.Print(2,4, "a gallery room");
       }
       scr.Print(2,19, "b to select");
 
@@ -264,8 +306,28 @@ public class ConfigurationController : MonoBehaviour
     IEnumerator run()
     {
       float timeBetweenCycles = 1f/5f;
-      string[] options = new string[] {"Audio configuration", "NPC configuration", "Controllers", "change mode", "exit"};
-      string[] helpText = new string[] { "Change sound volume", "To change the NPC behavior", "Map your control to play games", "global or room configuration", "exit configuration" };
+      
+      //wait for the room to load.
+      yield return new WaitForSeconds(2f);
+      
+      configHelper = new(globalConfiguration, roomConfiguration);
+
+      string[] options = new string[] {
+        "Audio configuration", 
+        "NPC configuration", 
+        "Controllers", 
+        "reset", 
+        "change mode", 
+        "exit"
+      };
+      string[] helpText = new string[] { 
+        "Change sound volume", 
+        "To change the NPC behavior", 
+        "Map your control to play games", 
+        "global or room configuration", 
+        "back to default",
+        "exit configuration" 
+      };
 
       mainMenu = new(scr, "AGE of Joy - Main configuration", options, helpText);
       bootScreen = new(scr);
@@ -284,7 +346,7 @@ public class ConfigurationController : MonoBehaviour
                     .Add(new GenericLabel(scr, "l2", "up/down to move", 2, 21));
 
       changeModeContainer = new(scr, "changeMode", 0, 0);
-      isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global configuration:", !configHelper.CanConfigureRoom(), 4, 10);
+      isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global:", !configHelper.CanConfigureRoom(), 4, 10);
       isGlobalConfigurationWidget.enabled = configHelper.CanConfigureRoom();
       changeModeContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " mode "))
                          .Add(isGlobalConfigurationWidget)
@@ -295,7 +357,10 @@ public class ConfigurationController : MonoBehaviour
       npcWindow = new(scr, 2, 8, "npcWindow", 36, 6, " NPC Configuration ", true);
       NPCStatusOptions = new(scr, "npc", "NPC Behavior:", new List<string>(ConfigInformation.NPC.validStatus), 4, 10);
 
-      yield return new WaitForSeconds(2f);
+      resetContainer = new(scr, "reset", 0, 0);
+      resetContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " reset "))
+                    .Add(new GenericButton(scr, "reset", "reset and save", 4, 11, true))
+                    .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
 
       status = StatusOptions.init;
       tree = buildBT();
@@ -305,6 +370,7 @@ public class ConfigurationController : MonoBehaviour
         yield return new WaitForSeconds(timeBetweenCycles);
       }
     }
+
     private BehaviorTree buildBT()
     {
       return new BehaviorTreeBuilder(gameObject)
@@ -348,7 +414,7 @@ public class ConfigurationController : MonoBehaviour
             .Do("Init", () =>
               {
                 scr.Clear();
-                MainMenuDraw();
+                mainMenuDraw();
                 return TaskStatus.Success;
               })
             .Do("Process", () =>
@@ -372,6 +438,8 @@ public class ConfigurationController : MonoBehaviour
                   status = StatusOptions.onAudio;
                 else if (mainMenu.GetSelectedOption() == "change mode")
                   status = StatusOptions.onChangeMode;
+                else if (mainMenu.GetSelectedOption() == "reset")
+                  status = StatusOptions.onReset;
                 mainMenu.Deselect();
                 return TaskStatus.Success;
               })
@@ -386,7 +454,6 @@ public class ConfigurationController : MonoBehaviour
               })
             .Do("Process", () =>
               {
-                NPCStatusOptions.Draw();
                 if (ControlActive("JOYPAD_LEFT")|| ControlActive("KEYB-LEFT"))
                   NPCStatusOptions.PreviousOption();
                 else if (ControlActive("JOYPAD_RIGHT")|| ControlActive("KEYB-RIGHT"))
@@ -470,6 +537,40 @@ public class ConfigurationController : MonoBehaviour
                       return TaskStatus.Success;
                     }
                     w.Action();
+                  }
+                  return TaskStatus.Success;
+                }
+                return TaskStatus.Continue;
+              })
+          .End()
+          
+          .Sequence("back to default")
+            .Condition("On back to default", () => status == StatusOptions.onReset)
+            .Do("Init", () =>
+              {
+                resetWindowDraw();
+                return TaskStatus.Success;
+              })
+            .Do("Process", () =>
+              {
+                if (ControlActive("JOYPAD_UP")|| ControlActive("KEYB-UP"))
+                  resetContainer.PreviousOption();
+                else if (ControlActive("JOYPAD_DOWN")|| ControlActive("KEYB-DOWN"))
+                  resetContainer.NextOption();
+                if (ControlActive("JOYPAD_B"))
+                {
+                  GenericWidget w = resetContainer.GetSelectedWidget();
+                  if (w != null)
+                  {
+                    if (w.name == "exit")
+                    {
+                      status = StatusOptions.onMainMenu;
+                    }
+                    else if (w.name == "reset")
+                    {
+                      resetSave();
+                      status = StatusOptions.onMainMenu;
+                    }
                   }
                   return TaskStatus.Success;
                 }
