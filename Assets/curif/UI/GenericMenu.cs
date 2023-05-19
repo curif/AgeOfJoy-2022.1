@@ -34,14 +34,11 @@ public class GenericMenu {
 
     // A method to draw the menu on the screen
     public void DrawMenu() {
-        // Clear the screen
-        screen.Clear();
         // Print the title in the center of the first row
         screen.PrintCentered(0, title, false);
 
         // Print a horizontal line below the title
         screen.PrintLine(1, false, '-');
-
 
         // Calculate the vertical center of the screen
         int centerY = screen.CharactersHeight / 2;
@@ -56,7 +53,7 @@ public class GenericMenu {
                 // Highlight the selected option with an inverted text and a character on both sides
                 screen.PrintCentered(row, highlightChar + " " + options[i] + " " + highlightChar, true);
             } else {
-                screen.PrintCentered(row, options[i], false);
+                screen.PrintCentered(row, "  " + options[i] + "  " , false);
             }
             row++;
         }

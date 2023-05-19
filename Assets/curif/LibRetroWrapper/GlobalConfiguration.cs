@@ -66,6 +66,22 @@ public class GlobalConfiguration : MonoBehaviour
     }
   }
 
+  public void Reset()
+  {
+    try
+    {
+        if (File.Exists(yamlPath))
+        {
+            File.Delete(yamlPath);
+            Load();
+        }
+    }
+    catch (IOException e)
+    {
+      ConfigManager.WriteConsoleError($"[RoomConfiguration.Delete] {yamlPath} - {e}");
+    }
+  }
+
   public void Save()
   {
     ConfigManager.WriteConsole($"[GlobalConfiguration] writing configuration: {yamlPath}");
