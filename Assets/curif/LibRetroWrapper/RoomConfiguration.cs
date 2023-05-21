@@ -19,7 +19,7 @@ public class RoomConfiguration : MonoBehaviour
   public  ConfigInformation Configuration
   {
     get { return configuration; }
-    private set 
+    set 
     { 
       configuration = value; 
       OnRoomConfigChanged?.Invoke();
@@ -42,10 +42,11 @@ public class RoomConfiguration : MonoBehaviour
   private void mergeWithGlobal(ConfigInformation config)
   {
     //merge with global
-    ConfigManager.WriteConsole($"[RoomConfiguration] merge with global");
-    ConfigManager.WriteConsole(config.ToString());
-    ConfigManager.WriteConsole(globalConfiguration.Configuration.ToString());
+    ConfigManager.WriteConsole($"[RoomConfiguration] merge with global configuration:");
+    ConfigManager.WriteConsole($"[RoomConfiguration] actual: {config.ToString()}");
+    ConfigManager.WriteConsole($"[RoomConfiguration] global to merge to: {globalConfiguration.Configuration.ToString()}");
     Configuration = (ConfigInformation)ConfigInformation.Merge(globalConfiguration.Configuration, config);
+    ConfigManager.WriteConsole($"[RoomConfiguration] final configuration: {Configuration.ToString()}");
   }
 
   public void Reset()
@@ -74,7 +75,7 @@ public class RoomConfiguration : MonoBehaviour
       config = ConfigInformation.fromYaml(yamlPath);
       if (config == null) 
       {
-        ConfigManager.WriteConsole($"[RoomConfiguration] ERROR can't read, using global: {yamlPath}");
+        ConfigManager.WriteConsoleError($"[RoomConfiguration] can't read, using global: {yamlPath}");
         Configuration = globalConfiguration.Configuration; 
       }
       else {
@@ -86,7 +87,7 @@ public class RoomConfiguration : MonoBehaviour
       Configuration = globalConfiguration.Configuration; 
     }
 
-    ConfigManager.WriteConsole($"[RoomConfiguration] configuration: ");
+    ConfigManager.WriteConsole($"[RoomConfiguration] configuration established: ");
     ConfigManager.WriteConsole(configuration.ToString());
   }
 

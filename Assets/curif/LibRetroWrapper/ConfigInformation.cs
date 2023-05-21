@@ -26,6 +26,17 @@ public class ConfigInformation
   public NPC npc;
   public Audio audio;
 
+  /** don't. create an empty object. Merge didn't works if both are loaded.
+  public ConfigInformation() {
+    audio = new Audio();
+    audio.background = BackgroundDefault();
+    audio.inGameBackground = BackgroundInGameDefault();
+
+    npc = new NPC();
+    npc.status = "enabled";
+  }
+  */
+
   public class NPC : ConfigInformationBase
   {
     public static string[] validStatus = new string[] {"enabled", "static", "disabled"};
@@ -33,7 +44,7 @@ public class ConfigInformation
 
     public override bool IsValid()
     {
-      return validStatus.Contains(status);
+      return status == null || validStatus.Contains(status);
     }
   }
 
@@ -85,14 +96,7 @@ public class ConfigInformation
   }
   public static ConfigInformation newDefault()
   {
-    ConfigInformation configuration = new ConfigInformation();
-    configuration.audio = new Audio();
-    configuration.audio.background = BackgroundDefault();
-    configuration.audio.inGameBackground = BackgroundInGameDefault();
-
-    configuration.npc = new NPC();
-    configuration.npc.status = "enabled";
-    return configuration;
+    return  new ConfigInformation();
   }
   // =============================================================
 
@@ -102,7 +106,7 @@ public class ConfigInformation
 
     if (!File.Exists(yamlPath))
     {
-      ConfigManager.WriteConsole($"[ConfigInformation]: ERROR YAML file ({yamlPath}) doesn't exists ");
+      ConfigManager.WriteConsoleError($"[ConfigInformation] YAML file ({yamlPath}) doesn't exists ");
       return null;
     }
 
@@ -125,7 +129,7 @@ public class ConfigInformation
     }
     catch (Exception e)
     {
-      ConfigManager.WriteConsole($"[ConfigInformation]:ERROR reading configuration YAML file {yamlPath} - {e}");
+      ConfigManager.WriteConsoleError($"[ConfigInformation] reading configuration YAML file {yamlPath} - {e}");
       return null;
     }
   }
@@ -176,7 +180,7 @@ public class ConfigInformation
         throw new Exception("Invalid audio settings");
   }
 
-  private static T change<T>(T obj1, T obj2) where T: class,new()
+  private static T returnNotNull<T>(T obj1, T obj2) where T: class,new()
   {
     if (obj1 == null && obj2 != null) return obj2;
     if (obj1 != null && obj2 == null) return obj1;
@@ -195,20 +199,20 @@ public class ConfigInformation
 
     ConfigInformation ret = new ConfigInformation();
 
-    ret.audio = change<Audio>(ci1.audio, ci2.audio);
+    ret.audio = returnNotNull<Audio>(ci1.audio, ci2.audio);
     if (ret.audio != ci2.audio)
     {
-      ret.audio.background = change<Background>(ci1.audio?.background, ci2.audio?.background);
+      ret.audio.background = returnNotNull<Background>(ci1.audio?.background, ci2.audio?.background);
       if (ret.audio.background != ci2.audio?.background)
-      {
-        ret.audio.background.volume = returnsNotNullOrSecond<uint?>(ci1.audio.background?.volume, ci2.audio.background?.volume);
-      }
+        ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio.background, ci2.audio.background);
+      if (ret.audio.inGameBackground != ci2.audio?.inGameBackground)
+        ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio.inGameBackground, ci2.audio.inGameBackground);
     }
 
-    ret.npc = change<NPC>(ci1.npc, ci2.npc);
+    ret.npc = returnNotNull<NPC>(ci1.npc, ci2.npc);
     if (ret.npc != ci2.npc)
     {
-      ret.npc.status = returnsNotNullOrSecond(ci1.npc?.status, ci2.npc?.status);
+      ret.npc = returnsNotNullOrSecond(ci1.npc, ci2.npc);
     }
 
     return ret;

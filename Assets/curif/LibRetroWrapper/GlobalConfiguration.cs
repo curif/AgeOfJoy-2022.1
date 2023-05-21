@@ -20,7 +20,7 @@ public class GlobalConfiguration : MonoBehaviour
   public  ConfigInformation Configuration
   {
     get { return configuration; }
-    private set 
+    set 
     { 
       configuration = value; 
       OnGlobalConfigChanged?.Invoke();
@@ -50,9 +50,9 @@ public class GlobalConfiguration : MonoBehaviour
       if (config == null) 
       {
         ConfigManager.WriteConsole($"[GlobalConfiguration] ERROR can't read, back to default: {yamlPath}");
-        Configuration = ConfigInformation.newDefault();
+        Configuration = new();
       }
-      else 
+      else
       {
         Configuration = config;
       }
