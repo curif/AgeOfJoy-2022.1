@@ -114,6 +114,7 @@ public static unsafe class LibretroMameCore
 
     private static mameControls deviceIdsJoypad = null;
     private static mameControls deviceIdsMouse = null;
+    public static List<string> deviceIdsCombined = null;
 
 
     [DllImport ("mame2003_plus_libretro_android")]
@@ -350,6 +351,44 @@ public static unsafe class LibretroMameCore
     public static string Gamma = DefaultGamma; 
     public static string Brightness = DefaultBrightness;
 
+    //one time initialization
+    static LibretroMameCore()
+    {
+      deviceIdsMouse = new();
+      deviceIdsJoypad = new();
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, "MOUSE_X");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, "MOUSE_Y");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, "MOUSE_LEFT");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_RIGHT, "MOUSE_RIGHT");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELUP, "MOUSE_WHEELUP");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELDOWN, "MOUSE_WHEELDOWN");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_MIDDLE, "MOUSE_MIDDLE");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP, "MOUSE_HORIZ_WHEELUP");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN, "MOUSE_HORIZ_WHEELDOWN");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_4, "MOUSE_BUTTON_4");
+      deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_5, "MOUSE_BUTTON_5");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_B,"JOYPAD_B");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_A, "JOYPAD_A");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_X, "JOYPAD_X");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_Y, "JOYPAD_Y");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_SELECT, "JOYPAD_SELECT");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_START, "JOYPAD_START");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_UP, "JOYPAD_UP");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_DOWN, "JOYPAD_DOWN");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_LEFT, "JOYPAD_LEFT");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_RIGHT, "JOYPAD_RIGHT");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L, "JOYPAD_L");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R, "JOYPAD_R");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, "JOYPAD_R2");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, "JOYPAD_L2");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, "JOYPAD_R3");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, "JOYPAD_L3");
+      deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_MASK, "JOYPAD_MASK");
+
+      List<string> joy = deviceIdsJoypad.ControlsList();
+      List<string> mouse = deviceIdsMouse.ControlsList();
+      deviceIdsCombined = mouse.Concat(joy).ToList();
+    }
 
     static void initializeControls() 
     {
@@ -357,53 +396,18 @@ public static unsafe class LibretroMameCore
         throw new Exception("[LibretroMameCore.initializeControls] the ControlMap should be assigned previous to the start of the game.");
       }
 
-      if (deviceIdsMouse == null) 
-      {
-        ConfigManager.WriteConsole($"[initializeControls] MOUSE: naming MAME controls (mapping libretro ids to control name)");
-        deviceIdsMouse = new(ControlMap);
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, "MOUSE_X");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, "MOUSE_Y");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, "MOUSE_LEFT");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_RIGHT, "MOUSE_RIGHT");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELUP, "MOUSE_WHEELUP");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELDOWN, "MOUSE_WHEELDOWN");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_MIDDLE, "MOUSE_MIDDLE");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP, "MOUSE_HORIZ_WHEELUP");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN, "MOUSE_HORIZ_WHEELDOWN");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_4, "MOUSE_BUTTON_4");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_5, "MOUSE_BUTTON_5");
-      }
-
-      if (deviceIdsJoypad == null) 
-      {
-        ConfigManager.WriteConsole($"[initializeControls] JOYPAD: naming MAME controls (mapping libretro ids to control name)");
-        deviceIdsJoypad = new(ControlMap);
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_B,"JOYPAD_B");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_A, "JOYPAD_A");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_X, "JOYPAD_X");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_Y, "JOYPAD_Y");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_SELECT, "JOYPAD_SELECT");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_START, "JOYPAD_START");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_UP, "JOYPAD_UP");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_DOWN, "JOYPAD_DOWN");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_LEFT, "JOYPAD_LEFT");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_RIGHT, "JOYPAD_RIGHT");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L, "JOYPAD_L");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R, "JOYPAD_R");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, "JOYPAD_R2");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, "JOYPAD_L2");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, "JOYPAD_R3");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, "JOYPAD_L3");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_MASK, "JOYPAD_MASK");
-      }
+      ConfigManager.WriteConsole($"[initializeControls] MOUSE: naming MAME controls (mapping libretro ids to control name)");
+      deviceIdsMouse.controlMap = ControlMap;
+      ConfigManager.WriteConsole($"[initializeControls] JOYPAD: naming MAME controls (mapping libretro ids to control name)");
+      deviceIdsJoypad.controlMap = ControlMap;
     }
 
     private class mameControls
     {
       private Dictionary<uint, string> ids = new();
-      LibretroControlMap controlMap;
+      public LibretroControlMap controlMap;
 
-      public mameControls(LibretroControlMap ctrl)
+      public mameControls(LibretroControlMap ctrl = null)
       {
         controlMap = ctrl;
       }
@@ -429,6 +433,11 @@ public static unsafe class LibretroMameCore
           return 0;
         }
         return (Int16)controlMap.Active(gameId);
+      }
+
+      public List<string> ControlsList()
+      {
+        return ids.Values.Distinct().ToList();
       }
     }
 

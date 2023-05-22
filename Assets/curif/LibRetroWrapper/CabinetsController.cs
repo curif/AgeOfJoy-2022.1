@@ -16,7 +16,9 @@ public class CabinetsController : MonoBehaviour
   public string Room;
   //public LightProbeGroup ClosestLightProbeGroup = null;
 
-  GameRegistry gameRegistry;
+  public GameRegistry gameRegistry;
+
+  public bool Loaded = false; //set when the room cabinets where assigned.
 
   void Start()
   {
@@ -42,6 +44,7 @@ public class CabinetsController : MonoBehaviour
       select cc
     ).ToList<CabinetController>();
     */
+    Loaded = false;
     foreach (CabinetPosition g in games)
     {
       if (g.CabInfo != null)
@@ -54,15 +57,17 @@ public class CabinetsController : MonoBehaviour
           yield return new WaitForSeconds(1f / 2f);
         }
         else
-          ConfigManager.WriteConsole(
-            $"[CabinetsController.load] ERROR child #{idx} don´t have a CabinetController component");
+          ConfigManager.WriteConsoleError(
+            $"[CabinetsController.load] child #{idx} don´t have a CabinetController component");
       }
       else
       {
-        ConfigManager.WriteConsole($"[CabinetsController.load] ERROR Assigned {g.CabinetDBName} in #{idx} doesn't have a Cabinet Information assigned, possible error when load cabinet.");
+        ConfigManager.WriteConsoleError($"[CabinetsController.load] Assigned {g.CabinetDBName} in #{idx} doesn't have a Cabinet Information assigned, possible error when load cabinet.");
       }
 
       idx++;
     }
+    ConfigManager.WriteConsole($"[CabinetsController] loaded to {idx-1} cabinets");
+    Loaded = true;
   }
 }

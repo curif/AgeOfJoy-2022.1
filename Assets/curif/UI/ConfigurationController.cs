@@ -100,6 +100,8 @@ public class ConfigurationController : MonoBehaviour
     [Tooltip("We will find the correct one")]
     public ChangeControls changeControls;
 
+    public CabinetsController cabinetsController;
+
     [Tooltip("Set only to change room configuration, if not setted will use the Global")]
     public RoomConfiguration roomConfiguration;
     [Tooltip("Set to change the Global or the system will find it")]
@@ -123,6 +125,9 @@ public class ConfigurationController : MonoBehaviour
         onNPCMenu,
         onAudio,
         onChangeMode,
+        onChangeMameCtrlSelectGame,
+        onChangeMameCtrl,
+        onAddDelCtrller,
         onReset,
         exit
     }
@@ -135,16 +140,14 @@ public class ConfigurationController : MonoBehaviour
     private GenericWindow npcWindow;
 
     private GenericBool isGlobalConfigurationWidget;
-    private GenericWidgetContainer changeModeContainer;
-
-    private GenericWindow audioWindow;
-    private GenericWidgetContainer audioContainer;
-
-    private GenericWidgetContainer resetContainer;
+    private GenericWidgetContainer changeModeContainer, audioContainer, resetContainer, mameCtrlContainer, gameSelectContainer, ageCtrlContainer;
+    private GenericLabel lblGameSelected, lblCtrlSelected;
+    private GenericOptions gameId, mameCtrlId, ageCtrlId;
 
     private DefaultControlMap map;
 
     private ConfigurationHelper configHelper;
+
 
     // Start is called before the first frame update
     void Start()
@@ -250,7 +253,6 @@ public class ConfigurationController : MonoBehaviour
             ((GenericBool)audioContainer.GetWidget("InGameBackgroundMuted")).SetValue((bool)ingamebkg.muted);
 
         scr.Clear();
-        audioWindow.Draw();
         audioContainer.Draw();
     }
     private void audioSave()
@@ -315,13 +317,57 @@ public class ConfigurationController : MonoBehaviour
         changeModeContainer.Draw();
     }
 
+    public void gameSelectWindowDraw()
+    {
+        scr.Clear();
+        scr.Print(2, 1, "Game selection for ");
+        scr.Print(2, 2, "control configuration. ");
+        gameSelectContainer.Draw();
+        scr.Print(2, 18, "up/down to change");
+        scr.Print(2, 19, "b to select");
+    }
+    public void mameCtrlSelectWindowDraw()
+    {
+        if (isGlobalConfigurationWidget.value)
+        {
+            lblGameSelected.label = "global";
+        } //else lblCtrlSelected is loaded
+
+        scr.Clear();
+        scr.Print(2, 1, "Select the control to map");
+        mameCtrlContainer.Draw();
+        scr.Print(2, 18, "up/down to change");
+        scr.Print(2, 19, "b to select");
+    }
+
+    public void ageCtrlContainerDraw()
+    {
+        scr.Clear();
+        scr.Print(2, 1, "Select the AGE control to map");
+        ageCtrlContainer.Draw();
+        scr.Print(2, 18, "up/down to change");
+        scr.Print(2, 19, "b to select");
+    }
+
+    public void ScreenWaitingDraw()
+    {
+        scr.Clear();
+        scr.PrintCentered(10, " - Wait for room setup - ");
+        scr.PrintCentered(12, cabinetsController.Room, true);
+    }
     IEnumerator run()
     {
-
-        //wait for the room to load.
-        yield return new WaitForSeconds(2f);
+        // first: wait for the room to load.
+        ScreenWaitingDraw();
+        while (!cabinetsController.Loaded)
+        {
+            yield return new WaitForSeconds(1f / 2f);
+            ScreenWaitingDraw();
+        }
 
         configHelper = new(globalConfiguration, roomConfiguration);
+        if (cabinetsController?.gameRegistry == null)
+            ConfigManager.WriteConsoleError("[CabinetsController] gameregistry component not found, cant configure cabinet controller");
 
         //main menu
         mainMenu = new(scr, "AGE of Joy - Main configuration");
@@ -330,18 +376,18 @@ public class ConfigurationController : MonoBehaviour
         if (canChangeNPC)
             mainMenu.AddOption("NPC configuration", "To change the NPC behavior");
         if (canChangeControllers)
-            mainMenu.AddOption("Controllers", "Map your controls to play games");
+            mainMenu.AddOption("controllers", "Map your controls to play games");
         mainMenu.AddOption("reset", "global or room configuration");
         mainMenu.AddOption("change mode", "back to default");
         mainMenu.AddOption("exit", "exit configuration");
-        
+
         //boot
         bootScreen = new(scr);
 
         //audio
-        audioWindow = new(scr, 2, 4, "audiowin", 36, 14, " Audio Configuration ");
         audioContainer = new(scr, "audioContainer", 0, 0);
-        audioContainer.Add(new GenericLabel(scr, "BackgroundLabel", "Background Audio", 4, 6))
+        audioContainer.Add(new GenericWindow(scr, 2, 4, "audiowin", 36, 14, " Audio Configuration "))
+                      .Add(new GenericLabel(scr, "BackgroundLabel", "Background Audio", 4, 6))
                       .Add(new GenericBool(scr, "BackgroundMuted", "mute:", false, 6, 8))
                       .Add(new GenericOptionsInteger(scr, "BackgroundVolume", "volume:", 0, 100, 6, 9))
                       .Add(new GenericLabel(scr, "InGameBackgroundLabel", "Background in game audio", 4, 11))
@@ -365,21 +411,54 @@ public class ConfigurationController : MonoBehaviour
         npcWindow = new(scr, 2, 8, "npcWindow", 36, 6, " NPC Configuration ", true);
         NPCStatusOptions = new(scr, "npc", "NPC Behavior:", new List<string>(ConfigInformation.NPC.validStatus), 4, 10);
 
+        //reset options
         resetContainer = new(scr, "reset", 0, 0);
         resetContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " reset "))
                       .Add(new GenericButton(scr, "reset", "reset and save", 4, 11, true))
                       .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
 
-        //main cycle
+        //controllers
+        //Game selection
+        // ---- title   : 4
+        // | lblGame    : 6
+        // |  lblCtlr   : 7
+        // | option     : 9
+        lblGameSelected = new GenericLabel(scr, "lblGame", "global", 4, 6);
+        lblCtrlSelected = new GenericLabel(scr, "lblCtrl", "", 6, 7);
+        mameCtrlId = new GenericOptions(scr, "mameCtrlId", "CTRL:", LibretroMameCore.deviceIdsCombined, 4, 9);
+        gameId = new GenericOptions(scr, "gameId", "game:",
+                                            cabinetsController.gameRegistry?.GetRomsAssignedToRoom(cabinetsController.Room), 4, 9);
+        ageCtrlId = new GenericOptions(scr, "ageCtrlId", "C:", ControlMapPathDictionary.getList(), 2, 9);
+
+        gameSelectContainer = new(scr, "gameSelect", 0, 0);
+        gameSelectContainer.Add(new GenericWindow(scr, 2, 4, "gameSelect", 36, 10, " Select game "))
+                            .Add(gameId)
+                            .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+        //mame control selection
+        mameCtrlContainer = new(scr, "mameCtrlContainer", 0, 0);
+        mameCtrlContainer.Add(new GenericWindow(scr, 2, 4, "mameControl", 36, 10, " MAME ctrl configuration "))
+                            .Add(lblGameSelected)
+                            .Add(mameCtrlId)
+                            .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+
+        //AGE control selection
+        ageCtrlContainer = new(scr, "ctrlContainer", 0, 0);
+        ageCtrlContainer.Add(new GenericWindow(scr, 0, 4, "ctrlConfig", 40, 12, " AGE Control configuration "))
+                            .Add(lblGameSelected)
+                            .Add(lblCtrlSelected)
+                            .Add(ageCtrlId)
+                            .Add(new GenericButton(scr, "exit", "exit", 2, 13, true));
+
         status = StatusOptions.init;
         tree = buildBT();
+        //main cycle
         while (true)
         {
             tree.Tick();
             if (status == StatusOptions.init || status == StatusOptions.onBoot || status == StatusOptions.waitingForCoin)
-                yield return new WaitForSeconds(1f/2f);
+                yield return new WaitForSeconds(1f / 2f);
             else
-                yield return new WaitForSeconds(1f/4f);
+                yield return new WaitForSeconds(1f / 4f);
         }
     }
 
@@ -452,6 +531,13 @@ public class ConfigurationController : MonoBehaviour
                         status = StatusOptions.onChangeMode;
                     else if (mainMenu.GetSelectedOption() == "reset")
                         status = StatusOptions.onReset;
+                    else if (mainMenu.GetSelectedOption() == "controllers")
+                    {
+                        if (isGlobalConfigurationWidget.value)
+                            status = StatusOptions.onChangeMameCtrl;
+                        else
+                            status = StatusOptions.onChangeMameCtrlSelectGame;
+                    }
                     mainMenu.Deselect();
                     return TaskStatus.Success;
                 })
@@ -494,15 +580,8 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
-                        audioContainer.PreviousOption();
-                    else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
-                        audioContainer.NextOption();
-                    else if (ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT"))
-                        audioContainer.GetSelectedWidget()?.PreviousOption();
-                    else if (ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT"))
-                        audioContainer.GetSelectedWidget()?.NextOption();
-                    else if (ControlActive("JOYPAD_B"))
+                    changeContainerSelection(audioContainer);
+                    if (ControlActive("JOYPAD_B"))
                     {
                         GenericWidget w = audioContainer.GetSelectedWidget();
                         if (w != null)
@@ -534,23 +613,16 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
-                        changeModeContainer.PreviousOption();
-                    else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
-                        changeModeContainer.NextOption();
-                    if (ControlActive("JOYPAD_B"))
+                    changeContainerSelection(changeModeContainer);
+                    GenericWidget w = changeModeContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
-                        GenericWidget w = changeModeContainer.GetSelectedWidget();
-                        if (w != null)
+                        if (w.name == "exit")
                         {
-                            if (w.name == "exit")
-                            {
-                                status = StatusOptions.onMainMenu;
-                                return TaskStatus.Success;
-                            }
-                            w.Action();
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
                         }
-                        return TaskStatus.Success;
+                        w.Action();
                     }
                     return TaskStatus.Continue;
                 })
@@ -565,26 +637,109 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
-                        resetContainer.PreviousOption();
-                    else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
-                        resetContainer.NextOption();
-                    if (ControlActive("JOYPAD_B"))
+                    changeContainerSelection(resetContainer);
+                    GenericWidget w = resetContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
-                        GenericWidget w = resetContainer.GetSelectedWidget();
-                        if (w != null)
+                        if (w.name == "exit")
                         {
-                            if (w.name == "exit")
-                            {
-                                status = StatusOptions.onMainMenu;
-                            }
-                            else if (w.name == "reset")
-                            {
-                                resetSave();
-                                status = StatusOptions.onMainMenu;
-                            }
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
                         }
-                        return TaskStatus.Success;
+                        else if (w.name == "reset")
+                        {
+                            resetSave();
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                    }
+                    return TaskStatus.Continue;
+                })
+            .End()
+
+            .Sequence("select game for controller")
+              .Condition("On selecting game", () => status == StatusOptions.onChangeMameCtrlSelectGame)
+              .Do("Init", () =>
+                {
+                    gameSelectWindowDraw();
+                    return TaskStatus.Success;
+                })
+              .Do("Process", () =>
+                {
+                    changeContainerSelection(gameSelectContainer);
+                    GenericWidget w = gameSelectContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
+                    {
+                        if (w.name == "exit")
+                        {
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "gameId")
+                        {
+                            lblGameSelected.label = gameId.GetSelectedOption();
+                            status = StatusOptions.onChangeMameCtrl;
+                            return TaskStatus.Success;
+                        }
+                    }
+                    return TaskStatus.Continue;
+                })
+            .End()
+            .Sequence("select control for game or global")
+              .Condition("On selecting control", () => status == StatusOptions.onChangeMameCtrl)
+              .Do("Init", () =>
+                {
+                    mameCtrlSelectWindowDraw();
+                    return TaskStatus.Success;
+                })
+              .Do("Process", () =>
+                {
+                    changeContainerSelection(mameCtrlContainer);
+                    GenericWidget w = mameCtrlContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
+                    {
+                        if (w.name == "exit")
+                        {
+                            if (isGlobalConfigurationWidget.value)
+                                status = StatusOptions.onChangeMameCtrlSelectGame;
+                            else
+                                status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "mameCtrlId")
+                        {
+                            lblCtrlSelected.label = mameCtrlId.GetSelectedOption();
+                            status = StatusOptions.onAddDelCtrller;
+                            return TaskStatus.Success;
+                        }
+                    }
+                    return TaskStatus.Continue;
+                })
+            .End()
+            .Sequence("select AGE control")
+              .Condition("On selecting control", () => status == StatusOptions.onAddDelCtrller)
+              .Do("Init", () =>
+                {
+                    ageCtrlContainerDraw();
+                    return TaskStatus.Success;
+                })
+              .Do("Process", () =>
+                {
+                    changeContainerSelection(ageCtrlContainer);
+                    GenericWidget w = ageCtrlContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
+                    {
+                        if (w.name == "exit")
+                        {
+                            status = StatusOptions.onChangeMameCtrl;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "ageCtrlId")
+                        {
+                            lblCtrlSelected.label = ageCtrlId.GetSelectedOption();
+                            status = StatusOptions.onAddDelCtrller;
+                            return TaskStatus.Success;
+                        }
                     }
                     return TaskStatus.Continue;
                 })
@@ -670,6 +825,19 @@ public class ConfigurationController : MonoBehaviour
             }
         }
         return ret;
+    }
+
+    private void changeContainerSelection(GenericWidgetContainer gwc)
+    {
+        if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
+            gwc.PreviousOption();
+        else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
+            gwc.NextOption();
+        else if (ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT"))
+            gwc.GetSelectedWidget()?.PreviousOption();
+        else if (ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT"))
+            gwc.GetSelectedWidget()?.NextOption();
+        return;
     }
 
 }

@@ -2,7 +2,7 @@
 class GenericLabel : GenericWidget // Inherit from GenericWidget
 {
     // The label to show
-    private string label;
+    public string label;
 
     // The inverted property
     private bool inverted; // Add this field

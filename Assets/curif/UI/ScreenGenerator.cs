@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class ScreenGenerator: MonoBehaviour
+public class ScreenGenerator : MonoBehaviour
 {
     // The texture that represents a matrix of characters, each character is 8x8 pixels
     public Texture2D c64Font;
@@ -20,8 +20,8 @@ public class ScreenGenerator: MonoBehaviour
 
     // The string that contains the list of characters in the same order as the font texture
     // the arroba means "no replace"
-    private string characterListOrder          = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@";
-    private string characterListOrderAlternate = "@abcdefghijklmnopqrstuvwxyz@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@";
+    private string characterListOrder = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@@@_";
+    private string characterListOrderAlternate = "@abcdefghijklmnopqrstuvwxyz@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@@@_";
     private int characterPositionForNotFound = 34; //" "
 
     // The texture that represents the screen, it has 40x25 characters of capacity
@@ -34,11 +34,12 @@ public class ScreenGenerator: MonoBehaviour
     private Renderer display;
     private ShaderScreenBase shader;
 
-    public Texture2D Screen { 
-      get
-      {
-        return c64Screen;
-      }
+    public Texture2D Screen
+    {
+        get
+        {
+            return c64Screen;
+        }
     }
 
     // The method that runs at the start of the game
@@ -67,12 +68,12 @@ public class ScreenGenerator: MonoBehaviour
         // Loop through all the characters in the font texture
         for (int i = 0; i < 256; i++)
         {
-          // Calculate the pixel coordinates for the source texture
-          int srcX = (i % 32) * 8;
-          int srcY = (7 - i / 32) * 8; // Subtract i / 32 from 7 to flip the origin
-          // Get the pixels for the current character and add them to the list
-          Color[] pixels = c64Font.GetPixels(srcX, srcY, 8, 8);
-          charPixels.Add(pixels);
+            // Calculate the pixel coordinates for the source texture
+            int srcX = (i % 32) * 8;
+            int srcY = (7 - i / 32) * 8; // Subtract i / 32 from 7 to flip the origin
+                                         // Get the pixels for the current character and add them to the list
+            Color[] pixels = c64Font.GetPixels(srcX, srcY, 8, 8);
+            charPixels.Add(pixels);
         }
 
         //Colors
@@ -81,19 +82,21 @@ public class ScreenGenerator: MonoBehaviour
         // Set all pixels in the colors array to the BackgroundColor color
         for (int i = 0; i < colorsBackgroundMatrix.Length; i++)
         {
-           colorsBackgroundMatrix[i] = BackgroundColor;
+            colorsBackgroundMatrix[i] = BackgroundColor;
         }
 
     }
     public void Update()
     {
-      shader.Update();
-      return;
+        shader.Update();
+        return;
     }
 
     // The method that prints a single character to the screen
     public void PrintChar(int x, int y, int charNum, bool inverted)
     {
+        if (c64Screen == null)
+            return;
         // Check if the coordinates and the character number are valid
         if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight || charNum < 0 || charNum >= 128)
         {
@@ -115,6 +118,8 @@ public class ScreenGenerator: MonoBehaviour
     // The method that prints a string of characters to the screen
     public void Print(int x, int y, string text, bool inverted = false)
     {
+        if (c64Screen == null)
+            return;
         // Check if the coordinates are valid
         if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight)
         {
@@ -131,12 +136,12 @@ public class ScreenGenerator: MonoBehaviour
             // Find the index of the character in the character list order string
             int index = characterListOrder.IndexOf(c);
             if (index == -1)
-              index = characterListOrderAlternate.IndexOf(c);
-              if (index == -1)
+                index = characterListOrderAlternate.IndexOf(c);
+            if (index == -1)
                 index = characterPositionForNotFound;
             if (index > 128)
-              index = characterPositionForNotFound;
-                // Print the character to the screen using PrintChar method with inversion flag
+                index = characterPositionForNotFound;
+            // Print the character to the screen using PrintChar method with inversion flag
             PrintChar(x + i, y, index, inverted);
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
@@ -144,13 +149,17 @@ public class ScreenGenerator: MonoBehaviour
     // The method that clears the screen with a given color or cyan by default
     public void Clear()
     {
-      // Fill the screen texture with the given color
-      c64Screen.SetPixels(colorsBackgroundMatrix);
-      c64Screen.Apply();
+        // Fill the screen texture with the given color
+        if (c64Screen == null)
+            return;
+        c64Screen.SetPixels(colorsBackgroundMatrix);
+        c64Screen.Apply();
     }
     // The method that prints a string of characters to the center of the X axis
     public void PrintCentered(int y, string text, bool inverted = false)
     {
+        if (c64Screen == null)
+            return;
         // Check if the y coordinate is valid
         if (y < 0 || y >= CharactersHeight)
         {
@@ -169,6 +178,8 @@ public class ScreenGenerator: MonoBehaviour
     // The method that prints the same character in a line
     public void PrintLine(int y, bool inverted, char c = '-')
     {
+        if (c64Screen == null)
+            return;
         // Check if the y coordinate is valid
         if (y < 0 || y >= CharactersHeight)
         {

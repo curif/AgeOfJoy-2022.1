@@ -204,9 +204,9 @@ public class ConfigInformation
     {
       ret.audio.background = returnNotNull<Background>(ci1.audio?.background, ci2.audio?.background);
       if (ret.audio.background != ci2.audio?.background)
-        ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio.background, ci2.audio.background);
+        ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio.background, ci2.audio?.background);
       if (ret.audio.inGameBackground != ci2.audio?.inGameBackground)
-        ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio.inGameBackground, ci2.audio.inGameBackground);
+        ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio.inGameBackground, ci2.audio?.inGameBackground);
     }
 
     ret.npc = returnNotNull<NPC>(ci1.npc, ci2.npc);

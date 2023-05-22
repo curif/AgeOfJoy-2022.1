@@ -83,4 +83,8 @@ public static class ControlMapPathDictionary
     }
   }
 
+  public static List<string> getList() {
+    return new List<string>(map.Keys);
+  }
+
 }
