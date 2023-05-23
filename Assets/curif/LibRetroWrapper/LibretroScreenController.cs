@@ -219,17 +219,20 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.PathBase = PathBase;
                   LibretroMameCore.shader = shader;
 
-                  //load user control map configuration
-                  ControlMapConfiguration userControlMap = ControlMapConfiguration.LoadFromYaml(ConfigManager.ConfigControllersDir + "/" + name + ".yaml");
-                  ControlMapConfiguration globalControlMap = GlobalControlMap.Configuration;
-                  // map configuration
-                  libretroControlMap.CreateFromConfiguration(
-                    CabinetControlMapConfig,
-                    userControlMap,
-                    globalControlMap
-                  );
-                  LibretroMameCore.ControlMap = libretroControlMap;
-
+                  //controllers
+                  if (CabinetControlMapConfig != null)
+                  {
+                      libretroControlMap.CreateFromConfiguration(new CustomControlMap(CabinetControlMapConfig));
+                  }
+                  else if (GameControlMap.Exists(name))
+                  {
+                      libretroControlMap.CreateFromConfiguration(new GameControlMap(name));
+                  }
+                  else
+                  {
+                      libretroControlMap.CreateFromConfiguration(new GlobalControlMap());
+                  }
+                  // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
                       CoinSlot.clean();

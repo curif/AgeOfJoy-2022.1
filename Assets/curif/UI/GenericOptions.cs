@@ -6,7 +6,7 @@ class GenericOptions : GenericWidget // derived class (child)
     protected List<string> options;
 
     // The index of the current option
-    protected int current;
+    protected int current = -1;
 
     // The label to show before the options
     private string label;
@@ -17,13 +17,13 @@ class GenericOptions : GenericWidget // derived class (child)
     public GenericOptions(ScreenGenerator screen, string name, string label, List<string> options, int x, int y, bool isSelectable = true, int maxLength = 0) :
     base(screen, x, y, name, isSelectable) // call the base class constructor
     {
-        this.options = options == null? new List<string>() : options;
+        this.options = options == null ? new List<string>() : options;
         this.label = label;
         this.current = 0; // Start with the first option
         this.MaxLength = maxLength; // assign the parameter to the property
         if (this.MaxLength == 0) // if zero, calculate based on options, label, brackets and x position
         {
-            foreach (string option in options) // Loop through the options
+            foreach (string option in this.options) // Loop through the options
             {
                 if (option.Length > this.MaxLength) // If the current option is longer than the previous maximum
                 {
@@ -43,14 +43,19 @@ class GenericOptions : GenericWidget // derived class (child)
     {
         if (!enabled)
             return;
-        string paddedOption = options[current].PadRight(MaxLength - label.Length - 4); // Add spaces to the right of the current option to make it fit within maxLength
-        if (paddedOption.Length > MaxLength - label.Length - 4) // if still too long
+        if (options.Count > 0)
         {
-            paddedOption = paddedOption.Substring(0, MaxLength - label.Length - 4); // truncate it
+            if (current == -1)
+                NextOption();
+            string paddedOption = options[current].PadRight(MaxLength - label.Length - 4); // Add spaces to the right of the current option to make it fit within maxLength
+            if (paddedOption.Length > MaxLength - label.Length - 4) // if still too long
+            {
+                paddedOption = paddedOption.Substring(0, MaxLength - label.Length - 4); // truncate it
+            }
+            screen.Print(x, y, label + " <", false); // Print the label with normal colors
+            screen.Print(x + label.Length + 2, y, paddedOption + " ", true); // Print the option with inverted colors and a trailing space
+            screen.Print(x + MaxLength - 1, y, ">", false); // Print the closing bracket with normal colors
         }
-        screen.Print(x, y, label + " <", false); // Print the label with normal colors
-        screen.Print(x + label.Length + 2, y, paddedOption + " ", true); // Print the option with inverted colors and a trailing space
-        screen.Print(x + MaxLength - 1, y, ">", false); // Print the closing bracket with normal colors
     }
 
     // A method to move to the next option
@@ -63,6 +68,11 @@ class GenericOptions : GenericWidget // derived class (child)
     // A method to move to the previous option
     public override void PreviousOption() // use override keyword to indicate that this method replaces the base class method
     {
+        if (current == -1)
+        {
+            NextOption();
+            return;
+        }
         current = (current - 1 + options.Count) % options.Count; // Decrement the index and wrap around if needed
         Draw(); // Show the new option
     }
@@ -70,6 +80,8 @@ class GenericOptions : GenericWidget // derived class (child)
     // A method to get the selected option
     public string GetSelectedOption()
     {
+        if (options.Count == 0 || current == -1)
+            return "";
         return options[current]; // Return the current option
     }
 

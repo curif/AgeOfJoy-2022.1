@@ -12,6 +12,7 @@ public class LibretroControlMap : MonoBehaviour
   public InputActionMap actionMap;
   private const int wheelDelta = 120;
 
+  /*
   public void LoadConfigurationFromFile(string filename)
   {
     ControlMapConfiguration conf = ControlMapConfiguration.LoadFromYaml(filename);
@@ -26,15 +27,15 @@ public class LibretroControlMap : MonoBehaviour
 
     actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
   }
+  */
 
   //load the control map from the cabinet configuration, if not found fall to the default one.
   //in fact merge any other control map with the default. 
   public void CreateFromConfiguration(
-      ControlMapConfiguration cabMapConfiguration, 
-      ControlMapConfiguration userConfiguration, 
-      ControlMapConfiguration globalConfiguration, 
+      ControlMapConfiguration conf, 
       string fileNameToSaveOrEmpty = "")
   {
+    /*
     ControlMapConfiguration conf;
 
     if (userConfiguration != null)
@@ -59,6 +60,7 @@ public class LibretroControlMap : MonoBehaviour
       conf = DefaultControlMap.Instance;
       ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] fall to deafult control configuration: {conf}");
     }
+    */
     //ConfigManager.WriteConsole(conf.asMarkdown());
     Debug.Log(conf.AsMarkdown());
     conf.ToDebug();

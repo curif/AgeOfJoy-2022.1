@@ -12,7 +12,7 @@ class GenericWidgetContainer : GenericWidget
     private int index; // The index of the current widget
 
     // A constructor that takes the screen generator, the x and y coordinates and the name of the container and initializes the list and the index
-    public GenericWidgetContainer(ScreenGenerator screen, string name, int x, int y) : base(screen, x, y, name)
+    public GenericWidgetContainer(ScreenGenerator screen, string name) : base(screen, 0, 0, name)
     {
         widgets = new List<GenericWidget>();
         index = -1;
@@ -56,7 +56,7 @@ class GenericWidgetContainer : GenericWidget
           index = i;
           //widgets[index].Draw();
           DrawAll();
-          ConfigManager.WriteConsole($"[GenericWidgetContainer.NextOption] {widgets[i].name} idx: {index}");
+          ConfigManager.WriteConsole($"[GenericWidgetContainer.NextOption] {widgets[i].name} idx: {index} enabled: {widgets[i].enabled}");
           return;
         }
       }
@@ -79,7 +79,7 @@ class GenericWidgetContainer : GenericWidget
           index = i;
           //widgets[index].Draw();
           DrawAll();
-          ConfigManager.WriteConsole($"[GenericWidgetContainer.PreviousOption] {widgets[i].name} idx: {index}");
+          ConfigManager.WriteConsole($"[GenericWidgetContainer.PreviousOption] {widgets[i].name} idx: {index} enabled: {widgets[i].enabled}");
           return;
         }
       }
