@@ -241,9 +241,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   c64Font: {fileID: 2800000, guid: 27b74844601859509959e3914b4b6f01, type: 3}
-  ScreenWidth: 320
-  ScreenHeight: 200
-  BackgroundColor: {r: 0, g: 0, b: 1, a: 0}
+  CharactersWidth: 40
+  CharactersHeight: 25
+  TextureWidth: 380
+  TextureHeight: 216
+  BackgroundColor: {r: 0.35686275, g: 0.5294118, b: 1, a: 0}
+  CenteredAreaColor: {r: 0.050980393, g: 0.22745098, b: 0.85882354, a: 0}
   ShaderName: damage
 --- !u!114 &4703797651494189707
 MonoBehaviour:
@@ -265,3 +268,10 @@ MonoBehaviour:
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
+  changeControls: {fileID: 0}
+  cabinetsController: {fileID: 0}
+  roomConfiguration: {fileID: 0}
+  globalConfiguration: {fileID: 0}
+  canChangeAudio: 1
+  canChangeNPC: 1
+  canChangeControllers: 1

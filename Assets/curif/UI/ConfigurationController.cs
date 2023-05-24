@@ -81,6 +81,7 @@ public class ConfigurationHelper
         return;
     }
 
+
     public void Reset(bool isGlobal)
     {
         if (isGlobal)
@@ -141,7 +142,7 @@ public class ConfigurationController : MonoBehaviour
 
     private GenericBool isGlobalConfigurationWidget;
     private GenericWidgetContainer changeModeContainer, audioContainer, resetContainer, controllerContainer;
-    private GenericLabel lblGameSelected, lblCtrlSelected;
+    private GenericLabel lblGameSelected;
     private GenericOptions controlMapGameId, controlMapMameControl;
     private GenericTimedLabel controlMapSavedLabel;
     private List<GenericOptions> controlMapRealControls;
@@ -323,10 +324,14 @@ public class ConfigurationController : MonoBehaviour
 
     public void controllerContainerDraw()
     {
-        controlMapGameId.enabled = isGlobalConfigurationWidget.value;
-        if (!controlMapGameId.enabled)
+        if (isGlobalConfigurationWidget.value)
         {
             lblGameSelected.label = "global configuration";
+        }
+        else
+        {
+            controlMapGameId.enabled = true;
+            lblGameSelected.label = controlMapGameId.GetSelectedOption();
         }
         scr.Clear();
         scr.PrintCentered(1, "- Controller configuration -");
@@ -485,8 +490,7 @@ public class ConfigurationController : MonoBehaviour
 
         //change mode
         isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global:", !configHelper.CanConfigureRoom(), 4, 10);
-        isGlobalConfigurationWidget.enabled = configHelper.CanConfigureRoom();
-        isGlobalConfigurationWidget.value = isGlobalConfigurationWidget.enabled;
+        isGlobalConfigurationWidget.enabled = isGlobalConfigurationWidget.value;
 
         changeModeContainer = new(scr, "changeMode");
         changeModeContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " mode "))
@@ -511,7 +515,6 @@ public class ConfigurationController : MonoBehaviour
         // |  lblCtlr   : 7
         // | option     : 9
         lblGameSelected = new GenericLabel(scr, "lblGame", "global configuration", 3, 6);
-        lblCtrlSelected = new GenericLabel(scr, "lblCtrl", "", 5, 7);
         controlMapGameId = new GenericOptions(scr, "gameId", "game:",
                                             cabinetsController?.gameRegistry?.GetRomsAssignedToRoom(cabinetsController.Room), 3, 9);
         //global configuration by default, changed in the first draw()
@@ -521,12 +524,11 @@ public class ConfigurationController : MonoBehaviour
         List<string> controlMapRealControlList = new List<string>();
         controlMapRealControlList.Add("--");
         controlMapRealControlList = controlMapRealControlList.Concat(ControlMapPathDictionary.getList()).ToList();
-        controlMapSavedLabel = new(scr, "saved", "saved", 2, 19, true);
+        controlMapSavedLabel = new(scr, "saved", "saved", 3, 19, true);
 
         controllerContainer = new(scr, "controllers");
         controllerContainer.Add(new GenericWindow(scr, 1, 4, "controllerscont", 39, 18, " controllers "))
                            .Add(lblGameSelected)
-                           .Add(lblCtrlSelected)
                            .Add(controlMapGameId)
                            .Add(controlMapMameControl);
         for (int x = 0; x < 5; x++)
@@ -548,10 +550,12 @@ public class ConfigurationController : MonoBehaviour
         while (true)
         {
             tree.Tick();
-            if (status == StatusOptions.init || status == StatusOptions.onBoot || status == StatusOptions.waitingForCoin)
-                yield return new WaitForSeconds(1f / 3f);
-            else
+            if (status == StatusOptions.init || status == StatusOptions.waitingForCoin)
+                yield return new WaitForSeconds(1f);
+            else if (status == StatusOptions.onBoot )
                 yield return new WaitForSeconds(1f / 5f);
+            else
+                yield return new WaitForSeconds(1f / 8f);
         }
     }
 
@@ -792,22 +796,20 @@ public class ConfigurationController : MonoBehaviour
 
                         if (right || left)
                         {
-                            if (w.name == "gameId")
-                            {
-                                lblGameSelected.label = controlMapGameId.GetSelectedOption();
-                                controlMapConfigurationLoad();
-                                controlMapUpdateWidgets();
-                            }
-
-                            // controlMapRealControl or mameControl
-                            else if (left)
+                            if (left)
                                 w.PreviousOption();
                             else if (right)
                                 w.NextOption();
 
-                            if (w.name.StartsWith("controlMapRealControl"))
+                            if (w.name == "gameId")
+                            {
+                                lblGameSelected.label = controlMapGameId.GetSelectedOption();
+                                controlMapConfigurationLoad();
+                            }
+                            else if (w.name.StartsWith("controlMapRealControl")) // controlMapRealControl or mameControl
+                            {
                                 controlMapUpdateConfigurationFromWidgets();
-
+                            }
                             controlMapUpdateWidgets();
                             controllerContainerDraw();
                         }

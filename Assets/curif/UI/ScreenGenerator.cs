@@ -8,8 +8,10 @@ public class ScreenGenerator : MonoBehaviour
 
     public int CharactersWidth = 40;
     public int CharactersHeight = 25;
-
+    public int TextureWidth;
+    public int TextureHeight;
     public Color BackgroundColor;
+    public Color CenteredAreaColor;
 
     public string ShaderName = "damage";
     [SerializeField]
@@ -27,8 +29,14 @@ public class ScreenGenerator : MonoBehaviour
     // The texture that represents the screen, it has 40x25 characters of capacity
     private Texture2D c64Screen;
     private Color[] colorsBackgroundMatrix;
+    private Color[] colorsCenteredAreaMatrix;
+
     private int ScreenWidth; // Width of the target texture
     private int ScreenHeight; // Height of the target texture
+    private int centerX;
+    private int centerY;
+
+
 
     //Renderer
     private Renderer display;
@@ -47,10 +55,19 @@ public class ScreenGenerator : MonoBehaviour
     {
         display = GetComponent<Renderer>();
 
+
+        // Calculate the width and height of the centered area
+        int centeredWidth = CharactersWidth * 8;
+        int centeredHeight = CharactersHeight * 8;
+
+        // Calculate the position of the centered area based on the whole texture size
+        centerX = (TextureWidth - centeredWidth) / 2;
+        centerY = (TextureHeight - centeredHeight) / 2;
+
         ScreenWidth = CharactersWidth * 8;  // Width of the target texture
         ScreenHeight = CharactersHeight * 8; // Height of the target texture
         // Create the target texture with the specified width and height
-        c64Screen = new Texture2D(ScreenWidth, ScreenHeight);
+        c64Screen = new Texture2D(TextureWidth, TextureHeight);
 
         // Set the target texture to be readable and writable
         c64Screen.wrapMode = TextureWrapMode.Clamp;
@@ -82,9 +99,29 @@ public class ScreenGenerator : MonoBehaviour
         // Set all pixels in the colors array to the BackgroundColor color
         for (int i = 0; i < colorsBackgroundMatrix.Length; i++)
         {
-            colorsBackgroundMatrix[i] = BackgroundColor;
+            colorsBackgroundMatrix[i] = CenteredAreaColor;
         }
+        setBackgroundColor();
+        Clear();
+    }
 
+    private void setBackgroundColor()
+    {
+        if (c64Screen != null)
+        {
+            // Create a new array of color data for the texture
+            Color[] pixels = c64Screen.GetPixels();
+
+            // Set the color for each pixel in the texture
+            for (int i = 0; i < TextureWidth * TextureHeight; i++)
+            {
+                pixels[i] = BackgroundColor;
+            }
+
+            // Apply the modified colors back to the texture
+            c64Screen.SetPixels(pixels);
+            c64Screen.Apply();
+        }
     }
     public void Update()
     {
@@ -103,9 +140,12 @@ public class ScreenGenerator : MonoBehaviour
             ConfigManager.WriteConsoleError($"[ScreenGenerator.PrintChar] Invalid parameters x,y: ({x},{y}), charNum: {charNum}");
             return;
         }
-        // Calculate the pixel coordinates for the destination texture
-        int destX = x * 8;
-        int destY = (CharactersHeight - 1 - y) * 8; // Subtract y from 24 to flip the origin
+
+        // Calculate the pixel coordinates for the destination texture within the centered area
+        int destX = (x * 8) + centerX;
+        //int destY = (TextureHeight - ((y + 1) * 8)) - centerY; // Subtract y from CharactersHeight and centerY to flip the origin
+        int destY = centerY + (CharactersHeight - (y + 1)) * 8; // Add centerY and adjust the y calculation to be relative to the top of the centered area
+
         // Get the pixels from the list for the given character number and inversion flag
         int index = inverted ? charNum + 128 : charNum;
         Color[] pixels = charPixels[index];
@@ -146,15 +186,18 @@ public class ScreenGenerator : MonoBehaviour
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
     }
+
     // The method that clears the screen with a given color or cyan by default
     public void Clear()
     {
         // Fill the screen texture with the given color
         if (c64Screen == null)
             return;
-        c64Screen.SetPixels(colorsBackgroundMatrix);
+
+        c64Screen.SetPixels(centerX, centerY, ScreenWidth, ScreenHeight, colorsBackgroundMatrix);
         c64Screen.Apply();
     }
+
     // The method that prints a string of characters to the center of the X axis
     public void PrintCentered(int y, string text, bool inverted = false)
     {
