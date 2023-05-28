@@ -5,19 +5,20 @@ using UnityEngine;
 // this class maps the quest controls to unity paths and behaviors
 public static class ControlMapPathDictionary
 {
-  static Dictionary<string, string> map; 
+    static Dictionary<string, string> map;
 
-  static ControlMapPathDictionary() {
-    /*
-    * secondaryButton [LeftHand XR Controller] = Y button
-       primaryButton [LeftHand XR Controller] = X button
-       secondaryButton [RightHand XR Controller] = B button
-       primaryButton [RightHand XR Controller] = A buttonsecondaryButton [LeftHand XR Controller] = Y button
-       primaryButton [LeftHand XR Controller] = X button
-       secondaryButton [RightHand XR Controller] = B button
-       primaryButton [RightHand XR Controller] = A button
-   */
-    map = new Dictionary<string, string>
+    static ControlMapPathDictionary()
+    {
+        /*
+        * secondaryButton [LeftHand XR Controller] = Y button
+           primaryButton [LeftHand XR Controller] = X button
+           secondaryButton [RightHand XR Controller] = B button
+           primaryButton [RightHand XR Controller] = A buttonsecondaryButton [LeftHand XR Controller] = Y button
+           primaryButton [LeftHand XR Controller] = X button
+           secondaryButton [RightHand XR Controller] = B button
+           primaryButton [RightHand XR Controller] = A button
+       */
+        map = new Dictionary<string, string>
     {
         // Left VR controller mappings
         { "quest-x", "<XRController>{LeftHand}/primaryButton" }, //primaryButton
@@ -52,6 +53,8 @@ public static class ControlMapPathDictionary
         { "gamepad-right-thumbstick", "<Gamepad>/rightStick" },
         { "gamepad-left-thumbstick-press", "<Gamepad>/leftStickPress" },
         { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" },
+
+        //keyboard
         { "keyboard-a", "<keyboard>/a"},
         { "keyboard-w", "<keyboard>/w"},
         { "keyboard-s", "<keyboard>/s"},
@@ -71,16 +74,30 @@ public static class ControlMapPathDictionary
         { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" }
         */
       };
-}
+    }
+    public static string GetBehavior(string realControl)
+    {
+        if (realControl == "quest-right-thumbstick" || realControl == "quest-left-thumbstick")
+            return "axis";
 
-  public static string GetInputPath(string realControl) {
-    if (map.ContainsKey(realControl) ) {
-      return map[realControl];
+        return "button";
     }
-    else {
-      ConfigManager.WriteConsoleError("[ControlMapPathDictionary] Control not found in control map: " + realControl);
-      return "";
+    public static string GetInputPath(string realControl)
+    {
+        if (map.ContainsKey(realControl))
+        {
+            return map[realControl];
+        }
+        else
+        {
+            ConfigManager.WriteConsoleError("[ControlMapPathDictionary] Control not found in control map: " + realControl);
+            return "";
+        }
     }
-  }
+
+    public static List<string> getList()
+    {
+        return new List<string>(map.Keys);
+    }
 
 }
