@@ -46,7 +46,8 @@ class GenericOptions : GenericWidget // derived class (child)
         if (options.Count > 0)
         {
             if (current == -1)
-                NextOption();
+                current = 0;
+            
             string paddedOption = options[current].PadRight(MaxLength - label.Length - 4); // Add spaces to the right of the current option to make it fit within maxLength
             if (paddedOption.Length > MaxLength - label.Length - 4) // if still too long
             {
@@ -61,7 +62,10 @@ class GenericOptions : GenericWidget // derived class (child)
     // A method to move to the next option
     public override void NextOption() // use override keyword to indicate that this method replaces the base class method
     {
-        current = (current + 1) % options.Count; // Increment the index and wrap around if needed
+        // current = (current + 1) % options.Count; // Increment the index and wrap around if needed
+        if (current == options.Count - 1)
+            return;
+        current++;
         Draw(); // Show the new option
     }
 
@@ -73,7 +77,12 @@ class GenericOptions : GenericWidget // derived class (child)
             NextOption();
             return;
         }
-        current = (current - 1 + options.Count) % options.Count; // Decrement the index and wrap around if needed
+        else if (current == 0)
+        {
+            return;
+        }
+        // current = (current - 1 + options.Count) % options.Count; // Decrement the index and wrap around if needed
+        current--;
         Draw(); // Show the new option
     }
 

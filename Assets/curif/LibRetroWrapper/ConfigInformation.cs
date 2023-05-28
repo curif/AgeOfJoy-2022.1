@@ -180,7 +180,7 @@ public class ConfigInformation
         throw new Exception("Invalid audio settings");
   }
 
-  private static T returnNotNull<T>(T obj1, T obj2) where T: class,new()
+  private static T returnNotNullOrNew<T>(T obj1, T obj2) where T: class,new()
   {
     if (obj1 == null && obj2 != null) return obj2;
     if (obj1 != null && obj2 == null) return obj1;
@@ -199,17 +199,17 @@ public class ConfigInformation
 
     ConfigInformation ret = new ConfigInformation();
 
-    ret.audio = returnNotNull<Audio>(ci1.audio, ci2.audio);
+    ret.audio = returnNotNullOrNew<Audio>(ci1.audio, ci2.audio);
     if (ret.audio != ci2.audio)
     {
-      ret.audio.background = returnNotNull<Background>(ci1.audio?.background, ci2.audio?.background);
+      ret.audio.background = returnNotNullOrNew<Background>(ci1.audio?.background, ci2.audio?.background);
       if (ret.audio.background != ci2.audio?.background)
-        ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio.background, ci2.audio?.background);
+        ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio?.background, ci2.audio?.background);
       if (ret.audio.inGameBackground != ci2.audio?.inGameBackground)
-        ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio.inGameBackground, ci2.audio?.inGameBackground);
+        ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio?.inGameBackground, ci2.audio?.inGameBackground);
     }
 
-    ret.npc = returnNotNull<NPC>(ci1.npc, ci2.npc);
+    ret.npc = returnNotNullOrNew<NPC>(ci1.npc, ci2.npc);
     if (ret.npc != ci2.npc)
     {
       ret.npc = returnsNotNullOrSecond(ci1.npc, ci2.npc);

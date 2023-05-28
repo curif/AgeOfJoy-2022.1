@@ -36,7 +36,7 @@ public class ScreenGenerator : MonoBehaviour
     private int centerX;
     private int centerY;
 
-
+    private bool needsDraw = false;
 
     //Renderer
     private Renderer display;
@@ -54,7 +54,6 @@ public class ScreenGenerator : MonoBehaviour
     private void Start()
     {
         display = GetComponent<Renderer>();
-
 
         // Calculate the width and height of the centered area
         int centeredWidth = CharactersWidth * 8;
@@ -105,7 +104,13 @@ public class ScreenGenerator : MonoBehaviour
         Clear();
     }
 
-    private void setBackgroundColor()
+    public void Update()
+    {
+        shader.Update();
+        return;
+    }
+
+    private ScreenGenerator setBackgroundColor()
     {
         if (c64Screen != null)
         {
@@ -120,25 +125,34 @@ public class ScreenGenerator : MonoBehaviour
 
             // Apply the modified colors back to the texture
             c64Screen.SetPixels(pixels);
-            c64Screen.Apply();
+
+            needsDraw = true;
         }
+        return this;
     }
-    public void Update()
+
+    // copies the texture to the gpu if it was modified
+    public ScreenGenerator DrawScreen()
     {
-        shader.Update();
-        return;
+
+        if (needsDraw)
+        {
+            c64Screen.Apply();
+            needsDraw = false;
+        }
+        return this;
     }
 
     // The method that prints a single character to the screen
-    public void PrintChar(int x, int y, int charNum, bool inverted)
+    public ScreenGenerator PrintChar(int x, int y, int charNum, bool inverted)
     {
         if (c64Screen == null)
-            return;
+            return this;
         // Check if the coordinates and the character number are valid
         if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight || charNum < 0 || charNum >= 128)
         {
             ConfigManager.WriteConsoleError($"[ScreenGenerator.PrintChar] Invalid parameters x,y: ({x},{y}), charNum: {charNum}");
-            return;
+            return this;
         }
 
         // Calculate the pixel coordinates for the destination texture within the centered area
@@ -152,19 +166,22 @@ public class ScreenGenerator : MonoBehaviour
 
         // Copy the pixels from the list to the screen texture
         c64Screen.SetPixels(destX, destY, 8, 8, pixels);
-        c64Screen.Apply();
+
+        needsDraw = true;
+
+        return this;
     }
 
     // The method that prints a string of characters to the screen
-    public void Print(int x, int y, string text, bool inverted = false)
+    public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
     {
         if (c64Screen == null)
-            return;
+            return this;
         // Check if the coordinates are valid
         if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight)
         {
             ConfigManager.WriteConsoleError($"[ScreenGenerator.Print] Invalid parameters for Print method, x,y: ({x},{y})");
-            return;
+            return this;
         }
 
         // Loop through all the characters in the text string
@@ -185,29 +202,32 @@ public class ScreenGenerator : MonoBehaviour
             PrintChar(x + i, y, index, inverted);
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
+
+        return this;
     }
 
     // The method that clears the screen with a given color or cyan by default
-    public void Clear()
+    public ScreenGenerator Clear()
     {
         // Fill the screen texture with the given color
         if (c64Screen == null)
-            return;
+            return this;
 
         c64Screen.SetPixels(centerX, centerY, ScreenWidth, ScreenHeight, colorsBackgroundMatrix);
-        c64Screen.Apply();
+        needsDraw = true;
+        return this;
     }
 
     // The method that prints a string of characters to the center of the X axis
-    public void PrintCentered(int y, string text, bool inverted = false)
+    public ScreenGenerator PrintCentered(int y, string text, bool inverted = false)
     {
         if (c64Screen == null)
-            return;
+            return this;
         // Check if the y coordinate is valid
         if (y < 0 || y >= CharactersHeight)
         {
             ConfigManager.WriteConsoleError($"[ScreenGenerator.PrintCentered] Invalid parameters y: ({y})");
-            return;
+            return this;
         }
 
         // Calculate the x coordinate that will center the text
@@ -215,19 +235,21 @@ public class ScreenGenerator : MonoBehaviour
 
         // Print the text using the Print method with the calculated x coordinate
         Print(x, y, text, inverted);
+
+        return this;
     }
 
 
     // The method that prints the same character in a line
-    public void PrintLine(int y, bool inverted, char c = '-')
+    public ScreenGenerator PrintLine(int y, bool inverted, char c = '-')
     {
         if (c64Screen == null)
-            return;
+            return this;
         // Check if the y coordinate is valid
         if (y < 0 || y >= CharactersHeight)
         {
             ConfigManager.WriteConsoleError($"[ScreenGenerator.PrintLine] Invalid parameters y: ({y})");
-            return;
+            return this;
         }
 
         // Create a string of 40 characters using the given character
@@ -235,6 +257,7 @@ public class ScreenGenerator : MonoBehaviour
 
         // Print the text using the Print method with the x coordinate of 0
         Print(0, y, text, inverted);
+        return this;
     }
 
 }

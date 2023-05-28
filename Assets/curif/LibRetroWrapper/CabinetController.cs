@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 public class CabinetController : MonoBehaviour
 {
   public CabinetPosition game;
+  public string Name;
+
   [Tooltip("Positions where the player can stay to load the cabinet")]
   public List<GameObject> AgentPlayerPositions;
 
@@ -39,6 +41,7 @@ public class CabinetController : MonoBehaviour
     }
     return false;
   }
+
 
   IEnumerator load()
   {

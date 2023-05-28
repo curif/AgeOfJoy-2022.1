@@ -10,6 +10,8 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
+using UnityEngine.XR.Interaction.Toolkit.Inputs;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -72,9 +74,11 @@ public class ConfigurationHelper
 
     public void Save(bool saveGlobal, ConfigInformation config)
     {
-        string yamlPath = roomConfiguration.yamlPath;
+        string yamlPath;
         if (saveGlobal)
             yamlPath = globalConfiguration.yamlPath;
+        else
+            yamlPath = roomConfiguration.yamlPath;
         ConfigManager.WriteConsole($"[ConfigurationController] save configuration global:{saveGlobal} {config} to {yamlPath}");
         config.ToYaml(yamlPath); //saving the file will reload the configuration in GlobalConfiguration and RoomConfiguration by trigger.
 
@@ -100,6 +104,9 @@ public class ConfigurationController : MonoBehaviour
     public ScreenGenerator scr;
     public CoinSlotController CoinSlot;
     public InputActionMap actionMap;
+    [Tooltip("The global action manager in the main rig. We will find one if not set.")]
+    public InputActionManager inputActionManager;
+
     [Tooltip("We will find the correct one")]
     public ChangeControls changeControls;
 
@@ -163,7 +170,6 @@ public class ConfigurationController : MonoBehaviour
         conf.AddMap("KEYB-DOWN", "keyboard-s");
         conf.AddMap("KEYB-LEFT", "keyboard-a");
         conf.AddMap("KEYB-RIGHT", "keyboard-d");
-
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
 
         if (changeControls == null)
@@ -171,9 +177,11 @@ public class ConfigurationController : MonoBehaviour
             GameObject player = GameObject.Find("OVRPlayerControllerGalery");
             changeControls = player.GetComponent<ChangeControls>();
         }
+        GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
+        inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
+
         StartCoroutine(run());
     }
-
 
     public void NPCScreen()
     {
@@ -199,6 +207,7 @@ public class ConfigurationController : MonoBehaviour
     {
         bool isGlobal = isGlobalConfigurationWidget.value;
         ConfigInformation config = configHelper.getConfigInformation(isGlobal);
+        config.npc = new();
         config.npc.status = NPCStatusOptions.GetSelectedOption();
         configHelper.Save(isGlobal, config);
     }
@@ -438,6 +447,7 @@ public class ConfigurationController : MonoBehaviour
         scr.PrintCentered(10, " - Wait for room setup - ");
         scr.PrintCentered(12, cabinetsController.Room, true);
     }
+
     IEnumerator run()
     {
         // first: wait for the room to load.
@@ -457,23 +467,54 @@ public class ConfigurationController : MonoBehaviour
         }
 
         if (cabinetsController?.gameRegistry == null)
-            ConfigManager.WriteConsoleError("[CabinetsController] gameregistry component not found, cant configure cabinet controller");
+            ConfigManager.WriteConsole("[ConfigurationController] gameregistry component not found, cant configure games controllers");
 
+        //create widgets
+        //boot
+        bootScreen = new(scr);
+        SetMainMenuWidgets();
+        SetAudioWidgets();
+        SetChangeModeWidgets();
+        SetNPCWidgets();
+        SetControllersWidgets();
+
+        //load control map
+        controlMapConfigurationLoad();
+        controlMapUpdateWidgets();
+
+        //main cycle
+        status = StatusOptions.init;
+        tree = buildBT();
+        while (true)
+        {
+            tree.Tick();
+
+            if (status == StatusOptions.init || status == StatusOptions.waitingForCoin)
+                yield return new WaitForSeconds(1f);
+            else if (status == StatusOptions.onBoot)
+                yield return new WaitForSeconds(1f / 4f);
+            else
+                yield return new WaitForSeconds(1f / 6f);
+        }
+    }
+
+    private void SetMainMenuWidgets()
+    {
         //main menu
         mainMenu = new(scr, "AGE of Joy - Main configuration");
         if (canChangeAudio)
-            mainMenu.AddOption("Audio configuration", "Change sound volume");
+            mainMenu.AddOption("Audio configuration", "    Change sound volume       ");
         if (canChangeNPC)
-            mainMenu.AddOption("NPC configuration", "To change the NPC behavior");
+            mainMenu.AddOption("NPC configuration", "  To change the NPC behavior  ");
         if (canChangeControllers)
             mainMenu.AddOption("controllers", "Map your controls to play games");
-        mainMenu.AddOption("reset", "global or room configuration");
-        mainMenu.AddOption("change mode", "back to default");
-        mainMenu.AddOption("exit", "exit configuration");
+        mainMenu.AddOption("reset", "  global or room configuration ");
+        mainMenu.AddOption("change mode", "         back to default       ");
+        mainMenu.AddOption("exit", "        exit configuration     ");
+    }
 
-        //boot
-        bootScreen = new(scr);
-
+    private void SetAudioWidgets()
+    {
         //audio
         audioContainer = new(scr, "audioContainer");
         audioContainer.Add(new GenericWindow(scr, 2, 4, "audiowin", 36, 14, " Audio Configuration "))
@@ -487,7 +528,10 @@ public class ConfigurationController : MonoBehaviour
                       .Add(new GenericButton(scr, "exit", "exit", 18, 16, true))
                       .Add(new GenericLabel(scr, "l1", "left/right/b to change", 2, 20))
                       .Add(new GenericLabel(scr, "l2", "up/down to move", 2, 21));
+    }
 
+    private void SetChangeModeWidgets()
+    {
         //change mode
         isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global:", !configHelper.CanConfigureRoom(), 4, 10);
         isGlobalConfigurationWidget.enabled = isGlobalConfigurationWidget.value;
@@ -496,7 +540,10 @@ public class ConfigurationController : MonoBehaviour
         changeModeContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " mode "))
                            .Add(isGlobalConfigurationWidget)
                            .Add(new GenericButton(scr, "exit", "exit", 4, 11, true));
+    }
 
+    private void SetNPCWidgets()
+    {
         //NPC configuration options.
         // take the statuses from the static value options in the information NPC class.
         npcWindow = new(scr, 2, 8, "npcWindow", 36, 6, " NPC Configuration ", true);
@@ -507,7 +554,10 @@ public class ConfigurationController : MonoBehaviour
         resetContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " reset "))
                       .Add(new GenericButton(scr, "reset", "reset and save", 4, 11, true))
                       .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+    }
 
+    private void SetControllersWidgets()
+    {
         //controllers
         //Game selection
         // ---- title   : 4
@@ -525,7 +575,6 @@ public class ConfigurationController : MonoBehaviour
         controlMapRealControlList.Add("--");
         controlMapRealControlList = controlMapRealControlList.Concat(ControlMapPathDictionary.getList()).ToList();
         controlMapSavedLabel = new(scr, "saved", "saved", 3, 19, true);
-
         controllerContainer = new(scr, "controllers");
         controllerContainer.Add(new GenericWindow(scr, 1, 4, "controllerscont", 39, 18, " controllers "))
                            .Add(lblGameSelected)
@@ -539,24 +588,6 @@ public class ConfigurationController : MonoBehaviour
         controllerContainer.Add(new GenericButton(scr, "save", "save", 3, 17, true))
                            .Add(new GenericButton(scr, "exit", "exit", 10, 17, true))
                            .Add(controlMapSavedLabel);
-
-        //load control map
-        controlMapConfigurationLoad();
-        controlMapUpdateWidgets();
-
-        status = StatusOptions.init;
-        tree = buildBT();
-        //main cycle
-        while (true)
-        {
-            tree.Tick();
-            if (status == StatusOptions.init || status == StatusOptions.waitingForCoin)
-                yield return new WaitForSeconds(1f);
-            else if (status == StatusOptions.onBoot )
-                yield return new WaitForSeconds(1f / 5f);
-            else
-                yield return new WaitForSeconds(1f / 8f);
-        }
     }
 
     private BehaviorTree buildBT()
@@ -570,8 +601,9 @@ public class ConfigurationController : MonoBehaviour
                 {
                     ControlEnable(false);
                     status = StatusOptions.waitingForCoin;
-                    scr.Clear();
-                    scr.PrintCentered(10, "Insert coin to start", true);
+                    scr.Clear()
+                       .PrintCentered(10, "Insert coin to start", true)
+                       .DrawScreen();
                     return TaskStatus.Success;
                 })
             .End()
@@ -588,8 +620,12 @@ public class ConfigurationController : MonoBehaviour
 
             .Sequence("Boot")
               .Condition("Booting", () => status == StatusOptions.onBoot)
-              .WaitTime(0.1f)
-              .Condition("Finished lines", () => bootScreen.PrintNextLine())
+              .Condition("Finished lines", () =>
+              {
+                bool finished = bootScreen.PrintNextLine();
+                scr.DrawScreen();
+                return finished;
+              })
               .Do("Start main menu", () =>
                 {
                     status = StatusOptions.onMainMenu;
@@ -603,6 +639,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     scr.Clear();
                     mainMenuDraw();
+                    scr.DrawScreen();
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
@@ -615,8 +652,10 @@ public class ConfigurationController : MonoBehaviour
                         mainMenu.Select();
 
                     if (!mainMenu.IsSelected())
+                    {
+                        scr.DrawScreen();
                         return TaskStatus.Continue;
-
+                    }
                     ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
                     if (mainMenu.GetSelectedOption() == "NPC configuration")
                         status = StatusOptions.onNPCMenu;
@@ -633,6 +672,7 @@ public class ConfigurationController : MonoBehaviour
                         status = StatusOptions.onChangeController;
                     }
                     mainMenu.Deselect();
+                    scr.DrawScreen();
                     return TaskStatus.Success;
                 })
             .End()
@@ -642,6 +682,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("Init", () =>
                 {
                     NPCScreen();
+                    scr.DrawScreen();
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
@@ -652,8 +693,10 @@ public class ConfigurationController : MonoBehaviour
                         NPCStatusOptions.NextOption();
                     else if (ControlActive("JOYPAD_B"))
                     {
+                        scr.DrawScreen();
                         return TaskStatus.Success;
                     }
+                    scr.DrawScreen();
                     return TaskStatus.Continue;
                 })
               .Do("Save", () =>
@@ -670,6 +713,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     audioScreen();
                     audioContainer.Draw();
+                    scr.DrawScreen();
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
@@ -694,6 +738,7 @@ public class ConfigurationController : MonoBehaviour
                             w.Action();
                         }
                     }
+                    scr.DrawScreen();
                     return TaskStatus.Continue;
                 })
             .End()
@@ -703,6 +748,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("Init", () =>
                 {
                     changeModeWindowDraw();
+                    scr.DrawScreen();
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
@@ -718,6 +764,7 @@ public class ConfigurationController : MonoBehaviour
                         }
                         w.Action();
                     }
+                    scr.DrawScreen();
                     return TaskStatus.Continue;
                 })
             .End()
@@ -727,6 +774,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("Init", () =>
                 {
                     resetWindowDraw();
+                    scr.DrawScreen();
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
@@ -747,6 +795,7 @@ public class ConfigurationController : MonoBehaviour
                             return TaskStatus.Success;
                         }
                     }
+                    scr.DrawScreen();
                     return TaskStatus.Continue;
                 })
             .End()
@@ -756,18 +805,18 @@ public class ConfigurationController : MonoBehaviour
               .Do("Init", () =>
                 {
                     controllerContainerDraw();
+                    scr.DrawScreen();
+
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
                 {
-
                     if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
                         controllerContainer.PreviousOption();
                     else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
                         controllerContainer.NextOption();
 
                     GenericWidget w = controllerContainer.GetSelectedWidget();
-
 
                     if (w != null)
                     {
@@ -793,8 +842,7 @@ public class ConfigurationController : MonoBehaviour
                                 controllerContainerDraw();
                             }
                         }
-
-                        if (right || left)
+                        else if (right || left)
                         {
                             if (left)
                                 w.PreviousOption();
@@ -813,10 +861,11 @@ public class ConfigurationController : MonoBehaviour
                             controlMapUpdateWidgets();
                             controllerContainerDraw();
                         }
-
                     }
 
                     controlMapSavedLabel.Draw();
+                    scr.DrawScreen();
+
                     return TaskStatus.Continue;
                 })
             .End()
@@ -840,12 +889,15 @@ public class ConfigurationController : MonoBehaviour
     public void ControlEnable(bool enable)
     {
         changeControls.PlayerMode(enable);
+        //if (inputActionManager != null)
+        //    inputActionManager.enabled = !enable;
         if (enable)
         {
             actionMap.Enable();
             return;
         }
         actionMap.Disable();
+
         return;
     }
 

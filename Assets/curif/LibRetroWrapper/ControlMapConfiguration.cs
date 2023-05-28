@@ -207,6 +207,11 @@ public class ControlMapConfiguration
         }
         return sb.ToString();
     }
+
+    public override string ToString()
+    {
+        return $" ControlMapConfiguration: {mapList.Count}";
+    }
 }
 
 public class DefaultControlMap : ControlMapConfiguration
@@ -297,14 +302,22 @@ public class GameControlMap : GlobalControlMap
         Load();
     }
 
-    private string getFileName()
+    public static string Path(string gameFileName)
     {
-        return ConfigManager.ConfigControllersDir + "/" + gameFile + ".yaml";
+        return ConfigManager.ConfigControllersDir + "/" + gameFileName + ".yaml";
     }
 
-    public static bool Exists(string gameFile)
+    private string getFileName()
     {
-        return File.Exists(ConfigManager.ConfigControllersDir + "/" + gameFile + ".yaml");
+        return Path(gameFile);
+    }
+
+    public static bool Exists(string gameFileName)
+    {
+        string path = Path(gameFileName);
+        bool exists = File.Exists(Path(gameFileName)); 
+        ConfigManager.WriteConsole($"[GameControlMap] configuration exists for game {gameFileName}: {exists}");
+        return exists;
     }
 
     public override void Save()
@@ -322,6 +335,8 @@ public class CustomControlMap : GlobalControlMap
 {
     public CustomControlMap(ControlMapConfiguration defaultConf) : base()
     {
+
         Merge(defaultConf);
+        ConfigManager.WriteConsole($"[CustomControlMap] Merged {defaultConf.ToString()}");
     }
 }

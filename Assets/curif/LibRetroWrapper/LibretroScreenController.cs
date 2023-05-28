@@ -15,6 +15,10 @@ using System.Runtime.InteropServices;
 using System;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
+using UnityEngine.XR.Interaction.Toolkit.Inputs;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 
 //[AddComponentMenu("curif/LibRetroWrapper/VideoPlayer")]
@@ -77,6 +81,9 @@ public class LibretroScreenController : MonoBehaviour
 
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
+
+    // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
+    // public InputActionManager inputActionManager;
 
     private ShaderScreenBase shader;
     private List<AgentScenePosition> agentPlayerPositionComponents;
@@ -145,6 +152,12 @@ public class LibretroScreenController : MonoBehaviour
         rightHand = GameObject.Find("RightHand");
         rightControl = GameObject.Find("RightControl");
         leftControl = GameObject.Find("LeftControl");
+
+        // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
+        // if (inputActionManagerGameobject == null)
+        //     ConfigManager.WriteConsoleError("[LibretroScreenController.Start] input action manager in the main rig doesn't found.");
+        // else
+        //     inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
@@ -222,16 +235,22 @@ public class LibretroScreenController : MonoBehaviour
                   //controllers
                   if (CabinetControlMapConfig != null)
                   {
+                      ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
                       libretroControlMap.CreateFromConfiguration(new CustomControlMap(CabinetControlMapConfig));
                   }
-                  else if (GameControlMap.Exists(name))
+                  else if (GameControlMap.Exists(GameFile))
                   {
-                      libretroControlMap.CreateFromConfiguration(new GameControlMap(name));
+                      ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {name}");
+                      libretroControlMap.CreateFromConfiguration(new GameControlMap(GameFile));
                   }
                   else
                   {
+                      ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
                       libretroControlMap.CreateFromConfiguration(new GlobalControlMap());
                   }
+                  //libretroControlMap.inputActionManager = inputActionManager;
+
+                  LibretroMameCore.ControlMap = libretroControlMap;
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
@@ -377,4 +396,26 @@ public class LibretroScreenController : MonoBehaviour
             PreparePlayerToPlayGame(false);
     }
 
+    public void InsertCoin()
+    {
+        CoinSlot.insertCoin();
+    }
 }
+
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(LibretroScreenController))]
+public class LibretroScreenControllerEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        DrawDefaultInspector();
+
+        LibretroScreenController myScript = (LibretroScreenController)target;
+        if(GUILayout.Button("InsertCoin"))
+        {
+          myScript.InsertCoin();
+        }
+    }
+}
+#endif
