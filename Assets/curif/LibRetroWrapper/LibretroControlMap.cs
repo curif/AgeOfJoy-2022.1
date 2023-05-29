@@ -67,8 +67,8 @@ public class LibretroControlMap : MonoBehaviour
         }
         */
         //ConfigManager.WriteConsole(conf.asMarkdown());
-        Debug.Log(conf.AsMarkdown());
-        conf.ToDebug();
+        // Debug.Log(conf.AsMarkdown());
+        // conf.ToDebug();
 
         if (fileNameToSaveOrEmpty != "")
         {

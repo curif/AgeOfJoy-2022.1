@@ -367,8 +367,8 @@ public class ConfigurationController : MonoBehaviour
             controlMapConfiguration = new DefaultControlMap();
             ConfigManager.WriteConsoleException($"[controllerLoadConfigMap] loading configuration, using default. Is Global:{isGlobalConfigurationWidget.value} ", e);
         }
-        ConfigManager.WriteConsole($"[controllerLoadConfigMap] debug in the next line ...");
-        controlMapConfiguration.ToDebug();
+        // ConfigManager.WriteConsole($"[controllerLoadConfigMap] debug in the next line ...");
+        // controlMapConfiguration.ToDebug();
     }
     private void controlMapUpdateWidgets()
     {

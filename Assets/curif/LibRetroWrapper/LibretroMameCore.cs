@@ -931,6 +931,8 @@ public static unsafe class LibretroMameCore
         m.CopyTo(SystemInfo).Free();
         WriteConsole(SystemInfo.ToString());
     }
+
+
     
      //storage pointers to unmanaged memory
     public class MarshalHelpPtrVault {
