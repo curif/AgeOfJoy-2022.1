@@ -49,6 +49,11 @@ public class RoomConfiguration : MonoBehaviour
     ConfigManager.WriteConsole($"[RoomConfiguration] final configuration: {Configuration.ToString()}");
   }
 
+  public string GetName()
+  {
+    return Path.GetFileNameWithoutExtension(fileMonitor.ConfigFileName);
+  }
+
   public void Reset()
   {
     try
