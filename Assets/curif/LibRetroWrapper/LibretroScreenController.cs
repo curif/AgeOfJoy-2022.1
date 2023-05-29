@@ -233,23 +233,25 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.shader = shader;
 
                   //controllers
+                  ControlMapConfiguration controlConf;
                   if (CabinetControlMapConfig != null)
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
-                      libretroControlMap.CreateFromConfiguration(new CustomControlMap(CabinetControlMapConfig));
+                      controlConf = new CustomControlMap(CabinetControlMapConfig);
                   }
                   else if (GameControlMap.Exists(GameFile))
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {name}");
-                      libretroControlMap.CreateFromConfiguration(new GameControlMap(GameFile));
+                      controlConf = new GameControlMap(GameFile);
                   }
                   else
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
-                      libretroControlMap.CreateFromConfiguration(new GlobalControlMap());
+                      controlConf = new GlobalControlMap();
                   }
-                  //libretroControlMap.inputActionManager = inputActionManager;
-
+                  //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
+                    // ConfigManager.WriteConsole(controlConf.AsMarkdown());
+                  libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
