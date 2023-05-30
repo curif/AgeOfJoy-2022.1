@@ -54,12 +54,15 @@ class GenericOptions : GenericWidget // derived class (child)
     {
         if (!enabled)
             return;
-
-        screen.Print(x, y, label + " <", false); // Print the label with normal colors
+        screen.Print(x, y, label, false); // Print the label with normal colors
         if (options.Count > 0)
         {
             if (current == -1)
                 current = 0;
+                
+            string toLeftChar = current == 0 ? " " : "<";
+            string toRightChar = current == options.Count - 1 ? " " : ">";
+            screen.Print(x + label.Length + 1, y, toLeftChar, false); // Print the label with normal colors
 
             string paddedOption = options[current].PadRight(MaxLength - label.Length - 4); // Add spaces to the right of the current option to make it fit within maxLength
             if (paddedOption.Length > MaxLength - label.Length - 4) // if still too long
@@ -67,7 +70,7 @@ class GenericOptions : GenericWidget // derived class (child)
                 paddedOption = paddedOption.Substring(0, MaxLength - label.Length - 4); // truncate it
             }
             screen.Print(x + label.Length + 2, y, paddedOption + " ", true); // Print the option with inverted colors and a trailing space
-            screen.Print(x + MaxLength - 1, y, ">", false); // Print the closing bracket with normal colors
+            screen.Print(x + MaxLength - 1, y, toRightChar, false); // Print the closing bracket with normal colors
         }
     }
 

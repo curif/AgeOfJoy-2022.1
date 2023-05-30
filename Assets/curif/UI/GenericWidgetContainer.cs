@@ -19,70 +19,84 @@ class GenericWidgetContainer : GenericWidget
     }
     public int Count()
     {
-      return widgets.Count;
+        return widgets.Count;
     }
 
     // A method to add a widget to the list
     public GenericWidgetContainer Add(GenericWidget widget)
     {
-      // Check if the widget is valid
-      if (widget == null)
-      {
-        throw new ArgumentNullException("The widget must not be null");
-      }
+        // Check if the widget is valid
+        if (widget == null)
+        {
+            throw new ArgumentNullException("The widget must not be null");
+        }
 
-      // Add the widget to the list
-      widgets.Add(widget);
+        // Add the widget to the list
+        widgets.Add(widget);
 
-      // If this is the first widget, set it as the current one
-      if (index == -1 && widget.isSelectable && widget.enabled)
-      {
-        index = widgets.Count - 1;
-      }
-      return this;
+        // If this is the first widget, set it as the current one
+        if (index == -1 && widget.isSelectable && widget.enabled)
+        {
+            index = widgets.Count - 1;
+        }
+        return this;
     }
 
     // A method to move to the next widget in the list
     public override void NextOption()
     {
-      // Check if there are any widgets in the list
-      if (widgets.Count == 0)
-          return;
+        // Check if there are any widgets in the list
+        if (widgets.Count == 0)
+            return;
 
-      for (int i = index + 1; i < widgets.Count; i++)
-      {
-        if (widgets[i].isSelectable && widgets[i].enabled)
+        for (int i = index + 1; i < widgets.Count; i++)
         {
-          index = i;
-          //widgets[index].Draw();
-          DrawAll();
-          ConfigManager.WriteConsole($"[GenericWidgetContainer.NextOption] {widgets[i].name} idx: {index} enabled: {widgets[i].enabled}");
-          return;
+            if (widgets[i].isSelectable && widgets[i].enabled)
+            {
+                index = i;
+                //widgets[index].Draw();
+                DrawAll();
+                ConfigManager.WriteConsole($"[GenericWidgetContainer.NextOption] {widgets[i].name} idx: {index} enabled: {widgets[i].enabled}");
+                return;
+            }
         }
-      }
+    }
+
+    public void SetOption(int idx)
+    {
+        // Check if there are any widgets in the list
+        if (widgets.Count == 0 || idx < 0 || idx > widgets.Count - 1)
+        {
+            return;
+        }
+        if (widgets[idx].isSelectable && widgets[idx].enabled)
+        {
+            index = idx;
+        }
+        DrawAll();
     }
 
     // A method to move to the previous widget in the list
     public override void PreviousOption()
     {
-      // Check if there are any widgets in the list
-      if (widgets.Count == 0)
-      {
-          return;
-      }
-
-      // Decrement the index and wrap around if needed
-      for (int i = index - 1; i >= 0; i--)
-      {
-        if (widgets[i].isSelectable && widgets[i].enabled)
+        // Check if there are any widgets in the list
+        if (widgets.Count == 0)
         {
-          index = i;
-          //widgets[index].Draw();
-          DrawAll();
-          ConfigManager.WriteConsole($"[GenericWidgetContainer.PreviousOption] {widgets[i].name} idx: {index} enabled: {widgets[i].enabled}");
-          return;
+            return;
         }
-      }
+
+        // Decrement the index and wrap around if needed
+        for (int i = index - 1; i >= 0; i--)
+        {
+            if (widgets[i].isSelectable && widgets[i].enabled)
+            {
+                index = i;
+                //widgets[index].Draw();
+                DrawAll();
+                ConfigManager.WriteConsole($"[GenericWidgetContainer.PreviousOption] {widgets[i].name} idx: {index} enabled: {widgets[i].enabled}");
+                return;
+            }
+        }
 
     }
 
@@ -92,17 +106,17 @@ class GenericWidgetContainer : GenericWidget
         // Check if the name is valid
         if (string.IsNullOrEmpty(name))
         {
-          throw new ArgumentException("The name must not be null or empty");
+            throw new ArgumentException("The name must not be null or empty");
         }
 
         // Loop through the list of widgets
         foreach (GenericWidget widget in widgets)
         {
-          // If the name matches, return the widget
-          if (widget.name == name)
-          {
-              return widget;
-          }
+            // If the name matches, return the widget
+            if (widget.name == name)
+            {
+                return widget;
+            }
         }
 
         // If no widget is found, return null
@@ -111,39 +125,39 @@ class GenericWidgetContainer : GenericWidget
     // A method to recover a widget from the container
     public GenericWidget GetSelectedWidget()
     {
-      if (index == -1)
-        return null;
-      return widgets[index];
+        if (index == -1)
+            return null;
+        return widgets[index];
     }
 
     // A method to draw all the widgets
     public void DrawAll()
     {
-      if (!enabled)
-        return;
+        if (!enabled)
+            return;
 
-      for (int i = 0; i < widgets.Count; i++) // Loop through the widgets
-      {
-        GenericWidget widget = widgets[i]; // Get the current widget
-        if (widget.enabled)
+        for (int i = 0; i < widgets.Count; i++) // Loop through the widgets
         {
-          if (i == index) // If it is the selected widget
-          {
-            screen.Print(widget.x - 1, widget.y, ">", true); // Print a ">" character before its x coordinate with normal colors
-          }
-          else 
-          {
-            screen.Print(widget.x - 1, widget.y, " ", false); // Print a space character before its x coordinate with normal colors
-          }
-          widget.Draw(); // Print the widget itself
+            GenericWidget widget = widgets[i]; // Get the current widget
+            if (widget.enabled)
+            {
+                if (i == index) // If it is the selected widget
+                {
+                    screen.Print(widget.x - 1, widget.y, ">", true); // Print a ">" character before its x coordinate with normal colors
+                }
+                else
+                {
+                    screen.Print(widget.x - 1, widget.y, " ", false); // Print a space character before its x coordinate with normal colors
+                }
+                widget.Draw(); // Print the widget itself
+            }
         }
-      }
     }
 
-  // A method to draw only this container on screen. Override from GenericWidget.
-  public override void Draw()
-  {
-      // Call DrawAll() to draw all the widgets in this container
-      DrawAll();
-  }
+    // A method to draw only this container on screen. Override from GenericWidget.
+    public override void Draw()
+    {
+        // Call DrawAll() to draw all the widgets in this container
+        DrawAll();
+    }
 }
