@@ -9,100 +9,101 @@ using System.Reflection;
 //[RequireComponent(typeof(FileMonitor))]
 public class GlobalConfiguration : MonoBehaviour
 {
-  public GameObject FileMonitorGameObject;
-  public UnityEvent OnGlobalConfigChanged;
-  
-  //[Tooltip("Global Configuration should use the first File Monitor in attached to the gameobject if there are more than one.")]
+    public GameObject FileMonitorGameObject;
+    public UnityEvent OnGlobalConfigChanged;
 
-  private FileMonitor fileMonitor;
-  public string yamlPath;
-  private ConfigInformation configuration;
-  public  ConfigInformation Configuration
-  {
-    get { return configuration; }
-    set 
-    { 
-      configuration = value; 
-      OnGlobalConfigChanged?.Invoke();
-    }
-  }
+    //[Tooltip("Global Configuration should use the first File Monitor in attached to the gameobject if there are more than one.")]
 
-  // Start is called before the first frame update
-  void Start()
-  {
-    // Get all FileMonitor components attached to the GameObject
-    //FileMonitor[] fileMonitors = GetComponents<FileMonitor>();
-
-    // Get the first FileMonitor component in the array
-    fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
-    yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
-    OnEnable();
-    Load();
-  }
-
-  private void Load()
-  {
-    ConfigInformation config;
-    ConfigManager.WriteConsole($"[GlobalConfiguration] loadConfiguration: {yamlPath}");
-    if (File.Exists(yamlPath))
+    private FileMonitor fileMonitor;
+    public string yamlPath;
+    private ConfigInformation configuration;
+    public ConfigInformation Configuration
     {
-      config = ConfigInformation.fromYaml(yamlPath);
-      if (config == null) 
-      {
-        ConfigManager.WriteConsole($"[GlobalConfiguration] ERROR can't read, back to default: {yamlPath}");
-        Configuration = new();
-      }
-      else
-      {
-        Configuration = config;
-      }
-    }
-    else {
-      ConfigManager.WriteConsole($"[GlobalConfiguration] file doesn't exists, create default: {yamlPath}");
-      Configuration = ConfigInformation.newDefault();
-      Save();
-      ConfigManager.WriteConsole($"[GlobalConfiguration] ");
-      ConfigManager.WriteConsole(configuration.ToString());
-    }
-  }
-
-  public void Reset()
-  {
-    try
-    {
-        if (File.Exists(yamlPath))
+        get { return configuration; }
+        set
         {
-            File.Delete(yamlPath);
-            Load();
+            configuration = value;
+            OnGlobalConfigChanged?.Invoke();
         }
     }
-    catch (IOException e)
+
+    // Start is called before the first frame update
+    void Start()
     {
-      ConfigManager.WriteConsoleError($"[RoomConfiguration.Delete] {yamlPath} - {e}");
+        // Get all FileMonitor components attached to the GameObject
+        //FileMonitor[] fileMonitors = GetComponents<FileMonitor>();
+
+        // Get the first FileMonitor component in the array
+        fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
+        yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
+        OnEnable();
+        Load();
     }
-  }
 
-  public void Save()
-  {
-    ConfigManager.WriteConsole($"[GlobalConfiguration] writing configuration: {yamlPath}");
-    configuration.ToYaml(yamlPath);
-  }
+    private void Load()
+    {
+        ConfigInformation config;
+        ConfigManager.WriteConsole($"[GlobalConfiguration] loadConfiguration: {yamlPath}");
+        if (File.Exists(yamlPath))
+        {
+            config = ConfigInformation.fromYaml(yamlPath);
+            if (config == null)
+            {
+                ConfigManager.WriteConsole($"[GlobalConfiguration] ERROR can't read, back to default: {yamlPath}");
+                Configuration = new();
+            }
+            else
+            {
+                Configuration = config;
+            }
+        }
+        else
+        {
+            ConfigManager.WriteConsole($"[GlobalConfiguration] file doesn't exists, create default: {yamlPath}");
+            Configuration = ConfigInformation.newDefault();
+            Save();
+            ConfigManager.WriteConsole($"[GlobalConfiguration] ");
+            ConfigManager.WriteConsole(configuration.ToString());
+        }
+    }
 
-  private void OnFileChanged()
-  {
-    Load();
-  }
-  
-  void OnEnable()
-  {
-    // Listen for the config reload message
-    fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
-  }
+    public void Reset()
+    {
+        try
+        {
+            if (File.Exists(yamlPath))
+            {
+                File.Delete(yamlPath);
+            }
+            Load();
+        }
+        catch (IOException e)
+        {
+            ConfigManager.WriteConsoleError($"[RoomConfiguration.Delete] {yamlPath} - {e}");
+        }
+    }
 
-  void OnDisable()
-  {
-    // Stop listening for the config reload message
-    fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
-  }
+    public void Save()
+    {
+        ConfigManager.WriteConsole($"[GlobalConfiguration] writing configuration: {yamlPath}");
+        configuration.ToYaml(yamlPath);
+    }
+
+    private void OnFileChanged()
+    {
+        Load();
+    }
+
+    void OnEnable()
+    {
+        // Listen for the config reload message
+        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+    }
+
+    void OnDisable()
+    {
+        // Stop listening for the config reload message
+        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+    }
 
 }

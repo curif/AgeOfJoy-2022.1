@@ -20,39 +20,32 @@ public class CabinetsController : MonoBehaviour
 
     public bool Loaded = false; //set when the room cabinets where assigned.
 
+    [SerializeField]
+    private int cabinetsCount; 
     public int CabinetsCount
     {
         get
         {
-            return transform.childCount;
+            return cabinetsCount;
         }
     }
 
     void Start()
     {
+        cabinetsCount = transform.childCount;
         gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
         if (gameRegistry != null)
             StartCoroutine(load());
         else
-            ConfigManager.WriteConsole("[CabinetsController] ERROR gameregistry component not found");
+            ConfigManager.WriteConsoleError("[CabinetsController] gameRegistry component not found");
     }
 
     IEnumerator load()
     {
-        List<CabinetPosition> games = gameRegistry.GetCabinetsAssignedToRoom(Room, transform.childCount); //persist registry with the new assignation if any.
+        List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(Room, transform.childCount); //persist registry with the new assignation if any.
         ConfigManager.WriteConsole($"[CabinetsController] Assigned {games.Count} cabinets to room {Room}");
-        int idx = 0;
-        /* not neccesary. Its possible to order the cabinets in design time
-        //games.Sort((x, y) => random.Next() > random.Next() ? 1 : -1);
-        List<CabinetController> controllers = (
-          from t in transform
-          let cc = t.gameObject.GetComponent<CabinetController>()
-          where cc != null 
-          orderby cc.priority descending
-          select cc
-        ).ToList<CabinetController>();
-        */
         Loaded = false;
+        int idx = 0;
         foreach (CabinetPosition g in games)
         {
             if (g.CabInfo != null)

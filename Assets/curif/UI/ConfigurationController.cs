@@ -110,6 +110,7 @@ public class ConfigurationController : MonoBehaviour
     [Tooltip("We will find the correct one")]
     public ChangeControls changeControls;
 
+    [Tooltip("Load with the cabinet's parent gameobject controller")]
     public CabinetsController cabinetsController;
 
     [Tooltip("Set only to change room configuration, if not setted will use the Global")]
@@ -602,10 +603,34 @@ public class ConfigurationController : MonoBehaviour
 
     private List<string> GetCabinetsInRoom()
     {
-        List<string> cabinetsInRoom = cabinetsController?.gameRegistry?.GetCabinetsNamesAssignedToRoom(GetRoomName());
-        if (cabinetsInRoom != null)
-            cabinetsInRoom.Sort();
-        return cabinetsInRoom;
+        List<string> cabsWithPosition = new List<string>();
+        string room = GetRoomName();
+        if (cabinetsController?.gameRegistry == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no gameRegistry loaded for {room}");
+            return new List<string>();
+        }
+        List<CabinetPosition> cabinetsInRoom = cabinetsController?.gameRegistry?.GetCabinetsAndPositionsAssignedToRoom(room);
+        if (cabinetsInRoom == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no cabinets registered in gameRegistry for {room}");
+            return new List<string>();
+        }
+        
+        ConfigManager.WriteConsole($"[GetCabinetsInRoom] there are {cabinetsInRoom.Count} cabinets in {room} and {cabinetsController?.gameRegistry?.CabinetsInRegistry} cabinets in the main registry");
+
+        for (int idx = 0; idx < cabinetsInRoom.Count; idx++)
+        {
+            cabsWithPosition.Add($"{cabinetsInRoom[idx].Position:D3}-{cabinetsInRoom[idx].CabinetDBName}");
+        }
+
+        for (int idx = cabinetsInRoom.Count; idx < cabinetsController.CabinetsCount; idx++)
+        {
+            cabsWithPosition.Add($"{idx:D3}-(free)");
+        }
+        cabsWithPosition.Sort();
+
+        return cabsWithPosition;
     }
     private List<string> GetAllCabinets()
     {
@@ -614,7 +639,6 @@ public class ConfigurationController : MonoBehaviour
             cabinetsAll.Sort();
         return cabinetsAll;
     }
-
 
     private void SetCabinetsWidgets()
     {
@@ -778,22 +802,32 @@ public class ConfigurationController : MonoBehaviour
                         return TaskStatus.Continue;
                     }
                     ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
-                    if (mainMenu.GetSelectedOption() == "NPC configuration")
-                        status = StatusOptions.onNPCMenu;
-                    else if (mainMenu.GetSelectedOption() == "exit")
-                        status = StatusOptions.exit;
-                    else if (mainMenu.GetSelectedOption() == "Audio configuration")
-                        status = StatusOptions.onAudio;
-                    else if (mainMenu.GetSelectedOption() == "change mode")
-                        status = StatusOptions.onChangeMode;
-                    else if (mainMenu.GetSelectedOption() == "reset")
-                        status = StatusOptions.onReset;
-                    else if (mainMenu.GetSelectedOption() == "cabinets")
-                        status = StatusOptions.onChangeCabinets;
-                    else if (mainMenu.GetSelectedOption() == "controllers")
+                    string selectedOption = mainMenu.GetSelectedOption();
+                    switch (selectedOption)
                     {
-                        status = StatusOptions.onChangeController;
+                        case "NPC configuration":
+                            status = StatusOptions.onNPCMenu;
+                            break;
+                        case "exit":
+                            status = StatusOptions.exit;
+                            break;
+                        case "Audio configuration":
+                            status = StatusOptions.onAudio;
+                            break;
+                        case "change mode":
+                            status = StatusOptions.onChangeMode;
+                            break;
+                        case "reset":
+                            status = StatusOptions.onReset;
+                            break;
+                        case "cabinets":
+                            status = StatusOptions.onChangeCabinets;
+                            break;
+                        case "controllers":
+                            status = StatusOptions.onChangeController;
+                            break;
                     }
+
                     mainMenu.Deselect();
                     scr.DrawScreen();
                     return TaskStatus.Success;

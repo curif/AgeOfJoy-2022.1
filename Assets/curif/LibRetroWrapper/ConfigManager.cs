@@ -58,12 +58,17 @@ public static class ConfigManager
   public static void WriteConsoleError(string st)
   {
     string formattedMessage = $"[AGE ERROR] {st}";
-    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.None, null, "{0}", formattedMessage);
+    UnityEngine.Debug.LogFormat(LogType.Error, LogOption.None, null, "{0}", formattedMessage);
+  }
+  public static void WriteConsoleWarning(string st)
+  {
+    string formattedMessage = $"[AGE WARNING] {st}";
+    UnityEngine.Debug.LogFormat(LogType.Warning, LogOption.None, null, "{0}", formattedMessage);
   }
   public static void WriteConsoleException(string st, Exception e)
   {
     string formattedMessage = $"[AGE ERROR EXCEPTION] {st}";
-    UnityEngine.Debug.LogFormat(LogType.Log, LogOption.None, null, "{0} Exception {1} StackTrace: \n {2}", formattedMessage, e, e.StackTrace);
+    UnityEngine.Debug.LogFormat(LogType.Exception, LogOption.None, null, "{0} Exception {1} StackTrace: \n {2}", formattedMessage, e, e.StackTrace);
   }
 
   public static void SignalToStopVideos()
