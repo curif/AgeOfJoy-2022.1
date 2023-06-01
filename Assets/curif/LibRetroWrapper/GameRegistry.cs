@@ -249,6 +249,7 @@ public class GameRegistry : MonoBehaviour
         List<CabinetPosition> cabs = new List<CabinetPosition>(
                             from cabPos in cabinetsPosition.Registry
                             where string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase)
+                            orderby cabPos.Position
                             select cabPos
                         ).ToList();
         return cabs;

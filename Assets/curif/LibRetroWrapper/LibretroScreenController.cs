@@ -239,7 +239,7 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
                       controlConf = new CustomControlMap(CabinetControlMapConfig);
                   }
-                  else if (GameControlMap.Exists(GameFile))
+                  else if (GameControlMap.ExistsConfiguration(GameFile))
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {name}");
                       controlConf = new GameControlMap(GameFile);

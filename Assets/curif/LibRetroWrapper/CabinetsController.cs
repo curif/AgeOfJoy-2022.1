@@ -21,7 +21,7 @@ public class CabinetsController : MonoBehaviour
     public bool Loaded = false; //set when the room cabinets where assigned.
 
     [SerializeField]
-    private int cabinetsCount; 
+    private int cabinetsCount;
     public int CabinetsCount
     {
         get
@@ -33,12 +33,32 @@ public class CabinetsController : MonoBehaviour
     void Start()
     {
         cabinetsCount = transform.childCount;
+
         gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
         if (gameRegistry != null)
             StartCoroutine(load());
         else
             ConfigManager.WriteConsoleError("[CabinetsController] gameRegistry component not found");
+
+        //set cabinets ID.using a For to ensure the order.
+        int idx = 0;
+        for (idx = 0; idx < cabinetsCount; idx++)
+        {
+            CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
+            if (cc != null)
+            {
+                cc.game = new();
+                cc.game.Position = idx;
+            }
+        }
     }
+
+    public CabinetController GetCabinetControllerByPosition(int position)
+    {
+        return transform.GetComponentsInChildren<CabinetController>()
+            .FirstOrDefault(cc => cc.Position == position);
+    }
+
 
     IEnumerator load()
     {
@@ -50,16 +70,27 @@ public class CabinetsController : MonoBehaviour
         {
             if (g.CabInfo != null)
             {
+                /*
                 CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
-                if (cc != null && (cc.game == null || String.IsNullOrEmpty(cc.game.CabinetDBName)))
+                if (cc?.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
                 {
                     ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
                     cc.game = g;
                     yield return new WaitForSeconds(1f / 2f);
                 }
                 else
-                    ConfigManager.WriteConsoleError(
-                      $"[CabinetsController.load] child #{idx} don´t have a CabinetController component");
+                    ConfigManager.WriteConsole(
+                      $"[CabinetsController.load] child #{idx} don´t have a CabinetController component or was assigned previously.");
+                */
+                CabinetController cc = GetCabinetControllerByPosition(g.Position);
+                if (cc?.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
+                {
+                    ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
+                    cc.game = g; //CabinetController will load the cabinet once asigned.
+                    yield return new WaitForSeconds(1f / 2f);
+                }
+                else
+                    ConfigManager.WriteConsole($"[CabinetsController.load] child #{idx} don´t have a CabinetController component or was assigned previously.");
             }
             else
             {
@@ -71,4 +102,6 @@ public class CabinetsController : MonoBehaviour
         ConfigManager.WriteConsole($"[CabinetsController] loaded to {idx - 1} cabinets");
         Loaded = true;
     }
+
+
 }

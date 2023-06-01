@@ -10,7 +10,6 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
 
 #if UNITY_EDITOR
 using UnityEditor;
