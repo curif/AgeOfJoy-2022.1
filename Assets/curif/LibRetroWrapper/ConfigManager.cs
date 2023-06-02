@@ -11,7 +11,8 @@ public static class ConfigManager
 {
   //paths
 #if UNITY_EDITOR
-  public static string BaseDir = Environment.GetEnvironmentVariable("HOME") + "/cabs";
+  //public static string BaseDir = Environment.GetEnvironmentVariable("HOME") + "/cabs";
+  public static string BaseDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+ "/cabs";
 #else
   public static string BaseDir = "/sdcard/Android/data/com.curif.AgeOfJoy";
 #endif
