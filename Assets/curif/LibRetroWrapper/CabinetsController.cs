@@ -56,7 +56,7 @@ public class CabinetsController : MonoBehaviour
     public CabinetController GetCabinetControllerByPosition(int position)
     {
         return transform.GetComponentsInChildren<CabinetController>()
-            .FirstOrDefault(cc => cc.Position == position);
+            .FirstOrDefault(cc => cc.game.Position == position);
     }
 
 
