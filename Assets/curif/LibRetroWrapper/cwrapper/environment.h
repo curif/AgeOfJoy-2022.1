@@ -15,7 +15,7 @@ extern "C" {
 
 #include "libretro.h"
 
-void wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
+int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                               char *_system_directory, char *_sample_rate);
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness);
 bool wrapper_environment_cb(unsigned cmd, void *data);

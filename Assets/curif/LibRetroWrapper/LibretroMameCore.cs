@@ -326,7 +326,7 @@ public static unsafe class LibretroMameCore
 
     //environment.
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_environment_init(logHandler lg, byte[] _save_directory, byte[] _system_directory, byte[] _sample_rate);
+    private static extern int wrapper_environment_init(logHandler lg, byte[] _save_directory, byte[] _system_directory, byte[] _sample_rate);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_environment_set_game_parameters(byte[] _gamma, byte[] _brightness);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -477,10 +477,16 @@ public static unsafe class LibretroMameCore
             WriteConsole("[LibRetroMameCore.Start] wrapper_environment_init/retro_set_environment");
             // should run first.
             //wrapper_environment_init(Marshal.GetFunctionPointerForDelegate(new logHandler(MamePrintf)));
-            wrapper_environment_init(new logHandler(MamePrintf), Encoding.ASCII.GetBytes(ConfigManager.GameSaveDir), 
-                                      Encoding.ASCII.GetBytes(ConfigManager.SystemDir),
-                                      Encoding.ASCII.GetBytes(QuestAudioFrequency.ToString())
-                                      );
+            int result = wrapper_environment_init(new logHandler(MamePrintf), Encoding.ASCII.GetBytes(ConfigManager.GameSaveDir), 
+                                                 Encoding.ASCII.GetBytes(ConfigManager.SystemDir),
+                                                 Encoding.ASCII.GetBytes(QuestAudioFrequency.ToString())
+                                                );
+            if (result != 0)
+            {
+              WriteConsole("[LibRetroMameCore.Start] wrapper_environment_init failed");
+              return false;
+            }
+            
             WriteConsole("[LibRetroMameCore.Start] wrapper_image_init");
             wrapper_image_init();
             wrapper_image_set_texture_cb(new CreateTextureHandler(CreateTexture), new LoadTextureDataHandler(LoadTextureData));
