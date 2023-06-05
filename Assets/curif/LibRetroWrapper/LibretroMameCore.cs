@@ -785,7 +785,7 @@ public static unsafe class LibretroMameCore
 
         if (device == RETRO_DEVICE_JOYPAD)
         {
-            InputControlDebug(RETRO_DEVICE_JOYPAD);
+            //InputControlDebug(RETRO_DEVICE_JOYPAD);
             switch (id)
             {
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:
@@ -820,7 +820,7 @@ public static unsafe class LibretroMameCore
 
         else if (device == RETRO_DEVICE_MOUSE)
         {
-            InputControlDebug(RETRO_DEVICE_MOUSE);
+            //InputControlDebug(RETRO_DEVICE_MOUSE);
             ret = (Int16)deviceIdsMouse.Active(id);
             if (ret != 0)
                 ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
