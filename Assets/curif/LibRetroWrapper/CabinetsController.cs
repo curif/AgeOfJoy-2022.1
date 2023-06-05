@@ -34,23 +34,27 @@ public class CabinetsController : MonoBehaviour
     {
         cabinetsCount = transform.childCount;
 
-        gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
-        if (gameRegistry != null)
-            StartCoroutine(load());
-        else
-            ConfigManager.WriteConsoleError("[CabinetsController] gameRegistry component not found");
-
         //set cabinets ID.using a For to ensure the order.
         int idx = 0;
         for (idx = 0; idx < cabinetsCount; idx++)
         {
             CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
+            if (cc == null)
+            {
+                cc = transform.GetChild(idx).gameObject.AddComponent<CabinetController>();
+            }
             if (cc != null)
             {
                 cc.game = new();
                 cc.game.Position = idx;
             }
         }
+        gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
+        if (gameRegistry != null)
+            StartCoroutine(load());
+        else
+            ConfigManager.WriteConsoleError("[CabinetsController] gameRegistry component not found");
+
     }
 
     public CabinetController GetCabinetControllerByPosition(int position)
@@ -59,6 +63,37 @@ public class CabinetsController : MonoBehaviour
             .FirstOrDefault(cc => cc.game.Position == position);
     }
 
+    public CabinetReplace GetCabinetReplaceByPosition(int position)
+    {
+        return transform.GetComponentsInChildren<CabinetReplace>()
+            .FirstOrDefault(cc => cc.game.Position == position);
+    }
+
+    public GameObject GetCabinetChildByPosition(int position)
+    {
+        // Loop through all the child objects
+        foreach (Transform childTransform in transform)
+        {
+            // Get the CabinetController component if it exists
+            CabinetController cabinetController = childTransform.GetComponent<CabinetController>();
+            if (cabinetController != null && cabinetController.game.Position == position)
+            {
+                // Return the GameObject if the position matches
+                return childTransform.gameObject;
+            }
+
+            // Get the CabinetReplace component if it exists
+            CabinetReplace cabinetReplace = childTransform.GetComponent<CabinetReplace>();
+            if (cabinetReplace != null && cabinetReplace.game.Position == position)
+            {
+                // Return the GameObject if the position matches
+                return childTransform.gameObject;
+            }
+        }
+
+        // Return null if no GameObject with the specified position was found
+        return null;
+    }
 
     IEnumerator load()
     {
@@ -83,7 +118,7 @@ public class CabinetsController : MonoBehaviour
                       $"[CabinetsController.load] child #{idx} don´t have a CabinetController component or was assigned previously.");
                 */
                 CabinetController cc = GetCabinetControllerByPosition(g.Position);
-                if (cc?.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
+                if (cc.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
                 {
                     ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
                     cc.game = g; //CabinetController will load the cabinet once asigned.
@@ -103,5 +138,38 @@ public class CabinetsController : MonoBehaviour
         Loaded = true;
     }
 
+    public void Replace(int position, string room, string cabinetDBName)
+    {
+        //replace in the registry
+        CabinetPosition toAdd = new();
+        toAdd.Room = room;
+        toAdd.Position = position;
+        toAdd.CabinetDBName = cabinetDBName;
 
+        CabinetPosition toBeReplaced = gameRegistry.GetCabinetPositionInRoom(position, room);
+        ConfigManager.WriteConsole($"[CabinetsController.Replace] [{toBeReplaced}] by [{toAdd}] ");
+        gameRegistry.Replace(toBeReplaced, toAdd); //persists changes
+
+        //get cabinetReplace component first.
+        CabinetReplace cr = GetCabinetReplaceByPosition(position);
+        if (cr != null)
+        {
+            ConfigManager.WriteConsole($"[CabinetController.Replace] replacing a cabinet by [{toAdd}]");
+            cr.ReplaceWith(toAdd);
+        }
+        else
+        {
+            CabinetController cc = GetCabinetControllerByPosition(position);
+            if (cc != null)
+            {
+                //its a non-loaded cabinet. It will load just with the assignment
+                ConfigManager.WriteConsole($"[CabinetController.Replace] adding [{toAdd}] to a not-loaded cabinet. It will load soon...");
+                cc.game = toAdd;
+            }
+            else
+            {
+                ConfigManager.WriteConsoleError($"[CabinetController.Replace] no cabinet found to replace by [{toAdd}]");
+            }
+        }
+    }
 }

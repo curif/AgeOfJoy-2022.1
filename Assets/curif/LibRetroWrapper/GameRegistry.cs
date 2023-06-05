@@ -24,6 +24,10 @@ public class CabinetPosition //: IEquatable<Part>
     [YamlIgnore]
     public CabinetInformation CabInfo;
 
+    public override string ToString()
+    {
+        return $"cab: {CabinetDBName} Pos: {Position} Room: {Room} rom: {Rom} hasInfo: {CabInfo != null}";
+    }
 }
 
 [Serializable]
@@ -142,6 +146,21 @@ public class GameRegistry : MonoBehaviour
         return cabinetsPosition.Remove(g);
     }
 
+    public void Replace(CabinetPosition g, CabinetPosition by)
+    {
+        if (g != null)
+            Remove(g);
+        Add(by);
+        Persist();
+    }
+
+    public CabinetPosition GetCabinetPositionInRoom(int position, string room)
+    {
+        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(g => g.Position == position 
+                                                                            && string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase) );
+        return cabPos;
+    }
+
     public GameRegistry Persist()
     {
         //save to disk
@@ -210,7 +229,6 @@ public class GameRegistry : MonoBehaviour
         LoadUnnasigned().DeleteMissingCabinets();
         return this;
     }
-
 
     public List<string> GetRomsAssignedToRoom(string room)
     {

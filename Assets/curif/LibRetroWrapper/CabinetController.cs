@@ -10,7 +10,7 @@ using System;
 using System.Threading.Tasks;
 
 
-[RequireComponent(typeof(CabinetReplace))]
+//[RequireComponent(typeof(CabinetReplace))]
 public class CabinetController : MonoBehaviour
 {
     public CabinetPosition game;
@@ -34,8 +34,8 @@ public class CabinetController : MonoBehaviour
 
         //the cabinet position should be loaded by default with this object, or replaced from configuration changes.
         //Then, the cabinet out of order default should have this CabinetReplace component for the second. 
-        cabinetReplaceComponent = GetComponent<CabinetReplace>();        
-        cabinetReplaceComponent.AgentPlayerPositions = AgentPlayerPositions;
+        //cabinetReplaceComponent = GetComponent<CabinetReplace>();        
+        //cabinetReplaceComponent.AgentPlayerPositions = AgentPlayerPositions;
 
         StartCoroutine(load());
     }
@@ -54,13 +54,9 @@ public class CabinetController : MonoBehaviour
     IEnumerator load()
     {
 
-        while (game == null || game.CabInfo == null)
+        while (game == null || string.IsNullOrEmpty(game.CabinetDBName) || game.CabInfo == null)
             yield return new WaitForSeconds(1f);
 
-         //propagate game information for future replacements.
-        cabinetReplaceComponent.AgentPlayerPositions = AgentPlayerPositions;
-        cabinetReplaceComponent.game = game;
-        
         while (!playerIsInSomePosition())
             yield return new WaitForSeconds(0.5f);
 
@@ -91,7 +87,7 @@ public class CabinetController : MonoBehaviour
         CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
         cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
         cabReplaceComp.game = game;
-
+        
         //gameObject.SetActive(false);
         Destroy(gameObject); //destroy me
 

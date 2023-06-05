@@ -20,7 +20,6 @@ public class Cabinet
   //those parts that the user can configure, but is not limited to.
   public static List<string> userStandarConfigurableParts = new List<string>() { "front", "left", "right", "joystick", "joystick-down", "screen-base" };
 
-
   // load a texture from disk.
   private static Texture2D LoadTexture(string filePath)
   {

@@ -15,13 +15,15 @@ public class CabinetReplace : MonoBehaviour
     public List<GameObject> AgentPlayerPositions;
     public CabinetPosition game;
 
-    private void ReplaceWith(string cabinetName, string room, int positionInList)
+    public void ReplaceWith(CabinetPosition newCabGame)
     {
-        string cabinetPath = ConfigManager.CabinetsDB + "/" + cabinetName;
+        ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] game: {newCabGame}");
+
+        string cabinetPath = ConfigManager.CabinetsDB + "/" + newCabGame.CabinetDBName;
         string descriptionPath = cabinetPath + "/description.yaml";
-        if (!File.Exists(cabinetPath))
+        if (!File.Exists(descriptionPath))
         {
-            ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] not found: {descriptionPath}");
+            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] not found: {descriptionPath}");
             return;
         }
 
@@ -34,7 +36,7 @@ public class CabinetReplace : MonoBehaviour
             cbInfo = CabinetInformation.fromYaml(cabinetPath);
             if (cbInfo == null)
             {
-                ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR NULL cabinet - new cabinet from yaml: {cabinetPath}");
+                ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR NULL cabinet - new cabinet from yaml: {descriptionPath}");
                 return;
             }
 
@@ -44,16 +46,15 @@ public class CabinetReplace : MonoBehaviour
             //cabinet inseption
             ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] Deploy replacement cabinet {cbInfo.name}");
             //note: factory will add this CabinetReplace component (this component) to the new cabinet.
-            Cabinet cab = CabinetFactory.fromInformation(cbInfo, room, positionInList, transform.position, transform.rotation, transform.parent, AgentPlayerPositions);
+            Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
+                                                            transform.position, transform.rotation,
+                                                            transform.parent, AgentPlayerPositions);
             CabinetFactory.skinFromInformation(cab, cbInfo);
 
             //add CabinetReplace for the next replacement. CabinetController do the same.
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
             cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
-            cabReplaceComp.game = new();
-            cabReplaceComp.game.CabinetDBName = cabinetName;
-            cabReplaceComp.game.Room = room;
-            cabReplaceComp.game.Position = game.Position;
+            cabReplaceComp.game = newCabGame;
 
             UnityEngine.Object.Destroy(gameObject);
 

@@ -556,7 +556,12 @@ public class ConfigurationController : MonoBehaviour
     private void SetControlMapWidgets()
     {
         if (lblGameSelected != null)
+        {
+            //adjust widgets
+            controlMapGameId.SetOptions(GetCabinetsInRoom());
+            controlMapGameId.enabled = !isGlobalConfigurationWidget.value;
             return;
+        }
 
         //controllers
         //Game selection
@@ -615,7 +620,7 @@ public class ConfigurationController : MonoBehaviour
             ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no cabinets registered in gameRegistry for {room}");
             return new List<string>();
         }
-        
+
         ConfigManager.WriteConsole($"[GetCabinetsInRoom] there are {cabinetsInRoom.Count} cabinets in {room} and {cabinetsController?.gameRegistry?.CabinetsInRegistry} cabinets in the main registry");
 
         for (int idx = 0; idx < cabinetsInRoom.Count; idx++)
@@ -641,8 +646,14 @@ public class ConfigurationController : MonoBehaviour
 
     private void SetCabinetsWidgets()
     {
-        if (cabinetToReplace != null || !CanConfigureCabinets())
+        if (!CanConfigureCabinets())
             return;
+
+        if (cabinetToReplace != null)
+        {
+            cabinetToReplace.SetOptions(GetCabinetsInRoom());
+            return;
+        }
 
         GenericLabel lblRoomName = new GenericLabel(scr, "lblRoomName", GetRoomName(), 4, 6);
         cabinetToReplace = new GenericOptions(scr, "cabinetToReplace", "replace:", GetCabinetsInRoom(), 4, 8, maxLength: 26);
@@ -655,6 +666,37 @@ public class ConfigurationController : MonoBehaviour
                                 .Add(cabinetReplaced)
                                 .Add(new GenericButton(scr, "save", "save", 4, 11, true))
                                 .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+    }
+    public void CabinetsExtractNumberAndName(out int number, out string name)
+    {
+        string input = cabinetToReplace.GetSelectedOption();
+        if (string.IsNullOrEmpty(input))
+        {
+            number = -1;
+            name = "";
+            return;
+        }
+        if (int.TryParse(input.Substring(0, 3), out number))
+        {
+            name = input.Substring(4);
+        }
+        else
+        {
+            number = -1;
+            name = "";
+        }
+    }
+
+    private void SaveCabinetPositions()
+    {
+        int position;
+        string cabinetDBName;
+        string room = GetRoomName();
+        CabinetsExtractNumberAndName(out position, out cabinetDBName); //the name doesn't care.
+        cabinetDBName = cabinetReplaced.GetSelectedOption();
+        ConfigManager.WriteConsole($"[SaveCabinetPositions] new replacement in pos:{position} by cabinet: {cabinetDBName} room: {room}");
+        // free cabinets dont have a CabinetReplace component but a CabinetController
+        cabinetsController.Replace(position, room, cabinetDBName);
     }
 
     private bool CanConfigureCabinets()
@@ -1062,6 +1104,7 @@ public class ConfigurationController : MonoBehaviour
                         }
                         else if (w.name == "save")
                         {
+                            SaveCabinetPositions();
                             status = StatusOptions.onMainMenu;
                             return TaskStatus.Success;
                         }
