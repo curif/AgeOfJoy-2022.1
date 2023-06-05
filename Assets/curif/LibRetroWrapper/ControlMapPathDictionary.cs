@@ -20,12 +20,14 @@ public static class ControlMapPathDictionary
        */
         map = new Dictionary<string, string>
     {
+        
+        //previous maps to 2022.3, ovr oculus controllers
         // Left VR controller mappings
         { "quest-x", "<XRController>{LeftHand}/primaryButton" }, //primaryButton
         { "quest-y", "<XRController>{LeftHand}/secondaryButton" },
-        { "quest-start", "<XRController>{LeftHand}/menuButton" },
+        { "quest-start", "<OculusTouchController>/start" },
         { "quest-left-grip", "<XRController>{LeftHand}/gripButton" },
-        { "quest-left-trigger", "<XRController>{LeftHand}/triggerButton" },
+        { "quest-left-trigger", "<OculusTouchController>{LeftHand}/triggerPressed" },
         { "quest-left-thumbstick", "<XRController>{LeftHand}/Primary2DAxis" },
         { "quest-left-thumbstick-press", "<XRController>{LeftHand}/thumbstickClicked" },
         
@@ -34,10 +36,28 @@ public static class ControlMapPathDictionary
         { "quest-b", "<XRController>{RightHand}/secondaryButton" },
         { "quest-select", "<XRController>{RightHand}/menuButton" },
         { "quest-right-grip", "<XRController>{RightHand}/gripButton" },
-        { "quest-right-trigger", "<XRController>{RightHand}/triggerButton" },
+        { "quest-right-trigger", "<OculusTouchController>{RightHand}/triggerPressed" },
         { "quest-right-thumbstick", "<XRController>{RightHand}/Primary2DAxis" },
         { "quest-right-thumbstick-press", "<XRController>{RightHand}/thumbstickClicked" },
-
+/*
+        // Left VR controller mappings
+        { "quest-x", "<OculusTouchController>{LeftHand}/primaryButton" }, //primaryButton
+        { "quest-y", "<OculusTouchController>{LeftHand}/secondaryButton" },
+        { "quest-start", "<OculusTouchController>/start" },
+        { "quest-left-grip", "<OculusTouchController>{LeftHand}/gripPressed" },
+        { "quest-left-trigger", "<OculusTouchController>{LeftHand}/triggerPressed" },
+        { "quest-left-thumbstick", "<OculusTouchController>{LeftHand}/thumbstick" },
+        { "quest-left-thumbstick-press", "<OculusTouchController>{LeftHand}/thumbstickClicked" },
+        
+        // Right VR controller mappings
+        { "quest-a", "<OculusTouchController>{RightHand}/primaryButton" },
+        { "quest-b", "<OculusTouchController>{RightHand}/secondaryButton" },
+        { "quest-select", "<OculusTouchController>{RightHand}/start" },
+        { "quest-right-grip", "<OculusTouchController>{RightHand}/gripPressed" },
+        { "quest-right-trigger", "<OculusTouchController>{RightHand}/triggerPressed" },
+        { "quest-right-thumbstick", "<OculusTouchController>{RightHand}/thumbstick" },
+        { "quest-right-thumbstick-press", "<OculusTouchController>{RightHand}/thumbstickClicked" },
+*/
         //Gamepad mappings
         { "gamepad-a", "<Gamepad>/buttonSouth" },
         { "gamepad-b", "<Gamepad>/buttonEast" },
@@ -62,17 +82,6 @@ public static class ControlMapPathDictionary
         { "keyboard-space", "<keyboard>/space"},
         { "keyboard-esc", "<keyboard>/escape"},
         { "keyboard-enter", "<keyboard>/enter"}
-        /*
-        { "gamepad-left-thumbstick-down", "<Gamepad>/leftStick/down" },
-        { "gamepad-left-thumbstick-up", "<Gamepad>/leftStick/up" },
-        { "gamepad-left-thumbstick-left", "<Gamepad>/leftStick/left" },
-        { "gamepad-left-thumbstick-right", "<Gamepad>/leftStick/right" },
-        { "gamepad-right-thumbstick-down", "<Gamepad>/rightStick/down" },
-        { "gamepad-right-thumbstick-up", "<Gamepad>/rightStick/up" },
-        { "gamepad-right-thumbstick-left", "<Gamepad>/rightStick/left" },
-        { "gamepad-right-thumbstick-right", "<Gamepad>/rightStick/right" },
-        { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" }
-        */
       };
     }
     public static string GetBehavior(string realControl)

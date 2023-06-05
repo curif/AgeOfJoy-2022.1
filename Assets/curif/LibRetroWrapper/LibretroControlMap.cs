@@ -5,8 +5,6 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
-
 
 public class LibretroControlMap : MonoBehaviour
 {
@@ -84,7 +82,7 @@ public class LibretroControlMap : MonoBehaviour
         InputAction action = actionMap.FindAction(mameControl);
         if (action == null)
         {
-            //ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{mameControl}] not found in controlMap");
+            ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{mameControl}] not found in controlMap");
             return 0;
         }
 
@@ -177,9 +175,11 @@ public class LibretroControlMap : MonoBehaviour
         if (enable)
         {
             actionMap.Enable();
+            ConfigManager.WriteConsole($"[LibretroControlMap.Enable] actionMap Enabled: {actionMap}");
             // inputActionManager.DisableInput();
             return;
         }
+        ConfigManager.WriteConsole($"[LibretroControlMap.Enable] actionMap Disabled: {actionMap}");
         actionMap.Disable();
         // inputActionManager.EnableInput();
         return;
