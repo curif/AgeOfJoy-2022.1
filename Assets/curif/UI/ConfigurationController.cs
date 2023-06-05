@@ -163,6 +163,8 @@ public class ConfigurationController : MonoBehaviour
     private GenericWidgetContainer cabinetsToChangeContainer;
     private GenericOptions cabinetToReplace;
     private GenericOptions cabinetReplaced;
+    private GenericTimedLabel cabinetSavedLabel;
+
     private GenericLabelOnOff lblHaveRoomConfiguration, lblRoomName;
 
 
@@ -658,6 +660,7 @@ public class ConfigurationController : MonoBehaviour
         GenericLabel lblRoomName = new GenericLabel(scr, "lblRoomName", GetRoomName(), 4, 6);
         cabinetToReplace = new GenericOptions(scr, "cabinetToReplace", "replace:", GetCabinetsInRoom(), 4, 8, maxLength: 26);
         cabinetReplaced = new GenericOptions(scr, "cabinetReplaced", "with:", GetAllCabinets(), 4, 9, maxLength: 26);
+        cabinetSavedLabel = new(scr, "saved", "cabinet replaced", 3, 19, true);
 
         cabinetsToChangeContainer = new(scr, "cabinetsToChangeContainer");
         cabinetsToChangeContainer.Add(new GenericWindow(scr, 2, 4, "cabswin", 37, 12, " replace cabinets "))
@@ -665,7 +668,8 @@ public class ConfigurationController : MonoBehaviour
                                 .Add(cabinetToReplace)
                                 .Add(cabinetReplaced)
                                 .Add(new GenericButton(scr, "save", "save", 4, 11, true))
-                                .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+                                .Add(new GenericButton(scr, "exit", "exit", 4, 12, true))
+                                .Add(cabinetSavedLabel);
     }
     public void CabinetsExtractNumberAndName(out int number, out string name)
     {
@@ -1105,10 +1109,11 @@ public class ConfigurationController : MonoBehaviour
                         else if (w.name == "save")
                         {
                             SaveCabinetPositions();
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
+                            SetCabinetsWidgets();
+                            cabinetSavedLabel.SetSecondsAndDraw(2);
                         }
                     }
+                    cabinetSavedLabel.Draw();
                     scr.DrawScreen();
                     return TaskStatus.Continue;
                 })
