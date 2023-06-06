@@ -185,4 +185,10 @@ public class LibretroControlMap : MonoBehaviour
         return;
     }
 
+    //when its not longer neccesary
+    public void Clean()
+    {
+        actionMap = null;
+    }
+
 }

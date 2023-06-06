@@ -392,7 +392,7 @@ public static unsafe class LibretroMameCore
         deviceIdsCombined = mouse.Concat(joy).ToList();
     }
 
-    static void initializeControls()
+    static void assignControls()
     {
         if (ControlMap == null)
         {
@@ -471,9 +471,6 @@ public static unsafe class LibretroMameCore
             WriteConsole("[LibRetroMameCore.Start] ------------------- LIBRETRO INIT -----------------------");
             WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
 
-            //controls
-            initializeControls();
-
             //Audio configuration
             var audioConfig = AudioSettings.GetConfiguration();
             QuestAudioFrequency = audioConfig.sampleRate;
@@ -526,7 +523,10 @@ public static unsafe class LibretroMameCore
         ScreenName = screenName;
 
         WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
-
+        
+        //controls
+        assignControls();
+        
         retro_game_info game = new retro_game_info();
         game.path = path;
         game.size = 0;
@@ -548,7 +548,6 @@ public static unsafe class LibretroMameCore
 
         wrapper_environment_get_av_info();
         FPSControl = new FpsControl((float)wrapper_environment_get_fps());
-
 
         /* It's impossible to change the Sample Rate, fixed in 48000
         audioConfig.sampleRate = sampleRate;

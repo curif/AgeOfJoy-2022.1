@@ -103,8 +103,8 @@ public class ConfigurationController : MonoBehaviour
     public ScreenGenerator scr;
     public CoinSlotController CoinSlot;
     public InputActionMap actionMap;
-    [Tooltip("The global action manager in the main rig. We will find one if not set.")]
-    public InputActionManager inputActionManager;
+    // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
+    // public InputActionManager inputActionManager;
 
     [Tooltip("We will find the correct one")]
     public ChangeControls changeControls;
@@ -189,8 +189,8 @@ public class ConfigurationController : MonoBehaviour
             GameObject player = GameObject.Find("OVRPlayerControllerGalery");
             changeControls = player.GetComponent<ChangeControls>();
         }
-        GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
-        inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
+        // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
+        // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
         StartCoroutine(run());
     }
@@ -1138,13 +1138,14 @@ public class ConfigurationController : MonoBehaviour
     public void ControlEnable(bool enable)
     {
         changeControls.PlayerMode(enable);
-        //if (inputActionManager != null)
-        //    inputActionManager.enabled = !enable;
         if (enable)
         {
+            // inputActionManager?.EnableInput();
             actionMap.Enable();
             return;
         }
+        // cant disable, headset goes crazy.
+        // inputActionManager?.DisableInput();
         actionMap.Disable();
 
         return;
