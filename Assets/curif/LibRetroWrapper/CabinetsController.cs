@@ -100,29 +100,22 @@ public class CabinetsController : MonoBehaviour
         List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(Room, transform.childCount); //persist registry with the new assignation if any.
         ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {games.Count} cabinets to room {Room}");
         Loaded = false;
-        int idx = 0;
         foreach (CabinetPosition g in games)
         {
-            if (g.CabInfo != null)
+            if (!String.IsNullOrEmpty(g.CabinetDBName))
             {
                 CabinetController cc = GetCabinetControllerByPosition(g.Position);
-                if (cc.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
+                if (cc != null)
                 {
-                    ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {g.CabInfo.name} to #{idx}");
-                    cc.game = g; //CabinetController will load the cabinet once asigned.
+                    ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {g}");
+                    cc.game = g; //CabinetController will load the cabinet once asigned a cabinetName
                     yield return new WaitForSeconds(1f / 2f);
                 }
                 else
-                    ConfigManager.WriteConsole($"[CabinetsController.load] child #{idx} don´t have a CabinetController component or was assigned previously.");
+                    ConfigManager.WriteConsole($"[CabinetsController.load] child #{g.Position} don´t have a CabinetController component or was assigned previously.");
             }
-            else
-            {
-                ConfigManager.WriteConsoleError($"[CabinetsController.load] Assigned {g.CabinetDBName} in #{idx} doesn't have a Cabinet Information assigned, possible error when load cabinet.");
-            }
-
-            idx++;
         }
-        ConfigManager.WriteConsole($"[CabinetsController] loaded to {idx - 1} cabinets");
+        ConfigManager.WriteConsole($"[CabinetsController.load] loaded cabinets");
         Loaded = true;
     }
 
