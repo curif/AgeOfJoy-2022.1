@@ -34,7 +34,7 @@ public class CabinetsController : MonoBehaviour
     {
         cabinetsCount = transform.childCount;
 
-        //set cabinets ID.using a For to ensure the order.
+        //set cabinets ID. using a For to ensure the order.
         int idx = 0;
         for (idx = 0; idx < cabinetsCount; idx++)
         {
@@ -98,29 +98,17 @@ public class CabinetsController : MonoBehaviour
     IEnumerator load()
     {
         List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(Room, transform.childCount); //persist registry with the new assignation if any.
-        ConfigManager.WriteConsole($"[CabinetsController] Assigned {games.Count} cabinets to room {Room}");
+        ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {games.Count} cabinets to room {Room}");
         Loaded = false;
         int idx = 0;
         foreach (CabinetPosition g in games)
         {
             if (g.CabInfo != null)
             {
-                /*
-                CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
-                if (cc?.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
-                {
-                    ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
-                    cc.game = g;
-                    yield return new WaitForSeconds(1f / 2f);
-                }
-                else
-                    ConfigManager.WriteConsole(
-                      $"[CabinetsController.load] child #{idx} don´t have a CabinetController component or was assigned previously.");
-                */
                 CabinetController cc = GetCabinetControllerByPosition(g.Position);
                 if (cc.game?.CabinetDBName == null || String.IsNullOrEmpty(cc.game.CabinetDBName))
                 {
-                    ConfigManager.WriteConsole($"[CabinetsController] Assigned {g.CabInfo.name} to #{idx}");
+                    ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {g.CabInfo.name} to #{idx}");
                     cc.game = g; //CabinetController will load the cabinet once asigned.
                     yield return new WaitForSeconds(1f / 2f);
                 }

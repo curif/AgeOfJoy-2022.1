@@ -182,7 +182,7 @@ public class GameRegistry : MonoBehaviour
         ConfigManager.WriteConsole($"[GameRegistry] {cabinetsPosition.Registry.Count}----------------");
         foreach (CabinetPosition g in cabinetsPosition.Registry)
         {
-            ConfigManager.WriteConsole($"{g.Rom} asigned to: {g.Room} cab: {g.CabinetDBName} pos #{g.Position}");
+            ConfigManager.WriteConsole($"cab: {g.CabinetDBName} (rom:{g.Rom}) asigned to: {g.Room} pos #{g.Position}");
         }
 
         ConfigManager.WriteConsole($"[GameRegistry] Unassigned cabinets: {UnassignedCabinets.Count}");
@@ -333,9 +333,7 @@ public class GameRegistry : MonoBehaviour
         //load cabinets information
         foreach (CabinetPosition cab in cabsPosition.Where(g => g.CabInfo == null))
         {
-            cab.CabInfo = CabinetInformation.fromName(cab.CabinetDBName);
-            if (cab.CabInfo != null)
-                cab.Rom = cab.CabInfo.rom;
+
         }
 
         return cabsPosition;

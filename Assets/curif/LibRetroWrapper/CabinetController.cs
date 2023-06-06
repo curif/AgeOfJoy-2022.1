@@ -32,11 +32,6 @@ public class CabinetController : MonoBehaviour
                 AgentPlayerPositionComponents.Add(asp);
         }
 
-        //the cabinet position should be loaded by default with this object, or replaced from configuration changes.
-        //Then, the cabinet out of order default should have this CabinetReplace component for the second. 
-        //cabinetReplaceComponent = GetComponent<CabinetReplace>();        
-        //cabinetReplaceComponent.AgentPlayerPositions = AgentPlayerPositions;
-
         StartCoroutine(load());
     }
 
@@ -50,44 +45,56 @@ public class CabinetController : MonoBehaviour
         return false;
     }
 
-
     IEnumerator load()
     {
 
-        while (game == null || string.IsNullOrEmpty(game.CabinetDBName) || game.CabInfo == null)
-            yield return new WaitForSeconds(1f);
+        while (game == null || string.IsNullOrEmpty(game.CabinetDBName))
+            yield return new WaitForSeconds(2f);
 
         while (!playerIsInSomePosition())
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(1f);
+
+        if (game.CabInfo == null)
+        {
+            game.CabInfo = CabinetInformation.fromName(game.CabinetDBName);
+            if (game.CabInfo == null)
+            {
+                ConfigManager.WriteConsoleError($"[CabinetController.load] loading cabinet from description fails {game}");
+                yield break;
+            }
+        }
 
         Cabinet cab;
         Transform parent = transform.parent;
         try
         {
             //cabinet inception
-            ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
+            ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game}");
             cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent, AgentPlayerPositions);
         }
         catch (System.Exception ex)
         {
-            ConfigManager.WriteConsole($"[CabinetController] ERROR loading cabinet from description {game.CabInfo.name}: {ex}");
+            ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {game.CabInfo.name}", ex);
             cab = null;
         }
+
 
         if (cab != null && game.CabInfo.Parts != null)
         {
             ConfigManager.WriteConsole($"[CabinetControlle] {game.CabInfo.name} texture parts");
+            //N seconds to load a cabinet
+            float waitForSeconds = 2f / game.CabInfo.Parts.Count;
             foreach (CabinetInformation.Part part in game.CabInfo.Parts)
             {
                 CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
-                yield return null;
+                yield return new WaitForSeconds(waitForSeconds);
             }
         }
 
         CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
         cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
         cabReplaceComp.game = game;
-        
+
         //gameObject.SetActive(false);
         Destroy(gameObject); //destroy me
 

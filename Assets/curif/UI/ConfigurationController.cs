@@ -67,7 +67,7 @@ public class ConfigurationHelper
     }
     public bool CanConfigureRoom()
     {
-        ConfigManager.WriteConsole($"[ConfigurationHelper.CanConfigureRoom] room: {roomConfiguration?.yamlPath}");
+        // ConfigManager.WriteConsole($"[ConfigurationHelper.CanConfigureRoom] room: {roomConfiguration?.yamlPath}");
         return roomConfiguration != null;
     }
 
@@ -176,13 +176,7 @@ public class ConfigurationController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        map = new();
-        ControlMapConfiguration conf = new DefaultControlMap();
-        conf.AddMap("KEYB-UP", "keyboard-w");
-        conf.AddMap("KEYB-DOWN", "keyboard-s");
-        conf.AddMap("KEYB-LEFT", "keyboard-a");
-        conf.AddMap("KEYB-RIGHT", "keyboard-d");
-        actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
+        setupActionMap();
 
         if (changeControls == null)
         {
@@ -193,8 +187,19 @@ public class ConfigurationController : MonoBehaviour
         // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
         if (CoinSlot == null)
-            ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.")
+            ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
         StartCoroutine(run());
+    }
+
+    private void setupActionMap()
+    {
+        map = new();
+        ControlMapConfiguration conf = new DefaultControlMap();
+        conf.AddMap("KEYB-UP", "keyboard-w");
+        conf.AddMap("KEYB-DOWN", "keyboard-s");
+        conf.AddMap("KEYB-LEFT", "keyboard-a");
+        conf.AddMap("KEYB-RIGHT", "keyboard-d");
+        actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
     }
 
     public void NPCScreenDraw()
