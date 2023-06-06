@@ -192,6 +192,8 @@ public class ConfigurationController : MonoBehaviour
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
         // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
+        if (CoinSlot == null)
+            ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.")
         StartCoroutine(run());
     }
 
