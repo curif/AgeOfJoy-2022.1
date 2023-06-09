@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using UnityEngine;
 using UnityEditor;
 
@@ -84,3 +86,4 @@ public class DoorAlignerEditor : Editor
         }
     }
 }
+#endif
