@@ -54,7 +54,6 @@ public class CabinetsController : MonoBehaviour
             StartCoroutine(load());
         else
             ConfigManager.WriteConsoleError("[CabinetsController] gameRegistry component not found");
-
     }
 
     public CabinetController GetCabinetControllerByPosition(int position)

@@ -24,10 +24,11 @@ public class SceneGate
 public class GateController : MonoBehaviour
 {
 
+/*
   [Tooltip("The minimal distance between the player and the gate to load/unload scenes.")]
   [SerializeField]
   public float MinimalDistance = 0.9f;
-
+*/
   [Header("Scene Load settings")]
   [Tooltip("Names of the scenes to load.")]
   [SerializeField]
