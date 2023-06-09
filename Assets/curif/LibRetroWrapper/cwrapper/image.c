@@ -15,7 +15,7 @@ struct
 {
   void* handle;
   void (*retro_set_video_refresh)(retro_video_refresh_t);
-} handlers;
+} image_handlers;
 
 void wrapper_image_init()
 {
@@ -23,9 +23,9 @@ void wrapper_image_init()
   CreateTextureCB = NULL;
   LoadTextureDataCB = NULL;
 
-  handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
-  handlers.retro_set_video_refresh = (void (*)(retro_video_refresh_t))dlsym(handlers.handle, "retro_set_video_refresh");
-  handlers.retro_set_video_refresh(&wrapper_image_video_refresh_cb);
+  image_handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
+  image_handlers.retro_set_video_refresh = (void (*)(retro_video_refresh_t))dlsym(image_handlers.handle, "retro_set_video_refresh");
+  image_handlers.retro_set_video_refresh(&wrapper_image_video_refresh_cb);
 
 }
 

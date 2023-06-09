@@ -239,7 +239,7 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
                       controlConf = new CustomControlMap(CabinetControlMapConfig);
                   }
-                  else if (GameControlMap.Exists(GameFile))
+                  else if (GameControlMap.ExistsConfiguration(GameFile))
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {name}");
                       controlConf = new GameControlMap(GameFile);
@@ -296,6 +296,7 @@ public class LibretroScreenController : MonoBehaviour
                   //videoPlayer.Play();
                   LibretroMameCore.End(name, GameFile);
                   PreparePlayerToPlayGame(false);
+                  libretroControlMap.Clean();
                   timeToExit = DateTime.MinValue;
 
                   return TaskStatus.Success;
@@ -346,7 +347,7 @@ public class LibretroScreenController : MonoBehaviour
                 bsc.InGame(isPlaying);
         }
 
-        //eable inputMap
+        //enable-disable inputMap
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
         libretroControlMap.Enable(isPlaying);
     }

@@ -312,7 +312,7 @@ public class GameControlMap : GlobalControlMap
         return Path(gameFile);
     }
 
-    public static bool Exists(string gameFileName)
+    public static bool ExistsConfiguration(string gameFileName)
     {
         string path = Path(gameFileName);
         bool exists = File.Exists(Path(gameFileName)); 

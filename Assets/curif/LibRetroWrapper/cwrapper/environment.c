@@ -36,21 +36,53 @@ char *wrapper_environment_log(enum retro_log_level level, char *format, ...) {
   handlers.log(level, log_buffer);
   return log_buffer;
 }
-void wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
+int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                               char *_system_directory, char *_sample_rate) {
   memset(&handlers, 0, sizeof(struct handlers_struct));
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
 
   handlers.log = log;
+  char *core = "mame2003_plus_libretro_android.so";
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_init] start -----------\n");
-  handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
+  handlers.handle = dlopen(core, RTLD_LAZY);
+  if ( handlers.handle == NULL)
+  {
+    const char* error = dlerror();
+    if (error != NULL) {
+        wrapper_environment_log(RETRO_LOG_ERROR, "dlopen Error: %s\n", error);
+    }
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] dlopen %s failed\n", core);
+    return -1;
+  }
+  
+  
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] dlsym retro_set_environment\n");
   handlers.retro_set_environment = (void (*)(retro_environment_t))dlsym(
       handlers.handle, "retro_set_environment");
+  if ( handlers.retro_set_environment == NULL)
+  {  
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] retro_set_environment not found\n");
+    return -1;
+  }
+
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] dlsym retro_get_system_av_info\n");
   handlers.retro_get_system_av_info =
       (void (*)(struct retro_get_system_av_info *))dlsym(
           handlers.handle, "retro_get_system_av_info");
-
+  if ( handlers.retro_get_system_av_info == NULL)
+  {  
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] retro_get_system_av_info not found\n");
+    return -1;
+  }
+  
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] call retro_set_environment\n");
   handlers.retro_set_environment(&wrapper_environment_cb);
 
   strncpy(save_directory, _save_directory, 500);
@@ -70,7 +102,11 @@ void wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                           system_directory);
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_init] end ----------\n");
+
+  return 0;
+
 }
+
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness) {
   strncpy(gamma, _gamma, 50);
   strncpy(brightness, _brightness, 50);

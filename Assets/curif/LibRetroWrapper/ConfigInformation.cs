@@ -16,206 +16,250 @@ using System.Reflection;
 
 public class ConfigInformationBase
 {
-  public virtual bool IsValid()
-  {
-    return true;
-  }
+    public virtual bool IsValid()
+    {
+        return true;
+    }
 }
 public class ConfigInformation
 {
-  public NPC npc;
-  public Audio audio;
+    public NPC npc;
+    public Audio audio;
 
-  /** don't. create an empty object. Merge didn't works if both are loaded.
-  public ConfigInformation() {
-    audio = new Audio();
-    audio.background = BackgroundDefault();
-    audio.inGameBackground = BackgroundInGameDefault();
+    /** don't. create an empty object. Merge didn't works if both are loaded.
+    public ConfigInformation() {
+      audio = new Audio();
+      audio.background = BackgroundDefault();
+      audio.inGameBackground = BackgroundInGameDefault();
 
-    npc = new NPC();
-    npc.status = "enabled";
-  }
-  */
-
-  public class NPC : ConfigInformationBase
-  {
-    public static string[] validStatus = new string[] {"enabled", "static", "disabled"};
-    public string status;
-
-    public override bool IsValid()
-    {
-      return status == null || validStatus.Contains(status);
+      npc = new NPC();
+      npc.status = "enabled";
     }
-  }
+    */
 
-  //background audio
-  public class Background : ConfigInformationBase
-  { 
-    [YamlMember(Alias = "volume-percent", ApplyNamingConventions = false)]
-    public uint? volume;
-    public bool? muted;
-
-    public override bool IsValid()
+    public class NPC : ConfigInformationBase
     {
-      return volume <= 100 && volume >= 0;
-    }
-  }
+        public static string[] validStatus = new string[] { "enabled", "static", "disabled" };
+        public string status;
 
-  //global audio config
-  public class Audio : ConfigInformationBase
-  {
-    public Background background;
-    [YamlMember(Alias = "in-game-background", ApplyNamingConventions = false)]
-    public Background inGameBackground;
-
-    public override bool IsValid()
-    {
-      if (background != null && !background.IsValid())
-        return false;
-      if (inGameBackground != null && !inGameBackground.IsValid())
-        return false;
-
-      return true;
-    }
-  }
-
-  // defaults ===================================================
-  public static Background BackgroundInGameDefault()
-  {
-    Background bg = new Background();
-    bg.volume = 20;
-    bg.muted = false;
-    return bg;
-  }
-  public static Background BackgroundDefault()
-  {
-    Background bg = new Background();
-    bg.volume = 70;
-    bg.muted = false;
-    return bg;
-  }
-  public static ConfigInformation newDefault()
-  {
-    return  new ConfigInformation();
-  }
-  // =============================================================
-
-  public static ConfigInformation fromYaml(string yamlPath)
-  {
-    ConfigManager.WriteConsole($"[ConfigInformation]: {yamlPath}");
-
-    if (!File.Exists(yamlPath))
-    {
-      ConfigManager.WriteConsoleError($"[ConfigInformation] YAML file ({yamlPath}) doesn't exists ");
-      return null;
+        public override bool IsValid()
+        {
+            return status == null || validStatus.Contains(status);
+        }
     }
 
-    try
+    //background audio
+    public class Background : ConfigInformationBase
     {
-      var input = File.OpenText(yamlPath);
+        [YamlMember(Alias = "volume-percent", ApplyNamingConventions = false)]
+        public uint? volume;
+        public bool? muted;
 
-      var deserializer = new DeserializerBuilder()
-          .WithNamingConvention(CamelCaseNamingConvention.Instance)
-          .IgnoreUnmatchedProperties()
-          .Build();
-
-      var configInfo = deserializer.Deserialize<ConfigInformation>(input);
-      if (configInfo == null)
-        throw new IOException("Deserialization error");
-
-      configInfo.validate();
-
-      return configInfo;
-    }
-    catch (Exception e)
-    {
-      ConfigManager.WriteConsoleError($"[ConfigInformation] reading configuration YAML file {yamlPath} - {e}");
-      return null;
-    }
-  }
-
-  public bool ToYaml(string yamlPath)
-  {
-    try
-    {
-      var serializer = new SerializerBuilder()
-          .WithNamingConvention(CamelCaseNamingConvention.Instance)
-          .Build();
-      var yaml = serializer.Serialize(this);
-      File.WriteAllText(yamlPath, yaml);
-    }
-    catch (Exception e)
-    {
-      ConfigManager.WriteConsoleError($"[ConfigInformation] configuration YAML file in configuration subdir {yamlPath} - {e}");
-      return false;
-    }
-    return true;
-  } 
-
-  public override string ToString()
-  {
-    string ret = "Configuration \n";
-    ret += "Audio \n";
-    ret += "----- \n";
-    ret += $" \t background: {audio?.background?.volume}\n";
-    ret += "NPCs \n";
-    ret += "---- \n";
-    ret += $" \t status: {npc?.status}\n";
-    ret += " \n";
-    ret += " \n";
-    ret += " \n";
-    ret += " \n";
-    ret += " \n";
-    return ret;
-  }
-
-  private void validate()
-  {
-    if (npc != null)
-      if (!npc.IsValid())
-        throw new Exception("Invalid NPC configuration");
-    
-    if (audio != null)
-      if (!audio.IsValid())
-        throw new Exception("Invalid audio settings");
-  }
-
-  private static T returnNotNullOrNew<T>(T obj1, T obj2) where T: class,new()
-  {
-    if (obj1 == null && obj2 != null) return obj2;
-    if (obj1 != null && obj2 == null) return obj1;
-    return new T(); //and change internal properties 
-  }
-  private static T returnsNotNullOrSecond<T>(T obj1, T obj2)
-  {
-    if (obj1 == null && obj2 != null) return obj2;
-    if (obj1 != null && obj2 == null) return obj1;
-    return obj2;
-  }
-  public static ConfigInformation Merge(ConfigInformation ci1, ConfigInformation ci2)
-  {
-    if (ci1 == null && ci2 != null) return ci2;
-    if (ci1 != null && ci2 == null) return ci1;
-
-    ConfigInformation ret = new ConfigInformation();
-
-    ret.audio = returnNotNullOrNew<Audio>(ci1.audio, ci2.audio);
-    if (ret.audio != ci2.audio)
-    {
-      ret.audio.background = returnNotNullOrNew<Background>(ci1.audio?.background, ci2.audio?.background);
-      if (ret.audio.background != ci2.audio?.background)
-        ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio?.background, ci2.audio?.background);
-      if (ret.audio.inGameBackground != ci2.audio?.inGameBackground)
-        ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio?.inGameBackground, ci2.audio?.inGameBackground);
+        public override bool IsValid()
+        {
+            return volume <= 100 && volume >= 0;
+        }
     }
 
-    ret.npc = returnNotNullOrNew<NPC>(ci1.npc, ci2.npc);
-    if (ret.npc != ci2.npc)
+    //global audio config
+    public class Audio : ConfigInformationBase
     {
-      ret.npc = returnsNotNullOrSecond(ci1.npc, ci2.npc);
+        public Background background;
+        [YamlMember(Alias = "in-game-background", ApplyNamingConventions = false)]
+        public Background inGameBackground;
+
+        public override bool IsValid()
+        {
+            if (background != null && !background.IsValid())
+                return false;
+            if (inGameBackground != null && !inGameBackground.IsValid())
+                return false;
+
+            return true;
+        }
     }
 
-    return ret;
-  }
+    // defaults ===================================================
+    public static Background BackgroundInGameDefault()
+    {
+        Background bg = new Background();
+        bg.volume = 20;
+        bg.muted = false;
+        return bg;
+    }
+    public static Background BackgroundDefault()
+    {
+        Background bg = new Background();
+        bg.volume = 70;
+        bg.muted = false;
+        return bg;
+    }
+    public static ConfigInformation newDefault()
+    {
+        return new ConfigInformation();
+    }
+    // =============================================================
+
+    public static ConfigInformation fromYaml(string yamlPath)
+    {
+        ConfigManager.WriteConsole($"[ConfigInformation]: {yamlPath}");
+
+        if (!File.Exists(yamlPath))
+        {
+            ConfigManager.WriteConsoleError($"[ConfigInformation] YAML file ({yamlPath}) doesn't exists ");
+            return null;
+        }
+
+        try
+        {
+            var input = File.OpenText(yamlPath);
+
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
+
+            var configInfo = deserializer.Deserialize<ConfigInformation>(input);
+            if (configInfo == null)
+                throw new IOException("Deserialization error");
+
+            configInfo.validate();
+
+            return configInfo;
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleError($"[ConfigInformation] reading configuration YAML file {yamlPath} - {e}");
+            return null;
+        }
+    }
+
+    public bool ToYaml(string yamlPath)
+    {
+        try
+        {
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .Build();
+            var yaml = serializer.Serialize(this);
+            File.WriteAllText(yamlPath, yaml);
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleError($"[ConfigInformation] configuration YAML file in configuration subdir {yamlPath} - {e}");
+            return false;
+        }
+        return true;
+    }
+
+    public override string ToString()
+    {
+        string ret = "Configuration \n";
+        ret += "Audio \n";
+        ret += "----- \n";
+        ret += $" \t background: {audio?.background?.volume}\n";
+        ret += "NPCs \n";
+        ret += "---- \n";
+        ret += $" \t status: {npc?.status}\n";
+        ret += " \n";
+        ret += " \n";
+        ret += " \n";
+        ret += " \n";
+        ret += " \n";
+        return ret;
+    }
+
+    private void validate()
+    {
+        if (npc != null)
+            if (!npc.IsValid())
+                throw new Exception("Invalid NPC configuration");
+
+        if (audio != null)
+            if (!audio.IsValid())
+                throw new Exception("Invalid audio settings");
+    }
+
+    // private static T returnNotNullOrNew<T>(T obj1, T obj2) where T : class, new()
+    // {
+    //     if (obj1 == null && obj2 != null) return obj2;
+    //     if (obj1 != null && obj2 == null) return obj1;
+    //     return new T(); //and change internal properties 
+    // }
+    // private static T returnsNotNullOrSecond<T>(T obj1, T obj2)
+    // {
+    //     if (obj1 == null && obj2 != null) return obj2;
+    //     if (obj1 != null && obj2 == null) return obj1;
+    //     return obj2;
+    // }
+    // public static ConfigInformation Merge(ConfigInformation ci1, ConfigInformation ci2)
+    // {
+    //     if (ci1 == null && ci2 != null) return ci2;
+    //     if (ci1 != null && ci2 == null) return ci1;
+
+    //     ConfigInformation ret = new();
+
+    //     ret.audio = returnNotNullOrNew<Audio>(ci1.audio, ci2.audio);
+    //     if (ret.audio != ci2.audio)
+    //     {
+    //         ret.audio.background = returnNotNullOrNew<Background>(ci1.audio?.background, ci2.audio?.background);
+    //         if (ret.audio.background != ci2.audio?.background)
+    //             ret.audio.background = returnsNotNullOrSecond<Background>(ci1.audio?.background, ci2.audio?.background);
+    //         if (ret.audio.inGameBackground != ci2.audio?.inGameBackground)
+    //             ret.audio.inGameBackground = returnsNotNullOrSecond<Background>(ci1.audio?.inGameBackground, ci2.audio?.inGameBackground);
+    //     }
+
+    //     ret.npc = returnNotNullOrNew<NPC>(ci1.npc, ci2.npc);
+    //     if (ret.npc != ci2.npc)
+    //     {
+    //         ret.npc = returnsNotNullOrSecond(ci1.npc, ci2.npc);
+    //     }
+
+    //     return ret;
+    // }
+
+    public static ConfigInformation.Background GetNewMergedBackground(ConfigInformation.Background bkg1, ConfigInformation.Background bkg2, ConfigInformation.Background ret)
+    {
+        if (bkg2 != null)
+        {
+            ret.muted = bkg2.muted;
+            ret.volume = bkg2.volume;
+        }
+        else if (bkg1 != null)
+        {
+            ret.muted = bkg1.muted;
+            ret.volume = bkg1.volume;
+        }
+        return ret;
+    }
+
+    public static ConfigInformation.Background GetNewMergedBackground(ConfigInformation ci1, ConfigInformation ci2)
+    {
+        return GetNewMergedBackground(ci1?.audio?.background, ci2?.audio?.background, ConfigInformation.BackgroundDefault());
+    }
+    public static ConfigInformation.Background GetNewMergedInGameBackground(ConfigInformation ci1, ConfigInformation ci2)
+    {
+        return GetNewMergedBackground(ci1?.audio?.inGameBackground, ci2?.audio?.inGameBackground, ConfigInformation.BackgroundInGameDefault());
+    }
+
+    // merge 1 with 2, 2 data will prevail.
+    public static ConfigInformation Merge(ConfigInformation ci1, ConfigInformation ci2)
+    {
+        ConfigInformation ret = new();
+        if (ci1?.audio != null || ci2?.audio != null)
+        {
+            ret.audio = new();
+            ret.audio.background = GetNewMergedBackground(ci1, ci2);
+            ret.audio.inGameBackground = GetNewMergedInGameBackground(ci1, ci2);
+        }
+        if (ci1?.npc != null || ci2?.npc != null)
+        {
+            ret.npc = new();
+            ret.npc.status = ci2?.npc?.status != null ? ci2.npc.status : ci1?.npc?.status;
+        }
+
+        return ret;
+
+    }
 }
 

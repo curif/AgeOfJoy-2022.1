@@ -10,7 +10,6 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -68,7 +67,7 @@ public class ConfigurationHelper
     }
     public bool CanConfigureRoom()
     {
-        ConfigManager.WriteConsole($"[ConfigurationHelper.CanConfigureRoom] room: {roomConfiguration?.yamlPath}");
+        // ConfigManager.WriteConsole($"[ConfigurationHelper.CanConfigureRoom] room: {roomConfiguration?.yamlPath}");
         return roomConfiguration != null;
     }
 
@@ -79,7 +78,7 @@ public class ConfigurationHelper
             yamlPath = globalConfiguration.yamlPath;
         else
             yamlPath = roomConfiguration.yamlPath;
-        ConfigManager.WriteConsole($"[ConfigurationController] save configuration global:{saveGlobal} {config} to {yamlPath}");
+        ConfigManager.WriteConsole($"[ConfigurationController] save configuration is global:{saveGlobal} {config} to {yamlPath}");
         config.ToYaml(yamlPath); //saving the file will reload the configuration in GlobalConfiguration and RoomConfiguration by trigger.
 
         return;
@@ -104,12 +103,13 @@ public class ConfigurationController : MonoBehaviour
     public ScreenGenerator scr;
     public CoinSlotController CoinSlot;
     public InputActionMap actionMap;
-    [Tooltip("The global action manager in the main rig. We will find one if not set.")]
-    public InputActionManager inputActionManager;
+    // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
+    // public InputActionManager inputActionManager;
 
     [Tooltip("We will find the correct one")]
     public ChangeControls changeControls;
 
+    [Tooltip("Load with the cabinet's parent gameobject controller")]
     public CabinetsController cabinetsController;
 
     [Tooltip("Set only to change room configuration, if not setted will use the Global")]
@@ -117,9 +117,14 @@ public class ConfigurationController : MonoBehaviour
     [Tooltip("Set to change the Global or the system will find it")]
     public GlobalConfiguration globalConfiguration;
 
+    [Tooltip("Applies only for room configuration")]
     public bool canChangeAudio = true;
+    [Tooltip("Applies only for room configuration")]
     public bool canChangeNPC = true;
+    [Tooltip("Applies only for room configuration")]
     public bool canChangeControllers = true;
+    [Tooltip("Applies only for room configuration")]
+    public bool canChangeCabinets = true;
 
     [Header("Tree")]
     [SerializeField]
@@ -136,6 +141,7 @@ public class ConfigurationController : MonoBehaviour
         onAudio,
         onChangeMode,
         onChangeController,
+        onChangeCabinets,
         onReset,
         exit
     }
@@ -145,15 +151,21 @@ public class ConfigurationController : MonoBehaviour
 
     private string NPCStatus;
     private GenericOptions NPCStatusOptions;
-    private GenericWindow npcWindow;
 
     private GenericBool isGlobalConfigurationWidget;
-    private GenericWidgetContainer changeModeContainer, audioContainer, resetContainer, controllerContainer;
+    private GenericWidgetContainer changeModeContainer, audioContainer, resetContainer, controllerContainer, npcContainer;
     private GenericLabel lblGameSelected;
     private GenericOptions controlMapGameId, controlMapMameControl;
     private GenericTimedLabel controlMapSavedLabel;
     private List<GenericOptions> controlMapRealControls;
     private ControlMapConfiguration controlMapConfiguration;
+
+    private GenericWidgetContainer cabinetsToChangeContainer;
+    private GenericOptions cabinetToReplace;
+    private GenericOptions cabinetReplaced;
+    private GenericTimedLabel cabinetSavedLabel;
+
+    private GenericLabelOnOff lblHaveRoomConfiguration, lblRoomName;
 
 
     private DefaultControlMap map;
@@ -164,6 +176,23 @@ public class ConfigurationController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        setupActionMap();
+
+        if (changeControls == null)
+        {
+            GameObject player = GameObject.Find("OVRPlayerControllerGalery");
+            changeControls = player.GetComponent<ChangeControls>();
+        }
+        // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
+        // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
+
+        if (CoinSlot == null)
+            ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
+        StartCoroutine(run());
+    }
+
+    private void setupActionMap()
+    {
         map = new();
         ControlMapConfiguration conf = new DefaultControlMap();
         conf.AddMap("KEYB-UP", "keyboard-w");
@@ -171,36 +200,27 @@ public class ConfigurationController : MonoBehaviour
         conf.AddMap("KEYB-LEFT", "keyboard-a");
         conf.AddMap("KEYB-RIGHT", "keyboard-d");
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
-
-        if (changeControls == null)
-        {
-            GameObject player = GameObject.Find("OVRPlayerControllerGalery");
-            changeControls = player.GetComponent<ChangeControls>();
-        }
-        GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
-        inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
-
-        StartCoroutine(run());
     }
 
-    public void NPCScreen()
+    public void NPCScreenDraw()
     {
-        //set the init value
+        scr.Clear();
+        npcContainer.Draw();
+
+        //some help
+        scr.Print(2, 16, "left/right/up/down to change");
+        scr.Print(2, 17, "b to select");
+
+    }
+
+    private void NPCGetStatus()
+    {
         string actualNPCStatus = ConfigInformation.NPC.validStatus[0];
         ConfigInformation config = configHelper.getConfigInformation(isGlobalConfigurationWidget.value);
         if (config?.npc != null)
             actualNPCStatus = config.npc.status;
 
-        scr.Clear();
-        npcWindow.Draw();
-
-        //some help
-        scr.Print(2, 16, "left/right to change");
-        scr.Print(2, 17, "b to select and exit");
-
-        ConfigManager.WriteConsole($"[ConfigurationController.GoToNPCConfiguration] NPC status: {actualNPCStatus}");
         NPCStatusOptions.SetCurrent(actualNPCStatus);
-        NPCStatusOptions.Draw();
     }
 
     private void NPCSave()
@@ -236,7 +256,7 @@ public class ConfigurationController : MonoBehaviour
     public void resetSave()
     {
         configHelper.Reset(isGlobalConfigurationWidget.value);
-        ConfigManager.WriteConsole($"[ConfigurationController.resetSave] Reset to default Global: {isGlobalConfigurationWidget.value}");
+        ConfigManager.WriteConsole($"[ConfigurationController.resetSave] Reset to default - is Global: {isGlobalConfigurationWidget.value}");
     }
 
     private void audioScreen()
@@ -305,6 +325,13 @@ public class ConfigurationController : MonoBehaviour
         else
         {
             scr.PrintCentered(4, "- room Configuration mode -");
+            if (configHelper.CanConfigureRoom())
+            {
+                lblRoomName.isOn = true;
+                lblHaveRoomConfiguration.isOn = roomConfiguration.ExistsRoomConfiguration();
+            }
+            lblHaveRoomConfiguration.Draw();
+            lblRoomName.Draw();
         }
     }
 
@@ -445,7 +472,275 @@ public class ConfigurationController : MonoBehaviour
     {
         scr.Clear();
         scr.PrintCentered(10, " - Wait for room setup - ");
-        scr.PrintCentered(12, cabinetsController.Room, true);
+        scr.PrintCentered(12, GetRoomName(), true);
+    }
+
+
+    private void SetMainMenuWidgets()
+    {
+        //main menu (Create any time because the conditionals.)
+        mainMenu = new(scr, "AGE of Joy - Main configuration");
+        if (CanConfigureAudio())
+            mainMenu.AddOption("Audio configuration", "     Change sound volume       ");
+        if (canChangeNPC)
+            mainMenu.AddOption("NPC configuration", "   To change the NPC behavior  ");
+        if (CanConfigureControllers())
+            mainMenu.AddOption("controllers", "Map your controls to play games");
+        if (CanConfigureCabinets())
+            mainMenu.AddOption("cabinets", " replace cabinets in the room  ");
+        mainMenu.AddOption("reset", "  global or room configuration ");
+        mainMenu.AddOption("change mode", "         back to default       ");
+        mainMenu.AddOption("exit", "        exit configuration     ");
+    }
+
+    private void SetAudioWidgets()
+    {
+        if (audioContainer != null)
+            return;
+
+        //audio
+        audioContainer = new(scr, "audioContainer");
+        audioContainer.Add(new GenericWindow(scr, 2, 4, "audiowin", 36, 14, " Audio Configuration "))
+                      .Add(new GenericLabel(scr, "BackgroundLabel", "Background Audio", 4, 6))
+                      .Add(new GenericBool(scr, "BackgroundMuted", "mute:", false, 6, 8))
+                      .Add(new GenericOptionsInteger(scr, "BackgroundVolume", "volume:", 0, 100, 6, 9))
+                      .Add(new GenericLabel(scr, "InGameBackgroundLabel", "Background in game audio", 4, 11))
+                      .Add(new GenericBool(scr, "InGameBackgroundMuted", "mute:", false, 6, 13))
+                      .Add(new GenericOptionsInteger(scr, "InGameBackgroundVolume", "volume:", 0, 100, 6, 14))
+                      .Add(new GenericButton(scr, "save", "save & exit", 4, 16, true))
+                      .Add(new GenericButton(scr, "exit", "exit", 18, 16, true))
+                      .Add(new GenericLabel(scr, "l1", "left/right/b to change", 2, 20))
+                      .Add(new GenericLabel(scr, "l2", "up/down to move", 2, 21));
+    }
+    private void SetGlobalWidgets()
+    {
+        isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global:", !configHelper.CanConfigureRoom(), 4, 10);
+        isGlobalConfigurationWidget.enabled = isGlobalConfigurationWidget.value;
+
+        //room screen information
+        lblHaveRoomConfiguration = new(scr, "haveRoom", "Room configuration exists", 1, 23, inverted: true);
+        string room = "";
+        if (configHelper.CanConfigureRoom() && roomConfiguration != null)
+            room = roomConfiguration.GetName();
+        lblRoomName = new(scr, "roomid", room, 1, 22, inverted: false);
+    }
+    private void SetChangeModeWidgets()
+    {
+        if (changeModeContainer != null)
+            return;
+
+        //change mode
+        changeModeContainer = new(scr, "changeMode");
+        changeModeContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " mode "))
+                           .Add(isGlobalConfigurationWidget)
+                           .Add(new GenericButton(scr, "exit", "exit", 4, 11, true));
+    }
+
+    private void SetResetWidgets()
+    {
+        if (resetContainer == null)
+        {
+            //reset options
+            resetContainer = new(scr, "reset");
+            resetContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " reset "))
+                          .Add(new GenericButton(scr, "reset", "delete and exit", 4, 11, true))
+                          .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+        }
+        resetContainer.SetOption(2); //safe in exit.
+    }
+
+    private void SetNPCWidgets()
+    {
+        if (NPCStatusOptions != null)
+            return;
+
+        NPCStatusOptions = new(scr, "npc", "NPC Behavior:", new List<string>(ConfigInformation.NPC.validStatus), 4, 8);
+        npcContainer = new(scr, "npc");
+        npcContainer.Add(new GenericWindow(scr, 2, 6, "npcWindow", 36, 8, " NPC Configuration ", true))
+                    .Add(NPCStatusOptions)
+                    .Add(new GenericButton(scr, "save", "save and exit", 4, 10, true))
+                    .Add(new GenericButton(scr, "exit", "exit", 4, 11, true));
+    }
+
+    private void SetControlMapWidgets()
+    {
+        if (lblGameSelected != null)
+        {
+            //adjust widgets
+            controlMapGameId.SetOptions(GetCabinetsInRoom());
+            controlMapGameId.enabled = !isGlobalConfigurationWidget.value;
+            return;
+        }
+
+        //controllers
+        //Game selection
+        // ---- title   : 4
+        // | lblGame    : 6
+        // |  lblCtlr   : 7
+        // | option     : 9
+
+
+        lblGameSelected = new GenericLabel(scr, "lblGame", "global configuration", 3, 6);
+        controlMapGameId = new GenericOptions(scr, "gameId", "game:", GetCabinetsInRoom(), 3, 9);
+        //global configuration by default, changed in the first draw()
+        controlMapGameId.enabled = false;
+        controlMapMameControl = new GenericOptions(scr, "mameControl", "CTRL:", LibretroMameCore.deviceIdsCombined, 3, 10);
+        controlMapRealControls = new();
+        List<string> controlMapRealControlList = new List<string>();
+        controlMapRealControlList.Add("--");
+        controlMapRealControlList = controlMapRealControlList.Concat(ControlMapPathDictionary.getList()).ToList();
+        controlMapSavedLabel = new(scr, "saved", "saved", 3, 19, true);
+        controllerContainer = new(scr, "controllers");
+        controllerContainer.Add(new GenericWindow(scr, 1, 4, "controllerscont", 39, 18, " controllers "))
+                           .Add(lblGameSelected)
+                           .Add(controlMapGameId)
+                           .Add(controlMapMameControl);
+        for (int x = 0; x < 5; x++)
+        {
+            controlMapRealControls.Add(new GenericOptions(scr, "controlMapRealControl-" + x.ToString(), x.ToString() + ":", controlMapRealControlList, 3, 11 + x));
+            controllerContainer.Add(controlMapRealControls[x]);
+        }
+        controllerContainer.Add(new GenericButton(scr, "save", "save", 3, 17, true))
+                           .Add(new GenericButton(scr, "exit", "exit", 10, 17, true))
+                           .Add(controlMapSavedLabel);
+    }
+
+    public string GetRoomName()
+    {
+        if (roomConfiguration != null)
+            return roomConfiguration.GetName();
+        if (cabinetsController != null)
+            return cabinetsController.Room;
+        return "";
+    }
+
+    private List<string> GetCabinetsInRoom()
+    {
+        List<string> cabsWithPosition = new List<string>();
+        string room = GetRoomName();
+        if (cabinetsController?.gameRegistry == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no gameRegistry loaded for {room}");
+            return new List<string>();
+        }
+        List<CabinetPosition> cabinetsInRoom = cabinetsController?.gameRegistry?.GetCabinetsAndPositionsAssignedToRoom(room);
+        if (cabinetsInRoom == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no cabinets registered in gameRegistry for {room}");
+            return new List<string>();
+        }
+
+        ConfigManager.WriteConsole($"[GetCabinetsInRoom] there are {cabinetsInRoom.Count} cabinets in {room} and {cabinetsController?.gameRegistry?.CabinetsInRegistry} cabinets in the main registry");
+
+        for (int idx = 0; idx < cabinetsInRoom.Count; idx++)
+        {
+            cabsWithPosition.Add($"{cabinetsInRoom[idx].Position:D3}-{cabinetsInRoom[idx].CabinetDBName}");
+        }
+
+        for (int idx = cabinetsInRoom.Count; idx < cabinetsController.CabinetsCount; idx++)
+        {
+            cabsWithPosition.Add($"{idx:D3}-(free)");
+        }
+        cabsWithPosition.Sort();
+
+        return cabsWithPosition;
+    }
+    private List<string> GetAllCabinets()
+    {
+        List<string> cabinetsAll = cabinetsController?.gameRegistry?.GetAllCabinetsName();
+        if (cabinetsAll != null)
+            cabinetsAll.Sort();
+        return cabinetsAll;
+    }
+
+    private void SetCabinetsWidgets()
+    {
+        if (!CanConfigureCabinets())
+            return;
+
+        if (cabinetToReplace != null)
+        {
+            cabinetToReplace.SetOptions(GetCabinetsInRoom());
+            return;
+        }
+
+        GenericLabel lblRoomName = new GenericLabel(scr, "lblRoomName", GetRoomName(), 4, 6);
+        cabinetToReplace = new GenericOptions(scr, "cabinetToReplace", "replace:", GetCabinetsInRoom(), 4, 8, maxLength: 26);
+        cabinetReplaced = new GenericOptions(scr, "cabinetReplaced", "with:", GetAllCabinets(), 4, 9, maxLength: 26);
+        cabinetSavedLabel = new(scr, "saved", "cabinet replaced", 3, 19, true);
+
+        cabinetsToChangeContainer = new(scr, "cabinetsToChangeContainer");
+        cabinetsToChangeContainer.Add(new GenericWindow(scr, 2, 4, "cabswin", 37, 12, " replace cabinets "))
+                                .Add(lblRoomName)
+                                .Add(cabinetToReplace)
+                                .Add(cabinetReplaced)
+                                .Add(new GenericButton(scr, "save", "save", 4, 11, true))
+                                .Add(new GenericButton(scr, "exit", "exit", 4, 12, true))
+                                .Add(cabinetSavedLabel);
+    }
+    public void CabinetsExtractNumberAndName(out int number, out string name)
+    {
+        string input = cabinetToReplace.GetSelectedOption();
+        if (string.IsNullOrEmpty(input))
+        {
+            number = -1;
+            name = "";
+            return;
+        }
+        if (int.TryParse(input.Substring(0, 3), out number))
+        {
+            name = input.Substring(4);
+        }
+        else
+        {
+            number = -1;
+            name = "";
+        }
+    }
+
+    private void SaveCabinetPositions()
+    {
+        int position;
+        string cabinetDBName;
+        string room = GetRoomName();
+        CabinetsExtractNumberAndName(out position, out cabinetDBName); //the name doesn't care.
+        cabinetDBName = cabinetReplaced.GetSelectedOption();
+        ConfigManager.WriteConsole($"[SaveCabinetPositions] new replacement in pos:{position} by cabinet: {cabinetDBName} room: {room}");
+        // free cabinets dont have a CabinetReplace component but a CabinetController
+        cabinetsController.Replace(position, room, cabinetDBName);
+    }
+
+    private bool CanConfigureCabinets()
+    {
+        if (isGlobalConfigurationWidget.value)
+            return false;
+
+        return canChangeCabinets && configHelper.CanConfigureRoom() && cabinetsController?.gameRegistry != null;
+    }
+    private bool CanConfigureControllers()
+    {
+        if (isGlobalConfigurationWidget.value)
+            return true;
+
+        return canChangeControllers && configHelper.CanConfigureRoom() && cabinetsController?.gameRegistry != null;
+    }
+    private bool CanConfigureAudio()
+    {
+        if (isGlobalConfigurationWidget.value)
+            return true;
+
+        return canChangeAudio && configHelper.CanConfigureRoom() && cabinetsController?.gameRegistry != null;
+    }
+
+    private void CabinetsWindowDraw()
+    {
+        if (cabinetsToChangeContainer == null)
+            return;
+
+        scr.Clear();
+        cabinetsToChangeContainer.Draw();
+        scr.Print(2, 23, "up/down/left/right to change");
+        scr.Print(2, 24, "b to select");
     }
 
     IEnumerator run()
@@ -472,15 +767,8 @@ public class ConfigurationController : MonoBehaviour
         //create widgets
         //boot
         bootScreen = new(scr);
-        SetMainMenuWidgets();
-        SetAudioWidgets();
-        SetChangeModeWidgets();
-        SetNPCWidgets();
-        SetControllersWidgets();
 
-        //load control map
-        controlMapConfigurationLoad();
-        controlMapUpdateWidgets();
+        SetGlobalWidgets();
 
         //main cycle
         status = StatusOptions.init;
@@ -497,99 +785,6 @@ public class ConfigurationController : MonoBehaviour
                 yield return new WaitForSeconds(1f / 6f);
         }
     }
-
-    private void SetMainMenuWidgets()
-    {
-        //main menu
-        mainMenu = new(scr, "AGE of Joy - Main configuration");
-        if (canChangeAudio)
-            mainMenu.AddOption("Audio configuration", "    Change sound volume       ");
-        if (canChangeNPC)
-            mainMenu.AddOption("NPC configuration", "  To change the NPC behavior  ");
-        if (canChangeControllers)
-            mainMenu.AddOption("controllers", "Map your controls to play games");
-        mainMenu.AddOption("reset", "  global or room configuration ");
-        mainMenu.AddOption("change mode", "         back to default       ");
-        mainMenu.AddOption("exit", "        exit configuration     ");
-    }
-
-    private void SetAudioWidgets()
-    {
-        //audio
-        audioContainer = new(scr, "audioContainer");
-        audioContainer.Add(new GenericWindow(scr, 2, 4, "audiowin", 36, 14, " Audio Configuration "))
-                      .Add(new GenericLabel(scr, "BackgroundLabel", "Background Audio", 4, 6))
-                      .Add(new GenericBool(scr, "BackgroundMuted", "mute:", false, 6, 8))
-                      .Add(new GenericOptionsInteger(scr, "BackgroundVolume", "volume:", 0, 100, 6, 9))
-                      .Add(new GenericLabel(scr, "InGameBackgroundLabel", "Background in game audio", 4, 11))
-                      .Add(new GenericBool(scr, "InGameBackgroundMuted", "mute:", false, 6, 13))
-                      .Add(new GenericOptionsInteger(scr, "InGameBackgroundVolume", "volume:", 0, 100, 6, 14))
-                      .Add(new GenericButton(scr, "save", "save & exit", 4, 16, true))
-                      .Add(new GenericButton(scr, "exit", "exit", 18, 16, true))
-                      .Add(new GenericLabel(scr, "l1", "left/right/b to change", 2, 20))
-                      .Add(new GenericLabel(scr, "l2", "up/down to move", 2, 21));
-    }
-
-    private void SetChangeModeWidgets()
-    {
-        //change mode
-        isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global:", !configHelper.CanConfigureRoom(), 4, 10);
-        isGlobalConfigurationWidget.enabled = isGlobalConfigurationWidget.value;
-
-        changeModeContainer = new(scr, "changeMode");
-        changeModeContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " mode "))
-                           .Add(isGlobalConfigurationWidget)
-                           .Add(new GenericButton(scr, "exit", "exit", 4, 11, true));
-    }
-
-    private void SetNPCWidgets()
-    {
-        //NPC configuration options.
-        // take the statuses from the static value options in the information NPC class.
-        npcWindow = new(scr, 2, 8, "npcWindow", 36, 6, " NPC Configuration ", true);
-        NPCStatusOptions = new(scr, "npc", "NPC Behavior:", new List<string>(ConfigInformation.NPC.validStatus), 4, 10);
-
-        //reset options
-        resetContainer = new(scr, "reset");
-        resetContainer.Add(new GenericWindow(scr, 2, 8, "win", 36, 6, " reset "))
-                      .Add(new GenericButton(scr, "reset", "reset and save", 4, 11, true))
-                      .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
-    }
-
-    private void SetControllersWidgets()
-    {
-        //controllers
-        //Game selection
-        // ---- title   : 4
-        // | lblGame    : 6
-        // |  lblCtlr   : 7
-        // | option     : 9
-        lblGameSelected = new GenericLabel(scr, "lblGame", "global configuration", 3, 6);
-        controlMapGameId = new GenericOptions(scr, "gameId", "game:",
-                                            cabinetsController?.gameRegistry?.GetRomsAssignedToRoom(cabinetsController.Room), 3, 9);
-        //global configuration by default, changed in the first draw()
-        controlMapGameId.enabled = false;
-        controlMapMameControl = new GenericOptions(scr, "mameControl", "CTRL:", LibretroMameCore.deviceIdsCombined, 3, 10);
-        controlMapRealControls = new();
-        List<string> controlMapRealControlList = new List<string>();
-        controlMapRealControlList.Add("--");
-        controlMapRealControlList = controlMapRealControlList.Concat(ControlMapPathDictionary.getList()).ToList();
-        controlMapSavedLabel = new(scr, "saved", "saved", 3, 19, true);
-        controllerContainer = new(scr, "controllers");
-        controllerContainer.Add(new GenericWindow(scr, 1, 4, "controllerscont", 39, 18, " controllers "))
-                           .Add(lblGameSelected)
-                           .Add(controlMapGameId)
-                           .Add(controlMapMameControl);
-        for (int x = 0; x < 5; x++)
-        {
-            controlMapRealControls.Add(new GenericOptions(scr, "controlMapRealControl-" + x.ToString(), x.ToString() + ":", controlMapRealControlList, 3, 11 + x));
-            controllerContainer.Add(controlMapRealControls[x]);
-        }
-        controllerContainer.Add(new GenericButton(scr, "save", "save", 3, 17, true))
-                           .Add(new GenericButton(scr, "exit", "exit", 10, 17, true))
-                           .Add(controlMapSavedLabel);
-    }
-
     private BehaviorTree buildBT()
     {
         return new BehaviorTreeBuilder(gameObject)
@@ -603,6 +798,7 @@ public class ConfigurationController : MonoBehaviour
                     status = StatusOptions.waitingForCoin;
                     scr.Clear()
                        .PrintCentered(10, "Insert coin to start", true)
+                       .PrintCentered(12, GetRoomName(), false)
                        .DrawScreen();
                     return TaskStatus.Success;
                 })
@@ -622,9 +818,9 @@ public class ConfigurationController : MonoBehaviour
               .Condition("Booting", () => status == StatusOptions.onBoot)
               .Condition("Finished lines", () =>
               {
-                bool finished = bootScreen.PrintNextLine();
-                scr.DrawScreen();
-                return finished;
+                  bool finished = bootScreen.PrintNextLine();
+                  scr.DrawScreen();
+                  return finished;
               })
               .Do("Start main menu", () =>
                 {
@@ -637,6 +833,7 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On main menu", () => status == StatusOptions.onMainMenu)
               .Do("Init", () =>
                 {
+                    SetMainMenuWidgets();
                     scr.Clear();
                     mainMenuDraw();
                     scr.DrawScreen();
@@ -657,20 +854,32 @@ public class ConfigurationController : MonoBehaviour
                         return TaskStatus.Continue;
                     }
                     ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
-                    if (mainMenu.GetSelectedOption() == "NPC configuration")
-                        status = StatusOptions.onNPCMenu;
-                    else if (mainMenu.GetSelectedOption() == "exit")
-                        status = StatusOptions.exit;
-                    else if (mainMenu.GetSelectedOption() == "Audio configuration")
-                        status = StatusOptions.onAudio;
-                    else if (mainMenu.GetSelectedOption() == "change mode")
-                        status = StatusOptions.onChangeMode;
-                    else if (mainMenu.GetSelectedOption() == "reset")
-                        status = StatusOptions.onReset;
-                    else if (mainMenu.GetSelectedOption() == "controllers")
+                    string selectedOption = mainMenu.GetSelectedOption();
+                    switch (selectedOption)
                     {
-                        status = StatusOptions.onChangeController;
+                        case "NPC configuration":
+                            status = StatusOptions.onNPCMenu;
+                            break;
+                        case "exit":
+                            status = StatusOptions.exit;
+                            break;
+                        case "Audio configuration":
+                            status = StatusOptions.onAudio;
+                            break;
+                        case "change mode":
+                            status = StatusOptions.onChangeMode;
+                            break;
+                        case "reset":
+                            status = StatusOptions.onReset;
+                            break;
+                        case "cabinets":
+                            status = StatusOptions.onChangeCabinets;
+                            break;
+                        case "controllers":
+                            status = StatusOptions.onChangeController;
+                            break;
                     }
+
                     mainMenu.Deselect();
                     scr.DrawScreen();
                     return TaskStatus.Success;
@@ -681,29 +890,35 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On NPC Config", () => status == StatusOptions.onNPCMenu)
               .Do("Init", () =>
                 {
-                    NPCScreen();
+                    SetNPCWidgets();
+                    NPCGetStatus();
+                    NPCScreenDraw();
                     scr.DrawScreen();
                     return TaskStatus.Success;
                 })
               .Do("Process", () =>
                 {
-                    if (ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT"))
-                        NPCStatusOptions.PreviousOption();
-                    else if (ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT"))
-                        NPCStatusOptions.NextOption();
-                    else if (ControlActive("JOYPAD_B"))
+                    changeContainerSelection(npcContainer);
+
+                    if (ControlActive("JOYPAD_B"))
                     {
+                        GenericWidget w = npcContainer.GetSelectedWidget();
+                        if (w.name == "exit")
+                        {
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "save")
+                        {
+                            NPCSave();
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
                         scr.DrawScreen();
                         return TaskStatus.Success;
                     }
                     scr.DrawScreen();
                     return TaskStatus.Continue;
-                })
-              .Do("Save", () =>
-                {
-                    NPCSave();
-                    status = StatusOptions.onMainMenu;
-                    return TaskStatus.Success;
                 })
             .End()
 
@@ -711,6 +926,7 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On Config", () => status == StatusOptions.onAudio)
               .Do("Init", () =>
                 {
+                    SetAudioWidgets();
                     audioScreen();
                     audioContainer.Draw();
                     scr.DrawScreen();
@@ -747,6 +963,7 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On change mode", () => status == StatusOptions.onChangeMode)
               .Do("Init", () =>
                 {
+                    SetChangeModeWidgets();
                     changeModeWindowDraw();
                     scr.DrawScreen();
                     return TaskStatus.Success;
@@ -769,10 +986,11 @@ public class ConfigurationController : MonoBehaviour
                 })
             .End()
 
-            .Sequence("back to default")
+            .Sequence("back to default reset")
               .Condition("On back to default", () => status == StatusOptions.onReset)
               .Do("Init", () =>
                 {
+                    SetResetWidgets();
                     resetWindowDraw();
                     scr.DrawScreen();
                     return TaskStatus.Success;
@@ -804,6 +1022,9 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On selecting game", () => status == StatusOptions.onChangeController)
               .Do("Init", () =>
                 {
+                    SetControlMapWidgets();
+                    controlMapConfigurationLoad();
+                    controlMapUpdateWidgets();
                     controllerContainerDraw();
                     scr.DrawScreen();
 
@@ -868,6 +1089,41 @@ public class ConfigurationController : MonoBehaviour
 
                     return TaskStatus.Continue;
                 })
+
+            .End()
+
+            .Sequence("Cabinets")
+              .Condition("On cabinets replacement", () => status == StatusOptions.onChangeCabinets)
+              .Condition("Can configure cabinets", () => CanConfigureCabinets())
+              .Do("Init", () =>
+                {
+                    SetCabinetsWidgets();
+                    CabinetsWindowDraw();
+                    scr.DrawScreen();
+                    return TaskStatus.Success;
+                })
+              .Do("Process", () =>
+                {
+                    changeContainerSelection(cabinetsToChangeContainer);
+                    GenericWidget w = cabinetsToChangeContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
+                    {
+                        if (w.name == "exit")
+                        {
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "save")
+                        {
+                            SaveCabinetPositions();
+                            SetCabinetsWidgets();
+                            cabinetSavedLabel.SetSecondsAndDraw(2);
+                        }
+                    }
+                    cabinetSavedLabel.Draw();
+                    scr.DrawScreen();
+                    return TaskStatus.Continue;
+                })
             .End()
 
 
@@ -889,13 +1145,14 @@ public class ConfigurationController : MonoBehaviour
     public void ControlEnable(bool enable)
     {
         changeControls.PlayerMode(enable);
-        //if (inputActionManager != null)
-        //    inputActionManager.enabled = !enable;
         if (enable)
         {
+            // inputActionManager?.EnableInput();
             actionMap.Enable();
             return;
         }
+        // cant disable, headset goes crazy.
+        // inputActionManager?.DisableInput();
         actionMap.Disable();
 
         return;
