@@ -2243,12 +2243,12 @@ GameObject:
   - component: {fileID: 862554715}
   - component: {fileID: 862554714}
   m_Layer: 0
-  m_Name: GateToRoom009
+  m_Name: GateToRoom011
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &862554713
 Transform:
   m_ObjectHideFlags: 0
@@ -2257,7 +2257,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 862554712}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -3.14, y: 0.35230517, z: -5.43}
+  m_LocalPosition: {x: -2.718, y: 0.35230517, z: -5.961}
   m_LocalScale: {x: 1.3632998, y: 1, z: 1.2385}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2298,17 +2298,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
-    sceneAssetGuidHex: 91277341fb3a40c4aa34a17eaf1ee1aa
+  - sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
+    sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
   ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: f5ff613baed38bf069ef30ee2c7557bc, type: 3}
-    sceneAssetGuidHex: f5ff613baed38bf069ef30ee2c7557bc
+  - sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
+    sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
-      sceneAssetGuidHex: 91277341fb3a40c4aa34a17eaf1ee1aa
+      sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
+      sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
     Blockers:
-    - {fileID: 2035889305}
+    - {fileID: 1117945904}
 --- !u!1001 &867132960
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3272,7 +3272,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Name
-      value: DoorToRoom009 (1)
+      value: DoorToRoom011
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_IsActive
@@ -3298,6 +3298,11 @@ PrefabInstance:
 --- !u!4 &1117945903 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+  m_PrefabInstance: {fileID: 1117945902}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1117945904 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8320214804801100467, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
   m_PrefabInstance: {fileID: 1117945902}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1120210371
@@ -5299,11 +5304,6 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 4298955583021570582, guid: 553de4abe7620eb378737204678971d5, type: 3}
   m_PrefabInstance: {fileID: 2029897829}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &2035889305 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8320214804801100467, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
-  m_PrefabInstance: {fileID: 526220236}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2088432544
 PrefabInstance:
