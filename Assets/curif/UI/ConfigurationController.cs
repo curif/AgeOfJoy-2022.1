@@ -15,6 +15,7 @@ using CleverCrow.Fluid.BTs.Trees;
 using UnityEditor;
 #endif
 
+
 public class ConfigurationHelper
 {
     private GlobalConfiguration globalConfiguration = null;
@@ -98,6 +99,7 @@ public class ConfigurationHelper
     }
 }
 
+[RequireComponent(typeof(Teleportation))]
 public class ConfigurationController : MonoBehaviour
 {
     public ScreenGenerator scr;

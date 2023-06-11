@@ -2866,7 +2866,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MinimalDistance: 0.6
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
     sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
@@ -2875,8 +2874,8 @@ MonoBehaviour:
     sceneAssetGuidHex: dae2049ed93a1f23590ea1c44263e494
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: be539a000da5d98b3bab4b266cb714b0, type: 3}
-      sceneAssetGuidHex: be539a000da5d98b3bab4b266cb714b0
+      sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
+      sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
     Blockers:
     - {fileID: 716135468}
   - SceneRef:
@@ -3051,7 +3050,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MinimalDistance: 0.6
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: dae2049ed93a1f23590ea1c44263e494, type: 3}
     sceneAssetGuidHex: dae2049ed93a1f23590ea1c44263e494
@@ -3060,8 +3058,8 @@ MonoBehaviour:
     sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: be539a000da5d98b3bab4b266cb714b0, type: 3}
-      sceneAssetGuidHex: be539a000da5d98b3bab4b266cb714b0
+      sceneAsset: {fileID: 102900000, guid: dae2049ed93a1f23590ea1c44263e494, type: 3}
+      sceneAssetGuidHex: dae2049ed93a1f23590ea1c44263e494
     Blockers:
     - {fileID: 1251889772}
 --- !u!65 &1081546835
@@ -3375,7 +3373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_StaticEditorFlags
