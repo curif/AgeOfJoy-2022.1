@@ -14663,6 +14663,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: ScenesToUnload.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 1588858820011275997, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
     m_RemovedGameObjects: []
@@ -17955,16 +17959,34 @@ MonoBehaviour:
   m_GameObject: {fileID: 1915306328}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Script: {fileID: 11500000, guid: 0dfae2729a61603439fdb45f5b02fd58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_OverrideArea: 0
-  m_Area: 0
-  m_OverrideGenerateLinks: 1
-  m_GenerateLinks: 1
-  m_IgnoreFromBuild: 0
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
+  Scenes:
+  - Scene:
+      sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
+      sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
+    SceneName: Room001
+    Description: '001 - the first '
+    PlayerSpawnGameObjectName: PlayerSpawnRoom001
+  - Scene:
+      sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
+      sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+    SceneName: Room002
+    Description: 002 - the little one
+    PlayerSpawnGameObjectName: PlayerSpawnRoom002
+  - Scene:
+      sceneAsset: {fileID: 102900000, guid: 20c6d912f757fb9eaab4bc33cc22b106, type: 3}
+      sceneAssetGuidHex: 20c6d912f757fb9eaab4bc33cc22b106
+    SceneName: Room003
+    Description: 003 - the wall
+    PlayerSpawnGameObjectName: PlayerSpawnRoom003
+  - Scene:
+      sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
+      sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
+    SceneName: Room004
+    Description: 004 - galaga
+    PlayerSpawnGameObjectName: PlayerSpawnRoom004
 --- !u!114 &1925194312 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6688015753839463788, guid: 895f6f3c2d334633b5800312285058d2, type: 3}
