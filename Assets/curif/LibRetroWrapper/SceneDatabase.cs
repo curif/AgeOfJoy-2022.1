@@ -46,12 +46,13 @@ public class SceneDatabase : MonoBehaviour
             .Select(scene => scene.SceneName)
             .ToList();
     }
-        public List<string> GetTeleportationDestinationRoomDescritions()
+    public List<string> GetTeleportationDestinationRoomDescritions()
     {
         return Scenes
             .Where(scene => !string.IsNullOrEmpty(scene.PlayerSpawnGameObjectName))
             .Select(scene => scene.Description)
             .ToList();
     }
+    
 }
 

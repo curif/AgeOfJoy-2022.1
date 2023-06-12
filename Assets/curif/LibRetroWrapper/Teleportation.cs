@@ -19,12 +19,16 @@ public class Teleportation : MonoBehaviour
 
     public void Teleport(SceneDocument teleportTo)
     {
+        if (string.IsNullOrEmpty(teleportTo.PlayerSpawnGameObjectName))
+            return;
+
         this.teleportTo = teleportTo;
         StartCoroutine(TeleportLoop());
     }
 
     IEnumerator TeleportLoop()
     {
+
         GameObject player = GameObject.Find("OVRPlayerControllerGalery");
 
         if (teleportTo != null && teleportTo.Scene.IsSafeToUse)
@@ -36,7 +40,7 @@ public class Teleportation : MonoBehaviour
             else
             {
                 AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(teleportTo.Scene.Name,
-                                                                    LoadSceneMode.Additive);
+                                                                          LoadSceneMode.Additive);
                 while (!asyncLoad.isDone)
                     yield return null;
 
@@ -81,9 +85,10 @@ public class Teleportation : MonoBehaviour
                     AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
                     while (!asyncLoad.isDone)
                         yield return null;
+
                     ConfigManager.WriteConsole($"[TeleportLoop] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
                     unloadUnusedAssets = true;
-                    LightProbes.TetrahedralizeAsync();
+
                 }
             }
             if (unloadUnusedAssets)
@@ -93,6 +98,9 @@ public class Teleportation : MonoBehaviour
                     yield return null;
             }
         }
+
+        LightProbes.TetrahedralizeAsync();
+        yield break;
     }
 
 }

@@ -490,7 +490,7 @@ public class ConfigurationController : MonoBehaviour
     {
         scr.Clear();
         scr.PrintCentered(10, " - Wait for room setup - ");
-        scr.PrintCentered(12, GetRoomName(), true);
+        scr.PrintCentered(12, GetRoomDescription(), true);
     }
 
 
@@ -629,9 +629,13 @@ public class ConfigurationController : MonoBehaviour
     {
         if (roomConfiguration != null)
             return roomConfiguration.GetName();
-        if (cabinetsController != null)
+        else if (cabinetsController != null)
             return cabinetsController.Room;
-        return "";
+        return name;
+    }
+    public string GetRoomDescription()
+    {
+        return sceneDatabase.FindByName(GetRoomName())?.Description ?? string.Empty;
     }
 
     private List<string> GetCabinetsInRoom()
@@ -803,10 +807,12 @@ public class ConfigurationController : MonoBehaviour
         if (configHelper.CanConfigureRoom() && cabinetsController != null)
         {
             ScreenWaitingDraw();
+            scr.DrawScreen();
             while (!cabinetsController.Loaded)
             {
                 yield return new WaitForSeconds(1f / 2f);
                 ScreenWaitingDraw();
+                scr.DrawScreen();
             }
         }
         else
@@ -851,7 +857,7 @@ public class ConfigurationController : MonoBehaviour
                     status = StatusOptions.waitingForCoin;
                     scr.Clear()
                        .PrintCentered(10, "Insert coin to start", true)
-                       .PrintCentered(12, GetRoomName(), false)
+                       .PrintCentered(12, GetRoomDescription(), false)
                        .DrawScreen();
                     return TaskStatus.Success;
                 })
