@@ -3725,6 +3725,37 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!1 &401638120
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 401638121}
+  m_Layer: 0
+  m_Name: PlayerSpawnRoom010
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &401638121
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 401638120}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.749, y: -0.687, z: -2.354}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1862072339}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &402908418
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16774,6 +16805,18 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: ScenesToUnload.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: ScenesToUnload.Array.data[0].sceneAsset
+      value: 
+      objectReference: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
+    - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: ScenesToUnload.Array.data[0].sceneAssetGuidHex
+      value: 159e12c1f8b371b41913da02f9f144bc
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -20469,7 +20512,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1607911971}
   - {fileID: 1860758833}
   - {fileID: 1438189809}
   - {fileID: 2106624054}
@@ -20478,6 +20520,7 @@ Transform:
   - {fileID: 1502047631}
   - {fileID: 238278363}
   - {fileID: 1055181436}
+  - {fileID: 1607911971}
   - {fileID: 187289936}
   - {fileID: 1437950767}
   - {fileID: 448424985}
@@ -20497,6 +20540,7 @@ Transform:
   - {fileID: 1495434555}
   - {fileID: 375040937}
   - {fileID: 1897845836}
+  - {fileID: 401638121}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
