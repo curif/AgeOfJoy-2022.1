@@ -128,6 +128,13 @@ public class ConfigurationController : MonoBehaviour
     [Tooltip("Applies only for room configuration")]
     public bool canChangeCabinets = true;
 
+    //Teleport
+    public bool canTeleport = true;
+    private SceneDatabase sceneDatabase;
+    private Teleportation teleportation;
+    private GenericOptions teleportDestination;
+    private GenericWidgetContainer teleportContainer;
+
     [Header("Tree")]
     [SerializeField]
     public BehaviorTree tree;
@@ -144,6 +151,7 @@ public class ConfigurationController : MonoBehaviour
         onChangeMode,
         onChangeController,
         onChangeCabinets,
+        onTeleport,
         onReset,
         exit
     }
@@ -185,6 +193,14 @@ public class ConfigurationController : MonoBehaviour
             GameObject player = GameObject.Find("OVRPlayerControllerGalery");
             changeControls = player.GetComponent<ChangeControls>();
         }
+
+        if (canTeleport)
+        {
+            GameObject roomInit = GameObject.Find("RoomInit");
+            sceneDatabase = roomInit.GetComponent<SceneDatabase>();
+            teleportation = GetComponent<Teleportation>();
+        }
+
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
         // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
@@ -492,7 +508,9 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("cabinets", " replace cabinets in the room  ");
         mainMenu.AddOption("reset", "  global or room configuration ");
         mainMenu.AddOption("change mode", "         back to default       ");
+        mainMenu.AddOption("teleport", "       teleport to a room       ");
         mainMenu.AddOption("exit", "        exit configuration     ");
+
     }
 
     private void SetAudioWidgets()
@@ -745,6 +763,39 @@ public class ConfigurationController : MonoBehaviour
         scr.Print(2, 24, "b to select");
     }
 
+
+    private void SetTeleportWidgets()
+    {
+        if (!canTeleport)
+            return;
+
+        if (teleportDestination != null)
+            return;
+
+        teleportDestination = new GenericOptions(scr, "teleportdest",
+                                    "des:", sceneDatabase.GetTeleportationDestinationRoomDescritions(),
+                                    4, 7, maxLength: 26);
+
+        teleportContainer = new(scr, "teleportContainer");
+        teleportContainer.Add(new GenericWindow(scr, 2, 4, "teleportwin", 37, 12,
+                                        " teleportation "))
+                            .Add(new GenericLabel(scr, "lbl", "select destination", 4, 6))
+                            .Add(teleportDestination)
+                            .Add(new GenericButton(scr, "teleport", "teleport", 4, 11, true))
+                            .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+    }
+
+    private void TeleportWindowDraw()
+    {
+        if (!canTeleport)
+            return;
+
+        scr.Clear();
+        teleportContainer.Draw();
+        scr.Print(2, 23, "up/down/left/right to change");
+        scr.Print(2, 24, "b to select");
+    }
+
     IEnumerator run()
     {
         // first: wait for the room to load.
@@ -879,6 +930,9 @@ public class ConfigurationController : MonoBehaviour
                             break;
                         case "controllers":
                             status = StatusOptions.onChangeController;
+                            break;
+                        case "teleport":
+                            status = StatusOptions.onTeleport;
                             break;
                     }
 
@@ -1128,6 +1182,48 @@ public class ConfigurationController : MonoBehaviour
                 })
             .End()
 
+            .Sequence("Teleport")
+              .Condition("On teleport", () => status == StatusOptions.onTeleport)
+              .Condition("Can teleport", () => canTeleport)
+              .Do("Init", () =>
+                {
+                    SetTeleportWidgets();
+                    TeleportWindowDraw();
+                    scr.DrawScreen();
+
+                    return TaskStatus.Success;
+                })
+                .Do("Process", () =>
+                {
+                    changeContainerSelection(teleportContainer);
+                    GenericWidget w = teleportContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
+                    {
+                        if (w.name == "exit")
+                        {
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "teleport")
+                        {
+                            string sceneDescription = teleportDestination.GetSelectedOption();
+                            SceneDocument toScene = sceneDatabase.FindByDescription(sceneDescription);
+                            if (toScene == null)
+                            {
+                                ConfigManager.WriteConsoleError($"[ConfigurationController.tree] scene [{sceneDescription}] not found in scenes database, jump to room001");
+                                toScene = sceneDatabase.FindByName("Room001");
+                            }
+                            ConfigManager.WriteConsole($"[ConfigurationController.tree] teleport to scene [{sceneDescription}]");
+                            ControlEnable(false); //free the player
+                            teleportation.Teleport(toScene);
+                            status = StatusOptions.init;
+                            return TaskStatus.Success;
+                        }
+                    }
+                    scr.DrawScreen();
+                    return TaskStatus.Continue;
+                })
+            .End()
 
             .Sequence("EXIT")
               //.Condition("Exit button", () => ControlActive("EXIT"))
