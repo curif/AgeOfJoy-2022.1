@@ -59,6 +59,7 @@ public class GateController : MonoBehaviour
 
         if (ScenesToLoad.Length > 0)
         {
+          ConfigManager.WriteConsole($"[GateController] gate activated, loading rooms...");
           foreach (SceneReference controledSceneToLoad in ScenesToLoad)   
           {
             if (controledSceneToLoad != null && controledSceneToLoad.IsSafeToUse &&
@@ -77,6 +78,7 @@ public class GateController : MonoBehaviour
         }
         if (ScenesToUnload.Length > 0)
         {
+          ConfigManager.WriteConsole($"[GateController] gate activated, unloading rooms...");
           bool unloadUnusedAssets = false;
           foreach (SceneReference controledSceneToUnLoad in ScenesToUnload)   
           {
