@@ -186,6 +186,7 @@ public class ConfigurationController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        ConfigManager.WriteConsole("[ConfigurationController] start");
         setupActionMap();
 
         if (changeControls == null)
@@ -206,6 +207,7 @@ public class ConfigurationController : MonoBehaviour
 
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
+
         StartCoroutine(run());
     }
 
@@ -534,6 +536,8 @@ public class ConfigurationController : MonoBehaviour
     }
     private void SetGlobalWidgets()
     {
+        bootScreen = new(scr);
+
         isGlobalConfigurationWidget = new GenericBool(scr, "isGlobal", "working with global:", !configHelper.CanConfigureRoom(), 4, 10);
         isGlobalConfigurationWidget.enabled = isGlobalConfigurationWidget.value;
 
@@ -544,6 +548,7 @@ public class ConfigurationController : MonoBehaviour
             room = roomConfiguration.GetName();
         lblRoomName = new(scr, "roomid", room, 1, 22, inverted: false);
     }
+
     private void SetChangeModeWidgets()
     {
         if (changeModeContainer != null)
@@ -802,6 +807,14 @@ public class ConfigurationController : MonoBehaviour
 
     IEnumerator run()
     {
+        ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
+
+        scr.Clear();
+        scr.PrintCentered(1, "BIOS ROM firmware loaded", true);
+        scr.PrintCentered(2, GetRoomDescription());
+        scr.DrawScreen();
+        yield return null;
+
         // first: wait for the room to load.
         configHelper = new(globalConfiguration, roomConfiguration);
         if (configHelper.CanConfigureRoom() && cabinetsController != null)
@@ -811,12 +824,14 @@ public class ConfigurationController : MonoBehaviour
             while (!cabinetsController.Loaded)
             {
                 yield return new WaitForSeconds(1f / 2f);
+                ConfigManager.WriteConsole("[ConfigurationController] waiting for cabinets load.");
                 ScreenWaitingDraw();
                 scr.DrawScreen();
             }
         }
         else
         {
+            //wait a bit to setup all elements in the room.
             yield return new WaitForSeconds(1f / 2f);
         }
 
@@ -824,9 +839,6 @@ public class ConfigurationController : MonoBehaviour
             ConfigManager.WriteConsole("[ConfigurationController] gameregistry component not found, cant configure games controllers");
 
         //create widgets
-        //boot
-        bootScreen = new(scr);
-
         SetGlobalWidgets();
 
         //main cycle
@@ -844,6 +856,7 @@ public class ConfigurationController : MonoBehaviour
                 yield return new WaitForSeconds(1f / 6f);
         }
     }
+
     private BehaviorTree buildBT()
     {
         return new BehaviorTreeBuilder(gameObject)
