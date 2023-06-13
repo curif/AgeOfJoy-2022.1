@@ -18,7 +18,7 @@ public class PutOnFloor : MonoBehaviour
         if (floor == null)
             return;
 
-        ConfigManager.WriteConsole($"[PutOnFloor] Cabinet {name} floor found");
+        //ConfigManager.WriteConsole($"[PutOnFloor] Cabinet {name} floor found");
 
         gameObject.transform.position = new Vector3(gameObject.transform.position.x, floor.position.y + floorHeight/2, gameObject.transform.position.z);
         //gameObject.transform.position.y = floor.position.y + 0.01f;

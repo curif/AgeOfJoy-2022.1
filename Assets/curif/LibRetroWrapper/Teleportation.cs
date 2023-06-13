@@ -22,85 +22,15 @@ public class Teleportation : MonoBehaviour
         if (string.IsNullOrEmpty(teleportTo.PlayerSpawnGameObjectName))
             return;
 
-        this.teleportTo = teleportTo;
-        StartCoroutine(TeleportLoop());
-    }
-
-    IEnumerator TeleportLoop()
-    {
-
-        GameObject player = GameObject.Find("OVRPlayerControllerGalery");
-
-        if (teleportTo != null && teleportTo.Scene.IsSafeToUse)
+        GameObject roomInit = GameObject.Find("RoomInit");
+        if (roomInit != null)
         {
-            if (SceneManager.GetSceneByName(teleportTo.Scene.Name).isLoaded)
-            {
-                ConfigManager.WriteConsole($"[TeleportLoop] LOADED SCENE (previously): {teleportTo.Scene.Name}");
-            }
-            else
-            {
-                AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(teleportTo.Scene.Name,
-                                                                          LoadSceneMode.Additive);
-                while (!asyncLoad.isDone)
-                    yield return null;
-
-                ConfigManager.WriteConsole($"[TeleportLoop] LOADED SCENE: {teleportTo.Scene.Name}");
-            }
+            TeleportationController controller = roomInit.GetComponent<TeleportationController>();
+            controller.Teleport(teleportTo, ScenesToUnload);
         }
         else
         {
-            ConfigManager.WriteConsole($"[TeleportLoop] scene isn't ready to be loaded, cancel: {teleportTo.Scene.Name}");
-            yield break;
+            ConfigManager.WriteConsoleError($"[Teleport] can't teleport, telleportationController not found.");
         }
-
-        //get player position
-        GameObject spawnPosition = GameObject.Find(teleportTo.PlayerSpawnGameObjectName);
-        if (spawnPosition != null)
-        {
-            ConfigManager.WriteConsole($"[TeleportLoop] player spawn in {spawnPosition}");
-            Vector3 sourcePosition = spawnPosition.transform.position;
-            Vector3 destinationPosition = player.transform.position;
-            destinationPosition.x = sourcePosition.x;
-            destinationPosition.y = sourcePosition.y;
-            destinationPosition.z = sourcePosition.z;
-            //moves the player
-            player.transform.position = destinationPosition;
-        }
-        else
-        {
-            ConfigManager.WriteConsoleError($"[TeleportLoop] can't spawn, position {teleportTo.PlayerSpawnGameObjectName} not found, check scene database in room init or the gameobject spawn in the destination room.");
-            SceneManager.UnloadSceneAsync(teleportTo.Scene.Name);
-            yield break;
-        }
-
-        //unload unused scenes
-        if (ScenesToUnload.Length > 0)
-        {
-            bool unloadUnusedAssets = false;
-            foreach (SceneReference controledSceneToUnLoad in ScenesToUnload)
-            {
-                if (controledSceneToUnLoad != null && controledSceneToUnLoad.IsSafeToUse &&
-                    SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
-                {
-                    AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
-                    while (!asyncLoad.isDone)
-                        yield return null;
-
-                    ConfigManager.WriteConsole($"[TeleportLoop] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
-                    unloadUnusedAssets = true;
-
-                }
-            }
-            if (unloadUnusedAssets)
-            {
-                AsyncOperation resourceUnloadOp = Resources.UnloadUnusedAssets();
-                while (!resourceUnloadOp.isDone)
-                    yield return null;
-            }
-        }
-
-        LightProbes.TetrahedralizeAsync();
-        yield break;
     }
-
 }
