@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(BoxCollider))]
+//[RequireComponent(typeof(BoxCollider))]
 public class AgentScenePosition : MonoBehaviour
 {
 
@@ -13,6 +13,11 @@ public class AgentScenePosition : MonoBehaviour
   void Start()
   {
     BoxCollider boxCollider = GetComponent<BoxCollider>();
+    if (boxCollider == null)
+    {
+      ConfigManager.WriteConsoleError($"[AgentScenePosition] box collider doesn't exists in the position");
+      return;
+    }
     boxCollider.isTrigger = true;
     Vector3 size = boxCollider.size;
     size.y = BoxColliderHeight;
