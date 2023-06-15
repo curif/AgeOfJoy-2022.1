@@ -70,7 +70,10 @@ public class ConfigInformation
         //in player.DynamicMoveProvider.moveSpeed
         [YamlMember(Alias = "speed", ApplyNamingConventions = false)]
         public int? moveSpeed;
+        [YamlMember(Alias = "turn-speed", ApplyNamingConventions = false)]
+        public int? turnSpeed;
     }
+
 
     //global audio config
     public class Audio : ConfigInformationBase

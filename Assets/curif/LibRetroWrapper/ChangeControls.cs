@@ -7,21 +7,25 @@ using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 public class ChangeControls : MonoBehaviour
 {
     public GameObject leftHandXRControl, rightHandXRControl;
+
     public GameObject leftHandPrefab;
     public GameObject rightHandPrefab;
     public GameObject leftJoystickPrefab;
     public GameObject rightJoystickPrefab;
+    [Tooltip("Teleport interactor gameobject contains it")]
+    public XRRayInteractor xrrayInteractor;
 
-    DynamicMoveProvider dynamicMoveProvider;
-    float moveSpeed;
     ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
-    float turnSpeed;
+    DynamicMoveProvider dynamicMoveProvider;
+    bool reservedTeleportationEnabled;
     ActionBasedController controllerLeftHand;
     ActionBasedController controllerRightHand;
     GameObject leftHandModel;
     GameObject rightHandModel;
     GameObject leftJoystickModel;
     GameObject rightJoystickModel;
+
+    bool isPlaying = false;
 
     void Start()
     {
@@ -30,8 +34,8 @@ public class ChangeControls : MonoBehaviour
 
         actionBasedContinuousTurnProvider = GetComponent<ActionBasedContinuousTurnProvider>();
         dynamicMoveProvider = GetComponent<DynamicMoveProvider>();
-        turnSpeed = actionBasedContinuousTurnProvider.turnSpeed;
-        moveSpeed = dynamicMoveProvider.moveSpeed;
+
+        reservedTeleportationEnabled = xrrayInteractor.enabled;
 
         leftJoystickModel = GameObject.Instantiate(leftJoystickPrefab, controllerLeftHand.modelParent);
         rightJoystickModel = GameObject.Instantiate(rightJoystickPrefab, controllerRightHand.modelParent);
@@ -41,33 +45,86 @@ public class ChangeControls : MonoBehaviour
         controllerLeftHand.model = leftHandModel.transform;
         controllerRightHand.model = rightHandModel.transform;
 
-        PlayerMode(false);
+        leftJoystickModel.SetActive(false);
+        rightJoystickModel.SetActive(false);
     }
 
     public void PlayerMode(bool modePlaying)
     {
-        ConfigManager.WriteConsole($"[ChangeControls.Playermode] modePlaying: {modePlaying}");
-        if (modePlaying)
+        ConfigManager.WriteConsole($"[ChangeControls.Playermode] modePlaying: {modePlaying} actual status playing: {isPlaying}");
+        if (isPlaying == modePlaying)
+            return;
+        changeMode(modePlaying);
+    }
+
+    private void activateDeactivateControls()
+    {
+        leftJoystickModel.SetActive(isPlaying);
+        rightJoystickModel.SetActive(isPlaying);
+        leftHandModel.gameObject.SetActive(!isPlaying);
+        rightHandModel.gameObject.SetActive(!isPlaying);
+    }
+    private void setControllers()
+    {
+        controllerLeftHand.model = isPlaying ? leftJoystickModel.transform : leftHandModel.transform;
+        controllerRightHand.model = isPlaying ? rightJoystickModel.transform : rightHandModel.transform;
+    }
+    private void changeMode(bool modePlaying)
+    {
+        isPlaying = modePlaying;
+        activateDeactivateControls();
+        setControllers();
+        dynamicMoveProvider.enabled = !isPlaying;
+        actionBasedContinuousTurnProvider.enabled = !isPlaying;
+
+        if (isPlaying)
         {
-            leftJoystickModel.SetActive(true);
-            rightJoystickModel.SetActive(true);
-            leftHandModel.SetActive(false);
-            rightHandModel.SetActive(false);
-            controllerLeftHand.model = leftJoystickModel.transform;
-            controllerRightHand.model = rightJoystickModel.transform;
-            actionBasedContinuousTurnProvider.turnSpeed = 0;
-            dynamicMoveProvider.moveSpeed = 0;          
+            reservedTeleportationEnabled = xrrayInteractor.enabled;
+            xrrayInteractor.enabled = false;
         }
         else
         {
-            controllerLeftHand.model = leftHandModel.transform;
-            controllerRightHand.model = rightHandModel.transform;
-            leftJoystickModel.SetActive(false);
-            rightJoystickModel.SetActive(false);
-            leftHandModel.gameObject.SetActive(true);
-            rightHandModel.gameObject.SetActive(true);
-            actionBasedContinuousTurnProvider.turnSpeed = turnSpeed;
-            dynamicMoveProvider.moveSpeed = moveSpeed;
+            xrrayInteractor.enabled = reservedTeleportationEnabled;
+        }
+    }
+
+    //units by second
+    public float moveSpeed
+    {
+        get
+        {
+            return dynamicMoveProvider.moveSpeed;
+        }
+        set
+        {
+            dynamicMoveProvider.moveSpeed = value;
+        }
+    }
+
+    //number of degress/second to rotate when turn
+    public float turnSpeed
+    {
+        get
+        {
+            return actionBasedContinuousTurnProvider.turnSpeed;
+        }
+        set
+        {
+            actionBasedContinuousTurnProvider.turnSpeed = value;
+        }
+    }
+
+    public bool teleportationEnabled
+    {
+        get
+        {
+            return isPlaying ? xrrayInteractor.enabled : reservedTeleportationEnabled;
+        }
+        set
+        {
+            reservedTeleportationEnabled = value;
+            if (!isPlaying)
+                xrrayInteractor.enabled = reservedTeleportationEnabled;
         }
     }
 }

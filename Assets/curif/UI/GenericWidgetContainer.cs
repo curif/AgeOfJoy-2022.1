@@ -11,6 +11,8 @@ class GenericWidgetContainer : GenericWidget
     // A field for the current index of the widget
     private int index; // The index of the current widget
 
+    public int lastYAdded = 0;
+
     // A constructor that takes the screen generator, the x and y coordinates and the name of the container and initializes the list and the index
     public GenericWidgetContainer(ScreenGenerator screen, string name) : base(screen, 0, 0, name)
     {
@@ -23,7 +25,7 @@ class GenericWidgetContainer : GenericWidget
     }
 
     // A method to add a widget to the list
-    public GenericWidgetContainer Add(GenericWidget widget)
+    public GenericWidgetContainer Add(GenericWidget widget, int x = -1, int y = -1)
     {
         // Check if the widget is valid
         if (widget == null)
@@ -33,6 +35,12 @@ class GenericWidgetContainer : GenericWidget
 
         // Add the widget to the list
         widgets.Add(widget);
+        if (x != -1)
+            widget.x = x;
+        if (y != -1)
+            widget.y = y;
+        
+        lastYAdded = widget.y;
 
         // If this is the first widget, set it as the current one
         if (index == -1 && widget.isSelectable && widget.enabled)

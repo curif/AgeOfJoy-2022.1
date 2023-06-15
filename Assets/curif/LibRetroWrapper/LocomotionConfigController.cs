@@ -4,19 +4,16 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
-public class LocomotionConfigContoller : MonoBehaviour
+public class LocomotionConfigController : MonoBehaviour
 {
-   public GlobalConfiguration globalConfiguration;
+    public GlobalConfiguration globalConfiguration;
 
-    private GameObject player;
-    private GameObject teleportInteractor;
+    [Tooltip("Change controls component in the PlayerControllerF")]
+    public ChangeControls changeControls;
 
     // Start is called before the first frame update
     void Start()
     {
-        player = GameObject.Find("OVRPlayerControllerGalery");
-        teleportInteractor = GameObject.Find("Teleport Interactor");
-
         OnEnable();
         change();
     }
@@ -26,20 +23,15 @@ public class LocomotionConfigContoller : MonoBehaviour
         ConfigInformation config = globalConfiguration.Configuration;
         if (config.locomotion?.teleportEnabled != null)
         {
-            XRRayInteractor xrrayInteractor = teleportInteractor.GetComponent<XRRayInteractor>();
-            if (xrrayInteractor != null)
-            {
-                xrrayInteractor.enabled = (bool)config.locomotion.teleportEnabled;
-            }
+            changeControls.teleportationEnabled = (bool)config.locomotion.teleportEnabled;
         }
         if (config.locomotion?.moveSpeed != null)
         {
-            DynamicMoveProvider dynamicMoveProvider = player.GetComponent<DynamicMoveProvider>();
-            if (dynamicMoveProvider != null)
-            {
-                //https://docs.unity3d.com/Packages/com.unity.xr.interaction.toolkit@2.4/api/UnityEngine.XR.Interaction.Toolkit.ContinuousMoveProviderBase.html#UnityEngine_XR_Interaction_Toolkit_ContinuousMoveProviderBase_moveSpeed
-                dynamicMoveProvider.moveSpeed = (int)config.locomotion.moveSpeed;
-            }
+            changeControls.moveSpeed = (float)config.locomotion.moveSpeed;
+        }
+        if (config.locomotion?.turnSpeed != null)
+        {
+            changeControls.turnSpeed = (float)config.locomotion.turnSpeed;
         }
     }
     void OnGlobalConfigChanged()
