@@ -9231,10 +9231,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: ConfigurationCabinet
       objectReference: {fileID: 0}
+    - target: {fileID: 408782547812308882, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2876436268418612056, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: CoinSlot
       value: 
-      objectReference: {fileID: 990952377}
+      objectReference: {fileID: 0}
     - target: {fileID: 2876436268418612056, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: roomConfiguration
       value: 
@@ -9247,6 +9251,18 @@ PrefabInstance:
       propertyPath: m_IsTrigger
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6377664636012016127, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.77
+      objectReference: {fileID: 0}
+    - target: {fileID: 6377664636012016127, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -6.83
+      objectReference: {fileID: 0}
+    - target: {fileID: 7172055644695085129, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7277189896210793098, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -9257,7 +9273,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7277189896210793098, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.69361013
+      value: -0.644
       objectReference: {fileID: 0}
     - target: {fileID: 7277189896210793098, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9291,6 +9307,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7944976058959383071, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.7300001
+      objectReference: {fileID: 0}
+    - target: {fileID: 7944976058959383071, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 7944976058959383071, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.02000004
+      objectReference: {fileID: 0}
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.size
       value: 1
@@ -9308,17 +9336,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
---- !u!114 &990952377 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 637130652569484175, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+--- !u!4 &990952377 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6377664636012016127, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
   m_PrefabInstance: {fileID: 990952376}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b52373b09ce4a4f088a17163eeefbee, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1007719548
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17270,11 +17292,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4.5542502, y: 13.944907, z: 8.522886}
   m_Center: {x: -0.14608036, y: 6.472471, z: 1.9891155}
---- !u!4 &1747387274 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 7277189896210793098, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
-  m_PrefabInstance: {fileID: 990952376}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1749523232
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17982,7 +17999,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 455458702}
-  - {fileID: 1747387274}
+  - {fileID: 990952377}
   - {fileID: 1645837029}
   - {fileID: 424229489}
   - {fileID: 1661450830}
