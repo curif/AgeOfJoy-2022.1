@@ -225,7 +225,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
           selectedDestination = totalDestinationsList[index];
           if (destination != null && UnityEngine.Object.ReferenceEquals(selectedDestination.Place, destination.Place))
           {
-            ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
+            // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
             return TaskStatus.Failure;
           }
           destination = null;
@@ -243,7 +243,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
             .Do("Use the default destination", () =>
             {
               selectedDestination = DefaultDestination;
-              ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder]{gameObject.name} falls into the default destination: {DefaultDestination.Place.name}");
+              // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder]{gameObject.name} falls into the default destination: {DefaultDestination.Place.name}");
               return TaskStatus.Success;
             })
           .End()
