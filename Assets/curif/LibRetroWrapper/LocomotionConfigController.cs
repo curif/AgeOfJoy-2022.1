@@ -11,31 +11,41 @@ public class LocomotionConfigController : MonoBehaviour
     [Tooltip("Change controls component in the PlayerControllerF")]
     public ChangeControls changeControls;
 
-    // Start is called before the first frame update
     void Start()
     {
-        OnEnable();
+        OnEnable(); 
         change();
     }
 
     void change()
     {
         ConfigInformation config = globalConfiguration.Configuration;
+        if (config == null)
+        {
+            ConfigManager.WriteConsoleError("[LocomotionConfigController.change] can't get global configuration");
+            return;
+        }
+
         if (config.locomotion?.teleportEnabled != null)
         {
             changeControls.teleportationEnabled = (bool)config.locomotion.teleportEnabled;
-        }
-        if (config.locomotion?.moveSpeed != null)
-        {
-            changeControls.moveSpeed = (float)config.locomotion.moveSpeed;
         }
         if (config.locomotion?.turnSpeed != null)
         {
             changeControls.turnSpeed = (float)config.locomotion.turnSpeed;
         }
+
+        if (config.locomotion?.moveSpeed != null)
+        {
+            changeControls.moveSpeed = (float)config.locomotion.moveSpeed;
+        }
+
+        ConfigManager.WriteConsole("[LocomotionConfigController.change] applied locomotion configuration");
     }
+
     void OnGlobalConfigChanged()
     {
+        ConfigManager.WriteConsole("[LocomotionConfigController.OnGlobalConfigChanged] invoked");
         change();
     }
 

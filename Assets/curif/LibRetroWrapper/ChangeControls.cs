@@ -15,9 +15,11 @@ public class ChangeControls : MonoBehaviour
     [Tooltip("Teleport interactor gameobject contains it")]
     public XRRayInteractor xrrayInteractor;
 
-    ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
-    DynamicMoveProvider dynamicMoveProvider;
+    public ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
+    public DynamicMoveProvider dynamicMoveProvider;
     bool reservedTeleportationEnabled;
+    float reservedMoveSpeed;
+    float reservedTurnSpeed;
     ActionBasedController controllerLeftHand;
     ActionBasedController controllerRightHand;
     GameObject leftHandModel;
@@ -32,10 +34,10 @@ public class ChangeControls : MonoBehaviour
         controllerLeftHand = leftHandXRControl.GetComponent<ActionBasedController>();
         controllerRightHand = rightHandXRControl.GetComponent<ActionBasedController>();
 
-        actionBasedContinuousTurnProvider = GetComponent<ActionBasedContinuousTurnProvider>();
-        dynamicMoveProvider = GetComponent<DynamicMoveProvider>();
-
-        reservedTeleportationEnabled = xrrayInteractor.enabled;
+        // actionBasedContinuousTurnProvider = GetComponent<ActionBasedContinuousTurnProvider>();
+        // dynamicMoveProvider = GetComponent<DynamicMoveProvider>();
+        // if (dynamicMoveProvider == null)
+        //     throw new System.Exception("[ChangeControls] a DynamicMoveProvider component is required");
 
         leftJoystickModel = GameObject.Instantiate(leftJoystickPrefab, controllerLeftHand.modelParent);
         rightJoystickModel = GameObject.Instantiate(rightJoystickPrefab, controllerRightHand.modelParent);
@@ -47,6 +49,20 @@ public class ChangeControls : MonoBehaviour
 
         leftJoystickModel.SetActive(false);
         rightJoystickModel.SetActive(false);
+    }
+
+    private void reserveValues()
+    {
+        reservedTeleportationEnabled = xrrayInteractor.enabled;
+        reservedMoveSpeed = dynamicMoveProvider.moveSpeed;
+        reservedTurnSpeed = actionBasedContinuousTurnProvider.turnSpeed;
+    }
+
+    private void restoreReservedValues()
+    {
+        xrrayInteractor.enabled = reservedTeleportationEnabled;
+        dynamicMoveProvider.moveSpeed = reservedMoveSpeed;
+        actionBasedContinuousTurnProvider.turnSpeed = reservedTurnSpeed;
     }
 
     public void PlayerMode(bool modePlaying)
@@ -74,17 +90,18 @@ public class ChangeControls : MonoBehaviour
         isPlaying = modePlaying;
         activateDeactivateControls();
         setControllers();
-        dynamicMoveProvider.enabled = !isPlaying;
+
         actionBasedContinuousTurnProvider.enabled = !isPlaying;
+        dynamicMoveProvider.enabled = !isPlaying;
 
         if (isPlaying)
         {
-            reservedTeleportationEnabled = xrrayInteractor.enabled;
+            reserveValues();
             xrrayInteractor.enabled = false;
         }
         else
         {
-            xrrayInteractor.enabled = reservedTeleportationEnabled;
+            restoreReservedValues();
         }
     }
 
@@ -93,11 +110,16 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            return dynamicMoveProvider.moveSpeed;
+            if (dynamicMoveProvider.enabled)
+                return dynamicMoveProvider.moveSpeed;
+            return reservedMoveSpeed;
         }
         set
         {
-            dynamicMoveProvider.moveSpeed = value;
+            ConfigManager.WriteConsole($"[ChangeControls] dynamicMoveProvider : {dynamicMoveProvider}");
+            if (dynamicMoveProvider.enabled)
+                dynamicMoveProvider.moveSpeed = value;
+            reservedMoveSpeed = value;
         }
     }
 
@@ -106,11 +128,15 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            return actionBasedContinuousTurnProvider.turnSpeed;
+            if (actionBasedContinuousTurnProvider.enabled)
+                return actionBasedContinuousTurnProvider.turnSpeed;
+            return reservedTurnSpeed;
         }
         set
         {
-            actionBasedContinuousTurnProvider.turnSpeed = value;
+            if (actionBasedContinuousTurnProvider.enabled)
+                actionBasedContinuousTurnProvider.turnSpeed = value;
+            reservedTurnSpeed = value;
         }
     }
 
@@ -118,7 +144,7 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            return isPlaying ? xrrayInteractor.enabled : reservedTeleportationEnabled;
+            return !isPlaying ? xrrayInteractor.enabled : reservedTeleportationEnabled;
         }
         set
         {

@@ -22,6 +22,8 @@ public class RoomConfiguration : MonoBehaviour
         set
         {
             configuration = value;
+            ConfigManager.WriteConsole($"[RoomConfiguration] invoke calls...");
+
             OnRoomConfigChanged?.Invoke();
         }
     }
@@ -56,7 +58,7 @@ public class RoomConfiguration : MonoBehaviour
 
     public bool ExistsRoomConfiguration()
     {
-      return File.Exists(yamlPath);
+        return File.Exists(yamlPath);
     }
 
     public void Reset()

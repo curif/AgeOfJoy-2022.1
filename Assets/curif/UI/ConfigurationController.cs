@@ -214,6 +214,15 @@ public class ConfigurationController : MonoBehaviour
         // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
         if (CoinSlot == null)
+        {
+            Transform parent = transform.parent;
+            if (parent != null)
+            {
+                // Get the CoinSlotController component from any object within the parent's children
+                CoinSlot = parent.GetComponentInChildren<CoinSlotController>();
+            }
+        }
+        if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
 
         StartCoroutine(run());
@@ -857,7 +866,7 @@ public class ConfigurationController : MonoBehaviour
     {
         scr.Clear();
         locomotionContainer.Draw();
-        
+
         scr.Print(2, 23, "up/down/left/right to change");
         scr.Print(2, 24, "b to select");
     }

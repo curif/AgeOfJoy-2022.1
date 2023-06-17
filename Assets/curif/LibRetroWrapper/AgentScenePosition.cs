@@ -46,10 +46,10 @@ public class AgentScenePosition : MonoBehaviour
   
   private void OnTriggerEnter(Collider collision)
   {
-    //ConfigManager.WriteConsole($"[OnTriggerEnter] {name}: {collision.gameObject.name}");
+    // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
     if (colliderIsPlayer(collision))
     {
-      //ConfigManager.WriteConsole($"[OnTriggerEnter] {name}: {collision.gameObject.name}");
+      // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
       IsPlayerPresent = true;
       IsNPCPresent = false;
       NPCPresentName = ""; 
@@ -58,7 +58,7 @@ public class AgentScenePosition : MonoBehaviour
     {
       if (!IsNPCPresent && collision.gameObject.tag == "NPC")
       {
-        //ConfigManager.WriteConsole($"[OnTriggerEnter] {name}: NPC present in position is {collision.gameObject.name}");
+        // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: NPC present in position is {collision.gameObject.name}");
         IsNPCPresent = true;
         NPCPresentName = collision.gameObject.name;
       }
@@ -83,4 +83,5 @@ public class AgentScenePosition : MonoBehaviour
       }
     }
   }
+
 }

@@ -83,7 +83,7 @@ public class CabinetController : MonoBehaviour
         {
             ConfigManager.WriteConsole($"[CabinetControlle] {game.CabInfo.name} texture parts");
             //N seconds to load a cabinet
-            float waitForSeconds = 2f / game.CabInfo.Parts.Count;
+            float waitForSeconds = 1f / game.CabInfo.Parts.Count;
             foreach (CabinetInformation.Part part in game.CabInfo.Parts)
             {
                 CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);

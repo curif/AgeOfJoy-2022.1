@@ -23,6 +23,7 @@ public class GlobalConfiguration : MonoBehaviour
         set
         {
             configuration = value;
+            ConfigManager.WriteConsole($"[GlobalConfiguration] new config asigned, invoke calls");
             OnGlobalConfigChanged?.Invoke();
         }
     }
@@ -36,8 +37,10 @@ public class GlobalConfiguration : MonoBehaviour
         // Get the first FileMonitor component in the array
         fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
         yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
-        OnEnable();
+        OnEnable(); 
         Load();
+                fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+
     }
 
     private void Load()
