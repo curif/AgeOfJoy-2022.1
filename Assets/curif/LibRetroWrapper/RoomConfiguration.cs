@@ -31,9 +31,13 @@ public class RoomConfiguration : MonoBehaviour
     void Start()
     {
         if (GlobalConfigurationGameObject == null)
-        {
             GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+        if (GlobalConfigurationGameObject == null)
+        {
+            ConfigManager.WriteConsoleError($"[RoomConfiguration.Start] Global Configuration isn't assigned, can't continue");
+            return;
         }
+
         fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
         yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
         globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
@@ -46,7 +50,7 @@ public class RoomConfiguration : MonoBehaviour
         //merge with global
         ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] merge with global configuration");
         ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] config to be merged: {config.ToString()}");
-        ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] global to merge to: {globalConfiguration.Configuration.ToString()}");
+        ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] global to merge to: {globalConfiguration.Configuration?.ToString()}");
         Configuration = (ConfigInformation)ConfigInformation.Merge(globalConfiguration.Configuration, config);
         ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] final configuration: {Configuration.ToString()}");
     }

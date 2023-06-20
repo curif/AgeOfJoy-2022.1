@@ -897,7 +897,7 @@ public class ConfigurationController : MonoBehaviour
             while (!cabinetsController.Loaded)
             {
                 yield return new WaitForSeconds(1f / 2f);
-                ConfigManager.WriteConsole("[ConfigurationController] waiting for cabinets load.");
+                // ConfigManager.WriteConsole("[ConfigurationController] waiting for cabinets load.");
                 ScreenWaitingDraw();
                 scr.DrawScreen();
             }

@@ -36,6 +36,8 @@ public class CabinetsController : MonoBehaviour
 
         //set cabinets ID. using a For to ensure the order.
         int idx = 0;
+        Shader shader = Shader.Find("Standard");
+        Vector2 newTiling = new Vector2(-1, -1);
         for (idx = 0; idx < cabinetsCount; idx++)
         {
             CabinetController cc = transform.GetChild(idx).gameObject.GetComponent<CabinetController>();
@@ -47,8 +49,33 @@ public class CabinetsController : MonoBehaviour
             {
                 cc.game = new();
                 cc.game.Position = idx;
+
+                //assign the cabinet number to the teleport area
+                MeshRenderer renderer = cc.AgentPlayerTeleportAnchor?.GetComponent<MeshRenderer>();
+                if (renderer != null)
+                {
+                    string textureName = $"Cabinets/AgentPlayerPositionsNumbers/AgentPlayerPosition ({idx.ToString()})";
+                    Texture2D numberTexture = Resources.Load<Texture2D>(textureName);
+                    if (numberTexture != null)
+                    {
+                        Material cabinetNumberMaterial = new Material(shader);
+
+                        // Assign the texture to the material
+                        cabinetNumberMaterial.mainTexture = numberTexture;
+                        //invert the texture number:
+                        cabinetNumberMaterial.mainTextureScale = newTiling;
+                        // Assign the material to the GameObject
+                        renderer.material = cabinetNumberMaterial;
+
+                        renderer.enabled = true;
+                    }
+                    else
+                        ConfigManager.WriteConsoleError($"[CabinetsController] Agent Player Position number texture not found: {textureName} idx: {idx}");
+
+                }
             }
         }
+
         gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
         if (gameRegistry != null)
             StartCoroutine(load());

@@ -237,6 +237,7 @@ Transform:
   - {fileID: 3920689133428433678}
   - {fileID: 8221622948686832776}
   - {fileID: 1295869715089939373}
+  - {fileID: 3764973883165088565}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -664,6 +665,74 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5905782540116178242, guid: ab2ef27b71a502e0588b103fa5c54e38, type: 3}
   m_PrefabInstance: {fileID: 2588619176834339274}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5357620398401699534
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 7277189896210793098}
+    m_Modifications:
+    - target: {fileID: 1225618955148793713, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_Name
+      value: 'Teleportation Anchor '
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_RootOrder
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.346
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.483
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 2331894275357442309, guid: e0bc45deca399c8419693197d2990220, type: 3}
+    - {fileID: 7369505817908819814, guid: e0bc45deca399c8419693197d2990220, type: 3}
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e0bc45deca399c8419693197d2990220, type: 3}
+--- !u!4 &3764973883165088565 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9107906348111308283, guid: e0bc45deca399c8419693197d2990220, type: 3}
+  m_PrefabInstance: {fileID: 5357620398401699534}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6163505922785556939
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -936,7 +1005,9 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4814773498061885357, guid: e0bc45deca399c8419693197d2990220, type: 3}
+    - {fileID: 6262607667674468851, guid: e0bc45deca399c8419693197d2990220, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
