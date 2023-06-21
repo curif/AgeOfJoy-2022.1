@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
@@ -135,6 +136,12 @@ public class ConfigurationController : MonoBehaviour
     private GenericOptions teleportDestination;
     private GenericWidgetContainer teleportContainer;
 
+    //locomotion
+    private GenericWidgetContainer locomotionContainer;
+    private GenericBool locomotionTeleportOn;
+    private GenericOptionsInteger locomotionSpeed;
+    private GenericOptionsInteger locomotionTurnSpeed;
+
     [Header("Tree")]
     [SerializeField]
     public BehaviorTree tree;
@@ -153,6 +160,7 @@ public class ConfigurationController : MonoBehaviour
         onChangeCabinets,
         onTeleport,
         onReset,
+        onChangeLocomotion,
         exit
     }
     private StatusOptions status;
@@ -205,6 +213,15 @@ public class ConfigurationController : MonoBehaviour
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
         // inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
+        if (CoinSlot == null)
+        {
+            Transform parent = transform.parent;
+            if (parent != null)
+            {
+                // Get the CoinSlotController component from any object within the parent's children
+                CoinSlot = parent.GetComponentInChildren<CoinSlotController>();
+            }
+        }
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
 
@@ -508,8 +525,10 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("controllers", "Map your controls to play games");
         if (CanConfigureCabinets())
             mainMenu.AddOption("cabinets", " replace cabinets in the room  ");
-        mainMenu.AddOption("reset", "  global or room configuration ");
-        mainMenu.AddOption("change mode", "         back to default       ");
+        if (isGlobalConfigurationWidget.value)
+            mainMenu.AddOption("locomotion", " player movement configuration  ");
+        mainMenu.AddOption("change mode", "  global or room configuration ");
+        mainMenu.AddOption("reset", "         back to default       ");
         mainMenu.AddOption("teleport", "       teleport to a room       ");
         mainMenu.AddOption("exit", "        exit configuration     ");
 
@@ -805,6 +824,60 @@ public class ConfigurationController : MonoBehaviour
         scr.Print(2, 24, "b to select");
     }
 
+    private void LocomotionUpdateConfigurationFromWidgets()
+    {
+        if (!isGlobalConfigurationWidget.value)
+            return;
+
+        ConfigInformation config = configHelper.getConfigInformation(true);
+        config.locomotion = new();
+        config.locomotion.moveSpeed = locomotionSpeed.GetSelectedOption();
+        config.locomotion.turnSpeed = locomotionTurnSpeed.GetSelectedOption();
+        config.locomotion.teleportEnabled = locomotionTeleportOn.value;
+        configHelper.Save(true, config);
+        //after save the LocomotionConfigController (in introGallery configuration)
+        //should detect the file change and configure the controls via ChangeControls component.
+    }
+
+    private void SetLocomotionWidgets()
+    {
+        if (locomotionContainer != null)
+            return;
+
+        locomotionSpeed = new GenericOptionsInteger(scr, "locomotionSpeed",
+                                          "Speed:", 1, 12, 4, 6);
+
+        locomotionTurnSpeed = new GenericOptionsInteger(scr, "locomotionTurnSpeed",
+                                          "Turn Speed:", 10, 100, 4, 7);
+        locomotionTeleportOn = new GenericBool(scr, "teleport", "teleport on/off: ", false, 4, 8);
+
+        locomotionContainer = new(scr, "locmotionContainer");
+        locomotionContainer.Add(new GenericWindow(scr, 2, 4, "locomotionwin", 37, 12, " locomotion "))
+                            .Add(new GenericLabel(scr, "descrip1", "in units per second:", 4, 6))
+                            .Add(locomotionSpeed, 6, locomotionContainer.lastYAdded + 1)
+                            .Add(new GenericLabel(scr, "descrip2", "degrees/second to rotate:", 4, locomotionContainer.lastYAdded + 1))
+                            .Add(locomotionTurnSpeed, 6, locomotionContainer.lastYAdded + 1)
+                            .Add(new GenericLabel(scr, "descrip3", "activate/deactivate teleportation:", 4, locomotionContainer.lastYAdded + 1))
+                            .Add(locomotionTeleportOn, 6, locomotionContainer.lastYAdded + 1)
+                            .Add(new GenericButton(scr, "save", "save", 4, locomotionContainer.lastYAdded + 2, true))
+                            .Add(new GenericButton(scr, "exit", "exit", 4, locomotionContainer.lastYAdded + 1, true));
+    }
+    private void LocomotionWindowDraw()
+    {
+        scr.Clear();
+        locomotionContainer.Draw();
+
+        scr.Print(2, 23, "up/down/left/right to change");
+        scr.Print(2, 24, "b to select");
+    }
+
+    private void LocomotionSetWidgetsValues()
+    {
+        locomotionSpeed.SetCurrent((int)changeControls.moveSpeed);
+        locomotionTurnSpeed.SetCurrent((int)changeControls.turnSpeed);
+        locomotionTeleportOn.value = changeControls.teleportationEnabled;
+    }
+
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
@@ -824,7 +897,7 @@ public class ConfigurationController : MonoBehaviour
             while (!cabinetsController.Loaded)
             {
                 yield return new WaitForSeconds(1f / 2f);
-                ConfigManager.WriteConsole("[ConfigurationController] waiting for cabinets load.");
+                // ConfigManager.WriteConsole("[ConfigurationController] waiting for cabinets load.");
                 ScreenWaitingDraw();
                 scr.DrawScreen();
             }
@@ -952,6 +1025,9 @@ public class ConfigurationController : MonoBehaviour
                             break;
                         case "teleport":
                             status = StatusOptions.onTeleport;
+                            break;
+                        case "locomotion":
+                            status = StatusOptions.onChangeLocomotion;
                             break;
                     }
 
@@ -1236,6 +1312,44 @@ public class ConfigurationController : MonoBehaviour
                             ControlEnable(false); //free the player
                             teleportation.Teleport(toScene);
                             status = StatusOptions.init;
+                            return TaskStatus.Success;
+                        }
+                    }
+                    scr.DrawScreen();
+                    return TaskStatus.Continue;
+                })
+            .End()
+
+            .Sequence("Locomotion")
+              .Condition("On locomotion", () => status == StatusOptions.onChangeLocomotion)
+              .Condition("is global config", () => isGlobalConfigurationWidget.value)
+              .Do("Init", () =>
+                {
+                    SetLocomotionWidgets();
+                    LocomotionSetWidgetsValues();
+                    LocomotionWindowDraw();
+                    scr.DrawScreen();
+                    return TaskStatus.Success;
+                })
+                .Do("Process", () =>
+                {
+                    changeContainerSelection(locomotionContainer);
+                    GenericWidget w = locomotionContainer.GetSelectedWidget();
+                    if (w != null && ControlActive("JOYPAD_B"))
+                    {
+                        if (w.name == "exit")
+                        {
+                            status = StatusOptions.onMainMenu;
+                            return TaskStatus.Success;
+                        }
+                        else if (w.name == "teleport")
+                        {
+                            locomotionTeleportOn.Action();
+                        }
+                        else if (w.name == "save")
+                        {
+                            LocomotionUpdateConfigurationFromWidgets();
+                            status = StatusOptions.onMainMenu;
                             return TaskStatus.Success;
                         }
                     }

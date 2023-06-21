@@ -25,6 +25,7 @@ public class ConfigInformation
 {
     public NPC npc;
     public Audio audio;
+    public LocomotionConfiguration locomotion;
 
     /** don't. create an empty object. Merge didn't works if both are loaded.
     public ConfigInformation() {
@@ -60,6 +61,19 @@ public class ConfigInformation
             return volume <= 100 && volume >= 0;
         }
     }
+
+    public class LocomotionConfiguration : ConfigInformationBase
+    {
+        //enable/disable "Teleport Interactor" gameobject
+        [YamlMember(Alias = "teleport-enabled", ApplyNamingConventions = false)]
+        public bool? teleportEnabled;
+        //in player.DynamicMoveProvider.moveSpeed
+        [YamlMember(Alias = "speed", ApplyNamingConventions = false)]
+        public int? moveSpeed;
+        [YamlMember(Alias = "turn-speed", ApplyNamingConventions = false)]
+        public int? turnSpeed;
+    }
+
 
     //global audio config
     public class Audio : ConfigInformationBase

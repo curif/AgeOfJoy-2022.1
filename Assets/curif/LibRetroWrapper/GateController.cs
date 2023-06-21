@@ -67,19 +67,23 @@ public class GateController : MonoBehaviour
                     //ConfigManager.WriteConsole($"[GateController] gate activated, loading rooms...");
                     foreach (SceneReference controledSceneToLoad in ScenesToLoad)
                     {
-                        if (controledSceneToLoad != null && controledSceneToLoad.IsSafeToUse &&
+                        if (controledSceneToLoad != null &&
+                            controledSceneToLoad.IsSafeToUse &&
                             !SceneManager.GetSceneByName(controledSceneToLoad.Name).isLoaded)
                         {
                             AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(controledSceneToLoad.Name, LoadSceneMode.Additive);
                             while (!asyncLoad.isDone)
-                                yield return null;
+                                yield return new WaitForSeconds(0.1f);
+                            // yield return null;
                             ConfigManager.WriteConsole($"[GateController] LOADED SCENE: {controledSceneToLoad.Name}");
+                            yield return new WaitForSeconds(0.1f);
                         }
                     }
                     // time to calculate blend probes teselation
                     // Force Unity to asynchronously regenerate the tetrahedral tesselation for all loaded Scenes
                     // https://docs.unity3d.com/Manual/light-probes-and-scene-loading.html  
                     LightProbes.TetrahedralizeAsync();
+                    yield return new WaitForSeconds(0.1f);
                 }
                 if (ScenesToUnload.Length > 0)
                 {
@@ -92,17 +96,20 @@ public class GateController : MonoBehaviour
                         {
                             AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
                             while (!asyncLoad.isDone)
-                                yield return null;
+                                yield return new WaitForSeconds(0.1f);
+                            // yield return null;
                             ConfigManager.WriteConsole($"[GateController] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
                             unloadUnusedAssets = true;
                             LightProbes.TetrahedralizeAsync();
+                            yield return new WaitForSeconds(0.1f);
                         }
                     }
                     if (unloadUnusedAssets)
                     {
                         AsyncOperation resourceUnloadOp = Resources.UnloadUnusedAssets();
                         while (!resourceUnloadOp.isDone)
-                            yield return null;
+                            yield return new WaitForSeconds(0.1f);
+                        // yield return null;
                     }
                 }
             }
@@ -113,7 +120,7 @@ public class GateController : MonoBehaviour
                 {
                     SceneReference controledSceneBlocker = SceneBlockers[idx].SceneRef;
                     if (controledSceneBlocker != null)
-                        LockGate(SceneBlockers[idx], 
+                        LockGate(SceneBlockers[idx],
                                 !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
                 }
             }

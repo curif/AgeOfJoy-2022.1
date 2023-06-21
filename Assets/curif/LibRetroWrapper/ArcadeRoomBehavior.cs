@@ -167,6 +167,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
   IEnumerator runBT()
   {
+    yield return new WaitForSeconds(2f);
+
     othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
                   where npc != gameObject
                   select npc.GetComponent<ArcadeRoomBehavior>()).
@@ -187,6 +189,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
     }
 
     DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
+
+    yield return new WaitForSeconds(0.01f);
 
     tree = buildBT();
     while (true)
@@ -225,7 +229,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
           selectedDestination = totalDestinationsList[index];
           if (destination != null && UnityEngine.Object.ReferenceEquals(selectedDestination.Place, destination.Place))
           {
-            ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
+            // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
             return TaskStatus.Failure;
           }
           destination = null;
@@ -243,7 +247,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
             .Do("Use the default destination", () =>
             {
               selectedDestination = DefaultDestination;
-              ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder]{gameObject.name} falls into the default destination: {DefaultDestination.Place.name}");
+              // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder]{gameObject.name} falls into the default destination: {DefaultDestination.Place.name}");
               return TaskStatus.Success;
             })
           .End()
@@ -379,7 +383,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     walk();
  
-    ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds} secs {timeout.ToString()}");
+    // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds} secs {timeout.ToString()}");
     
     return true;
   }

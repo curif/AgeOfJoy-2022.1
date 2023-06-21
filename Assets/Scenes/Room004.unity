@@ -740,18 +740,6 @@ Transform:
   - {fileID: 2022803585}
   - {fileID: 279108378}
   - {fileID: 694505083}
-  - {fileID: 291929570}
-  - {fileID: 1825763375}
-  - {fileID: 1306299109}
-  - {fileID: 671340501}
-  - {fileID: 1350941069}
-  - {fileID: 1410245694}
-  - {fileID: 581497427}
-  - {fileID: 413932099}
-  - {fileID: 1993234473}
-  - {fileID: 2093044265}
-  - {fileID: 1007732161}
-  - {fileID: 877349092}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -856,7 +844,7 @@ GameObject:
   - component: {fileID: 95860502}
   - component: {fileID: 95860501}
   - component: {fileID: 95860500}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: GateController Teleport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -871,11 +859,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 95860498}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.5727, y: -0.124, z: 2.8015}
+  m_LocalPosition: {x: -7.187149, y: -0.65090185, z: -1.1160793}
   m_LocalScale: {x: 1.6509647, y: 1, z: 1.984059}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1388098676}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &95860500
@@ -1192,6 +1180,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &108282755
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1521,6 +1510,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 1941433770}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 1306299108}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 2
@@ -2774,6 +2771,14 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 472604360}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 413932098}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -2855,10 +2860,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (12)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &279108378
 Transform:
   m_ObjectHideFlags: 0
@@ -2940,6 +2945,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &279108382
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2955,7 +2961,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -3148,14 +3154,12 @@ GameObject:
   - component: {fileID: 291929570}
   - component: {fileID: 291929576}
   - component: {fileID: 291929575}
-  - component: {fileID: 291929574}
-  - component: {fileID: 291929573}
   - component: {fileID: 291929572}
   - component: {fileID: 291929571}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -3171,7 +3175,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &291929571
@@ -3264,7 +3268,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -3295,43 +3299,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &291929573
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 291929569}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 0.50929207, z: 10}
-  m_Center: {x: 0, y: 0.24535397, z: 0}
---- !u!114 &291929574
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 291929569}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &291929575
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3572,6 +3539,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 432313554}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 671340500}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 1
@@ -3829,10 +3804,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (3)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &356969975
 Transform:
   m_ObjectHideFlags: 0
@@ -3914,6 +3889,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &356969979
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3929,7 +3905,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -4540,14 +4516,12 @@ GameObject:
   - component: {fileID: 413932099}
   - component: {fileID: 413932105}
   - component: {fileID: 413932104}
-  - component: {fileID: 413932103}
-  - component: {fileID: 413932102}
   - component: {fileID: 413932101}
   - component: {fileID: 413932100}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (6) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -4563,7 +4537,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &413932100
@@ -4656,7 +4630,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -4687,43 +4661,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &413932102
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 413932098}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 0.50647074, z: 10}
-  m_Center: {x: 0, y: 0.24676463, z: 0}
---- !u!114 &413932103
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 413932098}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &413932104
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4909,6 +4846,14 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 1501754495}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 1993234472}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -4981,16 +4926,13 @@ GameObject:
   - component: {fileID: 430369709}
   - component: {fileID: 430369708}
   - component: {fileID: 430369710}
-  - component: {fileID: 430369711}
-  - component: {fileID: 430369713}
-  - component: {fileID: 430369712}
   m_Layer: 0
   m_Name: GateController
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &430369708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5049,145 +4991,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &430369711
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 430369707}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_OverrideArea: 0
-  m_Area: 0
-  m_OverrideGenerateLinks: 1
-  m_GenerateLinks: 1
-  m_IgnoreFromBuild: 0
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
---- !u!114 &430369712
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 430369707}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38f6bf3d943ac7945842268c9ef1dca6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_InteractionManager: {fileID: 0}
-  m_Colliders: []
-  m_InteractionLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_InteractionLayers:
-    m_Bits: 1
-  m_DistanceCalculationMode: 1
-  m_SelectMode: 1
-  m_CustomReticle: {fileID: 0}
-  m_AllowGazeInteraction: 0
-  m_AllowGazeSelect: 0
-  m_OverrideGazeTimeToSelect: 0
-  m_GazeTimeToSelect: 0.5
-  m_OverrideTimeToAutoDeselectGaze: 0
-  m_TimeToAutoDeselectGaze: 3
-  m_AllowGazeAssistance: 0
-  m_FirstHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_HoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_HoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FirstSelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Activated:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Deactivated:
-    m_PersistentCalls:
-      m_Calls: []
-  m_StartingHoverFilters: []
-  m_StartingSelectFilters: []
-  m_StartingInteractionStrengthFilters: []
-  m_OnFirstHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnLastHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnSelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnSelectCanceled:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnActivate:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnDeactivate:
-    m_PersistentCalls:
-      m_Calls: []
-  m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
-  m_MatchDirectionalInput: 0
-  m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
-  m_Teleporting:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!64 &430369713
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 430369707}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 0}
 --- !u!1 &432313550
 GameObject:
   m_ObjectHideFlags: 0
@@ -5204,10 +5007,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (4)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &432313551
 Transform:
   m_ObjectHideFlags: 0
@@ -5289,6 +5092,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &432313555
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5304,7 +5108,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -5973,10 +5777,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (6)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &472604357
 Transform:
   m_ObjectHideFlags: 0
@@ -6058,6 +5862,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &472604361
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6073,7 +5878,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -6585,6 +6390,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 1118422248}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 581497426}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 2
@@ -7488,6 +7301,14 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 2022803588}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 2093044264}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -8004,14 +7825,12 @@ GameObject:
   - component: {fileID: 581497427}
   - component: {fileID: 581497433}
   - component: {fileID: 581497432}
-  - component: {fileID: 581497431}
-  - component: {fileID: 581497430}
   - component: {fileID: 581497429}
   - component: {fileID: 581497428}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (8) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -8027,7 +7846,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &581497428
@@ -8120,7 +7939,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -8151,43 +7970,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &581497430
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 581497426}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 9.999999, y: 0.49749056, z: 9.999999}
-  m_Center: {x: 0, y: 0.25125352, z: 0}
---- !u!114 &581497431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 581497426}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &581497432
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8905,14 +8687,12 @@ GameObject:
   - component: {fileID: 671340501}
   - component: {fileID: 671340507}
   - component: {fileID: 671340506}
-  - component: {fileID: 671340505}
-  - component: {fileID: 671340504}
   - component: {fileID: 671340503}
   - component: {fileID: 671340502}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (4) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -8925,10 +8705,10 @@ Transform:
   m_GameObject: {fileID: 671340500}
   m_LocalRotation: {x: -0, y: -0.9999483, z: -0, w: 0.010168351}
   m_LocalPosition: {x: -7.837, y: -0.66720396, z: -2.8920002}
-  m_LocalScale: {x: 0.05, y: 1, z: 0.05}
+  m_LocalScale: {x: 0.049999997, y: 1, z: 0.049999997}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &671340502
@@ -9021,7 +8801,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -9052,43 +8832,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &671340504
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 671340500}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 9.999999, y: 0.49682063, z: 9.999999}
-  m_Center: {x: 0, y: 0.2515897, z: 0}
---- !u!114 &671340505
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 671340500}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &671340506
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9241,10 +8984,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (11)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &694505083
 Transform:
   m_ObjectHideFlags: 0
@@ -9276,6 +9019,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &694505085
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9291,7 +9035,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -9501,6 +9245,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 1608465555}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 1350941068}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 2
@@ -10741,16 +10493,13 @@ GameObject:
   - component: {fileID: 855518699}
   - component: {fileID: 855518702}
   - component: {fileID: 855518701}
-  - component: {fileID: 855518700}
-  - component: {fileID: 855518704}
-  - component: {fileID: 855518703}
   m_Layer: 0
   m_Name: GateControllerToHallwaytoPolybius
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &855518699
 Transform:
   m_ObjectHideFlags: 0
@@ -10766,25 +10515,6 @@ Transform:
   m_Father: {fileID: 1388098676}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &855518700
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 855518698}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_OverrideArea: 0
-  m_Area: 0
-  m_OverrideGenerateLinks: 1
-  m_GenerateLinks: 1
-  m_IgnoreFromBuild: 0
-  m_ApplyToChildren: 1
-  m_AffectedAgents: ffffffff
 --- !u!65 &855518701
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10828,126 +10558,6 @@ MonoBehaviour:
       sceneAssetGuidHex: b072882af3739f929bc4252c490ccef1
     Blockers:
     - {fileID: 830623738}
---- !u!114 &855518703
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 855518698}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38f6bf3d943ac7945842268c9ef1dca6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_InteractionManager: {fileID: 0}
-  m_Colliders: []
-  m_InteractionLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_InteractionLayers:
-    m_Bits: 1
-  m_DistanceCalculationMode: 1
-  m_SelectMode: 1
-  m_CustomReticle: {fileID: 0}
-  m_AllowGazeInteraction: 0
-  m_AllowGazeSelect: 0
-  m_OverrideGazeTimeToSelect: 0
-  m_GazeTimeToSelect: 0.5
-  m_OverrideTimeToAutoDeselectGaze: 0
-  m_TimeToAutoDeselectGaze: 3
-  m_AllowGazeAssistance: 0
-  m_FirstHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_HoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_HoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_FirstSelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_LastSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_SelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Activated:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Deactivated:
-    m_PersistentCalls:
-      m_Calls: []
-  m_StartingHoverFilters: []
-  m_StartingSelectFilters: []
-  m_StartingInteractionStrengthFilters: []
-  m_OnFirstHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnLastHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnHoverEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnHoverExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnSelectEntered:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnSelectExited:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnSelectCanceled:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnActivate:
-    m_PersistentCalls:
-      m_Calls: []
-  m_OnDeactivate:
-    m_PersistentCalls:
-      m_Calls: []
-  m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
-  m_MatchDirectionalInput: 0
-  m_TeleportTrigger: 0
-  m_FilterSelectionByHitNormal: 0
-  m_UpNormalToleranceDegrees: 30
-  m_Teleporting:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!64 &855518704
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 855518698}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 0}
 --- !u!114 &860596336
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11069,14 +10679,12 @@ GameObject:
   - component: {fileID: 877349092}
   - component: {fileID: 877349098}
   - component: {fileID: 877349097}
-  - component: {fileID: 877349096}
-  - component: {fileID: 877349095}
   - component: {fileID: 877349094}
   - component: {fileID: 877349093}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (11) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -11089,10 +10697,10 @@ Transform:
   m_GameObject: {fileID: 877349091}
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.00012785336}
   m_LocalPosition: {x: -8.934, y: -0.661, z: -6.67}
-  m_LocalScale: {x: 0.05, y: 1, z: 0.05}
+  m_LocalScale: {x: 0.049999997, y: 1, z: 0.049999997}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &877349093
@@ -11185,7 +10793,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -11216,43 +10824,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &877349095
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 877349091}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 0.5021968, z: 10}
-  m_Center: {x: -0, y: 0.2489016, z: 0}
---- !u!114 &877349096
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 877349091}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &877349097
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11478,6 +11049,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &882978865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11836,6 +11408,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 2132604455}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 291929569}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 2
@@ -12786,14 +12366,12 @@ GameObject:
   - component: {fileID: 1007732161}
   - component: {fileID: 1007732167}
   - component: {fileID: 1007732166}
-  - component: {fileID: 1007732165}
-  - component: {fileID: 1007732164}
   - component: {fileID: 1007732163}
   - component: {fileID: 1007732162}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (12) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -12809,7 +12387,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1007732162
@@ -12902,7 +12480,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -12933,43 +12511,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &1007732164
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1007732160}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 9.999999, y: 0.5003981, z: 9.999999}
-  m_Center: {x: -0, y: 0.24980094, z: 0}
---- !u!114 &1007732165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1007732160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &1007732166
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -13144,6 +12685,14 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 356969978}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 1825763374}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -13254,6 +12803,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1049871977
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13269,7 +12819,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -13828,6 +13378,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1117604850
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13865,10 +13416,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (8)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1118422245
 Transform:
   m_ObjectHideFlags: 0
@@ -13950,6 +13501,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1118422249
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13965,7 +13517,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -14360,6 +13912,53 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4298955583021570582, guid: 553de4abe7620eb378737204678971d5, type: 3}
   m_PrefabInstance: {fileID: 1142172061}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1145403839
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1145403840}
+  m_Layer: 0
+  m_Name: Teleport
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1145403840
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1145403839}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 291929570}
+  - {fileID: 1825763375}
+  - {fileID: 1306299109}
+  - {fileID: 671340501}
+  - {fileID: 1350941069}
+  - {fileID: 1410245694}
+  - {fileID: 581497427}
+  - {fileID: 413932099}
+  - {fileID: 1993234473}
+  - {fileID: 2093044265}
+  - {fileID: 1007732161}
+  - {fileID: 877349092}
+  - {fileID: 1586058482}
+  - {fileID: 95860499}
+  - {fileID: 1925950784}
+  - {fileID: 1579117997}
+  m_Father: {fileID: 1862072339}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1149092788
 GameObject:
   m_ObjectHideFlags: 0
@@ -14938,6 +14537,14 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 1901165419}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 1410245693}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -15154,6 +14761,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1216232925
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15169,7 +14777,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -15295,6 +14903,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 694505084}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 877349091}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 1
@@ -15453,6 +15069,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentScenePosition
+      value: 
+      objectReference: {fileID: 279108381}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerTeleportAnchor
+      value: 
+      objectReference: {fileID: 1007732160}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
       value: 1
@@ -15951,6 +15575,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1282868789
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18643,14 +18268,12 @@ GameObject:
   - component: {fileID: 1306299109}
   - component: {fileID: 1306299115}
   - component: {fileID: 1306299114}
-  - component: {fileID: 1306299113}
-  - component: {fileID: 1306299112}
   - component: {fileID: 1306299111}
   - component: {fileID: 1306299110}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (2) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -18666,7 +18289,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1306299110
@@ -18759,7 +18382,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -18790,43 +18413,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &1306299112
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1306299108}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 0.5019162, z: 10}
-  m_Center: {x: 0, y: 0.2490407, z: 0}
---- !u!114 &1306299113
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1306299108}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &1306299114
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -19261,14 +18847,12 @@ GameObject:
   - component: {fileID: 1350941069}
   - component: {fileID: 1350941075}
   - component: {fileID: 1350941074}
-  - component: {fileID: 1350941073}
-  - component: {fileID: 1350941072}
   - component: {fileID: 1350941071}
   - component: {fileID: 1350941070}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (5) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -19284,7 +18868,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1350941070
@@ -19377,7 +18961,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -19408,43 +18992,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &1350941072
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1350941068}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 9.999999, y: 0.50612414, z: 9.999999}
-  m_Center: {x: 0, y: 0.24693699, z: 0}
---- !u!114 &1350941073
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1350941068}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &1350941074
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -19892,9 +19439,6 @@ Transform:
   - {fileID: 855518699}
   - {fileID: 830623736}
   - {fileID: 1360235616}
-  - {fileID: 95860499}
-  - {fileID: 1925950784}
-  - {fileID: 1579117997}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -19928,14 +19472,12 @@ GameObject:
   - component: {fileID: 1410245694}
   - component: {fileID: 1410245700}
   - component: {fileID: 1410245699}
-  - component: {fileID: 1410245698}
-  - component: {fileID: 1410245697}
   - component: {fileID: 1410245696}
   - component: {fileID: 1410245695}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (7) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -19951,7 +19493,7 @@ Transform:
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1410245695
@@ -20044,7 +19586,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -20075,43 +19617,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &1410245697
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1410245693}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 9.999999, y: 0.49985132, z: 9.999999}
-  m_Center: {x: 0, y: 0.25007284, z: 0}
---- !u!114 &1410245698
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1410245693}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &1410245699
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -20686,10 +20191,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (9)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1501754492
 Transform:
   m_ObjectHideFlags: 0
@@ -20771,6 +20276,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1501754496
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -20786,7 +20292,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -21307,6 +20813,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1535934521
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21764,7 +21271,7 @@ GameObject:
   - component: {fileID: 1579118000}
   - component: {fileID: 1579117999}
   - component: {fileID: 1579117998}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: teleportationArea
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -21778,12 +21285,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1579117996}
-  m_LocalRotation: {x: 0.000000018416003, y: -0.006154508, z: 1.5490072e-10, w: 0.99998105}
-  m_LocalPosition: {x: -7.7325, y: -0.12800002, z: 0.3862}
+  m_LocalRotation: {x: 0.000000018416005, y: -0.0061545083, z: 1.5490073e-10, w: 0.9999811}
+  m_LocalPosition: {x: -13.346949, y: -0.65490186, z: -3.5313797}
   m_LocalScale: {x: 0.21758546, y: 1, z: 0.71611905}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1388098676}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: -0.705, z: 0}
 --- !u!114 &1579117998
@@ -21979,12 +21486,12 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1586058481}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.547, y: -0.717, z: -6.329}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5.546999, y: -0.717, z: -6.3290005}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1862072339}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1602369609
@@ -22081,10 +21588,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (5)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1608465552
 Transform:
   m_ObjectHideFlags: 0
@@ -22166,6 +21673,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1608465556
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22181,7 +21689,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -22384,6 +21892,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1620565220
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22399,7 +21908,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -23004,6 +22513,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1693930869
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23212,6 +22722,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1714072623
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23826,14 +23337,12 @@ GameObject:
   - component: {fileID: 1825763375}
   - component: {fileID: 1825763381}
   - component: {fileID: 1825763380}
-  - component: {fileID: 1825763379}
-  - component: {fileID: 1825763378}
   - component: {fileID: 1825763377}
   - component: {fileID: 1825763376}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (3) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -23846,10 +23355,10 @@ Transform:
   m_GameObject: {fileID: 1825763374}
   m_LocalRotation: {x: -0, y: -0.9998224, z: -0, w: -0.018848272}
   m_LocalPosition: {x: -6.789999, y: -0.66720396, z: -2.789999}
-  m_LocalScale: {x: 0.05, y: 1, z: 0.05}
+  m_LocalScale: {x: 0.050000004, y: 1, z: 0.050000004}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1825763376
@@ -23942,7 +23451,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -23973,43 +23482,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &1825763378
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1825763374}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10.000001, y: 0.505183, z: 10.000001}
-  m_Center: {x: -0, y: 0.2474069, z: 0}
---- !u!114 &1825763379
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1825763374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &1825763380
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -24317,7 +23789,7 @@ MonoBehaviour:
   m_OverrideVoxelSize: 0
   m_VoxelSize: 0.1
   m_MinRegionArea: 2
-  m_NavMeshData: {fileID: 23800000, guid: f5292c730889f91f483255754c0bed28, type: 2}
+  m_NavMeshData: {fileID: 23800000, guid: 1e9b36c0016d7234f98f2e77dde644f9, type: 2}
   m_BuildHeightMesh: 0
 --- !u!4 &1860758833
 Transform:
@@ -24369,6 +23841,8 @@ Transform:
   - {fileID: 2106624054}
   - {fileID: 1502047631}
   - {fileID: 238278363}
+  - {fileID: 1145403840}
+  - {fileID: 68383149}
   - {fileID: 1055181436}
   - {fileID: 187289936}
   - {fileID: 1437950767}
@@ -24382,12 +23856,10 @@ Transform:
   - {fileID: 567004392}
   - {fileID: 814586840}
   - {fileID: 968612896}
-  - {fileID: 68383149}
   - {fileID: 1857847729}
   - {fileID: 974759618}
   - {fileID: 1121827045}
   - {fileID: 502976111}
-  - {fileID: 1586058482}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -24915,10 +24387,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (7)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1901165416
 Transform:
   m_ObjectHideFlags: 0
@@ -25000,6 +24472,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1901165420
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25015,7 +24488,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -25110,7 +24583,7 @@ GameObject:
   - component: {fileID: 1925950787}
   - component: {fileID: 1925950786}
   - component: {fileID: 1925950785}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: GateControllerToHallwaytoPolybius Teleport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -25125,11 +24598,11 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1925950783}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.3274, y: -0.04, z: -2.2353}
+  m_LocalPosition: {x: -3.2870483, y: -0.56690186, z: -6.1528797}
   m_LocalScale: {x: 1.7287662, y: 1, z: 1.488104}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1388098676}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1925950785
@@ -25447,10 +24920,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (2)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1941433767
 Transform:
   m_ObjectHideFlags: 0
@@ -25532,6 +25005,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &1941433771
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25547,7 +25021,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -25801,14 +25275,12 @@ GameObject:
   - component: {fileID: 1993234473}
   - component: {fileID: 1993234479}
   - component: {fileID: 1993234478}
-  - component: {fileID: 1993234477}
-  - component: {fileID: 1993234476}
   - component: {fileID: 1993234475}
   - component: {fileID: 1993234474}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (9) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -25821,10 +25293,10 @@ Transform:
   m_GameObject: {fileID: 1993234472}
   m_LocalRotation: {x: -0.0031752668, y: -0.024330376, z: -0.0011100242, w: -0.99969834}
   m_LocalPosition: {x: -10.087999, y: -0.662, z: -5.4370003}
-  m_LocalScale: {x: 0.05, y: 1, z: 0.05}
+  m_LocalScale: {x: 0.049999997, y: 1, z: 0.050000004}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1993234474
@@ -25917,7 +25389,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -25948,43 +25420,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &1993234476
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1993234472}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 0.5046601, z: 10}
-  m_Center: {x: 0.0000000019644766, y: 0.24767023, z: -6.1787464e-10}
---- !u!114 &1993234477
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1993234472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &1993234478
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -26262,10 +25697,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition (10)
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2022803585
 Transform:
   m_ObjectHideFlags: 0
@@ -26347,6 +25782,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &2022803589
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26362,7 +25798,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -26917,14 +26353,12 @@ GameObject:
   - component: {fileID: 2093044265}
   - component: {fileID: 2093044271}
   - component: {fileID: 2093044270}
-  - component: {fileID: 2093044269}
-  - component: {fileID: 2093044268}
   - component: {fileID: 2093044267}
   - component: {fileID: 2093044266}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: PlayerMarkPosition (10) Anchor
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 3936346786652291628, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
@@ -26937,10 +26371,10 @@ Transform:
   m_GameObject: {fileID: 2093044264}
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.00012785336}
   m_LocalPosition: {x: -9.968, y: -0.662, z: -6.67}
-  m_LocalScale: {x: 0.05, y: 1, z: 0.05}
+  m_LocalScale: {x: 0.049999997, y: 1, z: 0.049999997}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 68383149}
+  m_Father: {fileID: 1145403840}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2093044266
@@ -27033,7 +26467,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_TeleportationProvider: {fileID: 0}
-  m_MatchOrientation: 0
+  m_MatchOrientation: 2
   m_MatchDirectionalInput: 0
   m_TeleportTrigger: 0
   m_FilterSelectionByHitNormal: 0
@@ -27064,43 +26498,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!65 &2093044268
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2093044264}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 10, y: 0.501003, z: 10}
-  m_Center: {x: -0, y: 0.24949849, z: 0}
---- !u!114 &2093044269
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2093044264}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  IsPlayerPresent: 0
-  IsNPCPresent: 0
-  NPCPresentName: 
-  BoxColliderHeight: 35
 --- !u!23 &2093044270
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -27746,10 +27143,10 @@ GameObject:
   m_Layer: 0
   m_Name: PlayerMarkPosition
   m_TagString: Untagged
-  m_Icon: {fileID: -5397416234189338067, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: -964228994112308473, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2132604452
 Transform:
   m_ObjectHideFlags: 0
@@ -27831,6 +27228,7 @@ MonoBehaviour:
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
 --- !u!65 &2132604456
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27846,7 +27244,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

@@ -60,7 +60,7 @@ public class TeleportationAreaCreator : Editor
             newGateController.enabled = true;
 
             // Disable the original GameObject
-            gateController.gameObject.SetActive(false);
+            //gateController.gameObject.SetActive(false);
         }
     }
 

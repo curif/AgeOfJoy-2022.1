@@ -18,9 +18,13 @@ public class CabinetController : MonoBehaviour
 
     [Tooltip("Positions where the player can stay to load the cabinet")]
     public List<GameObject> AgentPlayerPositions;
+    [Tooltip("Teleport anchor for player teleportation")]
+    public GameObject AgentPlayerTeleportAnchor;
+    [Tooltip("Player/agent position assigned to the cabinet")]
+    public AgentScenePosition AgentScenePosition;
 
-    private List<AgentScenePosition> AgentPlayerPositionComponents;
     private CabinetReplace cabinetReplaceComponent;
+    private List<AgentScenePosition> AgentPlayerPositionComponents;
 
     void Start()
     {
@@ -62,6 +66,7 @@ public class CabinetController : MonoBehaviour
                 ConfigManager.WriteConsoleError($"[CabinetController.load] loading cabinet from description fails {game}");
                 yield break;
             }
+            yield return new WaitForSeconds(0.01f);
         }
 
         Cabinet cab;
@@ -75,28 +80,34 @@ public class CabinetController : MonoBehaviour
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {game.CabInfo.name}", ex);
-            cab = null;
+            yield break;
+        }
+        if (cab == null)
+        {
+            ConfigManager.WriteConsoleError($"[CabinetController] loading cabinet from description {game.CabInfo.name}");
+            yield break;
         }
 
-
-        if (cab != null && game.CabInfo.Parts != null)
+        if (game.CabInfo.Parts != null)
         {
-            ConfigManager.WriteConsole($"[CabinetControlle] {game.CabInfo.name} texture parts");
+            ConfigManager.WriteConsole($"[CabinetController] {game.CabInfo.name} texture parts");
             //N seconds to load a cabinet
-            float waitForSeconds = 2f / game.CabInfo.Parts.Count;
+            // float waitForSeconds = 1f / game.CabInfo.Parts.Count;
             foreach (CabinetInformation.Part part in game.CabInfo.Parts)
             {
+                yield return new WaitForSeconds(0.01f);
                 CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
-                yield return new WaitForSeconds(waitForSeconds);
             }
+
+            CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
+            cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
+            cabReplaceComp.game = game;
+
+            //gameObject.SetActive(false);
+            yield return new WaitForSeconds(0.01f);
+            Destroy(gameObject); //destroy me
         }
 
-        CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-        cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
-        cabReplaceComp.game = game;
-
-        //gameObject.SetActive(false);
-        Destroy(gameObject); //destroy me
 
         ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
     }
