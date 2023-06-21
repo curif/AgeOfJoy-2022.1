@@ -15932,7 +15932,9 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 616c2e963075fb24da2aa2592ef9060e, type: 3}
     sceneAssetGuidHex: 616c2e963075fb24da2aa2592ef9060e
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 69e209726246ae24ea72fee4904571b6, type: 3}
+    sceneAssetGuidHex: 69e209726246ae24ea72fee4904571b6
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 616c2e963075fb24da2aa2592ef9060e, type: 3}
@@ -22999,9 +23001,9 @@ Transform:
   - {fileID: 830623736}
   - {fileID: 1360235616}
   - {fileID: 1073387806}
-  - {fileID: 1516495082}
   - {fileID: 1817826213}
   - {fileID: 307791641}
+  - {fileID: 1516495082}
   - {fileID: 944411125}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
@@ -25261,8 +25263,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1516495081}
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
-  m_LocalPosition: {x: -3.8981495, y: 3.7496982, z: 7.1480007}
-  m_LocalScale: {x: 1.3632998, y: 1, z: 1.2385}
+  m_LocalPosition: {x: -3.8981571, y: 3.7496982, z: 7.148002}
+  m_LocalScale: {x: 1.3632996, y: 1, z: 1.2385}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1388098676}
@@ -25302,15 +25304,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-    sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
-  ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
-    sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
+  - sceneAsset: {fileID: 102900000, guid: 69e209726246ae24ea72fee4904571b6, type: 3}
+    sceneAssetGuidHex: 69e209726246ae24ea72fee4904571b6
+  ScenesToUnload: []
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-      sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
+      sceneAsset: {fileID: 102900000, guid: 69e209726246ae24ea72fee4904571b6, type: 3}
+      sceneAssetGuidHex: 69e209726246ae24ea72fee4904571b6
     Blockers:
     - {fileID: 1073387805}
 --- !u!1001 &1516534472
@@ -32466,7 +32466,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1997424668
 Transform:
   m_ObjectHideFlags: 0
@@ -33833,7 +33833,7 @@ BoxCollider:
   m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 4.101001, y: 1, z: 2.006948}
-  m_Center: {x: 0.80960214, y: 0, z: 4.2170916}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &2069555196
 Transform:
   m_ObjectHideFlags: 0
@@ -33842,7 +33842,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2069555193}
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -11.540001, y: 0.41999996, z: -6.220002}
+  m_LocalPosition: {x: -12.34, y: 2.91, z: -4.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
