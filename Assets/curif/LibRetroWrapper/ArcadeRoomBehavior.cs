@@ -167,6 +167,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
   IEnumerator runBT()
   {
+    yield return new WaitForSeconds(2f);
+
     othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
                   where npc != gameObject
                   select npc.GetComponent<ArcadeRoomBehavior>()).
@@ -187,6 +189,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
     }
 
     DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
+
+    yield return new WaitForSeconds(0.01f);
 
     tree = buildBT();
     while (true)
