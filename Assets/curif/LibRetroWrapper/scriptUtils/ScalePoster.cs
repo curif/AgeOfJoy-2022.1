@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 
@@ -56,3 +57,4 @@ public static class ScalePoster
         return scaledTexture;
     }
 }
+#endif
