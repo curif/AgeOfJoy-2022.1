@@ -6,41 +6,47 @@ using UnityEngine.Events;
 
 public class FileMonitor : MonoBehaviour
 {
-  public string ConfigFileName = ""; // change this to the path of the file you want to monitor
-  public float Interval = 2f; // interval in seconds to check for changes
-  public UnityEvent OnFileChanged;
+    public string ConfigFileName = ""; // change this to the path of the file you want to monitor
+    public float Interval = 2f; // interval in seconds to check for changes
+    public UnityEvent OnFileChanged;
 
-  private DateTime lastWriteTime;
+    private DateTime lastWriteTime;
+    private string filePath;
 
-  private IEnumerator Start()
-  {
-    // get the initial last write time of the file
-
-    string filePath = ConfigManager.ConfigDir + "/" + ConfigFileName;
-    ConfigManager.WriteConsole($"[FileMonitor]: monitoring file {filePath} ");
-    FileInfo fileInfo = new FileInfo(filePath);
-    lastWriteTime = fileInfo.LastWriteTime;
-
-    // start the coroutine to monitor the file
-    while (true)
+    void Start()
     {
-        yield return new WaitForSeconds(Interval);
+        // get the initial last write time of the file
 
-        // get the current last write time of the file
-        fileInfo = new FileInfo(filePath);
-        DateTime currentLastWriteTime = fileInfo.LastWriteTime;
+        filePath = ConfigManager.ConfigDir + "/" + ConfigFileName;
+        ConfigManager.WriteConsole($"[FileMonitor]: monitoring file {filePath} ");
+        StartCoroutine(monitor());
+    }
 
-        // compare the current last write time with the previous time
-        if (currentLastWriteTime != lastWriteTime)
+    IEnumerator monitor()
+    {
+        FileInfo fileInfo = new FileInfo(filePath);
+        lastWriteTime = fileInfo.LastWriteTime;
+
+        // start the coroutine to monitor the file
+        while (true)
         {
-            // the file has been modified, do something
-            ConfigManager.WriteConsole($"[FileMonitor]: changed {filePath} ");
-            OnFileChanged.Invoke();
+            yield return new WaitForSeconds(Interval);
 
-            // update the last write time
-            lastWriteTime = currentLastWriteTime;
+            // get the current last write time of the file
+            fileInfo.Refresh();
+            DateTime currentLastWriteTime = fileInfo.LastWriteTime;
+
+            // compare the current last write time with the previous time
+            if (currentLastWriteTime != lastWriteTime)
+            {
+                // the file has been modified, do something
+                ConfigManager.WriteConsole($"[FileMonitor]: changed {filePath} ");
+                OnFileChanged.Invoke();
+
+                // update the last write time
+                lastWriteTime = currentLastWriteTime;
+            }
         }
     }
-  }
 }
 

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
+//using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 
 public class ChangeControls : MonoBehaviour
 {
@@ -16,7 +16,9 @@ public class ChangeControls : MonoBehaviour
     public XRRayInteractor xrrayInteractor;
 
     public ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
-    public DynamicMoveProvider dynamicMoveProvider;
+    // public DynamicMoveProvider dynamicMoveProvider;
+    public ActionBasedContinuousMoveProvider actionBasedContinuousMoveProvider;
+
     bool reservedTeleportationEnabled;
     float reservedMoveSpeed;
     float reservedTurnSpeed;
@@ -54,14 +56,14 @@ public class ChangeControls : MonoBehaviour
     private void reserveValues()
     {
         reservedTeleportationEnabled = xrrayInteractor.enabled;
-        reservedMoveSpeed = dynamicMoveProvider.moveSpeed;
+        reservedMoveSpeed = actionBasedContinuousMoveProvider.moveSpeed;
         reservedTurnSpeed = actionBasedContinuousTurnProvider.turnSpeed;
     }
 
     private void restoreReservedValues()
     {
         xrrayInteractor.enabled = reservedTeleportationEnabled;
-        dynamicMoveProvider.moveSpeed = reservedMoveSpeed;
+        actionBasedContinuousMoveProvider.moveSpeed = reservedMoveSpeed;
         actionBasedContinuousTurnProvider.turnSpeed = reservedTurnSpeed;
     }
 
@@ -92,7 +94,7 @@ public class ChangeControls : MonoBehaviour
         setControllers();
 
         actionBasedContinuousTurnProvider.enabled = !isPlaying;
-        dynamicMoveProvider.enabled = !isPlaying;
+        actionBasedContinuousMoveProvider.enabled = !isPlaying;
 
         if (isPlaying)
         {
@@ -110,15 +112,15 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            if (dynamicMoveProvider.enabled)
-                return dynamicMoveProvider.moveSpeed;
+            if (actionBasedContinuousMoveProvider.enabled)
+                return actionBasedContinuousMoveProvider.moveSpeed;
             return reservedMoveSpeed;
         }
         set
         {
-            ConfigManager.WriteConsole($"[ChangeControls] dynamicMoveProvider : {dynamicMoveProvider}");
-            if (dynamicMoveProvider.enabled)
-                dynamicMoveProvider.moveSpeed = value;
+            ConfigManager.WriteConsole($"[ChangeControls] dynamicMoveProvider : {actionBasedContinuousMoveProvider}");
+            if (actionBasedContinuousMoveProvider.enabled)
+                actionBasedContinuousMoveProvider.moveSpeed = value;
             reservedMoveSpeed = value;
         }
     }
