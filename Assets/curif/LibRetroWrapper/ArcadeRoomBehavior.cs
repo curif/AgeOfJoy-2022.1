@@ -89,6 +89,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     {
         configureCollider();
         configureNavMesh();
+        forceToDefaultDestination();
     }
     void configureNavMesh()
     {
@@ -105,8 +106,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
     {
         if (DefaultDestination != null)
         {
-            // Copy position
-            transform.position = DefaultDestination.Place.transform.position;
+            GetComponent<NavMeshAgent>().Warp(DefaultDestination.Place.transform.position);
+            //transform.position = DefaultDestination.Place.transform.position;
 
             // Copy rotation
             transform.rotation = DefaultDestination.Place.transform.rotation;
