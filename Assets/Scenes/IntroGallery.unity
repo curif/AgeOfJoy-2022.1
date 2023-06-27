@@ -19963,6 +19963,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1488544974}
+  - component: {fileID: 1488544975}
   m_Layer: 0
   m_Name: NPCs
   m_TagString: Untagged
@@ -19989,6 +19990,23 @@ Transform:
   m_Father: {fileID: 1915306329}
   m_RootOrder: 21
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1488544975
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488544973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cc0f7cbea041b74a80d74de41f3d018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 1762873378}
+  CharacterList:
+  - {fileID: 1151057703}
+  - {fileID: 647687270}
+  - {fileID: 517459341}
 --- !u!1001 &1490726713
 PrefabInstance:
   m_ObjectHideFlags: 0

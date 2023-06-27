@@ -87,18 +87,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     void Start()
     {
-        agent = gameObject.GetComponent<NavMeshAgent>();
-        animator = gameObject.GetComponent<Animator>();
-        player = GameObject.Find("OVRPlayerControllerGalery");
-        roomConfiguration = RoomConfiguration.GetComponent<RoomConfiguration>();
-        enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
-
-        totalDestinationsList.AddRange(Destinations);
-
         configureCollider();
         configureNavMesh();
-
-        StartCoroutine(runBT());
     }
     void configureNavMesh()
     {
@@ -183,57 +173,48 @@ public class ArcadeRoomBehavior : MonoBehaviour
     }
     */
 
-    IEnumerator runBT()
+    void OnEnable()
     {
-        enableDisableRenderers.SetRenderers(false); //disable Renderers
-        yield return new WaitForSeconds(2f);
+        agent = gameObject.GetComponent<NavMeshAgent>();
+        animator = gameObject.GetComponent<Animator>();
+        player = GameObject.Find("OVRPlayerControllerGalery");
+        roomConfiguration = RoomConfiguration.GetComponent<RoomConfiguration>();
+        enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
 
-        othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
-                     where npc != gameObject
-                     select npc.GetComponent<ArcadeRoomBehavior>()).
-                      ToList<ArcadeRoomBehavior>();
-        if (PlayerPositions != null)
-            //The cabinets where not loaded when this code runs
-            totalDestinationsList.AddRange(
-                (from Transform playerPosition in PlayerPositions.transform
-                 select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
-                                         MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine,
-                                         playerPosition.gameObject.GetComponent<AgentScenePosition>())
-                ).ToList());
-        //get the agent ScenePosition Component for all the places
-        foreach (PlaceInformation place in totalDestinationsList)
+        if (totalDestinationsList.Count == 0)
         {
-            if (place.ScenePosition == null)
-                place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
-        }
-
-        DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
-
-        forceToDefaultDestination();
-
-        yield return new WaitForSeconds(0.01f);
-        enableDisableRenderers.SetRenderers(true); //enable Renderers
-
-
-        tree = buildBT();
-        while (true)
-        {
-            if (roomConfiguration != null && roomConfiguration.Configuration?.npc != null)
+            totalDestinationsList.AddRange(Destinations);
+            othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
+                         where npc != gameObject
+                         select npc.GetComponent<ArcadeRoomBehavior>()).
+                                ToList<ArcadeRoomBehavior>();
+            if (PlayerPositions != null)
+                //The cabinets where not loaded when this code runs
+                totalDestinationsList.AddRange(
+                    (from Transform playerPosition in PlayerPositions.transform
+                     select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
+                                             MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine,
+                                             playerPosition.gameObject.GetComponent<AgentScenePosition>())
+                    ).ToList());
+            //get the agent ScenePosition Component for all the places
+            foreach (PlaceInformation place in totalDestinationsList)
             {
-                //ConfigManager.WriteConsole($"[ArcadeRoomBehavior] {gameObject.name} STATUS: {roomConfiguration.Configuration.npc.status}");
-
-                if (roomConfiguration.Configuration.npc.status == "disabled")
-                {
-                    enableDisableRenderers.SetRenderers(false); //disable Renderers
-                    yield return new WaitForSeconds(2f);
-                    continue;
-                }
-
-                enableDisableRenderers.SetRenderers(true); //enable Renderers
-
-                IsStatic = roomConfiguration.Configuration.npc.status == "static";
+                if (place.ScenePosition == null)
+                    place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
             }
 
+            DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
+        }
+        tree = buildBT();
+        StartCoroutine(runBT());
+
+        ConfigManager.WriteConsole($"[ArcadeRoomBehavior.OnEnabled] {gameObject.name} is enabled");
+    }
+
+    IEnumerator runBT()
+    {
+        while (true)
+        {
             if (!AnimationControlled)
                 animator.SetFloat("Speed", agent.velocity.magnitude);
 
