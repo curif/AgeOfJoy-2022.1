@@ -81,7 +81,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private List<PlaceInformation> totalDestinationsList = new List<PlaceInformation>();
     private string[] animatorTriggers = new String[4] { "Idle", "Buy", "Play", "BoyPlay" }; //@see PlaceInformation Types
     private String[] boyPlayTriggers = new String[3] { "JumpAndPlay", "War", "Fight" };
-    private bool inPathToCollisionWithPlayer = false;
+    // private bool inPathToCollisionWithPlayer = false;
     private DateTime avoidCollisionAnalysis = DateTime.Now;
     private Rigidbody npcRigidbody;
 
@@ -144,7 +144,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
      * The character controller is like a capsule collider, the detection needs to 
      * be at center or higher than the floor level, the property cetnerRaycastPlayerDetection
      * is used to move the center of the Raycast.
-     * */
+     * 
     bool detectPlayer()
     {
         float angleIncrement = 20f; // angle increment between rays
@@ -181,6 +181,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
         return false;
 
     }
+    */
 
     IEnumerator runBT()
     {
@@ -295,7 +296,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
               .Selector()
                 .Condition("Timeout", () => DateTime.Now > timeout)
                 .Condition("Arrived", () => destination.ScenePosition.NPCIsPresent(name))
-                .Condition("Player found or blocked", () => collisionWithPlayer || detectPlayer())
+                .Condition("Player found or blocked", () => collisionWithPlayer /*|| detectPlayer()*/)
                 .Condition("Destination taken by other NPC or Player?", () => destination.ScenePosition.IsTaken)
               .End()
             .End()
@@ -312,7 +313,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
                 {
                     timeToSpentInPlace = DateTime.Now.AddSeconds(1);
                 }
-                else if (AvoidPlayer && (collisionWithPlayer || detectPlayer()))
+                else if (AvoidPlayer && (collisionWithPlayer /*|| detectPlayer()*/))
                 {
                     rotateAndWalk();
                     avoidCollisionAnalysis = DateTime.Now.AddSeconds(2); //give some time to the NPC to reach the destination before check for collisions again 
@@ -398,16 +399,14 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private bool walkToDestination()
     {
         timeout = DateTime.Now.AddSeconds(TimeoutSeconds); //if not reach in time abort
-      /*  if (!agent.SetDestination(destination.Place.transform.position))
+        if (!agent.SetDestination(destination.Place.transform.position))
         {
             //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] ERROR {gameObject.name} to {destination.Place.name} not possible");
             return false;
         }
-*/
-        agent.destination = destination.Place.transform.position;
         walk();
 
-        ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds} secs {timeout.ToString()}");
+        //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.walkToDestination] {gameObject.name} to {destination.Place.name} timeout {TimeoutSeconds} secs {timeout.ToString()}");
 
         return true;
     }

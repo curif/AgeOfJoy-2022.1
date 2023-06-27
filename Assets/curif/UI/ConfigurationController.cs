@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
