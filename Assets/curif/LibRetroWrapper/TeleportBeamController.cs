@@ -26,19 +26,21 @@ public class BeamController : MonoBehaviour
         // Unsubscribe from the input action's started and canceled events
         inputAction.action.started -= OnInputActionStarted;
         inputAction.action.canceled -= OnInputActionCanceled;
+
+        teleportInteractor.SetActive(false);
     }
 
     private void OnInputActionStarted(InputAction.CallbackContext context)
     {
         // Show the beam
-        ConfigManager.WriteConsole("[BeamController.OnInputAction] beam activated");
+        // ConfigManager.WriteConsole("[BeamController.OnInputAction] beam activated");
         teleportInteractor.SetActive(true);
     }
 
     private void OnInputActionCanceled(InputAction.CallbackContext context)
     {
         // Hide the beam
-        ConfigManager.WriteConsole("[BeamController.OnInputAction] beam de-activated");
+        // ConfigManager.WriteConsole("[BeamController.OnInputAction] beam de-activated");
         teleportInteractor.SetActive(false);
     }
 }
