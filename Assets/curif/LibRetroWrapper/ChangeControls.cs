@@ -13,7 +13,8 @@ public class ChangeControls : MonoBehaviour
     public GameObject leftJoystickPrefab;
     public GameObject rightJoystickPrefab;
     [Tooltip("Teleport interactor gameobject contains it")]
-    public XRRayInteractor xrrayInteractor;
+    //public XRRayInteractor xrrayInteractor;
+    public BeamController beanController;
 
     public ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
     // public DynamicMoveProvider dynamicMoveProvider;
@@ -55,14 +56,14 @@ public class ChangeControls : MonoBehaviour
 
     private void reserveValues()
     {
-        reservedTeleportationEnabled = xrrayInteractor.enabled;
+        reservedTeleportationEnabled = beanController.enabled;
         reservedMoveSpeed = actionBasedContinuousMoveProvider.moveSpeed;
         reservedTurnSpeed = actionBasedContinuousTurnProvider.turnSpeed;
     }
 
     private void restoreReservedValues()
     {
-        xrrayInteractor.enabled = reservedTeleportationEnabled;
+        beanController.enabled = reservedTeleportationEnabled;
         actionBasedContinuousMoveProvider.moveSpeed = reservedMoveSpeed;
         actionBasedContinuousTurnProvider.turnSpeed = reservedTurnSpeed;
     }
@@ -99,7 +100,7 @@ public class ChangeControls : MonoBehaviour
         if (isPlaying)
         {
             reserveValues();
-            xrrayInteractor.enabled = false;
+            beanController.enabled = false;
         }
         else
         {
@@ -146,13 +147,13 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            return !isPlaying ? xrrayInteractor.enabled : reservedTeleportationEnabled;
+            return !isPlaying ? beanController.enabled : reservedTeleportationEnabled;
         }
         set
         {
             reservedTeleportationEnabled = value;
             if (!isPlaying)
-                xrrayInteractor.enabled = reservedTeleportationEnabled;
+                beanController.enabled = reservedTeleportationEnabled;
         }
     }
 }
