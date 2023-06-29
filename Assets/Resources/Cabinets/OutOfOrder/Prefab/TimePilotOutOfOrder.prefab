@@ -156,8 +156,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.61133295, y: 2.78137, z: 0.7285163}
-  m_Center: {x: 0.068375625, y: 1.3062781, z: -0.008259876}
+  m_Size: {x: 0.61133295, y: 2.7672455, z: 0.6584684}
+  m_Center: {x: 0.068375625, y: 1.3133404, z: -0.00017736445}
 --- !u!114 &5455908607048437785
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,6 +177,8 @@ MonoBehaviour:
     Position: 0
   Name: 
   AgentPlayerPositions: []
+  AgentPlayerTeleportAnchor: {fileID: 0}
+  AgentScenePosition: {fileID: 0}
 --- !u!114 &-3788534554153774543
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,6 +191,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42af03ee7f443c3f38d7b24835fcc485, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  boxCollider: {fileID: 0}
 --- !u!54 &-3384868834526187442
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1072,7 +1075,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6342267615125105444}
   m_LocalRotation: {x: -0.5, y: -0.49999997, z: 0.5, w: 0.50000006}
-  m_LocalPosition: {x: 0.094844796, y: -0.043672267, z: -0.002410978}
+  m_LocalPosition: {x: 0.088, y: -0.027, z: 0}
   m_LocalScale: {x: 1, y: 30.5, z: 23.777681}
   m_ConstrainProportionsScale: 0
   m_Children: []
