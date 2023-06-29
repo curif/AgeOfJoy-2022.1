@@ -9,31 +9,71 @@ using UnityEngine;
 
 public class PutOnFloor : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public BoxCollider boxCollider;
+
+    private void Start()
     {
-        float floorHeight = 0.1f;
-
-        Transform floor = DetectFloor();
-        if (floor == null)
+        // Get the BoxCollider component attached to the GameObject
+        if (boxCollider == null)
+            boxCollider = GetComponent<BoxCollider>();
+        if (boxCollider == null)
+        {
+            ConfigManager.WriteConsoleError($"[PutOnFloor.Start] there is not a boxCollider for {name}");
             return;
+        }
+        // Align the lower part of the GameObject to the floor
+        if (!AlignLowerPartToFloor())
+        {
+            Vector3 reservedPosition = transform.position;
+            transform.position = new Vector3(
+                transform.position.x,
+                transform.position.y + 0.5f,
+                transform.position.z
+            );
+            if (!AlignLowerPartToFloor())
+            {
+                transform.position = reservedPosition;
+                ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
 
-        //ConfigManager.WriteConsole($"[PutOnFloor] Cabinet {name} floor found");
-
-        gameObject.transform.position = new Vector3(gameObject.transform.position.x, floor.position.y + floorHeight/2, gameObject.transform.position.z);
-        //gameObject.transform.position.y = floor.position.y + 0.01f;
+            }
+        }
     }
 
-    //https://forum.unity.com/threads/here-is-an-editor-script-to-help-place-objects-on-ground.38186/
-    public Transform DetectFloor() {
-        RaycastHit hit = new RaycastHit();
-        Ray ray = new Ray(gameObject.transform.position, Vector3.down);
-        //https://docs.unity3d.com/ScriptReference/Physics.Raycast.html
-        if (Physics.Raycast(ray, out hit, 1000))
-            return hit.transform;
+    private bool AlignLowerPartToFloor()
+    {
+        // Cast a ray downwards from the center of the BoxCollider
+        Vector3 lowBoxCollider = new Vector3(transform.position.x,
+                                                CalculateLowerPointY(),
+                                                transform.position.z);
+        Ray ray = new Ray(lowBoxCollider, Vector3.down);
 
-        //If no hit then you have attempted to measure the height somewhere off the mesh
-        return null;
+        // Perform a raycast to check for the floor
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit))
+        {
+            float yOffset = lowBoxCollider.y - hit.point.y;
+            // ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] lowBoxCollider.y: {lowBoxCollider.y} hit.point.y: {hit.point.y} {name}");
+            // ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] yOffset: {yOffset} {name}");
+
+            // Adjust the position of the GameObject
+            transform.position -= new Vector3(0f, yOffset, 0f);
+            return true;
+        }
+        ConfigManager.WriteConsoleError($"[PutOnFloor.AlignLowerPartToFloor] floor not found for {name}");
+        return false;
     }
 
+    public float CalculateLowerPointY()
+    {
+        // Get the center of the BoxCollider in world space
+        Vector3 colliderCenter = transform.TransformPoint(boxCollider.center);
+
+        // Calculate the half size of the BoxCollider in world space
+        Vector3 colliderHalfSize = Vector3.Scale(boxCollider.size * 0.5f, transform.lossyScale);
+
+        // Calculate the lower point in the Y-axis
+        float lowerPointY = colliderCenter.y - colliderHalfSize.y;
+
+        return lowerPointY;
+    }
 }
