@@ -665,29 +665,34 @@ public class ConfigurationController : MonoBehaviour
     {
         List<string> cabsWithPosition = new List<string>();
         string room = GetRoomName();
+
         if (cabinetsController?.gameRegistry == null)
         {
             ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no gameRegistry loaded for {room}");
             return new List<string>();
         }
-        List<CabinetPosition> cabinetsInRoom = cabinetsController?.gameRegistry?.GetCabinetsAndPositionsAssignedToRoom(room);
-        if (cabinetsInRoom == null)
+
+        List<CabinetPosition> cabinetsInRoomByGameRegistry =
+                        cabinetsController.gameRegistry.GetCabinetsAndPositionsAssignedToRoom(room);
+        if (cabinetsInRoomByGameRegistry != null)
         {
-            ConfigManager.WriteConsoleWarning($"[GetCabinetsInRoom] no cabinets registered in gameRegistry for {room}");
-            return new List<string>();
+            ConfigManager.WriteConsole($"[GetCabinetsInRoom] there are {cabinetsInRoomByGameRegistry.Count} cabinets in {room} and {cabinetsController?.gameRegistry?.CabinetsInRegistry} cabinets in the main registry");
+            foreach (CabinetPosition cabPos in cabinetsInRoomByGameRegistry)
+            {
+                cabsWithPosition.Add($"{cabPos.Position:D3}-{cabPos.CabinetDBName}");
+            }
+         }
+
+        //create empty positions
+        List<int> freePos = cabinetsController.gameRegistry.GetFreePositions(
+            cabinetsInRoomByGameRegistry, 
+            cabinetsController.CabinetsCount);
+        foreach(int free in freePos)
+        {
+            cabsWithPosition.Add($"{free:D3}-(free)");
         }
 
-        ConfigManager.WriteConsole($"[GetCabinetsInRoom] there are {cabinetsInRoom.Count} cabinets in {room} and {cabinetsController?.gameRegistry?.CabinetsInRegistry} cabinets in the main registry");
-
-        for (int idx = 0; idx < cabinetsInRoom.Count; idx++)
-        {
-            cabsWithPosition.Add($"{cabinetsInRoom[idx].Position:D3}-{cabinetsInRoom[idx].CabinetDBName}");
-        }
-
-        for (int idx = cabinetsInRoom.Count; idx < cabinetsController.CabinetsCount; idx++)
-        {
-            cabsWithPosition.Add($"{idx:D3}-(free)");
-        }
+        //sort
         cabsWithPosition.Sort();
 
         return cabsWithPosition;
