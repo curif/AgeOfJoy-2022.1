@@ -19,11 +19,18 @@ public class NPCController : MonoBehaviour
 
     void OnRoomConfigChanged()
     {
+        bool isActive = true;
+        bool isStatic = false;
+        if (roomConfiguration.Configuration?.npc != null)
+        {
+            isActive = roomConfiguration.Configuration.npc.status != "disabled";
+            isStatic = roomConfiguration.Configuration.npc.status == "static";
+        }
         foreach (GameObject npc in CharacterList)
         {
-            npc.SetActive(roomConfiguration.Configuration.npc.status != "disabled");
+            npc.SetActive(isActive);
             if (npc.activeSelf)
-                npc.GetComponent<ArcadeRoomBehavior>().IsStatic = roomConfiguration.Configuration.npc.status == "static";
+                npc.GetComponent<ArcadeRoomBehavior>().IsStatic = isStatic;
         }
     }
 

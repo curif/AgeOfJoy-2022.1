@@ -366,16 +366,22 @@ public class ArcadeRoomBehavior : MonoBehaviour
     {
 
         faceToDestination();
-
-        if (destination.Type == PlaceInformation.PlaceType.BoyPlay)
+        try
         {
-            //special behaviour
-            int index = UnityEngine.Random.Range(0, boyPlayTriggers.Length - 1);
-            animator.SetTrigger(boyPlayTriggers[index]);
-        }
-        else
-            animator.SetTrigger(animatorTriggers[(int)destination.Type]);
+            if (destination.Type == PlaceInformation.PlaceType.BoyPlay)
+            {
+                //special behaviour
+                int index = UnityEngine.Random.Range(0, boyPlayTriggers.Length - 1);
+                animator.SetTrigger(boyPlayTriggers[index]);
+            }
+            else
+                animator.SetTrigger(animatorTriggers[(int)destination.Type]);
 
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[runDestinationAnimation] on {name}", e);
+        }
     }
 
     private bool walkToDestination()

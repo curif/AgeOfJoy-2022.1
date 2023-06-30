@@ -59,7 +59,7 @@ public class Cabinet
 
     }
 
-    private void addBoxCollider()
+    private void addBoxCollider(GameObject gameObject)
     {
         BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
         if (boxCollider == null)
@@ -81,7 +81,13 @@ public class Cabinet
         }
 
         boxCollider.size = bounds.size;
-        boxCollider.center = bounds.center - gameObject.transform.position;
+        //boxCollider.center = bounds.center - gameObject.transform.position;
+        // Adjust the center and size of the box collider to match the parent game object
+        Vector3 centerOffset = bounds.center - gameObject.transform.position;
+        Vector3 adjustedCenter = new Vector3(centerOffset.x / gameObject.transform.lossyScale.x, 
+                                              centerOffset.y / gameObject.transform.lossyScale.y, 
+                                              centerOffset.z / gameObject.transform.lossyScale.z);
+        boxCollider.center = adjustedCenter;
     }
 
     private void toFloor()
@@ -105,9 +111,9 @@ public class Cabinet
         gameObject.name = name;
 
         //add neccesary components
-        addRigidBody();
+        //addRigidBody();
+        addBoxCollider(gameObject);
         toFloor();
-        addBoxCollider();
 
         if (!IsValid)
             throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
