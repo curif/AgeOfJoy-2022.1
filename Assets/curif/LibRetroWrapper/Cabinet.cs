@@ -111,9 +111,9 @@ public class Cabinet
         gameObject.name = name;
 
         //add neccesary components
-        addRigidBody();
-        toFloor();
+        //addRigidBody();
         addBoxCollider(gameObject);
+        toFloor();
 
         if (!IsValid)
             throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");

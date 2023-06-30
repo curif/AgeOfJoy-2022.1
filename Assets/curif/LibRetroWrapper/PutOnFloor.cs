@@ -7,22 +7,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PutOnFloor : MonoBehaviour
+public static class PlaceOnFloorFromBoxCollider
 {
-    public BoxCollider boxCollider;
-
-    private void Start()
+    public static bool PlaceOnFloor(Transform transform, BoxCollider boxCollider)
     {
-        // Get the BoxCollider component attached to the GameObject
-        if (boxCollider == null)
-            boxCollider = GetComponent<BoxCollider>();
-        if (boxCollider == null)
+        if (transform == null || boxCollider == null)
         {
-            ConfigManager.WriteConsoleError($"[PutOnFloor.Start] there is not a boxCollider for {name}");
-            return;
+            ConfigManager.WriteConsoleError($"[PlaceOnFloorFromBoxCollider.PlaceOnFloor] gameObject or boxCollider missing {transform}");
+            return false;
         }
+
         // Align the lower part of the GameObject to the floor
-        if (!AlignLowerPartToFloor())
+        if (!AlignLowerPartToFloor(transform, boxCollider))
         {
             Vector3 reservedPosition = transform.position;
             transform.position = new Vector3(
@@ -30,20 +26,21 @@ public class PutOnFloor : MonoBehaviour
                 transform.position.y + 0.5f,
                 transform.position.z
             );
-            if (!AlignLowerPartToFloor())
+            if (!AlignLowerPartToFloor(transform, boxCollider))
             {
                 transform.position = reservedPosition;
-                ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
-
+                return false;
             }
         }
+        return true;
     }
 
-    private bool AlignLowerPartToFloor()
+    private static bool AlignLowerPartToFloor(Transform transform, BoxCollider boxCollider)
     {
+
         // Cast a ray downwards from the center of the BoxCollider
         Vector3 lowBoxCollider = new Vector3(transform.position.x,
-                                                CalculateLowerPointY(),
+                                                CalculateLowerPointY(transform, boxCollider),
                                                 transform.position.z);
         Ray ray = new Ray(lowBoxCollider, Vector3.down);
 
@@ -59,11 +56,11 @@ public class PutOnFloor : MonoBehaviour
             transform.position -= new Vector3(0f, yOffset, 0f);
             return true;
         }
-        ConfigManager.WriteConsoleError($"[PutOnFloor.AlignLowerPartToFloor] floor not found for {name}");
+        ConfigManager.WriteConsoleError($"[PlaceOnFloorFromBoxCollider.AlignLowerPartToFloor] floor not found for {transform.gameObject.name}");
         return false;
     }
 
-    public float CalculateLowerPointY()
+    public static float CalculateLowerPointY(Transform transform, BoxCollider boxCollider)
     {
         // Get the center of the BoxCollider in world space
         Vector3 colliderCenter = transform.TransformPoint(boxCollider.center);
@@ -76,4 +73,25 @@ public class PutOnFloor : MonoBehaviour
 
         return lowerPointY;
     }
+}
+
+public class PutOnFloor : MonoBehaviour
+{
+    public BoxCollider boxCollider;
+
+    private void Start()
+    {
+        // Get the BoxCollider component attached to the GameObject
+        if (boxCollider == null)
+            boxCollider = GetComponent<BoxCollider>();
+        if (boxCollider == null)
+        {
+            ConfigManager.WriteConsoleError($"[PutOnFloor.Start] there is not a boxCollider for {name}");
+            return;
+        }
+
+        if (! PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
+            ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
+    }
+
 }
