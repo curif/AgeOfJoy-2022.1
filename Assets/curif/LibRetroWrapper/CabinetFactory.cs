@@ -52,6 +52,7 @@ public static class CabinetFactory
                 try
                 {
                     model = Importer.LoadFromFile(modelFilePath);
+                    model.SetActive(false);
                 }
                 catch (Exception e)
                 {

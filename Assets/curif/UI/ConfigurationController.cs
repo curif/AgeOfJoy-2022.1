@@ -276,14 +276,16 @@ public class ConfigurationController : MonoBehaviour
         {
             scr.Print(2, 1, "Back global configuration");
             scr.Print(2, 2, "to default.");
-            scr.Print(2, 3, "Lost all configured data.");
-        }
+            scr.Print(2, 3, "You will lost the global data");
+            scr.Print(2, 4, "except controllers information");
+            scr.Print(2, 5, "and cabinets positions.");        }
         else
         {
             scr.Print(2, 1, "Room configuration will");
             scr.Print(2, 2, "be deleted.");
             scr.Print(2, 3, "You will lost all room configured data");
-            scr.Print(2, 4, "except controllers information.");
+            scr.Print(2, 4, "except controllers information");
+            scr.Print(2, 5, "and cabinets positions.");
         }
         scr.Print(2, 16, "up/down to change");
         scr.Print(2, 17, "b to select and exit");

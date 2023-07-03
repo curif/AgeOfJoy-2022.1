@@ -109,6 +109,7 @@ public class Cabinet
         //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
         gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
         gameObject.name = name;
+        
 
         //add neccesary components
         //addRigidBody();
@@ -122,7 +123,10 @@ public class Cabinet
         if (PartsExist("bezel"))
             SetMaterial("bezel", CabinetMaterials.FrontGlassWithBezel);
 
+        //cached gameObjects could be inactive.
+        gameObject.SetActive(true);
     }
+
     public GameObject this[string part]
     {
         get
