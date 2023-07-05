@@ -38,51 +38,26 @@ public class LibretroControlMap : MonoBehaviour
         ControlMapConfiguration conf,
         string fileNameToSaveOrEmpty = "")
     {
-        /*
-        ControlMapConfiguration conf;
-
-        if (userConfiguration != null)
-        {
-          conf = new DefaultControlMap();
-          conf.Merge(userConfiguration);
-          ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from USER configuration: {conf}");
-        }
-        else if (globalConfiguration != null)
-        {
-          conf = new DefaultControlMap();
-          conf.Merge(globalConfiguration);
-          ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from GLOBAL configuration: {conf}");
-        }
-        else if (cabMapConfiguration != null) 
-        {
-          conf = new DefaultControlMap();
-          conf.Merge(cabMapConfiguration);
-          ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] loaded config from cabinet information (description.yaml): {conf}");
-        }
-        else {
-          conf = DefaultControlMap.Instance;
-          ConfigManager.WriteConsole($"[LibretroControlMap.LoadConfigurationFromCabinet] fall to deafult control configuration: {conf}");
-        }
-        */
-        //ConfigManager.WriteConsole(conf.asMarkdown());
-        // Debug.Log(conf.AsMarkdown());
-        // conf.ToDebug();
-
         if (fileNameToSaveOrEmpty != "")
         {
             conf.SaveAsYaml(fileNameToSaveOrEmpty);
         }
 
+        // Debug.Log(conf.AsMarkdown());
+
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
     }
-    public int Active(string mameControl)
+
+    public int Active(string mameControl, int port = 0)
     {
         int ret = 0;
 
-        InputAction action = actionMap.FindAction(mameControl);
+        string inputActionMapId = mameControl + "_" + port.ToString();
+
+        InputAction action = actionMap.FindAction(inputActionMapId);
         if (action == null)
         {
-            ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{mameControl}] not found in controlMap");
+            ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{inputActionMapId}] not found in controlMap");
             return 0;
         }
 
@@ -91,7 +66,7 @@ public class LibretroControlMap : MonoBehaviour
         {
             if (action.IsPressed())
             {
-                ConfigManager.WriteConsole($"[LibretroControlMap.Active] {mameControl} pressed");
+                ConfigManager.WriteConsole($"[LibretroControlMap.Active] {inputActionMapId} pressed");
                 return 1;
             }
             return 0;
@@ -100,33 +75,34 @@ public class LibretroControlMap : MonoBehaviour
         else if (action.type == InputActionType.Value)
         {
             Vector2 val = action.ReadValue<Vector2>();
+
             switch (mameControl)
             {
                 case "JOYPAD_UP":
                     if (val.y > 0.5)
                     {
-                        ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_DOWN":
                     if (val.y < -0.5)
                     {
-                        ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_RIGHT":
                     if (val.x > 0.5)
                     {
-                        ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_LEFT":
                     if (val.x < -0.5)
                     {
-                        ConfigManager.WriteConsole($"{mameControl}: val: {val}");
+                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;

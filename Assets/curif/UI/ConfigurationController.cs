@@ -447,7 +447,7 @@ public class ConfigurationController : MonoBehaviour
             controlMapRealControls[idx].SetCurrent("--");
         }
 
-        ControlMapConfiguration.Maps maps = controlMapConfiguration.GetMap(mameControl);
+        ControlMapConfiguration.Maps maps = controlMapConfiguration.GetMap(mameControl, 0);
         if (maps == null)
             return;
 
@@ -1399,7 +1399,7 @@ public class ConfigurationController : MonoBehaviour
     {
         bool ret = false;
 
-        InputAction action = actionMap.FindAction(mameControl);
+        InputAction action = actionMap.FindAction(mameControl + "_0");
         if (action == null)
         {
             //ConfigManager.WriteConsoleError($"[ConfigurationControl.Active] [{mameControl}] not found in controlMap");
