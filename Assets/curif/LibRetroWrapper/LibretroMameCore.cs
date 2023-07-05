@@ -395,8 +395,12 @@ public static unsafe class LibretroMameCore
 
         List<string> joy = deviceIdsJoypad.ControlsList();
         List<string> mouse = deviceIdsMouse.ControlsList();
-        List<string> analog = deviceIdsAnalog.ControlsList();
-        deviceIdsCombined = mouse.Concat(joy).Concat(analog).ToList();
+
+        //analog isn't ready
+        // List<string> analog = deviceIdsAnalog.ControlsList();
+        // deviceIdsCombined = mouse.Concat(joy).Concat(analog).ToList();
+
+        deviceIdsCombined = mouse.Concat(joy).ToList();
     }
 
     static void assignControls()
