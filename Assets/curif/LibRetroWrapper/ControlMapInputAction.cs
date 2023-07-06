@@ -11,22 +11,6 @@ using System.Text;
 
 public static class ControlMapInputAction
 {
-  /*
-  public static bool HasMameControl(string mameControl)
-  {
-     foreach (var item in LibretroMameCore.deviceIdsJoypad)
-     {
-       if (item == mameControl)
-         return true;
-     }
-     foreach (var item in LibretroMameCore.deviceIdsMouse)
-     {
-       if (item == mameControl)
-         return true;
-     }
-     return false;
-  }
-  */
 
   public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
   {
@@ -38,7 +22,7 @@ public static class ControlMapInputAction
       {
         t = InputActionType.Value;
       }
-      InputAction action = inputActionMap.AddAction(map.mameControl, type: t);
+      InputAction action = inputActionMap.AddAction(map.InputActionMapName(), type: t);
       foreach (var controlMap in map.controlMaps)
       {
         string path = ControlMapPathDictionary.GetInputPath(controlMap.RealControl);
@@ -51,7 +35,7 @@ public static class ControlMapInputAction
           var bind = new InputBinding
           {
             path = path, 
-            action = map.mameControl
+            action = map.mameControl + "_" + map.port.ToString()
           };
           action.AddBinding(bind);
         }

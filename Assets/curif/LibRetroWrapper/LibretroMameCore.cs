@@ -114,6 +114,7 @@ public static unsafe class LibretroMameCore
 
     private static mameControls deviceIdsJoypad = null;
     private static mameControls deviceIdsMouse = null;
+    private static mameControls deviceIdsAnalog = null;
     public static List<string> deviceIdsCombined = null;
 
 
@@ -358,6 +359,7 @@ public static unsafe class LibretroMameCore
     {
         deviceIdsMouse = new();
         deviceIdsJoypad = new();
+        deviceIdsAnalog = new();
         deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, "MOUSE_X");
         deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, "MOUSE_Y");
         deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, "MOUSE_LEFT");
@@ -385,10 +387,19 @@ public static unsafe class LibretroMameCore
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, "JOYPAD_L2");
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, "JOYPAD_R3");
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, "JOYPAD_L3");
+
+        deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_X, "ANALOG_X");
+        deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_Y, "ANALOG_Y");
+
         //deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_MASK, "JOYPAD_MASK");
 
         List<string> joy = deviceIdsJoypad.ControlsList();
         List<string> mouse = deviceIdsMouse.ControlsList();
+
+        //analog isn't ready
+        // List<string> analog = deviceIdsAnalog.ControlsList();
+        // deviceIdsCombined = mouse.Concat(joy).Concat(analog).ToList();
+
         deviceIdsCombined = mouse.Concat(joy).ToList();
     }
 
@@ -427,7 +438,12 @@ public static unsafe class LibretroMameCore
             return "";
         }
 
-        public Int16 Active(uint mameId)
+        public string InputActionMapName(string gameId, int port = 0)
+        {
+            return $"{gameId}_{port}";
+        }
+
+        public Int16 Active(uint mameId, int port = 0)
         {
             string gameId = Id(mameId);
             if (gameId == "")
@@ -435,8 +451,8 @@ public static unsafe class LibretroMameCore
                 ConfigManager.WriteConsoleError($"[mameControls] libretro is asking for a control id that is not mapped: {mameId}");
                 return 0;
             }
-            return (Int16)controlMap.Active(gameId);
-        }
+            return (Int16)controlMap.Active(gameId, port);
+        } 
 
         public List<string> ControlsList()
         {
@@ -523,10 +539,10 @@ public static unsafe class LibretroMameCore
         ScreenName = screenName;
 
         WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
-        
+
         //controls
         assignControls();
-        
+
         retro_game_info game = new retro_game_info();
         game.path = path;
         game.size = 0;
@@ -772,10 +788,17 @@ public static unsafe class LibretroMameCore
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
             return ret;
 
-        //WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{id}");
+        /*
+        if (device == RETRO_DEVICE_JOYPAD)
+            WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{deviceIdsJoypad.Id(id)}");
+        else if (device == RETRO_DEVICE_MOUSE)
+            WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id:{deviceIdsMouse.Id(id)}");
+        else
+            WriteConsole($"[inputStateCB] device unknown! {device}");
+        */
 
-        if (port != 0)
-            return ret;
+        //if (port != 0)
+        //    return ret;
 
 #if _debug_fps_
       Profiling.input.Start();
@@ -806,23 +829,25 @@ public static unsafe class LibretroMameCore
 
                 case RETRO_DEVICE_ID_JOYPAD_L3:
                     //mame menu: joystick right button press and right grip
-                    ret = (ControlMap.Active("JOYPAD_R3") != 0 && ControlMap.Active("JOYPAD_R") != 0) ? (Int16)1 : (Int16)0;
+                    ret = (ControlMap.Active("JOYPAD_R3") != 0 &&
+                            ControlMap.Active("JOYPAD_R") != 0) ?
+                            (Int16)1 : (Int16)0;
                     break;
 
                 default:
-                    ret = (Int16)deviceIdsJoypad.Active(id);
+                    ret = (Int16)deviceIdsJoypad.Active(id, (int)port);
                     break;
             }
-            if (ret != 0)
-                ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
+            // if (ret != 0)
+                // ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
         }
 
         else if (device == RETRO_DEVICE_MOUSE)
         {
             //InputControlDebug(RETRO_DEVICE_MOUSE);
-            ret = (Int16)deviceIdsMouse.Active(id);
-            if (ret != 0)
-                ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
+            ret = (Int16)deviceIdsMouse.Active(id, (int)port);
+            // if (ret != 0)
+                // ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
 
         }
 

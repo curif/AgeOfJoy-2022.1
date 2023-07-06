@@ -173,6 +173,7 @@ public class ConfigurationController : MonoBehaviour
     private GenericWidgetContainer changeModeContainer, audioContainer, resetContainer, controllerContainer, npcContainer;
     private GenericLabel lblGameSelected;
     private GenericOptions controlMapGameId, controlMapMameControl;
+    private GenericOptionsInteger controlMapPort;
     private GenericTimedLabel controlMapSavedLabel;
     private List<GenericOptions> controlMapRealControls;
     private ControlMapConfiguration controlMapConfiguration;
@@ -278,7 +279,8 @@ public class ConfigurationController : MonoBehaviour
             scr.Print(2, 2, "to default.");
             scr.Print(2, 3, "You will lost the global data");
             scr.Print(2, 4, "except controllers information");
-            scr.Print(2, 5, "and cabinets positions.");        }
+            scr.Print(2, 5, "and cabinets positions.");
+        }
         else
         {
             scr.Print(2, 1, "Room configuration will");
@@ -438,7 +440,8 @@ public class ConfigurationController : MonoBehaviour
     private void controlMapUpdateWidgets()
     {
         string mameControl = controlMapMameControl.GetSelectedOption();
-        ConfigManager.WriteConsole($"[controlMapUpdateWidgets] updating for mame control id {mameControl}");
+        int port = controlMapPort.GetSelectedOption();
+        ConfigManager.WriteConsole($"[controlMapUpdateWidgets] updating for mame control id {mameControl} port: {port}");
 
         //clean
         int idx = 0;
@@ -447,7 +450,7 @@ public class ConfigurationController : MonoBehaviour
             controlMapRealControls[idx].SetCurrent("--");
         }
 
-        ControlMapConfiguration.Maps maps = controlMapConfiguration.GetMap(mameControl);
+        ControlMapConfiguration.Maps maps = controlMapConfiguration.GetMap(mameControl, port);
         if (maps == null)
             return;
 
@@ -465,18 +468,19 @@ public class ConfigurationController : MonoBehaviour
     private void controlMapUpdateConfigurationFromWidgets()
     {
         string mameControl = controlMapMameControl.GetSelectedOption();
+        int port = controlMapPort.GetSelectedOption();
+
         ConfigManager.WriteConsole($"[controlMapUpdateConfigurationFromWidgets] updating from widget mame control id {mameControl}");
 
-        controlMapConfiguration.RemoveMaps(mameControl);
+        controlMapConfiguration.RemoveMaps(mameControl, port);
         for (int idx = 0; idx < 5; idx++)
         {
             string realControl = controlMapRealControls[idx].GetSelectedOption();
             if (realControl != "--")
             {
-                controlMapConfiguration.AddMap(mameControl, realControl);
+                controlMapConfiguration.AddMap(mameControl, realControl, null, port);
             }
         }
-
     }
     private bool controlMapConfigurationSave()
     {
@@ -612,7 +616,8 @@ public class ConfigurationController : MonoBehaviour
         if (lblGameSelected != null)
         {
             //adjust widgets
-            controlMapGameId.SetOptions(GetCabinetsInRoom());
+            // controlMapGameId.SetOptions(GetCabinetsInRoom());
+            controlMapGameId.SetOptions(cabinetsController.gameRegistry.GetCabinetsNamesAssignedToRoom(GetRoomName()));
             controlMapGameId.enabled = !isGlobalConfigurationWidget.value;
             return;
         }
@@ -626,10 +631,17 @@ public class ConfigurationController : MonoBehaviour
 
 
         lblGameSelected = new GenericLabel(scr, "lblGame", "global configuration", 3, 6);
-        controlMapGameId = new GenericOptions(scr, "gameId", "game:", GetCabinetsInRoom(), 3, 9);
+        controlMapGameId = new GenericOptions(scr, "gameId", "game:", 
+                                                cabinetsController.gameRegistry.GetCabinetsNamesAssignedToRoom(GetRoomName()), 
+                                                3, 9);
+
         //global configuration by default, changed in the first draw()
         controlMapGameId.enabled = false;
-        controlMapMameControl = new GenericOptions(scr, "mameControl", "CTRL:", LibretroMameCore.deviceIdsCombined, 3, 10);
+        controlMapMameControl = new GenericOptions(scr, "mameControl", "CTRL:",
+                                                    LibretroMameCore.deviceIdsCombined, 3, 10);
+        controlMapPort = new GenericOptionsInteger(scr, "controlMapPort",
+                                                    "Port:", 0, 10,
+                                                    3, 11);
         controlMapRealControls = new();
         List<string> controlMapRealControlList = new List<string>();
         controlMapRealControlList.Add("--");
@@ -637,16 +649,19 @@ public class ConfigurationController : MonoBehaviour
         controlMapSavedLabel = new(scr, "saved", "saved", 3, 19, true);
         controllerContainer = new(scr, "controllers");
         controllerContainer.Add(new GenericWindow(scr, 1, 4, "controllerscont", 39, 18, " controllers "))
-                           .Add(lblGameSelected)
-                           .Add(controlMapGameId)
-                           .Add(controlMapMameControl);
+                            .Add(lblGameSelected)
+                            .Add(controlMapGameId)
+                            .Add(controlMapMameControl)
+                            .Add(controlMapPort);
+
         for (int x = 0; x < 5; x++)
         {
-            controlMapRealControls.Add(new GenericOptions(scr, "controlMapRealControl-" + x.ToString(), x.ToString() + ":", controlMapRealControlList, 3, 11 + x));
+            controlMapRealControls.Add(new GenericOptions(scr, "controlMapRealControl-" + x.ToString(),
+                                        x.ToString() + ":", controlMapRealControlList, 3, 12 + x));
             controllerContainer.Add(controlMapRealControls[x]);
         }
-        controllerContainer.Add(new GenericButton(scr, "save", "save", 3, 17, true))
-                           .Add(new GenericButton(scr, "exit", "exit", 10, 17, true))
+        controllerContainer.Add(new GenericButton(scr, "save", "save", 3, 18, true))
+                           .Add(new GenericButton(scr, "exit", "exit", 10, 18, true))
                            .Add(controlMapSavedLabel);
     }
 
@@ -683,13 +698,13 @@ public class ConfigurationController : MonoBehaviour
             {
                 cabsWithPosition.Add($"{cabPos.Position:D3}-{cabPos.CabinetDBName}");
             }
-         }
+        }
 
         //create empty positions
         List<int> freePos = cabinetsController.gameRegistry.GetFreePositions(
-            cabinetsInRoomByGameRegistry, 
+            cabinetsInRoomByGameRegistry,
             cabinetsController.CabinetsCount);
-        foreach(int free in freePos)
+        foreach (int free in freePos)
         {
             cabsWithPosition.Add($"{free:D3}-(free)");
         }
@@ -1223,14 +1238,19 @@ public class ConfigurationController : MonoBehaviour
                         else if (right || left)
                         {
                             if (left)
-                                w.PreviousOption();
-                            else if (right)
                                 w.NextOption();
+                            else if (right)
+                                w.PreviousOption();
 
                             if (w.name == "gameId")
                             {
                                 lblGameSelected.label = controlMapGameId.GetSelectedOption();
+                                controlMapPort.SetCurrent(0);
                                 controlMapConfigurationLoad();
+                            }
+                            else if (w.name == "mameControl")
+                            {
+                                controlMapPort.SetCurrent(0);
                             }
                             else if (w.name.StartsWith("controlMapRealControl")) // controlMapRealControl or mameControl
                             {
@@ -1399,7 +1419,7 @@ public class ConfigurationController : MonoBehaviour
     {
         bool ret = false;
 
-        InputAction action = actionMap.FindAction(mameControl);
+        InputAction action = actionMap.FindAction(mameControl + "_0");
         if (action == null)
         {
             //ConfigManager.WriteConsoleError($"[ConfigurationControl.Active] [{mameControl}] not found in controlMap");

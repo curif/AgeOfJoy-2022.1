@@ -34,19 +34,20 @@ public class ControlMapConfiguration
 
     }
 
-    public ControlMapConfiguration.Maps GetMap(string mameControl)
+    public ControlMapConfiguration.Maps GetMap(string mameControl, int port)
     {
-        return mapList.FirstOrDefault(map => map.mameControl == mameControl);
+        return mapList.FirstOrDefault(map => map.mameControl == mameControl && map.port == port);
     }
-    public bool Exists(string mameControl)
+    public bool Exists(string mameControl, int port)
     {
-        return mapList.Any(map => map.mameControl == mameControl);
+        return mapList.Any(map => map.mameControl == mameControl && map.port == port);
     }
 
     public class Maps
     {
         [YamlMember(Alias = "libretro-id", ApplyNamingConventions = false)]
         public string mameControl;
+        public int port = 0;
         public string behavior = "button"; // or axis 
         [YamlMember(Alias = "maps-to", ApplyNamingConventions = false)]
         public List<ControlMap> controlMaps { get; set; }
@@ -54,10 +55,11 @@ public class ControlMapConfiguration
         {
 
         }
-        public Maps(string mameControl, string behavior = "button")
+        public Maps(string mameControl, int port = 0, string behavior = "button")
         {
             this.mameControl = mameControl;
             this.behavior = behavior;
+            this.port = port;
             this.controlMaps = new();
         }
         public ControlMap GetAction(string realControl)
@@ -75,17 +77,22 @@ public class ControlMapConfiguration
             return act;
         }
 
+        public string InputActionMapName()
+        {
+            return $"{mameControl}_{port}";
+        }
+
     }
 
-    public void AddMap(string mameControl, string realControl, string behavior = null)
+    public void AddMap(string mameControl, string realControl, string behavior = null, int port = 0)
     {
         ControlMapConfiguration.Maps map;
         if (behavior == null)
             behavior = ControlMapPathDictionary.GetBehavior(realControl);
-        map = GetMap(mameControl);
+        map = GetMap(mameControl, port);
         if (map == null)
         {
-            map = new(mameControl, behavior);
+            map = new(mameControl, port, behavior);
             mapList.Add(map);
         }
 
@@ -98,20 +105,20 @@ public class ControlMapConfiguration
         }
     }
 
-    public void AddMap(string mameControl, string[] realControlsToAssign, string behavior = null)
+    public void AddMap(string mameControl, string[] realControlsToAssign, string behavior = null, int port = 0)
     {
         foreach (string realControl in realControlsToAssign)
         {
-            AddMap(mameControl, realControl, behavior);
+            AddMap(mameControl, realControl,behavior, port);
         }
 
         return;
     }
 
-    public void RemoveMaps(string mameControl)
+    public void RemoveMaps(string mameControl, int port = 0)
     {
         ControlMapConfiguration.Maps map;
-        map = GetMap(mameControl);
+        map = GetMap(mameControl, port);
         if (map != null)
         {
             mapList.Remove(map);
@@ -129,7 +136,7 @@ public class ControlMapConfiguration
         foreach (Maps otherMap in other.mapList)
         {
             // Find a matching map in this ControlMapConfiguration based on the mameControl name
-            Maps thisMap = mapList.Find(x => x.mameControl == otherMap.mameControl);
+            Maps thisMap = mapList.Find(x => x.mameControl == otherMap.mameControl && x.port == otherMap.port);
 
             // If a matching map is found, replace its controlMaps list with the one from the other ControlMapConfiguration
             if (thisMap != null)
@@ -196,13 +203,13 @@ public class ControlMapConfiguration
     public string AsMarkdown()
     {
         StringBuilder sb = new StringBuilder();
-        sb.Append("| MAME | Control | Behavior | Unity Path |\n");
-        sb.Append("| --- | --- | --- | --- |\n");
+        sb.Append("| MAME | Control | Behavior | Port | Unity Path |\n");
+        sb.Append("| --- | --- | --- | --- | --- |\n");
         foreach (ControlMapConfiguration.Maps m in mapList)
         {
             foreach (ControlMapConfiguration.ControlMap a in m.controlMaps)
             {
-                sb.Append($"| {m.mameControl} | {a.RealControl} | {m.behavior} | `{a.Path}` |\n");
+                sb.Append($"| {m.mameControl} | {a.RealControl} | {m.port} | {m.behavior} | `{a.Path}` |\n");
             }
         }
         return sb.ToString();
@@ -236,6 +243,12 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap("JOYPAD_DOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("JOYPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("JOYPAD_RIGHT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
+
+        //also map port 1 to the right one (roboton issue #204)
+        AddMap("JOYPAD_UP", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("JOYPAD_DOWN", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("JOYPAD_LEFT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("JOYPAD_RIGHT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
 
         AddMap("JOYPAD_L", new string[] { "quest-left-trigger", "gamepad-left-trigger" });
         AddMap("JOYPAD_R", new string[] { "quest-right-trigger", "gamepad-right-trigger" });
@@ -295,28 +308,28 @@ public class GlobalControlMap : DefaultControlMap
 
 public class GameControlMap : GlobalControlMap
 {
-    private string gameFile;
-    public GameControlMap(string gameFile) : base()
+    private string cabinetDBName;
+    public GameControlMap(string cabDBName) : base()
     {
-        this.gameFile = gameFile;
+        this.cabinetDBName = cabDBName;
         Load();
     }
 
-    public static string Path(string gameFileName)
+    public static string Path(string cabDBName)
     {
-        return ConfigManager.ConfigControllersDir + "/" + gameFileName + ".yaml";
+        return ConfigManager.ConfigControllersDir + "/" + cabDBName + ".yaml";
     }
 
     private string getFileName()
     {
-        return Path(gameFile);
+        return Path(cabinetDBName);
     }
 
-    public static bool ExistsConfiguration(string gameFileName)
+    public static bool ExistsConfiguration(string cabDBName)
     {
-        string path = Path(gameFileName);
-        bool exists = File.Exists(Path(gameFileName)); 
-        ConfigManager.WriteConsole($"[GameControlMap] configuration exists for game {gameFileName}: {exists}");
+        string path = Path(cabDBName);
+        bool exists = File.Exists(Path(cabDBName));
+        ConfigManager.WriteConsole($"[GameControlMap] configuration exists for game {cabDBName}: {exists}");
         return exists;
     }
 
