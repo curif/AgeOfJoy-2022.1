@@ -416,27 +416,6 @@ public class ConfigurationController : MonoBehaviour
         scr.Print(2, 24, "b to select");
     }
 
-    private void controlMapConfigurationLoad()
-    {
-        try
-        {
-            if (isGlobalConfigurationWidget.value)
-            {
-                controlMapConfiguration = new GlobalControlMap();
-            }
-            else
-            {
-                controlMapConfiguration = new GameControlMap(lblGameSelected.label);
-            }
-        }
-        catch (Exception e)
-        {
-            controlMapConfiguration = new DefaultControlMap();
-            ConfigManager.WriteConsoleException($"[controllerLoadConfigMap] loading configuration, using default. Is Global:{isGlobalConfigurationWidget.value} ", e);
-        }
-        // ConfigManager.WriteConsole($"[controllerLoadConfigMap] debug in the next line ...");
-        // controlMapConfiguration.ToDebug();
-    }
     private void controlMapUpdateWidgets()
     {
         string mameControl = controlMapMameControl.GetSelectedOption();
@@ -481,6 +460,28 @@ public class ConfigurationController : MonoBehaviour
                 controlMapConfiguration.AddMap(mameControl, realControl, null, port);
             }
         }
+    }
+
+    private void controlMapConfigurationLoad()
+    {
+        try
+        {
+            if (isGlobalConfigurationWidget.value)
+            {
+                controlMapConfiguration = new GlobalControlMap();
+            }
+            else
+            {
+                controlMapConfiguration = new GameControlMap(controlMapGameId.GetSelectedOption());
+            }
+        }
+        catch (Exception e)
+        {
+            controlMapConfiguration = new DefaultControlMap();
+            ConfigManager.WriteConsoleException($"[controllerLoadConfigMap] loading configuration, using default. Is Global:{isGlobalConfigurationWidget.value} ", e);
+        }
+        // ConfigManager.WriteConsole($"[controllerLoadConfigMap] debug in the next line ...");
+        // controlMapConfiguration.ToDebug();
     }
     private bool controlMapConfigurationSave()
     {
@@ -631,8 +632,8 @@ public class ConfigurationController : MonoBehaviour
 
 
         lblGameSelected = new GenericLabel(scr, "lblGame", "global configuration", 3, 6);
-        controlMapGameId = new GenericOptions(scr, "gameId", "game:", 
-                                                cabinetsController.gameRegistry.GetCabinetsNamesAssignedToRoom(GetRoomName()), 
+        controlMapGameId = new GenericOptions(scr, "gameId", "game:",
+                                                cabinetsController?.gameRegistry?.GetCabinetsNamesAssignedToRoom(GetRoomName()),
                                                 3, 9);
 
         //global configuration by default, changed in the first draw()
