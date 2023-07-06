@@ -57,7 +57,7 @@ public class LibretroControlMap : MonoBehaviour
         InputAction action = actionMap.FindAction(inputActionMapId);
         if (action == null)
         {
-            ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{inputActionMapId}] not found in controlMap");
+            //ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{inputActionMapId}] not found in controlMap");
             return 0;
         }
 

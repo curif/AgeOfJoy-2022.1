@@ -308,28 +308,28 @@ public class GlobalControlMap : DefaultControlMap
 
 public class GameControlMap : GlobalControlMap
 {
-    private string gameFile;
-    public GameControlMap(string gameFile) : base()
+    private string cabinetDBName;
+    public GameControlMap(string cabDBName) : base()
     {
-        this.gameFile = gameFile;
+        this.cabinetDBName = cabDBName;
         Load();
     }
 
-    public static string Path(string gameFileName)
+    public static string Path(string cabDBName)
     {
-        return ConfigManager.ConfigControllersDir + "/" + gameFileName + ".yaml";
+        return ConfigManager.ConfigControllersDir + "/" + cabDBName + ".yaml";
     }
 
     private string getFileName()
     {
-        return Path(gameFile);
+        return Path(cabinetDBName);
     }
 
-    public static bool ExistsConfiguration(string gameFileName)
+    public static bool ExistsConfiguration(string cabDBName)
     {
-        string path = Path(gameFileName);
-        bool exists = File.Exists(Path(gameFileName));
-        ConfigManager.WriteConsole($"[GameControlMap] configuration exists for game {gameFileName}: {exists}");
+        string path = Path(cabDBName);
+        bool exists = File.Exists(Path(cabDBName));
+        ConfigManager.WriteConsole($"[GameControlMap] configuration exists for game {cabDBName}: {exists}");
         return exists;
     }
 

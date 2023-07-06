@@ -96,6 +96,7 @@ public class LibretroScreenController : MonoBehaviour
     private GameVideoPlayer videoPlayer;
     private DateTime timeToExit = DateTime.MinValue;
     private GameObject cabinet;
+    private CabinetReplace cabinetReplace;
 
     //hands
     private GameObject leftHand, rightHand, rightControl, leftControl;
@@ -233,16 +234,17 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.shader = shader;
 
                   //controllers
+                  cabinetReplace = cabinet.GetComponent<CabinetReplace>();
                   ControlMapConfiguration controlConf;
                   if (CabinetControlMapConfig != null)
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
                       controlConf = new CustomControlMap(CabinetControlMapConfig);
                   }
-                  else if (GameControlMap.ExistsConfiguration(GameFile))
+                  else if (GameControlMap.ExistsConfiguration(cabinetReplace.game.CabinetDBName))
                   {
-                      ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {name}");
-                      controlConf = new GameControlMap(GameFile);
+                      ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {cabinetReplace.game.CabinetDBName}");
+                      controlConf = new GameControlMap(cabinetReplace.game.CabinetDBName);
                   }
                   else
                   {
@@ -250,7 +252,7 @@ public class LibretroScreenController : MonoBehaviour
                       controlConf = new GlobalControlMap();
                   }
                   //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
-                    // ConfigManager.WriteConsole(controlConf.AsMarkdown());
+                  // ConfigManager.WriteConsole(controlConf.AsMarkdown());
                   libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
                   // start libretro

@@ -838,16 +838,16 @@ public static unsafe class LibretroMameCore
                     ret = (Int16)deviceIdsJoypad.Active(id, (int)port);
                     break;
             }
-            if (ret != 0)
-                ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
+            // if (ret != 0)
+                // ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
         }
 
         else if (device == RETRO_DEVICE_MOUSE)
         {
             //InputControlDebug(RETRO_DEVICE_MOUSE);
             ret = (Int16)deviceIdsMouse.Active(id, (int)port);
-            if (ret != 0)
-                ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
+            // if (ret != 0)
+                // ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
 
         }
 

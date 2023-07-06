@@ -616,7 +616,8 @@ public class ConfigurationController : MonoBehaviour
         if (lblGameSelected != null)
         {
             //adjust widgets
-            controlMapGameId.SetOptions(GetCabinetsInRoom());
+            // controlMapGameId.SetOptions(GetCabinetsInRoom());
+            controlMapGameId.SetOptions(cabinetsController.gameRegistry.GetCabinetsNamesAssignedToRoom(GetRoomName()));
             controlMapGameId.enabled = !isGlobalConfigurationWidget.value;
             return;
         }
@@ -630,7 +631,10 @@ public class ConfigurationController : MonoBehaviour
 
 
         lblGameSelected = new GenericLabel(scr, "lblGame", "global configuration", 3, 6);
-        controlMapGameId = new GenericOptions(scr, "gameId", "game:", GetCabinetsInRoom(), 3, 9);
+        controlMapGameId = new GenericOptions(scr, "gameId", "game:", 
+                                                cabinetsController.gameRegistry.GetCabinetsNamesAssignedToRoom(GetRoomName()), 
+                                                3, 9);
+
         //global configuration by default, changed in the first draw()
         controlMapGameId.enabled = false;
         controlMapMameControl = new GenericOptions(scr, "mameControl", "CTRL:",
