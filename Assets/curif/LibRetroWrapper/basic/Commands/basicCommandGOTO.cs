@@ -22,11 +22,13 @@ class CommandGOTO : ICommandBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue lineNumber = expr.Execute(vars);
-
+        return lineNumber;
+        /*
         //don't change the BasicValue var.
         vars.GetValue("_linenumber").SetValue(lineNumber.GetValueAsNumber());
 
         return null;
+        */
     }
 
 }

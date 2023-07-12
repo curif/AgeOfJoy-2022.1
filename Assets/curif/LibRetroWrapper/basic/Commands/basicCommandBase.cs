@@ -39,6 +39,8 @@ public class CommandType
             return Type.ExpressionEnd;
         else if (BasicValue.IsValidNumber(tokens.Token))
             return Type.Constant;
+        else if (BasicValue.IsValidString(tokens.Token))
+            return Type.Constant;
         else if (BasicVar.IsVariable(tokens.Token))
             return Type.Variable;
 

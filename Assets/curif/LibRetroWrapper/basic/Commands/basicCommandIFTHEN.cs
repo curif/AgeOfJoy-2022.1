@@ -20,7 +20,7 @@ class CommandIFTHEN : ICommandBase
             throw new Exception($"malformed IF/THEN, expression should be enclosed by ()");
 
         expr.Parse(++tokens);
-
+        
         if (tokens.Next("THEN") == null)
             throw new Exception($"malformed IF/THEN, THEN is missing");
 
@@ -36,7 +36,7 @@ class CommandIFTHEN : ICommandBase
     {
         BasicValue condition = expr.Execute(vars);
         if (condition.IsTrue())
-            cmd.Execute(vars);
+            return cmd.Execute(vars);
 
         return null;
     }

@@ -15,6 +15,8 @@ public static class Commands
         commands["GOTO"] = typeof(CommandGOTO);
         commands["IF"] = typeof(CommandIFTHEN);
         commands["END"] = typeof(CommandEND);
+        commands["GOSUB"] = typeof(CommandGOSUB);
+        commands["RETURN"] = typeof(CommandRETURN);
     }
 
     public static ICommandBase GetNew(string CommandType)

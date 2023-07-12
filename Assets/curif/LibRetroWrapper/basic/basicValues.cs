@@ -19,14 +19,15 @@ public class BasicValue
     public static BasicValue EmptyString = new BasicValue("");
 
     static List<string> validOperations = new List<string> {
-         "+", "-", "/", "*", "=", "<>", "!=", ">", "<", "<=", ">=", "or", "and"
+         "+", "-", "/", "*", "=", "<>", "!=", ">", "<", "<=", ">=", 
+         "OR", "AND"
          };
 
     public static Dictionary<string, int> OperatorPrecedence =
         new Dictionary<string, int>
             {
-                { "and", 1 },
-                { "or", 2 },
+                { "AND", 1 },
+                { "OR", 2 },
                 { "=", 3 },
                 { "!=", 3 },
                 { "<>", 3 },
@@ -53,7 +54,7 @@ public class BasicValue
     //strings could be surrounded by "
     public BasicValue(string str)
     {
-        /*
+
         bool startsAndEndsWithQuote = str.StartsWith("\"") && str.EndsWith("\"");
         if (startsAndEndsWithQuote)
         {
@@ -61,7 +62,6 @@ public class BasicValue
             type = BasicValueType.String;
             return;
         }
-        */
 
         double valueDouble;
         bool isParsableToDouble = double.TryParse(str, out valueDouble);
@@ -155,22 +155,8 @@ public class BasicValue
     public static bool operator !=(BasicValue obj1, BasicValue obj2)
     {
         return !(obj1 == obj2);
-        /*
-        if (ReferenceEquals(obj1, obj2))
-            return false;
-
-        if (ReferenceEquals(obj1, null) || ReferenceEquals(obj2, null))
-            return true;
-
-        if (obj1.type != obj2.type)
-            return true;
-
-        if (obj1.type == BasicValueType.Number)
-            return obj1.number != obj2.number;
-
-        return obj1.str != obj2.str;
-        */
     }
+    
     public static bool operator >(BasicValue obj1, BasicValue obj2)
     {
         if (ReferenceEquals(obj1, obj2))
@@ -258,7 +244,7 @@ public class BasicValue
 
     public bool IsTrue()
     {
-        return (type == BasicValueType.String ? 
+        return (type == BasicValueType.String ?
                     this != BasicValue.EmptyString :
                     this != BasicValue.False);
     }
@@ -316,6 +302,12 @@ public class BasicValue
         return double.TryParse(str, out _);
     }
 
+    public static bool IsValidString(string str)
+    {
+        return str.StartsWith("\"") && str.EndsWith("\"");
+
+    }
+
 
     public BasicValue Operate(BasicValue bval, BasicValue operation)
     {
@@ -334,7 +326,7 @@ public class BasicValue
                 return new BasicValue(bval == this ? 1 : 0);
             case "!=":
             case "<>":
-                return new BasicValue(bval != this ? 1 : 0);
+                return new BasicValue(this != bval ? 1 : 0);
             case ">":
                 return new BasicValue(this > bval ? 1 : 0);
             case "<":
@@ -343,9 +335,9 @@ public class BasicValue
                 return new BasicValue(this <= bval ? 1 : 0);
             case ">=":
                 return new BasicValue(this >= bval ? 1 : 0);
-            case "and":
+            case "AND":
                 return this & bval;
-            case "or":
+            case "OR":
                 return this | bval;
         }
         throw new Exception($"Operator unknown: [{operation}], allowed values are [{string.Join(", ", validOperations)}]...");

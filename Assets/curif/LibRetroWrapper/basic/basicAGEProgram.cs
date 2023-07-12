@@ -9,10 +9,12 @@ public class AGEProgram
 {
     public string Name;
     Dictionary<int, ICommandBase> lines = new();
+    int nextLineToExecute = -1;
     int lastLineNumberExecuted = -1;
     int lastLineNumberParsed = -1;
     BasicVars vars = new();
     BasicValue lineNumber = new();
+    BasicValue gosubstack = new("");
 
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
     public int LastLineNumberExecuted { get { return lastLineNumberExecuted; } }
@@ -20,14 +22,15 @@ public class AGEProgram
     private KeyValuePair<int, ICommandBase> getNext()
     {
         KeyValuePair<int, ICommandBase> nextLine =
-                    lines.FirstOrDefault(kvp => kvp.Key > lastLineNumberExecuted);
+                    lines.FirstOrDefault(kvp => kvp.Key >= nextLineToExecute);
         return nextLine;
     }
 
     public void PrepareToRun()
     {
-        this.lastLineNumberExecuted = -1;
-        vars.SetValue("_linenumber", lineNumber);
+        this.nextLineToExecute = -1;
+        vars.SetValue("_linenumber", lineNumber); //on excecution
+        vars.SetValue("_gosubstack", gosubstack); //gosub stack lines
     }
 
     public bool runNextLine()
@@ -37,29 +40,29 @@ public class AGEProgram
             return false;
 
         ConfigManager.WriteConsole($"EXEC LINE #[{cmd.Key}] Instruction: {cmd.Value.CmdToken}");
-        
-        lineNumber.SetValue((double)cmd.Key);
-        
-        cmd.Value.Execute(vars);
-        
-        double newLineNumber = lineNumber.GetValueAsNumber();
-        if (newLineNumber == double.MaxValue)
-            return false;
 
-        int newLine = (int) newLineNumber;
-        if (cmd.Key != newLine)
+        lineNumber.SetValue((double)cmd.Key);
+        BasicValue ret = cmd.Value.Execute(vars);
+        lastLineNumberExecuted = cmd.Key;
+
+        if (ret != null)
         {
+            double newLineNumber = ret.GetValueAsNumber();
+            if (newLineNumber == double.MaxValue)
+                return false;
+            int newLine = (int)newLineNumber;
             if (!lines.ContainsKey(newLine))
                 throw new Exception($"Line number not found: {newLineNumber}");
-            // user changes control flow (goto for example)
-            lastLineNumberExecuted = newLine - 1;
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >: {lastLineNumberExecuted}");
+            if (cmd.Value.CmdToken == "RETURN")
+                newLine++; //next instruction
+            nextLineToExecute = newLine;
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {nextLineToExecute}");
         }
         else
-            lastLineNumberExecuted = cmd.Key;
+            nextLineToExecute = lastLineNumberExecuted + 1;
+        
         return true;
     }
-
 
     public List<string> ParseString(string input)
     {
@@ -71,11 +74,11 @@ public class AGEProgram
         foreach (Match match in matches)
         {
             string parsedElement = match.Value;
-            if (parsedElement.StartsWith("\"") && parsedElement.EndsWith("\""))
+            /*if (parsedElement.StartsWith("\"") && parsedElement.EndsWith("\""))
             {
                 // Remove leading and trailing quotes
                 parsedElement = parsedElement.Trim('"');
-            }
+            }*/
             result.Add(parsedElement);
         }
 
@@ -85,7 +88,7 @@ public class AGEProgram
     public string Log()
     {
         string str = $"PROGRAM: {Name}\n";
-        str += $"Last line parsed: {lastLineNumberParsed} executed: {lastLineNumberExecuted}\n";
+        str += $"Last line parsed: {lastLineNumberParsed} executed: {nextLineToExecute}\n";
         str += $"vars: \n";
         str += vars.ToString() + "\n";
         return str;

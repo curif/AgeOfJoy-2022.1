@@ -18,11 +18,7 @@ class CommandEND : ICommandBase
     public BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}]");
-
-        //don't change the BasicValue var.
-        vars.GetValue("_linenumber").SetValue(double.MaxValue);
-
-        return null;
+        return new BasicValue(double.MaxValue);
     }
 
 }
