@@ -13,10 +13,13 @@ public static class Commands
         commands["PRINT"] = typeof(CommandPRINT);
         commands["LET"] = typeof(CommandLET);
         commands["GOTO"] = typeof(CommandGOTO);
+        commands["IF"] = typeof(CommandIFTHEN);
+        commands["END"] = typeof(CommandEND);
     }
 
     public static ICommandBase GetNew(string CommandType)
     {
+        CommandType = CommandType.ToUpper();
         if (!commands.ContainsKey(CommandType))
             return null;
         // return new commands[CommandType](args);

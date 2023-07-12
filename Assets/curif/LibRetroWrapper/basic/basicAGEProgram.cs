@@ -37,16 +37,22 @@ public class AGEProgram
             return false;
 
         ConfigManager.WriteConsole($"EXEC LINE #[{cmd.Key}] Instruction: {cmd.Value.CmdToken}");
+        
         lineNumber.SetValue((double)cmd.Key);
+        
         cmd.Value.Execute(vars);
-        int newLineNumber = (int)lineNumber.GetValueAsNumber();
-        if (cmd.Key != newLineNumber)
-        {
-            if (!lines.ContainsKey(newLineNumber))
-                throw new Exception($"Line number not found: {newLineNumber}");
+        
+        double newLineNumber = lineNumber.GetValueAsNumber();
+        if (newLineNumber == double.MaxValue)
+            return false;
 
+        int newLine = (int) newLineNumber;
+        if (cmd.Key != newLine)
+        {
+            if (!lines.ContainsKey(newLine))
+                throw new Exception($"Line number not found: {newLineNumber}");
             // user changes control flow (goto for example)
-            lastLineNumberExecuted = (int)newLineNumber - 1;
+            lastLineNumberExecuted = newLine - 1;
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >: {lastLineNumberExecuted}");
         }
         else
