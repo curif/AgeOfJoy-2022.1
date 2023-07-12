@@ -14,17 +14,30 @@ public class BasicValue
     double number = 0;
     BasicValueType type = BasicValueType.empty;
 
+    public static BasicValue True = new BasicValue(1);
+    public static BasicValue False = new BasicValue(0);
+    public static BasicValue EmptyString = new BasicValue("");
+
     static List<string> validOperations = new List<string> {
-         "+", "-", "/", "*"
+         "+", "-", "/", "*", "=", "<>", "!=", ">", "<", "<=", ">=", "or", "and"
          };
 
     public static Dictionary<string, int> OperatorPrecedence =
         new Dictionary<string, int>
             {
-                { "+", 1 },
-                { "-", 1 },
-                { "*", 2 },
-                { "/", 2 }
+                { "and", 1 },
+                { "or", 2 },
+                { "=", 3 },
+                { "!=", 3 },
+                { "<>", 3 },
+                { "<", 3 },
+                { "<=", 3 },
+                { ">=", 3 },
+                { ">", 3 },
+                { "+", 4 },
+                { "-", 4 },
+                { "*", 5 },
+                { "/", 5 }
             };
 
     public BasicValue()
@@ -89,6 +102,11 @@ public class BasicValue
         return str;
     }
 
+    public BasicValueType Type()
+    {
+        return this.type;
+    }
+
 
     /*
       public static bool IsParseable(string val)
@@ -110,7 +128,7 @@ public class BasicValue
             double valueDouble;
             bool isParsableToDouble = double.TryParse(this.str, out valueDouble);
             if (!isParsableToDouble)
-                throw new Exception($" string value {this.str} cant be casted to double");
+                throw new Exception($" string value {this.str} can't be casted to double");
 
             return new BasicValue(valueDouble);
         }
@@ -136,6 +154,8 @@ public class BasicValue
 
     public static bool operator !=(BasicValue obj1, BasicValue obj2)
     {
+        return !(obj1 == obj2);
+        /*
         if (ReferenceEquals(obj1, obj2))
             return false;
 
@@ -149,6 +169,47 @@ public class BasicValue
             return obj1.number != obj2.number;
 
         return obj1.str != obj2.str;
+        */
+    }
+    public static bool operator >(BasicValue obj1, BasicValue obj2)
+    {
+        if (ReferenceEquals(obj1, obj2))
+            return false;
+
+        if (ReferenceEquals(obj1, null) || ReferenceEquals(obj2, null))
+            return true;
+
+        if (obj1.type != obj2.type)
+            return true;
+
+        if (obj1.type == BasicValueType.Number)
+            return obj1.number > obj2.number;
+
+        return string.Compare(obj1.str, obj2.str) > 0;
+    }
+    public static bool operator <(BasicValue obj1, BasicValue obj2)
+    {
+        if (ReferenceEquals(obj1, obj2))
+            return false;
+
+        if (ReferenceEquals(obj1, null) || ReferenceEquals(obj2, null))
+            return true;
+
+        if (obj1.type != obj2.type)
+            return true;
+
+        if (obj1.type == BasicValueType.Number)
+            return obj1.number < obj2.number;
+
+        return string.Compare(obj1.str, obj2.str) < 0;
+    }
+    public static bool operator >=(BasicValue obj1, BasicValue obj2)
+    {
+        return (obj1 > obj2) || (obj1 == obj2);
+    }
+    public static bool operator <=(BasicValue obj1, BasicValue obj2)
+    {
+        return obj1 < obj2 || obj1 == obj2;
     }
 
     public static BasicValue operator +(BasicValue obj1, BasicValue obj2)
@@ -195,6 +256,32 @@ public class BasicValue
         return new BasicValue(obj1.number / obj2.number);
     }
 
+    public bool IsTrue()
+    {
+        return (type == BasicValueType.String ? 
+                    this != BasicValue.EmptyString :
+                    this != BasicValue.False);
+    }
+
+    public static BasicValue operator &(BasicValue obj1, BasicValue obj2)
+    {
+        bool left = obj1.IsTrue();
+        bool rigth = obj2.IsTrue();
+        if (left && rigth)
+            return new BasicValue(1);
+        return new BasicValue(0);
+    }
+
+
+    public static BasicValue operator |(BasicValue obj1, BasicValue obj2)
+    {
+        bool left = obj1.IsTrue();
+        bool rigth = obj2.IsTrue();
+        if (left || rigth)
+            return new BasicValue(1);
+        return new BasicValue(0);
+    }
+
     public override bool Equals(object obj)
     {
         if (obj == null || GetType() != obj.GetType())
@@ -229,12 +316,12 @@ public class BasicValue
         return double.TryParse(str, out _);
     }
 
+
     public BasicValue Operate(BasicValue bval, BasicValue operation)
     {
         switch (operation.ToString())
         {
-            case "=":
-                return new BasicValue(bval == this ? 1 : 0);
+
             case "+":
                 return this + bval;
             case "-":
@@ -243,8 +330,25 @@ public class BasicValue
                 return this * bval;
             case "/":
                 return this / bval;
+            case "=":
+                return new BasicValue(bval == this ? 1 : 0);
+            case "!=":
+            case "<>":
+                return new BasicValue(bval != this ? 1 : 0);
+            case ">":
+                return new BasicValue(this > bval ? 1 : 0);
+            case "<":
+                return new BasicValue(this < bval ? 1 : 0);
+            case "<=":
+                return new BasicValue(this <= bval ? 1 : 0);
+            case ">=":
+                return new BasicValue(this >= bval ? 1 : 0);
+            case "and":
+                return this & bval;
+            case "or":
+                return this | bval;
         }
-        throw new Exception($"binary operator unknown: [{operation}], spected values like *, +, -, etc...");
+        throw new Exception($"Operator unknown: [{operation}], allowed values are [{string.Join(", ", validOperations)}]...");
     }
 
     public override string ToString()
