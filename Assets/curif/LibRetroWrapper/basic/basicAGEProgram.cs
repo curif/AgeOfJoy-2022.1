@@ -12,9 +12,10 @@ public class AGEProgram
     int lastLineNumberExecuted = -1;
     int lastLineNumberParsed = -1;
     BasicVars vars = new();
+    BasicValue lineNumber = new();
 
-    public int LastLineNumberParsed { get {return lastLineNumberParsed;} }
-    public int LastLineNumberExecuted { get {return lastLineNumberExecuted;} }
+    public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
+    public int LastLineNumberExecuted { get { return lastLineNumberExecuted; } }
 
     private KeyValuePair<int, ICommandBase> getNext()
     {
@@ -26,6 +27,7 @@ public class AGEProgram
     public void PrepareToRun()
     {
         this.lastLineNumberExecuted = -1;
+        vars.SetValue("_linenumber", lineNumber);
     }
 
     public bool runNextLine()
@@ -34,10 +36,21 @@ public class AGEProgram
         if (cmd.Key == 0)
             return false;
 
-        ConfigManager.WriteConsole($"#[{cmd.Key}] {cmd.Value.CmdToken}");
+        ConfigManager.WriteConsole($"EXEC LINE #[{cmd.Key}] Instruction: {cmd.Value.CmdToken}");
+        lineNumber.SetValue((double)cmd.Key);
         cmd.Value.Execute(vars);
+        int newLineNumber = (int)lineNumber.GetValueAsNumber();
+        if (cmd.Key != newLineNumber)
+        {
+            if (!lines.ContainsKey(newLineNumber))
+                throw new Exception($"Line number not found: {newLineNumber}");
 
-        lastLineNumberExecuted = cmd.Key;
+            // user changes control flow (goto for example)
+            lastLineNumberExecuted = (int)newLineNumber - 1;
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >: {lastLineNumberExecuted}");
+        }
+        else
+            lastLineNumberExecuted = cmd.Key;
         return true;
     }
 
@@ -84,7 +97,7 @@ public class AGEProgram
             {
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
-                
+
                 //ConfigManager.WriteConsole($"[basicAGEProgram.Parse]  {line}");
 
                 //string[] parts = line.Split(" ", StringSplitOptions.RemoveEmptyEntries);
@@ -98,10 +111,10 @@ public class AGEProgram
                     {
                         if (lineNumber <= 0)
                             throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
-                        
+
                         if (lines.ContainsKey(lineNumber))
                             throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
-                        
+
                         ICommandBase cmd = Commands.GetNew(tokens.Next());
                         if (cmd == null)
                             throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");

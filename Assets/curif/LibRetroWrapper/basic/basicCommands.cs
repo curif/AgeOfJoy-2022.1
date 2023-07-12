@@ -12,6 +12,7 @@ public static class Commands
         commands["REM"] = typeof(CommandREM);
         commands["PRINT"] = typeof(CommandPRINT);
         commands["LET"] = typeof(CommandLET);
+        commands["GOTO"] = typeof(CommandGOTO);
     }
 
     public static ICommandBase GetNew(string CommandType)

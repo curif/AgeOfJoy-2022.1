@@ -27,10 +27,14 @@ public class BasicValue
                 { "/", 2 }
             };
 
+    public BasicValue()
+    {
+        SetValue(0);
+    }
+
     public BasicValue(double number)
     {
-        this.number = number;
-        type = BasicValueType.Number;
+        SetValue(number);
     }
 
     //strings could be surrounded by "
@@ -50,16 +54,41 @@ public class BasicValue
         bool isParsableToDouble = double.TryParse(str, out valueDouble);
         if (isParsableToDouble)
         {
-            this.number = valueDouble;
-            type = BasicValueType.Number;
+            SetValue(valueDouble);
             return;
         }
 
-        //is considered as a string
-        this.str = str;
-        type = BasicValueType.String;
+        SetValue(str);
         return;
     }
+
+    public BasicValue SetValue(double val)
+    {
+        this.number = val;
+        type = BasicValueType.Number;
+        return this;
+    }
+    public BasicValue SetValue(string str)
+    {
+        this.str = str;
+        type = BasicValueType.String;
+        return this;
+    }
+
+    public double GetValueAsNumber()
+    {
+        if (type != BasicValueType.Number)
+            throw new Exception("Value can't be used as a number");
+        return number;
+    }
+
+    public string GetValueAsString()
+    {
+        if (type != BasicValueType.String)
+            throw new Exception("Value can't be used as a string");
+        return str;
+    }
+
 
     /*
       public static bool IsParseable(string val)
@@ -70,17 +99,20 @@ public class BasicValue
      }
      */
 
-    public BasicValue ConvertTo(BasicValueType type)
+    public BasicValue CastTo(BasicValueType type)
     {
         if (this.type == BasicValueType.Number && type == BasicValueType.String)
         {
-            this.str = number.ToString();
-            this.type = type;
+            return new BasicValue(number.ToString());
         }
         else if (this.type == BasicValueType.String && type == BasicValueType.Number)
         {
-            this.number = double.Parse(this.str);
-            this.type = type;
+            double valueDouble;
+            bool isParsableToDouble = double.TryParse(this.str, out valueDouble);
+            if (!isParsableToDouble)
+                throw new Exception($" string value {this.str} cant be casted to double");
+
+            return new BasicValue(valueDouble);
         }
         return this;
     }
@@ -194,9 +226,9 @@ public class BasicValue
 
     public static bool IsValidNumber(string str)
     {
-       return double.TryParse(str, out _);
+        return double.TryParse(str, out _);
     }
-    
+
     public BasicValue Operate(BasicValue bval, BasicValue operation)
     {
         switch (operation.ToString())
@@ -229,12 +261,12 @@ public class BasicValue
     {
         string opLeft = left.ToString();
         string opRight = right.ToString();
-        if (! OperatorPrecedence.ContainsKey(opLeft))
+        if (!OperatorPrecedence.ContainsKey(opLeft))
             throw new Exception($"{opLeft} isn't an operator");
 
-        if (! OperatorPrecedence.ContainsKey(opRight))
+        if (!OperatorPrecedence.ContainsKey(opRight))
             throw new Exception($"{opRight} isn't an operator");
-            
+
         return OperatorPrecedence[opLeft] <= OperatorPrecedence[opRight];
     }
 

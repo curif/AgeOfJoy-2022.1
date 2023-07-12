@@ -8,17 +8,28 @@ public class BasicVars
 
     public BasicValue GetValue(BasicVar var)
     {
-        if (!vars.ContainsKey(var.Name))
-            throw new Exception($"{var} variable not defined");
+        return GetValue(var.Name);
+    }
 
-        return vars[var.Name];
+    public BasicValue GetValue(string name)
+    {
+        if (!vars.ContainsKey(name))
+            throw new Exception($"{name} variable not defined");
+
+        return vars[name];
     }
 
     public BasicValue SetValue(BasicVar var, BasicValue val)
     {
-        vars[var.Name] = val;
+        return SetValue(var.Name, val);
+    }
+
+    public BasicValue SetValue(string name, BasicValue val)
+    {
+        vars[name] = val;
         return val;
     }
+
 
     public void Clean()
     {
@@ -28,7 +39,7 @@ public class BasicVars
     public override string ToString()
     {
         string str = "";
-        foreach(KeyValuePair<string, BasicValue> var in vars)
+        foreach (KeyValuePair<string, BasicValue> var in vars)
         {
             str += $"{var.Key}: {vars[var.Key].ToString()}\n";
         }
