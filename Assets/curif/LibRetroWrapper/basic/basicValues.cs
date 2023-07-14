@@ -19,7 +19,7 @@ public class BasicValue
     public static BasicValue EmptyString = new BasicValue("");
 
     static List<string> validOperations = new List<string> {
-         "+", "-", "/", "*", "=", "<>", "!=", ">", "<", "<=", ">=", 
+         "+", "-", "/", "*", "=", "<>", "!=", ">", "<", "<=", ">=",
          "OR", "AND"
          };
 
@@ -156,7 +156,7 @@ public class BasicValue
     {
         return !(obj1 == obj2);
     }
-    
+
     public static bool operator >(BasicValue obj1, BasicValue obj2)
     {
         if (ReferenceEquals(obj1, obj2))
@@ -301,7 +301,18 @@ public class BasicValue
     {
         return double.TryParse(str, out _);
     }
-
+    public static bool IsValidNumber(double val)
+    {
+        return true;
+    }
+    public bool IsNumber()
+    {
+        return type == BasicValueType.Number;
+    }
+    public bool IsString()
+    {
+        return type == BasicValueType.String;
+    }
     public static bool IsValidString(string str)
     {
         return str.StartsWith("\"") && str.EndsWith("\"");

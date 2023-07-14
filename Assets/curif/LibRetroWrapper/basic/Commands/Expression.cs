@@ -13,6 +13,7 @@ class CommandExpression : ICommandBase
         public BasicVar var;
         public BasicValue val;
         public CommandExpression expr;
+        public ICommandBase func;
         public BasicValue op;
         public CommandType.Type type;
 
@@ -31,6 +32,11 @@ class CommandExpression : ICommandBase
             this.expr = expr;
             this.type = CommandType.Type.Expression;
         }
+        public Element(ICommandBase func)
+        {
+            this.func = func;
+            this.type = CommandType.Type.Function;
+        }
         public Element(BasicValue val)
         {
             this.val = val;
@@ -43,13 +49,14 @@ class CommandExpression : ICommandBase
             {
                 case CommandType.Type.Variable:
                     return vars.GetValue(var);
-                    
                 case CommandType.Type.Constant:
                     return val;
                 case CommandType.Type.Operation:
                     return op;
                 case CommandType.Type.Expression:
                     return expr.Execute(vars);
+                case CommandType.Type.Function:
+                    return func.Execute(vars);
                 default:
                     return null;
             }
@@ -73,6 +80,9 @@ class CommandExpression : ICommandBase
                 case CommandType.Type.Expression:
                     tostring += " (" + expr.ToString() + ")";
                     break;
+                case CommandType.Type.Function:
+                    tostring += func.ToString();
+                    break;
             }
             return tostring;
         }
@@ -89,7 +99,7 @@ class CommandExpression : ICommandBase
     {
         // Implementation specific to CommandImplementation class
         // expr operator expr
-        ConfigManager.WriteConsole($"[CommandExpression.Parse] {tokens.ToString()}");
+        ConfigManager.WriteConsole($"[CommandExpression.Parse] START PARSE {tokens.ToString()}");
 
         do
         {
@@ -106,6 +116,15 @@ class CommandExpression : ICommandBase
                 case CommandType.Type.Operation:
                     elements.Add(new Element(tokens.Token));
                     break;
+                case CommandType.Type.Function:
+                    ICommandBase fnct = Commands.GetNew(tokens.Token);
+                    if (fnct == null)
+                        throw new Exception($"Syntax error function not found in expression clause: {tokens.ToString()}");
+                    ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens.ToString()}");
+                    fnct.Parse(tokens);
+                    ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse END -  {tokens.ToString()}");
+                    elements.Add(new Element(fnct));
+                    break;
                 case CommandType.Type.Expression:
                     ConfigManager.WriteConsole($"[CommandExpression.Parse] nested expression token: {tokens.Token}");
                     tokens++; //consumes (
@@ -115,24 +134,28 @@ class CommandExpression : ICommandBase
                         throw new Exception($"unbalanced parentesis: {tokens.ToString()}");
                     // tokens++; //consumes )
                     elements.Add(new Element(expr));
+                    ConfigManager.WriteConsole($"[CommandExpression.Parse] expression parse end -  {tokens.ToString()}");
                     break;
                 case CommandType.Type.Unknown:
                     throw new Exception($"invalid expression {tokens.ToString()}");
             }
+        } while (tokens.Next() != null &&
+                tokens.Token != ")" &&
+                tokens.Token != ",");
 
-        } while(tokens.Next() != null && tokens.Token != ")");
-
-        ConfigManager.WriteConsole($"[CommandExpression.Parse] parser expression ended, token: {tokens.Token}");
+        ConfigManager.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
 
         return true;
     }
 
     public void ElementsLog()
     {
-        foreach(Element el in elements)
+        string str = $"Elements in memory: {elements.Count}:\n";
+        foreach (Element el in elements)
         {
-            ConfigManager.WriteConsole($"[CommandExpression.ElementsLog] {el.ToString()}\n");
+            str += el.ToString() + "\n";
         }
+        ConfigManager.WriteConsole($"[CommandExpression.ElementsLog] {str}\n");
     }
 
     public BasicValue Execute(BasicVars vars)

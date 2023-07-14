@@ -12,6 +12,14 @@ public interface ICommandBase
     BasicValue Execute(BasicVars vars);
 }
 
+public interface ICommandList
+{
+
+    int MaxAllowed { get; }
+
+    BasicValue[] ExecuteList(BasicVars vars);
+}
+
 public class CommandType
 {
     public enum Type
@@ -21,7 +29,7 @@ public class CommandType
         Constant,
         Function,
         Expression,
-        ExpressionEnd,
+        ExpressionList,
         Operation,
         Unknown
     }
@@ -31,12 +39,12 @@ public class CommandType
         // the order is important
         if (Commands.IsCommand(tokens.Token))
             return Type.Command;
+        if (Commands.IsFunction(tokens.Token))
+            return Type.Function;
         else if (BasicValue.IsValidOperation(tokens.Token))
             return Type.Operation;
         else if (tokens.Token == "(")
             return Type.Expression;
-        else if (tokens.Token == ")")
-            return Type.ExpressionEnd;
         else if (BasicValue.IsValidNumber(tokens.Token))
             return Type.Constant;
         else if (BasicValue.IsValidString(tokens.Token))

@@ -44,6 +44,13 @@ public class TokenConsumer
         return tokens[pointer + 1] == expected;
     }
 
+    public string ConsumeIf(string expected)
+    {
+        if (tokens[pointer] != expected)
+            return null;
+        return Next();
+    }
+
     public string Next(string expected = null)
     {
         if (Remains() < 1)
@@ -90,7 +97,16 @@ public class TokenConsumer
 
     public override string ToString()
     {
-        return string.Join(" ", tokens);
+        string str = "";
+        int idx;
+        for (idx = 0; idx < tokens.Count; idx++)
+        {
+            if (idx == pointer)
+                str += " >>" + tokens[idx] + "<<";
+            else
+                str += " " + tokens[idx];
+        }
+        return str;
     }
 
 }

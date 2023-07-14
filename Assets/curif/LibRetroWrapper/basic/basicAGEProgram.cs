@@ -125,8 +125,10 @@ public class AGEProgram
                             throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
 
                         ICommandBase cmd = Commands.GetNew(tokens.Next());
-                        if (cmd == null)
+
+                        if (cmd == null || cmd.Type != CommandType.Type.Command)
                             throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");
+
                         lastLineNumberParsed = lineNumber;
                         cmd.Parse(++tokens);
                         lines[lineNumber] = cmd;

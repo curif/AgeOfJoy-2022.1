@@ -20,7 +20,7 @@ public class basicAGE : MonoBehaviour
 
     public void Start()
     {
-        ProcessFiles(ConfigManager.ConfigDir);
+        ProcessFiles(ConfigManager.AGEBasicDir);
     }
 
     public void ProcessFiles(string folderPath)

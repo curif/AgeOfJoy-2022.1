@@ -6,6 +6,7 @@ using System.IO;
 public static class Commands
 {
     private static Dictionary<string, Type> commands = new();
+    private static Dictionary<string, Type> functions = new();
 
     static Commands()
     {
@@ -17,18 +18,35 @@ public static class Commands
         commands["END"] = typeof(CommandEND);
         commands["GOSUB"] = typeof(CommandGOSUB);
         commands["RETURN"] = typeof(CommandRETURN);
+
+        //funct
+        functions["ABS"] = typeof(CommandFunctionABS);
+        functions["MAX"] = typeof(CommandFunctionMAX);
+        functions["MIN"] = typeof(CommandFunctionMIN);
+
+        functions["LEN"] = typeof(CommandFunctionLEN);
+        functions["UCASE"] = typeof(CommandFunctionUCASE);
+        functions["LCASE"] = typeof(CommandFunctionLCASE);
+
     }
 
     public static ICommandBase GetNew(string CommandType)
     {
         CommandType = CommandType.ToUpper();
-        if (!commands.ContainsKey(CommandType))
-            return null;
-        // return new commands[CommandType](args);
-        return (ICommandBase)Activator.CreateInstance(commands[CommandType]);
+
+        if (commands.ContainsKey(CommandType))
+            return (ICommandBase)Activator.CreateInstance(commands[CommandType]);
+        if (functions.ContainsKey(CommandType))
+            return (ICommandBase)Activator.CreateInstance(functions[CommandType]);
+
+        return null;
     }
     public static bool IsCommand(string command)
     {
         return commands.ContainsKey(command);
+    }
+    public static bool IsFunction(string function)
+    {
+        return functions.ContainsKey(function);
     }
 }
