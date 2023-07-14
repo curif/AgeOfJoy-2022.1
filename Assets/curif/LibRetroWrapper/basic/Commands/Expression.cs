@@ -8,6 +8,8 @@ class CommandExpression : ICommandBase
     public string CmdToken { get; } = "EXPR";
     public CommandType.Type Type { get; } = CommandType.Type.Expression;
 
+    ConfigurationCommands config;
+
     private class Element
     {
         public BasicVar var;
@@ -90,9 +92,9 @@ class CommandExpression : ICommandBase
 
     private List<Element> elements = new();
 
-    public CommandExpression()
+    public CommandExpression(ConfigurationCommands config)
     {
-
+        this.config = config;
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -117,7 +119,7 @@ class CommandExpression : ICommandBase
                     elements.Add(new Element(tokens.Token));
                     break;
                 case CommandType.Type.Function:
-                    ICommandBase fnct = Commands.GetNew(tokens.Token);
+                    ICommandBase fnct = Commands.GetNew(tokens.Token, config);
                     if (fnct == null)
                         throw new Exception($"Syntax error function not found in expression clause: {tokens.ToString()}");
                     ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens.ToString()}");
@@ -128,7 +130,7 @@ class CommandExpression : ICommandBase
                 case CommandType.Type.Expression:
                     ConfigManager.WriteConsole($"[CommandExpression.Parse] nested expression token: {tokens.Token}");
                     tokens++; //consumes (
-                    CommandExpression expr = new();
+                    CommandExpression expr = new(config);
                     expr.Parse(tokens);
                     if (tokens.Token != ")")
                         throw new Exception($"unbalanced parentesis: {tokens.ToString()}");

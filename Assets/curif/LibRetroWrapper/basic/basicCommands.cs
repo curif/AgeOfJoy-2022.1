@@ -29,16 +29,19 @@ public static class Commands
         functions["UCASE"] = typeof(CommandFunctionUCASE);
         functions["LCASE"] = typeof(CommandFunctionLCASE);
 
+        // configuration settings
+        functions["ROOMNAME"] = typeof(CommandFunctionROOMNAME);
+
     }
 
-    public static ICommandBase GetNew(string CommandType)
+    public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
     {
         CommandType = CommandType.ToUpper();
 
         if (commands.ContainsKey(CommandType))
-            return (ICommandBase)Activator.CreateInstance(commands[CommandType]);
+            return (ICommandBase)Activator.CreateInstance(commands[CommandType], config);
         if (functions.ContainsKey(CommandType))
-            return (ICommandBase)Activator.CreateInstance(functions[CommandType]);
+            return (ICommandBase)Activator.CreateInstance(functions[CommandType], config);
 
         return null;
     }

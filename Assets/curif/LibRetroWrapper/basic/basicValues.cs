@@ -107,16 +107,6 @@ public class BasicValue
         return this.type;
     }
 
-
-    /*
-      public static bool IsParseable(string val)
-     {
-         bool startsAndEndsWithQuote = val.Length >= 2 && val.StartsWith("\"") && val.EndsWith("\"");
-         bool isParsableToDouble = double.TryParse(val, out _);
-         return startsAndEndsWithQuote || isParsableToDouble;
-     }
-     */
-
     public BasicValue CastTo(BasicValueType type)
     {
         if (this.type == BasicValueType.Number && type == BasicValueType.String)

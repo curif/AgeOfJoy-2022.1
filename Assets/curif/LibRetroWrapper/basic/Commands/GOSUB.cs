@@ -6,11 +6,16 @@ class CommandGOSUB : ICommandBase
 {
     public string CmdToken { get; } = "GOSUB";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
+    public ConfigurationCommands Config { get; set;}
 
-    CommandExpression expr = new();
+    CommandExpression expr;
 
-    public CommandGOSUB()
+    ConfigurationCommands config;
+
+    public CommandGOSUB(ConfigurationCommands config)
     {
+        this.config = config;
+        expr = new(config);
     }
 
     public bool Parse(TokenConsumer tokens)

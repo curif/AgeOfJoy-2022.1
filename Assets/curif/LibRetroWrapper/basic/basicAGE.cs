@@ -14,13 +14,21 @@ public class basicAGE : MonoBehaviour
     public Dictionary<string, AGEProgram> programs = new();
     private AGEProgram running;
 
+    public ConfigurationController configurationController;
+
 #if UNITY_EDITOR
     public string nameToExecute;
+    public string path;
 #endif 
+
+    ConfigurationCommands configCommands = new();
 
     public void Start()
     {
-        ProcessFiles(ConfigManager.AGEBasicDir);
+        if (configurationController == null)
+            configurationController = GetComponent<ConfigurationController>();
+
+        configCommands.ConfigurationController = configurationController;
     }
 
     public void ProcessFiles(string folderPath)
@@ -31,21 +39,26 @@ public class basicAGE : MonoBehaviour
         foreach (string filePath in files)
         {
             ConfigManager.WriteConsole($"[basicAge.ProcessFiles] {filePath}");
-            AGEProgram prg = new();
-            try
-            {
-                prg.Parse(filePath);
-            }
-            catch (Exception e)
-            {
-                ConfigManager.WriteConsoleException($"reading {filePath} Line number: {prg.LastLineNumberParsed}", e);
-            }
-            string name = Path.GetFileName(filePath);
-            prg.Name = name;
-            programs.Add(name, prg);
+            ProcessFile(filePath);
         }
     }
 
+    private void ProcessFile(string filePath)
+    {
+        AGEProgram prg = new();
+
+        string name = Path.GetFileName(filePath);
+        try
+        {
+            prg.Name = name;
+            prg.Parse(filePath, configCommands);
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"reading {filePath} Line number: {prg.LastLineNumberParsed}", e);
+        }
+        programs.Add(name, prg);
+    }
 
     public void ListPrograms()
     {
@@ -55,7 +68,13 @@ public class basicAGE : MonoBehaviour
         }
     }
 
-    public void run(string name)
+    string errorMessage(AGEProgram prg, Exception exception)
+    {
+        string str = $"ERROR: PRG {prg.Name} line: {prg.LastLineNumberExecuted}\n";
+        str += $"Exception: {exception.Message}\n";
+        return str;
+    }
+    public void Run(string name, bool blocking = false)
     {
 
         if (!programs.ContainsKey(name))
@@ -67,7 +86,27 @@ public class basicAGE : MonoBehaviour
         running = programs[name];
         running.PrepareToRun();
 
-        StartCoroutine(runProgram());
+        if (!blocking)
+            StartCoroutine(runProgram());
+        else
+        {
+            bool moreLines = true;
+            while (moreLines)
+            {
+                try
+                {
+                    moreLines = running.runNextLine();
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsole(errorMessage(running, e));
+                    ConfigManager.WriteConsoleException($"running {running.Name} line: {running.LastLineNumberExecuted}", e);
+                    running = null;
+                }
+            }
+            ConfigManager.WriteConsole($"{running.Name} END.");
+            running = null;
+        }
 
         return;
     }
@@ -96,13 +135,38 @@ public class basicAGE : MonoBehaviour
 #if UNITY_EDITOR
     public void ExecuteInEditorMode()
     {
-        run(nameToExecute);
+        Run(nameToExecute);
     }
     public void Log()
     {
         ConfigManager.WriteConsole(programs[nameToExecute].Log());
     }
-
+    public void ProcessTestPath()
+    {
+        ProcessFiles(path);
+    }
+    public void RunTests()
+    {
+        ProcessFiles(path);
+        ConfigManager.WriteConsole($"[RunTests] START");
+        foreach (KeyValuePair<string, AGEProgram> kvp in programs)
+        {
+            AGEProgram program = kvp.Value;
+            ConfigManager.WriteConsole($"[RunTests] TEST {kvp.Key}");
+            Run(kvp.Key, blocking: true);
+            if (program.Vars.Exists("ERROR"))
+            {            
+                BasicValue error = program.Vars.GetValue("ERROR");
+                if (error.IsString() && error.GetValueAsString() != "")
+                {
+                    ConfigManager.WriteConsoleError($"[RunTests] {kvp.Key}: {error.GetValueAsString()}");
+                }
+            }
+            ConfigManager.WriteConsole($"[RunTests] {program.Log()}");
+        }
+        
+        ConfigManager.WriteConsole($"[RunTests] END");
+    }
 #endif
 }
 
@@ -123,13 +187,17 @@ public class basicAGEEditor : Editor
         {
           myScript.ExecuteInEditorMode();
         }
-        if(GUILayout.Button("Reprocess path"))
+        if(GUILayout.Button("Process Test Path"))
         {
-          myScript.Start();
+          myScript.ProcessTestPath();
         }
-        if(GUILayout.Button("LOG"))
+        if(GUILayout.Button("Last LOG"))
         {
           myScript.Log();
+        }
+        if(GUILayout.Button("Run tests in Path"))
+        {
+          myScript.RunTests();
         }
     }
 }

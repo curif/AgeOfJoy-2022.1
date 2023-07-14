@@ -4,6 +4,8 @@ using System.IO;
 
 class CommandFunctionStringBase : CommandFunctionBase
 {
+    public CommandFunctionStringBase(ConfigurationCommands config) : base(config) { }
+
     protected void validateParams(BasicValue[] vals, int expectedParams)
     {
         if (exprs.Count != expectedParams)
@@ -20,7 +22,7 @@ class CommandFunctionStringBase : CommandFunctionBase
 }
 class CommandFunctionLEN : CommandFunctionStringBase
 {
-    public CommandFunctionLEN()
+    public CommandFunctionLEN(ConfigurationCommands config) : base(config) 
     {
         cmdToken = "LEN";
     }
@@ -36,7 +38,7 @@ class CommandFunctionLEN : CommandFunctionStringBase
 }
 class CommandFunctionUCASE : CommandFunctionStringBase
 {
-    public CommandFunctionUCASE()
+    public CommandFunctionUCASE(ConfigurationCommands config) : base(config)
     {
         cmdToken = "UCASE";
     }
@@ -54,7 +56,7 @@ class CommandFunctionUCASE : CommandFunctionStringBase
 
 class CommandFunctionLCASE : CommandFunctionStringBase
 {
-    public CommandFunctionLCASE()
+    public CommandFunctionLCASE(ConfigurationCommands config) : base(config)
     {
         cmdToken = "LCASE";
     }

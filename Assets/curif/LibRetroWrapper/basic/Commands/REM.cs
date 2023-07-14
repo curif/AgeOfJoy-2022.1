@@ -6,8 +6,9 @@ class CommandREM : ICommandBase
 {
     public string CmdToken { get; } = "REM";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
+    public ConfigurationCommands Config { get; set;}
 
-    public CommandREM()
+    public CommandREM(ConfigurationCommands config)
     {
     }
     public bool Parse(TokenConsumer tokens)

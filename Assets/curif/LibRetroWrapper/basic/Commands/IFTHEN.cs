@@ -7,11 +7,13 @@ class CommandIFTHEN : ICommandBase
     public string CmdToken { get; } = "IFTHEN";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    CommandExpression expr = new();
+    CommandExpression expr;
     ICommandBase cmd;
-
-    public CommandIFTHEN()
+    ConfigurationCommands config;
+    public CommandIFTHEN(ConfigurationCommands config)
     {
+        this.config = config;
+        expr = new(config);
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -20,11 +22,11 @@ class CommandIFTHEN : ICommandBase
             throw new Exception($"malformed IF/THEN, expression should be enclosed by ()");
 
         expr.Parse(++tokens);
-        
+
         if (tokens.Next("THEN") == null)
             throw new Exception($"malformed IF/THEN, THEN is missing");
 
-        cmd = Commands.GetNew(tokens.Next());
+        cmd = Commands.GetNew(tokens.Next(), config);
         if (cmd == null)
             throw new Exception($"Syntax error command not found in THEN clause: {tokens.ToString()}");
         cmd.Parse(++tokens);

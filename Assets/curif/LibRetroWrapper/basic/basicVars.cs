@@ -11,10 +11,14 @@ public class BasicVars
         return GetValue(var.Name);
     }
 
+    public bool Exists(string name)
+    {
+        return vars.ContainsKey(name);
+    }
     public BasicValue GetValue(string name)
     {
         if (!vars.ContainsKey(name))
-            throw new Exception($"{name} variable not defined");
+            throw new Exception($"variable '{name}' not defined");
 
         return vars[name];
     }

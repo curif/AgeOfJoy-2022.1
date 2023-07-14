@@ -13,9 +13,10 @@ class CommandExpressionList : ICommandBase, ICommandList
     const int maxAllowed = 15;
     CommandExpression[] exprs = new CommandExpression[15];
     public int Count = 0;
-
-    public CommandExpressionList()
+    ConfigurationCommands config;
+    public CommandExpressionList(ConfigurationCommands config)
     {
+        this.config = config;
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -31,14 +32,14 @@ class CommandExpressionList : ICommandBase, ICommandList
                 throw new Exception($"More than {maxAllowed} members in an expressionList {tokens.ToString()}");
 
             ConfigManager.WriteConsole($"[ExpressionList.Parse] parsing  {tokens.ToString()}");
-            CommandExpression expr = new();
+            CommandExpression expr = new(config);
             expr.Parse(tokens);
 
             idx++;
             exprs[idx] = expr;
         }
         while (tokens.Token == ",");
-        
+
         this.Count = idx + 1;
 
         ConfigManager.WriteConsole($"[ExpressionList.Parse] END members: {this.Count} {tokens.ToString()}");

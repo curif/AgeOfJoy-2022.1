@@ -7,7 +7,7 @@ class CommandEND : ICommandBase
     public string CmdToken { get; } = "END";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    public CommandEND()
+    public CommandEND(ConfigurationCommands config)
     {
     }
     public bool Parse(TokenConsumer tokens)

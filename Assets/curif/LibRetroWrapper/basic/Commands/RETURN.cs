@@ -7,9 +7,7 @@ class CommandRETURN : ICommandBase
     public string CmdToken { get; } = "RETURN";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    CommandExpression expr = new();
-
-    public CommandRETURN()
+    public CommandRETURN(ConfigurationCommands config)
     {
     }
     public bool Parse(TokenConsumer tokens)
@@ -36,7 +34,7 @@ class CommandRETURN : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
 
         BasicValue gosubstack = vars.GetValue("_gosubstack");
         string stack = gosubstack.GetValueAsString();

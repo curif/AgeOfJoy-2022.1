@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 
 class CommandFunctionBase : ICommandBase
 {
@@ -8,8 +9,16 @@ class CommandFunctionBase : ICommandBase
     public string CmdToken { get { return cmdToken; } }
     public CommandType.Type Type { get; } = CommandType.Type.Function;
 
-    protected CommandExpressionList exprs = new();
+    protected CommandExpressionList exprs;
 
+    protected ConfigurationCommands config;
+
+    public CommandFunctionBase(ConfigurationCommands config)
+    {
+        this.config = config;
+        exprs = new(config);
+    }
+    
     public virtual bool Parse(TokenConsumer tokens)
     {
         // FNCT ( expr ,  ... )

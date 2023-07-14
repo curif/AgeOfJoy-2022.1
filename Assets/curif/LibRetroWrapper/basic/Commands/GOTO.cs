@@ -7,10 +7,12 @@ class CommandGOTO : ICommandBase
     public string CmdToken { get; } = "GOTO";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    CommandExpression expr = new();
-
-    public CommandGOTO()
+    CommandExpression expr;
+    ConfigurationCommands config;
+    public CommandGOTO(ConfigurationCommands config)
     {
+        this.config = config;
+        expr = new(config);
     }
     public bool Parse(TokenConsumer tokens)
     {

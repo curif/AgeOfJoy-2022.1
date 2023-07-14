@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 7395208051691149763}
   - component: {fileID: 3962870371555651789}
   - component: {fileID: 4703797651494189707}
+  - component: {fileID: 2304435896953564567}
+  - component: {fileID: 7350981469054557136}
   m_Layer: 0
   m_Name: screen19i
   m_TagString: Untagged
@@ -275,3 +277,33 @@ MonoBehaviour:
   canChangeAudio: 1
   canChangeNPC: 1
   canChangeControllers: 1
+  canChangeCabinets: 1
+  canTeleport: 1
+--- !u!114 &2304435896953564567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 564223b6b6dd60849adae91a9c9c0ec7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ScenesToUnload: []
+--- !u!114 &7350981469054557136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c272e5d2405d561449f9b7403b5af15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  configurationController: {fileID: 0}
+  nameToExecute: 
+  path: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\config

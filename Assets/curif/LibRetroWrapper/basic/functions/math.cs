@@ -4,6 +4,8 @@ using System.IO;
 
 class CommandFunctionMathBase : CommandFunctionBase
 {
+    public CommandFunctionMathBase(ConfigurationCommands config) : base(config) {}
+
     protected void validateResults(BasicValue[] vals, int expectedParams)
     {
         if (exprs.Count != expectedParams)
@@ -20,7 +22,7 @@ class CommandFunctionMathBase : CommandFunctionBase
 }
 class CommandFunctionABS : CommandFunctionMathBase
 {
-    public CommandFunctionABS()
+    public CommandFunctionABS(ConfigurationCommands config) : base(config)
     {
         cmdToken = "ABS";
     }
@@ -37,7 +39,7 @@ class CommandFunctionABS : CommandFunctionMathBase
 
 class CommandFunctionMAX : CommandFunctionMathBase
 {
-    public CommandFunctionMAX()
+    public CommandFunctionMAX(ConfigurationCommands config) : base(config)
     {
         cmdToken = "MAX";
     }
@@ -56,7 +58,7 @@ class CommandFunctionMAX : CommandFunctionMathBase
 }
 class CommandFunctionMIN : CommandFunctionMathBase
 {
-    public CommandFunctionMIN()
+    public CommandFunctionMIN(ConfigurationCommands config) : base(config)
     {
         cmdToken = "MIN";
     }
@@ -78,7 +80,7 @@ class CommandFunctionMIN : CommandFunctionMathBase
 class CommandFunctionRND : CommandFunctionMathBase
 {
     Random random = new Random();
-    public CommandFunctionRND()
+    public CommandFunctionRND(ConfigurationCommands config) : base(config)
     {
         cmdToken = "RND";
     }

@@ -6,9 +6,11 @@ class CommandPRINT : ICommandBase
 {
     public string CmdToken { get; } = "PRINT";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
-
-    public CommandPRINT()
+    public ConfigurationCommands Config { get; set; }
+    ConfigurationCommands config;
+    public CommandPRINT(ConfigurationCommands config)
     {
+        this.config = config;
     }
 
     public bool Parse(TokenConsumer tokens)

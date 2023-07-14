@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-
 public class AGEProgram
 {
     public string Name;
@@ -18,6 +17,7 @@ public class AGEProgram
 
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
     public int LastLineNumberExecuted { get { return lastLineNumberExecuted; } }
+    public BasicVars Vars { get { return vars; } }
 
     private KeyValuePair<int, ICommandBase> getNext()
     {
@@ -33,6 +33,11 @@ public class AGEProgram
         vars.SetValue("_gosubstack", gosubstack); //gosub stack lines
     }
 
+    public BasicValue GetVarValue(string varName)
+    {
+        return vars.GetValue(varName);
+    }
+
     public bool runNextLine()
     {
         KeyValuePair<int, ICommandBase> cmd = getNext();
@@ -42,8 +47,8 @@ public class AGEProgram
         ConfigManager.WriteConsole($"EXEC LINE #[{cmd.Key}] Instruction: {cmd.Value.CmdToken}");
 
         lineNumber.SetValue((double)cmd.Key);
-        BasicValue ret = cmd.Value.Execute(vars);
         lastLineNumberExecuted = cmd.Key;
+        BasicValue ret = cmd.Value.Execute(vars);
 
         if (ret != null)
         {
@@ -95,7 +100,7 @@ public class AGEProgram
     }
 
 
-    public void Parse(string filePath)
+    public void Parse(string filePath, ConfigurationCommands config)
     {
         Dictionary<int, ICommandBase> lines = new();
 
@@ -121,7 +126,7 @@ public class AGEProgram
                         if (lines.ContainsKey(lineNumber))
                             throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
 
-                        ICommandBase cmd = Commands.GetNew(tokens.Next());
+                        ICommandBase cmd = Commands.GetNew(tokens.Next(), config);
 
                         if (cmd == null || cmd.Type != CommandType.Type.Command)
                             throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");

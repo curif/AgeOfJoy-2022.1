@@ -8,10 +8,12 @@ class CommandLET : ICommandBase
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
     BasicVar var;
-    CommandExpression expr = new();
-
-    public CommandLET()
+    CommandExpression expr;
+    ConfigurationCommands config;
+    public CommandLET(ConfigurationCommands config)
     {
+        this.config = config;
+        expr = new(config);
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -19,12 +21,12 @@ class CommandLET : ICommandBase
         // LET var = expr
         if (!BasicVar.IsVariable(tokens.Token))
             throw new Exception($"{tokens.Token} isn't a valid variable (LET)");
-        
+
         var = new(tokens.Token);
-        
+
         if (tokens.Next("=") == null)
             throw new Exception($"malformed LET missing [=] var: {var.ToString()}");
-        
+
         tokens++;
         expr.Parse(tokens);
 
