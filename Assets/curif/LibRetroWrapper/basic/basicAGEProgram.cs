@@ -62,6 +62,7 @@ public class AGEProgram
                 newLine++; //next instruction
             nextLineToExecute = newLine;
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {nextLineToExecute}");
+        
         }
         else
             nextLineToExecute = lastLineNumberExecuted + 1;

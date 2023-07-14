@@ -18,6 +18,7 @@ public static class Commands
         commands["END"] = typeof(CommandEND);
         commands["GOSUB"] = typeof(CommandGOSUB);
         commands["RETURN"] = typeof(CommandRETURN);
+        commands["CLS"] = typeof(CommandCLS);
 
         //funct
         functions["ABS"] = typeof(CommandFunctionABS);

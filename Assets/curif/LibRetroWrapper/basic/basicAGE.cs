@@ -15,6 +15,7 @@ public class basicAGE : MonoBehaviour
     private AGEProgram running;
 
     public ConfigurationController configurationController;
+    public ScreenGenerator screenGenerator;
 
 #if UNITY_EDITOR
     public string nameToExecute;
@@ -27,8 +28,10 @@ public class basicAGE : MonoBehaviour
     {
         if (configurationController == null)
             configurationController = GetComponent<ConfigurationController>();
-
+        if (screenGenerator == null)
+            screenGenerator = GetComponent<ScreenGenerator>();
         configCommands.ConfigurationController = configurationController;
+        configCommands.ScreenGenerator = screenGenerator;
     }
 
     public void ProcessFiles(string folderPath)
