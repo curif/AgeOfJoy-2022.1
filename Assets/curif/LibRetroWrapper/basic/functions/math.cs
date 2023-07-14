@@ -4,7 +4,7 @@ using System.IO;
 
 class CommandFunctionMathBase : CommandFunctionBase
 {
-    protected void validateParams(BasicValue[] vals, int expectedParams)
+    protected void validateResults(BasicValue[] vals, int expectedParams)
     {
         if (exprs.Count != expectedParams)
             throw new Exception($"{cmdToken}() parameter/s missing, actual {exprs.Count} expected: {expectedParams}");
@@ -29,7 +29,7 @@ class CommandFunctionABS : CommandFunctionMathBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        validateParams(vals, 1);
+        validateResults(vals, 1);
         double ret = Math.Abs(vals[0].GetValueAsNumber());
         return new BasicValue(ret);
     }
@@ -46,7 +46,7 @@ class CommandFunctionMAX : CommandFunctionMathBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        validateParams(vals, 2);
+        validateResults(vals, 2);
         double ret = Math.Max(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
 
@@ -65,9 +65,33 @@ class CommandFunctionMIN : CommandFunctionMathBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        validateParams(vals, 2);
+        validateResults(vals, 2);
         double ret = Math.Min(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
+
+        return new BasicValue(ret);
+    }
+
+}
+
+
+class CommandFunctionRND : CommandFunctionMathBase
+{
+    Random random = new Random();
+    public CommandFunctionRND()
+    {
+        cmdToken = "RND";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        validateResults(vals, 2);
+
+        double minValue = vals[0].GetValueAsNumber();
+        double maxValue = vals[1].GetValueAsNumber();
+        double ret = random.NextDouble() * (maxValue - minValue) + minValue;
 
         return new BasicValue(ret);
     }

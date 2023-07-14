@@ -20,7 +20,7 @@ class CommandFunctionStringBase : CommandFunctionBase
 }
 class CommandFunctionLEN : CommandFunctionStringBase
 {
-    public CommandFunctionABS()
+    public CommandFunctionLEN()
     {
         cmdToken = "LEN";
     }
@@ -46,7 +46,7 @@ class CommandFunctionUCASE : CommandFunctionStringBase
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
         validateParams(vals, 1);
-        double ret = vals[0].GetValueAsString().ToUpper();
+        string ret = vals[0].GetValueAsString().ToUpper();
         return new BasicValue(ret);
     }
 }
@@ -64,7 +64,7 @@ class CommandFunctionLCASE : CommandFunctionStringBase
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
         validateParams(vals, 1);
-        double ret = vals[0].GetValueAsString().ToLower();
+        string ret = vals[0].GetValueAsString().ToLower();
         return new BasicValue(ret);
     }
 }

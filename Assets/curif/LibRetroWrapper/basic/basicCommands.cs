@@ -23,6 +23,7 @@ public static class Commands
         functions["ABS"] = typeof(CommandFunctionABS);
         functions["MAX"] = typeof(CommandFunctionMAX);
         functions["MIN"] = typeof(CommandFunctionMIN);
+        functions["RND"] = typeof(CommandFunctionRND);
 
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);

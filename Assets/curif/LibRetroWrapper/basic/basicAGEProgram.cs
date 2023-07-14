@@ -107,9 +107,6 @@ public class AGEProgram
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                //ConfigManager.WriteConsole($"[basicAGEProgram.Parse]  {line}");
-
-                //string[] parts = line.Split(" ", StringSplitOptions.RemoveEmptyEntries);
                 List<string> parsedString = ParseString(line);
                 TokenConsumer tokens = new(parsedString);
                 ConfigManager.WriteConsole($"[basicAGEProgram.Parse]  {tokens.ToString()}");
