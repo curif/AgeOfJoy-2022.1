@@ -34,7 +34,7 @@ public class basicAGE : MonoBehaviour
         configCommands.ScreenGenerator = screenGenerator;
     }
 
-    public void ProcessFiles(string folderPath)
+    public void ParseFiles(string folderPath)
     {
         string[] files = Directory.GetFiles(folderPath, "*.bas");
         programs = new();
@@ -42,11 +42,11 @@ public class basicAGE : MonoBehaviour
         foreach (string filePath in files)
         {
             ConfigManager.WriteConsole($"[basicAge.ProcessFiles] {filePath}");
-            ProcessFile(filePath);
+            ParseFile(filePath);
         }
     }
 
-    private void ProcessFile(string filePath)
+    private void ParseFile(string filePath)
     {
         AGEProgram prg = new();
 
@@ -60,7 +60,7 @@ public class basicAGE : MonoBehaviour
         {
             ConfigManager.WriteConsoleException($"reading {filePath} Line number: {prg.LastLineNumberParsed}", e);
         }
-        programs.Add(name, prg);
+        programs[name] = prg;
     }
 
     public void ListPrograms()
@@ -146,11 +146,15 @@ public class basicAGE : MonoBehaviour
     }
     public void ProcessTestPath()
     {
-        ProcessFiles(path);
+        ParseFiles(path);
+    }
+    public void ProcessTheFile()
+    {
+        ParseFile(path + "\\" + nameToExecute);
     }
     public void RunTests()
     {
-        ProcessFiles(path);
+        ParseFiles(path);
         ConfigManager.WriteConsole($"[RunTests] START");
         foreach (KeyValuePair<string, AGEProgram> kvp in programs)
         {
@@ -186,8 +190,9 @@ public class basicAGEEditor : Editor
         {
           myScript.ListPrograms();
         }
-        if(GUILayout.Button("Execute"))
+        if(GUILayout.Button("Process and Execute the file"))
         {
+          myScript.ProcessTheFile();
           myScript.ExecuteInEditorMode();
         }
         if(GUILayout.Button("Process Test Path"))

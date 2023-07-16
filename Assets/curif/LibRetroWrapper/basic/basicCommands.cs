@@ -25,10 +25,17 @@ public static class Commands
         functions["MAX"] = typeof(CommandFunctionMAX);
         functions["MIN"] = typeof(CommandFunctionMIN);
         functions["RND"] = typeof(CommandFunctionRND);
+        functions["COS"] = typeof(CommandFunctionCOS);
+        functions["SIN"] = typeof(CommandFunctionSIN);
+        functions["TAN"] = typeof(CommandFunctionTAN);
 
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
         functions["LCASE"] = typeof(CommandFunctionLCASE);
+        functions["SUBSTR"] = typeof(CommandFunctionSUBSTR);
+        functions["RTRIM"] = typeof(CommandFunctionRTRIM);
+        functions["LTRIM"] = typeof(CommandFunctionLTRIM);
+        functions["TRIM"] = typeof(CommandFunctionTRIM);
 
         // configuration settings
         functions["ROOMNAME"] = typeof(CommandFunctionROOMNAME);

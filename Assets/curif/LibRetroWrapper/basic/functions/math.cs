@@ -2,25 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-class CommandFunctionMathBase : CommandFunctionBase
-{
-    public CommandFunctionMathBase(ConfigurationCommands config) : base(config) {}
 
-    protected void validateResults(BasicValue[] vals, int expectedParams)
-    {
-        if (exprs.Count != expectedParams)
-            throw new Exception($"{cmdToken}() parameter/s missing, actual {exprs.Count} expected: {expectedParams}");
-
-        for (int par = 0; par < exprs.Count; par++)
-        {
-            if (vals[par] == null)
-                throw new Exception($"{cmdToken}() parameter #{par} missing");
-            if (!vals[par].IsNumber())
-                throw new Exception($"{cmdToken}() parameter #{par} must be numbers");
-        }
-    }
-}
-class CommandFunctionABS : CommandFunctionMathBase
+class CommandFunctionABS : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionABS(ConfigurationCommands config) : base(config)
     {
@@ -29,15 +12,14 @@ class CommandFunctionABS : CommandFunctionMathBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
-        BasicValue[] vals = exprs.ExecuteList(vars);
-        validateResults(vals, 1);
-        double ret = Math.Abs(vals[0].GetValueAsNumber());
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double ret = Math.Abs(val.GetValueAsNumber());
         return new BasicValue(ret);
     }
 }
 
-class CommandFunctionMAX : CommandFunctionMathBase
+class CommandFunctionMAX : CommandFunctionExpressionListBase
 {
     public CommandFunctionMAX(ConfigurationCommands config) : base(config)
     {
@@ -48,7 +30,13 @@ class CommandFunctionMAX : CommandFunctionMathBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        validateResults(vals, 2);
+        
+        if (exprs.Count != 2)
+            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
+        
+        if (vals[0] == null || vals[1] == null)
+            throw new Exception($"{cmdToken}() invalid parameters");
+
         double ret = Math.Max(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
 
@@ -56,7 +44,7 @@ class CommandFunctionMAX : CommandFunctionMathBase
     }
 
 }
-class CommandFunctionMIN : CommandFunctionMathBase
+class CommandFunctionMIN : CommandFunctionExpressionListBase
 {
     public CommandFunctionMIN(ConfigurationCommands config) : base(config)
     {
@@ -67,7 +55,13 @@ class CommandFunctionMIN : CommandFunctionMathBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        validateResults(vals, 2);
+
+        if (exprs.Count != 2)
+            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
+        
+        if (vals[0] == null || vals[1] == null)
+            throw new Exception($"{cmdToken}() invalid parameters");
+
         double ret = Math.Min(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
 
@@ -77,7 +71,7 @@ class CommandFunctionMIN : CommandFunctionMathBase
 }
 
 
-class CommandFunctionRND : CommandFunctionMathBase
+class CommandFunctionRND : CommandFunctionExpressionListBase
 {
     Random random = new Random();
     public CommandFunctionRND(ConfigurationCommands config) : base(config)
@@ -89,7 +83,11 @@ class CommandFunctionRND : CommandFunctionMathBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        validateResults(vals, 2);
+        if (exprs.Count != 2)
+            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
+        
+        if (vals[0] == null || vals[1] == null)
+            throw new Exception($"{cmdToken}() invalid parameters");
 
         double minValue = vals[0].GetValueAsNumber();
         double maxValue = vals[1].GetValueAsNumber();
@@ -98,4 +96,61 @@ class CommandFunctionRND : CommandFunctionMathBase
         return new BasicValue(ret);
     }
 
+}
+
+class CommandFunctionTAN : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionTAN(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "TAN";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double angle = val.GetValueAsNumber();
+
+        double ret = (double)Math.Tan(angle);
+
+        return new BasicValue(ret);
+    }
+}
+
+class CommandFunctionCOS : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCOS(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "COS";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double angle = val.GetValueAsNumber();
+
+        double ret = (double)Math.Cos(angle);
+
+        return new BasicValue(ret);
+    }
+}
+
+class CommandFunctionSIN : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionSIN(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "SIN";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double angle = val.GetValueAsNumber();
+
+        double ret = (double)Math.Sin(angle);
+
+        return new BasicValue(ret);
+    }
 }

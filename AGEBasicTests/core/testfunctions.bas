@@ -10,11 +10,13 @@
 90 LET TWO = MIN ( 2 , 1 ) + 1
 100 IF ( ERROR == "" AND TWO != 2 )  THEN LET ERROR = "TWO FAIL"
 
-500 let lowercase = LCASE ( "PEPE" )
-510 let uppercase = UCASE ( "pepe" )
-520 if (  ERROR == "" AND lowercase != "pepe" ) THEN LET ERROR = "LCASE"
-530 if (  ERROR == "" AND uppercase != "PEPE" ) THEN LET ERROR = "UCASE"
+
+300 LET sinVal = SIN ( 30 * 3.1416 / 180 )
+310 REM Compare sinVal with the expected value (calculate using a calculator)
+320 IF ( sinVal < 0.499 OR sinVal > 0.501 ) THEN LET ERROR = "SIN(30) ERROR"
+
 
 1000 LET random = RND ( 0 , 1 )
 1010 LET randabs = ABS ( RND ( 0 , 1 ) + RND ( 2 , 3 ) )
 1020 IF ( ERROR == "" AND ( randabs < 0 OR randabs > 4 ) ) THEN LET ERROR = "randabs line 1010"
+
