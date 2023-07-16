@@ -8,8 +8,6 @@ class CommandCLS : ICommandBase
     public CommandType.Type Type { get; } = CommandType.Type.Command;
     ConfigurationCommands config;
 
-    BasicVar var;
-
     public CommandCLS(ConfigurationCommands config)
     {
         this.config = config;
@@ -25,7 +23,6 @@ class CommandCLS : ICommandBase
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.ScreenGenerator != null)
         {
-
             ConfigManager.WriteConsole($"clear and update ");
             config.ScreenGenerator.Clear();
             config.ScreenGenerator.DrawScreen();

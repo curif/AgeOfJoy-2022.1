@@ -18,7 +18,9 @@ public static class Commands
         commands["END"] = typeof(CommandEND);
         commands["GOSUB"] = typeof(CommandGOSUB);
         commands["RETURN"] = typeof(CommandRETURN);
+        //screen
         commands["CLS"] = typeof(CommandCLS);
+        commands["PRINT"] = typeof(CommandPRINT);
 
         //funct
         functions["ABS"] = typeof(CommandFunctionABS);
@@ -28,6 +30,7 @@ public static class Commands
         functions["COS"] = typeof(CommandFunctionCOS);
         functions["SIN"] = typeof(CommandFunctionSIN);
         functions["TAN"] = typeof(CommandFunctionTAN);
+        functions["MOD"] = typeof(CommandFunctionMOD);
 
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
@@ -36,6 +39,7 @@ public static class Commands
         functions["RTRIM"] = typeof(CommandFunctionRTRIM);
         functions["LTRIM"] = typeof(CommandFunctionLTRIM);
         functions["TRIM"] = typeof(CommandFunctionTRIM);
+        functions["STR"] = typeof(CommandFunctionSTR);
 
         // configuration settings
         functions["ROOMNAME"] = typeof(CommandFunctionROOMNAME);

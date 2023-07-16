@@ -52,26 +52,31 @@ public class BasicValue
     }
 
     //strings could be surrounded by "
-    public BasicValue(string str)
+    public BasicValue(string str, BasicValueType forceType = BasicValueType.empty)
     {
+        double valueDouble;
 
         bool startsAndEndsWithQuote = str.StartsWith("\"") && str.EndsWith("\"");
         if (startsAndEndsWithQuote)
         {
-            this.str = str.Substring(1, str.Length - 2);
-            type = BasicValueType.String;
+            str = str.Substring(1, str.Length - 2);
+            forceType = BasicValueType.String;
+        }
+
+        if (forceType == BasicValueType.String)
+        {
+            SetValue(str);
             return;
         }
 
-        double valueDouble;
-        bool isParsableToDouble = double.TryParse(str, out valueDouble);
-        if (isParsableToDouble)
+        if (double.TryParse(str, out valueDouble))
         {
             SetValue(valueDouble);
             return;
         }
 
         SetValue(str);
+        
         return;
     }
 

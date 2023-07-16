@@ -129,3 +129,22 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
         return new BasicValue(ret);
     }
 }
+
+class CommandFunctionSTR : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionSTR(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "STR";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double number = val.GetValueAsNumber();
+        string ret = number.ToString();
+
+        return new BasicValue(ret, BasicValue.BasicValueType.String);
+    }
+}
+

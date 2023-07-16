@@ -154,3 +154,32 @@ class CommandFunctionSIN : CommandFunctionSingleExpressionBase
         return new BasicValue(ret);
     }
 }
+
+class CommandFunctionMOD : CommandFunctionExpressionListBase
+{
+    public CommandFunctionMOD(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MOD";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        
+        BasicValue[] vals = exprs.ExecuteList(vars);
+
+        if (exprs.Count != 2)
+            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
+        
+        if (vals[0] == null || vals[1] == null)
+            throw new Exception($"{cmdToken}() invalid parameters");
+        
+        double dividend = vals[0].GetValueAsNumber();
+        double divisor = vals[1].GetValueAsNumber();
+
+        double ret = dividend % divisor;
+
+        return new BasicValue(ret);
+    }
+}
+
