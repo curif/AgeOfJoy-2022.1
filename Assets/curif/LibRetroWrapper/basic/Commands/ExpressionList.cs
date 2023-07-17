@@ -12,7 +12,10 @@ class CommandExpressionList : ICommandBase, ICommandList
 
     const int maxAllowed = 15;
     CommandExpression[] exprs = new CommandExpression[15];
-    public int Count = 0;
+
+    int count = 0;
+    public int Count { get {return count;} private set {count = value;} }
+
     ConfigurationCommands config;
     public CommandExpressionList(ConfigurationCommands config)
     {
@@ -40,7 +43,7 @@ class CommandExpressionList : ICommandBase, ICommandList
         }
         while (tokens.Token == ",");
 
-        this.Count = idx + 1;
+        this.count = idx + 1;
 
         ConfigManager.WriteConsole($"[ExpressionList.Parse] END members: {this.Count} {tokens.ToString()}");
 

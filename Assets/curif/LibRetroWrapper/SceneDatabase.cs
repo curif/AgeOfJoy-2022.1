@@ -31,6 +31,19 @@ public class SceneDatabase : MonoBehaviour
     {
         return Scenes.FirstOrDefault(scene => scene.SceneName == sceneName);
     }
+
+    public bool Exists(string sceneName)
+    {
+        return FindByName(sceneName) != null;
+    }
+
+    public SceneDocument ByIdx(int idx)
+    {
+        if (idx >= Scenes.Length )
+            return null;
+        return Scenes[idx];
+    }
+    
     public SceneDocument FindByDescription(string sceneDescription)
     {
         return Scenes.FirstOrDefault(scene => scene.Description == sceneDescription);

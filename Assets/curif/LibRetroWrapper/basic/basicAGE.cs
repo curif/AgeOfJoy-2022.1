@@ -32,6 +32,8 @@ public class basicAGE : MonoBehaviour
             screenGenerator = GetComponent<ScreenGenerator>();
         configCommands.ConfigurationController = configurationController;
         configCommands.ScreenGenerator = screenGenerator;
+        GameObject roomInit = GameObject.Find("RoomInit");
+        configCommands.SceneDatabase = roomInit.GetComponent<SceneDatabase>();
     }
 
     public void ParseFiles(string folderPath)

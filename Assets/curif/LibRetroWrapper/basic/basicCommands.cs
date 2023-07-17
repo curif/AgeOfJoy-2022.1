@@ -21,8 +21,11 @@ public static class Commands
         //screen
         commands["CLS"] = typeof(CommandCLS);
         commands["PRINT"] = typeof(CommandPRINT);
+        commands["SHOW"] = typeof(CommandSHOW);
 
-        //funct
+        //functions ------
+
+        //math
         functions["ABS"] = typeof(CommandFunctionABS);
         functions["MAX"] = typeof(CommandFunctionMAX);
         functions["MIN"] = typeof(CommandFunctionMIN);
@@ -32,6 +35,7 @@ public static class Commands
         functions["TAN"] = typeof(CommandFunctionTAN);
         functions["MOD"] = typeof(CommandFunctionMOD);
 
+        // strings
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
         functions["LCASE"] = typeof(CommandFunctionLCASE);
@@ -41,8 +45,13 @@ public static class Commands
         functions["TRIM"] = typeof(CommandFunctionTRIM);
         functions["STR"] = typeof(CommandFunctionSTR);
 
-        // configuration settings
+        // configuration settings -------
+
+        //ROOMs
         functions["ROOMNAME"] = typeof(CommandFunctionROOMNAME);
+        functions["ROOMCOUNT"] = typeof(CommandFunctionROOMCOUNT);
+        functions["ROOMGETNAME"] = typeof(CommandFunctionROOMGETNAME);
+        functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
 
     }
 

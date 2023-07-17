@@ -18,6 +18,8 @@ class CommandPRINT : ICommandBase
     public bool Parse(TokenConsumer tokens)
     {
         exprs.Parse(tokens);
+        if (exprs.Count < 3 )
+            throw new Exception($"{CmdToken}() parameter/s missing, expected x,y, expr, 1/0.");
         return true;
     }
 
@@ -30,14 +32,6 @@ class CommandPRINT : ICommandBase
         }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-
-        if (exprs.Count < 3 )
-            throw new Exception($"{CmdToken}() parameter/s missing, expected x,y, expr, 1/0.");
-
-        if (vals[0] == null ||
-            vals[1] == null ||
-            vals[2] == null)
-            throw new Exception($"{CmdToken}() invalid parameters");
 
         if (vals[2].IsNumber())
             vals[2].CastTo(BasicValue.BasicValueType.String);
@@ -57,10 +51,14 @@ class CommandPRINT : ICommandBase
         bool inverted = false;
         if (vals[3] != null)
             inverted = vals[3].GetValueAsNumber() != 0;
+        bool draw = true;
+        if (vals[4] != null)
+            draw = vals[4].GetValueAsNumber() != 0;
 
         ConfigManager.WriteConsole($"print {x}, {y}, {text}, {inverted}  ");
         config.ScreenGenerator.Print(x, y, text, inverted);
-        config.ScreenGenerator.DrawScreen();
+        if (draw)
+            config.ScreenGenerator.DrawScreen();
 
         return null;
     }

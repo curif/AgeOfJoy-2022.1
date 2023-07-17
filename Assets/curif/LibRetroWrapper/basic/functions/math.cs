@@ -25,17 +25,17 @@ class CommandFunctionMAX : CommandFunctionExpressionListBase
     {
         cmdToken = "MAX";
     }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
 
     public override BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        
-        if (exprs.Count != 2)
-            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
-        
-        if (vals[0] == null || vals[1] == null)
-            throw new Exception($"{cmdToken}() invalid parameters");
+        if (!vals[0].IsNumber() || !vals[1].IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
 
         double ret = Math.Max(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
@@ -50,17 +50,18 @@ class CommandFunctionMIN : CommandFunctionExpressionListBase
     {
         cmdToken = "MIN";
     }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+
 
     public override BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-
-        if (exprs.Count != 2)
-            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
-        
-        if (vals[0] == null || vals[1] == null)
-            throw new Exception($"{cmdToken}() invalid parameters");
+        if (!vals[0].IsNumber() || !vals[1].IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
 
         double ret = Math.Min(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
@@ -78,16 +79,17 @@ class CommandFunctionRND : CommandFunctionExpressionListBase
     {
         cmdToken = "RND";
     }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
 
     public override BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        if (exprs.Count != 2)
-            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
-        
-        if (vals[0] == null || vals[1] == null)
-            throw new Exception($"{cmdToken}() invalid parameters");
+        if (!vals[0].IsNumber() || !vals[1].IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
 
         double minValue = vals[0].GetValueAsNumber();
         double maxValue = vals[1].GetValueAsNumber();
@@ -109,6 +111,8 @@ class CommandFunctionTAN : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        if (!val.IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
         double angle = val.GetValueAsNumber();
 
         double ret = (double)Math.Tan(angle);
@@ -128,6 +132,9 @@ class CommandFunctionCOS : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        if (!val.IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
+
         double angle = val.GetValueAsNumber();
 
         double ret = (double)Math.Cos(angle);
@@ -162,18 +169,19 @@ class CommandFunctionMOD : CommandFunctionExpressionListBase
         cmdToken = "MOD";
     }
 
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+
     public override BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
-        
-        BasicValue[] vals = exprs.ExecuteList(vars);
 
-        if (exprs.Count != 2)
-            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
-        
-        if (vals[0] == null || vals[1] == null)
-            throw new Exception($"{cmdToken}() invalid parameters");
-        
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        if (!vals[0].IsNumber() || !vals[1].IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
+
         double dividend = vals[0].GetValueAsNumber();
         double divisor = vals[1].GetValueAsNumber();
 

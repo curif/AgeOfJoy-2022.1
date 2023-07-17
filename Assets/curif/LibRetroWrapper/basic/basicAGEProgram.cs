@@ -108,6 +108,7 @@ public class AGEProgram
         using (StreamReader reader = new StreamReader(filePath))
         {
             string line;
+            
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line))
@@ -123,9 +124,10 @@ public class AGEProgram
                     {
                         if (lineNumber <= 0)
                             throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
-
-                        if (lines.ContainsKey(lineNumber))
-                            throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
+                        if (lineNumber <= lastLineNumberParsed)
+                            throw new Exception($"Line numbers not in sequence, in file: {filePath}");
+                        // if (lines.ContainsKey(lineNumber))
+                        //     throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
 
                         ICommandBase cmd = Commands.GetNew(tokens.Next(), config);
 

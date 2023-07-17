@@ -1,3 +1,46 @@
+5 LET ERROR = ""
 10 LET room = ROOMNAME ( )
 
+20 LET count = ROOMCOUNT ( )
+25 IF ( ERROR = "" AND count < 5 ) THEN GOTO 2100
 
+30 LET name = ROOMGETNAME ( 0 )
+40 IF ( ERROR = "" AND name != "room001" ) THEN GOTO 3000
+
+45 REM room 999 doesnt exists
+50 LET name = ROOMGETNAME ( 999 )
+60 IF ( ERROR = "" AND name != "" ) THEN GOTO 4000 
+
+1000 CLS
+1010 LET idx = 0
+1020 LET name = ROOMGETNAME ( idx )
+1030 LET desc = ROOMGETDESC ( idx )
+1040 PRINT 0 , idx , "#" + STR ( idx ) + " " + name + "-" + desc , 0 , 0
+1050 IF ( idx >= count - 1 ) THEN GOTO 1080
+1060 LET idx = idx + 1
+1070 GOTO 1020
+1080 SHOW
+1090 END
+
+2000 CLS
+2010 PRINT 0 , 0 , ERROR , 1
+2020 END
+
+2100 REM ERROR room count
+2120 LET ERROR = "ROOMCOUNT, count: " + STR ( count )
+2130 PRINT 0 , 0 , ERROR , 1
+2140 END
+
+
+3000 REM ERROR room name
+3010 LET ERROR = "ROOMGETNAME: " + name
+3020 GOTO 10000
+
+4000 REM ERROR room name 999
+4010 LET ERROR = "ROOMGETNAME 999"
+4020 GOTO 10000
+
+
+10000 CLS
+10010 PRINT 0 , 0 , ERROR , 1
+10020 END

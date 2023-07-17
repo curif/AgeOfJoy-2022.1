@@ -90,7 +90,6 @@ class CommandFunctionTRIM : CommandFunctionSingleExpressionBase
     {
         cmdToken = "TRIM";
     }
-
     public override BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
@@ -107,18 +106,16 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
     {
         cmdToken = "SUBSTR";
     }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 3);
+    }
 
     public override BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
-        
+
         BasicValue[] vals = exprs.ExecuteList(vars);
-
-        if (exprs.Count != 3)
-            throw new Exception($"{cmdToken}() parameter/s missing, 3 expected.");
-
-        if (vals[0] == null || vals[1] == null || vals[2] == null)
-            throw new Exception($"{cmdToken}() invalid parameters");
 
         string input = vals[0].GetValueAsString();
         int startIndex = (int)vals[1].GetValueAsNumber();

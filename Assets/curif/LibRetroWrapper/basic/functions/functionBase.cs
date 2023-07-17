@@ -42,7 +42,7 @@ class CommandFunctionExpressionListBase : CommandFunctionBase
         exprs = new(config);
     }
 
-    public override bool Parse(TokenConsumer tokens)
+    public bool Parse(TokenConsumer tokens, int cantParametersRequired)
     {
         // FNCT ( expr ,  ... )
         // tokens points to FNCT
@@ -61,9 +61,13 @@ class CommandFunctionExpressionListBase : CommandFunctionBase
         //tokens++; //consumes )
         //always ends in the final token.
 
+        if (exprs.Count < cantParametersRequired)
+            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
+
         ConfigManager.WriteConsole($"[functionBase.Parse] END {tokens.ToString()}");
         return true;
     }
+
 }
 
 class CommandFunctionSingleExpressionBase : CommandFunctionBase
@@ -94,7 +98,30 @@ class CommandFunctionSingleExpressionBase : CommandFunctionBase
         //tokens++; //consumes )
         //always ends in the final token.
 
+        if (expr.Count < 1)
+            throw new Exception($"At least one parameter is required in {CmdToken}");
+
         ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] END {tokens.ToString()}");
+        return true;
+    }
+}
+
+class CommandFunctionNoExpressionBase : CommandFunctionSingleExpressionBase
+{
+
+    public CommandFunctionNoExpressionBase(ConfigurationCommands config) : base(config)
+    {
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+         if (tokens.Next() != "(")
+            throw new Exception($"function without enclosing (): {tokens.ToString()}");
+        tokens++; //consumes (
+
+        if (tokens.Token != ")")
+            throw new Exception($"function without enclosing () END is missing: {tokens.ToString()}");
+
         return true;
     }
 }

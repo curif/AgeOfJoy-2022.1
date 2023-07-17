@@ -91,6 +91,7 @@ class CommandExpression : ICommandBase
     }
 
     private List<Element> elements = new();
+    public int Count { get {return elements.Count;}}
 
     public CommandExpression(ConfigurationCommands config)
     {
@@ -146,7 +147,6 @@ class CommandExpression : ICommandBase
                 tokens.Token != ",");
 
         ConfigManager.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
-
         return true;
     }
 
