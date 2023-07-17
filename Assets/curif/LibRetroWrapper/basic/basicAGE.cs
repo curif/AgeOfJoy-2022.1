@@ -17,6 +17,8 @@ public class basicAGE : MonoBehaviour
     public ConfigurationController configurationController;
     public ScreenGenerator screenGenerator;
 
+    private bool stopProgramRunning = false;
+
 #if UNITY_EDITOR
     public string nameToExecute;
     public string path;
@@ -73,11 +75,27 @@ public class basicAGE : MonoBehaviour
         }
     }
 
+    public List<string> GetParsedPrograms()
+    {
+        return new List<string>(programs.Keys);
+    }
+
     string errorMessage(AGEProgram prg, Exception exception)
     {
         string str = $"ERROR: PRG {prg.Name} line: {prg.LastLineNumberExecuted}\n";
         str += $"Exception: {exception.Message}\n";
         return str;
+    }
+
+    public bool NotRunning()
+    {
+        return running == null;
+    }
+    public void Stop()
+    {
+        if (running == null)
+            return;
+        stopProgramRunning = true;
     }
     public void Run(string name, bool blocking = false)
     {
@@ -96,7 +114,7 @@ public class basicAGE : MonoBehaviour
         else
         {
             bool moreLines = true;
-            while (moreLines)
+            while (moreLines && !stopProgramRunning)
             {
                 try
                 {
@@ -107,10 +125,12 @@ public class basicAGE : MonoBehaviour
                     ConfigManager.WriteConsole(errorMessage(running, e));
                     ConfigManager.WriteConsoleException($"running {running.Name} line: {running.LastLineNumberExecuted}", e);
                     running = null;
+                    stopProgramRunning = false;
                 }
             }
             ConfigManager.WriteConsole($"{running.Name} END.");
             running = null;
+            stopProgramRunning = false;
         }
 
         return;
@@ -119,7 +139,7 @@ public class basicAGE : MonoBehaviour
     IEnumerator runProgram()
     {
         bool moreLines = true;
-        while (moreLines)
+        while (moreLines && !stopProgramRunning)
         {
             try
             {
@@ -129,12 +149,14 @@ public class basicAGE : MonoBehaviour
             {
                 ConfigManager.WriteConsoleException($"running {running.Name} line: {running.LastLineNumberExecuted}", e);
                 running = null;
+                stopProgramRunning = false;
                 yield break;
             }
             yield return new WaitForSeconds(0.01f);
         }
         ConfigManager.WriteConsole($"{running.Name} END.");
         running = null;
+        stopProgramRunning = false;
     }
 
 #if UNITY_EDITOR
