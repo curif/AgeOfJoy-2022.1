@@ -53,6 +53,9 @@ public static class Commands
         functions["ROOMGETNAME"] = typeof(CommandFunctionROOMGETNAME);
         functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
 
+
+        //Controllers
+        functions["CONTROLACTIVE"] = typeof(CommandFunctionCONTROLACTIVE);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
