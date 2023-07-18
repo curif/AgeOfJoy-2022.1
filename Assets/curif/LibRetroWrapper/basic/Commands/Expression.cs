@@ -163,7 +163,7 @@ class CommandExpression : ICommandBase
     public BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] [expression execution]");
-        ElementsLog();
+        //ElementsLog();
 
         Stack<BasicValue> operands = new Stack<BasicValue>();
         Stack<BasicValue> operators = new Stack<BasicValue>();

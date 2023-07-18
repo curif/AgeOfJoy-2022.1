@@ -9,15 +9,13 @@ public class AGEProgram
     public string Name;
     Dictionary<int, ICommandBase> lines = new();
     int nextLineToExecute = -1;
-    int lastLineNumberExecuted = -1;
     int lastLineNumberParsed = -1;
     BasicVars vars = new();
-    BasicValue lineNumber = new();
-    BasicValue gosubstack = new("");
 
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
-    public int LastLineNumberExecuted { get { return lastLineNumberExecuted; } }
     public BasicVars Vars { get { return vars; } }
+
+    ConfigurationCommands config;
 
     private KeyValuePair<int, ICommandBase> getNext()
     {
@@ -29,8 +27,10 @@ public class AGEProgram
     public void PrepareToRun()
     {
         this.nextLineToExecute = -1;
-        vars.SetValue("_linenumber", lineNumber); //on excecution
-        vars.SetValue("_gosubstack", gosubstack); //gosub stack lines
+        config.Gosub = new Stack<int>();
+        config.LineNumber = config.JumpNextTo = config.JumpTo = 0;
+        config.stop = false;
+        vars = new();
     }
 
     public BasicValue GetVarValue(string varName)
@@ -40,33 +40,39 @@ public class AGEProgram
 
     public bool runNextLine()
     {
+        if (config.stop)
+            return false;
+
         KeyValuePair<int, ICommandBase> cmd = getNext();
         if (cmd.Key == 0)
             return false;
 
-        ConfigManager.WriteConsole($"EXEC LINE #[{cmd.Key}] Instruction: {cmd.Value.CmdToken}");
+        ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
 
-        lineNumber.SetValue((double)cmd.Key);
-        lastLineNumberExecuted = cmd.Key;
-        BasicValue ret = cmd.Value.Execute(vars);
+        config.LineNumber = cmd.Key;
+        cmd.Value.Execute(vars);
 
-        if (ret != null)
+        if (config.stop)
+            return false;
+
+        if (config.JumpTo != 0)
         {
-            double newLineNumber = ret.GetValueAsNumber();
-            if (newLineNumber == double.MaxValue)
-                return false;
-            int newLine = (int)newLineNumber;
-            if (!lines.ContainsKey(newLine))
-                throw new Exception($"Line number not found: {newLineNumber}");
-            if (cmd.Value.CmdToken == "RETURN")
-                newLine++; //next instruction
-            nextLineToExecute = newLine;
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {nextLineToExecute}");
-        
+            if (!lines.ContainsKey(config.JumpTo))
+                throw new Exception($"Line number not found: {config.JumpTo}");
+
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
+            nextLineToExecute = config.JumpTo;
+            config.JumpTo = 0;
+        }
+        else if (config.JumpNextTo != 0)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
+            nextLineToExecute = config.JumpNextTo + 1;
+            config.JumpNextTo = 0;
         }
         else
-            nextLineToExecute = lastLineNumberExecuted + 1;
-        
+            nextLineToExecute = cmd.Key + 1;
+
         return true;
     }
 
@@ -104,11 +110,12 @@ public class AGEProgram
     public void Parse(string filePath, ConfigurationCommands config)
     {
         Dictionary<int, ICommandBase> lines = new();
+        this.config = config;
 
         using (StreamReader reader = new StreamReader(filePath))
         {
             string line;
-            
+
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line))

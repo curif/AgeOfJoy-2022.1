@@ -1,5 +1,5 @@
 5 REM this program should create four gousb* vars.
-7 LET ERROR = "NO ERRORS"
+7 LET ERROR = ""
 10 GOSUB 1000
 20 GOSUB 3000
 90 IF ( GOSUB1000 != "OK" OR GOSUB2000 != "OK" OR GOSUB3000 != "OK" OR GOSUB4000 != "OK" ) THEN LET ERROR = "Gosub errors"

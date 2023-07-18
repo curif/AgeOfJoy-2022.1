@@ -5,7 +5,6 @@
 16 REM LET b = a + 1
 17 REM LET c = 1 + 5 * 3
 18 REM LET fabio = ( 5 * 3 ) + b - c
-20 PRINT "pepe" a
 30 LET x = ( 3 * 2 ) - 1
 35 LET goto = 99 + 1
 40 GOTO goto
