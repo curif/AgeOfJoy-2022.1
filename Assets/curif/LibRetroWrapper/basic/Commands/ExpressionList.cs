@@ -14,7 +14,7 @@ class CommandExpressionList : ICommandBase, ICommandList
     CommandExpression[] exprs = new CommandExpression[15];
 
     int count = 0;
-    public int Count { get {return count;} private set {count = value;} }
+    public int Count { get { return count; } private set { count = value; } }
 
     ConfigurationCommands config;
     public CommandExpressionList(ConfigurationCommands config)
@@ -57,14 +57,29 @@ class CommandExpressionList : ICommandBase, ICommandList
 
     public BasicValue[] ExecuteList(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] ");
+        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] ExecuteList");
         BasicValue[] vals = new BasicValue[exprs.Length];
         int idx = 0;
         while (exprs[idx] != null)
         {
             ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] execute expression idx: {idx}");
-            vals[idx] = exprs[idx].Execute(vars);
-            idx++;
+            ICommandList exprList = exprs[idx] as ICommandList;
+            if (exprList != null)
+            {
+                BasicValue[] nestedVals = exprList.ExecuteList(vars);
+
+                Array.Resize(ref vals, vals.Length + nestedVals.Length);
+                foreach(BasicValue val in nestedVals)
+                {
+                    vals[idx] = val; 
+                    idx++;
+                }
+            }
+            else
+            {
+                vals[idx] = exprs[idx].Execute(vars);
+                idx++;
+            }
         }
         return vals;
     }

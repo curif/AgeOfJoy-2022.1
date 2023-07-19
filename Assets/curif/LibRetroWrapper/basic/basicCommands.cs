@@ -13,6 +13,7 @@ public static class Commands
         commands["REM"] = typeof(CommandREM);
         commands["PRINT"] = typeof(CommandPRINT);
         commands["LET"] = typeof(CommandLET);
+        commands["LETS"] = typeof(CommandLETS);
         commands["GOTO"] = typeof(CommandGOTO);
         commands["IF"] = typeof(CommandIFTHEN);
         commands["END"] = typeof(CommandEND);
