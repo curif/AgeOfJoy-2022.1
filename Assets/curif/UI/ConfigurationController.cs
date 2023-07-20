@@ -1522,6 +1522,11 @@ public class ConfigurationController : MonoBehaviour
         return;
     }
 
+    public bool ControlEnabled()
+    {
+        return actionMap != null && actionMap.enabled;
+    }
+
     public bool ControlActive(string mameControl)
     {
         bool ret = false;

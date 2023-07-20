@@ -147,14 +147,15 @@ public class basicAGE : MonoBehaviour
             }
             yield return new WaitForSeconds(0.01f);
         }
-        ConfigManager.WriteConsole($"{running.Name} END.");
+        ConfigManager.WriteConsole($"{running.Name} END. {running.ContLinesExecuted} lines executed.");
         running = null;
     }
 
 #if UNITY_EDITOR
     public void ExecuteInEditorMode()
     {
-        Run(nameToExecute, true);
+        Run(nameToExecute, false);
+
         AGEProgram program = programs[nameToExecute];
         if (program.Vars.Exists("ERROR"))
         {            
@@ -164,6 +165,25 @@ public class basicAGE : MonoBehaviour
                 ConfigManager.WriteConsoleError($"[ExecuteInEditorMode] {nameToExecute}: {error.GetValueAsString()}");
             }
         }
+    }
+    public void CheckTestsResults()
+    {
+        AGEProgram program = programs[nameToExecute];
+        if (program == null)
+            throw new Exception("Program didn't run yet (or was deleted)");
+        
+        this.Stop();
+
+        if (program.Vars.Exists("ERROR"))
+        {            
+            BasicValue error = program.Vars.GetValue("ERROR");
+            if (error.IsString() && error.GetValueAsString() != "")
+            {
+                ConfigManager.WriteConsoleError($"[ExecuteInEditorMode] {nameToExecute}: {error.GetValueAsString()}");
+                return;
+            }
+        }
+        ConfigManager.WriteConsole("no error detected in: " + program.Name);
     }
     public void Log()
     {
@@ -219,6 +239,10 @@ public class basicAGEEditor : Editor
         {
           myScript.ProcessTheFile();
           myScript.ExecuteInEditorMode();
+        }
+        if(GUILayout.Button("Check tests results"))
+        {
+          myScript.CheckTestsResults();
         }
         if(GUILayout.Button("Process Test Path"))
         {

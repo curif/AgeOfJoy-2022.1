@@ -90,7 +90,7 @@ class CommandFunctionSingleExpressionBase : CommandFunctionBase
             throw new Exception($"function without enclosing (): {tokens.ToString()}");
         tokens++; //consumes (
 
-        ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] EXPR LIST {tokens.ToString()}");
+        //ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] EXPR {tokens.ToString()}");
         expr.Parse(tokens);
 
         if (tokens.Token != ")")
@@ -101,7 +101,7 @@ class CommandFunctionSingleExpressionBase : CommandFunctionBase
         if (expr.Count < 1)
             throw new Exception($"At least one parameter is required in {CmdToken}");
 
-        ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] END {tokens.ToString()}");
+        //ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] END {tokens.ToString()}");
         return true;
     }
 }

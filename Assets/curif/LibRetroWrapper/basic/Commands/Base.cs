@@ -20,6 +20,19 @@ public interface ICommandList
     BasicValue[] ExecuteList(BasicVars vars);
 }
 
+public interface ICommandFunctionList
+{
+    string CmdToken { get; }
+    CommandType.Type Type { get; }
+
+    //returns how many consumes
+    bool Parse(TokenConsumer tokens);
+    int MaxAllowed { get; }
+
+    BasicValue[] ExecuteList(BasicVars vars);
+}
+
+
 public class CommandType
 {
     public enum Type

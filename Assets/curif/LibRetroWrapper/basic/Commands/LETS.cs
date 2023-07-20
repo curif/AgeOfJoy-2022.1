@@ -11,6 +11,7 @@ class CommandLETS : ICommandBase
     int count;
 
     CommandExpressionList exprs;
+    ICommandFunctionList fnct;
     ConfigurationCommands config;
     public CommandLETS(ConfigurationCommands config)
     {
@@ -45,11 +46,18 @@ class CommandLETS : ICommandBase
         }
 
         if (idx == 30)
-            throw new Exception($"LETS admits only 30 variables");
+            throw new Exception($"LETS admits 30 variables or less");
 
         count = idx;
 
-        exprs.Parse(tokens);
+        //could be an expression list or a function that returns 
+        // a list of values
+        fnct = Commands.GetNew(tokens.Token, config) as ICommandFunctionList;
+        ConfigManager.WriteConsole($"Parse LETS: is function? {fnct != null} {tokens.ToString()}");
+        if (fnct != null)
+            fnct.Parse(tokens);
+        else
+            exprs.Parse(tokens);
 
         return true;
     }
@@ -57,14 +65,19 @@ class CommandLETS : ICommandBase
     public BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] {count} variables assignment");
-        BasicValue[] vals = exprs.ExecuteList(vars);
-        if (vals.Length <= count)
+        BasicValue[] vals;
+        if (fnct == null)
+            vals = exprs.ExecuteList(vars);
+        else
+            vals = fnct.ExecuteList(vars);
+        
+        if (vals.Length < count)
             throw new Exception($"malformed LETS, all variables must get a value ({vals.Length} <> {count})");
+        
         for (int idx = 0; idx < count; idx++)
         {
             vars.SetValue(var[idx], vals[idx]);
         }
         return null;
     }
-
 }

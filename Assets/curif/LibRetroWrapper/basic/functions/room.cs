@@ -112,7 +112,7 @@ class CommandFunctionROOMGETDESC : CommandFunctionSingleExpressionBase
     }
 }
 
-class CommandFunctionROOMGET : CommandFunctionSingleExpressionBase, ICommandList
+class CommandFunctionROOMGET : CommandFunctionSingleExpressionBase, ICommandFunctionList
 {
     public int MaxAllowed { get; } = 2;
 

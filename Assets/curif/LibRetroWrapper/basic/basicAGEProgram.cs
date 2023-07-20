@@ -13,6 +13,9 @@ public class AGEProgram
     BasicVars vars = new();
     public TokenConsumer tokens;
 
+    //statis
+    public int ContLinesExecuted;
+
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
     public BasicVars Vars { get { return vars; } }
 
@@ -36,7 +39,7 @@ public class AGEProgram
     {
         this.nextLineToExecute = -1;
         config.Gosub = new Stack<int>();
-        config.LineNumber = config.JumpNextTo = config.JumpTo = 0;
+        config.LineNumber = config.JumpNextTo = config.JumpTo = ContLinesExecuted = 0;
         config.stop = false;
         vars = new();
     }
@@ -51,6 +54,9 @@ public class AGEProgram
         if (config.stop)
             return false;
 
+        if (ContLinesExecuted > 10000)
+            throw new Exception("program has reached the maximum execution lines available.");
+
         KeyValuePair<int, ICommandBase> cmd = getNext();
         if (cmd.Key == 0)
             return false;
@@ -59,6 +65,7 @@ public class AGEProgram
 
         config.LineNumber = cmd.Key;
         cmd.Value.Execute(vars);
+        ContLinesExecuted++;
 
         if (config.stop)
             return false;
@@ -84,7 +91,7 @@ public class AGEProgram
         return true;
     }
 
-    public List<string> ParseString(string input)
+    /*public List<string> ParseString(string input)
     {
         List<string> result = new List<string>();
 
@@ -94,16 +101,13 @@ public class AGEProgram
         foreach (Match match in matches)
         {
             string parsedElement = match.Value;
-            /*if (parsedElement.StartsWith("\"") && parsedElement.EndsWith("\""))
-            {
-                // Remove leading and trailing quotes
-                parsedElement = parsedElement.Trim('"');
-            }*/
+
             result.Add(parsedElement);
         }
 
         return result;
     }
+    */
 
     public string Log()
     {
@@ -114,46 +118,10 @@ public class AGEProgram
         return str;
     }
 
-    public static List<string> ParseLine(string code)
-    {
-        List<string> tokens = new List<string>();
-
-        // Regular expressions to match different language elements
-        string regexPattern = @"
-            (?<Text> ""(?:[^""\\]|\\.)*"" )
-            | (?<Number> [-+]?[0-9]*\.?[0-9]+ )
-            | (?<Word> [a-zA-Z][a-zA-Z0-9]* )
-            | (?<Separator> [()\/*+\-=,] | [=!]= | <> | [<>] )
-        ";
-
-        MatchCollection matches = Regex.Matches(code, regexPattern, RegexOptions.IgnorePatternWhitespace);
-
-        foreach (Match match in matches)
-        {
-            if (match.Groups["Text"].Success)
-            {
-                tokens.Add(match.Groups["Text"].Value);
-            }
-            else if (match.Groups["Number"].Success)
-            {
-                tokens.Add(match.Groups["Number"].Value);
-            }
-            else if (match.Groups["Word"].Success)
-            {
-                tokens.Add(match.Groups["Word"].Value);
-            }
-            else if (match.Groups["Separator"].Success)
-            {
-                tokens.Add(match.Groups["Separator"].Value);
-            }
-        }
-
-        return tokens;
-    }
     public string[] ParseLineOfCode(string codeLine)
     {
         string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|==|>|<)";
-//        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
+        //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
 
         //string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<|\s+)";
 
