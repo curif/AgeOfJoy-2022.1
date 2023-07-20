@@ -5,17 +5,17 @@
 16 REM LET b = a + 1
 17 REM LET c = 1 + 5 * 3
 18 REM LET fabio = ( 5 * 3 ) + b - c
-30 LET x = ( 3 * 2 ) - 1
-35 LET goto = 99 + 1
+30 LET x=(3*2)-1
+35 LET goto=99 + 1
 40 GOTO goto
-50 LET pepe = 1
+50 LET pepe=1
 
 100 LET IN100 = 1
 
 110 LET shouldbeone = 1 = 1
-120 LET shouldbeonetoo = 3 * 2 >= 5
-125 LET AND = 1 AND 1
-130 LET OR = 1 OR 1
+120 LET shouldbeonetoo = 3*2 >= 5
+125 LET AND=1 AND 1
+130 LET OR=1 OR 1
 140 LET ANDcero = 1 AND 0
 150 LET orcero = 0 OR 0
 160 LET orceroaritm = 1 AND 0 OR 0
@@ -24,10 +24,10 @@
 175 IF ( conditrue1 <> 1 ) THEN GOTO 1000
 
 190 LET conditrue2 = 1 < 2 
-195 IF ( conditrue2 <> 1  ) THEN GOTO 1000
+195 IF (conditrue2 <> 1) THEN GOTO 1000
 
 200 LET conditrue3 = 1 <= 1 
-205 IF ( conditrue3 <> 1  )  THEN GOTO 1000
+205 IF (conditrue3 <> 1)  THEN GOTO 1000
 
 210 LET conditrue4 = 1 >= 1 
 215 IF ( conditrue4 <> 1  ) THEN GOTO 1000

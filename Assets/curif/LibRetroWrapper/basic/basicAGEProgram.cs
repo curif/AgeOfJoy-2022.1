@@ -6,14 +6,17 @@ using System.Text.RegularExpressions;
 
 public class AGEProgram
 {
-    public string Name;
+    private string name;
     Dictionary<int, ICommandBase> lines = new();
     int nextLineToExecute = -1;
     int lastLineNumberParsed = -1;
     BasicVars vars = new();
+    public TokenConsumer tokens;
 
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
     public BasicVars Vars { get { return vars; } }
+
+    public string Name { get => name; }
 
     ConfigurationCommands config;
 
@@ -22,6 +25,11 @@ public class AGEProgram
         KeyValuePair<int, ICommandBase> nextLine =
                     lines.FirstOrDefault(kvp => kvp.Key >= nextLineToExecute);
         return nextLine;
+    }
+
+    public AGEProgram(string name)
+    {
+        this.name = name;
     }
 
     public void PrepareToRun()
@@ -106,6 +114,70 @@ public class AGEProgram
         return str;
     }
 
+    public static List<string> ParseLine(string code)
+    {
+        List<string> tokens = new List<string>();
+
+        // Regular expressions to match different language elements
+        string regexPattern = @"
+            (?<Text> ""(?:[^""\\]|\\.)*"" )
+            | (?<Number> [-+]?[0-9]*\.?[0-9]+ )
+            | (?<Word> [a-zA-Z][a-zA-Z0-9]* )
+            | (?<Separator> [()\/*+\-=,] | [=!]= | <> | [<>] )
+        ";
+
+        MatchCollection matches = Regex.Matches(code, regexPattern, RegexOptions.IgnorePatternWhitespace);
+
+        foreach (Match match in matches)
+        {
+            if (match.Groups["Text"].Success)
+            {
+                tokens.Add(match.Groups["Text"].Value);
+            }
+            else if (match.Groups["Number"].Success)
+            {
+                tokens.Add(match.Groups["Number"].Value);
+            }
+            else if (match.Groups["Word"].Success)
+            {
+                tokens.Add(match.Groups["Word"].Value);
+            }
+            else if (match.Groups["Separator"].Success)
+            {
+                tokens.Add(match.Groups["Separator"].Value);
+            }
+        }
+
+        return tokens;
+    }
+    public string[] ParseLineOfCode(string codeLine)
+    {
+        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|==|>|<)";
+//        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
+
+        //string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<|\s+)";
+
+        //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+-]|!=|<>|>=|<=|>|<)";
+        MatchCollection matches = Regex.Matches(codeLine, pattern);
+
+        string[] tokens = new string[matches.Count];
+        int index = 0;
+        string token;
+        foreach (Match match in matches)
+        {
+            token = match.Value.Trim();
+            if (!string.IsNullOrEmpty(token))
+            {
+                // ConfigManager.WriteConsole($"[{match.Value}] {token.Length} chars");
+                tokens[index] = token;
+                index++;
+            }
+        }
+        if (matches.Count == index)
+            return tokens;
+
+        return tokens.Take(index).ToArray<string>();
+    }
 
     public void Parse(string filePath, ConfigurationCommands config)
     {
@@ -121,9 +193,14 @@ public class AGEProgram
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                List<string> parsedString = ParseString(line);
-                TokenConsumer tokens = new(parsedString);
-                ConfigManager.WriteConsole($"[basicAGEProgram.Parse]  {tokens.ToString()}");
+                // List<string> parsed = ParseLine(line);
+                // ConfigManager.WriteConsole($">>>{string.Join('.', parsed)}");
+                // continue;
+
+                string[] parsedString = ParseLineOfCode(line);
+                tokens = new(parsedString);
+                ConfigManager.WriteConsole($"[basicAGEProgram.Parse] >>>>  {tokens.ToString()}");
+                //continue;
 
                 if (tokens.Remains() >= 1)
                 {

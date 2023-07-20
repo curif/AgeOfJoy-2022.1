@@ -112,3 +112,46 @@ class CommandFunctionROOMGETDESC : CommandFunctionSingleExpressionBase
     }
 }
 
+class CommandFunctionROOMGET : CommandFunctionSingleExpressionBase, ICommandList
+{
+    public int MaxAllowed { get; } = 2;
+
+    public CommandFunctionROOMGET(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ROOMGET";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        throw new Exception("Bad function implementation, should return a list");
+    }
+
+    public BasicValue[] ExecuteList(BasicVars vars)
+    {
+        BasicValue[] ret = new BasicValue[2]
+        {
+                new BasicValue(""),
+                new BasicValue("")
+        };
+
+        if (config?.SceneDatabase != null)
+        {
+            BasicValue val = expr.Execute(vars);
+            if (!val.IsNumber())
+                throw new Exception($"{CmdToken} parameter should be a number");
+
+            int idx = (int)val.GetValueAsNumber();
+            if (idx < 0 || idx > 999)
+                throw new Exception($"Invalid room number: {idx}");
+
+            SceneDocument scene = config.SceneDatabase.ByIdx(idx);
+            if (scene != null)
+            {
+                ret[0].SetValue(scene.SceneName);
+                ret[1].SetValue(scene.Description);
+            }
+        }
+
+        return ret;
+    }
+}

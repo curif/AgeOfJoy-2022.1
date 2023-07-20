@@ -51,17 +51,15 @@ public class basicAGE : MonoBehaviour
 
     private void ParseFile(string filePath)
     {
-        AGEProgram prg = new();
-
         string name = Path.GetFileName(filePath);
+        AGEProgram prg = new(name);
         try
         {
-            prg.Name = name;
             prg.Parse(filePath, configCommands);
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleException($"reading {filePath} Line number: {prg.LastLineNumberParsed}", e);
+            ConfigManager.WriteConsoleException($"reading {filePath}\n Line number: {prg.LastLineNumberParsed}", e);
         }
         programs[name] = prg;
     }
@@ -81,7 +79,7 @@ public class basicAGE : MonoBehaviour
 
     string errorMessage(AGEProgram prg, Exception exception)
     {
-        string str = $"ERROR: PRG {prg.Name} line: {configCommands.LineNumber}\n";
+        string str = $"ERROR: {prg.Name} line: {configCommands.LineNumber}\n";
         str += $"Exception: {exception.Message}\n";
         return str;
     }

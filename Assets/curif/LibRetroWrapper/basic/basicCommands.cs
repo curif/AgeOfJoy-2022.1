@@ -51,6 +51,7 @@ public static class Commands
         //ROOMs
         functions["ROOMNAME"] = typeof(CommandFunctionROOMNAME);
         functions["ROOMCOUNT"] = typeof(CommandFunctionROOMCOUNT);
+        functions["ROOMGET"] = typeof(CommandFunctionROOMGET);
         functions["ROOMGETNAME"] = typeof(CommandFunctionROOMGETNAME);
         functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
 

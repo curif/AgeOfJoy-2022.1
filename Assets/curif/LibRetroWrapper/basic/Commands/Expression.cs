@@ -91,7 +91,7 @@ class CommandExpression : ICommandBase
     }
 
     private List<Element> elements = new();
-    public int Count { get {return elements.Count;}}
+    public int Count { get { return elements.Count; } }
 
     public CommandExpression(ConfigurationCommands config)
     {
@@ -123,6 +123,11 @@ class CommandExpression : ICommandBase
                     ICommandBase fnct = Commands.GetNew(tokens.Token, config);
                     if (fnct == null)
                         throw new Exception($"Syntax error function not found in expression clause: {tokens.ToString()}");
+
+                    ICommandList exprList = fnct as ICommandList;
+                    if (exprList != null)
+                        throw new Exception($" fnct list cant be part of an expression {tokens.Token}");
+
                     ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens.ToString()}");
                     fnct.Parse(tokens);
                     ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse END -  {tokens.ToString()}");
@@ -191,13 +196,31 @@ class CommandExpression : ICommandBase
 
         while (operators.Count > 0)
         {
-            BasicValue right = operands.Pop();
-            BasicValue left = operands.Pop();
-            BasicValue val = left.Operate(right, operators.Pop());
+            BasicValue right, left, val;
+            try
+            {
+                right = operands.Pop();
+                left = operands.Pop();
+                val = left.Operate(right, operators.Pop());
+            }
+            catch
+            {
+                throw new Exception($"Malformed expression {CmdToken}");
+            }
             operands.Push(val);
         }
 
-        return operands.Pop();
+        //end
+        BasicValue valRet;
+        try
+        {
+            valRet = operands.Pop();
+        }
+        catch
+        {
+            throw new Exception($"Malformed expression {CmdToken} (END)");
+        }
+        return valRet;
     }
 
 }

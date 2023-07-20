@@ -13,14 +13,11 @@
 
 1000 CLS
 1010 LET idx = 0
-1020 LET name = ROOMGETNAME ( idx )
-1030 LET desc = ROOMGETDESC ( idx )
+1020 LETS name , desc = ROOMGET ( idx )
 1040 PRINT 0 , idx , "#" + STR ( idx ) + " " + name + "-" + desc , 0 , 0
-1050 IF ( idx >= count - 1 ) THEN GOTO 1080
+1050 IF ( idx >= count - 1 ) THEN GOTO 10020
 1060 LET idx = idx + 1
 1070 GOTO 1020
-1080 SHOW
-1090 GOTO 10020
 
 2100 REM ERROR room count
 2120 LET ERROR = "ROOMCOUNT, count: " + STR ( count )
@@ -37,7 +34,8 @@
 10000 CLS
 10010 PRINT 0 , 0 , ERROR , 1
 
-10020 PRINT 0 , 24 , "PRESS B to end", 1
-10030 LET status = CONTROLACTIVE ( "JOYPAD_B" )
-10040 IF ( status != 1 ) THEN GOTO 10030
-10050 END
+10020 SHOW
+10030 PRINT 0 , 24 , "PRESS B to end", 1
+10040 LET status = CONTROLACTIVE ( "JOYPAD_B" )
+10050 IF ( status != 1 ) THEN GOTO 10030
+10060 END
