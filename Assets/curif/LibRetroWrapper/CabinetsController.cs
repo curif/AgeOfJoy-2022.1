@@ -95,6 +95,35 @@ public class CabinetsController : MonoBehaviour
             .FirstOrDefault(cc => cc.game.Position == position);
     }
 
+    public int Count()
+    {
+        //only active gameobjects:
+        int maxPosition = 0;
+
+        foreach (Transform childTransform in transform)
+        {
+            // Get the CabinetController component if it exists
+            CabinetController cabinetController = childTransform.GetComponent<CabinetController>();
+            if (cabinetController != null)
+            {
+                if (maxPosition < cabinetController.game.Position)
+                    maxPosition = cabinetController.game.Position;
+            }
+            else
+            {
+                // Get the CabinetReplace component if it exists
+                CabinetReplace cabinetReplace = childTransform.GetComponent<CabinetReplace>();
+                if (cabinetReplace != null)
+                {
+                    if (maxPosition < cabinetReplace.game.Position)
+                        maxPosition = cabinetReplace.game.Position;
+                }
+            }
+
+        }
+        return maxPosition + 1;
+    }
+
     public GameObject GetCabinetChildByPosition(int position)
     {
         // Loop through all the child objects
@@ -123,7 +152,9 @@ public class CabinetsController : MonoBehaviour
 
     IEnumerator load()
     {
-        List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(Room, transform.childCount); //persist registry with the new assignation if any.
+        List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(
+                                                Room, 
+                                                transform.childCount); //persist registry with the new assignation if any.
         ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {games.Count} cabinets to room {Room}");
         Loaded = false;
         foreach (CabinetPosition g in games)
@@ -145,7 +176,26 @@ public class CabinetsController : MonoBehaviour
         Loaded = true;
     }
 
-    public void Replace(int position, string room, string cabinetDBName)
+    public CabinetPosition GetCabinetByPosition(int position)
+    {
+        foreach (Transform childTransform in transform)
+        {
+            // Get the CabinetController component if it exists
+            CabinetController cabinetController = childTransform.GetComponent<CabinetController>();
+            if (cabinetController?.game != null && cabinetController.game.Position == position)
+                // Return the GameObject if the position matches
+                return cabinetController.game;
+
+            // Get the CabinetReplace component if it exists
+            CabinetReplace cabinetReplace = childTransform.GetComponent<CabinetReplace>();
+            if (cabinetReplace?.game != null && cabinetReplace.game.Position == position)
+                // Return the GameObject if the position matches
+                return cabinetReplace.game;
+        }
+        return null;
+    }
+
+    public bool Replace(int position, string room, string cabinetDBName)
     {
         //replace in the registry
         CabinetPosition toAdd = new();
@@ -163,6 +213,7 @@ public class CabinetsController : MonoBehaviour
         {
             ConfigManager.WriteConsole($"[CabinetController.Replace] replacing a cabinet by [{toAdd}]");
             cr.ReplaceWith(toAdd);
+            return true;
         }
         else
         {
@@ -172,11 +223,10 @@ public class CabinetsController : MonoBehaviour
                 //its a non-loaded cabinet. It will load just with the assignment
                 ConfigManager.WriteConsole($"[CabinetController.Replace] adding [{toAdd}] to a not-loaded cabinet. It will load soon...");
                 cc.game = toAdd;
-            }
-            else
-            {
-                ConfigManager.WriteConsoleError($"[CabinetController.Replace] no cabinet found to replace by [{toAdd}]");
+                return true;
             }
         }
+        ConfigManager.WriteConsoleError($"[CabinetController.Replace] no cabinet found to replace by [{toAdd}]");
+        return false;
     }
 }

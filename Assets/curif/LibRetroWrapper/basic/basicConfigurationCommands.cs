@@ -15,4 +15,6 @@ public class ConfigurationCommands
     public int JumpTo; //line to jump in the next line run
     public int JumpNextTo; //jump to the next line of...
 
+    public CabinetsController CabinetsController;
+    public GameRegistry GameRegistry;
 }

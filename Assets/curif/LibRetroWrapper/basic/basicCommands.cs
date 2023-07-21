@@ -55,9 +55,17 @@ public static class Commands
         functions["ROOMGETNAME"] = typeof(CommandFunctionROOMGETNAME);
         functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
 
-
         //Controllers
         functions["CONTROLACTIVE"] = typeof(CommandFunctionCONTROLACTIVE);
+
+        //cabinets in the room
+        functions["CABROOMCOUNT"] = typeof(CommandFunctionCABROOMCOUNT);
+        functions["CABROOMGETNAME"] = typeof(CommandFunctionCABROOMGETNAME);
+        functions["CABROOMREPLACE"] = typeof(CommandFunctionCABROOMREPLACE);
+
+        //cabinets in registry
+        functions["CABDBCOUNT"] = typeof(CommandFunctionCABDBCOUNT);
+        functions["CABDBCOUNTINROOM"] = typeof(CommandFunctionCABDBCOUNTINROOM);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
@@ -73,10 +81,10 @@ public static class Commands
     }
     public static bool IsCommand(string command)
     {
-        return commands.ContainsKey(command);
+        return commands.ContainsKey(command.ToUpper());
     }
     public static bool IsFunction(string function)
     {
-        return functions.ContainsKey(function);
+        return functions.ContainsKey(function.ToUpper());
     }
 }

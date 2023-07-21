@@ -156,9 +156,22 @@ public class GameRegistry : MonoBehaviour
 
     public CabinetPosition GetCabinetPositionInRoom(int position, string room)
     {
-        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(g => g.Position == position 
-                                                                            && string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase) );
+        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(g => g.Position == position
+                                                                            && string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase));
         return cabPos;
+    }
+    public int GetCabinetsCountInRoom(string room)
+    {
+        // Use LINQ to count elements that match the condition
+        int count = cabinetsPosition.Registry.Count(cabPos =>
+            string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase));
+
+        return count;
+    }
+
+    public int Count()
+    {
+        return cabinetsPosition.Registry.Count;
     }
 
     public GameRegistry Persist()

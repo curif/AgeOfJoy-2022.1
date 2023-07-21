@@ -115,7 +115,7 @@ class CommandFunctionNoExpressionBase : CommandFunctionSingleExpressionBase
 
     public override bool Parse(TokenConsumer tokens)
     {
-         if (tokens.Next() != "(")
+        if (tokens.Next() != "(")
             throw new Exception($"function without enclosing (): {tokens.ToString()}");
         tokens++; //consumes (
 
@@ -124,4 +124,21 @@ class CommandFunctionNoExpressionBase : CommandFunctionSingleExpressionBase
 
         return true;
     }
+}
+
+public static class FunctionHelper
+{
+    public static bool ExpectedNumber(BasicValue val, string msg = "")
+    {
+        if (!val.IsNumber())
+            throw new Exception("Parameter should be a number " + msg);
+        return true;
+    }
+    public static bool ExpectedString(BasicValue val, string msg = "")
+    {
+        if (!val.IsString())
+            throw new Exception("Parameter should be a string " + msg);
+        return true;
+    }
+
 }

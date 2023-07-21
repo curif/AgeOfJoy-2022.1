@@ -14,8 +14,13 @@ public class basicAGE : MonoBehaviour
     public Dictionary<string, AGEProgram> programs = new();
     private AGEProgram running;
 
-    public ConfigurationController configurationController;
-    public ScreenGenerator screenGenerator;
+    public ConfigurationController ConfigurationController;
+    public ScreenGenerator ScreenGenerator;
+    public GameRegistry GameRegistry;
+    public CabinetsController CabinetsController;
+    public SceneDatabase SceneDatabase = null;
+
+
 
 
 #if UNITY_EDITOR
@@ -27,14 +32,24 @@ public class basicAGE : MonoBehaviour
 
     public void Start()
     {
-        if (configurationController == null)
-            configurationController = GetComponent<ConfigurationController>();
-        if (screenGenerator == null)
-            screenGenerator = GetComponent<ScreenGenerator>();
-        configCommands.ConfigurationController = configurationController;
-        configCommands.ScreenGenerator = screenGenerator;
         GameObject roomInit = GameObject.Find("RoomInit");
-        configCommands.SceneDatabase = roomInit.GetComponent<SceneDatabase>();
+
+        if (ConfigurationController == null)
+            ConfigurationController = GetComponent<ConfigurationController>();
+        if (ScreenGenerator == null)
+            ScreenGenerator = GetComponent<ScreenGenerator>();
+        if (CabinetsController == null && ConfigurationController != null)
+            CabinetsController = ConfigurationController.cabinetsController;
+        if (SceneDatabase == null && roomInit != null)
+            SceneDatabase = roomInit.GetComponent<SceneDatabase>();
+        if (GameRegistry == null && roomInit != null)
+            GameRegistry = roomInit.GetComponent<GameRegistry>();
+
+        configCommands.ConfigurationController = ConfigurationController;
+        configCommands.ScreenGenerator = ScreenGenerator;
+        configCommands.SceneDatabase = SceneDatabase;
+        configCommands.CabinetsController = CabinetsController;
+        configCommands.GameRegistry = GameRegistry;
     }
 
     public void ParseFiles(string folderPath)

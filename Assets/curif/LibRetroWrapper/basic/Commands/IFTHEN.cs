@@ -22,8 +22,9 @@ class CommandIFTHEN : ICommandBase
             throw new Exception($"malformed IF/THEN, expression should be enclosed by ()");
 
         expr.Parse(++tokens);
-
-        if (tokens.Next("THEN") == null)
+        
+        tokens++;
+        if (tokens.Token.ToUpper() != "THEN")
             throw new Exception($"malformed IF/THEN, THEN is missing");
 
         cmd = Commands.GetNew(tokens.Next(), config);
