@@ -18,12 +18,11 @@ class CommandIFTHEN : ICommandBase
 
     public bool Parse(TokenConsumer tokens)
     {
-        if (tokens.Token != "(")
-            throw new Exception($"malformed IF/THEN, expression should be enclosed by ()");
+        // if (tokens.Token != "(")
+        //     throw new Exception($"malformed IF/THEN, expression should be enclosed by ()");
 
-        expr.Parse(++tokens);
+        expr.Parse(tokens);
         
-        tokens++;
         if (tokens.Token.ToUpper() != "THEN")
             throw new Exception($"malformed IF/THEN, THEN is missing");
 
