@@ -271,6 +271,10 @@ public class basicAGEEditor : Editor
         {
           myScript.RunTests();
         }
+        if(GUILayout.Button("Stop"))
+        {
+          myScript.Stop();
+        }
     }
 }
 #endif

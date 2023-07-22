@@ -70,10 +70,14 @@ class CommandFunctionCABROOMREPLACE : CommandFunctionExpressionListBase
         string roomName = config?.ConfigurationController?.GetRoomName();
         if (string.IsNullOrEmpty(roomName))
             return new BasicValue(0); //fail
+        
+        string cabinetDBName = vals[1].GetValueAsString();
+        if (!config.GameRegistry.CabinetExists(cabinetDBName))
+            return new BasicValue(0); //fail
 
         bool result = config.CabinetsController.Replace((int)vals[0].GetValueAsNumber(),
                                                         roomName,
-                                                        vals[1].GetValueAsString());
+                                                        cabinetDBName);
 
         return new BasicValue(result ? 1 : 0);
     }
@@ -118,3 +122,49 @@ class CommandFunctionCABDBCOUNTINROOM : CommandFunctionSingleExpressionBase
     }
 }
 
+
+class CommandFunctionCABDBREPLACE : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABDBREPLACE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBREPLACE";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        if (config?.GameRegistry == null)
+            return new BasicValue(0);
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(vals[0], " - room name");
+        FunctionHelper.ExpectedNumber(vals[1], " - cabinet position");
+        FunctionHelper.ExpectedString(vals[2], " - new cabinet name");
+
+        string roomName = vals[0].GetValueAsString();
+        if (string.IsNullOrEmpty(roomName))
+            return new BasicValue(0); //fail
+        
+        string cabinetDBName = vals[2].GetValueAsString();
+        if (!config.GameRegistry.CabinetExists(cabinetDBName))
+            return new BasicValue(0); //fail
+        
+        int position = (int)vals[1].GetValueAsNumber();
+
+        CabinetPosition toAdd = new();
+        toAdd.Room = roomName;
+        toAdd.Position = position;
+        toAdd.CabinetDBName = cabinetDBName;
+
+        CabinetPosition toBeReplaced = config.GameRegistry.GetCabinetPositionInRoom(position, roomName);
+        ConfigManager.WriteConsole($"[CommandFunctionCABDBREPLACE] [{toBeReplaced}] by [{toAdd}] ");
+        config.GameRegistry.Replace(toBeReplaced, toAdd); //persists changes
+
+        return new BasicValue(1);
+    }
+}

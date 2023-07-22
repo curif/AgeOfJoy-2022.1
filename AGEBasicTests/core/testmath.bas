@@ -19,3 +19,5 @@
 1010 LET randabs=ABS(RND (0, 1) + RND (2, 3))
 1020 IF (ERROR="" AND (randabs < 0 OR randabs > 4)) THEN LET ERROR="randabs line 1010"
 
+1030 LET int=Int(10.5)
+1040 IF (ERROR="" AND int != 1) then LET ERROR="INT fails"

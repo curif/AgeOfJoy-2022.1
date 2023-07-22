@@ -17,4 +17,5 @@ public class ConfigurationCommands
 
     public CabinetsController CabinetsController;
     public GameRegistry GameRegistry;
+    public Dictionary<string, forToStorage> ForToNext = new();
 }

@@ -162,6 +162,25 @@ class CommandFunctionSIN : CommandFunctionSingleExpressionBase
     }
 }
 
+class CommandFunctionINT : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionINT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "INT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val);
+        
+        int retInt = (int)val.GetValueAsNumber();
+
+        return new BasicValue((double)retInt);
+    }
+}
+
 class CommandFunctionMOD : CommandFunctionExpressionListBase
 {
     public CommandFunctionMOD(ConfigurationCommands config) : base(config)

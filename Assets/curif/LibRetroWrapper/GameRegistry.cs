@@ -236,6 +236,12 @@ public class GameRegistry : MonoBehaviour
         return cabs;
     }
 
+    public bool CabinetExists(string cabinetName)
+    {
+        return Directory.EnumerateDirectories(ConfigManager.CabinetsDB)
+                        .Any(path => CabinetDBAdmin.GetNameFromPath(path) == cabinetName);
+    }
+
     public GameRegistry Recover()
     {
         cabinetsPosition = CabinetsPosition.ReadFromFile();

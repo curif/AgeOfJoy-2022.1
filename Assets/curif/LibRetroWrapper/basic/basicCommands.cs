@@ -19,6 +19,10 @@ public static class Commands
         commands["END"] = typeof(CommandEND);
         commands["GOSUB"] = typeof(CommandGOSUB);
         commands["RETURN"] = typeof(CommandRETURN);
+        commands["CALL"] = typeof(CommandCALL);
+        commands["FOR"] = typeof(CommandFORTO);
+        commands["NEXT"] = typeof(CommandNEXT);
+        
         //screen
         commands["CLS"] = typeof(CommandCLS);
         commands["PRINT"] = typeof(CommandPRINT);
@@ -35,7 +39,7 @@ public static class Commands
         functions["SIN"] = typeof(CommandFunctionSIN);
         functions["TAN"] = typeof(CommandFunctionTAN);
         functions["MOD"] = typeof(CommandFunctionMOD);
-
+        functions["INT"] = typeof(CommandFunctionINT);
         // strings
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
@@ -66,6 +70,7 @@ public static class Commands
         //cabinets in registry
         functions["CABDBCOUNT"] = typeof(CommandFunctionCABDBCOUNT);
         functions["CABDBCOUNTINROOM"] = typeof(CommandFunctionCABDBCOUNTINROOM);
+        functions["CABDBREPLACE"] = typeof(CommandFunctionCABDBREPLACE);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

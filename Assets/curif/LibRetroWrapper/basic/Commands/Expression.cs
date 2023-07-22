@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 
 
-class CommandExpression : ICommandBase
+public class CommandExpression : ICommandBase
 {
     public string CmdToken { get; } = "EXPR";
     public CommandType.Type Type { get; } = CommandType.Type.Expression;
@@ -149,7 +149,10 @@ class CommandExpression : ICommandBase
             }
         } while (tokens.Next() != null &&
                 tokens.Token != ")" &&
-                tokens.Token != ",");
+                tokens.Token != "," &&
+                tokens.Token.ToUpper() != "THEN" &&
+                tokens.Token.ToUpper() != "TO"
+                );
 
         ConfigManager.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
         return true;
