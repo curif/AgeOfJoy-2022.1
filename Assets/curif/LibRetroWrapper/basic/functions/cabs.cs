@@ -95,9 +95,11 @@ class CommandFunctionCABDBCOUNT : CommandFunctionNoExpressionBase
         if (config?.GameRegistry == null)
             return new BasicValue(0);
 
-        return new BasicValue(
-            (double)config.GameRegistry.Count()
-            );
+        int count = config.GameRegistry.CountCabinets();
+        if (count < 0)
+            throw new Exception("error access cabinetsDB folder");
+
+        return new BasicValue((double)count);
     }
 }
 
@@ -118,6 +120,27 @@ class CommandFunctionCABDBCOUNTINROOM : CommandFunctionSingleExpressionBase
 
         return new BasicValue(
             (double)config.GameRegistry.GetCabinetsCountInRoom(val.GetValueAsString())
+            );
+    }
+}
+
+class CommandFunctionCABDBGETNAME : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCABDBGETNAME(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBGETNAME";
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.GameRegistry == null)
+            return new BasicValue(0);
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val);
+
+        return new BasicValue(
+                config.GameRegistry.GetCabinetNameByPosition((int)val.GetValueAsNumber())
             );
     }
 }

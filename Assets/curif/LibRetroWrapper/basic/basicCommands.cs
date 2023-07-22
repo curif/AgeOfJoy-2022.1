@@ -71,6 +71,7 @@ public static class Commands
         functions["CABDBCOUNT"] = typeof(CommandFunctionCABDBCOUNT);
         functions["CABDBCOUNTINROOM"] = typeof(CommandFunctionCABDBCOUNTINROOM);
         functions["CABDBREPLACE"] = typeof(CommandFunctionCABDBREPLACE);
+        functions["CABDBGETNAME"] = typeof(CommandFunctionCABDBGETNAME);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

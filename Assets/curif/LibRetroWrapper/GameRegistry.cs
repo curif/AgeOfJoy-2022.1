@@ -169,9 +169,24 @@ public class GameRegistry : MonoBehaviour
         return count;
     }
 
-    public int Count()
+    public int CountRegistry()
     {
         return cabinetsPosition.Registry.Count;
+    }
+    public int CountCabinets()
+    {
+        try
+        {
+            // Get all directories in the specified path
+            string[] directories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB);
+            return directories.Length;
+        }
+        catch (Exception ex)
+        {
+            // Handle any exception that might occur while accessing the directory
+            // For simplicity, this example logs the exception, but you can handle it differently based on your needs.
+            return -1; // Return a negative value to indicate an error occurred.
+        }
     }
 
     public GameRegistry Persist()
@@ -210,6 +225,25 @@ public class GameRegistry : MonoBehaviour
                               select cab).ToList();
         return this;
     }
+
+    public string GetCabinetNameByPosition(int position)
+    {
+        if (position < 0)
+            throw new ArgumentException("Position must be a non-negative integer.");
+
+        // Get all cabinet directories sorted in alphabetical order
+        string[] cabinetDirectories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
+                                                        .OrderBy(path => path)
+                                                        .ToArray();
+
+        if (position >= cabinetDirectories.Length)
+            throw new ArgumentException($"Position {position} exceeds the number of cabinets: {cabinetDirectories.Length}.");
+
+        // Extract the cabinet name from the directory path
+        string cabinetName = CabinetDBAdmin.GetNameFromPath(cabinetDirectories[position]);
+        return cabinetName;
+    }
+
     private GameRegistry DeleteMissingCabinets()
     {
         List<string> cabsInDB = GetAllCabinetsName();
