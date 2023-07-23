@@ -51,6 +51,13 @@ public class BasicValue
         SetValue(number);
     }
 
+    public BasicValue(BasicValue val)
+    {
+        this.type = val.type;
+        this.number = val.number;
+        this.str = val.str;
+    }
+
     //strings could be surrounded by "
     public BasicValue(string str, BasicValueType forceType = BasicValueType.empty)
     {
@@ -116,7 +123,8 @@ public class BasicValue
     {
         if (this.type == BasicValueType.Number && type == BasicValueType.String)
         {
-            return new BasicValue(number.ToString());
+            this.str = number.ToString();
+            this.type = BasicValueType.String;
         }
         else if (this.type == BasicValueType.String && type == BasicValueType.Number)
         {
@@ -124,8 +132,9 @@ public class BasicValue
             bool isParsableToDouble = double.TryParse(this.str, out valueDouble);
             if (!isParsableToDouble)
                 throw new Exception($" string value {this.str} can't be casted to double");
-
-            return new BasicValue(valueDouble);
+            
+            this.number = valueDouble;
+            this.type = BasicValueType.Number;
         }
         return this;
     }

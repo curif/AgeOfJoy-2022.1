@@ -138,10 +138,9 @@ class CommandFunctionSTR : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
-        double number = val.GetValueAsNumber();
-        string ret = number.ToString();
-
-        return new BasicValue(ret, BasicValue.BasicValueType.String);
+        BasicValue ret = new BasicValue(val);
+        ret.CastTo(BasicValue.BasicValueType.String);
+        return ret;
     }
 }
 

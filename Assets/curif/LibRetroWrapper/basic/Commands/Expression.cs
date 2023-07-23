@@ -199,16 +199,17 @@ public class CommandExpression : ICommandBase
 
         while (operators.Count > 0)
         {
-            BasicValue right, left, val;
+            BasicValue right, left, val, op;
             try
             {
                 right = operands.Pop();
                 left = operands.Pop();
-                val = left.Operate(right, operators.Pop());
+                op = operators.Pop();
+                val = left.Operate(right, op);
             }
-            catch
+            catch (Exception e)
             {
-                throw new Exception($"Malformed expression {CmdToken}");
+                throw new Exception($"Malformed expression {CmdToken} - [{e.Message}]");
             }
             operands.Push(val);
         }
