@@ -173,11 +173,24 @@ class CommandFunctionINT : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
-        FunctionHelper.ExpectedNumber(val);
-        
         int retInt = (int)val.GetValueAsNumber();
 
         return new BasicValue((double)retInt);
+    }
+}
+class CommandFunctionNOT : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionNOT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "NOT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+
+        return val.IsTrue() ? new BasicValue(0) : new BasicValue(1);
     }
 }
 

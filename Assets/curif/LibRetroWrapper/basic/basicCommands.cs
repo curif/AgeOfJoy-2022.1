@@ -40,6 +40,7 @@ public static class Commands
         functions["TAN"] = typeof(CommandFunctionTAN);
         functions["MOD"] = typeof(CommandFunctionMOD);
         functions["INT"] = typeof(CommandFunctionINT);
+        functions["NOT"] = typeof(CommandFunctionNOT);
         // strings
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
