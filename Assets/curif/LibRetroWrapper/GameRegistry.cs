@@ -156,10 +156,23 @@ public class GameRegistry : MonoBehaviour
 
     public CabinetPosition GetCabinetPositionInRoom(int position, string room)
     {
-        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(g => g.Position == position
-                                                                            && string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase));
+        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(
+            g => g.Position == position &&
+            string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase)
+        );
         return cabPos;
     }
+
+    public CabinetPosition DeleteCabinetPositionInRoom(int position, string room)
+    {
+        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(
+            g => g.Position == position &&
+            string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase)
+        );
+        Remove(cabPos);
+        return cabPos;
+    }
+
     public int GetCabinetsCountInRoom(string room)
     {
         // Use LINQ to count elements that match the condition
@@ -181,7 +194,7 @@ public class GameRegistry : MonoBehaviour
             string[] directories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB);
             return directories.Length;
         }
-        catch (Exception ex)
+        catch
         {
             // Handle any exception that might occur while accessing the directory
             // For simplicity, this example logs the exception, but you can handle it differently based on your needs.
@@ -287,6 +300,7 @@ public class GameRegistry : MonoBehaviour
     {
         if (String.IsNullOrEmpty(room))
             return new List<string>();
+
         List<string> roms = new List<string>(
              from cabPos in cabinetsPosition.Registry
              where string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase)
@@ -336,6 +350,7 @@ public class GameRegistry : MonoBehaviour
     {
         if (String.IsNullOrEmpty(room))
             return null;
+        room = room.ToUpper();
 
         Recover(); //user can modify it.
 
@@ -384,10 +399,10 @@ public class GameRegistry : MonoBehaviour
         Show();
 
         //load cabinets information
-        foreach (CabinetPosition cab in cabsPosition.Where(g => g.CabInfo == null))
+        /*foreach (CabinetPosition cab in cabsPosition.Where(g => g.CabInfo == null))
         {
 
-        }
+        }*/
 
         return cabsPosition;
     }
