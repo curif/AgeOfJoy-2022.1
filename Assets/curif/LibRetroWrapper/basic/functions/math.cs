@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-
+using UnityEngine;
 
 class CommandFunctionABS : CommandFunctionSingleExpressionBase
 {
@@ -60,8 +60,8 @@ class CommandFunctionMIN : CommandFunctionExpressionListBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        if (!vals[0].IsNumber() || !vals[1].IsNumber())
-            throw new Exception($"{CmdToken} require numbers to operate.");
+        FunctionHelper.ExpectedNumber(vals[0]);
+        FunctionHelper.ExpectedNumber(vals[1]);
 
         double ret = Math.Min(vals[0].GetValueAsNumber(),
                                 vals[1].GetValueAsNumber());
@@ -74,7 +74,6 @@ class CommandFunctionMIN : CommandFunctionExpressionListBase
 
 class CommandFunctionRND : CommandFunctionExpressionListBase
 {
-    Random random = new Random();
     public CommandFunctionRND(ConfigurationCommands config) : base(config)
     {
         cmdToken = "RND";
@@ -88,14 +87,11 @@ class CommandFunctionRND : CommandFunctionExpressionListBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        if (!vals[0].IsNumber() || !vals[1].IsNumber())
-            throw new Exception($"{CmdToken} require numbers to operate.");
-
-        double minValue = vals[0].GetValueAsNumber();
-        double maxValue = vals[1].GetValueAsNumber();
-        double ret = random.NextDouble() * (maxValue - minValue) + minValue;
-
-        return new BasicValue(ret);
+        FunctionHelper.ExpectedNumber(vals[0]);
+        FunctionHelper.ExpectedNumber(vals[1]);
+        double randomValue = UnityEngine.Random.Range((float)vals[0].GetValueAsNumber(),
+                                                        (float)vals[1].GetValueAsNumber());
+        return new BasicValue(randomValue);
     }
 
 }
@@ -142,6 +138,9 @@ class CommandFunctionCOS : CommandFunctionSingleExpressionBase
         return new BasicValue(ret);
     }
 }
+
+
+
 
 class CommandFunctionSIN : CommandFunctionSingleExpressionBase
 {
@@ -222,4 +221,3 @@ class CommandFunctionMOD : CommandFunctionExpressionListBase
         return new BasicValue(ret);
     }
 }
-

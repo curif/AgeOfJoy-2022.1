@@ -13,7 +13,7 @@ public class BasicVars
 
     public bool Exists(string name)
     {
-        return vars.ContainsKey(name);
+        return vars.ContainsKey(name.ToUpper());
     }
     public BasicValue GetValue(string name)
     {

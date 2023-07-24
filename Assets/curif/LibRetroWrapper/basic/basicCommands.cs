@@ -51,6 +51,9 @@ public static class Commands
         functions["TRIM"] = typeof(CommandFunctionTRIM);
         functions["STR"] = typeof(CommandFunctionSTR);
 
+        //introspection
+        functions["EXISTS"] = typeof(CommandFunctionEXIST);
+
         // configuration settings -------
 
         //ROOMs
@@ -71,8 +74,12 @@ public static class Commands
         //cabinets in registry
         functions["CABDBCOUNT"] = typeof(CommandFunctionCABDBCOUNT);
         functions["CABDBCOUNTINROOM"] = typeof(CommandFunctionCABDBCOUNTINROOM);
-        functions["CABDBREPLACE"] = typeof(CommandFunctionCABDBREPLACE);
+        //functions["CABDBREPLACE"] = typeof(CommandFunctionCABDBREPLACE);
         functions["CABDBGETNAME"] = typeof(CommandFunctionCABDBGETNAME);
+        //functions["CABDBGET"] = typeof(CommandFunctionCABDBGET);
+        functions["CABDBDELETE"] = typeof(CommandFunctionCABDBDELETE);
+        functions["CABDBADD"] = typeof(CommandFunctionCABDBADD);
+        functions["CABDBSAVE"] = typeof(CommandFunctionCABDBSAVE);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
