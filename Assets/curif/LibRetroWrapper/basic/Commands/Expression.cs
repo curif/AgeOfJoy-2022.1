@@ -167,6 +167,15 @@ public class CommandExpression : ICommandBase
         }
         ConfigManager.WriteConsole($"[CommandExpression.ElementsLog] {str}\n");
     }
+    public override string ToString()
+    {
+        string str = "";
+        foreach (Element el in elements)
+        {
+            str += el.ToString();
+        }
+        return str;
+    }
 
     public BasicValue Execute(BasicVars vars)
     {

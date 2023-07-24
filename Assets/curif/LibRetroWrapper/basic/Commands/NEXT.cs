@@ -33,23 +33,23 @@ class CommandNEXT : ICommandBase
 
         if (!config.ForToNext.ContainsKey(var.Name))
             throw new Exception("NEXT without FOR");
-        
+
         forToStorage ft = config.ForToNext[var.Name];
 
         BasicValue endValue = ft.endExpr.Execute(vars);
         FunctionHelper.ExpectedNumber(endValue, "- TO must have an expression or number");
 
-        BasicValue startValue = vars.GetValue(ft.var);
-        FunctionHelper.ExpectedNumber(startValue, "- FOR must have an expression or number");
+        BasicValue actualValue = vars.GetValue(ft.var);
+        FunctionHelper.ExpectedNumber(actualValue, "- FOR must have an expression or number");
 
-        double start = startValue.GetValueAsNumber() + 1;
+        double actual = actualValue.GetValueAsNumber() + 1;
         double end = endValue.GetValueAsNumber();
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var: {var.Name} from: {start} to {end}");
+        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name}: {actual} to {end}");
 
-        startValue.SetValue(start);
-        vars.SetValue(ft.var, startValue);
+        actualValue.SetValue(actual);
+        vars.SetValue(ft.var, actualValue);
 
-        if (start > end)
+        if (actual > end)
         {
             config.ForToNext.Remove(var.Name);
             return null;
@@ -59,5 +59,4 @@ class CommandNEXT : ICommandBase
 
         return null;
     }
-
 }
