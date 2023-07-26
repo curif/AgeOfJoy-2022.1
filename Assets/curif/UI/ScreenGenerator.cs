@@ -185,6 +185,7 @@ public class ScreenGenerator : MonoBehaviour
         }
 
         // Loop through all the characters in the text string
+        int charpos = x;
         for (int i = 0; i < text.Length; i++)
         {
             // Get the current character from the text string
@@ -199,7 +200,14 @@ public class ScreenGenerator : MonoBehaviour
             if (index > 128)
                 index = characterPositionForNotFound;
             // Print the character to the screen using PrintChar method with inversion flag
-            PrintChar(x + i, y, index, inverted);
+            if (charpos >= CharactersWidth - 1)
+            {
+                charpos = -1;
+                y++;
+            }
+            charpos++;
+
+            PrintChar(charpos, y, index, inverted);
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
 
