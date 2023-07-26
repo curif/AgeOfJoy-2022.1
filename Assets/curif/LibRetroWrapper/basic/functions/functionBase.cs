@@ -62,7 +62,7 @@ class CommandFunctionExpressionListBase : CommandFunctionBase
         //always ends in the final token.
 
         if (exprs.Count < cantParametersRequired)
-            throw new Exception($"{cmdToken}() parameter/s missing, 2 expected.");
+            throw new Exception($"{cmdToken}() parameter missing, {cantParametersRequired} expected.");
 
         ConfigManager.WriteConsole($"[functionBase.Parse] END {tokens.ToString()}");
         return true;

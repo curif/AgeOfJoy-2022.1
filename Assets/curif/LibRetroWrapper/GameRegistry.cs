@@ -124,8 +124,16 @@ public class GameRegistry : MonoBehaviour
         ConfigManager.WriteConsole($"[GameRegistry.Start] {cabinetsPosition.Registry.Count} cabinets from registry");
     }
 
-    public CabinetPosition Add(string cabinetDBName = null, string rom = null, string room = null, int position = 0, CabinetInformation cabInfo = null)
+    public CabinetPosition Add(string cabinetDBName = null, string rom = null,
+                                string room = null, int position = 0, CabinetInformation cabInfo = null)
     {
+        if (room != null)
+        {
+            CabinetPosition cabpos = GetCabinetPositionInRoom(position, room);
+            if (cabpos != null)
+                throw new Exception($"Can't add position taken in {room}-{position}");
+        }
+
         CabinetPosition g = new();
         g.Room = room;
         g.CabinetDBName = cabinetDBName;
@@ -165,11 +173,9 @@ public class GameRegistry : MonoBehaviour
 
     public CabinetPosition DeleteCabinetPositionInRoom(int position, string room)
     {
-        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(
-            g => g.Position == position &&
-            string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase)
-        );
-        Remove(cabPos);
+        CabinetPosition cabPos = GetCabinetPositionInRoom(position, room);
+        if (cabPos != null)
+            Remove(cabPos);
         return cabPos;
     }
 

@@ -80,6 +80,7 @@ public static class Commands
         functions["CABDBDELETE"] = typeof(CommandFunctionCABDBDELETE);
         functions["CABDBADD"] = typeof(CommandFunctionCABDBADD);
         functions["CABDBSAVE"] = typeof(CommandFunctionCABDBSAVE);
+        functions["CABDBGETREGISTEREDNAME"] = typeof(CommandFunctionCABDBGETREGISTEREDNAME);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

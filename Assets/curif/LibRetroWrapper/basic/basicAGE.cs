@@ -76,9 +76,9 @@ public class basicAGE : MonoBehaviour
                 ScreenGenerator scr = configCommands.ScreenGenerator;
                 scr.Clear();
                 scr.Print(0, 0, "Compilation error");
-                scr.Print(0, 1, filePath);
-                scr.Print(0, 2, $"Line: {prg.LastLineNumberParsed}");
-                scr.Print(0, 3, e.Message);
+                scr.Print(0, 1, $"Line: {prg.LastLineNumberParsed}");
+                scr.Print(0, 3, filePath);
+                scr.Print(0, 6, e.Message);
                 scr.DrawScreen();
             }
             ConfigManager.WriteConsoleException($"reading {filePath}\n Line: {prg.LastLineNumberParsed}", e);
@@ -118,7 +118,6 @@ public class basicAGE : MonoBehaviour
     }
     public void Run(string name, bool blocking = false)
     {
-
         if (!programs.ContainsKey(name))
             throw new Exception($"program {name} doesn't exists");
 
@@ -150,7 +149,6 @@ public class basicAGE : MonoBehaviour
             ConfigManager.WriteConsole($"{running.Name} END.");
             running = null;
         }
-
         return;
     }
 

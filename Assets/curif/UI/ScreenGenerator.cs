@@ -200,14 +200,15 @@ public class ScreenGenerator : MonoBehaviour
             if (index > 128)
                 index = characterPositionForNotFound;
             // Print the character to the screen using PrintChar method with inversion flag
-            if (charpos >= CharactersWidth - 1)
-            {
-                charpos = -1;
-                y++;
-            }
-            charpos++;
 
             PrintChar(charpos, y, index, inverted);
+            charpos++;
+            if (charpos >= CharactersWidth - 1)
+            {
+                charpos = 0;
+                y++;
+            }
+
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
 
