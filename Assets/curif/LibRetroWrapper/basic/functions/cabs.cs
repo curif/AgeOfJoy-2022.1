@@ -50,6 +50,7 @@ class CommandFunctionCABROOMREPLACE : CommandFunctionExpressionListBase
     {
         cmdToken = "CABROOMREPLACE";
     }
+    
     public override bool Parse(TokenConsumer tokens)
     {
         return Parse(tokens, 2);
@@ -70,13 +71,13 @@ class CommandFunctionCABROOMREPLACE : CommandFunctionExpressionListBase
         if (string.IsNullOrEmpty(roomName))
             return new BasicValue(0); //fail
 
-        string cabinetDBName = vals[1].GetValueAsString();
+        string cabinetDBName = vals[1].GetString();
         if (!config.GameRegistry.CabinetExists(cabinetDBName))
             return new BasicValue(0); //fail
 
-        bool result = config.CabinetsController.Replace((int)vals[0].GetValueAsNumber(),
-                                                        roomName,
-                                                        cabinetDBName);
+        bool result = config.CabinetsController.ReplaceInRoom((int)vals[0].GetNumber(),
+                                                                roomName,
+                                                                cabinetDBName);
 
         return new BasicValue(result ? 1 : 0);
     }

@@ -195,6 +195,39 @@ public class CabinetsController : MonoBehaviour
         return null;
     }
 
+    
+
+    public bool ReplaceInRoom(int position, string room, string cabinetDBName)
+    {
+        //replace in the registry
+        CabinetPosition toAdd = new();
+        toAdd.Room = room;
+        toAdd.Position = position;
+        toAdd.CabinetDBName = cabinetDBName;
+
+        //get cabinetReplace component first.
+        CabinetReplace cr = GetCabinetReplaceByPosition(position);
+        if (cr != null)
+        {
+            ConfigManager.WriteConsole($"[CabinetController.ReplaceInRoom] replacing a cabinet by [{toAdd}]");
+            cr.ReplaceWith(toAdd);
+            return true;
+        }
+        else
+        {
+            CabinetController cc = GetCabinetControllerByPosition(position);
+            if (cc != null)
+            {
+                //its a non-loaded cabinet. It will load just with the assignment
+                ConfigManager.WriteConsole($"[CabinetController.ReplaceInRoom] adding [{toAdd}] to a not-loaded cabinet. It will load soon...");
+                cc.game = toAdd;
+                return true;
+            }
+        }
+        ConfigManager.WriteConsoleError($"[CabinetController.ReplaceInRoom] no cabinet found to replace by [{toAdd}]");
+        return false;
+    }
+
     public bool Replace(int position, string room, string cabinetDBName)
     {
         //replace in the registry
@@ -207,26 +240,6 @@ public class CabinetsController : MonoBehaviour
         ConfigManager.WriteConsole($"[CabinetsController.Replace] [{toBeReplaced}] by [{toAdd}] ");
         gameRegistry.Replace(toBeReplaced, toAdd); //persists changes
 
-        //get cabinetReplace component first.
-        CabinetReplace cr = GetCabinetReplaceByPosition(position);
-        if (cr != null)
-        {
-            ConfigManager.WriteConsole($"[CabinetController.Replace] replacing a cabinet by [{toAdd}]");
-            cr.ReplaceWith(toAdd);
-            return true;
-        }
-        else
-        {
-            CabinetController cc = GetCabinetControllerByPosition(position);
-            if (cc != null)
-            {
-                //its a non-loaded cabinet. It will load just with the assignment
-                ConfigManager.WriteConsole($"[CabinetController.Replace] adding [{toAdd}] to a not-loaded cabinet. It will load soon...");
-                cc.game = toAdd;
-                return true;
-            }
-        }
-        ConfigManager.WriteConsoleError($"[CabinetController.Replace] no cabinet found to replace by [{toAdd}]");
-        return false;
+        return ReplaceInRoom(position, room, cabinetDBName);
     }
 }

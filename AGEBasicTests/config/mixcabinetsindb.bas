@@ -2,6 +2,7 @@
 20 LET totalRooms = RoomCount()
 30 LET totalCabinetsDB = CabDbCount()
 35 LET cont = 0
+37 LET playerRoom = RoomName()
 
 40 REM Loop through each room
 50 FOR roomIndex = 0 TO totalRooms - 1
@@ -21,12 +22,15 @@
 
 120        REM Replace the cabinet in the current room with the random cabinet
 
+129        REM is a cabinet assigned? we need one to proceed to change it.
 130        if CabDBGetAssigned(currentRoomName, cabinetIndex) = "" then goto 170
 
-139        REM the position have a cabinet registered.
-140        REM CALL CabDBDelete(currentRoomName, cabinetIndex)
-150        REM CALL CabDBAdd(currentRoomName, cabinetIndex, newCabinetName)
-155        CALL CabDBAssign(currentRoomName, cabinetIndex, newCabinetName)
+139        rem change the database by assining the cabinet on the old position
+140        CALL CabDBAssign(currentRoomName, cabinetIndex, newCabinetName)
+
+149        rem change in current playerRoom if it is the same to see it inmediatly
+150        if playerRoom = currentRoomName then call CabRoomReplace(cabinetIndex, newCabinetName)
+
 160        let cont=cont+1
 
 170    NEXT cabinetIndex
