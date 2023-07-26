@@ -20,6 +20,9 @@ public class BasicVar
     {
         name = name.ToUpper();
 
+        if (Commands.IsCommand(name) || Commands.IsFunction(name))
+            return false;
+
         if (string.IsNullOrEmpty(name))
             return false;
 

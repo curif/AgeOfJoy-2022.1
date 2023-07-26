@@ -20,7 +20,7 @@ class CommandLET : ICommandBase
     {
         // LET var = expr
         if (!BasicVar.IsVariable(tokens.Token))
-            throw new Exception($"{tokens.Token} isn't a valid variable (LET)");
+            throw new Exception($"{tokens.Token} isn't a valid variable name (LET)");
 
         var = new(tokens.Token);
 

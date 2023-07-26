@@ -27,7 +27,7 @@ class CommandLETS : ICommandBase
         while (idx < 30)
         {
             if (!BasicVar.IsVariable(tokens.Token))
-                throw new Exception($"{tokens.Token} isn't a valid variable (LETS)");
+                throw new Exception($"{tokens.Token} isn't a valid variable name (LETS)");
 
             var[idx] = new(tokens.Token);
             idx++;
