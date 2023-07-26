@@ -177,15 +177,15 @@ class CommandFunctionCABDBADD : CommandFunctionExpressionListBase
         cabpos.Room = room;
         config.GameRegistry.Add(cabpos); //throws when repeated
 
-        return ret.SetValue(1);
+        return null;
     }
 }
 
-class CommandFunctionCABDBSET : CommandFunctionExpressionListBase
+class CommandFunctionCABDBASSIGN : CommandFunctionExpressionListBase
 {
-    public CommandFunctionCABDBSET(ConfigurationCommands config) : base(config)
+    public CommandFunctionCABDBASSIGN(ConfigurationCommands config) : base(config)
     {
-        cmdToken = "CommandFunctionCABDBSET";
+        cmdToken = "CABDBASSIGN";
     }
     public override bool Parse(TokenConsumer tokens)
     {
@@ -207,21 +207,19 @@ class CommandFunctionCABDBSET : CommandFunctionExpressionListBase
         string room = vals[0].GetValueAsString();
         int position = (int)vals[1].GetValueAsNumber();
 
-        CabinetPosition cabpos = new();
-        cabpos.CabinetDBName = vals[2].GetValueAsString();
-        cabpos.Position = position;
-        cabpos.Room = room;
-        config.GameRegistry.Add(cabpos); //throws when repeated
+        config.GameRegistry.AssignOrAddCabinet(vals[0].GetString(), 
+                                                (int)vals[1].GetNumber(), 
+                                                vals[2].GetString());
 
-        return ret.SetValue(1);
+        return null;
     }
 }
 
-class CommandFunctionCABDBGETREGISTEREDNAME : CommandFunctionExpressionListBase
+class CommandFunctionCABDBGETASSIGNED : CommandFunctionExpressionListBase
 {
-    public CommandFunctionCABDBGETREGISTEREDNAME(ConfigurationCommands config) : base(config)
+    public CommandFunctionCABDBGETASSIGNED(ConfigurationCommands config) : base(config)
     {
-        cmdToken = "CommandFunctionCABDBGETREGISTEREDNAME";
+        cmdToken = "CommandFunctionCABDBGETASSIGNED";
     }
     public override bool Parse(TokenConsumer tokens)
     {
@@ -239,8 +237,8 @@ class CommandFunctionCABDBGETREGISTEREDNAME : CommandFunctionExpressionListBase
         FunctionHelper.ExpectedString(vals[0], " - room name");
         FunctionHelper.ExpectedNumber(vals[1], " - cabinet position");
 
-        string room = vals[0].GetValueAsString();
-        int position = (int)vals[1].GetValueAsNumber();
+        string room = vals[0].GetString();
+        int position = (int)vals[1].GetNumber();
 
         CabinetPosition cabPos = config.GameRegistry.GetCabinetPositionInRoom(position, room);
         if (cabPos == null)

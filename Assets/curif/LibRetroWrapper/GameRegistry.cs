@@ -214,6 +214,31 @@ public class GameRegistry : MonoBehaviour
         cabinetsPosition.Persist();
         return this;
     }
+    public void AssignOrAddCabinet(string room, int position, string cabinetDBName)
+    {
+        // Check if the cabinet already exists in the specified room and position
+        CabinetPosition existingCabinet = cabinetsPosition.Registry.FirstOrDefault(cabPos =>
+            string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase) &&
+            cabPos.Position == position);
+
+        if (existingCabinet != null)
+        {
+            // Update the CabinetDBName of the existing cabinet
+            existingCabinet.CabinetDBName = cabinetDBName;
+        }
+        else
+        {
+            // If the cabinet doesn't exist, create a new one and add it to the list
+            CabinetPosition newCabinet = new CabinetPosition
+            {
+                CabinetDBName = cabinetDBName,
+                Room = room,
+                Position = position
+            };
+
+            cabinetsPosition.Registry.Add(newCabinet);
+        }
+    }
 
     public bool RomInRoom(string rom)
     {

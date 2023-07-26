@@ -21,12 +21,12 @@
 
 120        REM Replace the cabinet in the current room with the random cabinet
 
-130        if CabDBGetRegisteredName(currentRoomName, cabinetIndex) = "" then goto 170
+130        if CabDBGetAssigned(currentRoomName, cabinetIndex) = "" then goto 170
 
 139        REM the position have a cabinet registered.
-140        CALL CabDBDelete(currentRoomName, cabinetIndex)
-150        CALL CabDBAdd(currentRoomName, cabinetIndex, newCabinetName)
-
+140        REM CALL CabDBDelete(currentRoomName, cabinetIndex)
+150        REM CALL CabDBAdd(currentRoomName, cabinetIndex, newCabinetName)
+155        CALL CabDBAssign(currentRoomName, cabinetIndex, newCabinetName)
 160        let cont=cont+1
 
 170    NEXT cabinetIndex
