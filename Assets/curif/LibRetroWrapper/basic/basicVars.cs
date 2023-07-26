@@ -17,6 +17,7 @@ public class BasicVars
     }
     public BasicValue GetValue(string name)
     {
+        name = name.ToUpper();
         if (!vars.ContainsKey(name))
             throw new Exception($"variable '{name}' not defined");
 
@@ -34,12 +35,22 @@ public class BasicVars
         return val;
     }
 
-
     public void Clean()
     {
         vars = new();
     }
 
+    public void Remove(string name)
+    {
+        name = name.ToUpper();
+        if (vars.ContainsKey(name))
+            vars.Remove(name);
+    }
+    public void Remove(BasicVar var)
+    {
+        vars.Remove(var.Name);
+    }
+    
     public override string ToString()
     {
         string str = "";

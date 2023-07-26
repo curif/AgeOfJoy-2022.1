@@ -32,30 +32,33 @@ class CommandNEXT : ICommandBase
         ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}]");
 
         if (!config.ForToNext.ContainsKey(var.Name))
-            throw new Exception("NEXT without FOR");
+            throw new Exception($"NEXT without FOR: {var.Name}");
 
         forToStorage ft = config.ForToNext[var.Name];
 
         BasicValue endValue = ft.endExpr.Execute(vars);
-        FunctionHelper.ExpectedNumber(endValue, "- TO must have an expression or number");
+        FunctionHelper.ExpectedNumber(endValue, "- TO must compute to expression or number");
 
-        BasicValue actualValue = vars.GetValue(ft.var);
-        FunctionHelper.ExpectedNumber(actualValue, "- FOR must have an expression or number");
+        BasicValue actualValue = vars.GetValue(var);
+        FunctionHelper.ExpectedNumber(actualValue, "- FOR must compute to expression or number");
 
-        double actual = actualValue.GetValueAsNumber() + 1;
-        double end = endValue.GetValueAsNumber();
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name}: {actual} to {end}");
-
-        actualValue.SetValue(actual);
-        vars.SetValue(ft.var, actualValue);
-
-        if (actual > end)
+        double step = 1;
+        if (ft.stepExpr != null)
         {
-            config.ForToNext.Remove(var.Name);
-            return null;
+            BasicValue stepValue = ft.stepExpr.Execute(vars);
+            FunctionHelper.ExpectedNumber(stepValue, "- STEP must compute to expression or number");
+            step = stepValue.GetNumber();
         }
 
-        config.JumpNextTo = ft.lineNumber;
+        //it's faster than create a new instance and assign to the vars dic.
+        actualValue.SetValue(actualValue.GetNumber() + step);
+        // vars.SetValue(var, actualValue);
+        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name}: {actualValue.ToString()} to {endValue.ToString()} step {step}");
+
+        if (actualValue > endValue)
+            config.ForToNext.Remove(var.Name);
+        else
+            config.JumpNextTo = ft.lineNumber;
 
         return null;
     }

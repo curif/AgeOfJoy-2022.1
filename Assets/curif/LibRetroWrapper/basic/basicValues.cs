@@ -53,9 +53,7 @@ public class BasicValue
 
     public BasicValue(BasicValue val)
     {
-        this.type = val.type;
-        this.number = val.number;
-        this.str = val.str;
+        SetValue(val);
     }
 
     //strings could be surrounded by "
@@ -83,10 +81,17 @@ public class BasicValue
         }
 
         SetValue(str);
-        
+
         return;
     }
 
+    public BasicValue SetValue(BasicValue val)
+    {
+        this.type = val.type;
+        this.number = val.number;
+        this.str = val.str;
+        return this;
+    }
     public BasicValue SetValue(double val)
     {
         this.number = val;
@@ -114,6 +119,16 @@ public class BasicValue
         return str;
     }
 
+    public double GetNumber()
+    {
+        return number;
+    }
+
+    public string GetString()
+    {
+        return str;
+    }
+
     public BasicValueType Type()
     {
         return this.type;
@@ -132,7 +147,7 @@ public class BasicValue
             bool isParsableToDouble = double.TryParse(this.str, out valueDouble);
             if (!isParsableToDouble)
                 throw new Exception($" string value {this.str} can't be casted to double");
-            
+
             this.number = valueDouble;
             this.type = BasicValueType.Number;
         }

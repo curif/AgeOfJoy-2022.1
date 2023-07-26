@@ -9,6 +9,7 @@ public class CommandExpression : ICommandBase
     public CommandType.Type Type { get; } = CommandType.Type.Expression;
 
     ConfigurationCommands config;
+    HashSet<string> constantStoppers;
 
     private class Element
     {
@@ -96,6 +97,7 @@ public class CommandExpression : ICommandBase
     public CommandExpression(ConfigurationCommands config)
     {
         this.config = config;
+        this.constantStoppers = new HashSet<string> { ")", ",", "THEN", "TO", "STEP" };
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -147,12 +149,7 @@ public class CommandExpression : ICommandBase
                 case CommandType.Type.Unknown:
                     throw new Exception($"invalid expression {tokens.ToString()}");
             }
-        } while (tokens.Next() != null &&
-                tokens.Token != ")" &&
-                tokens.Token != "," &&
-                tokens.Token.ToUpper() != "THEN" &&
-                tokens.Token.ToUpper() != "TO"
-                );
+        } while (tokens.Next() != null && !constantStoppers.Contains(tokens.Token.ToUpper()));
 
         ConfigManager.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
         return true;

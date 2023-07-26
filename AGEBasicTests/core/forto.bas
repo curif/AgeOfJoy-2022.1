@@ -14,5 +14,14 @@
 160 next j
 
 170 if nested != ",[j=0, h=0],[j=0, h=1],[j=0, h=2],[j=0, h=3],[j=1, h=0],[j=1, h=1],[j=1, h=2],[j=1, h=3],[j=2, h=0],[j=2, h=1],[j=2, h=2],[j=2, h=3],[j=3, h=0],[j=3, h=1],[j=3, h=2],[j=3, h=3],[j=4, h=0],[j=4, h=1],[j=4, h=2],[j=4, h=3],[j=5, h=0],[j=5, h=1],[j=5, h=2],[j=5, h=3]" then let ERROR = "nexted error"
+180 if exists("error") then end
 
-180 END
+200 REM STEP
+210 let strstep = ""
+220 for z = 1 - 1 to 100 / 10 step 1 + 1
+230    let strstep = strstep + "," + str(z)
+240 next z
+250 if strstep != ",0,2,4,6,8,10" then let error = "step fails"
+
+
+1800 END

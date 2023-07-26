@@ -6,7 +6,8 @@ public class forToStorage
 {
     public int lineNumber;
     public CommandExpression endExpr;
-    public BasicVar var;
+    public CommandExpression stepExpr;
+
 }
 
 class CommandFORTO : ICommandBase
@@ -16,6 +17,7 @@ class CommandFORTO : ICommandBase
 
     CommandExpression expr;
     CommandExpression exprTo;
+    CommandExpression exprStep;
     BasicVar var;
 
     ConfigurationCommands config;
@@ -24,6 +26,7 @@ class CommandFORTO : ICommandBase
         this.config = config;
         expr = new(config);
         exprTo = new(config);
+        exprStep = null;
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -35,7 +38,7 @@ class CommandFORTO : ICommandBase
 
         if (tokens.Next("=") == null)
             throw new Exception($"malformed FOR/TO missing [=] var: {var.ToString()}");
-        
+
         tokens++;
         expr.Parse(tokens);
 
@@ -45,6 +48,13 @@ class CommandFORTO : ICommandBase
         tokens++;
         exprTo.Parse(tokens);
 
+        if (tokens.Token.ToUpper() == "STEP")
+        {
+            tokens++;
+            exprStep = new(config);
+            exprStep.Parse(tokens);
+        }
+
         return true;
     }
 
@@ -52,7 +62,7 @@ class CommandFORTO : ICommandBase
     public BasicValue Execute(BasicVars vars)
     {
         ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}]");
-        
+
         BasicValue startVal = new(expr.Execute(vars));
         FunctionHelper.ExpectedNumber(startVal, "- FOR must have an expression or number");
 
@@ -61,9 +71,9 @@ class CommandFORTO : ICommandBase
         forToStorage ft = new();
         ft.lineNumber = config.LineNumber;
         ft.endExpr = exprTo;
-        ft.var = var;
+        ft.stepExpr = exprStep;
 
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{ft.var.Name} from {startVal.ToString()} expr:({expr.ToString()}) to expr: ({exprTo.ToString()})  lineNumber:{ft.lineNumber}");
+        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name} from {startVal.ToString()} expr:({expr.ToString()}) to expr: ({exprTo.ToString()})  lineNumber:{ft.lineNumber}");
         config.ForToNext[var.Name] = ft;
 
         return null;
