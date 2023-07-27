@@ -62,7 +62,8 @@ public static class Commands
         functions["ROOMGET"] = typeof(CommandFunctionROOMGET);
         functions["ROOMGETNAME"] = typeof(CommandFunctionROOMGETNAME);
         functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
-
+        functions["ROOMTELEPORT"] = typeof(CommandFunctionROOMTELEPORT);
+        
         //Controllers
         functions["CONTROLACTIVE"] = typeof(CommandFunctionCONTROLACTIVE);
 

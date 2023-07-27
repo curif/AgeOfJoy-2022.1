@@ -155,3 +155,31 @@ class CommandFunctionROOMGET : CommandFunctionSingleExpressionBase, ICommandFunc
         return ret;
     }
 }
+
+
+class CommandFunctionROOMTELEPORT : CommandFunctionSingleExpressionBase
+{
+
+    public CommandFunctionROOMTELEPORT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ROOMTELEPORT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        if (config?.Teleportation == null)
+            throw new Exception("teleportation capability not available");
+        
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val, " - room name");
+        
+        string scene = val.GetString();
+        SceneDocument toScene = config.SceneDatabase.FindByName(scene);
+        if (toScene == null)
+            throw new Exception($"unknown room to teleport: {scene} ");
+
+        config.Teleportation.Teleport(toScene);
+
+        return null;
+    }
+}

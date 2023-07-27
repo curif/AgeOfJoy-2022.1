@@ -7,6 +7,7 @@ public class ConfigurationCommands
     public ConfigurationController ConfigurationController = null;
     public ScreenGenerator ScreenGenerator = null;
     public SceneDatabase SceneDatabase = null;
+    public Teleportation Teleportation = null;
 
     public Stack<int> Gosub = new Stack<int>();
     public int LineNumber; //in execution

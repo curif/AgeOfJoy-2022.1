@@ -18,6 +18,8 @@ public class basicAGE : MonoBehaviour
     public ScreenGenerator ScreenGenerator;
     public GameRegistry GameRegistry;
     public CabinetsController CabinetsController;
+    public Teleportation Teleportation;
+
     public SceneDatabase SceneDatabase = null;
 
 #if UNITY_EDITOR
@@ -41,12 +43,16 @@ public class basicAGE : MonoBehaviour
             SceneDatabase = roomInit.GetComponent<SceneDatabase>();
         if (GameRegistry == null && roomInit != null)
             GameRegistry = roomInit.GetComponent<GameRegistry>();
+        if (Teleportation == null)
+            Teleportation = GetComponent<Teleportation>();
 
         configCommands.ConfigurationController = ConfigurationController;
         configCommands.ScreenGenerator = ScreenGenerator;
         configCommands.SceneDatabase = SceneDatabase;
         configCommands.CabinetsController = CabinetsController;
         configCommands.GameRegistry = GameRegistry;
+        configCommands.Teleportation = Teleportation;
+
     }
 
     public void ParseFiles(string folderPath)

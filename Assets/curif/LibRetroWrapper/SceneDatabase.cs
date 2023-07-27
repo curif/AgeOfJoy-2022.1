@@ -29,9 +29,18 @@ public class SceneDatabase : MonoBehaviour
 
     public SceneDocument FindByName(string sceneName)
     {
-        return Scenes.FirstOrDefault(scene => scene.SceneName == sceneName);
+        return Scenes.FirstOrDefault(scene =>
+                    string.Equals(scene.SceneName, sceneName, StringComparison.OrdinalIgnoreCase)
+                );
     }
 
+    public SceneDocument FindByDescription(string sceneDescription)
+    {
+        return Scenes.FirstOrDefault(scene => 
+                    string.Equals(scene.Description, sceneDescription, StringComparison.OrdinalIgnoreCase)
+                    );
+    }
+    
     public bool Exists(string sceneName)
     {
         return FindByName(sceneName) != null;
@@ -39,15 +48,11 @@ public class SceneDatabase : MonoBehaviour
 
     public SceneDocument ByIdx(int idx)
     {
-        if (idx >= Scenes.Length )
+        if (idx >= Scenes.Length)
             return null;
         return Scenes[idx];
     }
-    
-    public SceneDocument FindByDescription(string sceneDescription)
-    {
-        return Scenes.FirstOrDefault(scene => scene.Description == sceneDescription);
-    }
+
     public List<SceneDocument> GetTeleportationDestinationRooms()
     {
         return Scenes.Where(scene => !string.IsNullOrEmpty(scene.PlayerSpawnGameObjectName)).ToList();
@@ -66,6 +71,6 @@ public class SceneDatabase : MonoBehaviour
             .Select(scene => scene.Description)
             .ToList();
     }
-    
+
 }
 
