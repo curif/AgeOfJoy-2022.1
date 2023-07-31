@@ -8,6 +8,58 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
+public class CompilationException : Exception
+{
+    public int LineNumber;
+    public string Program;
+    public CompilationException(string program, int lineNumber, string message) : base(message)
+    {
+        LineNumber = lineNumber;
+        Program = program;
+    }
+
+    public CompilationException(string program, int lineNumber,
+                                string message, Exception innerException) : base(message, innerException)
+    {
+        LineNumber = lineNumber;
+        Program = program;
+    }
+
+    public void Show(ScreenGenerator scr)
+    {
+        scr.Clear();
+        scr.Print(0, 0, "Compilation error");
+        scr.Print(0, 1, $"Line: {LineNumber}");
+        scr.Print(0, 3, Program);
+        scr.Print(0, 6, Message);
+        scr.DrawScreen();
+    }
+}
+
+public class RuntimeException : Exception
+{
+    public int LineNumber;
+    public string Program;
+    public RuntimeException(string program, int lineNumber, string message) : base(message)
+    {
+        LineNumber = lineNumber;
+        Program = program;
+    }
+
+    public RuntimeException(string program, int lineNumber,
+                                string message, Exception innerException) : base(message, innerException)
+    {
+        LineNumber = lineNumber;
+        Program = program;
+    }
+    public override string ToString()
+    {
+        string str = $"COMPILATION ERROR: {Program} \n line: {LineNumber}\n";
+        str += $"Exception: {Message}\n";
+        return str;
+    }
+}
+
 public class basicAGE : MonoBehaviour
 {
     //program list
@@ -28,6 +80,8 @@ public class basicAGE : MonoBehaviour
 #endif 
 
     ConfigurationCommands configCommands = new();
+
+    public RuntimeException LastRuntimeException;
 
     public void Start()
     {
@@ -64,10 +118,12 @@ public class basicAGE : MonoBehaviour
         {
             ConfigManager.WriteConsole($"[basicAge.ProcessFiles] {filePath}");
             ParseFile(filePath);
+            // if (configCommands.ScreenGenerator != null)
+            // ce.Show(configCommands.ScreenGenerator);
         }
     }
 
-    private void ParseFile(string filePath)
+    public void ParseFile(string filePath)
     {
         string name = Path.GetFileName(filePath);
         AGEProgram prg = new(name);
@@ -77,17 +133,12 @@ public class basicAGE : MonoBehaviour
         }
         catch (Exception e)
         {
-            if (configCommands.ScreenGenerator != null)
-            {
-                ScreenGenerator scr = configCommands.ScreenGenerator;
-                scr.Clear();
-                scr.Print(0, 0, "Compilation error");
-                scr.Print(0, 1, $"Line: {prg.LastLineNumberParsed}");
-                scr.Print(0, 3, filePath);
-                scr.Print(0, 6, e.Message);
-                scr.DrawScreen();
-            }
-            ConfigManager.WriteConsoleException($"reading {filePath}\n Line: {prg.LastLineNumberParsed}", e);
+            CompilationException ce = new CompilationException(
+                filePath,
+                prg.LastLineNumberParsed,
+                e.Message, e
+            );
+            throw ce;
         }
         programs[name] = prg;
     }
@@ -99,6 +150,7 @@ public class basicAGE : MonoBehaviour
             ConfigManager.WriteConsole($" {kvp.Key}");
         }
     }
+
 
     public List<string> GetParsedPrograms()
     {
@@ -112,7 +164,7 @@ public class basicAGE : MonoBehaviour
         return str;
     }
 
-    public bool NotRunning()
+    public bool Running()
     {
         return running == null;
     }
@@ -148,28 +200,15 @@ public class basicAGE : MonoBehaviour
                 {
                     string strerror = errorMessage(running, e);
                     ConfigManager.WriteConsoleError(strerror);
-                    showRuntimeExceptionOnScreen(e, running.Name);
+                    LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
                     running = null;
                 }
             }
             ConfigManager.WriteConsole($"{running.Name} END.");
             running = null;
+            LastRuntimeException = null;
         }
         return;
-    }
-
-    private void showRuntimeExceptionOnScreen(Exception e, string prgName)
-    {
-        if (configCommands.ScreenGenerator == null)
-            return;
-        ScreenGenerator scr = configCommands.ScreenGenerator;
-        string strerror = errorMessage(running, e);
-        scr.Clear();
-        scr.Print(0, 0, "runtime Exception");
-        scr.Print(0, 1, prgName);
-        scr.Print(0, 2, $"line: {configCommands.LineNumber}");
-        scr.Print(0, 3, e.Message);
-        scr.DrawScreen();
     }
 
     IEnumerator runProgram()
@@ -185,7 +224,7 @@ public class basicAGE : MonoBehaviour
             {
                 string strerror = errorMessage(running, e);
                 ConfigManager.WriteConsoleError(strerror);
-                showRuntimeExceptionOnScreen(e, running.Name);
+                LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
                 running = null;
                 yield break;
             }
@@ -193,6 +232,7 @@ public class basicAGE : MonoBehaviour
         }
         ConfigManager.WriteConsole($"{running.Name} END. {running.ContLinesExecuted} lines executed.");
         running = null;
+        LastRuntimeException = null;
     }
 
 #if UNITY_EDITOR

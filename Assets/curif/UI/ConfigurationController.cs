@@ -147,8 +147,9 @@ public class ConfigurationController : MonoBehaviour
     //AGEBasic
     private GenericWidgetContainer AGEBasicContainer;
     private GenericOptions AGEBasicPrograms;
-    private DateTime timeoutAGEBasicRun;
-
+    private DateTime AGEBasicRunTimeout;
+    private CompilationException AGEBasicCompilationException;
+    private bool AGEBasicWaitForPressAKey = false;
 
 
     [Header("Tree")]
@@ -876,30 +877,62 @@ public class ConfigurationController : MonoBehaviour
 
     private void SetAGEBasicWidgets()
     {
-        if (AGEBasicContainer != null)
-        {
-            AGEBasic.ParseFiles(ConfigManager.AGEBasicDir);
-            AGEBasicPrograms.SetOptions(AGEBasic.GetParsedPrograms());
-            return;
-        }
-
         if (AGEBasic == null)
-        {
             AGEBasic = GetComponent<basicAGE>();
-            AGEBasic.ParseFiles(ConfigManager.AGEBasicDir);
+
+        if (AGEBasicContainer == null)
+        {
+            AGEBasicContainer = new(scr, "AGEBasicContainer");
+            AGEBasicPrograms = new GenericOptions(scr, "AGEBasicPrograms",
+                                    "program: ", null, 4, 6, maxLength: 26);
+            AGEBasicContainer.Add(new GenericWindow(scr, 2, 4, "AGEBasic", 37, 15, " AGEBasic "))
+                                .Add(AGEBasicPrograms)
+
+                                .Add(new GenericButton(scr, "run", "run", 4,
+                                    AGEBasicContainer.lastYAdded + 1, true))
+                                .Add(new GenericButton(scr, "Compile",
+                                                        "Compile all files again", 4,
+                                                        AGEBasicContainer.lastYAdded + 2, true))
+
+                                .Add(new GenericButton(scr, "RunTimeError",
+                                                        "show last runtime error", 4,
+                                                        AGEBasicContainer.lastYAdded + 1, true))
+                                .Add(new GenericButton(scr, "CompError",
+                                                        "show last compilation error", 4,
+                                                        AGEBasicContainer.lastYAdded + 1, true))
+
+                                .Add(new GenericButton(scr, "exit", "exit", 4,
+                                                        AGEBasicContainer.lastYAdded + 2, true))
+
+                                .Add(new GenericTimedLabel(scr, "RuntimeStatus",
+                                            "runtime error", 4,
+                                            AGEBasicContainer.lastYAdded + 2, true, false))
+                                .Add(new GenericTimedLabel(scr, "CompStatus",
+                                            "compilation error", 4,
+                                            AGEBasicContainer.lastYAdded + 1, true, false))
+                                .Add(new GenericLabel(scr, "lblpath", ConfigManager.AGEBasicDir, 0, 21, false));
         }
 
-        AGEBasicPrograms = new GenericOptions(scr, "AGEBasicPrograms",
-                                "program: ", AGEBasic.GetParsedPrograms(), 4, 6, maxLength: 26);
-        AGEBasicContainer = new(scr, "AGEBasicContainer");
-        AGEBasicContainer.Add(new GenericWindow(scr, 2, 4, "AGEBasic", 37, 12, " AGEBasic "))
-                            .Add(AGEBasicPrograms)
-                            .Add(new GenericButton(scr, "run", "run", 4, AGEBasicContainer.lastYAdded + 2, true))
-                            .Add(new GenericButton(scr, "exit", "exit", 4, AGEBasicContainer.lastYAdded + 1, true));
-
+        AGEBasicCompile();
+        return;
     }
 
-    private void runAGEBasicProgram()
+    private void AGEBasicCompile()
+    {
+        try
+        {
+            AGEBasic.ParseFiles(ConfigManager.AGEBasicDir);
+            AGEBasicCompilationException = null; 
+        }
+        catch (CompilationException ce)
+        {
+            ConfigManager.WriteConsoleException("[ParseFiles]", ce);
+            ((GenericTimedLabel)AGEBasicContainer.GetWidget("CompStatus")).Start(5);
+            AGEBasicCompilationException = ce;
+        }
+        AGEBasicPrograms.SetOptions(AGEBasic.GetParsedPrograms());
+    }
+    private void AGEBasicRun()
     {
         string program = AGEBasicPrograms.GetSelectedOption();
         AGEBasic.Run(program, blocking: false);
@@ -907,9 +940,45 @@ public class ConfigurationController : MonoBehaviour
     }
 
 
-    private void runAGEBasicWindowDraw()
+    private void AGEBasicShowLastCompilationError()
     {
         scr.Clear();
+        scr.Print(2, 24, "press b to continue");
+
+        if (AGEBasicCompilationException == null)
+        {
+            scr.Print(0, 0, "NO error", true);
+            return;
+        }
+        scr.Print(0, 0, "compilation error", true);
+        scr.Print(0, 1, AGEBasicCompilationException.Program);
+        scr.Print(0, 2, "line: " + AGEBasicCompilationException.LineNumber.ToString());
+        scr.Print(0, 3, AGEBasicCompilationException.Message);
+    }
+
+    private void AGEBasicShowLastRuntimeError()
+    {
+        scr.Clear();
+        if (AGEBasic.LastRuntimeException != null)
+        {
+            scr.Print(0, 0, "runtime error", true);
+            scr.Print(0, 1, AGEBasic.LastRuntimeException.Program);
+            scr.Print(0, 2, "line: " + AGEBasic.LastRuntimeException.LineNumber.ToString());
+            scr.Print(0, 3, AGEBasic.LastRuntimeException.Message);
+        }
+        else
+        {
+            scr.Print(0, 0, "NO error", true);
+        }
+        scr.Print(0, 24, "press b to continue");
+    }
+
+
+
+    private void AGEBasicWindowDraw()
+    {
+        scr.Clear();
+        AGEBasicContainer.SetOption(0);
         AGEBasicContainer.Draw();
 
         scr.Print(2, 23, "up/down/left/right to change");
@@ -1447,10 +1516,13 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On AGEBasic", () => status == StatusOptions.onRunAGEBasicRunning)
               .Do("Process", () =>
               {
-                  if (DateTime.Now > timeoutAGEBasicRun)
+                  if (DateTime.Now > AGEBasicRunTimeout)
                       AGEBasic.Stop();
-                  
-                  if (!AGEBasic.NotRunning())
+
+                  if (AGEBasic.LastRuntimeException != null)
+                      ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
+
+                  if (!AGEBasic.Running())
                       return TaskStatus.Continue;
 
                   status = StatusOptions.onRunAGEBasic;
@@ -1463,12 +1535,23 @@ public class ConfigurationController : MonoBehaviour
               .Do("Init", () =>
                 {
                     SetAGEBasicWidgets();
-                    runAGEBasicWindowDraw();
+                    AGEBasicWindowDraw();
                     scr.DrawScreen();
                     return TaskStatus.Success;
                 })
                 .Do("Process", () =>
                 {
+                    if (AGEBasicWaitForPressAKey)
+                    {
+                        if (ControlActive("JOYPAD_B"))
+                        {
+                            AGEBasicWaitForPressAKey = false;
+                            AGEBasicWindowDraw();
+                            scr.DrawScreen();
+                        }
+                        return TaskStatus.Continue;
+                    }
+
                     changeContainerSelection(AGEBasicContainer);
                     GenericWidget w = AGEBasicContainer.GetSelectedWidget();
                     if (w != null && ControlActive("JOYPAD_B"))
@@ -1480,12 +1563,29 @@ public class ConfigurationController : MonoBehaviour
                         }
                         else if (w.name == "run")
                         {
-                            runAGEBasicProgram();
-                            timeoutAGEBasicRun =  DateTime.Now.AddSeconds(60); //if not reach in time abort
+                            AGEBasicRun();
+                            AGEBasicRunTimeout = DateTime.Now.AddSeconds(60); //if not reach in time abort
                             status = StatusOptions.onRunAGEBasicRunning;
                             return TaskStatus.Success;
                         }
+                        else if (w.name == "Compile")
+                        {
+                            AGEBasicCompile();
+                        }
+                        else if (w.name == "CompError" || w.name == "RunTimeError")
+                        {
+                            AGEBasicWaitForPressAKey = true;
+                            if (w.name == "CompError")
+                                AGEBasicShowLastCompilationError();
+                            else
+                                AGEBasicShowLastRuntimeError();
+                            scr.DrawScreen();
+                            return TaskStatus.Continue;
+                        }
                     }
+
+                    AGEBasicContainer.GetWidget("CompStatus").Draw();
+                    AGEBasicContainer.GetWidget("RuntimeStatus").Draw();
                     scr.DrawScreen();
                     return TaskStatus.Continue;
                 })

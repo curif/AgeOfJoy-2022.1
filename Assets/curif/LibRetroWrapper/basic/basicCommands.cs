@@ -11,6 +11,7 @@ public static class Commands
     static Commands()
     {
         commands["REM"] = typeof(CommandREM);
+        commands["'"] = typeof(CommandREM2);
         commands["PRINT"] = typeof(CommandPRINT);
         commands["LET"] = typeof(CommandLET);
         commands["LETS"] = typeof(CommandLETS);

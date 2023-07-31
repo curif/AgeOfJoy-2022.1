@@ -7,14 +7,14 @@
 
 100 REM nested
 110 let nested = ""
-120 for j=0 to 5
-130    for h=0 to 3
+120 for j=0 to 5 ' external for
+130    for h=0 to 3 ' nested
 140         let nested = nested + ",[j=" + str(j) + ", h=" + str(h) +"]"
 150    next h
 160 next j
 
 170 if nested != ",[j=0, h=0],[j=0, h=1],[j=0, h=2],[j=0, h=3],[j=1, h=0],[j=1, h=1],[j=1, h=2],[j=1, h=3],[j=2, h=0],[j=2, h=1],[j=2, h=2],[j=2, h=3],[j=3, h=0],[j=3, h=1],[j=3, h=2],[j=3, h=3],[j=4, h=0],[j=4, h=1],[j=4, h=2],[j=4, h=3],[j=5, h=0],[j=5, h=1],[j=5, h=2],[j=5, h=3]" then let ERROR = "nexted error"
-180 if exists("error") then end
+180 if exists("error") then end 'finish when an error raise
 
 200 REM STEP
 210 let strstep = ""

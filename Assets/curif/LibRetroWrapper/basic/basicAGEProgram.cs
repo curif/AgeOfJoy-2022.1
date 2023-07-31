@@ -120,7 +120,7 @@ public class AGEProgram
 
     public string[] ParseLineOfCode(string codeLine)
     {
-        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|==|>|<)";
+        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|==|>|<|')";
         //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
 
         //string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<|\s+)";

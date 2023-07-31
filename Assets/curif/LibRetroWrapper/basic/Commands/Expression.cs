@@ -97,7 +97,7 @@ public class CommandExpression : ICommandBase
     public CommandExpression(ConfigurationCommands config)
     {
         this.config = config;
-        this.constantStoppers = new HashSet<string> { ")", ",", "THEN", "TO", "STEP" };
+        this.constantStoppers = new HashSet<string> { ")", ",", "'", "THEN", "TO", "STEP" };
     }
 
     public bool Parse(TokenConsumer tokens)

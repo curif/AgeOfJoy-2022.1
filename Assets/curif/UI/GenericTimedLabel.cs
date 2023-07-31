@@ -41,10 +41,15 @@ class GenericTimedLabel : GenericLabel
     // A method to set the seconds and start drawing again
     public void SetSecondsAndDraw(double seconds)
     {
+        Start(seconds);
+        Draw(); // Call the Draw method
+    }
+
+    public void Start(double seconds)
+    {
         startTime = DateTime.Now; // Set the start time to the current time
         this.seconds = seconds; // Set the seconds field
-        enabled = true; // Set the enabled property to true
-        Draw(); // Call the Draw method
+        enabled = true;
     }
 
     // A method to check if the time has elapsed and clear if so
