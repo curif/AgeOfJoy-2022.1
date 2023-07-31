@@ -124,8 +124,16 @@ public class GameRegistry : MonoBehaviour
         ConfigManager.WriteConsole($"[GameRegistry.Start] {cabinetsPosition.Registry.Count} cabinets from registry");
     }
 
-    public CabinetPosition Add(string cabinetDBName = null, string rom = null, string room = null, int position = 0, CabinetInformation cabInfo = null)
+    public CabinetPosition Add(string cabinetDBName = null, string rom = null,
+                                string room = null, int position = 0, CabinetInformation cabInfo = null)
     {
+        if (room != null)
+        {
+            CabinetPosition cabpos = GetCabinetPositionInRoom(position, room);
+            if (cabpos != null)
+                throw new Exception($"Can't add position taken in {room}-{position}");
+        }
+
         CabinetPosition g = new();
         g.Room = room;
         g.CabinetDBName = cabinetDBName;
@@ -156,9 +164,48 @@ public class GameRegistry : MonoBehaviour
 
     public CabinetPosition GetCabinetPositionInRoom(int position, string room)
     {
-        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(g => g.Position == position 
-                                                                            && string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase) );
+        CabinetPosition cabPos = cabinetsPosition.Registry.FirstOrDefault(
+            g => g.Position == position &&
+            string.Equals(g.Room, room, StringComparison.OrdinalIgnoreCase)
+        );
         return cabPos;
+    }
+
+    public CabinetPosition DeleteCabinetPositionInRoom(int position, string room)
+    {
+        CabinetPosition cabPos = GetCabinetPositionInRoom(position, room);
+        if (cabPos != null)
+            Remove(cabPos);
+        return cabPos;
+    }
+
+    public int GetCabinetsCountInRoom(string room)
+    {
+        // Use LINQ to count elements that match the condition
+        int count = cabinetsPosition.Registry.Count(cabPos =>
+            string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase));
+
+        return count;
+    }
+
+    public int CountRegistry()
+    {
+        return cabinetsPosition.Registry.Count;
+    }
+    public int CountCabinets()
+    {
+        try
+        {
+            // Get all directories in the specified path
+            string[] directories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB);
+            return directories.Length;
+        }
+        catch
+        {
+            // Handle any exception that might occur while accessing the directory
+            // For simplicity, this example logs the exception, but you can handle it differently based on your needs.
+            return -1; // Return a negative value to indicate an error occurred.
+        }
     }
 
     public GameRegistry Persist()
@@ -166,6 +213,31 @@ public class GameRegistry : MonoBehaviour
         //save to disk
         cabinetsPosition.Persist();
         return this;
+    }
+    public void AssignOrAddCabinet(string room, int position, string cabinetDBName)
+    {
+        // Check if the cabinet already exists in the specified room and position
+        CabinetPosition existingCabinet = cabinetsPosition.Registry.FirstOrDefault(cabPos =>
+            string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase) &&
+            cabPos.Position == position);
+
+        if (existingCabinet != null)
+        {
+            // Update the CabinetDBName of the existing cabinet
+            existingCabinet.CabinetDBName = cabinetDBName;
+        }
+        else
+        {
+            // If the cabinet doesn't exist, create a new one and add it to the list
+            CabinetPosition newCabinet = new CabinetPosition
+            {
+                CabinetDBName = cabinetDBName,
+                Room = room,
+                Position = position
+            };
+
+            cabinetsPosition.Registry.Add(newCabinet);
+        }
     }
 
     public bool RomInRoom(string rom)
@@ -197,6 +269,25 @@ public class GameRegistry : MonoBehaviour
                               select cab).ToList();
         return this;
     }
+
+    public string GetCabinetNameByPosition(int position)
+    {
+        if (position < 0)
+            throw new ArgumentException("Position must be a non-negative integer.");
+
+        // Get all cabinet directories sorted in alphabetical order
+        string[] cabinetDirectories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
+                                                        .OrderBy(path => path)
+                                                        .ToArray();
+
+        if (position >= cabinetDirectories.Length)
+            throw new ArgumentException($"Position {position} exceeds the number of cabinets: {cabinetDirectories.Length}.");
+
+        // Extract the cabinet name from the directory path
+        string cabinetName = CabinetDBAdmin.GetNameFromPath(cabinetDirectories[position]);
+        return cabinetName;
+    }
+
     private GameRegistry DeleteMissingCabinets()
     {
         List<string> cabsInDB = GetAllCabinetsName();
@@ -223,6 +314,12 @@ public class GameRegistry : MonoBehaviour
         return cabs;
     }
 
+    public bool CabinetExists(string cabinetName)
+    {
+        return Directory.EnumerateDirectories(ConfigManager.CabinetsDB)
+                        .Any(path => CabinetDBAdmin.GetNameFromPath(path) == cabinetName);
+    }
+
     public GameRegistry Recover()
     {
         cabinetsPosition = CabinetsPosition.ReadFromFile();
@@ -234,6 +331,7 @@ public class GameRegistry : MonoBehaviour
     {
         if (String.IsNullOrEmpty(room))
             return new List<string>();
+
         List<string> roms = new List<string>(
              from cabPos in cabinetsPosition.Registry
              where string.Equals(cabPos.Room, room, StringComparison.OrdinalIgnoreCase)
@@ -283,6 +381,7 @@ public class GameRegistry : MonoBehaviour
     {
         if (String.IsNullOrEmpty(room))
             return null;
+        room = room.ToUpper();
 
         Recover(); //user can modify it.
 
@@ -331,10 +430,10 @@ public class GameRegistry : MonoBehaviour
         Show();
 
         //load cabinets information
-        foreach (CabinetPosition cab in cabsPosition.Where(g => g.CabInfo == null))
+        /*foreach (CabinetPosition cab in cabsPosition.Where(g => g.CabInfo == null))
         {
 
-        }
+        }*/
 
         return cabsPosition;
     }

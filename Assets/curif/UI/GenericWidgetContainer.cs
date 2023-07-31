@@ -149,14 +149,11 @@ class GenericWidgetContainer : GenericWidget
             GenericWidget widget = widgets[i]; // Get the current widget
             if (widget.enabled)
             {
+                int xpos = widget.x > 1 ? widget.x - 1 : 0;
                 if (i == index) // If it is the selected widget
-                {
-                    screen.Print(widget.x - 1, widget.y, ">", true); // Print a ">" character before its x coordinate with normal colors
-                }
+                    screen.Print(xpos, widget.y, ">", true); // Print a ">" character before its x coordinate with normal colors
                 else
-                {
-                    screen.Print(widget.x - 1, widget.y, " ", false); // Print a space character before its x coordinate with normal colors
-                }
+                    screen.Print(xpos, widget.y, " ", false); // Print a space character before its x coordinate with normal colors
                 widget.Draw(); // Print the widget itself
             }
         }

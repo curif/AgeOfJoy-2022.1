@@ -11202,6 +11202,7 @@ Transform:
   - {fileID: 434999384}
   - {fileID: 901626422}
   - {fileID: 763409761}
+  - {fileID: 1341315382}
   m_Father: {fileID: 1915306329}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -17801,6 +17802,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4381534673091769565, guid: 5ffd0117f83717521bbbde94068c5ccd, type: 3}
   m_PrefabInstance: {fileID: 1327681569}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1341315381
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1341315382}
+  m_Layer: 0
+  m_Name: PlayerSpawnRoomInit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1341315382
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1341315381}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5.708, y: -0.43, z: 6.787}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1007060054}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1352715827
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18995,6 +19027,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1915306329}
     m_Modifications:
+    - target: {fileID: 49528823921596931, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: path
+      value: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\config
+      objectReference: {fileID: 0}
+    - target: {fileID: 49528823921596931, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: nameToExecute
+      value: mixcabinetsindb.bas
+      objectReference: {fileID: 0}
     - target: {fileID: 408782547812308882, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_Name
       value: ConfigurationCabinet
@@ -23326,6 +23366,7 @@ GameObject:
   - component: {fileID: 1915306332}
   - component: {fileID: 1915306333}
   - component: {fileID: 1915306334}
+  - component: {fileID: 1915306335}
   m_Layer: 0
   m_Name: RoomInit
   m_TagString: Untagged
@@ -23488,7 +23529,7 @@ MonoBehaviour:
       sceneAssetGuidHex: 64fd20b20f1ca8c889969d613bef4583
     SceneName: roominit
     Description: roominit - "The Lobby"
-    PlayerSpawnGameObjectName: 
+    PlayerSpawnGameObjectName: PlayerSpawnRoomInit
   - Scene:
       sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
       sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
@@ -23525,6 +23566,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e692b7af0199e124c8394215ec4054a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1915306335
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1915306328}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c272e5d2405d561449f9b7403b5af15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ConfigurationController: {fileID: 0}
+  ScreenGenerator: {fileID: 0}
+  GameRegistry: {fileID: 0}
+  CabinetsController: {fileID: 0}
+  Teleportation: {fileID: 0}
+  SceneDatabase: {fileID: 0}
+  nameToExecute: comments.bas
+  path: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\core
 --- !u!1 &1926537338
 GameObject:
   m_ObjectHideFlags: 0

@@ -22,9 +22,9 @@ public class ScreenGenerator : MonoBehaviour
 
     // The string that contains the list of characters in the same order as the font texture
     // the arroba means "no replace"
-    private string characterListOrder = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@@@_";
-    private string characterListOrderAlternate = "@abcdefghijklmnopqrstuvwxyz@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@@@_";
-    private int characterPositionForNotFound = 34; //" "
+    private string characterListOrder = "@ABCDEFGHIJKLMNOPQRSTUVWXYZ@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@@@_@@@@@@\\";
+    private string characterListOrderAlternate = "@abcdefghijklmnopqrstuvwxyz@@@@+ !\"#$%&'()*+,-./0123456789:;<=>?@@|@@@_@@@@@@\\";
+    private int characterPositionForNotFound = 32; //" "
 
     // The texture that represents the screen, it has 40x25 characters of capacity
     private Texture2D c64Screen;
@@ -185,6 +185,7 @@ public class ScreenGenerator : MonoBehaviour
         }
 
         // Loop through all the characters in the text string
+        int charpos = x;
         for (int i = 0; i < text.Length; i++)
         {
             // Get the current character from the text string
@@ -199,7 +200,15 @@ public class ScreenGenerator : MonoBehaviour
             if (index > 128)
                 index = characterPositionForNotFound;
             // Print the character to the screen using PrintChar method with inversion flag
-            PrintChar(x + i, y, index, inverted);
+
+            PrintChar(charpos, y, index, inverted);
+            charpos++;
+            if (charpos >= CharactersWidth - 1)
+            {
+                charpos = 0;
+                y++;
+            }
+
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
 
@@ -253,7 +262,7 @@ public class ScreenGenerator : MonoBehaviour
         }
 
         // Create a string of 40 characters using the given character
-        string text = new string(c, CharactersWidth);
+        string text = new string(c, CharactersWidth-1);
 
         // Print the text using the Print method with the x coordinate of 0
         Print(0, y, text, inverted);
