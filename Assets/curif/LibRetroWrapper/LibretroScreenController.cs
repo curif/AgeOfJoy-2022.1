@@ -241,7 +241,8 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
                       controlConf = new CustomControlMap(CabinetControlMapConfig);
                   }
-                  else if (GameControlMap.ExistsConfiguration(cabinetReplace.game.CabinetDBName))
+                  else if (!string.IsNullOrEmpty(cabinetReplace?.game?.CabinetDBName) &&
+                             GameControlMap.ExistsConfiguration(cabinetReplace.game.CabinetDBName))
                   {
                       ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {cabinetReplace.game.CabinetDBName}");
                       controlConf = new GameControlMap(cabinetReplace.game.CabinetDBName);
