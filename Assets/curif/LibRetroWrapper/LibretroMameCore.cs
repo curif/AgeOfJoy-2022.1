@@ -581,13 +581,13 @@ public static unsafe class LibretroMameCore
         retro_game_info game = new retro_game_info();
         game.path = path;
         game.size = 0;
-        
+
         //ligthgun
         int xy_device = 0;
-        if (lightGunTarget?.lightGunInformation != null && 
+        if (lightGunTarget?.lightGunInformation != null &&
             lightGunTarget.lightGunInformation.active)
             xy_device = 1;
-        
+
         WriteConsole($"[LibRetroMameCore.Start] wrapper_image_prev_load_game/retro_load_game - loading:{path}");
         wrapper_environment_set_game_parameters(
                                       Encoding.ASCII.GetBytes(Gamma),
@@ -850,42 +850,8 @@ public static unsafe class LibretroMameCore
 #endif
         //port: 0 device: 1 index: 0 id: 2 (select) Coin
 
-        if (device == RETRO_DEVICE_LIGHTGUN)
-        {
-            //WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
 
-            switch (id)
-            {
-                case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()} - port: {port}");
-                    ret = (CoinSlot != null && CoinSlot.takeCoin()) ||
-                            ControlMap.Active("INSERT") != 0 ? (Int16)1 : (Int16)0;
-                    break;
-                case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
-                    if (port != 0)
-                        return 1;
-                    
-                    lightGunTarget.Shoot();
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                    ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
-                    break;
-                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
-                    lightGunTarget.Shoot();
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                    ret = (Int16)lightGunTarget.HitX;
-                    break;
-                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
-                    lightGunTarget.Shoot();
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                    ret = (Int16)lightGunTarget.HitY;
-                    break;
-                default:
-                    ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} active: {ret} - port: {port}");
-                    break;
-            }
-        }
-        else if (device == RETRO_DEVICE_JOYPAD)
+        if (device == RETRO_DEVICE_JOYPAD)
         {
             //InputControlDebug(RETRO_DEVICE_JOYPAD);
             switch (id)
@@ -933,6 +899,43 @@ public static unsafe class LibretroMameCore
 
         }
 
+        else if (device == RETRO_DEVICE_LIGHTGUN &&
+            lightGunTarget?.lightGunInformation != null &&
+            lightGunTarget.lightGunInformation.active)
+        {
+            //WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
+
+            switch (id)
+            {
+                case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()} - port: {port}");
+                    ret = (CoinSlot != null && CoinSlot.takeCoin()) ||
+                            ControlMap.Active("INSERT") != 0 ? (Int16)1 : (Int16)0;
+                    break;
+                case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
+                    if (port != 0)
+                        return 1;
+
+                    lightGunTarget.Shoot();
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                    break;
+                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
+                    lightGunTarget.Shoot();
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    ret = (Int16)lightGunTarget.HitX;
+                    break;
+                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
+                    lightGunTarget.Shoot();
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    ret = (Int16)lightGunTarget.HitY;
+                    break;
+                default:
+                    ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} active: {ret} - port: {port}");
+                    break;
+            }
+        }
 #if _debug_fps_
       Profiling.input.Stop();
 #endif

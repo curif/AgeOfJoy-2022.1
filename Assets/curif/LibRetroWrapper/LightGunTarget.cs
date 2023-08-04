@@ -12,7 +12,7 @@ public class LightGunInformation
     public CRT crt = new();
     public Debug debug = new();
 
-    
+
     public class Debug
     {
         public bool active = false;
@@ -41,7 +41,7 @@ public class LightGunInformation
         public bool inverty = true;
     }
 
-    public LightGunInformation() {}
+    public LightGunInformation() { }
 
 }
 
@@ -130,7 +130,7 @@ public class LightGunTarget : MonoBehaviour
         if (showHitPosition)
         {
             hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            hitPosition.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f); // Adjust the size of the sphere as needed
+            hitPosition.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f); // Adjust the size of the sphere as needed
             hitPosition.GetComponent<Renderer>().material.color = Color.red;
             hitPosition.SetActive(false);
             hitPosition.transform.SetParent(transform);
@@ -158,7 +158,8 @@ public class LightGunTarget : MonoBehaviour
     {
         HitX = -0x8000;
         HitY = -0x8000;
-        hitPosition.SetActive(false);
+        if (showHitPosition)
+            hitPosition.SetActive(false);
         return;
     }
 

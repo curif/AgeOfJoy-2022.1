@@ -42,7 +42,7 @@ int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                             ) {
   memset(&handlers, 0, sizeof(struct handlers_struct));
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
-  control_type = _control_type;
+  
   handlers.log = log;
   char *core = "mame2003_plus_libretro_android.so";
   wrapper_environment_log(RETRO_LOG_INFO,
@@ -116,8 +116,8 @@ void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, in
 
   wrapper_environment_log(
       RETRO_LOG_INFO,
-      "[wrapper_environment_set_game_parameters] gamma: %s brightness: %s \n",
-      gamma, brightness);
+      "[wrapper_environment_set_game_parameters] gamma: %s brightness: %s XY control type: %i \n",
+      gamma, brightness, xy_control_type);
 }
 
 void wrapper_environment_get_av_info() {
