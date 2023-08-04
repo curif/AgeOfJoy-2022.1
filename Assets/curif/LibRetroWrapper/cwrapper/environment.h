@@ -17,7 +17,7 @@ extern "C" {
 
 int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                               char *_system_directory, char *_sample_rate);
-void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness);
+void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, int _xy_control_type);
 bool wrapper_environment_cb(unsigned cmd, void *data);
 enum retro_pixel_format wrapper_environment_get_pixel_format();
 char *wrapper_environment_log(enum retro_log_level, char *format, ...);

@@ -35,6 +35,9 @@ public class CabinetInformation
     [YamlMember(Alias = "controllers", ApplyNamingConventions = false)]
     public ControlMapConfiguration ControlMap;
 
+    [YamlMember(Alias = "light-gun", ApplyNamingConventions = false)]
+    public LightGunInformation lightGunInformation = new();
+
     [YamlIgnore]
     public string pathBase;
 

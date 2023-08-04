@@ -82,6 +82,8 @@ public class LibretroScreenController : MonoBehaviour
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
+    public LightGunInformation lightGunInformation;
+
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
 
@@ -157,6 +159,7 @@ public class LibretroScreenController : MonoBehaviour
         leftControl = GameObject.Find("LeftControl");
         */
         lightGunTarget = GetComponent<LightGunTarget>();
+        lightGunTarget.Init(lightGunInformation);
         lightGunTarget.spaceGun = changeControls.RightHand;
 
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
@@ -257,10 +260,12 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
                       controlConf = new GlobalControlMap();
                   }
-                  //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
-                  // ConfigManager.WriteConsole(controlConf.AsMarkdown());
+                //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
+                //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
                   libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
+
+                  lightGunTarget.Init(lightGunInformation);
                   LibretroMameCore.lightGunTarget = lightGunTarget;
 
                   // start libretro
@@ -274,10 +279,6 @@ public class LibretroScreenController : MonoBehaviour
 
                   //assign the gun once was enabled in PreparePlayerToPlayGame
                   lightGunTarget.spaceGun = changeControls.RightJoystick;
-                  lightGunTarget.showHitPossition = true;
-                  lightGunTarget.invertForward = true;
-                  lightGunTarget.InvertX = true;
-                  //   lightGunTarget.InvertY = GameInvertY;
 
                   return TaskStatus.Success;
               })

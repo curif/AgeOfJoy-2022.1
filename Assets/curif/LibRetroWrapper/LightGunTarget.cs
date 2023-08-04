@@ -1,19 +1,65 @@
-#define ON_DEBUG
+//#define ON_DEBUG
+
 using UnityEngine;
 using System;
+using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
+using YamlDotNet.Serialization.NamingConventions;
 
+public class LightGunInformation
+{
+    public bool active = false;
+    public Gun gun = new();
+    public CRT crt = new();
+    public Debug debug = new();
+
+    
+    public class Debug
+    {
+        public bool active = false;
+        public string model;
+    }
+    public class Gun
+    {
+        public string model;
+
+        [YamlMember(Alias = "invert-pointer", ApplyNamingConventions = false)]
+        public bool invertPointer = true;
+    }
+
+    public class CRT
+    {
+        [YamlMember(Alias = "mesh-factor-scale-x", ApplyNamingConventions = false)]
+        public float meshFactorScaleX = 0.01f;
+        [YamlMember(Alias = "mesh-factor-scale-y", ApplyNamingConventions = false)]
+        public float meshFactorScaleY = 0.01f;
+
+        [YamlMember(Alias = "border-size-x", ApplyNamingConventions = false)]
+        public float borderSizeX = 1.5f;
+        [YamlMember(Alias = "border-size-y", ApplyNamingConventions = false)]
+        public float borderSizeY = 1f;
+        public bool invertx = true;
+        public bool inverty = true;
+    }
+
+    public LightGunInformation() {}
+
+}
 
 // https://github.com/libretro/mame2003-plus-libretro/blob/89298ff12328433c7cdc63d38c65439079afcb5d/src/mame2003/mame2003.c#L1352
 // https://github.com/libretro/mame2003-plus-libretro/blob/master/src/mame2003/core_options.c#L66
 public class LightGunTarget : MonoBehaviour
 {
+
+    [Tooltip("Information from cabinet description. Transfered to others properties at Start")]
+    public LightGunInformation lightGunInformation;
+
     [Tooltip("the gun gameobject model")]
     public GameObject spaceGun; // The Space Gun GameObject
     [Tooltip("Invert to gun model forward.")]
     public bool invertForward = false;
 
     // Public properties to access the hit coordinates from other scripts if needed
-    [Tooltip("libretro shoot position X.(calculated)")]
+    [Tooltip("libretro shoot position X (calculated)")]
     public int HitX;
     [Tooltip("libretro shoot position Y (calculated).")]
     public int HitY;
@@ -24,11 +70,11 @@ public class LightGunTarget : MonoBehaviour
     private GameObject hitPosition;
 
     [Tooltip("show the debug ball.")]
-    public bool showHitPossition = false;
-    [Tooltip("Invert to negative the x point.")]
+    public bool showHitPosition = false;
+    [Tooltip("Invert to negative/positive the x point.")]
     public bool InvertX = true;
     [Tooltip("Invert to negative the y point.")]
-    public bool InvertY = false;
+    public bool InvertY = true;
 
     [Tooltip("Screen mesh scale factor to adjust in width.")]
     public float scaleFactorX = 0.01f;
@@ -44,18 +90,51 @@ public class LightGunTarget : MonoBehaviour
     float CRTAreaHeight; //new height after substract borders
     float factorX; //adjustment factor for hit point to translate to libretro width space
     float factorY; //adjustment factor for hit point to translate to libretro height space
-    const int virtualScreenWidth = 32768; //libretro constant width
-    const int virtualScreenHeight = 32768; //libretro constant height
 
-    void Start()
+    /*
+    It reports X/Y coordinates in screen space (similar to the pointer)
+    in the range [-0x8000, 0x7fff] in both axes, with zero being center and
+    -0x8000 being out of bounds.
+    [-0x7fff, 0x7fff]: -0x7fff corresponds to the far left/top of the screen,
+     and 0x7fff corresponds to the far right/bottom of the screen.
+    */
+    const int virtualScreenWidth = 32767; //libretro constant width
+    const int virtualScreenHeight = 32767; //libretro constant height
+
+    //to start the component only if light-gun is active for the game.
+    public void Init(LightGunInformation lightGunInfo)
     {
+        if (lightGunInfo == null || !lightGunInfo.active)
+            return;
+
+        lightGunInformation = lightGunInfo;
+
         layerMask = LayerMask.GetMask("CRT");
 
-        hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        hitPosition.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f); // Adjust the size of the sphere as needed
-        hitPosition.GetComponent<Renderer>().material.color = Color.red;
-        hitPosition.SetActive(false);
-        hitPosition.transform.SetParent(transform);
+        if (lightGunInformation != null)
+        {
+            borderSizeX = lightGunInformation.crt.borderSizeX;
+            borderSizeY = lightGunInformation.crt.borderSizeY;
+            scaleFactorX = lightGunInformation.crt.meshFactorScaleX;
+            scaleFactorY = lightGunInformation.crt.meshFactorScaleY;
+            InvertX = lightGunInformation.crt.invertx;
+            InvertY = lightGunInformation.crt.inverty;
+
+            showHitPosition = lightGunInformation.debug.active;
+            invertForward = lightGunInformation.gun.invertPointer;
+        }
+
+#if ON_DEBUG
+        showHitPosition = true;
+#endif
+        if (showHitPosition)
+        {
+            hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            hitPosition.transform.localScale = new Vector3(0.03f, 0.03f, 0.03f); // Adjust the size of the sphere as needed
+            hitPosition.GetComponent<Renderer>().material.color = Color.red;
+            hitPosition.SetActive(false);
+            hitPosition.transform.SetParent(transform);
+        }
 
         // Calculate the new x width after shrinking at both ends
         CRTAreaWidth = transform.localScale.x - -borderSizeX * 2;
@@ -63,12 +142,12 @@ public class LightGunTarget : MonoBehaviour
         //calculate the multiplication factor for the hit point after substract borders
         factorX = CRTAreaWidth / transform.localScale.x;
         factorY = CRTAreaHeight / transform.localScale.y;
+
     }
 
 #if ON_DEBUG
     void Update()
     {
-        showHitPossition = true;
         Shoot();
         if (OnScreen())
             ConfigManager.WriteConsole($"[LightGunTarget] {spaceGun.name}: Hitx:{HitX} Hitx:{HitY}");
@@ -128,7 +207,7 @@ public class LightGunTarget : MonoBehaviour
                     if (InvertY)
                         HitY = -HitY;
 
-                    if (showHitPossition)
+                    if (showHitPosition)
                     {
                         // hitPosition.transform.position = hit.point;
                         hitPosition.transform.localPosition = localHitPoint;
@@ -143,6 +222,7 @@ public class LightGunTarget : MonoBehaviour
                 return;
             }
         }
+
         // If the ray doesn't hit anything, reset the hit coordinates to out-of-bounds
         declareOutOfScreen();
 
@@ -156,10 +236,4 @@ public class LightGunTarget : MonoBehaviour
         Debug.DrawRay(spaceGun.transform.position, spaceGun.transform.forward * 100f, Color.red); // Change 100f to adjust the ray length
     }
 #endif
-
-    void OnDisable()
-    {
-        DestroyImmediate(hitPosition);
-    }
-
 }

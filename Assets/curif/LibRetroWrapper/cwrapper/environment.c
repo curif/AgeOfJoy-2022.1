@@ -18,6 +18,7 @@ static char sample_rate[50];
 static struct retro_game_geometry geometry;
 static struct retro_system_av_info av_info;
 static char log_buffer[LOG_BUFFER_SIZE];
+static int xy_control_type; //0 mouse, 1 ligthgun
 
 enum retro_pixel_format wrapper_environment_get_pixel_format() {
   return pixel_format;
@@ -37,10 +38,11 @@ char *wrapper_environment_log(enum retro_log_level level, char *format, ...) {
   return log_buffer;
 }
 int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
-                              char *_system_directory, char *_sample_rate) {
+                              char *_system_directory, char *_sample_rate
+                            ) {
   memset(&handlers, 0, sizeof(struct handlers_struct));
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
-
+  control_type = _control_type;
   handlers.log = log;
   char *core = "mame2003_plus_libretro_android.so";
   wrapper_environment_log(RETRO_LOG_INFO,
@@ -107,9 +109,11 @@ int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
 
 }
 
-void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness) {
+void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, int _xy_control_type) {
   strncpy(gamma, _gamma, 50);
   strncpy(brightness, _brightness, 50);
+  xy_control_type = _xy_control_type;
+
   wrapper_environment_log(
       RETRO_LOG_INFO,
       "[wrapper_environment_set_game_parameters] gamma: %s brightness: %s \n",
@@ -173,7 +177,10 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
                               "[wrapper_environment_cb] get var: %s", var->key);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
-      var->value = "lightgun";//"mouse";
+      if (xy_control_type == 0)
+        var->value = "mouse";
+      else   
+        var->value = "lightgun";
       wrapper_environment_log(RETRO_LOG_INFO,
                               "[wrapper_environment_cb] get var: %s", var->key);
       return true;

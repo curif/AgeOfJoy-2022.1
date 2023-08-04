@@ -273,7 +273,8 @@ public class Cabinet
                              string gamma = "1.0", string brightness = "1.0",
                              List<GameObject> agentPlayerPositions = null,
                              string shaderName = "damage", Dictionary<string, string> shaderConfig = null,
-                             ControlMapConfiguration cabinetControlMap = null
+                             ControlMapConfiguration cabinetControlMap = null,
+                             LightGunInformation lightGunInformation = null
                           )
     {
         string CRTType = $"screen-mock-{orientation}";
@@ -323,7 +324,7 @@ public class Cabinet
 
         //control mapping
         libretroScreenController.CabinetControlMapConfig = cabinetControlMap;
-
+        libretroScreenController.lightGunInformation = lightGunInformation;
         return this;
     }
 

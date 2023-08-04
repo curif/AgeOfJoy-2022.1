@@ -350,7 +350,7 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_init(logHandler lg, byte[] _save_directory, byte[] _system_directory, byte[] _sample_rate);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_environment_set_game_parameters(byte[] _gamma, byte[] _brightness);
+    private static extern void wrapper_environment_set_game_parameters(byte[] _gamma, byte[] _brightness, int xy_device);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_environment_get_av_info();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -581,11 +581,18 @@ public static unsafe class LibretroMameCore
         retro_game_info game = new retro_game_info();
         game.path = path;
         game.size = 0;
-
+        
+        //ligthgun
+        int xy_device = 0;
+        if (lightGunTarget?.lightGunInformation != null && 
+            lightGunTarget.lightGunInformation.active)
+            xy_device = 1;
+        
         WriteConsole($"[LibRetroMameCore.Start] wrapper_image_prev_load_game/retro_load_game - loading:{path}");
         wrapper_environment_set_game_parameters(
                                       Encoding.ASCII.GetBytes(Gamma),
-                                      Encoding.ASCII.GetBytes(Brightness));
+                                      Encoding.ASCII.GetBytes(Brightness),
+                                      xy_device);
         wrapper_image_prev_load_game(); //in order...
         GameLoaded = retro_load_game(ref game);
 
@@ -850,7 +857,7 @@ public static unsafe class LibretroMameCore
             switch (id)
             {
                 case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
-                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()} - port: {port}");
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()} - port: {port}");
                     ret = (CoinSlot != null && CoinSlot.takeCoin()) ||
                             ControlMap.Active("INSERT") != 0 ? (Int16)1 : (Int16)0;
                     break;
@@ -859,17 +866,17 @@ public static unsafe class LibretroMameCore
                         return 1;
                     
                     lightGunTarget.Shoot();
-                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
                     ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
                     lightGunTarget.Shoot();
-                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
                     ret = (Int16)lightGunTarget.HitX;
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
                     lightGunTarget.Shoot();
-                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
                     ret = (Int16)lightGunTarget.HitY;
                     break;
                 default:
