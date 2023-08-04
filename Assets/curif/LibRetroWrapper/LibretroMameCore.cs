@@ -69,6 +69,7 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_NONE = 0;
     public const uint RETRO_DEVICE_JOYPAD = 1;
     public const uint RETRO_DEVICE_MOUSE = 2;
+    public const uint RETRO_DEVICE_LIGHTGUN = 4;
     public const uint RETRO_DEVICE_ANALOG = 5;
     // public const uint RETRO_DEVICE_KEYBOARD   = 3;
     // public const uint RETROK_5              = 53;
@@ -112,11 +113,27 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_ID_MOUSE_BUTTON_4 = 9;
     public const uint RETRO_DEVICE_ID_MOUSE_BUTTON_5 = 10;
 
+    /* Id values for LIGHTGUN. */
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X = 13;     /* Absolute Position */
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y = 14;     /* Absolute */
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN = 15; /* Status Check */
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_TRIGGER = 2;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_RELOAD = 16;       /* Forced off-screen shot */
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_AUX_A = 3;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_AUX_B = 4;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_START = 6;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_SELECT = 7;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_AUX_C = 8;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP = 9;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN = 10;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT = 11;
+    public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT = 12;
+
     private static mameControls deviceIdsJoypad = null;
     private static mameControls deviceIdsMouse = null;
     private static mameControls deviceIdsAnalog = null;
+    private static mameControls deviceIdsLightGun = null;
     public static List<string> deviceIdsCombined = null;
-
 
     [DllImport("mame2003_plus_libretro_android")]
     private static extern void retro_set_controller_port_device(uint port, uint device);
@@ -310,6 +327,8 @@ public static unsafe class LibretroMameCore
     public static bool GameLoaded = false;
     static bool Initialized = false;
 
+    public static LightGunTarget lightGunTarget;
+
 #if _debug_fps_
     //Profiling
     static StopWatches Profiling;
@@ -360,6 +379,8 @@ public static unsafe class LibretroMameCore
         deviceIdsMouse = new();
         deviceIdsJoypad = new();
         deviceIdsAnalog = new();
+        deviceIdsLightGun = new();
+
         deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, "MOUSE_X");
         deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, "MOUSE_Y");
         deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, "MOUSE_LEFT");
@@ -391,16 +412,28 @@ public static unsafe class LibretroMameCore
         deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_X, "ANALOG_X");
         deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_Y, "ANALOG_Y");
 
-        //deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_MASK, "JOYPAD_MASK");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_A, "LIGHTGUN_AUX_A");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_B, "LIGHTGUN_AUX_B");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_C, "LIGHTGUN_AUX_C");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, "LIGHTGUN_DPAD_DOWN");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, "LIGHTGUN_DPAD_LEFT");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "LIGHTGUN_DPAD_RIGHT");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, "LIGHTGUN_DPAD_UP");
+        //deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN, "LIGHTGUN_AUX_A");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_RELOAD, "LIGHTGUN_RELOAD");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_SELECT, "LIGHTGUN_SELECT");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_START, "LIGHTGUN_START");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, "LIGHTGUN_TRIGGER");
 
         List<string> joy = deviceIdsJoypad.ControlsList();
         List<string> mouse = deviceIdsMouse.ControlsList();
+        List<string> light = deviceIdsLightGun.ControlsList();
 
         //analog isn't ready
         // List<string> analog = deviceIdsAnalog.ControlsList();
         // deviceIdsCombined = mouse.Concat(joy).Concat(analog).ToList();
 
-        deviceIdsCombined = mouse.Concat(joy).ToList();
+        deviceIdsCombined = mouse.Concat(joy).Concat(light).ToList();
     }
 
     static void assignControls()
@@ -414,6 +447,8 @@ public static unsafe class LibretroMameCore
         deviceIdsMouse.controlMap = ControlMap;
         ConfigManager.WriteConsole($"[initializeControls] JOYPAD: naming MAME controls (mapping libretro ids to control name)");
         deviceIdsJoypad.controlMap = ControlMap;
+        ConfigManager.WriteConsole($"[initializeControls] LIGTHGUN: naming MAME controls (mapping libretro ids to control name)");
+        deviceIdsLightGun.controlMap = ControlMap;
     }
 
     private class mameControls
@@ -452,7 +487,7 @@ public static unsafe class LibretroMameCore
                 return 0;
             }
             return (Int16)controlMap.Active(gameId, port);
-        } 
+        }
 
         public List<string> ControlsList()
         {
@@ -796,7 +831,10 @@ public static unsafe class LibretroMameCore
         else
             WriteConsole($"[inputStateCB] device unknown! {device}");
         */
-
+        /*
+        if (device == RETRO_DEVICE_LIGHTGUN)
+            WriteConsole($"[inputStateCB] dev {device} port {port} index:{index}");
+        */
         //if (port != 0)
         //    return ret;
 
@@ -805,7 +843,42 @@ public static unsafe class LibretroMameCore
 #endif
         //port: 0 device: 1 index: 0 id: 2 (select) Coin
 
-        if (device == RETRO_DEVICE_JOYPAD)
+        if (device == RETRO_DEVICE_LIGHTGUN)
+        {
+            //WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
+
+            switch (id)
+            {
+                case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
+                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()} - port: {port}");
+                    ret = (CoinSlot != null && CoinSlot.takeCoin()) ||
+                            ControlMap.Active("INSERT") != 0 ? (Int16)1 : (Int16)0;
+                    break;
+                case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
+                    if (port != 0)
+                        return 1;
+                    
+                    lightGunTarget.Shoot();
+                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                    break;
+                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
+                    lightGunTarget.Shoot();
+                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    ret = (Int16)lightGunTarget.HitX;
+                    break;
+                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
+                    lightGunTarget.Shoot();
+                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                    ret = (Int16)lightGunTarget.HitY;
+                    break;
+                default:
+                    ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} active: {ret} - port: {port}");
+                    break;
+            }
+        }
+        else if (device == RETRO_DEVICE_JOYPAD)
         {
             //InputControlDebug(RETRO_DEVICE_JOYPAD);
             switch (id)
@@ -836,18 +909,20 @@ public static unsafe class LibretroMameCore
 
                 default:
                     ret = (Int16)deviceIdsJoypad.Active(id, (int)port);
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
                     break;
             }
             // if (ret != 0)
-                // ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
+            // ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
         }
 
         else if (device == RETRO_DEVICE_MOUSE)
         {
             //InputControlDebug(RETRO_DEVICE_MOUSE);
             ret = (Int16)deviceIdsMouse.Active(id, (int)port);
+            // WriteConsole($"[inputStateCB] RETRO_DEVICE_MOUSE_???: id: {id} active: {ret} - port: {port}");
             // if (ret != 0)
-                // ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
+            // ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
 
         }
 

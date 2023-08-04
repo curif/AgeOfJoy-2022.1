@@ -173,7 +173,7 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
                               "[wrapper_environment_cb] get var: %s", var->key);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
-      var->value = "mouse";
+      var->value = "lightgun";//"mouse";
       wrapper_environment_log(RETRO_LOG_INFO,
                               "[wrapper_environment_cb] get var: %s", var->key);
       return true;

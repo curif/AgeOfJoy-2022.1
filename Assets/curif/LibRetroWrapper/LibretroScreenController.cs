@@ -97,9 +97,10 @@ public class LibretroScreenController : MonoBehaviour
     private DateTime timeToExit = DateTime.MinValue;
     private GameObject cabinet;
     private CabinetReplace cabinetReplace;
+    private LightGunTarget lightGunTarget;
 
     //hands
-    private GameObject leftHand, rightHand, rightControl, leftControl;
+    //private GameObject leftHand, rightHand, rightControl, leftControl;
 
     //controls
     private LibretroControlMap libretroControlMap;
@@ -148,11 +149,15 @@ public class LibretroScreenController : MonoBehaviour
 
         player = GameObject.Find("OVRPlayerControllerGalery");
         changeControls = player.GetComponent<ChangeControls>();
-
+        /*
         leftHand = GameObject.Find("LeftHand");
         rightHand = GameObject.Find("RightHand");
         rightControl = GameObject.Find("RightControl");
+        lightGunTarget.spaceGun = rightControl;
         leftControl = GameObject.Find("LeftControl");
+        */
+        lightGunTarget = GetComponent<LightGunTarget>();
+        lightGunTarget.spaceGun = changeControls.RightHand;
 
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
         // if (inputActionManagerGameobject == null)
@@ -256,6 +261,8 @@ public class LibretroScreenController : MonoBehaviour
                   // ConfigManager.WriteConsole(controlConf.AsMarkdown());
                   libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
+                  LibretroMameCore.lightGunTarget = lightGunTarget;
+
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
@@ -264,6 +271,13 @@ public class LibretroScreenController : MonoBehaviour
                   }
 
                   PreparePlayerToPlayGame(true);
+
+                  //assign the gun once was enabled in PreparePlayerToPlayGame
+                  lightGunTarget.spaceGun = changeControls.RightJoystick;
+                  lightGunTarget.showHitPossition = true;
+                  lightGunTarget.invertForward = true;
+                  lightGunTarget.InvertX = true;
+                  //   lightGunTarget.InvertY = GameInvertY;
 
                   return TaskStatus.Success;
               })
