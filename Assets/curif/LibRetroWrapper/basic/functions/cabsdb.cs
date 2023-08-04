@@ -54,7 +54,7 @@ class CommandFunctionCABDBGETNAME : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
-            return new BasicValue(0);
+            return new BasicValue("");
 
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(val);
