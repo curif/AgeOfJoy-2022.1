@@ -100,16 +100,14 @@ public class ControlMapConfiguration
         if (string.IsNullOrEmpty(path))
             ConfigManager.WriteConsole($"[ControlMapConfiguration.AddMap] ERROR path unknown action:{mameControl} maped control: {realControl}");
         else
-        {
             map.AddAction(realControl, path);
-        }
     }
 
     public void AddMap(string mameControl, string[] realControlsToAssign, string behavior = null, int port = 0)
     {
         foreach (string realControl in realControlsToAssign)
         {
-            AddMap(mameControl, realControl,behavior, port);
+            AddMap(mameControl, realControl, behavior, port);
         }
 
         return;
@@ -186,7 +184,6 @@ public class ControlMapConfiguration
         //to implement
         throw new NotImplementedException("[controlMapConfiguration] Method Save");
     }
-
 
     public void ToDebug()
     {
@@ -274,6 +271,22 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap("MOUSE_HORIZ_WHEELDOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("MOUSE_BUTTON_4", new string[] { "quest-left-thumbstick-press", "gamepad-left-thumbstick-press" });
         AddMap("MOUSE_BUTTON_5", new string[] { "quest-right-thumbstick-press", "gamepad-right-thumbstick-press" });
+
+        AddMap("LIGHTGUN_AUX_A", new string[] { "quest-a", "gamepad-a" });
+        AddMap("LIGHTGUN_AUX_B", new string[] { "quest-b", "gamepad-b", "quest-right-trigger", "keyboard-enter" });
+        AddMap("LIGHTGUN_AUX_C", new string[] { "gamepad-x", "quest-x" });
+        AddMap("LIGHTGUN_DPAD_UP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
+        AddMap("LIGHTGUN_DPAD_DOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
+        AddMap("LIGHTGUN_DPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
+        AddMap("LIGHTGUN_DPAD_RIGHT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
+        AddMap("LIGHTGUN_DPAD_UP", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("LIGHTGUN_DPAD_DOWN", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("LIGHTGUN_DPAD_LEFT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("LIGHTGUN_DPAD_RIGHT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("LIGHTGUN_START", new string[] { "gamepad-start", "quest-start" });
+        AddMap("LIGHTGUN_SELECT", new string[] { "gamepad-select", "quest-select" });
+        AddMap("LIGHTGUN_TRIGGER", new string[] { "quest-right-trigger", "gamepad-right-trigger"});
+        AddMap("LIGHTGUN_RELOAD", new string[] { "gamepad-start", "quest-start" });
 
     }
 

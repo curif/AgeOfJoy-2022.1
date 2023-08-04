@@ -218,7 +218,8 @@ public static class CabinetFactory
 				cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
 				agentPlayerPositions,
 				cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
-				cbinfo.ControlMap);
+				cbinfo.ControlMap,
+                cbinfo.lightGunInformation);
 
         ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 

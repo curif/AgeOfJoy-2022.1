@@ -43,7 +43,7 @@ public class LibretroControlMap : MonoBehaviour
             conf.SaveAsYaml(fileNameToSaveOrEmpty);
         }
 
-        // Debug.Log(conf.AsMarkdown());
+        //Debug.Log(conf.AsMarkdown());
 
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
     }

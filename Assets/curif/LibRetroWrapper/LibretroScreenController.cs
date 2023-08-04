@@ -82,6 +82,8 @@ public class LibretroScreenController : MonoBehaviour
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
+    public LightGunInformation lightGunInformation;
+
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
 
@@ -97,9 +99,10 @@ public class LibretroScreenController : MonoBehaviour
     private DateTime timeToExit = DateTime.MinValue;
     private GameObject cabinet;
     private CabinetReplace cabinetReplace;
+    private LightGunTarget lightGunTarget;
 
     //hands
-    private GameObject leftHand, rightHand, rightControl, leftControl;
+    //private GameObject leftHand, rightHand, rightControl, leftControl;
 
     //controls
     private LibretroControlMap libretroControlMap;
@@ -148,11 +151,16 @@ public class LibretroScreenController : MonoBehaviour
 
         player = GameObject.Find("OVRPlayerControllerGalery");
         changeControls = player.GetComponent<ChangeControls>();
-
+        /*
         leftHand = GameObject.Find("LeftHand");
         rightHand = GameObject.Find("RightHand");
         rightControl = GameObject.Find("RightControl");
+        lightGunTarget.spaceGun = rightControl;
         leftControl = GameObject.Find("LeftControl");
+        */
+        lightGunTarget = GetComponent<LightGunTarget>();
+        lightGunTarget.Init(lightGunInformation);
+        lightGunTarget.spaceGun = changeControls.RightHand;
 
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
         // if (inputActionManagerGameobject == null)
@@ -252,10 +260,14 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
                       controlConf = new GlobalControlMap();
                   }
-                  //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
-                  // ConfigManager.WriteConsole(controlConf.AsMarkdown());
+                //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
+                //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
                   libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
+
+                  lightGunTarget.Init(lightGunInformation);
+                  LibretroMameCore.lightGunTarget = lightGunTarget;
+
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
@@ -264,6 +276,9 @@ public class LibretroScreenController : MonoBehaviour
                   }
 
                   PreparePlayerToPlayGame(true);
+
+                  //assign the gun once was enabled in PreparePlayerToPlayGame
+                  lightGunTarget.spaceGun = changeControls.RightJoystick;
 
                   return TaskStatus.Success;
               })

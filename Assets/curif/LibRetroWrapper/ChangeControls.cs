@@ -30,6 +30,11 @@ public class ChangeControls : MonoBehaviour
     GameObject leftJoystickModel;
     GameObject rightJoystickModel;
 
+    public GameObject LeftHand { get { return leftHandModel;} }
+    public GameObject RightHand { get { return rightHandModel;} }
+    public GameObject LeftJoystick { get { return leftJoystickModel;} }
+    public GameObject RightJoystick { get { return rightJoystickModel;} }
+
     bool isPlaying = false;
 
     void Start()
