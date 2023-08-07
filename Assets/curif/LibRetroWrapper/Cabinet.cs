@@ -59,6 +59,7 @@ public class Cabinet
 
     }
 
+
     private void addBoxCollider(GameObject gameObject)
     {
         BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
@@ -69,7 +70,7 @@ public class Cabinet
 
         if (childRenderers.Length == 0)
         {
-            Debug.LogWarning("No child renderers found.");
+            ConfigManager.WriteConsoleWarning($"[addBoxCollider] {gameObject.name} No child renderers found.");
             return;
         }
 
@@ -90,6 +91,54 @@ public class Cabinet
         boxCollider.center = adjustedCenter;
     }
 
+/*
+Another approach:
+private void addBoxCollider(GameObject gameObject)
+{
+    BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
+    if (boxCollider == null)
+        boxCollider = gameObject.AddComponent<BoxCollider>();
+
+    Renderer[] childRenderers = gameObject.GetComponentsInChildren<Renderer>();
+
+    if (childRenderers.Length == 0)
+    {
+        ConfigManager.WriteConsoleWarning($"[addBoxCollider] {gameObject.name} No child renderers found.");
+        return;
+    }
+
+    // Initialize minimum and maximum corner points in world space
+    Vector3 minWorldCorner = childRenderers[0].bounds.min;
+    Vector3 maxWorldCorner = childRenderers[0].bounds.max;
+
+    for (int i = 1; i < childRenderers.Length; i++)
+    {
+        Vector3 rendererMin = childRenderers[i].bounds.min;
+        Vector3 rendererMax = childRenderers[i].bounds.max;
+
+        // Update min and max corner points in world space
+        minWorldCorner = Vector3.Min(minWorldCorner, rendererMin);
+        maxWorldCorner = Vector3.Max(maxWorldCorner, rendererMax);
+    }
+
+    // Convert world space corner points to local space
+    Vector3 minLocalCorner = gameObject.transform.InverseTransformPoint(minWorldCorner);
+    Vector3 maxLocalCorner = gameObject.transform.InverseTransformPoint(maxWorldCorner);
+
+    // Calculate the center and size of the box collider in local space
+    Vector3 center = (minLocalCorner + maxLocalCorner) * 0.5f;
+    Vector3 size = maxLocalCorner - minLocalCorner;
+
+    // Adjust the center based on the parent's scale
+    Vector3 adjustedCenter = new Vector3(center.x / gameObject.transform.localScale.x,
+                                          center.y / gameObject.transform.localScale.y,
+                                          center.z / gameObject.transform.localScale.z);
+    boxCollider.center = adjustedCenter;
+    boxCollider.size = size;
+}
+*/
+
+
     private void toFloor()
     {
         gameObject.AddComponent<PutOnFloor>();
@@ -109,7 +158,6 @@ public class Cabinet
         //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
         gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
         gameObject.name = name;
-        
 
         //add neccesary components
         //addRigidBody();
