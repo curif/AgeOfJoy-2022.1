@@ -41,6 +41,11 @@ public class LightGunInformation
         public bool inverty = true;
     }
 
+    public override string ToString()
+    {
+        return $"active: {active} model: {gun.model} invert x,y: {crt.invertx},{crt.inverty} debug: {debug.active}";
+    }
+
     public LightGunInformation() { }
 
 }
@@ -85,7 +90,8 @@ public class LightGunTarget : MonoBehaviour
     public float borderSizeX = 1.5f;
     [Tooltip("CRT border size up and down to exclude.")]
     public float borderSizeY = 1f;
-
+    //Cabinet path
+    private string pathBase;
     float CRTAreaWidth; //new width after substract borders
     float CRTAreaHeight; //new height after substract borders
     float factorX; //adjustment factor for hit point to translate to libretro width space
@@ -102,12 +108,14 @@ public class LightGunTarget : MonoBehaviour
     const int virtualScreenHeight = 32767; //libretro constant height
 
     //to start the component only if light-gun is active for the game.
-    public void Init(LightGunInformation lightGunInfo)
+    public void Init(LightGunInformation lightGunInfo, string pathBase)
     {
         if (lightGunInfo == null || !lightGunInfo.active)
             return;
 
         lightGunInformation = lightGunInfo;
+        this.pathBase = pathBase;
+        ConfigManager.WriteConsole($"[LightGunTarget.init] lightGunInfo:{lightGunInfo.ToString()} pathbase: {pathBase}");
 
         layerMask = LayerMask.GetMask("CRT");
 
@@ -161,6 +169,13 @@ public class LightGunTarget : MonoBehaviour
         if (showHitPosition)
             hitPosition.SetActive(false);
         return;
+    }
+
+    public string GetModelPath()
+    {
+        if (lightGunInformation?.gun == null)
+            return null;
+        return pathBase + "/" + lightGunInformation.gun.model;
     }
 
     public bool OnScreen()

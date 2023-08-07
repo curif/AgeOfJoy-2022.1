@@ -159,8 +159,7 @@ public class LibretroScreenController : MonoBehaviour
         leftControl = GameObject.Find("LeftControl");
         */
         lightGunTarget = GetComponent<LightGunTarget>();
-        lightGunTarget.Init(lightGunInformation);
-        lightGunTarget.spaceGun = changeControls.RightHand;
+
 
         // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
         // if (inputActionManagerGameobject == null)
@@ -260,13 +259,17 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
                       controlConf = new GlobalControlMap();
                   }
-                //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
-                //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
+                  //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
+                  //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
                   libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
 
-                  lightGunTarget.Init(lightGunInformation);
-                  LibretroMameCore.lightGunTarget = lightGunTarget;
+                  // Ligth guns configuration
+                  if (lightGunTarget != null && lightGunInformation != null)
+                  {
+                      lightGunTarget.Init(lightGunInformation, PathBase);
+                      LibretroMameCore.lightGunTarget = lightGunTarget;
+                  }
 
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
@@ -275,11 +278,11 @@ public class LibretroScreenController : MonoBehaviour
                       return TaskStatus.Failure;
                   }
 
+                  if (lightGunTarget != null)
+                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
+                  
                   PreparePlayerToPlayGame(true);
-
-                  //assign the gun once was enabled in PreparePlayerToPlayGame
-                  lightGunTarget.spaceGun = changeControls.RightJoystick;
-
+                  
                   return TaskStatus.Success;
               })
             .End()
