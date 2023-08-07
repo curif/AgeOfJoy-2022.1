@@ -24,6 +24,15 @@ public class LightGunInformation
 
         [YamlMember(Alias = "invert-pointer", ApplyNamingConventions = false)]
         public bool invertPointer = true;
+
+        [YamlMember(Alias = "adjust-sight", ApplyNamingConventions = false)]
+        public GunAdjustHitPoint adjustSight = new();
+    }
+
+    public class GunAdjustHitPoint
+    {
+        public float horizontal;
+        public float vertical;
     }
 
     public class CRT
@@ -90,6 +99,9 @@ public class LightGunTarget : MonoBehaviour
     public float borderSizeX = 1.5f;
     [Tooltip("CRT border size up and down to exclude.")]
     public float borderSizeY = 1f;
+    public float adjustSightVertical = 0, adjustSightHorizontal = 0;
+
+
     //Cabinet path
     private string pathBase;
     float CRTAreaWidth; //new width after substract borders
@@ -127,6 +139,8 @@ public class LightGunTarget : MonoBehaviour
             scaleFactorY = lightGunInformation.crt.meshFactorScaleY;
             InvertX = lightGunInformation.crt.invertx;
             InvertY = lightGunInformation.crt.inverty;
+            adjustSightVertical = lightGunInformation.gun.adjustSight.vertical;
+            adjustSightHorizontal = lightGunInformation.gun.adjustSight.horizontal;
 
             showHitPosition = lightGunInformation.debug.active;
             invertForward = lightGunInformation.gun.invertPointer;
@@ -137,11 +151,14 @@ public class LightGunTarget : MonoBehaviour
 #endif
         if (showHitPosition)
         {
-            hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            hitPosition.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f); // Adjust the size of the sphere as needed
-            hitPosition.GetComponent<Renderer>().material.color = Color.red;
-            hitPosition.SetActive(false);
-            hitPosition.transform.SetParent(transform);
+            if (hitPosition == null)
+            {
+                hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                hitPosition.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f); // Adjust the size of the sphere as needed
+                hitPosition.GetComponent<Renderer>().material.color = Color.red;
+                hitPosition.transform.SetParent(transform);
+            }
+            hitPosition.SetActive(true);
         }
 
         // Calculate the new x width after shrinking at both ends
@@ -150,7 +167,6 @@ public class LightGunTarget : MonoBehaviour
         //calculate the multiplication factor for the hit point after substract borders
         factorX = CRTAreaWidth / transform.localScale.x;
         factorY = CRTAreaHeight / transform.localScale.y;
-
     }
 
 #if ON_DEBUG
@@ -187,8 +203,14 @@ public class LightGunTarget : MonoBehaviour
         if (spaceGun?.transform == null)
             return;
 
+        //adjust vertical/horizontal sight (in centimeters)
+        Vector3 adjustedPosition = new Vector3(
+            spaceGun.transform.position.x + adjustSightHorizontal / 100f,
+            spaceGun.transform.position.y + adjustSightVertical / 100f,
+            spaceGun.transform.position.z
+        );
         // Cast a ray from the spaceGun position to its forward direction
-        if (Physics.Raycast(spaceGun.transform.position,
+        if (Physics.Raycast(adjustedPosition,
                 invertForward ? -spaceGun.transform.forward : spaceGun.transform.forward,
                 out RaycastHit hit, Mathf.Infinity, layerMask))
         {
@@ -206,12 +228,14 @@ public class LightGunTarget : MonoBehaviour
                 float hitPointX = localHitPoint.x * factorX;
                 float hitPointY = localHitPoint.y * factorY;
 
-                HitX = Mathf.RoundToInt(Mathf.Clamp(hitPointX * virtualScreenWidth / scaleFactorX,
-                                    -virtualScreenWidth,
-                                    virtualScreenWidth));
-                HitY = Mathf.RoundToInt(Mathf.Clamp(hitPointY * virtualScreenHeight / scaleFactorY,
-                                    -virtualScreenHeight,
-                                    virtualScreenHeight));
+                float translatedHitX = hitPointX * virtualScreenWidth / scaleFactorX;
+                float translatedHitY = hitPointY * virtualScreenHeight / scaleFactorY;
+
+                // translatedHitX += adjustSightHorizontal;
+                // translatedHitY += adjustSightVertical;
+
+                HitX = Mathf.RoundToInt(Mathf.Clamp(translatedHitX, -virtualScreenWidth, virtualScreenWidth));
+                HitY = Mathf.RoundToInt(Mathf.Clamp(translatedHitY, -virtualScreenHeight, virtualScreenHeight));
                 if (Math.Abs(HitX) == virtualScreenWidth || Math.Abs(HitY) == virtualScreenHeight)
                 {
                     declareOutOfScreen();
@@ -225,9 +249,8 @@ public class LightGunTarget : MonoBehaviour
 
                     if (showHitPosition)
                     {
-                        // hitPosition.transform.position = hit.point;
-                        hitPosition.transform.localPosition = localHitPoint;
                         hitPosition.SetActive(true);
+                        hitPosition.transform.localPosition = localHitPoint;
                     }
                 }
 
