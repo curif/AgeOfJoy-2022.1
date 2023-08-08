@@ -219,7 +219,8 @@ public static class CabinetFactory
 				agentPlayerPositions,
 				cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
 				cbinfo.ControlMap,
-                cbinfo.lightGunInformation);
+                cbinfo.lightGunInformation,
+                cbinfo.agebasic);
 
         ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 

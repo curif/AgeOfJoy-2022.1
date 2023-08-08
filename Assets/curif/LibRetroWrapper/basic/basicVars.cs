@@ -56,7 +56,7 @@ public class BasicVars
         string str = "";
         foreach (KeyValuePair<string, BasicValue> var in vars)
         {
-            str += $"{var.Key}: {vars[var.Key].ToString()} {vars[var.Key].Type().ToString()}\n";
+            str += $"{var.Key}: {vars[var.Key].ToString()} [{vars[var.Key].Type().ToString()}]\n";
         }
         return str;
     }

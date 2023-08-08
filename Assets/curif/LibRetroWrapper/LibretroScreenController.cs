@@ -25,6 +25,8 @@ using UnityEditor;
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(GameVideoPlayer))]
 [RequireComponent(typeof(LibretroControlMap))]
+[RequireComponent(typeof(basicAGE))]
+[RequireComponent(typeof(CabinetAGEBasic))]
 // [RequireComponent(typeof(BoxCollider))]
 public class LibretroScreenController : MonoBehaviour
 {
@@ -110,6 +112,10 @@ public class LibretroScreenController : MonoBehaviour
     //public ControlMapConfiguration GlobalControlMapConfig = null;
     //public ControlMapConfiguration UserControlMapConfig = null;
 
+    //age basic
+    public CabinetAGEBasicInformation ageBasicInformation;
+    private CabinetAGEBasic cabinetAGEBasic;
+
     private CoinSlotController getCoinSlotController()
     {
         Transform coinslot = cabinet.transform.Find("coin-slot-added");
@@ -142,6 +148,7 @@ public class LibretroScreenController : MonoBehaviour
         cabinet = gameObject.transform.parent.gameObject;
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
         libretroControlMap = GetComponent<LibretroControlMap>();
+        cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
 
         //camera
         centerEyeCamera = GameObject.Find("Main Camera");
@@ -197,6 +204,14 @@ public class LibretroScreenController : MonoBehaviour
 
         videoPlayer.setVideo(GameVideoFile, shader, GameVideoInvertX, GameVideoInvertY);
         // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
+
+        // age basic
+        if (ageBasicInformation.active)
+        {
+            cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
+            cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
+            cabinetAGEBasic.AfterLoad();
+        }
 
         while (true)
         {
@@ -271,18 +286,31 @@ public class LibretroScreenController : MonoBehaviour
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
 
+                  // age basic
+                  if (ageBasicInformation.active)
+                  {
+                      cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
+                      cabinetAGEBasic.InsertCoin();
+                  }
+
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
                       CoinSlot.clean();
+
+                      if (ageBasicInformation.active)
+                      {
+                          cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
+                          cabinetAGEBasic.AfterLeave();
+                      }
                       return TaskStatus.Failure;
                   }
 
                   if (lightGunTarget != null)
                       changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
-                  
+
                   PreparePlayerToPlayGame(true);
-                  
+
                   return TaskStatus.Success;
               })
             .End()
@@ -319,6 +347,13 @@ public class LibretroScreenController : MonoBehaviour
                   PreparePlayerToPlayGame(false);
                   libretroControlMap.Clean();
                   timeToExit = DateTime.MinValue;
+
+                  // age basic
+                  if (ageBasicInformation.active)
+                  {
+                      cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
+                      cabinetAGEBasic.AfterLeave();
+                  }
 
                   return TaskStatus.Success;
               })

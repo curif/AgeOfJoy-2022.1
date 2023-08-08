@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine;
 
 public class ConfigurationCommands
 {
@@ -19,4 +20,11 @@ public class ConfigurationCommands
     public CabinetsController CabinetsController;
     public GameRegistry GameRegistry;
     public Dictionary<string, forToStorage> ForToNext = new();
+
+    public bool DebugMode = false;
+
+    //actual cabinet.
+    public GameObject Cabinet;
+
+    public CoinSlotController CoinSlot;
 }
