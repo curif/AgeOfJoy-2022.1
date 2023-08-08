@@ -322,7 +322,8 @@ private void addBoxCollider(GameObject gameObject)
                              List<GameObject> agentPlayerPositions = null,
                              string shaderName = "damage", Dictionary<string, string> shaderConfig = null,
                              ControlMapConfiguration cabinetControlMap = null,
-                             LightGunInformation lightGunInformation = null
+                             LightGunInformation lightGunInformation = null,
+                             CabinetAGEBasicInformation agebasic = null
                           )
     {
         string CRTType = $"screen-mock-{orientation}";
@@ -373,6 +374,10 @@ private void addBoxCollider(GameObject gameObject)
         //control mapping
         libretroScreenController.CabinetControlMapConfig = cabinetControlMap;
         libretroScreenController.lightGunInformation = lightGunInformation;
+
+        //age basic
+        libretroScreenController.ageBasicInformation = agebasic;
+
         return this;
     }
 

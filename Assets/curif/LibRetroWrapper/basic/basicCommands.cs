@@ -84,6 +84,17 @@ public static class Commands
         functions["CABDBSAVE"] = typeof(CommandFunctionCABDBSAVE);
         functions["CABDBGETASSIGNED"] = typeof(CommandFunctionCABDBGETASSIGNED);
         functions["CABDBASSIGN"] = typeof(CommandFunctionCABDBASSIGN);
+
+        //cabinet in AGEBasic for the actual cabinet
+        functions["CABPARTSCOUNT"] = typeof(CommandFunctionCABPARTSCOUNT);
+        functions["CABPARTSNAME"] = typeof(CommandFunctionCABPARTSNAME);
+        functions["CABPARTSPOSITION"] = typeof(CommandFunctionCABPARTSPOSITION);
+        functions["CABPARTSENABLE"] = typeof(CommandFunctionCABPARTSENABLE);
+        functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
+
+        //debug
+        functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);
+
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

@@ -38,6 +38,8 @@ public class CabinetInformation
     [YamlMember(Alias = "light-gun", ApplyNamingConventions = false)]
     public LightGunInformation lightGunInformation = new();
 
+    public CabinetAGEBasicInformation agebasic = new();
+
     [YamlIgnore]
     public string pathBase;
 

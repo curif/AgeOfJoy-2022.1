@@ -83,6 +83,18 @@ public class basicAGE : MonoBehaviour
 
     public RuntimeException LastRuntimeException;
 
+    public bool DebugMode
+    {
+        get
+        {
+            return configCommands.DebugMode;
+        }
+        set
+        {
+            configCommands.DebugMode = value;
+        }
+    }
+
     public void Start()
     {
         GameObject roomInit = GameObject.Find("RoomInit");
@@ -123,9 +135,26 @@ public class basicAGE : MonoBehaviour
         }
     }
 
+    public void SetCabinet(GameObject cabinet)
+    {
+        configCommands.Cabinet = cabinet;
+    }
+
+    public void SetCoinSlot(CoinSlotController coinSlot)
+    {
+        configCommands.CoinSlot = coinSlot;
+    }
+
+    public bool Exists(string name)
+    {
+        return programs.ContainsKey(name);
+    }
     public void ParseFile(string filePath)
     {
         string name = Path.GetFileName(filePath);
+
+        ConfigManager.WriteConsole($"[basicAGE.ParseFile] [{name}] {filePath} ");
+
         AGEProgram prg = new(name);
         try
         {
@@ -138,6 +167,10 @@ public class basicAGE : MonoBehaviour
                 prg.LastLineNumberParsed,
                 e.Message, e
             );
+
+            if (configCommands.DebugMode)
+                SaveDebug(name, ce);
+
             throw ce;
         }
         programs[name] = prg;
@@ -202,13 +235,47 @@ public class basicAGE : MonoBehaviour
                     ConfigManager.WriteConsoleError(strerror);
                     LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
                     running = null;
+                    if (configCommands.DebugMode)
+                        SaveDebug(name, null, LastRuntimeException);
                 }
             }
             ConfigManager.WriteConsole($"{running.Name} END.");
             running = null;
             LastRuntimeException = null;
+            if (configCommands.DebugMode)
+                SaveDebug(name);
         }
         return;
+    }
+
+    public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null)
+    {
+        string filePathDebug = Path.Combine(ConfigManager.AGEBasicDir, prgName + ".debug");
+        ConfigManager.WriteConsole($"[SaveDebug] {filePathDebug}");
+        try
+        {
+            // Create a new StreamWriter instance to write to the file
+            using (StreamWriter writer = new StreamWriter(filePathDebug, false))
+            {
+                // Write the text to the file
+                writer.WriteLine($"Program: {prgName}");
+                if (compEx != null)
+                    writer.WriteLine(compEx.ToString());
+                if (runEx != null)
+                    writer.WriteLine(runEx.ToString());
+
+                if (Exists(prgName))
+                {
+                    writer.WriteLine("PROGRAM STATUS ---");
+                    writer.WriteLine(programs[prgName].Log());
+                    writer.WriteLine("---");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException("Error writing to file: " + filePathDebug, e);
+        }
     }
 
     IEnumerator runProgram()
@@ -226,13 +293,21 @@ public class basicAGE : MonoBehaviour
                 ConfigManager.WriteConsoleError(strerror);
                 LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
                 running = null;
+                if (configCommands.DebugMode)
+                    SaveDebug(name, null, LastRuntimeException);
+
                 yield break;
             }
             yield return new WaitForSeconds(0.01f);
         }
         ConfigManager.WriteConsole($"{running.Name} END. {running.ContLinesExecuted} lines executed.");
+
+        if (configCommands.DebugMode)
+            SaveDebug(running.Name);
+        
         running = null;
         LastRuntimeException = null;
+
     }
 
 #if UNITY_EDITOR
