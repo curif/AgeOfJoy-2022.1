@@ -311,6 +311,8 @@ public class LibretroScreenController : MonoBehaviour
 
                   PreparePlayerToPlayGame(true);
 
+                  LibretroMameCore.StartRunThread();
+
                   return TaskStatus.Success;
               })
             .End()
@@ -390,7 +392,6 @@ public class LibretroScreenController : MonoBehaviour
 
     void PreparePlayerToPlayGame(bool isPlaying)
     {
-
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
         changeControls.PlayerMode(isPlaying);
 
@@ -411,8 +412,18 @@ public class LibretroScreenController : MonoBehaviour
     public void Update()
     {
         // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
-        LibretroMameCore.Run(name, GameFile); //only runs if this game is running
+        //LibretroMameCore.Run(name, GameFile); //only runs if this game is running
+        if (!LibretroMameCore.isRunning(name, GameFile))
+            return;
+
+        if (LibretroMameCore.GameTexture == null && LibretroMameCore.TextureWidth != 0)
+        {
+            LibretroMameCore.CreateTexture();
+            shader.Texture = LibretroMameCore.GameTexture;
+        }
+        LibretroMameCore.LoadTextureData();
         shader.Update();
+        
         return;
     }
 

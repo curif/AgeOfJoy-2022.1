@@ -6,10 +6,16 @@
 //#define IMAGE_DEBUG
 
 static CreateTexture CreateTextureCB;
-static LoadTextureData LoadTextureDataCB;
+static TextureLock TextureLockCB;
+static TextureUnlock TextureUnlockCB;
 static char create_texture_called;
 static unsigned image_width;
 static unsigned image_height;
+static unsigned no_draw;
+static pthread_mutex_t mutex;
+static int bufIdx;
+static unsigned char *imageBuffer;
+static unsigned imageSize;
 
 struct 
 {
@@ -21,26 +27,41 @@ void wrapper_image_init()
 {
   printf("[wrapper_image_init]\n");
   CreateTextureCB = NULL;
-  LoadTextureDataCB = NULL;
 
   image_handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
-  image_handlers.retro_set_video_refresh = (void (*)(retro_video_refresh_t))dlsym(image_handlers.handle, "retro_set_video_refresh");
+  image_handlers.retro_set_video_refresh = (void (*)(retro_video_refresh_t))dlsym(image_handlers.handle,
+                                             "retro_set_video_refresh");
   image_handlers.retro_set_video_refresh(&wrapper_image_video_refresh_cb);
-
+  
+  no_draw = 0;
+  bufIdx = 0;
+  imageBuffer = NULL;
+  imageSize = 0;
+  pthread_mutex_init(&mutex, NULL); // Initialize the mutex
 }
 
-void wrapper_image_set_texture_cb(CreateTexture createTexture, LoadTextureData loadTextureData)
+void wrapper_image_set_texture_cb(CreateTexture createTexture, 
+                                    TextureLock textureLock, TextureUnlock textureUnlock)
 {
   CreateTextureCB = createTexture;
-  LoadTextureDataCB = loadTextureData;
+  TextureLockCB = textureLock;
+  TextureUnlockCB = textureUnlock;
+  no_draw = 0;
 }
-
 
 void wrapper_image_prev_load_game()
 {
   create_texture_called = 0;
   image_width = 0;
   image_height = 0;
+  bufIdx = 0;
+  imageBuffer = NULL;
+  imageSize = 0;
+}
+
+void wrapper_image_suspend_image(unsigned _no_draw)
+{
+  no_draw = _no_draw;
 }
 
 #ifdef IMAGE_DEBUG
@@ -66,12 +87,36 @@ def IMAGE_DEBUGint debug_sum(const void *data, unsigned width, unsigned height, 
 }
 #endif
 
+void swapBuffers(unsigned char *imageBuf, unsigned size)
+{
+  TextureLockCB();
+
+  imageBuffer = imageBuf;
+  imageSize = size;
+
+  bufIdx = (bufIdx + 1) % 2;
+
+  TextureUnlockCB();
+}
+
+unsigned char *wrapper_image_get_buffer()
+{
+  return imageBuffer;
+}
+unsigned wrapper_image_get_buffer_size()
+{
+  return imageSize;
+}
+
 void wrapper_image_video_refresh_cb(const void *data, unsigned width, unsigned height, size_t pitch)
 {
   if (!data)
     return;
   
-  if (!CreateTextureCB || !LoadTextureDataCB)
+  if (!CreateTextureCB)
+    return;
+  
+  if (no_draw)
     return;
 
   enum retro_pixel_format pixel_format = wrapper_environment_get_pixel_format();
@@ -94,17 +139,19 @@ void wrapper_image_video_refresh_cb(const void *data, unsigned width, unsigned h
   unsigned char *imageBuf = NULL;
   if (pixel_format == RETRO_PIXEL_FORMAT_0RGB1555)
   {
-    imageBuf = wrapper_image_conversion_convert0RGB1555ToRGB565(data, width, height, pitch);
+    imageBuf = wrapper_image_conversion_convert0RGB1555ToRGB565(data, width, height, pitch, bufIdx);
     if (imageBuf)
-      LoadTextureDataCB(imageBuf, width * height * 2);
+      swapBuffers(imageBuf, width * height * 2);
   }
   else if (pixel_format == RETRO_PIXEL_FORMAT_XRGB8888)
   {
-    imageBuf = wrapper_image_conversion_convertXRGB8888ToRGB565(data, width, height, pitch);
+    imageBuf = wrapper_image_conversion_convertXRGB8888ToRGB565(data, width, height, pitch, bufIdx);
     if (imageBuf)
-      LoadTextureDataCB(imageBuf, width * height * 2);
+      swapBuffers(imageBuf, width * height * 2);
   }
   else {
-    LoadTextureDataCB((unsigned char *)data, height * pitch);
+    imageBuf = wrapper_image_preserve(data, width, height, pitch, bufIdx);
+    if (imageBuf)
+      swapBuffers(imageBuf, height * pitch);
   }
 }
