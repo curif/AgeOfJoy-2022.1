@@ -8,6 +8,7 @@
 static CreateTexture CreateTextureCB;
 static TextureLock TextureLockCB;
 static TextureUnlock TextureUnlockCB;
+static TextureSemAvailable TextureSemAvailableCB;
 static char create_texture_called;
 static unsigned image_width;
 static unsigned image_height;
@@ -41,11 +42,14 @@ void wrapper_image_init()
 }
 
 void wrapper_image_set_texture_cb(CreateTexture createTexture, 
-                                    TextureLock textureLock, TextureUnlock textureUnlock)
+                                    TextureLock textureLock, 
+                                    TextureUnlock textureUnlock,
+                                    TextureSemAvailable textureSemAvailable)
 {
   CreateTextureCB = createTexture;
   TextureLockCB = textureLock;
   TextureUnlockCB = textureUnlock;
+  TextureSemAvailableCB = textureSemAvailable;
   no_draw = 0;
 }
 
@@ -95,6 +99,8 @@ void swapBuffers(unsigned char *imageBuf, unsigned size)
   imageSize = size;
 
   bufIdx = (bufIdx + 1) % 2;
+
+  TextureSemAvailableCB();
 
   TextureUnlockCB();
 }

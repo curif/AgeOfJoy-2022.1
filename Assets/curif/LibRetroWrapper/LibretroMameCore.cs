@@ -202,11 +202,11 @@ public static unsafe class LibretroMameCore
             {
                 snprintf(buf, bufLogSize, format, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12);
                 string str = Marshal.PtrToStringAnsi(buf);
-                WriteConsole($"[{level}] {str}");
+                WriteConsole($"{level}: {str}");
             }
             else
             {
-                WriteConsole($"[{level}] {format}");
+                WriteConsole($"{level}: {format}");
             }
             // Marshal.FreeHGlobal(buf); //the pointer dies with the program, no memleak here.
         }
@@ -307,23 +307,22 @@ public static unsafe class LibretroMameCore
 #endif
 
     //image ===========    
-    static FpsControl FPSControl;
     static FpsControlNoUnity FPSControlNoUnity;
     static FpsCounter FPSCounter;
     public static Texture2D GameTexture = null;
     public static uint TextureWidth = 0, TextureHeight = 0;
     static object GameTextureLock = new object();
-    public static ShaderScreenBase shader;
-    // public static GameObject Camera;
+    static ManualResetEventSlim  GameTextureBufferSem = new ManualResetEventSlim(false);
 
     //parameters ================
 
-    public static int SecondsToWaitToFinishLoad = 2;
 
     //components parameters
     public static Renderer Display;
     public static AudioSource Speaker;
     public static CoinSlotController CoinSlot;
+    public static int SecondsToWaitToFinishLoad = 2;
+
 
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
@@ -361,10 +360,12 @@ public static unsafe class LibretroMameCore
     private delegate void CreateTextureHandler(uint width, uint height);
     private delegate void TextureLockHandler();
     private delegate void TextureUnlockHandler();
+    private delegate void TextureBufferSemAvailableHandler();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_image_set_texture_cb(CreateTextureHandler CreateTexture,
                                                             TextureLockHandler TextureLock,
-                                                            TextureUnlockHandler TextureUnlock
+                                                            TextureUnlockHandler TextureUnlock,
+                                                            TextureBufferSemAvailableHandler TextureBufferSemAvailable
                                                             );
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_image_suspend_image(uint suspend);
@@ -566,7 +567,8 @@ public static unsafe class LibretroMameCore
             wrapper_image_init();
             wrapper_image_set_texture_cb(new CreateTextureHandler(CreateTextureCB),
                                             new TextureLockHandler(TextureLockCB),
-                                            new TextureUnlockHandler(TextureUnlockCB));
+                                            new TextureUnlockHandler(TextureUnlockCB),
+                                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
 
             WriteConsole("[LibRetroMameCore.Start] retro_set_audio_sample");
             retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
@@ -629,7 +631,6 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded:{path}");
 
         wrapper_environment_get_av_info();
-        FPSControl = new FpsControl((float)wrapper_environment_get_fps());
         FPSControlNoUnity = new((float)wrapper_environment_get_fps());
         FPSCounter = new();
 
@@ -688,7 +689,6 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[CreateTexture] {TextureWidth}, {TextureHeight}");
         GameTexture = new Texture2D((int)TextureWidth, (int)TextureHeight, TextureFormat.RGB565, false);
         GameTexture.filterMode = FilterMode.Point;
-        // shader.Texture = GameTexture;
     }
 
     [AOT.MonoPInvokeCallback(typeof(TextureLockHandler))]
@@ -703,19 +703,28 @@ public static unsafe class LibretroMameCore
         // ConfigManager.WriteConsole($"[TextureUnlockCB]");
         Monitor.Exit(GameTextureLock);
     }
+    [AOT.MonoPInvokeCallback(typeof(TextureBufferSemAvailableHandler))]
+    public static void TextureBufferSemAvailable()
+    {
+        GameTextureBufferSem.Set();
+        return;
+    }
 
     public static void LoadTextureData()
     {
         if (GameTexture == null)
+            return;
+        if (!GameTextureBufferSem.Wait(0))
             return;
 
         lock (GameTextureLock)
         {
             IntPtr data = wrapper_image_get_buffer();
             int size = wrapper_image_get_buffer_size();
-            // ConfigManager.WriteConsole($"[LoadTextureData] size: {size} pointer: {data}");
+            ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
             if (data != IntPtr.Zero)
                 GameTexture.LoadRawTextureData(data, size);
+            GameTextureBufferSem.Reset();
         }
         GameTexture.Apply(false, false);
     }
@@ -730,7 +739,7 @@ public static unsafe class LibretroMameCore
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    // ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run");
+                    ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run");
                     retro_run();
                 }
                 //Task.Delay(10);
@@ -739,76 +748,85 @@ public static unsafe class LibretroMameCore
         );
     }
 
-    public static void StopThread()
+    public static void StopRunThread()
     {
         ConfigManager.WriteConsole($"[StopThread] stopping task");
         retroRunTaskCancellationToken.Cancel();
+        Waiter stopThreadWaiter = new(2);
         //await Task.Delay(10);
-        while (retroRunTask.Status == TaskStatus.Running)
+        while (retroRunTask.Status == TaskStatus.Running && !stopThreadWaiter.Finished())
         {
             ConfigManager.WriteConsole($"[StopThread] stopping task, status: {retroRunTask.Status}");
-            Task.Delay(10);
+            Task.Delay(100).Wait(); //can't await in unsafe, this block the thread.
+        }
+        if (retroRunTask.Status == TaskStatus.Running)
+        {
+            WriteConsole("[StopRunThread] ERROR ------");
+            WriteConsole("[StopRunThread] Game thread can't finish");
+            WriteConsole("[StopRunThread] ERROR ------");
+            ConfigManager.WriteConsoleError("[StopRunThread] Game thread continues running. can't stop it.");
         }
     }
 
-    public static void Run(string screenName, string gameFileName)
-    {
-        if (!isRunning(screenName, gameFileName))
+    /*
+        public static void Run(string screenName, string gameFileName)
         {
+            if (!isRunning(screenName, gameFileName))
+            {
+                return;
+            }
+            //WriteConsole($"[LibRetroMameCore.Run] running screen: {screenName} game: {gameFileName}");
+
+            FPSCounter.Update();
+            // https://docs.unity3d.com/ScriptReference/Time-deltaTime.html
+            FPSControl.CountTimeFrame();
+            while (FPSControl.isTime())
+            {
+
+    #if _debug_fps_
+                // https://github.com/libretro/mame2003-plus-libretro/blob/6de44ee0a37b32a85e0aec013924bef34996ef35/src/mame2003/video.c#L400
+                // https://github.com/libretro/mame2003-plus-libretro/issues/1323
+                uint AudioPercentOccupancy = (uint)AudioBatch.Count * (uint)100 / AudioBufferMaxOccupancy; 
+                Profiling = new StopWatches();
+                Profiling.retroRun.Start();
+                retro_run();
+                Profiling.retroRun.Stop();
+                WriteConsole($"[Run] {Profiling.ToString()} | Audio occupancy {AudioPercentOccupancy}%");
+    #else
+                retro_run();
+                if (FPSCounter.GetFPS() < 50)
+                {
+                    wrapper_image_suspend_image(1);
+                    ConfigManager.WriteConsole($"[Run] dropping fps, actual: {FPSCounter.GetFPS()}");
+                }
+                else
+                {
+                    wrapper_image_suspend_image(0);
+                }
+    #endif
+            }
+
+    #if _serialize_
+            if (SerializationStatus == SerializationState.Serialize) {
+              if (WaitToSerialize.Finished()) {
+                Serialize();
+                SerializationStatus = SerializationState.Done;
+              }
+            }
+            else if (SerializationStatus == SerializationState.Load)
+            {
+              UnSerialize();
+              WaitToFinishedGameLoad = new Waiter(1); //for first coin check
+              SerializationStatus = SerializationState.Done;
+            }
+    #endif
+
+            if (!Speaker.isPlaying)
+                Speaker.Play(); //why is this neccesary?
+
             return;
         }
-        //WriteConsole($"[LibRetroMameCore.Run] running screen: {screenName} game: {gameFileName}");
-
-        FPSCounter.Update();
-        // https://docs.unity3d.com/ScriptReference/Time-deltaTime.html
-        FPSControl.CountTimeFrame();
-        while (FPSControl.isTime())
-        {
-
-#if _debug_fps_
-            // https://github.com/libretro/mame2003-plus-libretro/blob/6de44ee0a37b32a85e0aec013924bef34996ef35/src/mame2003/video.c#L400
-            // https://github.com/libretro/mame2003-plus-libretro/issues/1323
-            uint AudioPercentOccupancy = (uint)AudioBatch.Count * (uint)100 / AudioBufferMaxOccupancy; 
-            Profiling = new StopWatches();
-            Profiling.retroRun.Start();
-            retro_run();
-            Profiling.retroRun.Stop();
-            WriteConsole($"[Run] {Profiling.ToString()} | Audio occupancy {AudioPercentOccupancy}%");
-#else
-            retro_run();
-            if (FPSCounter.GetFPS() < 50)
-            {
-                wrapper_image_suspend_image(1);
-                ConfigManager.WriteConsole($"[Run] dropping fps, actual: {FPSCounter.GetFPS()}");
-            }
-            else
-            {
-                wrapper_image_suspend_image(0);
-            }
-#endif
-        }
-
-#if _serialize_
-        if (SerializationStatus == SerializationState.Serialize) {
-          if (WaitToSerialize.Finished()) {
-            Serialize();
-            SerializationStatus = SerializationState.Done;
-          }
-        }
-        else if (SerializationStatus == SerializationState.Load)
-        {
-          UnSerialize();
-          WaitToFinishedGameLoad = new Waiter(1); //for first coin check
-          SerializationStatus = SerializationState.Done;
-        }
-#endif
-
-        if (!Speaker.isPlaying)
-            Speaker.Play(); //why is this neccesary?
-
-        return;
-    }
-
+    */
     public static void End(string screenName, string gameFileName)
     {
         if (gameFileName != GameFileName || screenName != ScreenName)
@@ -816,7 +834,7 @@ public static unsafe class LibretroMameCore
             return;
         }
 
-        StopThread();
+        StopRunThread();
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         retro_unload_game();
@@ -830,9 +848,10 @@ public static unsafe class LibretroMameCore
     {
         WriteConsole("[LibRetroMameCore.ClearAll]");
 
-        FPSControl = null;
+        FPSControlNoUnity = null;
         GameTexture = null;
         GameTextureLock = new();
+        GameTextureBufferSem = new ManualResetEventSlim(false);
         TextureWidth = 0;
         TextureHeight = 0;
 
@@ -923,23 +942,25 @@ public static unsafe class LibretroMameCore
         return;
     }
 
-    static Int16 insertCoins()
+    static Int16 checkForCoins()
     {
+
         if ((CoinSlot != null && CoinSlot.takeCoin()) ||
                 ControlMap.Active("INSERT") != 0)
         {
             //hack for pacman and others.
-            coinSlotWaiter = new(1); //respond 1 during the next second.
-            return 1;
+            coinSlotWaiter = new(0.2); //respond 1 during the next 0.n of second.
+            WriteConsole($"[insertCoins] starting coinSlotWaiter, returns 1");
+            return (Int16)1;
         }
 
         if (!coinSlotWaiter.Finished())
         {
-            return 1;
-            //ConfigManager.WriteConsole($"[inputStateCB] TakeCoin JOYPAD_SELECT: ret: {ret} cycle# {HotDelaySelectCycles}");
+            WriteConsole($"[insertCoins] coinSlotWaiter not Finished, returns 1");
+            return (Int16)1;
         }
 
-        return 0;
+        return (Int16)0;
     }
 
     // https://github.com/RetroPie/RetroPie-Docs/blob/219c93ca6a81309eed937bb5b7a79b8c71add41b/docs/RetroArch-Configuration.md
@@ -964,8 +985,11 @@ public static unsafe class LibretroMameCore
             switch (id)
             {
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:
-                    //WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                    ret = insertCoins();
+                    if (port == 0)
+                    {
+                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                        ret = checkForCoins();
+                    }
                     break;
 
                 case RETRO_DEVICE_ID_JOYPAD_L3:
@@ -1003,17 +1027,21 @@ public static unsafe class LibretroMameCore
             switch (id)
             {
                 case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()} - port: {port}");
                     if (port == 0)
-                        ret = insertCoins();
+                    {
+                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
+                        ret = checkForCoins();
+                    }
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
                     if (port != 0)
-                        return 1;
-
-                    lightGunTarget.Shoot();
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                    ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                        ret = 1;
+                    else
+                    {
+                        lightGunTarget.Shoot();
+                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                        ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                    }
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
                     lightGunTarget.Shoot();
@@ -1048,7 +1076,6 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback(typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames)
     {
-        // WriteConsole($"[LibRetroMameCore.audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
 
         if (data == (short*)IntPtr.Zero)
             return 0;
@@ -1056,10 +1083,11 @@ public static unsafe class LibretroMameCore
         if (AudioBatch.Count > AudioBufferMaxOccupancy)
             return 0;
 
+        WriteConsole($"[audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
+
 #if _debug_fps_
         Profiling.audio.Start();
 #endif
-
         var inBuffer = new List<float>();
         for (ulong i = 0; i < frames * 2; ++i)
         {
@@ -1088,9 +1116,9 @@ public static unsafe class LibretroMameCore
         return frames;
     }
 
-    public static void MoveAudioStreamTo(string _gameFileName, float[] data)
+    public static void MoveAudioStreamTo(string gameFileName, float[] data)
     {
-        if (!GameLoaded || GameFileName != _gameFileName)
+        if (!GameLoaded || GameFileName != gameFileName)
             return;
         if (AudioBatch == null || AudioBatch.Count == 0)
             return;
@@ -1100,6 +1128,7 @@ public static unsafe class LibretroMameCore
             int toCopy = AudioBatch.Count >= data.Length ? data.Length : AudioBatch.Count;
             if (toCopy > 0)
             {
+                WriteConsole($"[MoveAudioStreamTo] copy:{toCopy} of {AudioBatch.Count}");
                 AudioBatch.CopyTo(0, data, 0, toCopy);
                 AudioBatch.RemoveRange(0, toCopy);
             }
@@ -1165,8 +1194,6 @@ public static unsafe class LibretroMameCore
         m.CopyTo(SystemInfo).Free();
         WriteConsole(SystemInfo.ToString());
     }
-
-
 
     //storage pointers to unmanaged memory
     public class MarshalHelpPtrVault
@@ -1404,38 +1431,43 @@ public static unsafe class LibretroMameCore
     [Conditional("_debug_")]
     public static void WriteConsole(string st)
     {
-        UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, $"[{GameFileName}] - {st}");
+        ConfigManager.WriteConsole($"({GameFileName}) - {st}");
     }
 
     public class Waiter
     {
         bool finished = false;
         DateTime started = DateTime.MaxValue;
-        int waitSecs = 0;
+        double waitSecs = 0;
 
-        public Waiter(int _pwaitSecs)
+        public Waiter(double _pwaitSecs)
         {
             waitSecs = _pwaitSecs;
         }
-        public int WaitSecs
+
+        public double WaitSecs
         {
             get
             {
                 return waitSecs;
             }
         }
-        public void reset()
+
+        public void Reset()
         {
             started = DateTime.MaxValue;
             finished = false;
         }
+
         public bool Finished()
         {
             if (!finished)
             {
                 if (started == DateTime.MaxValue)
                     started = DateTime.Now;
-                finished = started.AddSeconds(waitSecs) < DateTime.Now;
+
+                TimeSpan elapsedTime = DateTime.Now - started;
+                finished = elapsedTime.TotalSeconds >= waitSecs;
             }
             return finished;
         }

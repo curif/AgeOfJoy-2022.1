@@ -210,7 +210,7 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
       wrapper_environment_log(RETRO_LOG_INFO,
                               "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
-    } /*else if (strcmp(var->key, "mame2003-plus_cpu_clock_scale") == 0) {
+    /*} else if (strcmp(var->key, "mame2003-plus_cpu_clock_scale") == 0) {
       // https://github.com/libretro/mame2003-plus-libretro/blob/5a4eb1e4da0788d265e28480568cbbb92ddd4a84/src/mame2003/core_options.c#L718
       var->value = "200";
       wrapper_environment_log(RETRO_LOG_INFO,
