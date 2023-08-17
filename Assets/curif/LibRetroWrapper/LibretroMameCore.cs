@@ -308,11 +308,12 @@ public static unsafe class LibretroMameCore
 
     //image ===========    
     static FpsControlNoUnity FPSControlNoUnity;
-    static FpsCounter FPSCounter;
     public static Texture2D GameTexture = null;
     public static uint TextureWidth = 0, TextureHeight = 0;
-    static object GameTextureLock = new object();
-    static ManualResetEventSlim  GameTextureBufferSem = new ManualResetEventSlim(false);
+    static object GameTextureLock = new();
+    static object LightGunLock = new();
+
+    static ManualResetEventSlim GameTextureBufferSem = new ManualResetEventSlim(false);
 
     //parameters ================
 
@@ -632,7 +633,6 @@ public static unsafe class LibretroMameCore
 
         wrapper_environment_get_av_info();
         FPSControlNoUnity = new((float)wrapper_environment_get_fps());
-        FPSCounter = new();
 
         /* It's impossible to change the Sample Rate, fixed in 48000
         audioConfig.sampleRate = sampleRate;
@@ -706,25 +706,26 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback(typeof(TextureBufferSemAvailableHandler))]
     public static void TextureBufferSemAvailable()
     {
+        // ConfigManager.WriteConsole($"[TextureBufferSemAvailable]");
         GameTextureBufferSem.Set();
-        return;
     }
 
     public static void LoadTextureData()
     {
         if (GameTexture == null)
             return;
-        if (!GameTextureBufferSem.Wait(0))
-            return;
 
         lock (GameTextureLock)
         {
-            IntPtr data = wrapper_image_get_buffer();
-            int size = wrapper_image_get_buffer_size();
-            ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
-            if (data != IntPtr.Zero)
-                GameTexture.LoadRawTextureData(data, size);
-            GameTextureBufferSem.Reset();
+            if (GameTextureBufferSem.Wait(0))
+            {
+                IntPtr data = wrapper_image_get_buffer();
+                int size = wrapper_image_get_buffer_size();
+                // ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
+                if (data != IntPtr.Zero)
+                    GameTexture.LoadRawTextureData(data, size);
+                GameTextureBufferSem.Reset();
+            }
         }
         GameTexture.Apply(false, false);
     }
@@ -739,10 +740,10 @@ public static unsafe class LibretroMameCore
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run");
+                    // ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run -------------------------");
                     retro_run();
+                    // ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run end -------------------------");
                 }
-                //Task.Delay(10);
             }
         }
         );
@@ -835,6 +836,7 @@ public static unsafe class LibretroMameCore
         }
 
         StopRunThread();
+
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         retro_unload_game();
@@ -851,6 +853,7 @@ public static unsafe class LibretroMameCore
         FPSControlNoUnity = null;
         GameTexture = null;
         GameTextureLock = new();
+        LightGunLock = new();
         GameTextureBufferSem = new ManualResetEventSlim(false);
         TextureWidth = 0;
         TextureHeight = 0;
@@ -949,7 +952,7 @@ public static unsafe class LibretroMameCore
                 ControlMap.Active("INSERT") != 0)
         {
             //hack for pacman and others.
-            coinSlotWaiter = new(0.2); //respond 1 during the next 0.n of second.
+            coinSlotWaiter = new(0.1); //respond 1 during the next 0.n of second.
             WriteConsole($"[insertCoins] starting coinSlotWaiter, returns 1");
             return (Int16)1;
         }
@@ -963,6 +966,18 @@ public static unsafe class LibretroMameCore
         return (Int16)0;
     }
 
+    public static void CalculateLightGunPosition()
+    {
+        if (lightGunTarget?.lightGunInformation != null &&
+            lightGunTarget.lightGunInformation.active)
+        {
+            lock (LightGunLock)
+            {
+                lightGunTarget.Shoot();
+            }
+        }
+    }
+
     // https://github.com/RetroPie/RetroPie-Docs/blob/219c93ca6a81309eed937bb5b7a79b8c71add41b/docs/RetroArch-Configuration.md
     // https://docs.libretro.com/library/mame2003_plus/#default-retropad-layouts
     [AOT.MonoPInvokeCallback(typeof(inputStateHandler))]
@@ -970,8 +985,11 @@ public static unsafe class LibretroMameCore
     {
         Int16 ret = 0;
 
+        if (!Initialized)
+            return 0;
+
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
-            return ret;
+            return 0;
 
         // WriteConsole($"[inputStateCB] dev {device} port {port} index:{index}");
 
@@ -1035,27 +1053,36 @@ public static unsafe class LibretroMameCore
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
                     if (port != 0)
+                    {
                         ret = 1;
+                    }
                     else
                     {
-                        lightGunTarget.Shoot();
-                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                        ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                        lock (LightGunLock)
+                        {
+                            // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                            ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                        }
                     }
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
-                    lightGunTarget.Shoot();
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                    ret = (Int16)lightGunTarget.HitX;
+                    lock (LightGunLock)
+                    {
+                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitX})");
+                        ret = (Int16)lightGunTarget.HitX;
+                    }
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
-                    lightGunTarget.Shoot();
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                    ret = (Int16)lightGunTarget.HitY;
+                    lock (LightGunLock)
+                    {
+                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
+                        ret = (Int16)lightGunTarget.HitY;
+                    }
                     break;
                 default:
+                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} - port: {port}");
                     ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} active: {ret} - port: {port}");
+                    // WriteConsole($"[inputStateCB] active: {ret}");
                     break;
             }
         }
@@ -1076,14 +1103,13 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback(typeof(audioSampleBatchHandler))]
     static ulong audioSampleBatchCB(short* data, ulong frames)
     {
-
         if (data == (short*)IntPtr.Zero)
             return 0;
 
         if (AudioBatch.Count > AudioBufferMaxOccupancy)
             return 0;
 
-        WriteConsole($"[audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
+        // WriteConsole($"[audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
 
 #if _debug_fps_
         Profiling.audio.Start();
@@ -1128,7 +1154,7 @@ public static unsafe class LibretroMameCore
             int toCopy = AudioBatch.Count >= data.Length ? data.Length : AudioBatch.Count;
             if (toCopy > 0)
             {
-                WriteConsole($"[MoveAudioStreamTo] copy:{toCopy} of {AudioBatch.Count}");
+                // WriteConsole($"[MoveAudioStreamTo] copy:{toCopy} of {AudioBatch.Count}");
                 AudioBatch.CopyTo(0, data, 0, toCopy);
                 AudioBatch.RemoveRange(0, toCopy);
             }

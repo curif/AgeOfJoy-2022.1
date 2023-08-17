@@ -26,7 +26,6 @@ struct
 
 void wrapper_image_init()
 {
-  printf("[wrapper_image_init]\n");
   CreateTextureCB = NULL;
 
   image_handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
@@ -69,7 +68,7 @@ void wrapper_image_suspend_image(unsigned _no_draw)
 }
 
 #ifdef IMAGE_DEBUG
-def IMAGE_DEBUGint debug_sum(const void *data, unsigned width, unsigned height, size_t pitch)
+int debug_sum(const void *data, unsigned width, unsigned height, size_t pitch)
 {
     int sum = 0;
     uint8_t* pData = (uint8_t*)data;
@@ -93,6 +92,7 @@ def IMAGE_DEBUGint debug_sum(const void *data, unsigned width, unsigned height, 
 
 void swapBuffers(unsigned char *imageBuf, unsigned size)
 {
+  // wrapper_environment_log(RETRO_LOG_INFO, "[swapBuffers] START\n");
   TextureLockCB();
 
   imageBuffer = imageBuf;
@@ -103,6 +103,7 @@ void swapBuffers(unsigned char *imageBuf, unsigned size)
   TextureSemAvailableCB();
 
   TextureUnlockCB();
+  // wrapper_environment_log(RETRO_LOG_INFO, "[swapBuffers] END\n");
 }
 
 unsigned char *wrapper_image_get_buffer()

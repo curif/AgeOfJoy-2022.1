@@ -406,6 +406,7 @@ public class LibretroScreenController : MonoBehaviour
         LibretroMameCore.LoadTextureData();
         shader.Update();
 
+        LibretroMameCore.CalculateLightGunPosition();
         return;
     }
 
