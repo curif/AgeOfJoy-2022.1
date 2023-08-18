@@ -76,7 +76,7 @@ public class ChangeControls : MonoBehaviour
 
         if (string.IsNullOrEmpty(modelFilePath))
         {
-            ConfigManager.WriteConsoleError($"[ChangeControls.ChangeRightJoystickModel] ERROR model path missing");
+            // ConfigManager.WriteConsoleError($"[ChangeControls.ChangeRightJoystickModel] ERROR model path missing");
             return;
         }
 

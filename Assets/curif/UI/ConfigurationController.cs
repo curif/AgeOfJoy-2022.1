@@ -177,7 +177,7 @@ public class ConfigurationController : MonoBehaviour
     }
     private StatusOptions status;
     private C64BootScreen bootScreen;
-    private LibretroMameCore.Waiter onBootDelayWaiter;
+    // private LibretroMameCore.Waiter onBootDelayWaiter;
 
     private string NPCStatus;
     private GenericOptions NPCStatusOptions;

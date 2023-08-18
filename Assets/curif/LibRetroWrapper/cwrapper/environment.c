@@ -1,7 +1,7 @@
 #include "environment.h"
 
 #define LOG_BUFFER_SIZE 4096
-// #define ENVIRONMENT_DEBUG
+//#define ENVIRONMENT_DEBUG
 
 struct handlers_struct {
   void *handle;
@@ -42,6 +42,7 @@ int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                             ) {
   memset(&handlers, 0, sizeof(struct handlers_struct));
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
+
   
   handlers.log = log;
   char *core = "mame2003_plus_libretro_android.so";
@@ -169,12 +170,12 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
     if (strcmp(var->key, "mame2003-plus_skip_disclaimer") == 0) {
       var->value = "enabled";
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_skip_warnings") == 0) {
       var->value = "enabled";
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
       if (xy_control_type == 0)
@@ -182,38 +183,43 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
       else   
         var->value = "lightgun";
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_gamma") == 0) {
       var->value = gamma;
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_brightness") == 0) {
       var->value = brightness;
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_sample_rate") == 0) {
       var->value = sample_rate;
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_mame_remapping") == 0) {
       var->value = "enabled";
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_vector_intensity") == 0) {
       var->value = "2.0";
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
-    } else if (strcmp(var->key, "mame2003-plus_vector_vector_translusency") ==
-               0) {
+    /*} else if (strcmp(var->key, "mame2003-plus_cpu_clock_scale") == 0) {
+      // https://github.com/libretro/mame2003-plus-libretro/blob/5a4eb1e4da0788d265e28480568cbbb92ddd4a84/src/mame2003/core_options.c#L718
+      var->value = "200";
+      wrapper_environment_log(RETRO_LOG_INFO,
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
+      return true;*/
+    } else if (strcmp(var->key, "mame2003-plus_vector_vector_translusency") == 0) {
       var->value = "disabled";
       wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s", var->key);
+                              "[wrapper_environment_cb] get var: %s: %s", var->key, var->value);
       return true;
     }
     return false;

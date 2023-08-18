@@ -70,15 +70,15 @@ public class CabinetAGEBasic : MonoBehaviour
         }
     }
 
-    public void InsertCoin()
+    public void ExecInsertCoinBas()
     {
         execute(AGEInfo.afterInsertCoin);
     }
-    public void AfterLeave()
+    public void ExecAfterLeaveBas()
     {
         execute(AGEInfo.afterLeave);
     }
-    public void AfterLoad()
+    public void ExecAfterLoadBas()
     {
         execute(AGEInfo.afterLoad);
     }

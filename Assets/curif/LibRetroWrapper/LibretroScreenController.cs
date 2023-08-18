@@ -103,14 +103,9 @@ public class LibretroScreenController : MonoBehaviour
     private CabinetReplace cabinetReplace;
     private LightGunTarget lightGunTarget;
 
-    //hands
-    //private GameObject leftHand, rightHand, rightControl, leftControl;
-
     //controls
     private LibretroControlMap libretroControlMap;
     public ControlMapConfiguration CabinetControlMapConfig = null;
-    //public ControlMapConfiguration GlobalControlMapConfig = null;
-    //public ControlMapConfiguration UserControlMapConfig = null;
 
     //age basic
     public CabinetAGEBasicInformation ageBasicInformation;
@@ -158,21 +153,7 @@ public class LibretroScreenController : MonoBehaviour
 
         player = GameObject.Find("OVRPlayerControllerGalery");
         changeControls = player.GetComponent<ChangeControls>();
-        /*
-        leftHand = GameObject.Find("LeftHand");
-        rightHand = GameObject.Find("RightHand");
-        rightControl = GameObject.Find("RightControl");
-        lightGunTarget.spaceGun = rightControl;
-        leftControl = GameObject.Find("LeftControl");
-        */
         lightGunTarget = GetComponent<LightGunTarget>();
-
-
-        // GameObject inputActionManagerGameobject = GameObject.Find("Input Action Manager");
-        // if (inputActionManagerGameobject == null)
-        //     ConfigManager.WriteConsoleError("[LibretroScreenController.Start] input action manager in the main rig doesn't found.");
-        // else
-        //     inputActionManager = inputActionManagerGameobject.GetComponent<InputActionManager>();
 
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
@@ -210,7 +191,7 @@ public class LibretroScreenController : MonoBehaviour
         {
             cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
             cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
-            cabinetAGEBasic.AfterLoad();
+            cabinetAGEBasic.ExecAfterLoadBas();
         }
 
         while (true)
@@ -245,15 +226,14 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Speaker = GetComponent<AudioSource>();
                   LibretroMameCore.Display = display;
                   LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
-#if _serialize_
-            LibretroMameCore.EnableSaveState = EnableSaveState;
-            LibretroMameCore.StateFile = StateFile;
-#endif
                   LibretroMameCore.Brightness = Brightness;
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
                   LibretroMameCore.PathBase = PathBase;
-                  LibretroMameCore.shader = shader;
+#if _serialize_
+                  LibretroMameCore.EnableSaveState = EnableSaveState;
+                  LibretroMameCore.StateFile = StateFile;
+#endif
 
                   //controllers
                   cabinetReplace = cabinet.GetComponent<CabinetReplace>();
@@ -290,7 +270,7 @@ public class LibretroScreenController : MonoBehaviour
                   if (ageBasicInformation.active)
                   {
                       cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
-                      cabinetAGEBasic.InsertCoin();
+                      cabinetAGEBasic.ExecInsertCoinBas();
                   }
 
                   // start libretro
@@ -301,7 +281,7 @@ public class LibretroScreenController : MonoBehaviour
                       if (ageBasicInformation.active)
                       {
                           cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
-                          cabinetAGEBasic.AfterLeave();
+                          cabinetAGEBasic.ExecAfterLeaveBas();
                       }
                       return TaskStatus.Failure;
                   }
@@ -310,6 +290,12 @@ public class LibretroScreenController : MonoBehaviour
                       changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
 
                   PreparePlayerToPlayGame(true);
+
+                  //admit user interactions (like insert coins)
+                  LibretroMameCore.StartInteractions();
+
+                  // start retro_run cycle
+                  LibretroMameCore.StartRunThread();
 
                   return TaskStatus.Success;
               })
@@ -352,7 +338,7 @@ public class LibretroScreenController : MonoBehaviour
                   if (ageBasicInformation.active)
                   {
                       cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
-                      cabinetAGEBasic.AfterLeave();
+                      cabinetAGEBasic.ExecAfterLeaveBas();
                   }
 
                   return TaskStatus.Success;
@@ -390,7 +376,6 @@ public class LibretroScreenController : MonoBehaviour
 
     void PreparePlayerToPlayGame(bool isPlaying)
     {
-
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
         changeControls.PlayerMode(isPlaying);
 
@@ -411,8 +396,21 @@ public class LibretroScreenController : MonoBehaviour
     public void Update()
     {
         // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
-        LibretroMameCore.Run(name, GameFile); //only runs if this game is running
+        //LibretroMameCore.Run(name, GameFile); //only runs if this game is running
+        if (shader == null)
+            return;
+        if (!LibretroMameCore.isRunning(name, GameFile))
+            return;
+
+        if (LibretroMameCore.GameTexture == null && LibretroMameCore.TextureWidth != 0)
+        {
+            LibretroMameCore.CreateTexture();
+            shader.Texture = LibretroMameCore.GameTexture;
+        }
+        LibretroMameCore.LoadTextureData();
         shader.Update();
+
+        LibretroMameCore.CalculateLightGunPosition();
         return;
     }
 
@@ -449,10 +447,10 @@ public class LibretroScreenController : MonoBehaviour
 
     private void OnDestroy()
     {
-        LibretroMameCore.End(name, GameFile);
-
         if (LibretroMameCore.isRunning(name, GameFile))
             PreparePlayerToPlayGame(false);
+
+        LibretroMameCore.End(name, GameFile);
     }
 
     public void InsertCoin()

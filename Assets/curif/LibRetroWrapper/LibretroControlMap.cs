@@ -43,7 +43,7 @@ public class LibretroControlMap : MonoBehaviour
             conf.SaveAsYaml(fileNameToSaveOrEmpty);
         }
 
-        //Debug.Log(conf.AsMarkdown());
+        // Debug.Log(conf.AsMarkdown());
 
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
     }
@@ -66,7 +66,7 @@ public class LibretroControlMap : MonoBehaviour
         {
             if (action.IsPressed())
             {
-                ConfigManager.WriteConsole($"[LibretroControlMap.Active] {inputActionMapId} pressed");
+                // ConfigManager.WriteConsole($"[LibretroControlMap.Active] {inputActionMapId} pressed");
                 return 1;
             }
             return 0;
@@ -81,28 +81,28 @@ public class LibretroControlMap : MonoBehaviour
                 case "JOYPAD_UP":
                     if (val.y > 0.5)
                     {
-                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
+                        // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_DOWN":
                     if (val.y < -0.5)
                     {
-                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
+                        // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_RIGHT":
                     if (val.x > 0.5)
                     {
-                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
+                        // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_LEFT":
                     if (val.x < -0.5)
                     {
-                        ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
+                        // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
