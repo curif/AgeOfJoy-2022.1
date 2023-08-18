@@ -291,6 +291,10 @@ public class LibretroScreenController : MonoBehaviour
 
                   PreparePlayerToPlayGame(true);
 
+                  //admit user interactions (like insert coins)
+                  LibretroMameCore.StartInteractions();
+
+                  // start retro_run cycle
                   LibretroMameCore.StartRunThread();
 
                   return TaskStatus.Success;
@@ -445,7 +449,7 @@ public class LibretroScreenController : MonoBehaviour
     {
         if (LibretroMameCore.isRunning(name, GameFile))
             PreparePlayerToPlayGame(false);
-        
+
         LibretroMameCore.End(name, GameFile);
     }
 

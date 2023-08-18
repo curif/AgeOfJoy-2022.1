@@ -324,7 +324,6 @@ public static unsafe class LibretroMameCore
     public static CoinSlotController CoinSlot;
     public static int SecondsToWaitToFinishLoad = 2;
 
-
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
 
@@ -337,6 +336,7 @@ public static unsafe class LibretroMameCore
     //Status flags
     public static bool GameLoaded = false;
     static bool Initialized = false;
+    static bool InteractionAvailable = false;
 
     public static LightGunTarget lightGunTarget;
 
@@ -646,28 +646,6 @@ public static unsafe class LibretroMameCore
 
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
-#if _serialize_
-        if (EnableSaveState)
-        {
-          if (AlreadySerialized())
-          {
-            WaitToSerialize = new Waiter(3);
-            SerializationStatus = SerializationState.Load;
-          }
-          else {
-            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 3); //for first coin check
-            WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad);
-            SerializationStatus = SerializationState.Serialize;
-          }
-        }
-        else
-        {
-          WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
-          SerializationStatus = SerializationState.None;
-        }
-#else
-        WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
-#endif
         return true;
     }
 
@@ -747,6 +725,35 @@ public static unsafe class LibretroMameCore
             }
         }
         );
+    }
+
+    public static void StartInteractions()
+    {
+        
+#if _serialize_
+        if (EnableSaveState)
+        {
+          if (AlreadySerialized())
+          {
+            WaitToSerialize = new Waiter(3);
+            SerializationStatus = SerializationState.Load;
+          }
+          else {
+            WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad + 3); //for first coin check
+            WaitToSerialize = new Waiter(SecondsToWaitToFinishLoad);
+            SerializationStatus = SerializationState.Serialize;
+          }
+        }
+        else
+        {
+          WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
+          SerializationStatus = SerializationState.None;
+        }
+#else
+        WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
+#endif
+        
+        InteractionAvailable = true;
     }
 
     public static void StopRunThread()
@@ -877,6 +884,7 @@ public static unsafe class LibretroMameCore
 
         GameFileName = "";
         ScreenName = "";
+        InteractionAvailable = false;
         GameLoaded = false;
 
         CoinSlot?.clean();
@@ -985,7 +993,7 @@ public static unsafe class LibretroMameCore
     {
         Int16 ret = 0;
 
-        if (!Initialized)
+        if (!Initialized || !InteractionAvailable)
             return 0;
 
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
