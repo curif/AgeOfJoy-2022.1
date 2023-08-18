@@ -7,6 +7,10 @@ struct handlers_struct {
   void *handle;
   void (*retro_set_environment)(retro_environment_t);
   void (*retro_get_system_av_info)(struct retro_system_av_info *info);
+  void (*retro_get_system_info)(struct retro_system_info *info);
+  void (*retro_init)();
+  void (*retro_deinit)();
+  bool (*retro_load_game)(struct retro_game_info *game);
   retro_log_printf_t log;
 } handlers;
 static enum retro_pixel_format pixel_format;
@@ -16,7 +20,11 @@ static char gamma[50];
 static char brightness[50];
 static char sample_rate[50];
 static struct retro_game_geometry geometry;
+static struct retro_system_info system_info;
 static struct retro_system_av_info av_info;
+static struct retro_game_info game_info;
+static char game_path[500];
+
 static char log_buffer[LOG_BUFFER_SIZE];
 static int xy_control_type; //0 mouse, 1 ligthgun
 
@@ -75,7 +83,7 @@ int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_init] dlsym retro_get_system_av_info\n");
   handlers.retro_get_system_av_info =
-      (void (*)(struct retro_get_system_av_info *))dlsym(
+      (void (*)(struct retro_system_av_info *))dlsym(
           handlers.handle, "retro_get_system_av_info");
   if ( handlers.retro_get_system_av_info == NULL)
   {  
@@ -83,16 +91,56 @@ int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
                           "[wrapper_environment_init] retro_get_system_av_info not found\n");
     return -1;
   }
+
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] dlsym retro_get_system_info\n");
+  handlers.retro_get_system_info =
+      (void (*)(struct retro_system_info *))dlsym(
+          handlers.handle, "retro_get_system_info");
+  if ( handlers.retro_get_system_info == NULL)
+  {  
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] retro_get_system_info not found\n");
+    return -1;
+  }
+
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] dlsym retro_init\n");
+  handlers.retro_init = (void (*)(void))dlsym(handlers.handle, "retro_init");
+  if (handlers.retro_init == NULL)
+  {  
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] retro_init not found\n");
+    return -1;
+  }
+
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] dlsym retro_deinit\n");
+  handlers.retro_deinit = (void (*)(void))dlsym(handlers.handle, "retro_deinit");
+  if (handlers.retro_deinit == NULL)
+  {  
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] retro_deinit not found\n");
+    return -1;
+  }
   
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] dlsym retro_load_game\n");
+  handlers.retro_load_game = (bool (*)(struct retro_game_info *))dlsym(handlers.handle, "retro_load_game");
+  if (handlers.retro_load_game == NULL)
+  {  
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                          "[wrapper_environment_init] retro_load_game not found\n");
+    return -1;
+  }
+
+
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_init] call retro_set_environment\n");
   handlers.retro_set_environment(&wrapper_environment_cb);
-
   strncpy(save_directory, _save_directory, 500);
   strncpy(system_directory, _system_directory, 500);
   strncpy(sample_rate, _sample_rate, 50);
-
-  memset(&av_info, 0, sizeof(struct retro_system_av_info));
 
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_init] sample_rate: %s\n",
@@ -103,11 +151,20 @@ int wrapper_environment_init(retro_log_printf_t log, char *_save_directory,
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_init] system_directory: %s\n",
                           system_directory);
+  
+  handlers.retro_get_system_info(&system_info);
   wrapper_environment_log(RETRO_LOG_INFO,
-                          "[wrapper_environment_init] end ----------\n");
+                        "[_retro_get_system_info] Library Name: %s\n"
+                        "Library Version: %s\n"
+                        "valid_extensions: %s\n"
+                        "need_fullpath: %i\n", 
+                        system_info.library_name, system_info.library_version, 
+                        system_info.valid_extensions,  (int)system_info.need_fullpath);
 
+  memset(&av_info, 0, sizeof(struct retro_system_av_info));
+
+  wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_init] end ----------\n");
   return 0;
-
 }
 
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, int _xy_control_type) {
@@ -270,4 +327,31 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
     return true;
   }
   return false;
+}
+
+int wrapper_system_info_need_full_path()
+{
+    return (int)system_info.need_fullpath;
+}
+
+void wrapper_retro_init()
+{
+    return handlers.retro_init();
+}
+
+void wrapper_retro_deinit()
+{
+    return handlers.retro_deinit();
+}
+
+int wrapper_retro_load_game(char *path)
+{
+  memset(&game_info, 0, sizeof(struct retro_game_info));
+  memset(game_path, 0, 500);
+  strncpy(game_path, path, 500);
+  game_info.path = game_path;
+  wrapper_environment_log(RETRO_LOG_INFO,
+                            "[wrapper_retro_load_game] (%s)--\n", game_info.path);
+  bool ret = handlers.retro_load_game(&game_info);
+  return (int)ret;
 }

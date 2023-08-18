@@ -35,36 +35,6 @@ public static unsafe class LibretroMameCore
     //IL2CPP does not support marshaling delegates that point to instance methods to native code
     //NotSupportedException: To marshal a managed method, please add an attribute named 'MonoPInvokeCallback' to the method definition. 
 
-
-    [StructLayout(LayoutKind.Sequential)]
-    public class retro_system_info
-    {
-        public string library_name;
-        public string library_version;
-        public string valid_extensions;
-        public bool need_fullpath;
-        public bool block_extract;
-
-        public override string ToString()
-        {
-            return String.Format(
-                "------------------- LIBRETRO SYSTEM INFO -----------------------\n" +
-                "Library Name: {0} \n" +
-                "Library Version: {1} \n" +
-                "valid_extensions: {2} \n" +
-                "need_fullpath: {3} \n" +
-                "block_extract: {4} \n", library_name, library_version, valid_extensions, need_fullpath, block_extract);
-        }
-    }
-
-    [DllImport("mame2003_plus_libretro_android")]
-    private static extern void retro_get_system_info(IntPtr info);
-
-    [DllImport("mame2003_plus_libretro_android")]
-    private static extern int retro_api_version();
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] public delegate uint APIVersionSignature();
-
-
     #region INPUT
     public const int RETRO_DEVICE_TYPE_SHIFT = 8;
     public const int RETRO_DEVICE_MASK = (1 << RETRO_DEVICE_TYPE_SHIFT) - 1;
@@ -249,22 +219,9 @@ public static unsafe class LibretroMameCore
     private static extern void retro_init();
     // deinit do nothing
     // https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L401
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_deinit();
     // retro_run -------------------------------
     [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern void retro_run();
-    // retro_load_game -------------------------------
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct retro_game_info
-    {
-        public string path;
-        public string data;
-        public uint size;
-        public string meta;
-    }
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool retro_load_game(ref retro_game_info game);
     [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern void retro_unload_game();
 
@@ -347,6 +304,19 @@ public static unsafe class LibretroMameCore
 
     // C Wrappers 
     //
+    
+    //system
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_retro_init();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_retro_deinit();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_retro_load_game(byte[] path);
+
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_system_info_need_full_path();
+
     //image
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_image_prev_load_game();
@@ -581,13 +551,12 @@ public static unsafe class LibretroMameCore
             retro_set_input_state(new inputStateHandler(inputStateCB));
 
             WriteConsole("[LibRetroMameCore.Start] call retro_init");
-            retro_init(); //do almost nothing https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
+            wrapper_retro_init(); //do almost nothing https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
 
             WriteConsole("[LibRetroMameCore.Start] retro_set_controller_port_device");
             retro_set_controller_port_device(port: 0, device: RETRO_DEVICE_JOYPAD);
 
-            getSystemInfo();
-            if (!SystemInfo.need_fullpath)
+            if (wrapper_system_info_need_full_path() == 0)
             {
                 ClearAll();
                 WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
@@ -600,14 +569,8 @@ public static unsafe class LibretroMameCore
         GameFileName = gameFileName;
         ScreenName = screenName;
 
-        WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
-
         //controls
         assignControls();
-
-        retro_game_info game = new retro_game_info();
-        game.path = path;
-        game.size = 0;
 
         //ligthgun
         int xy_device = 0;
@@ -620,9 +583,10 @@ public static unsafe class LibretroMameCore
                                       Encoding.ASCII.GetBytes(Gamma),
                                       Encoding.ASCII.GetBytes(Brightness),
                                       xy_device);
-        wrapper_image_prev_load_game(); //in order...
-        GameLoaded = retro_load_game(ref game);
 
+        WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
+        wrapper_image_prev_load_game(); //in order...
+        GameLoaded = wrapper_retro_load_game(Encoding.ASCII.GetBytes(path)) == 1;
         if (!GameLoaded)
         {
             ClearAll();
@@ -1219,15 +1183,6 @@ public static unsafe class LibretroMameCore
     }
 
 #endif
-    private static void getSystemInfo()
-    {
-        WriteConsole("[LibRetroMameCore.getSystemInfo] retro_get_system_info ");
-        SystemInfo = new retro_system_info();
-        MarshalHelpCalls<retro_system_info> m = new MarshalHelpCalls<retro_system_info>();
-        retro_get_system_info(m.GetPtr(SystemInfo));
-        m.CopyTo(SystemInfo).Free();
-        WriteConsole(SystemInfo.ToString());
-    }
 
     //storage pointers to unmanaged memory
     public class MarshalHelpPtrVault

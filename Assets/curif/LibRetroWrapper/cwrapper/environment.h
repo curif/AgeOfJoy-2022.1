@@ -12,6 +12,7 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "libretro.h"
 
@@ -24,6 +25,8 @@ char *wrapper_environment_log(enum retro_log_level, char *format, ...);
 void wrapper_environment_get_av_info();
 double wrapper_environment_get_fps();
 double wrapper_environment_get_sample_rate();
+int wrapper_system_info_need_full_path();
+int wrapper_retro_load_game(char *path);
 
 #ifdef __cplusplus
 }
