@@ -4,7 +4,6 @@
 
 #include "libretro.h"
 #include <stddef.h>
-#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,12 +15,11 @@ typedef void (*TextureLock)();
 typedef void (*TextureUnlock)();
 typedef void (*TextureSemAvailable)();
 
-void wrapper_image_init();
+void wrapper_image_init(CreateTexture createTexture,  
+                        TextureLock textureLock, 
+                        TextureUnlock textureUnlock,
+                        TextureSemAvailable textureSemAvailableCB);
 void wrapper_image_prev_load_game();
-void wrapper_image_set_texture_cb(CreateTexture createTexture,  
-                                    TextureLock textureLock, 
-                                    TextureUnlock textureUnlock,
-                                    TextureSemAvailable textureSemAvailableCB);
 void wrapper_image_video_refresh_cb(const void *data, unsigned width, unsigned height, size_t pitch);
 
 void wrapper_image_lock();

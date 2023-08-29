@@ -216,13 +216,13 @@ public class LibretroScreenController : MonoBehaviour
               //.Condition("Player looking screen", () => isPlayerLookingAtScreen3()) if coinslot is present with coins is sufficient
               .Do("Start game", () =>
               {
-                  videoPlayer.Stop();
+                  videoPlayer.Pause();
 
                   // core do it: shader.texture = LibretroMameCore.GameTexture;
                   shader.Invert(GameInvertX, GameInvertY);
 
                   //start mame
-                  LibretroMameCore.WriteConsole($"MAME Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
+                  ConfigManager.WriteConsole($"[LibretroScreenController] Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
                   LibretroMameCore.Speaker = GetComponent<AudioSource>();
                   LibretroMameCore.Display = display;
                   LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
@@ -399,18 +399,20 @@ public class LibretroScreenController : MonoBehaviour
         //LibretroMameCore.Run(name, GameFile); //only runs if this game is running
         if (shader == null)
             return;
-        if (!LibretroMameCore.isRunning(name, GameFile))
-            return;
 
-        if (LibretroMameCore.GameTexture == null && LibretroMameCore.TextureWidth != 0)
+        if (LibretroMameCore.isRunning(name, GameFile))
         {
-            LibretroMameCore.CreateTexture();
-            shader.Texture = LibretroMameCore.GameTexture;
+            if (LibretroMameCore.GameTexture == null && LibretroMameCore.TextureWidth != 0)
+            {
+                LibretroMameCore.CreateTexture();
+                shader.Texture = LibretroMameCore.GameTexture;
+            }
+            LibretroMameCore.LoadTextureData();
+            LibretroMameCore.CalculateLightGunPosition();
         }
-        LibretroMameCore.LoadTextureData();
+
         shader.Update();
 
-        LibretroMameCore.CalculateLightGunPosition();
         return;
     }
 

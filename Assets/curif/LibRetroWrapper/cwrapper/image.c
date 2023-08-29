@@ -13,7 +13,6 @@ static char create_texture_called;
 static unsigned image_width;
 static unsigned image_height;
 static unsigned no_draw;
-static pthread_mutex_t mutex;
 static int bufIdx;
 static unsigned char *imageBuffer;
 static unsigned imageSize;
@@ -24,9 +23,11 @@ struct
   void (*retro_set_video_refresh)(retro_video_refresh_t);
 } image_handlers;
 
-void wrapper_image_init()
+void wrapper_image_init(CreateTexture createTexture, 
+                        TextureLock textureLock, 
+                        TextureUnlock textureUnlock,
+                        TextureSemAvailable textureSemAvailable)
 {
-  CreateTextureCB = NULL;
 
   image_handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
   image_handlers.retro_set_video_refresh = (void (*)(retro_video_refresh_t))dlsym(image_handlers.handle,
@@ -37,18 +38,12 @@ void wrapper_image_init()
   bufIdx = 0;
   imageBuffer = NULL;
   imageSize = 0;
-  pthread_mutex_init(&mutex, NULL); // Initialize the mutex
-}
 
-void wrapper_image_set_texture_cb(CreateTexture createTexture, 
-                                    TextureLock textureLock, 
-                                    TextureUnlock textureUnlock,
-                                    TextureSemAvailable textureSemAvailable)
-{
   CreateTextureCB = createTexture;
   TextureLockCB = textureLock;
   TextureUnlockCB = textureUnlock;
   TextureSemAvailableCB = textureSemAvailable;
+
   no_draw = 0;
 }
 

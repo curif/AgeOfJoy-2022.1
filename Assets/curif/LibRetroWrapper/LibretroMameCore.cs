@@ -43,14 +43,6 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_MOUSE = 2;
     public const uint RETRO_DEVICE_LIGHTGUN = 4;
     public const uint RETRO_DEVICE_ANALOG = 5;
-    // public const uint RETRO_DEVICE_KEYBOARD   = 3;
-    // public const uint RETROK_5              = 53;
-    // public const uint RETRO_DEVICE_ANALOG   = 5;
-    // // public const uint RETRO_DEVICE_MOUSE    = 2;
-    // public const uint RETRO_DEVICE_KEYBOARD = 3;
-    // public const uint RETRO_DEVICE_LIGHTGUN = 4;
-    // public const uint RETRO_DEVICE_ANALOG   = 5;
-    // public const uint RETRO_DEVICE_POINTER  = 6;
 
     public const uint RETRO_DEVICE_ID_JOYPAD_B = 0;
     public const uint RETRO_DEVICE_ID_JOYPAD_Y = 1;
@@ -107,8 +99,6 @@ public static unsafe class LibretroMameCore
     private static mameControls deviceIdsLightGun = null;
     public static List<string> deviceIdsCombined = null;
 
-    [DllImport("mame2003_plus_libretro_android")]
-    private static extern void retro_set_controller_port_device(uint port, uint device);
     // retro_set_input_poll -------------------------------
     private delegate void inputPollHander();
     [DllImport("mame2003_plus_libretro_android")]
@@ -122,6 +112,7 @@ public static unsafe class LibretroMameCore
 
     public static LibretroControlMap ControlMap;
     #endregion
+
     #region LOG
     // LibRetro log callback implementation ----------------------------------------
     public enum retro_log_level
@@ -136,19 +127,7 @@ public static unsafe class LibretroMameCore
     // MarshalDirectiveException: Cannot marshal type 'System.Object[]'
     //public delegate void logHandler(retro_log_level level, string format, object[] args);
     public delegate void logHandler(retro_log_level level, [In, MarshalAs(UnmanagedType.LPStr)] string format, IntPtr arg1, IntPtr arg2, IntPtr arg3, IntPtr arg4, IntPtr arg5, IntPtr arg6, IntPtr arg7, IntPtr arg8, IntPtr arg9, IntPtr arg10, IntPtr arg11, IntPtr arg12);
-
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct retro_log_callback
-    {
-        public IntPtr log; // retro_log_printf_t
-    }
-    [StructLayout(LayoutKind.Sequential)]
-    public struct retro_message
-    {
-        public string msg;        /* Message to be displayed. */
-        public uint frames;     /* Duration in frames of message. */
-    }
+    public delegate void wrapperLogHandler(retro_log_level level, string value);
 
     static int bufLogSize = 2 * 1024;
     static IntPtr buf = Marshal.AllocHGlobal(bufLogSize); //there is a risk here.
@@ -181,8 +160,14 @@ public static unsafe class LibretroMameCore
             // Marshal.FreeHGlobal(buf); //the pointer dies with the program, no memleak here.
         }
     }
+    [AOT.MonoPInvokeCallback(typeof(wrapperLogHandler))]
+    public static void WrapperPrintf(retro_log_level level, string value)
+    {
+        WriteConsole($"{level}: {value}");
+    }
 
     #endregion
+
     #region AUDIO
 
     // retro_set_audio_sample -------------------------------
@@ -195,35 +180,19 @@ public static unsafe class LibretroMameCore
     [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern void retro_set_audio_sample_batch(audioSampleBatchHandler sah);
 
-    // retro_set_audio_sample_batch -------------------------------
-    public delegate void AudiobufferStatustHandler(bool active, uint occupancy, bool underrun_likely);
-    [StructLayout(LayoutKind.Sequential)]
-    public struct retro_audio_buffer_status_callback
-    {
-        public IntPtr callback;
-    }
-
-    public static AudiobufferStatustHandler AudioBufferStatusInfo;
-
     // audio buffer ===============
     public static List<float> AudioBatch = new List<float>();
     static object AudioBufferLock = new object();
-
     static uint AudioBufferMaxOccupancy = 1024 * 8;
     static int QuestAudioFrequency = 48000; //Quest 2 standar, can change at start
 
     #endregion
 
-    // retro_init -------------------------------
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_init();
     // deinit do nothing
     // https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L401
     // retro_run -------------------------------
     [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
     private static extern void retro_run();
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_unload_game();
 
 #if _serialize_
     // serialization -------------------
@@ -235,17 +204,9 @@ public static unsafe class LibretroMameCore
     private static extern bool retro_unserialize(IntPtr info, uint size);
 #endif
 
-    [StructLayout(LayoutKind.Sequential)]
-    public class retro_system_timing
-    {
-        public double fps;             /* FPS of video content. */
-        public double sample_rate;     /* Sampling rate of audio. */
-    };
-
     // user control
     //games have to initialize and then they can accept controls.
     private static Waiter WaitToFinishedGameLoad = null;
-    private static FpsControl controlForAskIfTimeToExitGame;
 
 #if _serialize_
     //serialization control
@@ -274,7 +235,6 @@ public static unsafe class LibretroMameCore
 
     //parameters ================
 
-
     //components parameters
     public static Renderer Display;
     public static AudioSource Speaker;
@@ -285,7 +245,6 @@ public static unsafe class LibretroMameCore
     static CancellationTokenSource retroRunTaskCancellationToken;
 
     //game info and storage.
-    public static retro_system_info SystemInfo = new retro_system_info();
     static string GameFileName = "";
     static string ScreenName = ""; //name of the screen of the cabinet where is running the game
     public static string PathBase = "";
@@ -304,15 +263,17 @@ public static unsafe class LibretroMameCore
 
     // C Wrappers 
     //
-    
+
     //system
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_retro_init();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_retro_deinit();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int wrapper_retro_load_game(byte[] path);
-
+    private static extern int wrapper_load_game(string path, string _gamma,
+                                                        string _brightness, int xy_device);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_unload_game();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_system_info_need_full_path();
@@ -320,42 +281,38 @@ public static unsafe class LibretroMameCore
     //image
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_image_prev_load_game();
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_image_init();
-
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr wrapper_image_get_buffer();
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int wrapper_image_get_buffer_size();
 
     private delegate void CreateTextureHandler(uint width, uint height);
     private delegate void TextureLockHandler();
     private delegate void TextureUnlockHandler();
     private delegate void TextureBufferSemAvailableHandler();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_image_set_texture_cb(CreateTextureHandler CreateTexture,
-                                                            TextureLockHandler TextureLock,
-                                                            TextureUnlockHandler TextureUnlock,
-                                                            TextureBufferSemAvailableHandler TextureBufferSemAvailable
-                                                            );
+    private static extern void wrapper_image_init(CreateTextureHandler CreateTexture,
+                                                    TextureLockHandler TextureLock,
+                                                    TextureUnlockHandler TextureUnlock,
+                                                    TextureBufferSemAvailableHandler TextureBufferSemAvailable
+                                                    );
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr wrapper_image_get_buffer();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_image_get_buffer_size();
+
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_image_suspend_image(uint suspend);
 
     //environment.
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int wrapper_environment_init(logHandler lg, byte[] _save_directory, byte[] _system_directory, byte[] _sample_rate);
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_environment_set_game_parameters(byte[] _gamma, byte[] _brightness, int xy_device);
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_environment_get_av_info();
+    //private static extern int wrapper_environment_init(logHandler lg, byte[] _save_directory, byte[] _system_directory, byte[] _sample_rate);
+    private static extern int wrapper_environment_init(wrapperLogHandler lg, 
+                                                        retro_log_level _minLogLevel, 
+                                                        string _save_directory, 
+                                                        string _system_directory, 
+                                                        string _sample_rate);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern double wrapper_environment_get_fps();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern double wrapper_environment_get_sample_rate();
-
-    // pointer vault
-    private static MarshalHelpPtrVault PtrVault = new MarshalHelpPtrVault();
-    private static MarshalHelpPtrVault PtrVaultNoFreed = new MarshalHelpPtrVault();
 
     public static string[] GammaOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
     public static string[] BrightnessOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
@@ -445,53 +402,8 @@ public static unsafe class LibretroMameCore
         deviceIdsLightGun.controlMap = ControlMap;
     }
 
-    private class mameControls
-    {
-        private Dictionary<uint, string> ids = new();
-        public LibretroControlMap controlMap;
-
-        public mameControls(LibretroControlMap ctrl = null)
-        {
-            controlMap = ctrl;
-        }
-
-        public void addMap(uint mameId, string gameId)
-        {
-            ids[mameId] = gameId;
-        }
-
-        public string Id(uint mameId)
-        {
-            if (ids.ContainsKey(mameId))
-                return ids[mameId];
-            return "";
-        }
-
-        public string InputActionMapName(string gameId, int port = 0)
-        {
-            return $"{gameId}_{port}";
-        }
-
-        public Int16 Active(uint mameId, int port = 0)
-        {
-            string gameId = Id(mameId);
-            if (gameId == "")
-            {
-                ConfigManager.WriteConsoleError($"[mameControls] libretro is asking for a control id that is not mapped: {mameId}");
-                return 0;
-            }
-            return (Int16)controlMap.Active(gameId, port);
-        }
-
-        public List<string> ControlsList()
-        {
-            return ids.Values.Distinct().ToList();
-        }
-    }
-
     public static bool Start(string screenName, string gameFileName)
     {
-
         string path = ConfigManager.RomsDir + "/" + gameFileName;
 
         if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName))
@@ -521,41 +433,36 @@ public static unsafe class LibretroMameCore
             QuestAudioFrequency = audioConfig.sampleRate;
             WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
 
-            WriteConsole("[LibRetroMameCore.Start] wrapper_environment_init/retro_set_environment");
+            WriteConsole("[LibRetroMameCore.Start] init environment");
             // should run first.
-            //wrapper_environment_init(Marshal.GetFunctionPointerForDelegate(new logHandler(MamePrintf)));
-            int result = wrapper_environment_init(new logHandler(MamePrintf), Encoding.ASCII.GetBytes(ConfigManager.GameSaveDir),
-                                                 Encoding.ASCII.GetBytes(ConfigManager.SystemDir),
-                                                 Encoding.ASCII.GetBytes(QuestAudioFrequency.ToString())
-                                                );
+            int result = wrapper_environment_init(new wrapperLogHandler(WrapperPrintf),
+                                                    MinLogLevel,
+                                                    ConfigManager.GameSaveDir,
+                                                    ConfigManager.SystemDir,
+                                                    QuestAudioFrequency.ToString()
+                                                    );
             if (result != 0)
             {
-                WriteConsole("[LibRetroMameCore.Start] wrapper_environment_init failed");
+                ConfigManager.WriteConsoleError("[LibRetroMameCore.Start] wrapper_environment_init failed");
                 return false;
             }
 
-            WriteConsole("[LibRetroMameCore.Start] wrapper_image_init");
-            wrapper_image_init();
-            wrapper_image_set_texture_cb(new CreateTextureHandler(CreateTextureCB),
-                                            new TextureLockHandler(TextureLockCB),
-                                            new TextureUnlockHandler(TextureUnlockCB),
-                                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
+            WriteConsole("[LibRetroMameCore.Start] image callbacks");
+            wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
+                                new TextureLockHandler(TextureLockCB),
+                                new TextureUnlockHandler(TextureUnlockCB),
+                                new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
 
-            WriteConsole("[LibRetroMameCore.Start] retro_set_audio_sample");
+            //audio callbacks
+            WriteConsole("[LibRetroMameCore.Start] audio callbacks");
             retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
-            WriteConsole("[LibRetroMameCore.Start] retro_set_audio_sample_batch");
             retro_set_audio_sample_batch(new audioSampleBatchHandler(audioSampleBatchCB));
-            WriteConsole("[LibRetroMameCore.Start] retro_set_input_poll");
             retro_set_input_poll(new inputPollHander(inputPollCB));
-            WriteConsole("[LibRetroMameCore.Start] retro_set_input_state");
             retro_set_input_state(new inputStateHandler(inputStateCB));
 
+            // init 
             WriteConsole("[LibRetroMameCore.Start] call retro_init");
             wrapper_retro_init(); //do almost nothing https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
-
-            WriteConsole("[LibRetroMameCore.Start] retro_set_controller_port_device");
-            retro_set_controller_port_device(port: 0, device: RETRO_DEVICE_JOYPAD);
-
             if (wrapper_system_info_need_full_path() == 0)
             {
                 ClearAll();
@@ -564,6 +471,7 @@ public static unsafe class LibretroMameCore
             }
 
             Initialized = true;
+            WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
         }
 
         GameFileName = gameFileName;
@@ -573,29 +481,18 @@ public static unsafe class LibretroMameCore
         assignControls();
 
         //ligthgun
-        int xy_device = 0;
-        if (lightGunTarget?.lightGunInformation != null &&
-            lightGunTarget.lightGunInformation.active)
-            xy_device = 1;
+        int xy_device = (lightGunTarget?.lightGunInformation != null &&
+                            lightGunTarget.lightGunInformation.active) ? 1 : 0;
 
-        WriteConsole($"[LibRetroMameCore.Start] wrapper_image_prev_load_game/retro_load_game - loading:{path}");
-        wrapper_environment_set_game_parameters(
-                                      Encoding.ASCII.GetBytes(Gamma),
-                                      Encoding.ASCII.GetBytes(Brightness),
-                                      xy_device);
-
-        WriteConsole($"------------------- retro_load_game {GameFileName} in {ScreenName}");
-        wrapper_image_prev_load_game(); //in order...
-        GameLoaded = wrapper_retro_load_game(Encoding.ASCII.GetBytes(path)) == 1;
+        WriteConsole($"------------------- wrapper_load_game {GameFileName} in {ScreenName} -------");
+        GameLoaded = wrapper_load_game(path, Gamma, Brightness, xy_device) == 1;
         if (!GameLoaded)
         {
             ClearAll();
             WriteConsole($"[LibRetroMameCore.Start] ERROR {path} MAME can't start the game, please check if it is the correct version and is supported in MAME2003+ in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
             return false;
         }
-        WriteConsole($"[LibRetroMameCore.Start] Game Loaded:{path}");
 
-        wrapper_environment_get_av_info();
         FPSControlNoUnity = new((float)wrapper_environment_get_fps());
 
         /* It's impossible to change the Sample Rate, fixed in 48000
@@ -604,8 +501,6 @@ public static unsafe class LibretroMameCore
         audioConfig = AudioSettings.GetConfiguration();
         WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
         */
-
-        WriteConsole($"[LibRetroMameCore.Start] AUDIO Mame2003+ frequency {wrapper_environment_get_sample_rate()} | Quest: {QuestAudioFrequency}");
         Speaker.Play();
 
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
@@ -663,7 +558,7 @@ public static unsafe class LibretroMameCore
             {
                 IntPtr data = wrapper_image_get_buffer();
                 int size = wrapper_image_get_buffer_size();
-                // ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
+                ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
                 if (data != IntPtr.Zero)
                     GameTexture.LoadRawTextureData(data, size);
                 GameTextureBufferSem.Reset();
@@ -674,6 +569,21 @@ public static unsafe class LibretroMameCore
 
     public static void StartRunThread()
     {
+#if _serialize_
+            if (SerializationStatus == SerializationState.Serialize) {
+              if (WaitToSerialize.Finished()) {
+                Serialize();
+                SerializationStatus = SerializationState.Done;
+              }
+            }
+            else if (SerializationStatus == SerializationState.Load)
+            {
+              UnSerialize();
+              WaitToFinishedGameLoad = new Waiter(1); //for first coin check
+              SerializationStatus = SerializationState.Done;
+            }
+#endif
+
         retroRunTaskCancellationToken = new();
         retroRunTask = Task.Run(() =>
         {
@@ -682,9 +592,9 @@ public static unsafe class LibretroMameCore
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    // ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run -------------------------");
+                    ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run -------------------------");
                     retro_run();
-                    // ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run end -------------------------");
+                    ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run end -------------------------");
                 }
             }
         }
@@ -693,7 +603,7 @@ public static unsafe class LibretroMameCore
 
     public static void StartInteractions()
     {
-        
+
 #if _serialize_
         if (EnableSaveState)
         {
@@ -716,7 +626,7 @@ public static unsafe class LibretroMameCore
 #else
         WaitToFinishedGameLoad = new Waiter(SecondsToWaitToFinishLoad); //for first coin check
 #endif
-        
+
         InteractionAvailable = true;
     }
 
@@ -738,81 +648,22 @@ public static unsafe class LibretroMameCore
             WriteConsole("[StopRunThread] ERROR ------");
             ConfigManager.WriteConsoleError("[StopRunThread] Game thread continues running. can't stop it.");
         }
+        ConfigManager.WriteConsole($"[StopThread] stopped, status: {retroRunTask.Status}");
     }
 
-    /*
-        public static void Run(string screenName, string gameFileName)
-        {
-            if (!isRunning(screenName, gameFileName))
-            {
-                return;
-            }
-            //WriteConsole($"[LibRetroMameCore.Run] running screen: {screenName} game: {gameFileName}");
-
-            FPSCounter.Update();
-            // https://docs.unity3d.com/ScriptReference/Time-deltaTime.html
-            FPSControl.CountTimeFrame();
-            while (FPSControl.isTime())
-            {
-
-    #if _debug_fps_
-                // https://github.com/libretro/mame2003-plus-libretro/blob/6de44ee0a37b32a85e0aec013924bef34996ef35/src/mame2003/video.c#L400
-                // https://github.com/libretro/mame2003-plus-libretro/issues/1323
-                uint AudioPercentOccupancy = (uint)AudioBatch.Count * (uint)100 / AudioBufferMaxOccupancy; 
-                Profiling = new StopWatches();
-                Profiling.retroRun.Start();
-                retro_run();
-                Profiling.retroRun.Stop();
-                WriteConsole($"[Run] {Profiling.ToString()} | Audio occupancy {AudioPercentOccupancy}%");
-    #else
-                retro_run();
-                if (FPSCounter.GetFPS() < 50)
-                {
-                    wrapper_image_suspend_image(1);
-                    ConfigManager.WriteConsole($"[Run] dropping fps, actual: {FPSCounter.GetFPS()}");
-                }
-                else
-                {
-                    wrapper_image_suspend_image(0);
-                }
-    #endif
-            }
-
-    #if _serialize_
-            if (SerializationStatus == SerializationState.Serialize) {
-              if (WaitToSerialize.Finished()) {
-                Serialize();
-                SerializationStatus = SerializationState.Done;
-              }
-            }
-            else if (SerializationStatus == SerializationState.Load)
-            {
-              UnSerialize();
-              WaitToFinishedGameLoad = new Waiter(1); //for first coin check
-              SerializationStatus = SerializationState.Done;
-            }
-    #endif
-
-            if (!Speaker.isPlaying)
-                Speaker.Play(); //why is this neccesary?
-
-            return;
-        }
-    */
     public static void End(string screenName, string gameFileName)
     {
         if (gameFileName != GameFileName || screenName != ScreenName)
-        {
             return;
-        }
 
         StopRunThread();
 
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
-        retro_unload_game();
+        wrapper_unload_game();
 
         ClearAll();
+        Initialized = false;
 
         WriteConsole("[LibRetroMameCore.End] END  *************************************************");
     }
@@ -821,6 +672,7 @@ public static unsafe class LibretroMameCore
     {
         WriteConsole("[LibRetroMameCore.ClearAll]");
 
+        InteractionAvailable = false;
         FPSControlNoUnity = null;
         GameTexture = null;
         GameTextureLock = new();
@@ -839,16 +691,8 @@ public static unsafe class LibretroMameCore
             Speaker = null;
         }
 
-        if (PtrVault != null)
-        {
-            WriteConsole("[LibRetroMameCore.ClearAll] Free Pointers");
-            PtrVault.Free();
-            PtrVault = new MarshalHelpPtrVault();
-        }
-
         GameFileName = "";
         ScreenName = "";
-        InteractionAvailable = false;
         GameLoaded = false;
 
         CoinSlot?.clean();
@@ -856,7 +700,6 @@ public static unsafe class LibretroMameCore
 
         WriteConsole("[LibRetroMameCore.ClearAll] Unloaded and clear  *************************************************");
     }
-
 
     static public void InputControlDebug(UInt32 device)
     {
@@ -977,7 +820,7 @@ public static unsafe class LibretroMameCore
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:
                     if (port == 0)
                     {
-                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
                         ret = checkForCoins();
                     }
                     break;
@@ -1003,14 +846,11 @@ public static unsafe class LibretroMameCore
             //InputControlDebug(RETRO_DEVICE_MOUSE);
             ret = (Int16)deviceIdsMouse.Active(id, (int)port);
             // WriteConsole($"[inputStateCB] RETRO_DEVICE_MOUSE_???: id: {id} active: {ret} - port: {port}");
-            // if (ret != 0)
-            // ConfigManager.WriteConsole($"[inputStateCB] MOUSE id: {id} name: {deviceIdsMouse.Id(id)} ret: {ret}");
-
         }
 
         else if (device == RETRO_DEVICE_LIGHTGUN &&
-            lightGunTarget?.lightGunInformation != null &&
-            lightGunTarget.lightGunInformation.active)
+                    lightGunTarget?.lightGunInformation != null &&
+                    lightGunTarget.lightGunInformation.active)
         {
             //WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
 
@@ -1019,7 +859,7 @@ public static unsafe class LibretroMameCore
                 case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
                     if (port == 0)
                     {
-                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
+                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
                         ret = checkForCoins();
                     }
                     break;
@@ -1184,127 +1024,6 @@ public static unsafe class LibretroMameCore
 
 #endif
 
-    //storage pointers to unmanaged memory
-    public class MarshalHelpPtrVault
-    {
-        private List<IntPtr> vault = new List<IntPtr>();
-
-        public IntPtr GetPtr(string str)
-        {
-            IntPtr p = Marshal.StringToHGlobalAnsi(str);
-            if (p == IntPtr.Zero)
-                throw new OutOfMemoryException();
-            vault.Add(p);
-            WriteConsole($"[LibRetroMameCore.MarshalHelpPtrVault] add: {p} ");
-            return p;
-        }
-        public IntPtr GetPtr(bool b)
-        {
-            IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf(b));
-            if (p == IntPtr.Zero)
-                throw new OutOfMemoryException();
-            Marshal.WriteByte(p, b ? (byte)1 : (byte)0);
-            vault.Add(p);
-            return p;
-        }
-        public void Free()
-        {
-            foreach (IntPtr p in vault)
-            {
-                WriteConsole($"[LibRetroMameCore.MarshalHelpPtrVault] free: {p} ");
-                Marshal.FreeHGlobal(p);
-            }
-            vault = new List<IntPtr>();
-        }
-        ~MarshalHelpPtrVault()
-        {
-            WriteConsole($"[LibRetroMameCore.MarshalHelpPtrVault] destroy ");
-            Free();
-        }
-    }
-
-    //helper to convert structs to pointers used call functions.
-    public class MarshalHelpCalls<T>
-    {
-        IntPtr _p = IntPtr.Zero;
-        //Alloc global memory and copy the object, returns the pointer.
-        public IntPtr GetPtr(T obj)
-        {
-            _p = Marshal.AllocHGlobal(Marshal.SizeOf<T>(obj));
-            if (_p == IntPtr.Zero)
-                throw new OutOfMemoryException();
-            Marshal.StructureToPtr(obj, _p, false);
-            return _p;
-        }
-        public IntPtr Ptr
-        {
-            get
-            {
-                return _p;
-            }
-        }
-        //copy from global memory to the object. Returns this.
-        public MarshalHelpCalls<T> CopyTo(T obj)
-        {
-            if (_p == IntPtr.Zero)
-                throw new OutOfMemoryException();
-            Marshal.PtrToStructure(_p, obj);
-            return this;
-        }
-        //frees global memory. return this
-        public MarshalHelpCalls<T> Free()
-        {
-            if (_p != IntPtr.Zero)
-            {
-                // Marshal.DestroyStructure(_p, typeof(T));
-                Marshal.FreeHGlobal(_p);
-                _p = IntPtr.Zero;
-            }
-            return this;
-        }
-        ~MarshalHelpCalls()
-        {
-            Free();
-        }
-    }
-
-    public class FpsCounter
-    {
-        private float updateInterval = 0.5f;
-        private float accumulatedFrames = 0f;
-        private float timeLeft;
-        private int fps;
-
-        public FpsCounter(float interval = 0.5f)
-        {
-            updateInterval = interval;
-            timeLeft = updateInterval;
-        }
-
-        public void Update()
-        {
-            timeLeft -= Time.deltaTime;
-            accumulatedFrames++;
-
-            if (timeLeft <= 0f)
-            {
-                CalculateFPS();
-                timeLeft = updateInterval;
-                accumulatedFrames = 0f;
-            }
-        }
-
-        private void CalculateFPS()
-        {
-            fps = Mathf.RoundToInt(accumulatedFrames / updateInterval);
-        }
-
-        public int GetFPS()
-        {
-            return fps;
-        }
-    }
-
     public class FpsControlNoUnity
     {
         private float timeBalance = 0;
@@ -1368,54 +1087,6 @@ public static unsafe class LibretroMameCore
         }
     }
 
-    public class FpsControl
-    {
-        float timeBalance = 0;
-        float timePerFrame = 0;
-        uint frameCount = 0;
-        float acumTime = 0;
-
-        public FpsControl(float FPSExpected)
-        {
-            timeBalance = 0;
-            frameCount = 0;
-            timePerFrame = 1f / FPSExpected;
-        }
-        public void CountTimeFrame()
-        {
-            timeBalance += Time.deltaTime;
-            acumTime += Time.deltaTime;
-            frameCount++;
-        }
-        public void Reset()
-        {
-            timeBalance = 0;
-            frameCount = 0;
-            acumTime = 0;
-        }
-        public float fps()
-        {
-            return frameCount / acumTime;
-        }
-        public bool isTime()
-        {
-            //deltaTime: time from the last call
-            if (timeBalance >= timePerFrame)
-            {
-                timeBalance -= timePerFrame;
-                return true;
-            }
-            return false;
-        }
-        public float DelayedFrames()
-        {
-            return timeBalance / timePerFrame;
-        }
-        public override string ToString()
-        {
-            return $"timePerFrame: {timePerFrame} delayed frames: {DelayedFrames()} fps: {fps()} frames total: {frameCount}";
-        }
-    }
 
     [Conditional("_debug_")]
     public static void WriteConsole(string st)
@@ -1461,6 +1132,51 @@ public static unsafe class LibretroMameCore
             return finished;
         }
     }
+
+    private class mameControls
+    {
+        private Dictionary<uint, string> ids = new();
+        public LibretroControlMap controlMap;
+
+        public mameControls(LibretroControlMap ctrl = null)
+        {
+            controlMap = ctrl;
+        }
+
+        public void addMap(uint mameId, string gameId)
+        {
+            ids[mameId] = gameId;
+        }
+
+        public string Id(uint mameId)
+        {
+            if (ids.ContainsKey(mameId))
+                return ids[mameId];
+            return "";
+        }
+
+        public string InputActionMapName(string gameId, int port = 0)
+        {
+            return $"{gameId}_{port}";
+        }
+
+        public Int16 Active(uint mameId, int port = 0)
+        {
+            string gameId = Id(mameId);
+            if (gameId == "")
+            {
+                ConfigManager.WriteConsoleError($"[mameControls] libretro is asking for a control id that is not mapped: {mameId}");
+                return 0;
+            }
+            return (Int16)controlMap.Active(gameId, port);
+        }
+
+        public List<string> ControlsList()
+        {
+            return ids.Values.Distinct().ToList();
+        }
+    }
+
 
 #if _debug_fps_
     public class StopWatches {
