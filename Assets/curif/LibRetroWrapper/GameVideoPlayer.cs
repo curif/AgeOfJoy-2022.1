@@ -73,8 +73,8 @@ public class GameVideoPlayer : MonoBehaviour
 
     public GameVideoPlayer Play()
     {
-      ConfigManager.WriteConsole($"[videoPlayer.Play] prepared: {videoPlayer.isPrepared} playing: {videoPlayer.isPlaying} {videoPath}  ====");
 #if !DISABLE_VIDEO
+        // ConfigManager.WriteConsole($"[videoPlayer.Play] prepared: {videoPlayer.isPrepared} playing: {videoPlayer.isPlaying} {videoPath}  ====");
         if (videoPlayer == null || string.IsNullOrEmpty(videoPath) || isPreparing)
             return this;
 
@@ -103,14 +103,17 @@ public class GameVideoPlayer : MonoBehaviour
     public GameVideoPlayer Pause()
     {
 #if !DISABLE_VIDEO
-        if (videoPlayer == null || string.IsNullOrEmpty(videoPath) 
+        if (videoPlayer == null || string.IsNullOrEmpty(videoPath)
             || !videoPlayer.isPrepared || videoPlayer.isPaused || isPreparing)
             return this;
 
-        //is is necessary because the VideoPlayer.Pause method only works if isLooping is set to false. If isLooping is set to true, the Pause method will have no effect and the video will continue to play.
+        //is is necessary because the VideoPlayer.Pause method only works if isLooping is set to false. 
+        // If isLooping is set to true, the Pause method will have no effect and the video will 
+        // continue to play.
         ConfigManager.WriteConsole($"[videoPlayer.Pause] {videoPath} ====");
         videoPlayer.isLooping = false;
         videoPlayer.Pause();
+        isReady = false;
 #endif
         return this;
     }
@@ -122,6 +125,7 @@ public class GameVideoPlayer : MonoBehaviour
             return this;
 
         ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
+        //destroy internal resources.
         videoPlayer.Stop();
 #endif
         return this;
