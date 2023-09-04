@@ -16,23 +16,18 @@ static unsigned no_draw;
 static int bufIdx;
 static unsigned char *imageBuffer;
 static unsigned imageSize;
-
-struct 
-{
-  void* handle;
-  void (*retro_set_video_refresh)(retro_video_refresh_t);
-} image_handlers;
+static handlers_t *handlers;
 
 void wrapper_image_init(CreateTexture createTexture, 
                         TextureLock textureLock, 
                         TextureUnlock textureUnlock,
                         TextureSemAvailable textureSemAvailable)
 {
-
-  image_handlers.handle = dlopen("mame2003_plus_libretro_android.so", RTLD_LAZY);
-  image_handlers.retro_set_video_refresh = (void (*)(retro_video_refresh_t))dlsym(image_handlers.handle,
-                                             "retro_set_video_refresh");
-  image_handlers.retro_set_video_refresh(&wrapper_image_video_refresh_cb);
+  handlers = wrapper_environment_get_handlers();
+  if (!handlers)
+    return;
+  
+  handlers->retro_set_video_refresh(&wrapper_image_video_refresh_cb);
   
   no_draw = 0;
   bufIdx = 0;
@@ -55,6 +50,7 @@ void wrapper_image_prev_load_game()
   bufIdx = 0;
   imageBuffer = NULL;
   imageSize = 0;
+  no_draw = 0;
 }
 
 void wrapper_image_suspend_image(unsigned _no_draw)
@@ -139,21 +135,24 @@ void wrapper_image_video_refresh_cb(const void *data, unsigned width, unsigned h
   #endif /* ifdef IMAGE_DEBUG */
 
   unsigned char *imageBuf = NULL;
-  if (pixel_format == RETRO_PIXEL_FORMAT_0RGB1555)
-  {
-    imageBuf = wrapper_image_conversion_convert0RGB1555ToRGB565(data, width, height, pitch, bufIdx);
-    if (imageBuf)
-      swapBuffers(imageBuf, width * height * 2);
-  }
-  else if (pixel_format == RETRO_PIXEL_FORMAT_XRGB8888)
-  {
-    imageBuf = wrapper_image_conversion_convertXRGB8888ToRGB565(data, width, height, pitch, bufIdx);
-    if (imageBuf)
-      swapBuffers(imageBuf, width * height * 2);
-  }
-  else {
-    imageBuf = wrapper_image_preserve(data, width, height, pitch, bufIdx);
-    if (imageBuf)
-      swapBuffers(imageBuf, height * pitch);
+  switch (pixel_format) {
+    case RETRO_PIXEL_FORMAT_0RGB1555:
+      // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_image_conversion_convert0RGB1555ToRGB565] (%u, %u) pitch: %u \n", width, height, pitch);
+      imageBuf = wrapper_image_conversion_convert0RGB1555ToRGB565(data, width, height, pitch, bufIdx);
+      if (imageBuf)
+        swapBuffers(imageBuf, width * height * 2);
+      return;
+    case RETRO_PIXEL_FORMAT_XRGB8888:
+      // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_image_conversion_convertXRGB8888ToRGB565] (%u, %u) pitch: %u \n", width, height, pitch);
+      imageBuf = wrapper_image_conversion_convertXRGB8888ToRGB565(data, width, height, pitch, bufIdx);
+      if (imageBuf)
+        swapBuffers(imageBuf, width * height * 2);
+      return;
+    case RETRO_PIXEL_FORMAT_RGB565:
+      // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_image_preserve] (%u, %u) pitch: %u \n", width, height, pitch);
+      imageBuf = wrapper_image_preserve(data, width, height, pitch, bufIdx);
+      if (imageBuf)
+        swapBuffers(imageBuf, height * pitch);
+      return;
   }
 }

@@ -188,12 +188,6 @@ public static unsafe class LibretroMameCore
 
     #endregion
 
-    // deinit do nothing
-    // https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L401
-    // retro_run -------------------------------
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_run();
-
 #if _serialize_
     // serialization -------------------
     [DllImport ("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
@@ -251,7 +245,6 @@ public static unsafe class LibretroMameCore
 
     //Status flags
     public static bool GameLoaded = false;
-    static bool Initialized = false;
     static bool InteractionAvailable = false;
 
     public static LightGunTarget lightGunTarget;
@@ -264,9 +257,10 @@ public static unsafe class LibretroMameCore
     // C Wrappers 
     //
 
-    //system
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_retro_init();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_run();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_retro_deinit();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -303,12 +297,14 @@ public static unsafe class LibretroMameCore
 
     //environment.
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    //private static extern int wrapper_environment_init(logHandler lg, byte[] _save_directory, byte[] _system_directory, byte[] _sample_rate);
-    private static extern int wrapper_environment_init(wrapperLogHandler lg, 
-                                                        retro_log_level _minLogLevel, 
-                                                        string _save_directory, 
-                                                        string _system_directory, 
+    private static extern int wrapper_environment_open(wrapperLogHandler lg,
+                                                        retro_log_level _minLogLevel,
+                                                        string _save_directory,
+                                                        string _system_directory,
                                                         string _sample_rate);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_environment_init();
+
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern double wrapper_environment_get_fps();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -405,75 +401,70 @@ public static unsafe class LibretroMameCore
     public static bool Start(string screenName, string gameFileName)
     {
         string path = ConfigManager.RomsDir + "/" + gameFileName;
-
-        if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName))
-        {
-            WriteConsole($"[LibRetroMameCore.Start] ERROR: MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
-            return false;
-        }
         if (GameLoaded)
         {
             WriteConsole($"[LibRetroMameCore.Start] ERROR a game was loaded previously ({GameFileName}), it's neccesary to call End() before the Start()");
             return false;
         }
+        if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName))
+        {
+            WriteConsole($"[LibRetroMameCore.Start] ERROR: MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
+            return false;
+        }
+
         if (!File.Exists(path))
         {
             WriteConsole($"[LibRetroMameCore.Start] ERROR {path} don't exists or inaccesible.");
             return false;
         }
 
-        if (!Initialized)
+        WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
+        WriteConsole("[LibRetroMameCore.Start] ------------------- LIBRETRO INIT -----------------------");
+        WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
+
+        //Audio configuration
+        var audioConfig = AudioSettings.GetConfiguration();
+        QuestAudioFrequency = audioConfig.sampleRate;
+        WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
+
+        // should run first.
+
+        WriteConsole("[LibRetroMameCore.Start] audio callbacks");
+        retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
+        retro_set_audio_sample_batch(new audioSampleBatchHandler(audioSampleBatchCB));
+
+        WriteConsole("[LibRetroMameCore.Start] input callbacks");
+        retro_set_input_poll(new inputPollHander(inputPollCB));
+        retro_set_input_state(new inputStateHandler(inputStateCB));
+
+        WriteConsole("[LibRetroMameCore.Start] Init environmnet and call retro_init()");
+        int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
+                                                MinLogLevel,
+                                                ConfigManager.GameSaveDir,
+                                                ConfigManager.SystemDir,
+                                                QuestAudioFrequency.ToString()
+                                                );
+        if (result != 0)
         {
-            WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
-            WriteConsole("[LibRetroMameCore.Start] ------------------- LIBRETRO INIT -----------------------");
-            WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
-
-            //Audio configuration
-            var audioConfig = AudioSettings.GetConfiguration();
-            QuestAudioFrequency = audioConfig.sampleRate;
-            WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
-
-            WriteConsole("[LibRetroMameCore.Start] init environment");
-            // should run first.
-            int result = wrapper_environment_init(new wrapperLogHandler(WrapperPrintf),
-                                                    MinLogLevel,
-                                                    ConfigManager.GameSaveDir,
-                                                    ConfigManager.SystemDir,
-                                                    QuestAudioFrequency.ToString()
-                                                    );
-            if (result != 0)
-            {
-                ConfigManager.WriteConsoleError("[LibRetroMameCore.Start] wrapper_environment_init failed");
-                return false;
-            }
-
-            WriteConsole("[LibRetroMameCore.Start] image callbacks");
-            wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
-                                new TextureLockHandler(TextureLockCB),
-                                new TextureUnlockHandler(TextureUnlockCB),
-                                new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
-
-            //audio callbacks
-            WriteConsole("[LibRetroMameCore.Start] audio callbacks");
-            retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
-            retro_set_audio_sample_batch(new audioSampleBatchHandler(audioSampleBatchCB));
-            retro_set_input_poll(new inputPollHander(inputPollCB));
-            retro_set_input_state(new inputStateHandler(inputStateCB));
-
-            // init 
-            WriteConsole("[LibRetroMameCore.Start] call retro_init");
-            wrapper_retro_init(); //do almost nothing https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
-            if (wrapper_system_info_need_full_path() == 0)
-            {
-                ClearAll();
-                WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
-                return false;
-            }
-
-            Initialized = true;
-            WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
+            ConfigManager.WriteConsoleError("[LibRetroMameCore.Start] wrapper_environment_init failed");
+            return false;
         }
 
+        WriteConsole("[LibRetroMameCore.Start] image callbacks");
+        wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
+                            new TextureLockHandler(TextureLockCB),
+                            new TextureUnlockHandler(TextureUnlockCB),
+                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
+
+        wrapper_environment_init();
+        if (wrapper_system_info_need_full_path() == 0)
+        {
+            ClearAll();
+            WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
+            return false;
+        }
+
+        WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
         GameFileName = gameFileName;
         ScreenName = screenName;
 
@@ -484,16 +475,14 @@ public static unsafe class LibretroMameCore
         int xy_device = (lightGunTarget?.lightGunInformation != null &&
                             lightGunTarget.lightGunInformation.active) ? 1 : 0;
 
-        WriteConsole($"------------------- wrapper_load_game {GameFileName} in {ScreenName} -------");
+        WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
         GameLoaded = wrapper_load_game(path, Gamma, Brightness, xy_device) == 1;
         if (!GameLoaded)
         {
             ClearAll();
-            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} MAME can't start the game, please check if it is the correct version and is supported in MAME2003+ in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} libretro can't start the game, please check if it is the correct version and is supported in MAME2003+ in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
             return false;
         }
-
-        FPSControlNoUnity = new((float)wrapper_environment_get_fps());
 
         /* It's impossible to change the Sample Rate, fixed in 48000
         audioConfig.sampleRate = sampleRate;
@@ -558,7 +547,7 @@ public static unsafe class LibretroMameCore
             {
                 IntPtr data = wrapper_image_get_buffer();
                 int size = wrapper_image_get_buffer_size();
-                ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
+                // ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
                 if (data != IntPtr.Zero)
                     GameTexture.LoadRawTextureData(data, size);
                 GameTextureBufferSem.Reset();
@@ -584,6 +573,8 @@ public static unsafe class LibretroMameCore
             }
 #endif
 
+        ConfigManager.WriteConsole($"[StartRunThread] -------------------------");
+        FPSControlNoUnity = new((float)wrapper_environment_get_fps());
         retroRunTaskCancellationToken = new();
         retroRunTask = Task.Run(() =>
         {
@@ -592,9 +583,9 @@ public static unsafe class LibretroMameCore
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run -------------------------");
-                    retro_run();
-                    ConfigManager.WriteConsole($"[RunBackgroundThread] retro_run end -------------------------");
+                    ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run -------------------------");
+                    wrapper_run();
+                    ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run end -------------------------");
                 }
             }
         }
@@ -656,14 +647,17 @@ public static unsafe class LibretroMameCore
         if (gameFileName != GameFileName || screenName != ScreenName)
             return;
 
+        WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
+
         StopRunThread();
 
-        WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
-        wrapper_unload_game();
+        if (GameLoaded)
+            wrapper_unload_game();
+        
+        wrapper_retro_deinit();
 
         ClearAll();
-        Initialized = false;
 
         WriteConsole("[LibRetroMameCore.End] END  *************************************************");
     }
@@ -674,9 +668,11 @@ public static unsafe class LibretroMameCore
 
         InteractionAvailable = false;
         FPSControlNoUnity = null;
+
+        LightGunLock = new();
+
         GameTexture = null;
         GameTextureLock = new();
-        LightGunLock = new();
         GameTextureBufferSem = new ManualResetEventSlim(false);
         TextureWidth = 0;
         TextureHeight = 0;
@@ -688,8 +684,8 @@ public static unsafe class LibretroMameCore
         {
             WriteConsole("[LibRetroMameCore.ClearAll] Pause Speaker");
             Speaker.Pause();
-            Speaker = null;
         }
+        Speaker = null;
 
         GameFileName = "";
         ScreenName = "";
@@ -800,7 +796,7 @@ public static unsafe class LibretroMameCore
     {
         Int16 ret = 0;
 
-        if (!Initialized || !InteractionAvailable)
+        if (!InteractionAvailable)
             return 0;
 
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())

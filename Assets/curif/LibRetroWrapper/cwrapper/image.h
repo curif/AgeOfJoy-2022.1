@@ -2,8 +2,9 @@
 #ifndef IMAGE_H
 #define IMAGE_H
 
-#include "libretro.h"
 #include <stddef.h>
+#include "libretro.h"
+#include "environment.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,6 +27,7 @@ void wrapper_image_lock();
 void wrapper_image_unlock();
 unsigned char *wrapper_image_get_buffer();
 unsigned wrapper_image_get_buffer_size();
+
 
 #ifdef __cplusplus
 }
