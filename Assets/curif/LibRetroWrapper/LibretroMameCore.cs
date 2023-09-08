@@ -583,9 +583,9 @@ public static unsafe class LibretroMameCore
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run -------------------------");
+                    // ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run -------------------------");
                     wrapper_run();
-                    ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run end -------------------------");
+                    // ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run end -------------------------");
                 }
             }
         }
@@ -792,7 +792,7 @@ public static unsafe class LibretroMameCore
     // https://github.com/RetroPie/RetroPie-Docs/blob/219c93ca6a81309eed937bb5b7a79b8c71add41b/docs/RetroArch-Configuration.md
     // https://docs.libretro.com/library/mame2003_plus/#default-retropad-layouts
     [AOT.MonoPInvokeCallback(typeof(inputStateHandler))]
-    static Int16 inputStateCB(UInt32 port, UInt32 device, UInt32 index, UInt32 id)
+    static Int16 inputStateCB(uint port, uint device, uint index, uint id)
     {
         Int16 ret = 0;
 
@@ -802,7 +802,7 @@ public static unsafe class LibretroMameCore
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
             return 0;
 
-        // WriteConsole($"[inputStateCB] dev {device} port {port} index:{index}");
+        // WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id: {id}");
 
 #if _debug_fps_
       Profiling.input.Start();
@@ -947,6 +947,7 @@ public static unsafe class LibretroMameCore
 #if _debug_fps_
         Profiling.audio.Stop();
 #endif
+
         return frames;
     }
 
@@ -969,9 +970,9 @@ public static unsafe class LibretroMameCore
         }
 
 #if _debug_audio_
-        WriteConsole($"[LibRetroMameCore.LoadAudio] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
+        WriteConsole($"[LibRetroMameCore.MoveAudioStreamTo] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
 #endif
-
+        return;
     }
 
 #if _serialize_

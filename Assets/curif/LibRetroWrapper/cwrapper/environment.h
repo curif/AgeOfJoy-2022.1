@@ -30,7 +30,6 @@ typedef struct handlers_struct {
   void (*retro_run)();
   void (*retro_set_controller_port_device)(unsigned port, unsigned device);
   void (*retro_set_video_refresh)(retro_video_refresh_t);
-  wrapper_log_printf_t log;
 } handlers_t;
 
 handlers_t *wrapper_environment_get_handlers();
