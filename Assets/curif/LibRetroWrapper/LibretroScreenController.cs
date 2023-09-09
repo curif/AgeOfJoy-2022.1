@@ -224,12 +224,10 @@ public class LibretroScreenController : MonoBehaviour
                   //start mame
                   ConfigManager.WriteConsole($"[LibretroScreenController] Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
                   LibretroMameCore.Speaker = GetComponent<AudioSource>();
-                  LibretroMameCore.Display = display;
                   LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
                   LibretroMameCore.Brightness = Brightness;
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
-                  LibretroMameCore.PathBase = PathBase;
 #if _serialize_
                   LibretroMameCore.EnableSaveState = EnableSaveState;
                   LibretroMameCore.StateFile = StateFile;

@@ -30,12 +30,17 @@ typedef struct handlers_struct {
   void (*retro_run)();
   void (*retro_set_controller_port_device)(unsigned port, unsigned device);
   void (*retro_set_video_refresh)(retro_video_refresh_t);
+  void (*retro_set_audio_sample)(retro_audio_sample_t);
+  void (*retro_set_audio_sample_batch)(retro_audio_sample_batch_t);
+  void (*retro_set_input_poll)(retro_input_poll_t);
+  void (*retro_set_input_state)(retro_input_state_t);
 } handlers_t;
 
 handlers_t *wrapper_environment_get_handlers();
 int wrapper_environment_open(wrapper_log_printf_t log, 
                               enum retro_log_level _minLogLevel, char *_save_directory,
-                              char *_system_directory, char *_sample_rate);
+                              char *_system_directory, char *_sample_rate,
+                              retro_input_state_t _retro_input_state_cb);
 void wrapper_environment_init();                              
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, int _xy_control_type);
 void wrapper_retro_init();

@@ -99,18 +99,11 @@ public static unsafe class LibretroMameCore
     private static mameControls deviceIdsLightGun = null;
     public static List<string> deviceIdsCombined = null;
 
-    // retro_set_input_poll -------------------------------
     private delegate void inputPollHander();
-    [DllImport("mame2003_plus_libretro_android")]
-    private static extern void retro_set_input_poll(inputPollHander iph);
-    static Waiter coinSlotWaiter = new(2);
-
-    // retro_set_input_state -------------------------------
     private delegate Int16 inputStateHandler(uint port, uint device, uint index, uint id);
-    [DllImport("mame2003_plus_libretro_android")]
-    private static extern void retro_set_input_state(inputStateHandler ish);
-
+    static Waiter coinSlotWaiter = new(2);
     public static LibretroControlMap ControlMap;
+
     #endregion
 
     #region LOG
@@ -170,20 +163,26 @@ public static unsafe class LibretroMameCore
 
     #region AUDIO
 
-    // retro_set_audio_sample -------------------------------
-    private delegate void audioSampleHandler(Int16 left, Int16 right);
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_set_audio_sample(audioSampleHandler sah);
+    // audio ===============
+    private delegate void AudioLockHandler();
+    private delegate void AudioUnlockHandler();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_audio_init(AudioLockHandler AudioLock,
+                                                    AudioUnlockHandler AudioUnlock
+                                                    );
 
-    // retro_set_audio_sample_batch -------------------------------
-    private delegate ulong audioSampleBatchHandler(short* data, ulong frames);
-    [DllImport("mame2003_plus_libretro_android", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void retro_set_audio_sample_batch(audioSampleBatchHandler sah);
+    // Declare the C functions using P/Invoke
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr wrapper_audio_get_audio_buffer_pointer();
 
-    // audio buffer ===============
-    public static List<float> AudioBatch = new List<float>();
-    static object AudioBufferLock = new object();
-    static uint AudioBufferMaxOccupancy = 1024 * 8;
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_audio_get_audio_buffer_occupancy();
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_audio_consume_buffer(int consumeSize);
+
+
+    static object AudioBufferLock = new();
     static int QuestAudioFrequency = 48000; //Quest 2 standar, can change at start
 
     #endregion
@@ -230,7 +229,6 @@ public static unsafe class LibretroMameCore
     //parameters ================
 
     //components parameters
-    public static Renderer Display;
     public static AudioSource Speaker;
     public static CoinSlotController CoinSlot;
     public static int SecondsToWaitToFinishLoad = 2;
@@ -241,7 +239,6 @@ public static unsafe class LibretroMameCore
     //game info and storage.
     static string GameFileName = "";
     static string ScreenName = ""; //name of the screen of the cabinet where is running the game
-    public static string PathBase = "";
 
     //Status flags
     public static bool GameLoaded = false;
@@ -255,7 +252,6 @@ public static unsafe class LibretroMameCore
 #endif
 
     // C Wrappers 
-    //
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_retro_init();
@@ -273,9 +269,6 @@ public static unsafe class LibretroMameCore
     private static extern int wrapper_system_info_need_full_path();
 
     //image
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_image_prev_load_game();
-
     private delegate void CreateTextureHandler(uint width, uint height);
     private delegate void TextureLockHandler();
     private delegate void TextureUnlockHandler();
@@ -292,23 +285,19 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_image_get_buffer_size();
 
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_image_suspend_image(uint suspend);
-
     //environment.
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_open(wrapperLogHandler lg,
                                                         retro_log_level _minLogLevel,
                                                         string _save_directory,
                                                         string _system_directory,
-                                                        string _sample_rate);
+                                                        string _sample_rate,
+                                                        inputStateHandler _input_state_handler_cb);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_init();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern double wrapper_environment_get_fps();
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern double wrapper_environment_get_sample_rate();
 
     public static string[] GammaOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
     public static string[] BrightnessOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
@@ -428,21 +417,22 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
 
         // should run first.
+        /*
+                WriteConsole("[LibRetroMameCore.Start] audio callbacks");
+                retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
+                retro_set_audio_sample_batch(new audioSampleBatchHandler(audioSampleBatchCB));
 
-        WriteConsole("[LibRetroMameCore.Start] audio callbacks");
-        retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
-        retro_set_audio_sample_batch(new audioSampleBatchHandler(audioSampleBatchCB));
-
-        WriteConsole("[LibRetroMameCore.Start] input callbacks");
-        retro_set_input_poll(new inputPollHander(inputPollCB));
-        retro_set_input_state(new inputStateHandler(inputStateCB));
-
+                WriteConsole("[LibRetroMameCore.Start] input callbacks");
+                retro_set_input_poll(new inputPollHander(inputPollCB));
+                retro_set_input_state(new inputStateHandler(inputStateCB));
+        */
         WriteConsole("[LibRetroMameCore.Start] Init environmnet and call retro_init()");
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
-                                                QuestAudioFrequency.ToString()
+                                                QuestAudioFrequency.ToString(),
+                                                new inputStateHandler(inputStateCB)
                                                 );
         if (result != 0)
         {
@@ -455,8 +445,11 @@ public static unsafe class LibretroMameCore
                             new TextureLockHandler(TextureLockCB),
                             new TextureUnlockHandler(TextureUnlockCB),
                             new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
+        wrapper_audio_init(new AudioLockHandler(AudioLockCB),
+                            new AudioUnlockHandler(AudioUnlockCB));
 
         wrapper_environment_init();
+
         if (wrapper_system_info_need_full_path() == 0)
         {
             ClearAll();
@@ -654,7 +647,7 @@ public static unsafe class LibretroMameCore
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         if (GameLoaded)
             wrapper_unload_game();
-        
+
         wrapper_retro_deinit();
 
         ClearAll();
@@ -677,7 +670,6 @@ public static unsafe class LibretroMameCore
         TextureWidth = 0;
         TextureHeight = 0;
 
-        AudioBatch = new List<float>();
         AudioBufferLock = new();
 
         if (Speaker != null && Speaker.isPlaying)
@@ -901,78 +893,37 @@ public static unsafe class LibretroMameCore
         return ret;
     }
 
-    [AOT.MonoPInvokeCallback(typeof(audioSampleHandler))]
-    static void audioSampleCB(Int16 left, Int16 right)
+    [AOT.MonoPInvokeCallback(typeof(AudioLockHandler))]
+    public static void AudioLockCB()
     {
-        WriteConsole("[LibRetroMameCore.audioSampleCB] left: " + left + " right: " + right);
-        return;
+        Monitor.Enter(AudioBufferLock);
     }
-
-    [AOT.MonoPInvokeCallback(typeof(audioSampleBatchHandler))]
-    static ulong audioSampleBatchCB(short* data, ulong frames)
+    [AOT.MonoPInvokeCallback(typeof(AudioUnlockHandler))]
+    public static void AudioUnlockCB()
     {
-        if (data == (short*)IntPtr.Zero)
-            return 0;
-
-        if (AudioBatch.Count > AudioBufferMaxOccupancy)
-            return 0;
-
-        // WriteConsole($"[audioSampleBatchCB] AUDIO IN from MAME - frames:{frames} batch actual load: {AudioBatch.Count}");
-
-#if _debug_fps_
-        Profiling.audio.Start();
-#endif
-        var inBuffer = new List<float>();
-        for (ulong i = 0; i < frames * 2; ++i)
-        {
-            // float value = Mathf.Clamp(data[i]  / 32768f, -1.0f, 1.0f); // 0.000030517578125f o 0.00048828125; //to convert from 16 to fp 
-            float value = data[i] / 32768f;
-            inBuffer.Add(value);
-        }
-
-        double ratio = (double)wrapper_environment_get_sample_rate() / QuestAudioFrequency;
-        int outSample = 0;
-        lock (AudioBufferLock)
-        {
-            while (true)
-            {
-                int inBufferIndex = (int)(outSample++ * ratio);
-                if (inBufferIndex < (int)frames * 2)
-                    AudioBatch.Add(inBuffer[inBufferIndex]);
-                else
-                    break;
-            }
-        }
-
-#if _debug_fps_
-        Profiling.audio.Stop();
-#endif
-
-        return frames;
+        // ConfigManager.WriteConsole($"[AudioUnlockCB]");
+        Monitor.Exit(AudioBufferLock);
     }
-
-    public static void MoveAudioStreamTo(string gameFileName, float[] data)
+    public static void MoveAudioStreamTo(string gameFileName, float[] audioData)
     {
         if (!GameLoaded || GameFileName != gameFileName)
             return;
-        if (AudioBatch == null || AudioBatch.Count == 0)
-            return;
-
         lock (AudioBufferLock)
         {
-            int toCopy = AudioBatch.Count >= data.Length ? data.Length : AudioBatch.Count;
-            if (toCopy > 0)
+            // Call the C functions to access the audio data
+            IntPtr audioBufferPtr = wrapper_audio_get_audio_buffer_pointer();
+            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy(); //in sizeof(float)
+            int toCopy = audioBufferOccupancy >= audioData.Length ? audioData.Length : audioBufferOccupancy;
+            
+            if (audioBufferOccupancy > 0)
             {
-                // WriteConsole($"[MoveAudioStreamTo] copy:{toCopy} of {AudioBatch.Count}");
-                AudioBatch.CopyTo(0, data, 0, toCopy);
-                AudioBatch.RemoveRange(0, toCopy);
+                // Convert the IntPtr to a float array
+                Marshal.Copy(audioBufferPtr, audioData, 0, toCopy * sizeof(float));
+
+                // Consume the data in the C buffer
+                wrapper_audio_consume_buffer(toCopy);
             }
         }
-
-#if _debug_audio_
-        WriteConsole($"[LibRetroMameCore.MoveAudioStreamTo] AUDIO OUT output buffer length: {data.Length} frames loaded from MAME: {AudioBatch.Count} toCopy: {toCopy} ");
-#endif
-        return;
     }
 
 #if _serialize_
