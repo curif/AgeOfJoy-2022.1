@@ -40,11 +40,10 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t *data,
 
   // Initialize inBuffer here
   float inBuffer[MAX_AUDIO_BATCH_SIZE / sizeof(float)]; // Static array
-  int inIdx = 0;
 
-  for (uint64_t i = 0; i < frames * 2; ++i) {
+  for (uint64_t i = 0; i <= frames * 2; i++) {
     float value = data[i] / 32768.0f;
-    inBuffer[inIdx++] = value;
+    inBuffer[i] = value;
   }
 
   double ratio =
@@ -78,6 +77,9 @@ float *wrapper_audio_get_audio_buffer_pointer() { return AudioBatch; }
 size_t wrapper_audio_get_audio_buffer_occupancy() {
   return AudioBatchOccupancy;
 }
+size_t wrapper_audio_get_audio_buffer_occupancy_bytes() {
+  return AudioBatchOccupancy * sizeof(float);
+}
 
 // Function to consume the first part of the buffer and move the rest to
 // position zero
@@ -94,6 +96,10 @@ void wrapper_audio_consume_buffer(size_t consumeSize) {
             (AudioBatchOccupancy - consumeSize) * sizeof(float));
     AudioBatchOccupancy -= consumeSize; // Update occupancy
   }
+}
+void wrapper_audio_consume_buffer_bytes(size_t consumeSizeBytes) {
+    wrapper_audio_consume_buffer(consumeSizeBytes/sizeof(float));
+    return;
 }
 
 void wrapper_audio_init(AudioBufferLock audioBufferLockCB,

@@ -176,10 +176,10 @@ public static unsafe class LibretroMameCore
     private static extern IntPtr wrapper_audio_get_audio_buffer_pointer();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int wrapper_audio_get_audio_buffer_occupancy();
+    private static extern int wrapper_audio_get_audio_buffer_occupancy_bytes();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_audio_consume_buffer(int consumeSize);
+    private static extern void wrapper_audio_consume_buffer_bytes(int consumeSize);
 
 
     static object AudioBufferLock = new();
@@ -908,20 +908,22 @@ public static unsafe class LibretroMameCore
     {
         if (!GameLoaded || GameFileName != gameFileName)
             return;
+            
         lock (AudioBufferLock)
         {
             // Call the C functions to access the audio data
             IntPtr audioBufferPtr = wrapper_audio_get_audio_buffer_pointer();
-            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy(); //in sizeof(float)
-            int toCopy = audioBufferOccupancy >= audioData.Length ? audioData.Length : audioBufferOccupancy;
+            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy_bytes(); //in sizeof(float)
+            int audioDataLength = audioData.Length * sizeof(float);
+            int toCopy = audioBufferOccupancy >= audioDataLength ? audioDataLength : audioBufferOccupancy;
             
             if (audioBufferOccupancy > 0)
             {
                 // Convert the IntPtr to a float array
-                Marshal.Copy(audioBufferPtr, audioData, 0, toCopy * sizeof(float));
+                Marshal.Copy(audioBufferPtr, audioData, 0, toCopy);
 
                 // Consume the data in the C buffer
-                wrapper_audio_consume_buffer(toCopy);
+                wrapper_audio_consume_buffer_bytes(toCopy);
             }
         }
     }
