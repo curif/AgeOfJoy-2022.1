@@ -52,7 +52,7 @@ public class ConfigInformation
 
     public class Player : ConfigInformationBase
     {
-        public static Dictionary<string, float> heightPlayers = new Dictionary<string, float>
+        public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
         {
             {"Pac-man", 1f}, // 1 is a kid
             {"Sonic", 1.05f}, // 0.05 step
@@ -77,13 +77,19 @@ public class ConfigInformation
         {
             return IsValidHeight(height);
         }
-        static string FindNearestKey(float value)
+        public static string FindNearestKey(float value)
         {
             if (!IsValidHeight(value))
                 return "";
 
-            var nearestKey = heightPlayers.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
+            var nearestKey = HeightPlayers.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
             return nearestKey;
+        }
+
+        public void SetFromKey(string key)
+        {
+            if (HeightPlayers.ContainsKey(key))
+                height = HeightPlayers[key];
         }
     }
 

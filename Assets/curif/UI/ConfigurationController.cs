@@ -171,6 +171,7 @@ public class ConfigurationController : MonoBehaviour
         onTeleport,
         onReset,
         onChangeLocomotion,
+        onChangePlayer,
         onRunAGEBasic,
         onRunAGEBasicRunning,
         exit
@@ -198,6 +199,9 @@ public class ConfigurationController : MonoBehaviour
 
     private GenericLabelOnOff lblHaveRoomConfiguration, lblRoomName;
 
+    //player
+    private GenericOptions playerHeight;
+    private GenericWidgetContainer playerContainer;
 
     private DefaultControlMap map;
 
@@ -546,7 +550,10 @@ public class ConfigurationController : MonoBehaviour
         if (CanConfigureCabinets())
             mainMenu.AddOption("cabinets", " replace cabinets in the room  ");
         if (isGlobalConfigurationWidget.value)
+        {
             mainMenu.AddOption("locomotion", " player movement configuration  ");
+            mainMenu.AddOption("player", " player configuration  ");
+        }
         mainMenu.AddOption("change mode", "  global or room configuration ");
         mainMenu.AddOption("reset", "         back to default       ");
         mainMenu.AddOption("teleport", "       teleport to a room       ");
@@ -922,7 +929,7 @@ public class ConfigurationController : MonoBehaviour
         try
         {
             AGEBasic.ParseFiles(ConfigManager.AGEBasicDir);
-            AGEBasicCompilationException = null; 
+            AGEBasicCompilationException = null;
         }
         catch (CompilationException ce)
         {
@@ -1022,6 +1029,58 @@ public class ConfigurationController : MonoBehaviour
         locomotionSpeed.SetCurrent((int)changeControls.moveSpeed);
         locomotionTurnSpeed.SetCurrent((int)changeControls.turnSpeed);
         locomotionTeleportOn.value = changeControls.teleportationEnabled;
+    }
+
+    private void PlayerWindowDraw()
+    {
+        if (playerContainer == null)
+            return;
+
+        scr.Clear();
+        playerContainer.Draw();
+        scr.Print(2, 23, "up/down/left/right to change");
+        scr.Print(2, 24, "b to select");
+    }
+
+    private void SetPlayerWidgets()
+    {
+        if (playerContainer != null)
+            return;
+
+        playerHeight = new GenericOptions(scr, "playerHeight","size like: ", 
+                                            new List<string>(ConfigInformation.Player.HeightPlayers.Keys),
+                                            4, 6, maxLength: 26);
+        playerContainer = new(scr, "playerContainer");
+        playerContainer.Add(new GenericWindow(scr, 2, 4, "playerContainerWin", 37, 12, " Player "))
+                            .Add(new GenericLabel(scr, "heightlbl", "Eye sight height", 4, 6))
+                            .Add(playerHeight, 6, playerContainer.lastYAdded + 1)
+                            .Add(new GenericButton(scr, "save", "save", 4, playerContainer.lastYAdded + 2, true))
+                            .Add(new GenericButton(scr, "exit", "exit", 4, playerContainer.lastYAdded + 1, true));
+    }
+    private void PlayerSetWidgetValues()
+    {
+        //only for global configuration
+        string current;
+        ConfigInformation config = configHelper.getConfigInformation(true);
+        if (config.player != null)
+            current = ConfigInformation.Player.FindNearestKey(config.player.height);
+        else
+        {
+            ConfigInformation.Player p = ConfigInformation.PlayerDefault();
+            current = ConfigInformation.Player.FindNearestKey(p.height);
+        }
+        playerHeight.SetCurrent(current);
+    }
+
+    private void PlayerUpdateConfigurationFromWidgets()
+    {
+        if (!isGlobalConfigurationWidget.value)
+            return;
+
+        ConfigInformation config = configHelper.getConfigInformation(true);
+        config.player = new();
+        config.player.SetFromKey(playerHeight.GetSelectedOption());
+        configHelper.Save(true, config);
     }
 
     IEnumerator run()
@@ -1178,6 +1237,9 @@ public class ConfigurationController : MonoBehaviour
                         case "AGEBasic":
                             status = StatusOptions.onRunAGEBasic;
                             break;
+                        case "player":
+                            status = StatusOptions.onChangePlayer;
+                            break;
                     }
 
                     mainMenu.Deselect();
@@ -1248,6 +1310,42 @@ public class ConfigurationController : MonoBehaviour
                             else if (w.name == "save")
                             {
                                 audioSave();
+                                status = StatusOptions.onMainMenu;
+                                return TaskStatus.Success;
+                            }
+                            w.Action();
+                        }
+                    }
+                    scr.DrawScreen();
+                    return TaskStatus.Continue;
+                })
+            .End()
+            
+            .Sequence("Player Configuration")
+              .Condition("On Config", () => status == StatusOptions.onChangePlayer)
+              .Do("Init", () =>
+                {
+                    SetPlayerWidgets();
+                    PlayerWindowDraw();
+                    scr.DrawScreen();
+                    return TaskStatus.Success;
+                })
+              .Do("Process", () =>
+                {
+                    changeContainerSelection(playerContainer);
+                    if (ControlActive("JOYPAD_B"))
+                    {
+                        GenericWidget w = playerContainer.GetSelectedWidget();
+                        if (w != null)
+                        {
+                            if (w.name == "exit")
+                            {
+                                status = StatusOptions.onMainMenu;
+                                return TaskStatus.Success;
+                            }
+                            else if (w.name == "save")
+                            {
+                                PlayerUpdateConfigurationFromWidgets();
                                 status = StatusOptions.onMainMenu;
                                 return TaskStatus.Success;
                             }
