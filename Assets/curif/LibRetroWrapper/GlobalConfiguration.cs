@@ -37,9 +37,9 @@ public class GlobalConfiguration : MonoBehaviour
         // Get the first FileMonitor component in the array
         fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
         yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
-        OnEnable(); 
+        OnEnable();
         Load();
-                fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
 
     }
 

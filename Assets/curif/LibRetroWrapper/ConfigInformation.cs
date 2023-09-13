@@ -26,6 +26,7 @@ public class ConfigInformation
     public NPC npc;
     public Audio audio;
     public LocomotionConfiguration locomotion;
+    public Player player;
 
     /** don't. create an empty object. Merge didn't works if both are loaded.
     public ConfigInformation() {
@@ -46,6 +47,43 @@ public class ConfigInformation
         public override bool IsValid()
         {
             return status == null || validStatus.Contains(status);
+        }
+    }
+
+    public class Player : ConfigInformationBase
+    {
+        public static Dictionary<string, float> heightPlayers = new Dictionary<string, float>
+        {
+            {"Pac-man", 1f}, // 1 is a kid
+            {"Sonic", 1.05f}, // 0.05 step
+            {"Pikachu", 1.1f}, // 0.05 step
+            {"Mario", 1.15f}, // 0.05 step
+            {"Luigi", 1.2f}, // 0.05 step
+            {"Final Fantasy", 1.25f}, // 0.05 step
+            {"Megaman", 1.3f}, // aprox 1.7m
+            {"Street Fighter", 1.35f}, // 0.05 step
+            {"Donkey Kong", 1.4f}, // 0.05 step
+            {"Mega Boss", 1.45f}, // aprox 1.8m
+            {"NBA Jam", 1.5f}, // 0.05 step
+        };
+
+        public float height;
+        public static bool IsValidHeight(float height)
+        {
+            return height <= 1.5f && height >= 1f;
+
+        }
+        public override bool IsValid()
+        {
+            return IsValidHeight(height);
+        }
+        static string FindNearestKey(float value)
+        {
+            if (!IsValidHeight(value))
+                return "";
+
+            var nearestKey = heightPlayers.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
+            return nearestKey;
         }
     }
 
@@ -108,6 +146,13 @@ public class ConfigInformation
         bg.muted = false;
         return bg;
     }
+    public static Player PlayerDefault()
+    {
+        Player player = new();
+        player.height = 1.35f;
+        return player;
+    }
+
     public static ConfigInformation newDefault()
     {
         return new ConfigInformation();
@@ -170,16 +215,11 @@ public class ConfigInformation
     {
         string ret = "Configuration \n";
         ret += "Audio \n";
-        ret += "----- \n";
         ret += $" \t background: {audio?.background?.volume}\n";
         ret += "NPCs \n";
-        ret += "---- \n";
         ret += $" \t status: {npc?.status}\n";
-        ret += " \n";
-        ret += " \n";
-        ret += " \n";
-        ret += " \n";
-        ret += " \n";
+        ret += "Player \n";
+        ret += $" \t height: {player?.height}\n";
         return ret;
     }
 
@@ -192,6 +232,9 @@ public class ConfigInformation
         if (audio != null)
             if (!audio.IsValid())
                 throw new Exception("Invalid audio settings");
+        if (player != null)
+            if (!player.IsValid())
+                throw new Exception("Invalid player settings");
     }
 
     // private static T returnNotNullOrNew<T>(T obj1, T obj2) where T : class, new()
@@ -270,6 +313,11 @@ public class ConfigInformation
         {
             ret.npc = new();
             ret.npc.status = ci2?.npc?.status != null ? ci2.npc.status : ci1?.npc?.status;
+        }
+        if (ci1?.player != null || ci2?.player != null)
+        {
+            ret.player = new();
+            ret.player.height = ci2?.player != null ? ci2.player.height : ci1.player.height;
         }
 
         return ret;
