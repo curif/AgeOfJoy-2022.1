@@ -52,20 +52,22 @@ public class ConfigInformation
 
     public class Player : ConfigInformationBase
     {
+        public const float minHeight = 1.4f;
+        public const float maxHeight = minHeight + (10f * 0.05f);
         public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
         {
             {"Calculated", 0f},
-            {"Pac-man (short)", 1.05f}, // 1 is a kid
-            {"Sonic", 1.1f}, // 0.05 step
-            {"Pikachu", 1.15f}, // 0.05 step
-            {"Mario", 1.2f}, // 0.05 step
-            {"Luigi", 1.25f}, // 0.05 step
-            {"Final Fantasy (average)", 1.3f}, // 0.05 step
-            {"Megaman", 1.35f}, // aprox 1.7m
-            {"Street Fighter", 1.4f}, // 0.05 step
-            {"Donkey Kong", 1.45f}, // 0.05 step
-            {"Mega Boss", 1.5f}, // aprox 1.8m
-            {"NBA Jam (tall)", 1.55f} // 0.05 step
+            {"Pac-man (short)", minHeight}, // 1 is a kid
+            {"Sonic", minHeight + (1f * 0.05f)}, // 0.05 step
+            {"Pikachu", minHeight + (2f * 0.05f)}, // 0.05 step
+            {"Mario", minHeight + (3f * 0.05f)}, // 0.05 step
+            {"Luigi", minHeight + (4f * 0.05f)}, // 0.05 step
+            {"Final Fantasy (average)", minHeight + (5f * 0.05f)}, // 0.05 step
+            {"Megaman", minHeight + (6f * 0.05f)}, // aprox 1.7m
+            {"Street Fighter", minHeight + (7f * 0.05f)}, // 0.05 step
+            {"Donkey Kong", minHeight + (8f * 0.05f)}, // 0.05 step
+            {"Mega Boss", minHeight + (9f * 0.05f)}, // aprox 1.8m
+            {"NBA Jam (tall)", maxHeight} // 0.05 step
         };
         public static Dictionary<string, float> Scales = new Dictionary<string, float>
         {
@@ -79,7 +81,7 @@ public class ConfigInformation
 
         public static bool IsValidHeight(float height)
         {
-            return height == 0 || (height <= 1.55f && height >= 1.05f);
+            return height == 0 || (height <= maxHeight && height >= minHeight);
         }
         public static bool IsValidScale(float scale)
         {
