@@ -62,7 +62,7 @@ public class TeleportationController : MonoBehaviour
             Vector3 sourcePosition = spawnPosition.transform.position;
             Vector3 destinationPosition = player.transform.position;
             destinationPosition.x = sourcePosition.x;
-            destinationPosition.y = sourcePosition.y;
+            destinationPosition.y = sourcePosition.y + 0.5f;
             destinationPosition.z = sourcePosition.z;
             //moves the player
             player.transform.position = destinationPosition;

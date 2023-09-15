@@ -74,6 +74,7 @@ public class ConfigurationHelper
 
     public void Save(bool saveGlobal, ConfigInformation config)
     {
+        /*
         string yamlPath;
         if (saveGlobal)
             yamlPath = globalConfiguration.yamlPath;
@@ -81,10 +82,19 @@ public class ConfigurationHelper
             yamlPath = roomConfiguration.yamlPath;
         ConfigManager.WriteConsole($"[ConfigurationController] save configuration is global:{saveGlobal} {config} to {yamlPath}");
         config.ToYaml(yamlPath); //saving the file will reload the configuration in GlobalConfiguration and RoomConfiguration by trigger.
-
+*/
+        if (saveGlobal)
+        {
+            globalConfiguration.Configuration = config;
+            globalConfiguration.Save();
+        }
+        else
+        {
+            roomConfiguration.Configuration = config;
+            roomConfiguration.Save();
+        }
         return;
     }
-
 
     public void Reset(bool isGlobal)
     {
@@ -201,6 +211,7 @@ public class ConfigurationController : MonoBehaviour
 
     //player
     private GenericOptions playerHeight;
+    private GenericOptions playerScale;
     private GenericWidgetContainer playerContainer;
 
     private DefaultControlMap map;
@@ -554,7 +565,7 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("locomotion", " player movement configuration  ");
             mainMenu.AddOption("player", " player configuration  ");
         }
-        mainMenu.AddOption("change mode", "  global or room configuration ");
+        mainMenu.AddOption("change mode (global/room)", "  global or room configuration ");
         mainMenu.AddOption("reset", "         back to default       ");
         mainMenu.AddOption("teleport", "       teleport to a room       ");
         mainMenu.AddOption("exit", "        exit configuration     ");
@@ -1047,29 +1058,32 @@ public class ConfigurationController : MonoBehaviour
         if (playerContainer != null)
             return;
 
-        playerHeight = new GenericOptions(scr, "playerHeight","size like: ", 
+        playerHeight = new GenericOptions(scr, "playerHeight", "height: ",
                                             new List<string>(ConfigInformation.Player.HeightPlayers.Keys),
-                                            4, 6, maxLength: 26);
+                                            4, 7, maxLength: 26);
+
+        playerScale = new GenericOptions(scr, "playerScale", "Age: ",
+                                            new List<string>(ConfigInformation.Player.Scales.Keys),
+                                            4, 8, maxLength: 26);
         playerContainer = new(scr, "playerContainer");
         playerContainer.Add(new GenericWindow(scr, 2, 4, "playerContainerWin", 37, 12, " Player "))
-                            .Add(new GenericLabel(scr, "heightlbl", "Eye sight height", 4, 6))
-                            .Add(playerHeight, 6, playerContainer.lastYAdded + 1)
+                            .Add(playerHeight, 4, 6)
+                            .Add(playerScale, 4, playerContainer.lastYAdded + 1)
                             .Add(new GenericButton(scr, "save", "save", 4, playerContainer.lastYAdded + 2, true))
                             .Add(new GenericButton(scr, "exit", "exit", 4, playerContainer.lastYAdded + 1, true));
     }
     private void PlayerSetWidgetValues()
     {
         //only for global configuration
-        string current;
+        ConfigInformation.Player p;
+        string height, scale;
         ConfigInformation config = configHelper.getConfigInformation(true);
-        if (config.player != null)
-            current = ConfigInformation.Player.FindNearestKey(config.player.height);
-        else
-        {
-            ConfigInformation.Player p = ConfigInformation.PlayerDefault();
-            current = ConfigInformation.Player.FindNearestKey(p.height);
-        }
-        playerHeight.SetCurrent(current);
+        p = config.player ?? ConfigInformation.PlayerDefault();
+        height = ConfigInformation.Player.FindNearestKey(p.height);
+        scale = ConfigInformation.Player.FindNearestKeyScale(p.scale);
+        playerHeight.SetCurrent(height);
+        playerScale.SetCurrent(scale);
+        ConfigManager.WriteConsole($"[ConfigurationController.PlayerSetWidgetValues] height:{height} scale:{scale}.");
     }
 
     private void PlayerUpdateConfigurationFromWidgets()
@@ -1078,8 +1092,14 @@ public class ConfigurationController : MonoBehaviour
             return;
 
         ConfigInformation config = configHelper.getConfigInformation(true);
-        config.player = new();
-        config.player.SetFromKey(playerHeight.GetSelectedOption());
+        config.player = ConfigInformation.PlayerDefault();
+        float scale = ConfigInformation.Player.GetScale(playerScale.GetSelectedOption());
+        float height = ConfigInformation.Player.GetHeight(playerHeight.GetSelectedOption());
+        if (scale != -1)
+            config.player.scale = scale;
+        if (height != -1)
+            config.player.height = height;
+
         configHelper.Save(true, config);
     }
 
@@ -1216,7 +1236,7 @@ public class ConfigurationController : MonoBehaviour
                         case "Audio configuration":
                             status = StatusOptions.onAudio;
                             break;
-                        case "change mode":
+                        case "change mode (global/room)":
                             status = StatusOptions.onChangeMode;
                             break;
                         case "reset":
@@ -1320,12 +1340,13 @@ public class ConfigurationController : MonoBehaviour
                     return TaskStatus.Continue;
                 })
             .End()
-            
+
             .Sequence("Player Configuration")
               .Condition("On Config", () => status == StatusOptions.onChangePlayer)
               .Do("Init", () =>
                 {
                     SetPlayerWidgets();
+                    PlayerSetWidgetValues();
                     PlayerWindowDraw();
                     scr.DrawScreen();
                     return TaskStatus.Success;

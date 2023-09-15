@@ -71,7 +71,9 @@ public class RoomConfiguration : MonoBehaviour
         {
             if (File.Exists(yamlPath))
             {
+                fileMonitor.fileLock();
                 File.Delete(yamlPath);
+                fileMonitor.fileUnlock();
             }
             Load();
         }
@@ -88,7 +90,9 @@ public class RoomConfiguration : MonoBehaviour
         ConfigManager.WriteConsole($"[RoomConfiguration.Load] load: {yamlPath}");
         if (File.Exists(yamlPath))
         {
+            fileMonitor.fileLock();
             config = ConfigInformation.fromYaml(yamlPath);
+            fileMonitor.fileUnlock();
             if (config == null)
             {
                 ConfigManager.WriteConsoleError($"[RoomConfiguration.Load] can't load existent file, default to global: {yamlPath}");
@@ -113,8 +117,11 @@ public class RoomConfiguration : MonoBehaviour
     public void Save()
     {
         ConfigManager.WriteConsole($"[RoomConfiguration] writing configuration: {yamlPath}");
+        fileMonitor.fileLock();
         configuration.ToYaml(yamlPath);
+        fileMonitor.fileUnlock();
     }
+
 
     void OnEnable()
     {

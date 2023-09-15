@@ -39,8 +39,6 @@ public class GlobalConfiguration : MonoBehaviour
         yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
         OnEnable();
         Load();
-        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
-
     }
 
     private void Load()
@@ -49,7 +47,10 @@ public class GlobalConfiguration : MonoBehaviour
         ConfigManager.WriteConsole($"[GlobalConfiguration] loadConfiguration: {yamlPath}");
         if (File.Exists(yamlPath))
         {
+            fileMonitor.fileLock();
             config = ConfigInformation.fromYaml(yamlPath);
+            fileMonitor.fileUnlock();
+
             if (config == null)
             {
                 ConfigManager.WriteConsole($"[GlobalConfiguration] ERROR can't read, back to default: {yamlPath}");
@@ -76,7 +77,9 @@ public class GlobalConfiguration : MonoBehaviour
         {
             if (File.Exists(yamlPath))
             {
+                fileMonitor.fileLock();
                 File.Delete(yamlPath);
+                fileMonitor.fileUnlock();
             }
             Load();
         }
@@ -89,7 +92,9 @@ public class GlobalConfiguration : MonoBehaviour
     public void Save()
     {
         ConfigManager.WriteConsole($"[GlobalConfiguration] writing configuration: {yamlPath}");
+        fileMonitor.fileLock();
         configuration.ToYaml(yamlPath);
+        fileMonitor.fileUnlock();
     }
 
     private void OnFileChanged()
