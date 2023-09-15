@@ -54,28 +54,40 @@ public class ConfigInformation
     {
         public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
         {
-            {"Pac-man", 1f}, // 1 is a kid
-            {"Sonic", 1.05f}, // 0.05 step
-            {"Pikachu", 1.1f}, // 0.05 step
-            {"Mario", 1.15f}, // 0.05 step
-            {"Luigi", 1.2f}, // 0.05 step
-            {"Final Fantasy", 1.25f}, // 0.05 step
-            {"Megaman", 1.3f}, // aprox 1.7m
-            {"Street Fighter", 1.35f}, // 0.05 step
-            {"Donkey Kong", 1.4f}, // 0.05 step
-            {"Mega Boss", 1.45f}, // aprox 1.8m
-            {"NBA Jam", 1.5f}, // 0.05 step
+            {"Calculated", 0f},
+            {"Pac-man (short)", 1.05f}, // 1 is a kid
+            {"Sonic", 1.1f}, // 0.05 step
+            {"Pikachu", 1.15f}, // 0.05 step
+            {"Mario", 1.2f}, // 0.05 step
+            {"Luigi", 1.25f}, // 0.05 step
+            {"Final Fantasy (average)", 1.3f}, // 0.05 step
+            {"Megaman", 1.35f}, // aprox 1.7m
+            {"Street Fighter", 1.4f}, // 0.05 step
+            {"Donkey Kong", 1.45f}, // 0.05 step
+            {"Mega Boss", 1.5f}, // aprox 1.8m
+            {"NBA Jam (tall)", 1.55f} // 0.05 step
+        };
+        public static Dictionary<string, float> Scales = new Dictionary<string, float>
+        {
+            {"Kid", 0.7f},
+            {"Teen", 0.8f},
+            {"Adult", 0.9f},
         };
 
-        public float height;
+        public float height = 0f;
+        public float scale = 0.9f;
+
         public static bool IsValidHeight(float height)
         {
-            return height <= 1.5f && height >= 1f;
-
+            return height == 0 || (height <= 1.55f && height >= 1.05f);
+        }
+        public static bool IsValidScale(float scale)
+        {
+            return scale <= 0.9f && scale >= 0.7f;
         }
         public override bool IsValid()
         {
-            return IsValidHeight(height);
+            return IsValidHeight(height) && IsValidScale(scale);
         }
         public static string FindNearestKey(float value)
         {
@@ -85,11 +97,25 @@ public class ConfigInformation
             var nearestKey = HeightPlayers.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
             return nearestKey;
         }
+        public static string FindNearestKeyScale(float value)
+        {
+            if (!IsValidScale(value))
+                return "";
 
-        public void SetFromKey(string key)
+            var nearestKey = Scales.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
+            return nearestKey;
+        }
+        public static float GetHeight(string key)
         {
             if (HeightPlayers.ContainsKey(key))
-                height = HeightPlayers[key];
+                return HeightPlayers[key];
+            return -1f;
+        }
+        public static float GetScale(string key)
+        {
+            if (Scales.ContainsKey(key))
+                return Scales[key];
+            return -1f;
         }
     }
 
@@ -155,7 +181,8 @@ public class ConfigInformation
     public static Player PlayerDefault()
     {
         Player player = new();
-        player.height = 1.35f;
+        player.height = 0f;
+        player.scale = 0.9f;
         return player;
     }
 
@@ -167,53 +194,82 @@ public class ConfigInformation
 
     public static ConfigInformation fromYaml(string yamlPath)
     {
-        ConfigManager.WriteConsole($"[ConfigInformation]: {yamlPath}");
+        ConfigInformation configInfo;
+        ConfigManager.WriteConsole($"[ConfigInformation.fromYaml]: {yamlPath}");
 
         if (!File.Exists(yamlPath))
         {
-            ConfigManager.WriteConsoleError($"[ConfigInformation] YAML file ({yamlPath}) doesn't exists ");
+            ConfigManager.WriteConsoleError($"[ConfigInformation.fromYaml] YAML file ({yamlPath}) doesn't exists ");
             return null;
         }
 
         try
         {
-            var input = File.OpenText(yamlPath);
-
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .IgnoreUnmatchedProperties()
                 .Build();
 
-            var configInfo = deserializer.Deserialize<ConfigInformation>(input);
-            if (configInfo == null)
-                throw new IOException("Deserialization error");
+            using (var input = new FileStream(yamlPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                string yamlContent;
 
-            configInfo.validate();
+                using (var reader = new StreamReader(input))
+                {
+                    yamlContent = reader.ReadToEnd();
+                }
 
-            return configInfo;
+                configInfo = deserializer.Deserialize<ConfigInformation>(yamlContent);
+                if (configInfo == null)
+                    throw new IOException("Deserialization error");
+
+                configInfo.validate();
+
+            }
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleError($"[ConfigInformation] reading configuration YAML file {yamlPath} - {e}");
+            ConfigManager.WriteConsoleException($"[ConfigInformation.fromYaml] reading configuration YAML file {yamlPath}", e);
             return null;
         }
+
+        return configInfo;
     }
 
     public bool ToYaml(string yamlPath)
     {
+        string yaml;
         try
         {
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .Build();
-            var yaml = serializer.Serialize(this);
-            File.WriteAllText(yamlPath, yaml);
+            yaml = serializer.Serialize(this);
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleError($"[ConfigInformation] configuration YAML file in configuration subdir {yamlPath} - {e}");
+            ConfigManager.WriteConsoleException($"[ConfigInformation.ToYaml] serialization problem {yamlPath}", e);
             return false;
         }
+
+        using (var fileStream = new FileStream(yamlPath, FileMode.Create,
+                                                FileAccess.ReadWrite, FileShare.ReadWrite))
+        {
+
+            try
+            {
+                using (var streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.Write(yaml);
+                }
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[ConfigInformation.ToYaml] problem saving {yamlPath}", e);
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -226,6 +282,7 @@ public class ConfigInformation
         ret += $" \t status: {npc?.status}\n";
         ret += "Player \n";
         ret += $" \t height: {player?.height}\n";
+        ret += $" \t scale: {player?.scale}\n";
         return ret;
     }
 
@@ -324,6 +381,7 @@ public class ConfigInformation
         {
             ret.player = new();
             ret.player.height = ci2?.player != null ? ci2.player.height : ci1.player.height;
+            ret.player.scale = ci2?.player != null ? ci2.player.scale : ci1.player.scale;
         }
 
         return ret;
