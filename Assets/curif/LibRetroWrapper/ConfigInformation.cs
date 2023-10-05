@@ -26,6 +26,7 @@ public class ConfigInformation
     public NPC npc;
     public Audio audio;
     public LocomotionConfiguration locomotion;
+    public Player player;
 
     /** don't. create an empty object. Merge didn't works if both are loaded.
     public ConfigInformation() {
@@ -46,6 +47,92 @@ public class ConfigInformation
         public override bool IsValid()
         {
             return status == null || validStatus.Contains(status);
+        }
+    }
+
+    public class Player : ConfigInformationBase
+    {
+        //remember: floor starts in y=-0.532
+        //          1.6 = average (1.7 height)
+        public const float minHeight = 1.35f;
+        public const float maxHeight = minHeight + (10f * 0.05f);
+        public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
+        {
+            {"Calculated", 0f},
+            {"Pac-man (short)", minHeight}, // 1 is a kid
+            {"Sonic", minHeight + (1f * 0.05f)}, // 0.05 step
+            {"Pikachu", minHeight + (2f * 0.05f)}, // 0.05 step
+            {"Mario", minHeight + (3f * 0.05f)}, // 0.05 step
+            {"Luigi", minHeight + (4f * 0.05f)}, // 0.05 step
+            {"Final Fantasy (avg)", minHeight + (5f * 0.05f)}, // should be 1.6
+            {"Megaman", minHeight + (6f * 0.05f)}, // aprox 1.7m
+            {"Street Fighter", minHeight + (7f * 0.05f)}, // 0.05 step
+            {"Donkey Kong", minHeight + (8f * 0.05f)}, // 0.05 step
+            {"Mega Boss", minHeight + (9f * 0.05f)}, // aprox 1.8m
+            {"NBA Jam (tall)", maxHeight} // 0.05 step
+        };
+
+        public static Dictionary<string, float> Scales = new Dictionary<string, float>
+        {
+            {"Kid", 0.6f},
+            {"Teen", 0.75f},
+            {"Adult", 0.9f},
+        };
+
+        public string ShowHeightPlayers()
+        {
+            string debugMessage = "HeightPlayers Dictionary:\n";
+
+            foreach (var kvp in HeightPlayers)
+            {
+                debugMessage += $"{kvp.Key}: {kvp.Value}m\n";
+            }
+
+            return debugMessage;
+        }
+
+        public float height = 0f;
+        public float scale = 0.9f;
+
+        public static bool IsValidHeight(float height)
+        {
+            return height == 0 || (height <= maxHeight && height >= minHeight);
+        }
+        public static bool IsValidScale(float scale)
+        {
+            return scale <= 1f && scale >= 0.6f;
+        }
+        public override bool IsValid()
+        {
+            return IsValidHeight(height) && IsValidScale(scale);
+        }
+        public static string FindNearestKey(float value)
+        {
+            if (!IsValidHeight(value))
+                return "";
+
+            var nearestKey = HeightPlayers.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
+            return nearestKey;
+        }
+        public static string FindNearestKeyScale(float value)
+        {
+            if (!IsValidScale(value))
+                return "";
+
+            var nearestKey = Scales.OrderBy(pair => Math.Abs(pair.Value - value)).First().Key;
+            return nearestKey;
+        }
+        public static float GetHeight(string key)
+        {
+            if (HeightPlayers.ContainsKey(key))
+                return HeightPlayers[key];
+            return -1f;
+        }
+        public static float GetScale(string key)
+        {
+            if (Scales.ContainsKey(key))
+                return Scales[key];
+            return -1f;
         }
     }
 
@@ -108,6 +195,14 @@ public class ConfigInformation
         bg.muted = false;
         return bg;
     }
+    public static Player PlayerDefault()
+    {
+        Player player = new();
+        player.height = 0f;
+        player.scale = 0.9f;
+        return player;
+    }
+
     public static ConfigInformation newDefault()
     {
         return new ConfigInformation();
@@ -116,53 +211,82 @@ public class ConfigInformation
 
     public static ConfigInformation fromYaml(string yamlPath)
     {
-        ConfigManager.WriteConsole($"[ConfigInformation]: {yamlPath}");
+        ConfigInformation configInfo;
+        ConfigManager.WriteConsole($"[ConfigInformation.fromYaml]: {yamlPath}");
 
         if (!File.Exists(yamlPath))
         {
-            ConfigManager.WriteConsoleError($"[ConfigInformation] YAML file ({yamlPath}) doesn't exists ");
+            ConfigManager.WriteConsoleError($"[ConfigInformation.fromYaml] YAML file ({yamlPath}) doesn't exists ");
             return null;
         }
 
         try
         {
-            var input = File.OpenText(yamlPath);
-
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .IgnoreUnmatchedProperties()
                 .Build();
 
-            var configInfo = deserializer.Deserialize<ConfigInformation>(input);
-            if (configInfo == null)
-                throw new IOException("Deserialization error");
+            using (var input = new FileStream(yamlPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                string yamlContent;
 
-            configInfo.validate();
+                using (var reader = new StreamReader(input))
+                {
+                    yamlContent = reader.ReadToEnd();
+                }
 
-            return configInfo;
+                configInfo = deserializer.Deserialize<ConfigInformation>(yamlContent);
+                if (configInfo == null)
+                    throw new IOException("Deserialization error");
+
+                configInfo.validate();
+
+            }
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleError($"[ConfigInformation] reading configuration YAML file {yamlPath} - {e}");
+            ConfigManager.WriteConsoleException($"[ConfigInformation.fromYaml] reading configuration YAML file {yamlPath}", e);
             return null;
         }
+
+        return configInfo;
     }
 
     public bool ToYaml(string yamlPath)
     {
+        string yaml;
         try
         {
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .Build();
-            var yaml = serializer.Serialize(this);
-            File.WriteAllText(yamlPath, yaml);
+            yaml = serializer.Serialize(this);
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleError($"[ConfigInformation] configuration YAML file in configuration subdir {yamlPath} - {e}");
+            ConfigManager.WriteConsoleException($"[ConfigInformation.ToYaml] serialization problem {yamlPath}", e);
             return false;
         }
+
+        using (var fileStream = new FileStream(yamlPath, FileMode.Create,
+                                                FileAccess.ReadWrite, FileShare.ReadWrite))
+        {
+
+            try
+            {
+                using (var streamWriter = new StreamWriter(fileStream))
+                {
+                    streamWriter.Write(yaml);
+                }
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[ConfigInformation.ToYaml] problem saving {yamlPath}", e);
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -170,16 +294,12 @@ public class ConfigInformation
     {
         string ret = "Configuration \n";
         ret += "Audio \n";
-        ret += "----- \n";
         ret += $" \t background: {audio?.background?.volume}\n";
         ret += "NPCs \n";
-        ret += "---- \n";
         ret += $" \t status: {npc?.status}\n";
-        ret += " \n";
-        ret += " \n";
-        ret += " \n";
-        ret += " \n";
-        ret += " \n";
+        ret += "Player \n";
+        ret += $" \t height: {player?.height}\n";
+        ret += $" \t scale: {player?.scale}\n";
         return ret;
     }
 
@@ -192,6 +312,9 @@ public class ConfigInformation
         if (audio != null)
             if (!audio.IsValid())
                 throw new Exception("Invalid audio settings");
+        if (player != null)
+            if (!player.IsValid())
+                throw new Exception("Invalid player settings");
     }
 
     // private static T returnNotNullOrNew<T>(T obj1, T obj2) where T : class, new()
@@ -270,6 +393,12 @@ public class ConfigInformation
         {
             ret.npc = new();
             ret.npc.status = ci2?.npc?.status != null ? ci2.npc.status : ci1?.npc?.status;
+        }
+        if (ci1?.player != null || ci2?.player != null)
+        {
+            ret.player = new();
+            ret.player.height = ci2?.player != null ? ci2.player.height : ci1.player.height;
+            ret.player.scale = ci2?.player != null ? ci2.player.scale : ci1.player.scale;
         }
 
         return ret;

@@ -106,7 +106,7 @@ public class ScreenGenerator : MonoBehaviour
 
     public void Update()
     {
-        shader.Update();
+        shader?.Update();
         return;
     }
 
@@ -262,7 +262,7 @@ public class ScreenGenerator : MonoBehaviour
         }
 
         // Create a string of 40 characters using the given character
-        string text = new string(c, CharactersWidth-1);
+        string text = new string(c, CharactersWidth - 1);
 
         // Print the text using the Print method with the x coordinate of 0
         Print(0, y, text, inverted);
