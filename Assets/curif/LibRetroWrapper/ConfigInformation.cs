@@ -52,7 +52,9 @@ public class ConfigInformation
 
     public class Player : ConfigInformationBase
     {
-        public const float minHeight = 1.4f;
+        //remember: floor starts in y=-0.532
+        //          1.6 = average (1.7 height)
+        public const float minHeight = 1.35f;
         public const float maxHeight = minHeight + (10f * 0.05f);
         public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
         {
@@ -62,19 +64,32 @@ public class ConfigInformation
             {"Pikachu", minHeight + (2f * 0.05f)}, // 0.05 step
             {"Mario", minHeight + (3f * 0.05f)}, // 0.05 step
             {"Luigi", minHeight + (4f * 0.05f)}, // 0.05 step
-            {"Final Fantasy (average)", minHeight + (5f * 0.05f)}, // 0.05 step
+            {"Final Fantasy (avg)", minHeight + (5f * 0.05f)}, // should be 1.6
             {"Megaman", minHeight + (6f * 0.05f)}, // aprox 1.7m
             {"Street Fighter", minHeight + (7f * 0.05f)}, // 0.05 step
             {"Donkey Kong", minHeight + (8f * 0.05f)}, // 0.05 step
             {"Mega Boss", minHeight + (9f * 0.05f)}, // aprox 1.8m
             {"NBA Jam (tall)", maxHeight} // 0.05 step
         };
+
         public static Dictionary<string, float> Scales = new Dictionary<string, float>
         {
-            {"Kid", 0.7f},
-            {"Teen", 0.8f},
+            {"Kid", 0.6f},
+            {"Teen", 0.75f},
             {"Adult", 0.9f},
         };
+
+        public string ShowHeightPlayers()
+        {
+            string debugMessage = "HeightPlayers Dictionary:\n";
+
+            foreach (var kvp in HeightPlayers)
+            {
+                debugMessage += $"{kvp.Key}: {kvp.Value}m\n";
+            }
+
+            return debugMessage;
+        }
 
         public float height = 0f;
         public float scale = 0.9f;
@@ -85,7 +100,7 @@ public class ConfigInformation
         }
         public static bool IsValidScale(float scale)
         {
-            return scale <= 0.9f && scale >= 0.7f;
+            return scale <= 1f && scale >= 0.6f;
         }
         public override bool IsValid()
         {
