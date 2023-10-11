@@ -403,7 +403,7 @@ public static unsafe class LibretroMameCore
 
         if (!File.Exists(path))
         {
-            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} don't exists or inaccesible.");
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} not found.");
             return false;
         }
 
