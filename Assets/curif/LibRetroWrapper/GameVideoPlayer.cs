@@ -83,6 +83,7 @@ public class GameVideoPlayer : MonoBehaviour
             videoPlayer.url = videoPath;
         }
 
+        // ConfigManager.WriteConsole($"[videoPlayer.Play] isPlaying: {videoPlayer.isPlaying} ====");
         if (!videoPlayer.isPrepared)
         {
             ConfigManager.WriteConsole($"[videoPlayer.Play] prepare {videoPath} ====");
@@ -113,7 +114,8 @@ public class GameVideoPlayer : MonoBehaviour
         ConfigManager.WriteConsole($"[videoPlayer.Pause] {videoPath} ====");
         videoPlayer.isLooping = false;
         videoPlayer.Pause();
-        isReady = false;
+        // ConfigManager.WriteConsole($"[videoPlayer.Pause] isPlaying: {videoPlayer.isPlaying} ====");
+        // isReady = false;
 #endif
         return this;
     }

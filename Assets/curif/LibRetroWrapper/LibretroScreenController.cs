@@ -264,24 +264,25 @@ public class LibretroScreenController : MonoBehaviour
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
 
+                  // start libretro
+                  if (!LibretroMameCore.Start(name, GameFile))
+                  {
+                      CoinSlot.clean();
+                      /*
+                                            if (ageBasicInformation.active)
+                                            {
+                                                cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
+                                                cabinetAGEBasic.ExecAfterLeaveBas();
+                                            }
+                       */
+                      return TaskStatus.Failure;
+                  }                  
+                  
                   // age basic
                   if (ageBasicInformation.active)
                   {
                       cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
                       cabinetAGEBasic.ExecInsertCoinBas();
-                  }
-
-                  // start libretro
-                  if (!LibretroMameCore.Start(name, GameFile))
-                  {
-                      CoinSlot.clean();
-
-                      if (ageBasicInformation.active)
-                      {
-                          cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
-                          cabinetAGEBasic.ExecAfterLeaveBas();
-                      }
-                      return TaskStatus.Failure;
                   }
 
                   if (lightGunTarget != null)
