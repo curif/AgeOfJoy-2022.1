@@ -542,11 +542,13 @@ public static unsafe class LibretroMameCore
                 int size = wrapper_image_get_buffer_size();
                 // ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
                 if (data != IntPtr.Zero)
+                {
                     GameTexture.LoadRawTextureData(data, size);
+                    GameTexture.Apply(false, false);
+                }
                 GameTextureBufferSem.Reset();
             }
         }
-        GameTexture.Apply(false, false);
     }
 
     public static void StartRunThread()
@@ -908,7 +910,7 @@ public static unsafe class LibretroMameCore
     {
         if (!GameLoaded || GameFileName != gameFileName)
             return;
-            
+
         lock (AudioBufferLock)
         {
             // Call the C functions to access the audio data
@@ -916,7 +918,7 @@ public static unsafe class LibretroMameCore
             int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy_bytes(); //in sizeof(float)
             int audioDataLength = audioData.Length * sizeof(float);
             int toCopy = audioBufferOccupancy >= audioDataLength ? audioDataLength : audioBufferOccupancy;
-            
+
             if (audioBufferOccupancy > 0)
             {
                 // Convert the IntPtr to a float array
