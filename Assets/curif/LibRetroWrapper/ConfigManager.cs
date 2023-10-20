@@ -3,6 +3,15 @@ This program is free software: you can redistribute it and/or modify it under th
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
+
+// coment the next line for releases build
+#define FORCE_DEBUG
+#if UNITY_EDITOR
+#define DEBUG_ACTIVE
+#elif FORCE_DEBUG
+#define DEBUG_ACTIVE
+#endif
+
 using UnityEngine;
 using System.IO;
 using System;
@@ -26,10 +35,18 @@ public static class ConfigManager
     public static string ConfigControllersDir = $"{BaseDir}/configuration/controllers";
     public static string AGEBasicDir = $"{BaseDir}/AGEBasic";
 
-    public static bool GameVideosStopped = false;
-
     public static ConfigInformation configuration;
-
+    public static bool DebugActive
+    {
+        get
+        {
+            #if DEBUG_ACTIVE
+            return true;
+            #else
+            return false;
+            #endif
+        }
+    }
 
     static ConfigManager()
     {
@@ -54,31 +71,27 @@ public static class ConfigManager
         }
 
     }
+
+    [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsole(string st)
     {
-        string formattedMessage = $"[AGE] {st}";
-        UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "{0}", formattedMessage);
+        UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[AGE] {0}", st);
     }
+    [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleError(string st)
     {
-        string formattedMessage = $"[AGE ERROR] {st}";
-        UnityEngine.Debug.LogFormat(LogType.Error, LogOption.None, null, "{0}", formattedMessage);
+        UnityEngine.Debug.LogFormat(LogType.Error, LogOption.None, null, "[AGE ERROR] {0}", st);
     }
+    [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleWarning(string st)
     {
-        string formattedMessage = $"[AGE WARNING] {st}";
-        UnityEngine.Debug.LogFormat(LogType.Warning, LogOption.None, null, "{0}", formattedMessage);
+        UnityEngine.Debug.LogFormat(LogType.Warning, LogOption.None, null, "[AGE WARNING] {0}", st);
     }
+    [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleException(string st, Exception e)
     {
-        string formattedMessage = $"[AGE ERROR EXCEPTION] {st}";
-        UnityEngine.Debug.LogFormat(LogType.Exception, LogOption.None, null, "{0} Exception {1} StackTrace: \n {2}", formattedMessage, e, e.StackTrace);
+        UnityEngine.Debug.LogFormat(LogType.Exception, LogOption.None, null,
+                    "[AGE ERROR EXCEPTION] {0} Exception {1} StackTrace: \n {2}", st, e, e.StackTrace);
     }
 
-    public static void SignalToStopVideos()
-    {
-        GameVideosStopped = true;
-    }
 }
-
-

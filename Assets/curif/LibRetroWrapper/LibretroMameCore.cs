@@ -573,14 +573,15 @@ public static unsafe class LibretroMameCore
         retroRunTaskCancellationToken = new();
         retroRunTask = Task.Run(() =>
         {
+            ConfigManager.WriteConsole($"[StartRunThread.retroRunTask]task start running IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status}");
             while (!retroRunTaskCancellationToken.IsCancellationRequested)
             {
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    // ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run -------------------------");
+                    ConfigManager.WriteConsole($"[StartRunThread.retroRunTask] wrapper_run -------------------------");
                     wrapper_run();
-                    // ConfigManager.WriteConsole($"[RunBackgroundThread] wrapper_run end -------------------------");
+                    ConfigManager.WriteConsole($"[retroRunTask] wrapper_run end IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status} -------------------------");
                 }
             }
         }
@@ -618,21 +619,29 @@ public static unsafe class LibretroMameCore
 
     public static void StopRunThread()
     {
-        ConfigManager.WriteConsole($"[StopThread] stopping task");
-        retroRunTaskCancellationToken.Cancel();
-        Waiter stopThreadWaiter = new(2);
-        //await Task.Delay(10);
-        while (retroRunTask.Status == TaskStatus.Running && !stopThreadWaiter.Finished())
+        ConfigManager.WriteConsole($"[StopThread] stopping task - status: {retroRunTask.Status}");
+
+        // Check the task status
+        if (retroRunTask.Status == TaskStatus.Faulted)
         {
-            ConfigManager.WriteConsole($"[StopThread] stopping task, status: {retroRunTask.Status}");
-            Task.Delay(100).Wait(); //can't await in unsafe, this block the thread.
+            ConfigManager.WriteConsoleException($"Task has thrown an exception", retroRunTask.Exception);
         }
-        if (retroRunTask.Status == TaskStatus.Running)
+        else
         {
-            WriteConsole("[StopRunThread] ERROR ------");
-            WriteConsole("[StopRunThread] Game thread can't finish");
-            WriteConsole("[StopRunThread] ERROR ------");
-            ConfigManager.WriteConsoleError("[StopRunThread] Game thread continues running. can't stop it.");
+            Waiter stopThreadWaiter = new(2);
+            retroRunTaskCancellationToken.Cancel();
+            while (retroRunTask.Status == TaskStatus.Running && !stopThreadWaiter.Finished())
+            {
+                ConfigManager.WriteConsole($"[StopThread] stopping task, status: {retroRunTask.Status}");
+                Task.Delay(100).Wait(); //can't await in unsafe, this block the thread.
+            }
+            if (retroRunTask.Status == TaskStatus.Running)
+            {
+                WriteConsole("[StopRunThread] ERROR ------");
+                WriteConsole("[StopRunThread] Game thread can't finish");
+                WriteConsole("[StopRunThread] ERROR ------");
+                ConfigManager.WriteConsoleError("[StopRunThread] Game thread continues running. can't stop it.");
+            }
         }
         ConfigManager.WriteConsole($"[StopThread] stopped, status: {retroRunTask.Status}");
     }
