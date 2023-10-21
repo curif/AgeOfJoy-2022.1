@@ -60,9 +60,7 @@ void wrapper_environment_log(enum retro_log_level level, const char *format,
 
 int wrapper_dlopen() {
   INIT_STRUCT(handlers);
-  // char *core =
-  // "/sdcard/Android/data/com.curif.AgeOfJoy/cores/mame2003_plus_libretro_android.so";
-  char *core = "mame2003_plus_libretro_android.so";
+  char *core = "libmame2003_plus_libretro_android.so";
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_environment_open] start -----------\n");
   handlers.handle = dlopen(core, RTLD_LAZY);

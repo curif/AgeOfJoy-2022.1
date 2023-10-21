@@ -177,7 +177,7 @@ public static class CabinetFactory
 
             if (!File.Exists(modelFilePath))
             {
-                ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] ERROR {modelFilePath} model don't exists, falls to standar cabinet model");
+                ConfigManager.WriteConsoleError($"[CabinetFactory.fromInformation] {modelFilePath} model don't exists, falls to standar cabinet model");
                 modelFilePath = "";
             }
         }

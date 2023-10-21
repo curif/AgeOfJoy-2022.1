@@ -125,7 +125,7 @@ public class GateController : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(1f / 2f);
+            yield return new WaitForSeconds(1f);
         }
     }
     void LockGate(SceneGate scn, bool block)
