@@ -579,9 +579,9 @@ public static unsafe class LibretroMameCore
                 FPSControlNoUnity.CountTimeFrame();
                 if (FPSControlNoUnity.isTime())
                 {
-                    ConfigManager.WriteConsole($"[StartRunThread.retroRunTask] wrapper_run -------------------------");
+                    // ConfigManager.WriteConsole($"[StartRunThread.retroRunTask] wrapper_run -------------------------");
                     wrapper_run();
-                    ConfigManager.WriteConsole($"[retroRunTask] wrapper_run end IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status} -------------------------");
+                    // ConfigManager.WriteConsole($"[retroRunTask] wrapper_run end IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status} -------------------------");
                 }
             }
         }
