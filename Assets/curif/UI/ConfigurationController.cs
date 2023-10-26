@@ -1068,7 +1068,7 @@ public class ConfigurationController : MonoBehaviour
         playerContainer = new(scr, "playerContainer");
         playerContainer.Add(new GenericWindow(scr, 2, 4, "playerContainerWin", 37, 12, " Player "))
                             .Add(playerHeight, 4, 6)
-                            .Add(playerScale, 4, playerContainer.lastYAdded + 1)
+                            //.Add(playerScale, 4, playerContainer.lastYAdded + 1)
                             .Add(new GenericButton(scr, "save", "save", 4, playerContainer.lastYAdded + 2, true))
                             .Add(new GenericButton(scr, "exit", "exit", 4, playerContainer.lastYAdded + 1, true));
     }
