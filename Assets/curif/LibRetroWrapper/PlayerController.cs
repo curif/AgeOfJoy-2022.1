@@ -112,11 +112,11 @@ public class PlayerController : MonoBehaviour
         }
 
         //player height
-        if (player.height == 0)
+        if (player.height == 0f)
         {
             //calculated
             xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
-            CameraYOffset = 0f;
+            // CameraYOffset = 0f;
             ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height calculated from floor");
         }
         else

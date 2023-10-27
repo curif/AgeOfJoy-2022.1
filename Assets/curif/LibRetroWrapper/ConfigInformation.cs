@@ -26,7 +26,7 @@ public class ConfigInformation
     public NPC npc;
     public Audio audio;
     public LocomotionConfiguration locomotion;
-    public Player player;
+    public Player player = new();
 
     /** don't. create an empty object. Merge didn't works if both are loaded.
     public ConfigInformation() {
