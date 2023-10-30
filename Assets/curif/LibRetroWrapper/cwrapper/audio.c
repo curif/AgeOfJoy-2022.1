@@ -10,7 +10,6 @@ static handlers_t *handlers;
 static float AudioBatch[MAX_AUDIO_BATCH_SIZE / sizeof(float)]; // Static array
 static size_t AudioBatchOccupancy = 0;
 
-static int QuestAudioFrequency = 48000; // Quest 2 standard, can change at start
 static AudioBufferLock AudioBufferLockCB;
 static AudioBufferUnlock AudioBufferUnLockCB;
 
@@ -33,30 +32,31 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t *data,
     return 0; // Input data size exceeds the maximum AudioBatch size
   }
 
-//   wrapper_environment_log(
-//       RETRO_LOG_INFO,
-//       "[wrapper_audio_sample_batch_cb] frames:%i AudioBatchOccupancy:%i\n",
-//       frames, AudioBatchOccupancy);
+  //   wrapper_environment_log(
+  //       RETRO_LOG_INFO,
+  //       "[wrapper_audio_sample_batch_cb] frames:%i AudioBatchOccupancy:%i\n",
+  //       frames, AudioBatchOccupancy);
 
   // Initialize inBuffer here
-  float inBuffer[MAX_AUDIO_BATCH_SIZE / sizeof(float)]; // Static array
+  float inBuffer[frames * 2]; // Since each frame has 2 samples
 
-  for (uint64_t i = 0; i <= frames * 2; i++) {
-    float value = data[i] / 32768.0f;
+  for (size_t i = 0; i < frames * 2; i++) {
+    float value = (float)data[i] / 32768.0f;
     inBuffer[i] = value;
   }
 
   double ratio =
       (double)wrapper_environment_get_sample_rate() / QUEST_AUDIO_FREQUENCY;
-  int outSample = 0;
 
   AudioBufferLockCB(); // Lock the AudioBatch for synchronization
 
-  while (1) {
-    int inBufferIndex = (int)(outSample++ * ratio);
-    if (inBufferIndex < (int)(frames * 2)) {
+  size_t outSample = 0;
+  while (outSample < frames * 2) {
+    int inBufferIndex = (int)(outSample / ratio);
+    if (inBufferIndex < frames * 2) {
       if (AudioBatchOccupancy < MAX_AUDIO_BATCH_SIZE / sizeof(float)) {
         AudioBatch[AudioBatchOccupancy++] = inBuffer[inBufferIndex];
+        outSample++;
       } else {
         break; // AudioBatch is full
       }
@@ -84,10 +84,10 @@ size_t wrapper_audio_get_audio_buffer_occupancy_bytes() {
 // Function to consume the first part of the buffer and move the rest to
 // position zero
 void wrapper_audio_consume_buffer(size_t consumeSize) {
-//   wrapper_environment_log(
-//       RETRO_LOG_INFO,
-//       "[wrapper_audio_consume_buffer] consumeSize:%i AudioBatchOccupancy:%i\n",
-//       consumeSize, AudioBatchOccupancy);
+  //   wrapper_environment_log(
+  //       RETRO_LOG_INFO,
+  //       "[wrapper_audio_consume_buffer] consumeSize:%i
+  //       AudioBatchOccupancy:%i\n", consumeSize, AudioBatchOccupancy);
   if (consumeSize >= AudioBatchOccupancy) {
     AudioBatchOccupancy = 0; // Reset occupancy
   } else {
@@ -98,8 +98,8 @@ void wrapper_audio_consume_buffer(size_t consumeSize) {
   }
 }
 void wrapper_audio_consume_buffer_bytes(size_t consumeSizeBytes) {
-    wrapper_audio_consume_buffer(consumeSizeBytes/sizeof(float));
-    return;
+  wrapper_audio_consume_buffer(consumeSizeBytes / sizeof(float));
+  return;
 }
 
 void wrapper_audio_init(AudioBufferLock audioBufferLockCB,
