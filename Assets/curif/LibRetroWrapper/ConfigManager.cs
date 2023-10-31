@@ -5,7 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 // coment the next line for releases build
-//#define FORCE_DEBUG
+#define FORCE_DEBUG
 #if UNITY_EDITOR
 #define DEBUG_ACTIVE
 #elif FORCE_DEBUG
