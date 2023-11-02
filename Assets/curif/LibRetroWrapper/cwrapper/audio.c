@@ -6,8 +6,8 @@ static handlers_t *handlers;
 
 #define AUDIO_BUFFER_MAX_OCCUPANCY (1024 * 8)
 #define QUEST_AUDIO_FREQUENCY 48000
-#define MAX_AUDIO_BATCH_SIZE (8192)                            // 8K bytes
-static float AudioBatch[MAX_AUDIO_BATCH_SIZE / sizeof(float)]; // Static array
+#define MAX_AUDIO_BATCH_SIZE (8192)            // 8K bytes
+static float AudioBatch[MAX_AUDIO_BATCH_SIZE]; // Static array
 static size_t AudioBatchOccupancy = 0;
 
 static AudioBufferLock AudioBufferLockCB;
@@ -51,20 +51,16 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t *data,
   AudioBufferLockCB(); // Lock the AudioBatch for synchronization
 
   size_t outSample = 0;
-  while (outSample < frames * 2) {
-    int inBufferIndex = (int)(outSample / ratio);
-    if (inBufferIndex < frames * 2) {
-      if (AudioBatchOccupancy < MAX_AUDIO_BATCH_SIZE / sizeof(float)) {
-        AudioBatch[AudioBatchOccupancy++] = inBuffer[inBufferIndex];
-        outSample++;
-      } else {
-        break; // AudioBatch is full
-      }
-    } else {
+  while (1) {
+    int inBufferIndex = (int)(outSample++ * ratio);
+    if (inBufferIndex < (int)frames * 2) {
+      AudioBatch[AudioBatchOccupancy++] = inBuffer[inBufferIndex];
+      if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE)
+        break;
+    } else
       break;
-    }
   }
-
+  
   AudioBufferUnLockCB(); // Unlock the AudioBatch
 
   return frames;
