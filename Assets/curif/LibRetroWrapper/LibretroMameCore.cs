@@ -176,10 +176,10 @@ public static unsafe class LibretroMameCore
     private static extern IntPtr wrapper_audio_get_audio_buffer_pointer();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int wrapper_audio_get_audio_buffer_occupancy_bytes();
+    private static extern int wrapper_audio_get_audio_buffer_occupancy();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_audio_consume_buffer_bytes(int consumeSize);
+    private static extern void wrapper_audio_consume_buffer(int consumeSize);
 
 
     static object AudioBufferLock = new();
@@ -924,17 +924,16 @@ public static unsafe class LibretroMameCore
         {
             // Call the C functions to access the audio data
             IntPtr audioBufferPtr = wrapper_audio_get_audio_buffer_pointer();
-            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy_bytes(); //in sizeof(float)
-            int audioDataLength = audioData.Length * sizeof(float);
-            int toCopy = audioBufferOccupancy >= audioDataLength ? audioDataLength : audioBufferOccupancy;
+            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy(); 
+            int toCopy = audioBufferOccupancy >= audioData.Length ? audioData.Length : audioBufferOccupancy;
 
-            if (audioBufferOccupancy > 0)
+            if (toCopy > 0)
             {
                 // Convert the IntPtr to a float array
                 Marshal.Copy(audioBufferPtr, audioData, 0, toCopy);
 
                 // Consume the data in the C buffer
-                wrapper_audio_consume_buffer_bytes(toCopy);
+                wrapper_audio_consume_buffer(toCopy);
             }
         }
     }

@@ -609,6 +609,7 @@ void wrapper_unload_game() {
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_unload_game] retro_unload_game\n");
   handlers.retro_unload_game();
+  wrapper_audio_free();
 }
 
 void wrapper_run() {
