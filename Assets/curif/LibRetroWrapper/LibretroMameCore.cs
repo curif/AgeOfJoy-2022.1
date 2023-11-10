@@ -221,6 +221,7 @@ public static unsafe class LibretroMameCore
     static FpsControlNoUnity FPSControlNoUnity;
     public static Texture2D GameTexture = null;
     public static uint TextureWidth = 0, TextureHeight = 0;
+    static bool RecreateTexture = true;
     static object GameTextureLock = new();
     static object LightGunLock = new();
 
@@ -253,8 +254,6 @@ public static unsafe class LibretroMameCore
 
     // C Wrappers 
 
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void wrapper_retro_init();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_run();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -370,6 +369,9 @@ public static unsafe class LibretroMameCore
         // deviceIdsCombined = mouse.Concat(joy).Concat(analog).ToList();
 
         deviceIdsCombined = mouse.Concat(joy).Concat(light).ToList();
+
+        GameTexture = new Texture2D(200, 200, TextureFormat.RGB565, false);
+        GameTexture.filterMode = FilterMode.Point;
     }
 
     static void assignControls()
@@ -416,16 +418,6 @@ public static unsafe class LibretroMameCore
         QuestAudioFrequency = audioConfig.sampleRate;
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
 
-        // should run first.
-        /*
-                WriteConsole("[LibRetroMameCore.Start] audio callbacks");
-                retro_set_audio_sample(new audioSampleHandler(audioSampleCB));
-                retro_set_audio_sample_batch(new audioSampleBatchHandler(audioSampleBatchCB));
-
-                WriteConsole("[LibRetroMameCore.Start] input callbacks");
-                retro_set_input_poll(new inputPollHander(inputPollCB));
-                retro_set_input_state(new inputStateHandler(inputStateCB));
-        */
         WriteConsole("[LibRetroMameCore.Start] Init environmnet and call retro_init()");
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
@@ -447,7 +439,6 @@ public static unsafe class LibretroMameCore
                             new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
         wrapper_audio_init(new AudioLockHandler(AudioLockCB),
                             new AudioUnlockHandler(AudioUnlockCB));
-
         wrapper_environment_init();
 
         if (wrapper_system_info_need_full_path() == 0)
@@ -502,14 +493,8 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[CreateTextureCB] to be in the main thread: {width}, {height}");
         TextureWidth = width;
         TextureHeight = height;
+        RecreateTexture = true;
     }
-    public static void CreateTexture()
-    {
-        WriteConsole($"[CreateTexture] {TextureWidth}, {TextureHeight}");
-        GameTexture = new Texture2D((int)TextureWidth, (int)TextureHeight, TextureFormat.RGB565, false);
-        GameTexture.filterMode = FilterMode.Point;
-    }
-
     [AOT.MonoPInvokeCallback(typeof(TextureLockHandler))]
     public static void TextureLockCB()
     {
@@ -529,26 +514,45 @@ public static unsafe class LibretroMameCore
         GameTextureBufferSem.Set();
     }
 
+
+    public static bool InitializeTexture()
+    {
+        if (TextureWidth != 0 && RecreateTexture)
+        {
+            GameTexture.Reinitialize((int)TextureWidth, (int)TextureHeight);
+            WriteConsole($"[InitializeTexture] {GameTexture.width}, {GameTexture.height}- {GameTexture.format}");
+            RecreateTexture = false;
+            return true;
+        }
+        return false;
+    }
     public static void LoadTextureData()
     {
-        if (GameTexture == null)
-            return;
-
         lock (GameTextureLock)
         {
             if (GameTextureBufferSem.Wait(0))
             {
                 IntPtr data = wrapper_image_get_buffer();
                 int size = wrapper_image_get_buffer_size();
-                // ConfigManager.WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} pointer: {data != IntPtr.Zero}");
                 if (data != IntPtr.Zero)
                 {
+                    InitializeTexture();
+
+                    // // GameTexture.LoadRawTextureData(data, size);
+                    // NativeArray<byte> textureData = GameTexture.GetRawTextureData<byte>();
+                    // // Marshal.Copy(data, textureData, 0, textureData.Length);
+                    // WriteConsole($"[LoadTextureData] LoadRawTextureData size: {size} textureData:{textureData.Length} pointer: {data}");
+                    // if (textureData.Length < size)
+                    //     WriteConsole($"[LoadTextureData] ERROR size: {size} > texture: {textureData.Length}");
+                    // else
+
                     GameTexture.LoadRawTextureData(data, size);
                     GameTexture.Apply(false, false);
                 }
                 GameTextureBufferSem.Reset();
             }
         }
+        // WriteConsole($"[LoadTextureData] END");
     }
 
     public static void StartRunThread()
@@ -675,11 +679,12 @@ public static unsafe class LibretroMameCore
 
         LightGunLock = new();
 
-        GameTexture = null;
+
         GameTextureLock = new();
         GameTextureBufferSem = new ManualResetEventSlim(false);
         TextureWidth = 0;
         TextureHeight = 0;
+        RecreateTexture = true;
 
         AudioBufferLock = new();
 
@@ -924,8 +929,9 @@ public static unsafe class LibretroMameCore
         {
             // Call the C functions to access the audio data
             IntPtr audioBufferPtr = wrapper_audio_get_audio_buffer_pointer();
-            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy(); 
+            int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy();
             int toCopy = audioBufferOccupancy >= audioData.Length ? audioData.Length : audioBufferOccupancy;
+            // WriteConsole($"[MoveAudioStreamTo] toCopy: {toCopy}");
 
             if (toCopy > 0)
             {

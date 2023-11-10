@@ -218,9 +218,6 @@ public class LibretroScreenController : MonoBehaviour
               {
                   videoPlayer.Pause();
 
-                  // core do it: shader.texture = LibretroMameCore.GameTexture;
-                  shader.Invert(GameInvertX, GameInvertY);
-
                   //start mame
                   ConfigManager.WriteConsole($"[LibretroScreenController] Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
                   LibretroMameCore.Speaker = GetComponent<AudioSource>();
@@ -268,16 +265,9 @@ public class LibretroScreenController : MonoBehaviour
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
                       CoinSlot.clean();
-                      /*
-                                            if (ageBasicInformation.active)
-                                            {
-                                                cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
-                                                cabinetAGEBasic.ExecAfterLeaveBas();
-                                            }
-                       */
                       return TaskStatus.Failure;
-                  }                  
-                  
+                  }
+
                   // age basic
                   if (ageBasicInformation.active)
                   {
@@ -295,6 +285,9 @@ public class LibretroScreenController : MonoBehaviour
 
                   // start retro_run cycle
                   LibretroMameCore.StartRunThread();
+
+                  shader.Texture = LibretroMameCore.GameTexture;
+                  shader.Invert(GameInvertX, GameInvertY);
 
                   return TaskStatus.Success;
               })
@@ -327,7 +320,9 @@ public class LibretroScreenController : MonoBehaviour
               .End()
               .Do("Exit game", () =>
               {
-                  //videoPlayer.Play();
+                  //to replace the shader texture ASAP:
+                  videoPlayer.Play();
+
                   LibretroMameCore.End(name, GameFile);
                   PreparePlayerToPlayGame(false);
                   libretroControlMap.Clean();
@@ -401,12 +396,8 @@ public class LibretroScreenController : MonoBehaviour
 
         if (LibretroMameCore.isRunning(name, GameFile))
         {
-            if (LibretroMameCore.GameTexture == null && LibretroMameCore.TextureWidth != 0)
-            {
-                LibretroMameCore.CreateTexture();
-                shader.Texture = LibretroMameCore.GameTexture;
-            }
             LibretroMameCore.LoadTextureData();
+
             LibretroMameCore.CalculateLightGunPosition();
         }
 

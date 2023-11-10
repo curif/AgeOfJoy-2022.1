@@ -21,6 +21,20 @@ void wrapper_audio_sample_cb(int16_t left, int16_t right) { return; }
 static size_t wrapper_audio_sample_batch_cb(const int16_t *data,
                                             size_t frames) {
   size_t consumedFrames = 0;
+  
+#ifdef AUDIO_FRAME_DEBUG
+  wrapper_environment_log(
+      RETRO_LOG_INFO, "[wrapper_audio_sample_batch_cb] frames: %i\n", frames);
+#endif
+
+
+  if (data == NULL || frames < 2) {
+#ifdef AUDIO_FRAME_DEBUG
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                            "[wrapper_audio_sample_batch_cb] no data received\n");
+#endif
+    return 0;
+  }
 
   if (frames % 2 != 0) {
     // Handle the case where frames is not even (e.g., by skipping the last odd
@@ -32,14 +46,6 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t *data,
 #ifdef AUDIO_CANCEL
   return frames;
 #endif
-
-  if (data == NULL) {
-#ifdef AUDIO_FRAME_DEBUG
-    wrapper_environment_log(RETRO_LOG_ERROR,
-                            "[wrapper_audio_sample_batch_cb] no data sent\n");
-#endif
-    return 0;
-  }
 
   if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE ||
       totalFrames > MAX_AUDIO_BATCH_SIZE) {
@@ -76,7 +82,6 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t *data,
 
     if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE)
       break;
-    
   }
 
   AudioBufferUnLockCB(); // Unlock the AudioBatch
@@ -94,6 +99,7 @@ size_t wrapper_audio_get_audio_buffer_occupancy() {
 
 // Function to consume the first part of the buffer and move the rest to
 // position zero
+// The lock is locked in the caller c# function.
 void wrapper_audio_consume_buffer(size_t consumeSizeFloat) {
 
 #ifdef AUDIO_FRAME_DEBUG
@@ -135,4 +141,8 @@ void wrapper_audio_init(AudioBufferLock audioBufferLockCB,
   handlers->retro_set_audio_sample_batch(&wrapper_audio_sample_batch_cb);
 }
 
-void wrapper_audio_free() { AudioBatchOccupancy = 0; }
+void wrapper_audio_free() {
+  AudioBufferLockCB(); // Lock the AudioBatch for synchronization
+  AudioBatchOccupancy = 0;
+  AudioBufferUnLockCB(); // Unlock the AudioBatch
+}
