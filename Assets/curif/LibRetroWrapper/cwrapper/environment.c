@@ -27,10 +27,11 @@ static enum retro_log_level minLogLevel;
 
 #define INIT_AND_COPY_STRING(dest, src)                                        \
   do {                                                                         \
-    memset(dest, 0, sizeof(dest));                                             \
-    strncpy(dest, src, sizeof(dest) - 1);                                      \
-    dest[sizeof(dest) - 1] = '\0';                                             \
+    size_t srcLen = strnlen((src), sizeof(dest) - 1);                          \
+    strncpy((dest), (src), srcLen);                                            \
+    (dest)[srcLen] = '\0';                                                     \
   } while (0)
+
 #define INIT_STRUCT(structure) memset(&structure, 0, sizeof(structure))
 
 enum retro_pixel_format wrapper_environment_get_pixel_format() {
@@ -61,9 +62,9 @@ void wrapper_environment_log(enum retro_log_level level, const char *format,
 int wrapper_dlopen() {
   INIT_STRUCT(handlers);
   char *core = "libmame2003_plus_libretro_android.so";
-  wrapper_environment_log(RETRO_LOG_INFO,
-                          "[wrapper_environment_open] start -----------\n");
-  handlers.handle = dlopen(core, RTLD_LAZY);
+  // wrapper_environment_log(RETRO_LOG_INFO,
+  //                         "[wrapper_environment_open] start -----------\n");
+  handlers.handle = dlopen(core, RTLD_LAZY | RTLD_LOCAL);
   if (handlers.handle == NULL) {
     const char *error = dlerror();
     if (error != NULL) {
@@ -71,9 +72,9 @@ int wrapper_dlopen() {
     }
     wrapper_environment_log(
         RETRO_LOG_ERROR, "[wrapper_environment_open] dlopen %s failed\n", core);
-    return -1;
+    return false;
   }
-  return 0;
+  return true;
 }
 
 void wrapper_dlclose() {
@@ -96,7 +97,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
   input_state_cb = _input_state_cb;
 
   // load core.
-  if (wrapper_dlopen())
+  if (!wrapper_dlopen())
     return -1;
 
   wrapper_environment_log(
@@ -278,16 +279,18 @@ int16_t wrapper_input_state_cb(unsigned port, unsigned device, unsigned index,
 }
 
 void wrapper_environment_init() {
-  wrapper_environment_log(
-      RETRO_LOG_INFO,
-      "[wrapper_environment_init] retro_set_environment callback\n");
-  handlers.retro_set_environment(&wrapper_environment_cb);
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] call retro init\n");
 
+  handlers.retro_set_environment(&wrapper_environment_cb);
   handlers.retro_set_input_poll(&wrapper_input_poll_cb);
   handlers.retro_set_input_state(&wrapper_input_state_cb);
 
-  wrapper_retro_init(); // do almost nothing
-                        // https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
+  // do almost nothing
+  // https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
+  wrapper_environment_log(RETRO_LOG_INFO,
+                          "[wrapper_environment_init] retro_init\n");
+  handlers.retro_init();
 
   wrapper_environment_get_system_info();
 
@@ -346,9 +349,13 @@ void wrapper_environment_log_geometry() {
 }
 
 void wrapper_environment_get_av_info() {
-  wrapper_environment_log(RETRO_LOG_INFO,
-                          "[wrapper_environment_get_av_info]\n");
+  // wrapper_environment_log(RETRO_LOG_INFO,
+  //                         "[wrapper_environment_get_av_info]\n");
   INIT_STRUCT(av_info);
+
+  if (!handlers.handle)
+    return;
+
   handlers.retro_get_system_av_info(&av_info);
   wrapper_environment_log_geometry();
 
@@ -548,6 +555,14 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
     *(bool *)data = true;
     return true;
 
+  case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
+    if (!data)
+      return false;
+    wrapper_environment_log(RETRO_LOG_INFO,
+                            "[RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE]\n");
+    *(bool *)data = false;
+    return false;
+
   case RETRO_ENVIRONMENT_SHUTDOWN:
     wrapper_environment_log(RETRO_LOG_INFO,
                             "[RETRO_ENVIRONMENT_SHUTDOWN] ???\n");
@@ -567,13 +582,6 @@ int wrapper_system_info_need_full_path() {
   return (int)system_info.need_fullpath;
 }
 
-void wrapper_retro_init() {
-  // handlers.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
-  wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_retro_init]\n");
-  handlers.retro_init();
-  wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_retro_init] end\n");
-}
-
 void wrapper_retro_deinit() {
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_retro_deinit] retro_deinit\n");
@@ -586,7 +594,11 @@ void wrapper_retro_deinit() {
 
 int wrapper_load_game(char *path, char *_gamma, char *_brightness,
                       int _xy_control_type) {
+
   wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game]\n");
+  if (!handlers.handle)
+    return false;
+
   INIT_STRUCT(game_info);
   INIT_AND_COPY_STRING(game_path, path);
   game_info.path = game_path;
@@ -608,10 +620,16 @@ void wrapper_unload_game() {
   // https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_unload_game] retro_unload_game\n");
+  if (!handlers.handle)
+    return;
   handlers.retro_unload_game();
+  wrapper_audio_free();
 }
 
 void wrapper_run() {
+  // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_run] retro_run start\n");
   if (handlers.handle)
     handlers.retro_run();
+
+  // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_run] retro_run end\n");
 }
