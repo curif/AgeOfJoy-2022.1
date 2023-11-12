@@ -7,96 +7,145 @@ using UnityEngine.Events;
 //[RequireComponent(typeof(FileMonitor))]
 public class RoomConfiguration : MonoBehaviour
 {
-  public GameObject FileMonitorGameObject;
-  public GameObject GlobalConfigurationGameObject;
-  public UnityEvent OnRoomConfigChanged;
+    public GameObject FileMonitorGameObject;
+    public GameObject GlobalConfigurationGameObject;
+    public UnityEvent OnRoomConfigChanged;
 
-  private string yamlPath;
-  private FileMonitor fileMonitor;
-  private GlobalConfiguration globalConfiguration;
+    public string yamlPath;
+    private FileMonitor fileMonitor;
+    private GlobalConfiguration globalConfiguration;
 
-  private ConfigInformation configuration;
-  public  ConfigInformation Configuration
-  {
-    get { return configuration; }
-    private set 
-    { 
-      configuration = value; 
-      OnRoomConfigChanged?.Invoke();
-    }
-  }
-
-  void Start()
-  {
-    if (GlobalConfigurationGameObject == null) 
+    private ConfigInformation configuration;
+    public ConfigInformation Configuration
     {
-      GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+        get { return configuration; }
+        set
+        {
+            configuration = value;
+            ConfigManager.WriteConsole($"[RoomConfiguration] invoke calls...");
+
+            OnRoomConfigChanged?.Invoke();
+        }
     }
-    fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
-    yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
-    globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
-    OnEnable();
-    Load();
-  }
 
-  private void mergeWithGlobal(ConfigInformation config)
-  {
-    //merge with global
-    ConfigManager.WriteConsole($"[RoomConfiguration] merge with global");
-    ConfigManager.WriteConsole(config.ToString());
-    ConfigManager.WriteConsole(globalConfiguration.Configuration.ToString());
-    Configuration = (ConfigInformation)ConfigInformation.Merge(globalConfiguration.Configuration, config);
-  }
-
-  private void Load()
-  {
-    ConfigInformation config;
-
-    ConfigManager.WriteConsole($"[RoomConfiguration] load: {yamlPath}");
-    if (File.Exists(yamlPath))
+    void Start()
     {
-      config = ConfigInformation.fromYaml(yamlPath);
-      if (config == null) 
-      {
-        ConfigManager.WriteConsole($"[RoomConfiguration] ERROR can't read, using global: {yamlPath}");
-        Configuration = globalConfiguration.Configuration; 
-      }
-      else {
-        mergeWithGlobal(config);
-      }
+        if (GlobalConfigurationGameObject == null)
+            GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+        if (GlobalConfigurationGameObject == null)
+        {
+            ConfigManager.WriteConsoleError($"[RoomConfiguration.Start] Global Configuration isn't assigned, (check if IntroGallery is loaded) can't continue");
+            return;
+        }
+
+        fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
+        yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
+        globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
+        OnEnable();
+        Load();
     }
-    else {
-      ConfigManager.WriteConsole($"[RoomConfiguration] file doesn't exists using global: {yamlPath}");
-      Configuration = globalConfiguration.Configuration; 
+
+    private void mergeWithGlobalAndAssign(ConfigInformation config)
+    {
+        //merge with global
+        ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] merge with global configuration");
+        ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] config to be merged: {config.ToString()}");
+        ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] global to merge to: {globalConfiguration.Configuration?.ToString()}");
+        Configuration = (ConfigInformation)ConfigInformation.Merge(globalConfiguration.Configuration, config);
+        ConfigManager.WriteConsole($"[RoomConfiguration.mergeWithGlobalAndAssign] final configuration: {Configuration.ToString()}");
     }
 
-    ConfigManager.WriteConsole($"[RoomConfiguration] configuration: ");
-    ConfigManager.WriteConsole(configuration.ToString());
-  }
+    public string GetName()
+    {
+        return Path.GetFileNameWithoutExtension(fileMonitor?.ConfigFileName);
+    }
 
-  void OnEnable()
-  {
-    // Listen for the config reload message
-    fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
-    globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
-  }
+    public bool ExistsRoomConfiguration()
+    {
+        return File.Exists(yamlPath);
+    }
 
-  void OnDisable()
-  {
-    // Stop listening for the config reload message
-    fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
-    globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
-  }
+    public void Reset()
+    {
+        try
+        {
+            if (File.Exists(yamlPath))
+            {
+                fileMonitor.fileLock();
+                File.Delete(yamlPath);
+                fileMonitor.fileUnlock();
+            }
+            Load();
+        }
+        catch (IOException e)
+        {
+            ConfigManager.WriteConsoleError($"[RoomConfiguration.Delete] {yamlPath} - {e}");
+        }
+    }
 
-  void OnGlobalConfigChanged()
-  {
-    ConfigManager.WriteConsole($"[RoomConfiguration] global config changed, reload: {yamlPath}");
-    Load();  
-  }
+    private void Load()
+    {
+        ConfigInformation config;
 
-  void OnFileChanged()
-  {
-    ConfigManager.WriteConsole($"[RoomConfiguration] file changed, reload: {yamlPath}");
-    Load();
-  }
+        ConfigManager.WriteConsole($"[RoomConfiguration.Load] load: {yamlPath}");
+        if (File.Exists(yamlPath))
+        {
+            fileMonitor.fileLock();
+            config = ConfigInformation.fromYaml(yamlPath);
+            fileMonitor.fileUnlock();
+            if (config == null)
+            {
+                ConfigManager.WriteConsoleError($"[RoomConfiguration.Load] can't load existent file, default to global: {yamlPath}");
+                mergeWithGlobalAndAssign(new()); //set a new configuration merged with global configuration.
+            }
+            else
+            {
+                ConfigManager.WriteConsole($"[RoomConfiguration.Load] loaded from file, merge with global {yamlPath}");
+                mergeWithGlobalAndAssign(config);
+            }
+        }
+        else
+        {
+            ConfigManager.WriteConsole($"[RoomConfiguration.Load] file doesn't exists, using global. {yamlPath}");
+            mergeWithGlobalAndAssign(new()); //set a new configuration merged with global configuration.
+        }
+
+        ConfigManager.WriteConsole($"[RoomConfiguration.Load] configuration established: ");
+        ConfigManager.WriteConsole(configuration.ToString());
+    }
+
+    public void Save()
+    {
+        ConfigManager.WriteConsole($"[RoomConfiguration] writing configuration: {yamlPath}");
+        fileMonitor.fileLock();
+        configuration.ToYaml(yamlPath);
+        fileMonitor.fileUnlock();
+    }
+
+
+    void OnEnable()
+    {
+        // Listen for the config reload message
+        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+    }
+
+    void OnDisable()
+    {
+        // Stop listening for the config reload message
+        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+    }
+
+    void OnGlobalConfigChanged()
+    {
+        ConfigManager.WriteConsole($"[RoomConfiguration] global config changed, reload: {yamlPath}");
+        Load();
+    }
+
+    void OnFileChanged()
+    {
+        ConfigManager.WriteConsole($"[RoomConfiguration] file changed, reload: {yamlPath}");
+        Load();
+    }
 }

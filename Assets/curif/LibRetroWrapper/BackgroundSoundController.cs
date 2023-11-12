@@ -38,14 +38,14 @@ public class BackgroundSoundController : MonoBehaviour
       if (roomConfiguration?.Configuration?.audio?.background != null)
         changeWithBackgroundData(roomConfiguration.Configuration.audio.background);
       else
-        changeWithBackgroundData(ConfigInformation.BackgroundInGameDefault());
+        changeWithBackgroundData(ConfigInformation.BackgroundDefault());
     }
     else
     {
       if (roomConfiguration?.Configuration?.audio?.inGameBackground != null)
         changeWithBackgroundData(roomConfiguration.Configuration.audio.inGameBackground);
       else
-        changeWithBackgroundData(ConfigInformation.BackgroundDefault());
+        changeWithBackgroundData(ConfigInformation.BackgroundInGameDefault());
     }
   }
   void OnRoomConfigChanged()

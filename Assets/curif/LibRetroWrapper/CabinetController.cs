@@ -10,68 +10,105 @@ using System;
 using System.Threading.Tasks;
 
 
+//[RequireComponent(typeof(CabinetReplace))]
 public class CabinetController : MonoBehaviour
 {
-  public CabinetPosition game;
-  [Tooltip("Positions where the player can stay to load the cabinet")]
-  public List<GameObject> AgentPlayerPositions;
+    public CabinetPosition game;
+    public string Name;
 
-  private List<AgentScenePosition> AgentPlayerPositionComponents;
+    [Tooltip("Positions where the player can stay to load the cabinet")]
+    public List<GameObject> AgentPlayerPositions;
+    [Tooltip("Teleport anchor for player teleportation")]
+    public GameObject AgentPlayerTeleportAnchor;
+    [Tooltip("Player/agent position assigned to the cabinet")]
+    public AgentScenePosition AgentScenePosition;
 
-  void Start()
-  {
-    AgentPlayerPositionComponents = new();
-    foreach (GameObject playerPos in AgentPlayerPositions)
+    private CabinetReplace cabinetReplaceComponent;
+    private List<AgentScenePosition> AgentPlayerPositionComponents;
+
+    void Start()
     {
-      AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();
-      if (asp != null)
-        AgentPlayerPositionComponents.Add(asp);
-    }
-    StartCoroutine(load());
-  }
-  
-  private bool playerIsInSomePosition()
-  {
-    foreach (AgentScenePosition asp in AgentPlayerPositionComponents)
-    {
-      if (asp.IsPlayerPresent)
-        return true;
-    }
-    return false;
-  }
+        AgentPlayerPositionComponents = new List<AgentScenePosition>();
+        foreach (GameObject playerPos in AgentPlayerPositions)
+        {
+            AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();
+            if (asp != null)
+                AgentPlayerPositionComponents.Add(asp);
+        }
 
-  IEnumerator load()
-  {
-
-    while (game == null || game.CabInfo == null)
-      yield return new WaitForSeconds(1f);
-
-    while (!playerIsInSomePosition())
-      yield return new WaitForSeconds(0.5f);
-
-    Cabinet cab;
-    Transform parent = transform.parent;
-    try
-    {
-      //cabinet inception
-      ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game.CabInfo.name} #{game.Position}");
-      cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent, AgentPlayerPositions);
+        StartCoroutine(load());
     }
-    catch (System.Exception ex)
+
+    private bool playerIsInSomePosition()
     {
-      ConfigManager.WriteConsole($"[CabinetController] ERROR loading cabinet from description {game.CabInfo.name}: {ex}");
-      cab = null;
+        foreach (AgentScenePosition asp in AgentPlayerPositionComponents)
+        {
+            if (asp.IsPlayerPresent)
+                return true;
+        }
+        return false;
     }
-    if (cab != null && game.CabInfo.Parts != null) 
+
+    IEnumerator load()
     {
-      ConfigManager.WriteConsole($"[CabinetControlle] {game.CabInfo.name} texture parts");
-      foreach (CabinetInformation.Part part in game.CabInfo.Parts)
-      {
-        CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
-        yield return null;
-      }
+
+        while (game == null || string.IsNullOrEmpty(game.CabinetDBName))
+            yield return new WaitForSeconds(2f);
+
+        while (!playerIsInSomePosition())
+            yield return new WaitForSeconds(1f);
+
+        if (game.CabInfo == null)
+        {
+            game.CabInfo = CabinetInformation.fromName(game.CabinetDBName);
+            if (game.CabInfo == null)
+            {
+                ConfigManager.WriteConsoleError($"[CabinetController.load] loading cabinet from description fails {game}");
+                yield break;
+            }
+            yield return new WaitForSeconds(0.01f);
+        }
+
+        Cabinet cab;
+        Transform parent = transform.parent;
+        try
+        {
+            //cabinet inception
+            ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game}");
+            cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent, AgentPlayerPositions);
+        }
+        catch (System.Exception ex)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {game.CabInfo.name}", ex);
+            yield break;
+        }
+        if (cab == null)
+        {
+            ConfigManager.WriteConsoleError($"[CabinetController] loading cabinet from description {game.CabInfo.name}");
+            yield break;
+        }
+
+        if (game.CabInfo.Parts != null)
+        {
+            ConfigManager.WriteConsole($"[CabinetController] {game.CabInfo.name} texture parts");
+            //N seconds to load a cabinet
+            // float waitForSeconds = 1f / game.CabInfo.Parts.Count;
+            foreach (CabinetInformation.Part part in game.CabInfo.Parts)
+            {
+                yield return new WaitForSeconds(0.01f);
+                CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
+            }
+
+            CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
+            cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
+            cabReplaceComp.game = game;
+
+            //gameObject.SetActive(false);
+            yield return new WaitForSeconds(0.01f);
+            Destroy(gameObject); //destroy me
+        }
+
+
+        ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
     }
-    gameObject.SetActive(false);
-    ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
-  }
 }

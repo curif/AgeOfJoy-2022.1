@@ -19,7 +19,7 @@ public class PictureController : MonoBehaviour
     //load and randomize
     if (gameObject.transform.childCount > 0)
     {
-      List<Texture2D> textures = new();
+      List<Texture2D> textures = new List<Texture2D>();
       textures.AddRange(Resources.LoadAll<Texture2D>($"Decoration/Pictures/"));
       //List<Texture2D> texturesRandomized = textures.OrderBy(a => random.Next()).ToList(); //no orderby?
       textures.Sort((x, y) => random.Next() > random.Next() ? 1 : -1);

@@ -55,20 +55,20 @@ public static class CabinetDBAdmin
             timetoload = 8,
             year = 1980,
             material = "black",
-            crt = new()
+            crt = new CabinetInformation.CRT()
             {
                 type = "19i",
                 orientation = orientation,
-                screen = new()
+                screen = new CabinetInformation.Screen()
                 {
                     damage = "low",
                     invertx = invertx,
                     inverty = inverty,
                 }
             },
-            Parts = new()
+            Parts = new List<CabinetInformation.Part>()
             {
-                new()
+                new CabinetInformation.Part()
                 {
                     name = "marquee",
                     type = "marquee",
@@ -76,7 +76,7 @@ public static class CabinetDBAdmin
                     {
                         file = "marquee.png"
                     },
-                    color = new() { r = 238, g = 232, b = 176, intensity = -2 }
+                    color = new CabinetInformation.RGBColor() { r = 238, g = 232, b = 176, intensity = -2 }
                 }
             }
         };

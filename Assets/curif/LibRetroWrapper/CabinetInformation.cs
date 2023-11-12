@@ -12,28 +12,44 @@ using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 
+
 public class CabinetInformation
 {
     public string name;
     public string rom;
     public List<Part> Parts { get; set; }
-    public CRT crt = new();
+    public CRT crt = new CRT();
     public string style = "galaga";
-    public Model model = new();
+    public Model model = new Model();
     public string material;
     public RGBColor color;
     public int year;
     public string coinslot = "coin-slot-double";
-    public Geometry coinslotgeometry = new();
+    public Geometry coinslotgeometry = new Geometry();
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv"; 
-    public Video video = new();
+    public Video video = new Video();
     public string md5sum;
+
+    [YamlMember(Alias = "controllers", ApplyNamingConventions = false)]
+    public ControlMapConfiguration ControlMap;
+
+    [YamlMember(Alias = "light-gun", ApplyNamingConventions = false)]
+    public LightGunInformation lightGunInformation = new();
+
+    public CabinetAGEBasicInformation agebasic = new();
 
     [YamlIgnore]
     public string pathBase;
 
+    private static IDeserializer deserializer = new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .IgnoreUnmatchedProperties()
+                .Build();
+
+    public CabinetInformation() {}
+    
     public static CabinetInformation fromName(string cabName)
     {
       return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
@@ -41,39 +57,37 @@ public class CabinetInformation
 
     public static CabinetInformation fromYaml(string cabPath)
     {
-        string yamlPath = $"{cabPath}/description.yaml";
-        LibretroMameCore.WriteConsole($"[CabinetInformation]: {yamlPath}");
-
-        if (!File.Exists(yamlPath))
-        {
-            LibretroMameCore.WriteConsole($"[CabinetInformation]: ERROR Description YAML file (description.yaml) don't exists in cabinet subdir {cabPath}");
-            return null;
-        }
-
-        try
-        {
-          var input = File.OpenText(yamlPath);
-
-          var deserializer = new DeserializerBuilder()
-              .WithNamingConvention(CamelCaseNamingConvention.Instance)
-              .IgnoreUnmatchedProperties()
-            .Build();
-
-          var cabInfo = deserializer.Deserialize<CabinetInformation>(input);
-          if (cabInfo == null)
-              throw new IOException();
-
-          cabInfo.pathBase = cabPath;
-
-          return cabInfo;
-        }
-        catch (Exception e)
-        {
-          LibretroMameCore.WriteConsole($"[CabinetInformation]:ERROR Description YAML file in cabinet subdir {cabPath} - {e}");
-
-        }
+      string yamlPath = $"{cabPath}/description.yaml";
+      ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
+      
+      if (!File.Exists(yamlPath))
+      {
+        ConfigManager.WriteConsoleError($"[CabinetInformation]: Description YAML file (description.yaml) doesn't exists in cabinet folder: {cabPath}");
         return null;
+      }
+
+      try
+      {
+        var input = File.OpenText(yamlPath);
+        var yaml = input.ReadToEnd();
+        input.Close();
+
+        //ConfigManager.WriteConsole($"[CabinetInformation]: {yamlPath} \n {yaml}");
+        var cabInfo = deserializer.Deserialize<CabinetInformation>(yaml);
+        if (cabInfo == null)
+          throw new IOException();
+
+        cabInfo.pathBase = cabPath;
+
+        return cabInfo;
+      }
+      catch (Exception e)
+      {
+        ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
+      }
+      return null;
     }
+
     public class Model
     {
         public string style = ""; //can refer to other cabinet. Set the cabinet Name here. Empty means actual 'file' model in pack
@@ -121,16 +135,16 @@ public class CabinetInformation
       public Art art;
       public RGBColor color;
       public string type = "normal"; // or bezel or marquee
-      public Geometry geometry = new();
-      public Marquee marquee = new();
+      public Geometry geometry = new Geometry();
+      public Marquee marquee = new Marquee();
     }
 
     public class CRT
     {
       public string type = "19i";
       public string orientation = "vertical";
-      public Screen screen = new();
-      public Geometry geometry = new();
+      public Screen screen = new Screen();
+      public Geometry geometry = new Geometry();
 
       public System.Exception validate(List<string> crtTypes)
       {
@@ -159,7 +173,7 @@ public class CabinetInformation
 
       public Dictionary<string, string> config() 
       {
-        Dictionary<string, string> dic = new();
+        Dictionary<string, string> dic = new Dictionary<string, string>();
         dic["damage"] = damage;
         return dic;
       }
@@ -241,7 +255,7 @@ public class CabinetInformation
         List<string> crtTypes
     )
     {
-        Dictionary<string, System.Exception> exceptions = new();
+        Dictionary<string, System.Exception> exceptions = new Dictionary<string, System.Exception>();
         exceptions.Add("Cabinet",
             string.IsNullOrEmpty(name) ? new System.Exception("Cabinet doesn't have a name") : null);
         int number = 1;
@@ -298,7 +312,7 @@ public class CabinetInformation
             new List<string>(CRTsFactory.objects.Keys));
         foreach (KeyValuePair<string, System.Exception> error in exceptions)
         {
-            ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value)}");
+          ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
         }
 
         ConfigManager.WriteConsole("===================");

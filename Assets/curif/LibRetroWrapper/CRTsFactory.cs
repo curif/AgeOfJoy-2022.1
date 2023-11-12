@@ -7,7 +7,7 @@ using UnityEngine;
 using System.Collections.Generic;
 
 public static class CRTsFactory {
-    public static Dictionary<string, GameObject> objects = new();
+    public static Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
     
     static CRTsFactory() {
         //CRTs
