@@ -401,8 +401,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1.3223404, z: 0.6062994}
-  m_Center: {x: 0, y: -0.16117018, z: 0.021761417}
+  m_Size: {x: 1, y: 1.3223404, z: 1.9490156}
+  m_Center: {x: 0, y: -0.16117018, z: -0.03382635}
 --- !u!1001 &63642551
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13402,15 +13402,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.data[0].sceneAsset
       value: 
       objectReference: {fileID: 102900000, guid: 20c6d912f757fb9eaab4bc33cc22b106, type: 3}
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: ScenesToUnload.Array.data[1].sceneAsset
+      value: 
+      objectReference: {fileID: 102900000, guid: 1cc66a48f66c6854aa8a94e1c017bc44, type: 3}
+    - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.data[0].sceneAssetGuidHex
       value: 20c6d912f757fb9eaab4bc33cc22b106
+      objectReference: {fileID: 0}
+    - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
+      propertyPath: ScenesToUnload.Array.data[1].sceneAssetGuidHex
+      value: 1cc66a48f66c6854aa8a94e1c017bc44
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
