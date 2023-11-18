@@ -97,7 +97,7 @@ public class basicAGE : MonoBehaviour
 
     public void Start()
     {
-        GameObject roomInit = GameObject.Find("RoomInit");
+        GameObject roomInit = GameObject.Find("FixedObject");
 
         if (ConfigurationController == null)
             ConfigurationController = GetComponent<ConfigurationController>();

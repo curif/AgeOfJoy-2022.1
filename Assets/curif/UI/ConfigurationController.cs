@@ -233,7 +233,7 @@ public class ConfigurationController : MonoBehaviour
 
         if (canTeleport)
         {
-            GameObject roomInit = GameObject.Find("RoomInit");
+            GameObject roomInit = GameObject.Find("FixedObject");
             sceneDatabase = roomInit.GetComponent<SceneDatabase>();
             teleportation = GetComponent<Teleportation>();
         }
