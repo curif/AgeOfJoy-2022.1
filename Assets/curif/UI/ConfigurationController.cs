@@ -1176,7 +1176,8 @@ public class ConfigurationController : MonoBehaviour
 
             .Sequence("Insert coin")
               .Condition("Waiting for coin", () => status == StatusOptions.waitingForCoin)
-              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) || ControlActive("INSERT"))
+              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) /*|| 
+                        ControlActive("INSERT")*/)
               .Do("coin inserted", () =>
                 {
                     InsertCoin();

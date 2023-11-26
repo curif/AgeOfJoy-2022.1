@@ -5189,6 +5189,8 @@ MonoBehaviour:
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: f5ff613baed38bf069ef30ee2c7557bc, type: 3}
     sceneAssetGuidHex: f5ff613baed38bf069ef30ee2c7557bc
+  - sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
+    sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: d1dbee755be594247ad776ed746d2345, type: 3}
@@ -5623,7 +5625,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 2.7917993e-37, z: 1.6759978e-38, w: 3.0873276e+29}
+  m_BoundingSphereOverride: {x: 5.73e-43, y: NaN, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -6233,15 +6235,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0.006677959
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 5.73e-43
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 0
+      value: 1e-45
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
@@ -9759,7 +9761,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 2.1005258e+32}
+  m_BoundingSphereOverride: {x: 5.73e-43, y: 7.1e-44, z: 0, w: 2.5216802e+30}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -10946,7 +10948,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Name
-      value: DoorToRoomyyy
+      value: DoorToHallway008
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_IsActive
@@ -12211,19 +12213,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 6.3063424e+13
+      value: -4.331313e-39
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 1.3555877e-19
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 7.1853964e+22
+      value: 0.08191311
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 1.8976041e+28
+      value: 5.73e-43
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13121,12 +13123,12 @@ GameObject:
   - component: {fileID: 1896868962}
   - component: {fileID: 1896868961}
   m_Layer: 0
-  m_Name: GateControllerToHallway001
+  m_Name: GateControllerToHallway008
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1896868958
 Transform:
   m_ObjectHideFlags: 0
@@ -13161,8 +13163,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.6240616, y: 1.7841265, z: 0.71053886}
-  m_Center: {x: 0.1298647, y: -0.15865791, z: -0.14473057}
+  m_Size: {x: 1.6240616, y: 1.7841265, z: 1.0510483}
+  m_Center: {x: 0.1298647, y: -0.15865791, z: 0.02552414}
 --- !u!114 &1896868960
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13176,15 +13178,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
-    sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
+  - sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
+    sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
   ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+  - sceneAsset: {fileID: 102900000, guid: d1dbee755be594247ad776ed746d2345, type: 3}
+    sceneAssetGuidHex: d1dbee755be594247ad776ed746d2345
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
-      sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
+      sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
+      sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
     Blockers:
     - {fileID: 1548461729}
 --- !u!114 &1896868961
