@@ -1750,6 +1750,9 @@ public class ConfigurationController : MonoBehaviour
     public bool ControlActive(string mameControl)
     {
         bool ret = false;
+        
+        if (!ControlEnabled())
+            return false;
 
         InputAction action = actionMap.FindAction(mameControl + "_0");
         if (action == null)
@@ -1762,6 +1765,7 @@ public class ConfigurationController : MonoBehaviour
         if (action.type == InputActionType.Button)
         {
             if (action.IsPressed())
+            // if (action.WasReleasedThisFrame())
             {
                 return true;
             }
