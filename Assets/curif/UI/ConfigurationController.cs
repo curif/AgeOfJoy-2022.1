@@ -233,7 +233,7 @@ public class ConfigurationController : MonoBehaviour
 
         if (canTeleport)
         {
-            GameObject roomInit = GameObject.Find("RoomInit");
+            GameObject roomInit = GameObject.Find("FixedObject");
             sceneDatabase = roomInit.GetComponent<SceneDatabase>();
             teleportation = GetComponent<Teleportation>();
         }
@@ -1176,7 +1176,8 @@ public class ConfigurationController : MonoBehaviour
 
             .Sequence("Insert coin")
               .Condition("Waiting for coin", () => status == StatusOptions.waitingForCoin)
-              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) || ControlActive("INSERT"))
+              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) /*|| 
+                        ControlActive("INSERT")*/)
               .Do("coin inserted", () =>
                 {
                     InsertCoin();

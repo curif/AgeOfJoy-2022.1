@@ -22,7 +22,7 @@ public class Teleportation : MonoBehaviour
         if (string.IsNullOrEmpty(teleportTo.PlayerSpawnGameObjectName))
             return;
 
-        GameObject roomInit = GameObject.Find("RoomInit");
+        GameObject roomInit = GameObject.Find("FixedObject");
         if (roomInit != null)
         {
             TeleportationController controller = roomInit.GetComponent<TeleportationController>();
