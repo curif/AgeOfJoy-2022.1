@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 //using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using Siccity.GLTFUtility;
@@ -22,6 +23,10 @@ public class ChangeControls : MonoBehaviour
     // public DynamicMoveProvider dynamicMoveProvider;
     public ActionBasedContinuousMoveProvider actionBasedContinuousMoveProvider;
 
+    InputActionProperty leftHandTurnAction;
+    InputActionProperty rightHandTurnAction;
+    InputActionProperty leftHandMoveAction;
+    InputActionProperty rightHandMoveAction;
     bool reservedTeleportationEnabled;
     float reservedMoveSpeed;
     float reservedTurnSpeed;
@@ -62,6 +67,11 @@ public class ChangeControls : MonoBehaviour
 
         controllerLeftHand.model = leftHandModel.transform;
         controllerRightHand.model = rightHandModel.transform;
+
+        leftHandTurnAction = actionBasedContinuousTurnProvider.leftHandTurnAction;
+        rightHandTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
+        leftHandMoveAction = actionBasedContinuousMoveProvider.leftHandMoveAction;
+        rightHandMoveAction = actionBasedContinuousMoveProvider.rightHandMoveAction;
 
         leftJoystickModel.SetActive(false);
         rightJoystickModel.SetActive(false);
@@ -144,10 +154,10 @@ public class ChangeControls : MonoBehaviour
         alternativeRightJoystick.SetActive(false);
         alternativeRightJoystick.transform.position = controllerRightHand.transform.position;
         alternativeRightJoystick.transform.rotation = controllerRightHand.transform.rotation;
-        
+
         rightJoystickModel.SetActive(false);
         rightJoystickModel = alternativeRightJoystick;
-        
+
         lightGunTarget.spaceGun = alternativeRightJoystick;
     }
 
@@ -156,6 +166,11 @@ public class ChangeControls : MonoBehaviour
         reservedTeleportationEnabled = beamController.enabled;
         reservedMoveSpeed = actionBasedContinuousMoveProvider.moveSpeed;
         reservedTurnSpeed = actionBasedContinuousTurnProvider.turnSpeed;
+        leftHandTurnAction = actionBasedContinuousTurnProvider.leftHandTurnAction;
+        rightHandTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
+        leftHandMoveAction = actionBasedContinuousMoveProvider.leftHandMoveAction;
+        rightHandMoveAction = actionBasedContinuousMoveProvider.rightHandMoveAction;
+
     }
 
     private void restoreReservedValues()
@@ -164,6 +179,11 @@ public class ChangeControls : MonoBehaviour
         actionBasedContinuousMoveProvider.moveSpeed = reservedMoveSpeed;
         actionBasedContinuousTurnProvider.turnSpeed = reservedTurnSpeed;
         rightJoystickModel = reservedRightJoystickModel;
+        actionBasedContinuousTurnProvider.leftHandTurnAction = leftHandTurnAction;
+        actionBasedContinuousTurnProvider.rightHandTurnAction = rightHandTurnAction;
+        actionBasedContinuousMoveProvider.leftHandMoveAction = leftHandMoveAction;
+        actionBasedContinuousMoveProvider.rightHandMoveAction = rightHandMoveAction;
+
     }
 
     public void PlayerMode(bool modePlaying)
@@ -181,33 +201,37 @@ public class ChangeControls : MonoBehaviour
         leftHandModel.gameObject.SetActive(!playing);
         rightHandModel.gameObject.SetActive(!playing);
     }
-    private void setControllers(bool playing)
+    private void setControllers(bool playerIsPlaying)
     {
-        controllerLeftHand.model = playing ? leftJoystickModel.transform : leftHandModel.transform;
-        controllerRightHand.model = playing ? rightJoystickModel.transform : rightHandModel.transform;
+        controllerLeftHand.model = playerIsPlaying ? leftJoystickModel.transform : leftHandModel.transform;
+        controllerRightHand.model = playerIsPlaying ? rightJoystickModel.transform : rightHandModel.transform;
     }
-    private void changeMode(bool modePlaying)
+    private void changeMode(bool playerIsPlaying)
     {
-        activateDeactivateControls(modePlaying);
-        setControllers(modePlaying);
-
-        if (isPlaying == modePlaying)
+        if (isPlaying == playerIsPlaying)
             return;
 
-        isPlaying = modePlaying;
+        isPlaying = playerIsPlaying;
 
-        actionBasedContinuousTurnProvider.enabled = !modePlaying;
-        actionBasedContinuousMoveProvider.enabled = !modePlaying;
+        activateDeactivateControls(playerIsPlaying);
+        setControllers(playerIsPlaying);
 
-        if (modePlaying)
+        if (playerIsPlaying)
         {
             reserveValues();
+            actionBasedContinuousMoveProvider.moveSpeed = 0;
+            actionBasedContinuousTurnProvider.turnSpeed = 0;
             beamController.enabled = false;
         }
         else
         {
             restoreReservedValues();
         }
+
+        //issue: isn't enough to set to zero movesped, the player jump when he moves in player mode.
+        actionBasedContinuousTurnProvider.enabled = !playerIsPlaying;
+        actionBasedContinuousMoveProvider.enabled = !playerIsPlaying;
+
     }
 
     //units by second
