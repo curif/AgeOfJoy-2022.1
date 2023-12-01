@@ -3644,8 +3644,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.2647247, y: 1.440078, z: 1}
-  m_Center: {x: 0.0086689, y: 0.07919535, z: 0}
+  m_Size: {x: 1.2647247, y: 1.440078, z: 1.1804008}
+  m_Center: {x: 0.0086689, y: 0.07919538, z: 0.090200424}
 --- !u!1001 &1060973347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3866,8 +3866,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.2262096, y: 1, z: 1.1152506}
-  m_Center: {x: 0.12726593, y: 0, z: 0.057625294}
+  m_Size: {x: 2.2262096, y: 1, z: 1.1144103}
+  m_Center: {x: 0.12726593, y: 0, z: -0.15764481}
 --- !u!1 &1114115492
 GameObject:
   m_ObjectHideFlags: 0
@@ -4004,8 +4004,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1251889771}
-  - {fileID: 1057744634}
   - {fileID: 1081546833}
+  - {fileID: 1057744634}
   - {fileID: 1671464973}
   - {fileID: 716135467}
   - {fileID: 799705361}
@@ -5339,7 +5339,7 @@ GameObject:
   - component: {fileID: 1671464975}
   - component: {fileID: 1671464974}
   m_Layer: 0
-  m_Name: GateControllerToRoomSpawnHallway
+  m_Name: GateControllerToHallway002
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5379,8 +5379,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.0199752, y: 1, z: 1.71511}
-  m_Center: {x: -0.2696183, y: 0, z: 0.024110688}
+  m_Size: {x: 2.2056077, y: 1, z: 1.2655377}
+  m_Center: {x: 0.1375629, y: 0, z: 0.24889672}
 --- !u!114 &1671464975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5396,7 +5396,11 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: ab16ecd832b3bbd58b73c184034e5e90, type: 3}
     sceneAssetGuidHex: ab16ecd832b3bbd58b73c184034e5e90
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
+    sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
+  - sceneAsset: {fileID: 102900000, guid: 20c6d912f757fb9eaab4bc33cc22b106, type: 3}
+    sceneAssetGuidHex: 20c6d912f757fb9eaab4bc33cc22b106
   SceneBlockers: []
 --- !u!1001 &1728201921
 PrefabInstance:
