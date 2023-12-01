@@ -1742,14 +1742,21 @@ public class ConfigurationController : MonoBehaviour
         return;
     }
 
-    public bool ControlEnabled()
-    {
-        return actionMap != null && actionMap.enabled;
-    }
+    // public bool ControlEnabled()
+    // {
+    //     return actionMap != null && actionMap.enabled;
+    // }
 
     public bool ControlActive(string mameControl)
     {
         bool ret = false;
+        
+        //creates an segfault
+        //if (!ControlEnabled())
+        //    return false;
+
+        if (actionMap == null)
+            return false;
 
         InputAction action = actionMap.FindAction(mameControl + "_0");
         if (action == null)
@@ -1757,11 +1764,14 @@ public class ConfigurationController : MonoBehaviour
             //ConfigManager.WriteConsoleError($"[ConfigurationControl.Active] [{mameControl}] not found in controlMap");
             return false;
         }
+        if (!action.enabled)
+            return false;
 
         //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
         if (action.type == InputActionType.Button)
         {
             if (action.IsPressed())
+            // if (action.WasReleasedThisFrame())
             {
                 return true;
             }

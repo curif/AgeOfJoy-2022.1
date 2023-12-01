@@ -2974,12 +2974,12 @@ GameObject:
   - component: {fileID: 430369712}
   - component: {fileID: 430369711}
   m_Layer: 0
-  m_Name: GateControllerTo002
+  m_Name: GateControllerToHallway009
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &430369708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2993,17 +2993,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
-  - sceneAsset: {fileID: 102900000, guid: ab16ecd832b3bbd58b73c184034e5e90, type: 3}
-    sceneAssetGuidHex: ab16ecd832b3bbd58b73c184034e5e90
+  - sceneAsset: {fileID: 102900000, guid: ed23ec7a0ee12b6488d11496a89382ae, type: 3}
+    sceneAssetGuidHex: ed23ec7a0ee12b6488d11496a89382ae
   ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-    sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
+  - sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
+    sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
+  - sceneAsset: {fileID: 102900000, guid: d1dbee755be594247ad776ed746d2345, type: 3}
+    sceneAssetGuidHex: d1dbee755be594247ad776ed746d2345
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-      sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
+      sceneAsset: {fileID: 102900000, guid: ed23ec7a0ee12b6488d11496a89382ae, type: 3}
+      sceneAssetGuidHex: ed23ec7a0ee12b6488d11496a89382ae
     Blockers:
     - {fileID: 1360235617}
 --- !u!4 &430369709
@@ -5625,7 +5625,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 5.73e-43, y: NaN, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 5.469543e-15}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -6235,7 +6235,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0
+      value: 0.000025896137
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -6243,7 +6243,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 1e-45
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
@@ -9761,7 +9761,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 5.73e-43, y: 7.1e-44, z: 0, w: 2.5216802e+30}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 5.76e-43, w: 1.20254686e-35}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -9933,7 +9933,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Name
-      value: DoorToRoomxxx
+      value: DoorToHallway009
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_IsActive
@@ -10073,10 +10073,10 @@ Transform:
   m_Children:
   - {fileID: 430369709}
   - {fileID: 1896868958}
+  - {fileID: 662115877}
   - {fileID: 1360235616}
   - {fileID: 1548461728}
   - {fileID: 830623736}
-  - {fileID: 662115877}
   m_Father: {fileID: 1862072339}
   m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -12213,19 +12213,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: -4.331313e-39
-      objectReference: {fileID: 0}
-    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
-      propertyPath: m_BoundingSphereOverride.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_BoundingSphereOverride.x
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 0.08191311
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 5.73e-43
+      value: 0.16666667
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -12917,8 +12917,8 @@ Transform:
   - {fileID: 964701108}
   - {fileID: 2004435480}
   - {fileID: 238278363}
-  - {fileID: 1145141480}
   - {fileID: 1388098676}
+  - {fileID: 1145141480}
   - {fileID: 1281671081}
   - {fileID: 464099657}
   - {fileID: 814586840}
