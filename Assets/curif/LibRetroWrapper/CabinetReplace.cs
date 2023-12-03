@@ -8,12 +8,47 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System;
+using System.Linq;
 
 public class CabinetReplace : MonoBehaviour
 {
     [Tooltip("The system will find it")]
     public List<GameObject> AgentPlayerPositions;
+    [Tooltip("The system will find it")]
+    public List<GameObject> AgentPlayerPositionsToUnload;
     public CabinetPosition game;
+    public GameObject outOfOrderCabinet;
+
+    private List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
+
+    private bool playerIsNotInAnyUnloadPosition()
+    {
+        foreach (AgentScenePosition asp in AgentPlayerPositionComponentsToUnload)
+        {
+            if (asp.IsPlayerPresent)
+                return false;
+        }
+        return true;
+    }
+
+    void Start()
+    {
+        AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
+        .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+        .Where(asp => asp != null)
+        .ToList();
+
+        StartCoroutine(unload());
+    }
+
+    IEnumerator unload()
+    {
+        while (!playerIsNotInAnyUnloadPosition())
+            yield return new WaitForSeconds(2f);
+
+        outOfOrderCabinet.SetActive(true); //reactivate the out of order cabinet before destruction
+        Destroy(gameObject); //destroy me
+    }
 
     public void ReplaceWith(CabinetPosition newCabGame)
     {
@@ -51,17 +86,17 @@ public class CabinetReplace : MonoBehaviour
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
                                                          adjustedPosition, transform.rotation,
                                                          transform.parent, AgentPlayerPositions);
-            /*Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
-                                                            transform.position, transform.rotation,
-                                                            transform.parent, AgentPlayerPositions);
-            */
-            
+
+            cab.gameObject.SetActive(false);
             CabinetFactory.skinFromInformation(cab, cbInfo);
 
             //add CabinetReplace for the next replacement. CabinetController do the same.
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
             cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
+            cabReplaceComp.AgentPlayerPositionsToUnload = AgentPlayerPositionsToUnload;
             cabReplaceComp.game = newCabGame;
+            cabReplaceComp.outOfOrderCabinet = gameObject;
+            cab.gameObject.SetActive(true);
 
             UnityEngine.Object.Destroy(gameObject);
 
@@ -72,4 +107,6 @@ public class CabinetReplace : MonoBehaviour
             ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from description {descriptionPath}: {ex}");
         }
     }
+
+
 }
