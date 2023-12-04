@@ -10,6 +10,8 @@ using UnityEngine.SceneManagement;
 using System;
 using Eflatun.SceneReference;
 using UnityEngine.XR.Interaction.Toolkit;
+using System.Linq;
+
 
 // https://github.com/starikcetin/Eflatun.SceneReference
 
@@ -49,12 +51,25 @@ public class GateController : MonoBehaviour
     private GameObject player;
     private bool playerIsOnTheGate = false;
 
+    private HashSet<string> scenesToLoadSet;
+
     void Start()
     {
         player = GameObject.Find("OVRPlayerControllerGalery");
+
+        scenesToLoadSet = new HashSet<string>();
+        foreach (var sceneReference in ScenesToLoad)
+        {
+            scenesToLoadSet.Add(sceneReference.Name);
+        }
+
         StartCoroutine(gateControlLoop());
     }
 
+    bool IsSceneToLoad(string sceneName)
+    {
+        return scenesToLoadSet.Contains(sceneName);
+    }
     IEnumerator gateControlLoop()
     {
         while (true)
@@ -91,7 +106,9 @@ public class GateController : MonoBehaviour
                     bool unloadUnusedAssets = false;
                     foreach (SceneReference controledSceneToUnLoad in ScenesToUnload)
                     {
-                        if (controledSceneToUnLoad != null && controledSceneToUnLoad.IsSafeToUse &&
+                        if (controledSceneToUnLoad != null &&
+                            !IsSceneToLoad(controledSceneToUnLoad.Name) &&
+                            controledSceneToUnLoad.IsSafeToUse &&
                             SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
                         {
                             AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);

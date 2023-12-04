@@ -95,7 +95,7 @@ public class CabinetController : MonoBehaviour
         // this object when that occurs.
         while (!playerIsInSomePosition())
         {
-            ConfigManager.WriteConsole($"[CabinetController] waiting for  {game.CabInfo?.name}");
+            // ConfigManager.WriteConsole($"[CabinetController] waiting for  {game.CabInfo?.name}");
             yield return new WaitForSeconds(1f);
         }
         if (game.CabInfo == null)
@@ -160,11 +160,7 @@ public class CabinetController : MonoBehaviour
 
         //deactivate the out of order cabinet.
         coroutineIsRunning = false;
-        gameObject.SetActive(false); //this corroutine is suspended.
-                                     // yield return new WaitForSeconds(1f);
-
-        //if the code reach this position is because was reactivated.
-        // ConfigManager.WriteConsole($"[CabinetController] Cabinet out of order was reactivated: game {game.CabInfo.name} ******");
+        gameObject.SetActive(false); 
 
     }
 }
