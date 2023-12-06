@@ -20,23 +20,43 @@ public class CabinetReplace : MonoBehaviour
     public GameObject outOfOrderCabinet;
 
     private List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
+    private List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
 
-    private bool playerIsNotInAnyUnloadPosition()
+    /*private bool playerIsNotInAnyUnloadPosition()
     {
-        foreach (AgentScenePosition asp in AgentPlayerPositionComponentsToUnload)
+        List<AgentScenePosition> positions = AgentPlayerPositionComponentsToUnload;
+
+        if (positions == null || positions.Count() == 0)
+            positions = AgentPlayerPositionComponentsToLoad;
+
+        foreach (AgentScenePosition asp in positions)
         {
             if (asp.IsPlayerPresent)
                 return false;
         }
         return true;
     }
+    */
+    private bool playerIsNotInAnyUnloadPosition()
+    {
+        List<AgentScenePosition> positions = AgentPlayerPositionComponentsToUnload;
+
+        if (positions == null || !positions.Any())
+            positions = AgentPlayerPositionComponentsToLoad;
+
+        return positions.All(asp => !asp.IsPlayerPresent);
+    }
 
     void Start()
     {
         AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
-        .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
-        .Where(asp => asp != null)
-        .ToList();
+            .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+            .Where(asp => asp != null)
+            .ToList();
+        AgentPlayerPositionComponentsToLoad = AgentPlayerPositions
+            .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+            .Where(asp => asp != null)
+            .ToList();
 
         StartCoroutine(unload());
     }

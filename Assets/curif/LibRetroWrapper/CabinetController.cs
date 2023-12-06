@@ -64,24 +64,23 @@ public class CabinetController : MonoBehaviour
         }
     }
 
+    // private bool playerIsNotInAnyUnloadPosition()
+    // {
+    //     foreach (AgentScenePosition asp in AgentPlayerPositionComponentsToUnload)
+    //     {
+    //         if (asp.IsPlayerPresent)
+    //             return false;
+    //     }
+    //     return true;
+    // }
     private bool playerIsNotInAnyUnloadPosition()
     {
-        foreach (AgentScenePosition asp in AgentPlayerPositionComponentsToUnload)
-        {
-            if (asp.IsPlayerPresent)
-                return false;
-        }
-        return true;
+        return !AgentPlayerPositionComponentsToUnload.Any(asp => asp.IsPlayerPresent);
     }
 
     private bool playerIsInSomePosition()
     {
-        foreach (AgentScenePosition asp in AgentPlayerPositionComponents)
-        {
-            if (asp.IsPlayerPresent)
-                return true;
-        }
-        return false;
+        return AgentPlayerPositionComponents.Any(asp => asp.IsPlayerPresent);
     }
 
     IEnumerator load()
@@ -160,7 +159,7 @@ public class CabinetController : MonoBehaviour
 
         //deactivate the out of order cabinet.
         coroutineIsRunning = false;
-        gameObject.SetActive(false); 
+        gameObject.SetActive(false);
 
     }
 }

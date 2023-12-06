@@ -211,19 +211,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalScale.x
-      value: 46.08738
+      value: 46.08739
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalScale.y
-      value: 29.38733
+      value: 29.387337
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalScale.z
-      value: 96.740875
+      value: 96.7409
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -8.88
+      value: -8.880002
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalPosition.y
@@ -231,7 +231,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.27057981
+      value: -0.2705803
       objectReference: {fileID: 0}
     - target: {fileID: 77689073418743503, guid: 222d99764ca1784e7b8220ba711399ac, type: 3}
       propertyPath: m_LocalRotation.w
@@ -472,7 +472,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d4d1629744a74739aa5522bad4a47913, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.86741996
+      value: 0.86742026
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d4d1629744a74739aa5522bad4a47913, type: 3}
       propertyPath: m_LocalScale.y
@@ -480,11 +480,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d4d1629744a74739aa5522bad4a47913, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.86741996
+      value: 0.86742026
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d4d1629744a74739aa5522bad4a47913, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.97
+      value: -2.9700007
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d4d1629744a74739aa5522bad4a47913, type: 3}
       propertyPath: m_LocalPosition.y
@@ -915,11 +915,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &108282755
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1791,7 +1793,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -13.337
+      value: -13.337004
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1799,7 +1801,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.185
+      value: -2.1850004
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2851,11 +2853,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &279108382
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3589,11 +3593,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &356969979
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4459,8 +4465,6 @@ MonoBehaviour:
   - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
     sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
   ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: 616c2e963075fb24da2aa2592ef9060e, type: 3}
-    sceneAssetGuidHex: 616c2e963075fb24da2aa2592ef9060e
   - sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
     sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
   SceneBlockers:
@@ -4602,11 +4606,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &432313555
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5139,79 +5145,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6865371072832569255, guid: bed55c1f95da37f6bba78b04eaf3ec54, type: 3}
   m_PrefabInstance: {fileID: 451827677}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &456727703
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 456727704}
-  - component: {fileID: 456727707}
-  - component: {fileID: 456727706}
-  m_Layer: 0
-  m_Name: GateControllerToRoom007 (1)
-  m_TagString: door
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483639
-  m_IsActive: 1
---- !u!4 &456727704
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 456727703}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -1.65, y: 0.785, z: 2.148}
-  m_LocalScale: {x: 2.9947186, y: 1, z: 0.57237}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1388098676}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &456727706
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 456727703}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.6259768, y: 1, z: 1.7817576}
-  m_Center: {x: -0.14548802, y: 0, z: -0.39087826}
---- !u!114 &456727707
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 456727703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ScenesToLoad: []
-  ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-    sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
-  - sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
-    sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
-  SceneBlockers: []
 --- !u!1001 &459560670
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5426,11 +5359,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &472604361
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8262,11 +8197,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &694505085
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10598,11 +10535,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &882978865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -12509,8 +12448,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 9.052069, y: 1, z: 2.534016}
-  m_Center: {x: 3.8765965, y: 0, z: -0.026382208}
+  m_Size: {x: 8.350984, y: 1, z: 2.534016}
+  m_Center: {x: 2.8168273, y: 0, z: -0.026382208}
 --- !u!114 &1049871978
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12523,11 +12462,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!1001 &1053765826
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13167,11 +13108,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1117604850
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13290,11 +13233,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1118422249
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14638,8 +14583,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.2260485, y: 1, z: 6.3449607}
-  m_Center: {x: -4.492815, y: 0, z: 0.5445881}
+  m_Size: {x: 2.8500125, y: 1, z: 6.9890385}
+  m_Center: {x: -4.180833, y: 0, z: 0.866627}
 --- !u!114 &1203061925
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14652,11 +14597,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!1 &1216232922
 GameObject:
   m_ObjectHideFlags: 0
@@ -14702,11 +14649,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1216232925
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14726,8 +14675,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 6.6053424, y: 1, z: 4.594551}
-  m_Center: {x: -1.4703693, y: 0, z: 2.2613049}
+  m_Size: {x: 7.3796453, y: 1, z: 2.8310611}
+  m_Center: {x: -1.857521, y: 0, z: 1.37956}
 --- !u!1001 &1236668236
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16314,11 +16263,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
       propertyPath: m_RootOrder
-      value: 1
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 100.00004
+      objectReference: {fileID: 0}
+    - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 100.00003
       objectReference: {fileID: 0}
     - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -12.216
+      value: -12.216003
       objectReference: {fileID: 0}
     - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
       propertyPath: m_LocalPosition.y
@@ -16326,7 +16287,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.191
+      value: -5.191002
       objectReference: {fileID: 0}
     - target: {fileID: 1041250643982068785, guid: 13ae362fca908964691e8bc87b8467d4, type: 3}
       propertyPath: m_LocalRotation.w
@@ -17194,19 +17155,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalScale.x
-      value: 28.812698
+      value: 28.812706
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalScale.y
-      value: 41.161003
+      value: 41.16101
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalScale.z
-      value: 82.322
+      value: 82.32202
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -11.250001
+      value: -11.250002
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalPosition.y
@@ -17214,7 +17175,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -6.2349997
+      value: -6.2350016
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalRotation.w
@@ -17226,11 +17187,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalRotation.y
-      value: -0.015477236
+      value: -0.01547724
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalRotation.z
-      value: -0.015477236
+      value: -0.01547724
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -17313,7 +17274,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 430369709}
-  - {fileID: 456727704}
   - {fileID: 1977435050}
   - {fileID: 830623736}
   - {fileID: 1360235616}
@@ -18115,11 +18075,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1501754496
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -19964,19 +19926,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3753052313968970461, guid: 6a7287f6d9282b40d858a57d353aec2f, type: 3}
       propertyPath: m_LocalScale.x
-      value: 2.5400004
+      value: 2.5400019
       objectReference: {fileID: 0}
     - target: {fileID: 3753052313968970461, guid: 6a7287f6d9282b40d858a57d353aec2f, type: 3}
       propertyPath: m_LocalScale.y
-      value: 2.5399997
+      value: 2.54
       objectReference: {fileID: 0}
     - target: {fileID: 3753052313968970461, guid: 6a7287f6d9282b40d858a57d353aec2f, type: 3}
       propertyPath: m_LocalScale.z
-      value: 2.5400002
+      value: 2.5400007
       objectReference: {fileID: 0}
     - target: {fileID: 3753052313968970461, guid: 6a7287f6d9282b40d858a57d353aec2f, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5.604675
+      value: -5.604676
       objectReference: {fileID: 0}
     - target: {fileID: 3753052313968970461, guid: 6a7287f6d9282b40d858a57d353aec2f, type: 3}
       propertyPath: m_LocalPosition.y
@@ -20212,11 +20174,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1608465556
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21317,11 +21281,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1693930869
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21526,11 +21492,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1714072623
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25116,6 +25084,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1388098676}
   - {fileID: 1860758833}
   - {fileID: 1438189809}
   - {fileID: 2106624054}
@@ -25123,29 +25092,28 @@ Transform:
   - {fileID: 657486030}
   - {fileID: 1502047631}
   - {fileID: 1055181436}
+  - {fileID: 814586840}
+  - {fileID: 968612896}
+  - {fileID: 230957666}
+  - {fileID: 68383149}
+  - {fileID: 238278363}
+  - {fileID: 1857847729}
+  - {fileID: 1121827045}
+  - {fileID: 251826613}
+  - {fileID: 944689153}
+  - {fileID: 1236736632}
+  - {fileID: 1963274409}
+  - {fileID: 1495434555}
+  - {fileID: 375040937}
+  - {fileID: 1897845836}
+  - {fileID: 974759618}
+  - {fileID: 567004392}
   - {fileID: 1607911971}
   - {fileID: 187289936}
   - {fileID: 1437950767}
   - {fileID: 448424985}
   - {fileID: 1344663308}
   - {fileID: 1951166604}
-  - {fileID: 1388098676}
-  - {fileID: 814586840}
-  - {fileID: 968612896}
-  - {fileID: 1963274409}
-  - {fileID: 230957666}
-  - {fileID: 68383149}
-  - {fileID: 238278363}
-  - {fileID: 1857847729}
-  - {fileID: 974759618}
-  - {fileID: 567004392}
-  - {fileID: 1121827045}
-  - {fileID: 251826613}
-  - {fileID: 944689153}
-  - {fileID: 1236736632}
-  - {fileID: 1495434555}
-  - {fileID: 375040937}
-  - {fileID: 1897845836}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
@@ -25749,11 +25717,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1901165420
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25951,11 +25921,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1941433771
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26011,11 +25983,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_RootOrder
-      value: 0
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -13.79
+      value: -13.790003
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalPosition.y
@@ -26023,7 +25995,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -1.147
+      value: -1.1470003
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalRotation.w
@@ -26031,7 +26003,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalRotation.y
@@ -26039,7 +26011,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 6101424418291072734, guid: f70af93985d8a46bdba5019d7260e71b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -26369,6 +26341,8 @@ MonoBehaviour:
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
     sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
+  - sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
+    sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 616c2e963075fb24da2aa2592ef9060e, type: 3}
@@ -26683,11 +26657,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2022803589
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27893,11 +27869,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2132604456
 BoxCollider:
   m_ObjectHideFlags: 0
