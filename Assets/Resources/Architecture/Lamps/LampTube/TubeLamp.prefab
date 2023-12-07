@@ -32,7 +32,7 @@ Transform:
   - {fileID: 5248190736729783593}
   - {fileID: 4783922164466273460}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2985781977043778208
 GameObject:
@@ -45,7 +45,6 @@ GameObject:
   - component: {fileID: 573071387172104774}
   - component: {fileID: 4281137602589239808}
   - component: {fileID: 875542287233700234}
-  - component: {fileID: 4523181302862977692}
   m_Layer: 0
   m_Name: wer
   m_TagString: Untagged
@@ -118,20 +117,6 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &4523181302862977692
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2985781977043778208}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1 &8613761347711939543
 GameObject:
   m_ObjectHideFlags: 0
@@ -143,7 +128,6 @@ GameObject:
   - component: {fileID: 5248190736729783593}
   - component: {fileID: 7365680231937827518}
   - component: {fileID: 4323235895812678919}
-  - component: {fileID: 7892525815259577845}
   m_Layer: 0
   m_Name: wer (1)
   m_TagString: Untagged
@@ -216,26 +200,12 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &7892525815259577845
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8613761347711939543}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!1001 &5037661707004816223
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    serializedVersion: 2
+    serializedVersion: 3
     m_TransformParent: {fileID: 3563754588736878886}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 4a0a3b4f7540f6e9c8933cd2a3113674, type: 3}
@@ -307,7 +277,9 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4a0a3b4f7540f6e9c8933cd2a3113674, type: 3}
 --- !u!4 &4783922164466273460 stripped
 Transform:

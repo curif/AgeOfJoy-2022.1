@@ -76,7 +76,7 @@ public class CabinetsController : MonoBehaviour
             }
         }
 
-        gameRegistry = GameObject.Find("RoomInit").GetComponent<GameRegistry>();
+        gameRegistry = GameObject.Find("FixedObject").GetComponent<GameRegistry>();
         if (gameRegistry != null)
             StartCoroutine(load());
         else

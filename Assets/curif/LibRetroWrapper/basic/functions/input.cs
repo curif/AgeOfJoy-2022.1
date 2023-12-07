@@ -12,9 +12,9 @@ class CommandFunctionCONTROLACTIVE : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        if (config?.ConfigurationController == null ||
-                !config.ConfigurationController.ControlEnabled())
-            throw new Exception("no controller enabled.");
+        if (config?.ConfigurationController == null /* ||
+                !config.ConfigurationController.ControlEnabled()*/)
+            throw new Exception("no controller assigned.");
         
         BasicValue val = expr.Execute(vars);
         if (!val.IsString())

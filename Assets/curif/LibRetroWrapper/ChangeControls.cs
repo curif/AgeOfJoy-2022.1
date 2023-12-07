@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 //using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using Siccity.GLTFUtility;
@@ -15,16 +16,14 @@ public class ChangeControls : MonoBehaviour
     public GameObject leftJoystickPrefab;
     public GameObject rightJoystickPrefab;
     [Tooltip("Teleport interactor gameobject contains it")]
-    //public XRRayInteractor xrrayInteractor;
     public BeamController beamController;
 
     public ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
-    // public DynamicMoveProvider dynamicMoveProvider;
     public ActionBasedContinuousMoveProvider actionBasedContinuousMoveProvider;
 
+    InputActionProperty rightHandTurnAction;
+    InputActionProperty leftHandMoveAction;
     bool reservedTeleportationEnabled;
-    float reservedMoveSpeed;
-    float reservedTurnSpeed;
     ActionBasedController controllerLeftHand;
     ActionBasedController controllerRightHand;
     GameObject leftHandModel;
@@ -49,11 +48,6 @@ public class ChangeControls : MonoBehaviour
         controllerLeftHand = leftHandXRControl.GetComponent<ActionBasedController>();
         controllerRightHand = rightHandXRControl.GetComponent<ActionBasedController>();
 
-        // actionBasedContinuousTurnProvider = GetComponent<ActionBasedContinuousTurnProvider>();
-        // dynamicMoveProvider = GetComponent<DynamicMoveProvider>();
-        // if (dynamicMoveProvider == null)
-        //     throw new System.Exception("[ChangeControls] a DynamicMoveProvider component is required");
-
         leftJoystickModel = GameObject.Instantiate(leftJoystickPrefab, controllerLeftHand.modelParent);
         rightJoystickModel = GameObject.Instantiate(rightJoystickPrefab, controllerRightHand.modelParent);
         reservedRightJoystickModel = rightJoystickModel;
@@ -62,6 +56,9 @@ public class ChangeControls : MonoBehaviour
 
         controllerLeftHand.model = leftHandModel.transform;
         controllerRightHand.model = rightHandModel.transform;
+
+        rightHandTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
+        leftHandMoveAction = actionBasedContinuousMoveProvider.leftHandMoveAction;
 
         leftJoystickModel.SetActive(false);
         rightJoystickModel.SetActive(false);
@@ -144,26 +141,23 @@ public class ChangeControls : MonoBehaviour
         alternativeRightJoystick.SetActive(false);
         alternativeRightJoystick.transform.position = controllerRightHand.transform.position;
         alternativeRightJoystick.transform.rotation = controllerRightHand.transform.rotation;
-        
+
         rightJoystickModel.SetActive(false);
         rightJoystickModel = alternativeRightJoystick;
-        
+
         lightGunTarget.spaceGun = alternativeRightJoystick;
     }
 
     private void reserveValues()
     {
         reservedTeleportationEnabled = beamController.enabled;
-        reservedMoveSpeed = actionBasedContinuousMoveProvider.moveSpeed;
-        reservedTurnSpeed = actionBasedContinuousTurnProvider.turnSpeed;
     }
 
     private void restoreReservedValues()
     {
         beamController.enabled = reservedTeleportationEnabled;
-        actionBasedContinuousMoveProvider.moveSpeed = reservedMoveSpeed;
-        actionBasedContinuousTurnProvider.turnSpeed = reservedTurnSpeed;
         rightJoystickModel = reservedRightJoystickModel;
+
     }
 
     public void PlayerMode(bool modePlaying)
@@ -181,33 +175,36 @@ public class ChangeControls : MonoBehaviour
         leftHandModel.gameObject.SetActive(!playing);
         rightHandModel.gameObject.SetActive(!playing);
     }
-    private void setControllers(bool playing)
+    private void setControllers(bool playerIsPlaying)
     {
-        controllerLeftHand.model = playing ? leftJoystickModel.transform : leftHandModel.transform;
-        controllerRightHand.model = playing ? rightJoystickModel.transform : rightHandModel.transform;
+        controllerLeftHand.model = playerIsPlaying ? leftJoystickModel.transform : leftHandModel.transform;
+        controllerRightHand.model = playerIsPlaying ? rightJoystickModel.transform : rightHandModel.transform;
     }
-    private void changeMode(bool modePlaying)
+    private void changeMode(bool playerIsPlaying)
     {
-        activateDeactivateControls(modePlaying);
-        setControllers(modePlaying);
-
-        if (isPlaying == modePlaying)
+        if (isPlaying == playerIsPlaying)
             return;
 
-        isPlaying = modePlaying;
+        isPlaying = playerIsPlaying;
 
-        actionBasedContinuousTurnProvider.enabled = !modePlaying;
-        actionBasedContinuousMoveProvider.enabled = !modePlaying;
+        activateDeactivateControls(playerIsPlaying);
+        setControllers(playerIsPlaying);
 
-        if (modePlaying)
+        if (playerIsPlaying)
         {
             reserveValues();
+            rightHandTurnAction.action.Disable();
+            leftHandMoveAction.action.Disable();
+
             beamController.enabled = false;
         }
         else
         {
             restoreReservedValues();
+            rightHandTurnAction.action.Enable();
+            leftHandMoveAction.action.Enable();
         }
+
     }
 
     //units by second
@@ -215,16 +212,11 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            if (actionBasedContinuousMoveProvider.enabled)
-                return actionBasedContinuousMoveProvider.moveSpeed;
-            return reservedMoveSpeed;
+            return actionBasedContinuousMoveProvider.moveSpeed;
         }
         set
         {
-            ConfigManager.WriteConsole($"[ChangeControls] dynamicMoveProvider : {actionBasedContinuousMoveProvider}");
-            if (actionBasedContinuousMoveProvider.enabled)
-                actionBasedContinuousMoveProvider.moveSpeed = value;
-            reservedMoveSpeed = value;
+            actionBasedContinuousMoveProvider.moveSpeed = value;
         }
     }
 
@@ -233,15 +225,11 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            if (actionBasedContinuousTurnProvider.enabled)
-                return actionBasedContinuousTurnProvider.turnSpeed;
-            return reservedTurnSpeed;
+            return actionBasedContinuousTurnProvider.turnSpeed;
         }
         set
         {
-            if (actionBasedContinuousTurnProvider.enabled)
-                actionBasedContinuousTurnProvider.turnSpeed = value;
-            reservedTurnSpeed = value;
+            actionBasedContinuousTurnProvider.turnSpeed = value;
         }
     }
 
