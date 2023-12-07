@@ -218,22 +218,12 @@ public class ConfigurationController : MonoBehaviour
 
     private ConfigurationHelper configHelper;
 
-    private Dictionary<string, bool> inputDictionary = new Dictionary<string, bool>();
-    private List<string> inputKeys;
-
 
     // Start is called before the first frame update
     void Start()
     {
         ConfigManager.WriteConsole("[ConfigurationController] start");
         setupActionMap();
-        // Initialize the dictionary with default values (false for all keys)
-        inputDictionary.Add("up", false);
-        inputDictionary.Add("down", false);
-        inputDictionary.Add("left", false);
-        inputDictionary.Add("right", false);
-        inputDictionary.Add("action", false);
-        inputKeys = inputDictionary.Keys.ToList();
 
         if (changeControls == null)
         {
@@ -243,7 +233,7 @@ public class ConfigurationController : MonoBehaviour
 
         if (canTeleport)
         {
-            GameObject roomInit = GameObject.Find("FixedObject");
+            GameObject roomInit = GameObject.Find("RoomInit");
             sceneDatabase = roomInit.GetComponent<SceneDatabase>();
             teleportation = GetComponent<Teleportation>();
         }
@@ -266,20 +256,6 @@ public class ConfigurationController : MonoBehaviour
         StartCoroutine(run());
     }
 
-    void Update()
-    {
-        inputDictionary["up"] = inputDictionary["up"] || ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP");
-        inputDictionary["down"] = inputDictionary["down"] || ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN");
-        inputDictionary["left"] = inputDictionary["left"] || ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT");
-        inputDictionary["right"] = inputDictionary["right"] || ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT");
-        inputDictionary["action"] = inputDictionary["action"] || ControlActive("JOYPAD_B");
-    }
-
-    void ResetInputValues()
-    {
-        // Reset all input values to false
-        inputKeys.ForEach(key => inputDictionary[key] = false);
-    }
     private void setupActionMap()
     {
         map = new();
@@ -1169,7 +1145,6 @@ public class ConfigurationController : MonoBehaviour
         while (true)
         {
             tree.Tick();
-            ResetInputValues();
 
             if (status == StatusOptions.init || status == StatusOptions.waitingForCoin)
                 yield return new WaitForSeconds(1f);
@@ -1201,8 +1176,7 @@ public class ConfigurationController : MonoBehaviour
 
             .Sequence("Insert coin")
               .Condition("Waiting for coin", () => status == StatusOptions.waitingForCoin)
-              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) /*|| 
-                        ControlActive("INSERT")*/)
+              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) || ControlActive("INSERT"))
               .Do("coin inserted", () =>
                 {
                     InsertCoin();
@@ -1237,11 +1211,11 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (inputDictionary["up"] || ControlActive("KEYB-UP"))
+                    if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
                         mainMenu.PreviousOption();
-                    else if (inputDictionary["down"] || ControlActive("KEYB-DOWN"))
+                    else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
                         mainMenu.NextOption();
-                    else if (inputDictionary["action"])
+                    else if (ControlActive("JOYPAD_B"))
                         mainMenu.Select();
 
                     if (!mainMenu.IsSelected())
@@ -1308,7 +1282,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     changeContainerSelection(npcContainer);
 
-                    if (inputDictionary["action"])
+                    if (ControlActive("JOYPAD_B"))
                     {
                         GenericWidget w = npcContainer.GetSelectedWidget();
                         if (w.name == "exit")
@@ -1343,7 +1317,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("Process", () =>
                 {
                     changeContainerSelection(audioContainer);
-                    if (inputDictionary["action"])
+                    if (ControlActive("JOYPAD_B"))
                     {
                         GenericWidget w = audioContainer.GetSelectedWidget();
                         if (w != null)
@@ -1380,7 +1354,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("Process", () =>
                 {
                     changeContainerSelection(playerContainer);
-                    if (inputDictionary["action"])
+                    if (ControlActive("JOYPAD_B"))
                     {
                         GenericWidget w = playerContainer.GetSelectedWidget();
                         if (w != null)
@@ -1417,7 +1391,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     changeContainerSelection(changeModeContainer);
                     GenericWidget w = changeModeContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
                         if (w.name == "exit")
                         {
@@ -1444,7 +1418,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     changeContainerSelection(resetContainer);
                     GenericWidget w = resetContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
                         if (w.name == "exit")
                         {
@@ -1477,19 +1451,19 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (inputDictionary["up"] || ControlActive("KEYB-UP"))
+                    if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
                         controllerContainer.PreviousOption();
-                    else if (inputDictionary["down"] || ControlActive("KEYB-DOWN"))
+                    else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
                         controllerContainer.NextOption();
 
                     GenericWidget w = controllerContainer.GetSelectedWidget();
 
                     if (w != null)
                     {
-                        bool right = inputDictionary["left"] || ControlActive("KEYB-LEFT");
-                        bool left = inputDictionary["right"] || ControlActive("KEYB-RIGHT");
+                        bool right = ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT");
+                        bool left = ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT");
 
-                        if (inputDictionary["action"])
+                        if (ControlActive("JOYPAD_B"))
                         {
                             if (w.name == "exit")
                             {
@@ -1556,7 +1530,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     changeContainerSelection(cabinetsToChangeContainer);
                     GenericWidget w = cabinetsToChangeContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
                         if (w.name == "exit")
                         {
@@ -1591,7 +1565,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     changeContainerSelection(teleportContainer);
                     GenericWidget w = teleportContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
                         if (w.name == "exit")
                         {
@@ -1634,7 +1608,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     changeContainerSelection(locomotionContainer);
                     GenericWidget w = locomotionContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
                         if (w.name == "exit")
                         {
@@ -1688,7 +1662,7 @@ public class ConfigurationController : MonoBehaviour
                 {
                     if (AGEBasicWaitForPressAKey)
                     {
-                        if (inputDictionary["action"])
+                        if (ControlActive("JOYPAD_B"))
                         {
                             AGEBasicWaitForPressAKey = false;
                             AGEBasicWindowDraw();
@@ -1699,7 +1673,7 @@ public class ConfigurationController : MonoBehaviour
 
                     changeContainerSelection(AGEBasicContainer);
                     GenericWidget w = AGEBasicContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
+                    if (w != null && ControlActive("JOYPAD_B"))
                     {
                         if (w.name == "exit")
                         {
@@ -1767,21 +1741,14 @@ public class ConfigurationController : MonoBehaviour
         return;
     }
 
-    // public bool ControlEnabled()
-    // {
-    //     return actionMap != null && actionMap.enabled;
-    // }
+    public bool ControlEnabled()
+    {
+        return actionMap != null && actionMap.enabled;
+    }
 
     public bool ControlActive(string mameControl)
     {
         bool ret = false;
-
-        //creates an segfault
-        //if (!ControlEnabled())
-        //    return false;
-
-        if (actionMap == null)
-            return false;
 
         InputAction action = actionMap.FindAction(mameControl + "_0");
         if (action == null)
@@ -1789,14 +1756,15 @@ public class ConfigurationController : MonoBehaviour
             //ConfigManager.WriteConsoleError($"[ConfigurationControl.Active] [{mameControl}] not found in controlMap");
             return false;
         }
-        if (!action.enabled)
-            return false;
 
         //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
         if (action.type == InputActionType.Button)
         {
-            // ConfigManager.WriteConsole($"[ConfigurationController.ControlActive] {mameControl}: {action.WasReleasedThisFrame()}");
-            return action.WasReleasedThisFrame();
+            if (action.IsPressed())
+            {
+                return true;
+            }
+            return false;
         }
 
         else if (action.type == InputActionType.Value)
@@ -1835,13 +1803,13 @@ public class ConfigurationController : MonoBehaviour
 
     private void changeContainerSelection(GenericWidgetContainer gwc)
     {
-        if (inputDictionary["up"])
+        if (ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP"))
             gwc.PreviousOption();
-        else if (inputDictionary["down"])
+        else if (ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN"))
             gwc.NextOption();
-        else if (inputDictionary["left"])
+        else if (ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT"))
             gwc.GetSelectedWidget()?.PreviousOption();
-        else if (inputDictionary["right"])
+        else if (ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT"))
             gwc.GetSelectedWidget()?.NextOption();
         return;
     }

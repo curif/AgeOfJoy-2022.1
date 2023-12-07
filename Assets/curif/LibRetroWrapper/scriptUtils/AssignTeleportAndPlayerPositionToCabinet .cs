@@ -32,9 +32,10 @@ public class AssignTeleportAndPlayerPositionToCabinet : EditorWindow
             AssignComponents();
         }
     }
+
     private void AssignComponents()
     {
-        if (ValidateInputs())
+        if (cabinetObject != null && teleportAnchorObject != null && agentScenePositionObject != null)
         {
             CabinetController cabinetController = cabinetObject.GetComponent<CabinetController>();
             AgentScenePosition agentScenePosition = agentScenePositionObject.GetComponent<AgentScenePosition>();
@@ -50,36 +51,23 @@ public class AssignTeleportAndPlayerPositionToCabinet : EditorWindow
                 agentScenePositionProperty.objectReferenceValue = agentScenePosition;
 
                 cabinetSerializedObject.ApplyModifiedProperties();
-
-               // Set the position and rotation
-                agentScenePositionObject.transform.position = teleportAnchorObject.transform.position;
-                agentScenePositionObject.transform.rotation = teleportAnchorObject.transform.rotation;
-
+/*
+                cabinetController.AgentPlayerTeleportAnchor = teleportAnchorObject;
+                cabinetController.AgentScenePosition = agentScenePosition;
+*/
                 EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
 
                 Debug.Log("Assignment complete!");
             }
             else
             {
-                EditorUtility.DisplayDialog("Error", "One or more required components not found on the specified GameObjects.", "OK");
+                Debug.LogError("One or more required components not found on the specified GameObjects.");
             }
         }
         else
         {
-            EditorUtility.DisplayDialog("Error", "One or more GameObject references are null.", "OK");
+            Debug.LogError("One or more GameObject references are null.");
         }
-    }
-
-    private bool ValidateInputs()
-    {
-        if (cabinetObject == null || teleportAnchorObject == null || agentScenePositionObject == null)
-        {
-            return false;
-        }
-
-        // Add more validation if needed (e.g., check types, scene validation)
-
-        return true;
     }
 }
 #endif

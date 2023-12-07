@@ -514,13 +514,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDurationTimeSecs: 0
 --- !u!65 &32017150
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -540,8 +538,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.986182, y: 1, z: 7.8894577}
-  m_Center: {x: -1.1390853, y: 0, z: -1.0159862}
+  m_Size: {x: 2.7656734, y: 1, z: 5.954923}
+  m_Center: {x: -1.2493396, y: 0, z: -0.048718918}
 --- !u!1001 &34472237
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1199,6 +1197,77 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4298955583021570582, guid: 553de4abe7620eb378737204678971d5, type: 3}
   m_PrefabInstance: {fileID: 111642608}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &115760430
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 115760433}
+  - component: {fileID: 115760432}
+  - component: {fileID: 115760431}
+  m_Layer: 0
+  m_Name: RoomAPosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &115760431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115760430}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
+  NPCPresentName: 
+  BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
+--- !u!65 &115760432
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115760430}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5.2939596, y: 1, z: 1.6908857}
+  m_Center: {x: 0.014803644, y: 0, z: 0.31384817}
+--- !u!4 &115760433
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115760430}
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -4.031, y: -0.121, z: -4.88}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2059682242}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &121931569
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5700,7 +5769,7 @@ PrefabInstance:
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositions.Array.data[1]
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 115760430}
     - target: {fileID: 6589180444663174073, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483639
@@ -7946,13 +8015,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDurationTimeSecs: 0
 --- !u!65 &794598930
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7972,8 +8039,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 2.8203928, y: 1, z: 7.9870653}
-  m_Center: {x: 1.251587, y: 0, z: 0.7440036}
+  m_Size: {x: 2.8203928, y: 1, z: 6.090756}
+  m_Center: {x: 1.251587, y: 0, z: 1.6921583}
 --- !u!1001 &801960710
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9850,8 +9917,6 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: d178e537fa2109342be338c8543458aa, type: 3}
     sceneAssetGuidHex: d178e537fa2109342be338c8543458aa
-  - sceneAsset: {fileID: 102900000, guid: 16309e65ce5201d409f3db1e67af0644, type: 3}
-    sceneAssetGuidHex: 16309e65ce5201d409f3db1e67af0644
   ScenesToUnload: []
   SceneBlockers:
   - SceneRef:
@@ -10678,16 +10743,12 @@ PrefabInstance:
       objectReference: {fileID: 1983482097}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositions.Array.data[0]
       value: 
-      objectReference: {fileID: 794598927}
-    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositions.Array.data[1]
-      value: 
-      objectReference: {fileID: 32017147}
+      objectReference: {fileID: 115760430}
     - target: {fileID: 3802768730504208353, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
@@ -12697,20 +12758,16 @@ PrefabInstance:
       objectReference: {fileID: 1441369281}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositions.Array.size
-      value: 2
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositions.Array.data[0]
       value: 
-      objectReference: {fileID: 32017147}
+      objectReference: {fileID: 115760430}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositions.Array.data[1]
       value: 
-      objectReference: {fileID: 794598927}
-    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositions.Array.data[2]
-      value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 115760430}
     - target: {fileID: 5087249327356433597, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
@@ -16877,7 +16934,7 @@ PrefabInstance:
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.data[2].sceneAsset
       value: 
-      objectReference: {fileID: 102900000, guid: 1cc66a48f66c6854aa8a94e1c017bc44, type: 3}
+      objectReference: {fileID: 102900000, guid: d178e537fa2109342be338c8543458aa, type: 3}
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.data[0].sceneAssetGuidHex
       value: 4d732da02b6933145b2d6025b96bb878
@@ -16888,7 +16945,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8743484398287449156, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: ScenesToUnload.Array.data[2].sceneAssetGuidHex
-      value: 1cc66a48f66c6854aa8a94e1c017bc44
+      value: d178e537fa2109342be338c8543458aa
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4918127604005102844, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
@@ -20624,8 +20681,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1388098676}
   - {fileID: 1516534473}
+  - {fileID: 727601266}
   - {fileID: 828747344}
   - {fileID: 1341974359}
   - {fileID: 1250446164}
@@ -20634,11 +20691,11 @@ Transform:
   - {fileID: 238278363}
   - {fileID: 1502047631}
   - {fileID: 2059682242}
+  - {fileID: 1388098676}
   - {fileID: 814586840}
   - {fileID: 1121827045}
   - {fileID: 1157114492}
   - {fileID: 1495434555}
-  - {fileID: 727601266}
   - {fileID: 326345997}
   - {fileID: 1044017594}
   m_Father: {fileID: 0}
@@ -22423,6 +22480,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 115760433}
   - {fileID: 794598928}
   - {fileID: 32017148}
   m_Father: {fileID: 1862072339}

@@ -82,21 +82,18 @@ public class TeleportationController : MonoBehaviour
             {
                 if (controledSceneToUnLoad != null /*&& controledSceneToUnLoad.IsSafeToUse*/)
                 {
-                    if (controledSceneToUnLoad.Name != teleportTo.Scene.Name)
+                    if (SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
                     {
-                        if (SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
-                        {
-                            AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
-                            while (!asyncLoad.isDone)
-                                yield return null;
+                        AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
+                        while (!asyncLoad.isDone)
+                            yield return null;
 
-                            ConfigManager.WriteConsole($"[TeleportLoop] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
-                            unloadUnusedAssets = true;
-                        }
-                        else
-                        {
-                            ConfigManager.WriteConsoleError($"[TeleportLoop] scene isn't ready to be unloaded {controledSceneToUnLoad}");
-                        }
+                        ConfigManager.WriteConsole($"[TeleportLoop] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
+                        unloadUnusedAssets = true;
+                    }
+                    else
+                    {
+                        ConfigManager.WriteConsoleError($"[TeleportLoop] scene isn't ready to be unloaded {controledSceneToUnLoad}");
                     }
                 }
             }
