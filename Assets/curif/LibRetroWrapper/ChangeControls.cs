@@ -19,13 +19,10 @@ public class ChangeControls : MonoBehaviour
     public BeamController beamController;
 
     public ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
-    // public DynamicMoveProvider dynamicMoveProvider;
     public ActionBasedContinuousMoveProvider actionBasedContinuousMoveProvider;
 
-    InputActionProperty leftHandTurnAction;
     InputActionProperty rightHandTurnAction;
     InputActionProperty leftHandMoveAction;
-    InputActionProperty rightHandMoveAction;
     bool reservedTeleportationEnabled;
     ActionBasedController controllerLeftHand;
     ActionBasedController controllerRightHand;
@@ -60,10 +57,8 @@ public class ChangeControls : MonoBehaviour
         controllerLeftHand.model = leftHandModel.transform;
         controllerRightHand.model = rightHandModel.transform;
 
-        leftHandTurnAction = actionBasedContinuousTurnProvider.leftHandTurnAction;
         rightHandTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
         leftHandMoveAction = actionBasedContinuousMoveProvider.leftHandMoveAction;
-        rightHandMoveAction = actionBasedContinuousMoveProvider.rightHandMoveAction;
 
         leftJoystickModel.SetActive(false);
         rightJoystickModel.SetActive(false);
@@ -198,20 +193,16 @@ public class ChangeControls : MonoBehaviour
         if (playerIsPlaying)
         {
             reserveValues();
-            leftHandTurnAction.action.Disable();
             rightHandTurnAction.action.Disable();
             leftHandMoveAction.action.Disable();
-            rightHandMoveAction.action.Disable();
 
             beamController.enabled = false;
         }
         else
         {
             restoreReservedValues();
-            leftHandTurnAction.action.Enable();
             rightHandTurnAction.action.Enable();
             leftHandMoveAction.action.Enable();
-            rightHandMoveAction.action.Enable();
         }
 
     }
