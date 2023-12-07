@@ -6,11 +6,16 @@ using UnityEngine;
 public class AgentScenePosition : MonoBehaviour
 {
 
+    public bool IsPlayerColliding = false;
     public bool IsPlayerPresent = false;
+
     public bool IsNPCPresent = false;
     public string NPCPresentName = "";
     public float BoxColliderHeight = 5f;
     public BoxCollider boxCollider;
+    public float playerStayDurationTimeSecs = 0f;
+    private float playerTimer = 0f;
+
     void Start()
     {
         if (boxCollider == null)
@@ -26,28 +31,31 @@ public class AgentScenePosition : MonoBehaviour
         Vector3 size = boxCollider.size;
         size.y = BoxColliderHeight;
         boxCollider.size = size;
+        playerTimer = 0f;
+
     }
 
     public bool ItsMe(string name)
     {
         return IsNPCPresent && NPCPresentName == name;
-
     }
+
     public bool NPCIsPresent(string name)
     {
         return IsNPCPresent && ItsMe(name);
     }
+
     public bool IsTaken
     {
-        get { return IsNPCPresent || IsPlayerPresent; }
+        get { return IsNPCPresent || IsPlayerColliding; }
     }
-
 
     private bool colliderIsPlayer(Collider collision)
     {
-        return collision.gameObject.name == "OVRPlayerControllerGalery" || 
-                collision.gameObject.name == "GrabVolumeSmall" || 
-                collision.gameObject.name == "GrabVolumeBig";
+        return collision.gameObject.name == "OVRPlayerControllerGalery"
+        /* ||
+                collision.gameObject.name == "GrabVolumeSmall" ||
+                collision.gameObject.name == "GrabVolumeBig"*/;
     }
 
     private void OnTriggerEnter(Collider collision)
@@ -55,10 +63,15 @@ public class AgentScenePosition : MonoBehaviour
         // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
         if (colliderIsPlayer(collision))
         {
-            // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
-            IsPlayerPresent = true;
+            ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
+            IsPlayerColliding = true;
+            playerTimer = 0f;
             IsNPCPresent = false;
             NPCPresentName = "";
+            if (playerStayDurationTimeSecs > 0)
+                InvokeRepeating("checkPlayerTimer", playerStayDurationTimeSecs, 1f);
+            else
+                IsPlayerPresent = true;
         }
         else
         {
@@ -71,19 +84,28 @@ public class AgentScenePosition : MonoBehaviour
         }
     }
 
+    void checkPlayerTimer()
+    {
+        IsPlayerPresent = IsPlayerColliding;
+        CancelInvoke("checkPlayerTimer");
+        ConfigManager.WriteConsole($"[AgentScenePosition.checkPlayerTimer] {name}: is player present: {IsPlayerPresent} ");
+    }
+
     private void OnTriggerExit(Collider collision)
     {
         //ConfigManager.WriteConsole($"[OnTriggerExit] {name}: {collision.gameObject.name}");
         if (colliderIsPlayer(collision))
         {
-            //ConfigManager.WriteConsole($"[OnTriggerExit] {name}: {collision.gameObject.name}");
+            ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: {collision.gameObject.name}");
+            IsPlayerColliding = false;
             IsPlayerPresent = false;
+            playerTimer = 0f;
         }
         else
         {
             if (collision.gameObject.tag == "NPC" && collision.gameObject.name == NPCPresentName)
             {
-                //ConfigManager.WriteConsole($"[OnTriggerEnter] {name}: NPC left the position {collision.gameObject.name}");
+                ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: NPC left the position {collision.gameObject.name}");
                 IsNPCPresent = false;
                 NPCPresentName = "";
             }

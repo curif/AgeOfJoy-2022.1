@@ -1112,7 +1112,17 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: b55ce2caa37c8ea418c0d43da0b41de0, type: 3}
     sceneAssetGuidHex: b55ce2caa37c8ea418c0d43da0b41de0
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
+    sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
+  - sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
+    sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
+  - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
+    sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
+  - sceneAsset: {fileID: 102900000, guid: 64927f30440d7fd9bb4a06ce743658d6, type: 3}
+    sceneAssetGuidHex: 64927f30440d7fd9bb4a06ce743658d6
+  - sceneAsset: {fileID: 102900000, guid: 69e209726246ae24ea72fee4904571b6, type: 3}
+    sceneAssetGuidHex: 69e209726246ae24ea72fee4904571b6
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: b55ce2caa37c8ea418c0d43da0b41de0, type: 3}
@@ -1898,83 +1908,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4298955583021570582, guid: 553de4abe7620eb378737204678971d5, type: 3}
   m_PrefabInstance: {fileID: 532775037}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &543864671
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 543864672}
-  - component: {fileID: 543864674}
-  - component: {fileID: 543864673}
-  m_Layer: 0
-  m_Name: GateCenter
-  m_TagString: door
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &543864672
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 543864671}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.46, y: 0.35230517, z: -4.89}
-  m_LocalScale: {x: 1.3632998, y: 1, z: 1.2385}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1455149335}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &543864673
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 543864671}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 2.9635246, y: 1.5116475, z: 1.3427407}
-  m_Center: {x: 0.49724475, y: -0.0132113695, z: -0.76215124}
---- !u!114 &543864674
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 543864671}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ScenesToLoad: []
-  ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
-    sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
-  - sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
-    sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
-  - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-    sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
-  - sceneAsset: {fileID: 102900000, guid: b55ce2caa37c8ea418c0d43da0b41de0, type: 3}
-    sceneAssetGuidHex: b55ce2caa37c8ea418c0d43da0b41de0
-  SceneBlockers: []
 --- !u!1001 &590259265
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3033,7 +2966,11 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
     sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
+    sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
+  - sceneAsset: {fileID: 102900000, guid: b55ce2caa37c8ea418c0d43da0b41de0, type: 3}
+    sceneAssetGuidHex: b55ce2caa37c8ea418c0d43da0b41de0
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
@@ -5377,7 +5314,6 @@ Transform:
   - {fileID: 2014162372}
   - {fileID: 1117945903}
   - {fileID: 862554713}
-  - {fileID: 543864672}
   m_Father: {fileID: 1729188144}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5756,9 +5692,9 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1455149335}
   - {fileID: 803560594}
   - {fileID: 1080415014}
-  - {fileID: 1455149335}
   - {fileID: 1914997962}
   - {fileID: 1715584667}
   - {fileID: 1844173153}
@@ -6319,8 +6255,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3161986, y: 1.5116475, z: 1.8535774}
-  m_Center: {x: 0.05275635, y: -0.0132113695, z: -0.6521375}
+  m_Size: {x: 1.3161986, y: 1.5116475, z: 3.1509705}
+  m_Center: {x: 0.05275635, y: -0.0132113695, z: -1.3008343}
 --- !u!114 &2014162374
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6336,7 +6272,11 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
     sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: b55ce2caa37c8ea418c0d43da0b41de0, type: 3}
+    sceneAssetGuidHex: b55ce2caa37c8ea418c0d43da0b41de0
+  - sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
+    sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}

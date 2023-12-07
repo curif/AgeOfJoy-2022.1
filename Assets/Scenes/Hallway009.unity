@@ -472,88 +472,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1593038524014086401, guid: 03ca118021f56e503b5cc0dda40a7374, type: 3}
   m_PrefabInstance: {fileID: 73329260}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &73669588
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 73669589}
-  - component: {fileID: 73669590}
-  - component: {fileID: 73669591}
-  m_Layer: 0
-  m_Name: GateToRoom004
-  m_TagString: door
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
---- !u!4 &73669589
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 73669588}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -10.767, y: 0.35230517, z: 23.252}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1104837137}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &73669590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 73669588}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
-    sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
-  ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: 20c6d912f757fb9eaab4bc33cc22b106, type: 3}
-    sceneAssetGuidHex: 20c6d912f757fb9eaab4bc33cc22b106
-  - sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-    sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
-  - sceneAsset: {fileID: 102900000, guid: be539a000da5d98b3bab4b266cb714b0, type: 3}
-    sceneAssetGuidHex: be539a000da5d98b3bab4b266cb714b0
-  SceneBlockers:
-  - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
-      sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
-    Blockers:
-    - {fileID: 1794290910}
---- !u!65 &73669591
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 73669588}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.9763632, y: 1.269035, z: 1.1069431}
-  m_Center: {x: -0.4881816, y: -0.13451761, z: 0.053471565}
 --- !u!1001 &96358850
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3459,7 +3377,17 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
     sceneAssetGuidHex: 91277341fb3a40c4aa34a17eaf1ee1aa
-  ScenesToUnload: []
+  - sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
+    sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
+  - sceneAsset: {fileID: 102900000, guid: d1dbee755be594247ad776ed746d2345, type: 3}
+    sceneAssetGuidHex: d1dbee755be594247ad776ed746d2345
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 3a5291929c0e1d24780b273a2535876c, type: 3}
+    sceneAssetGuidHex: 3a5291929c0e1d24780b273a2535876c
+  - sceneAsset: {fileID: 102900000, guid: f5ff613baed38bf069ef30ee2c7557bc, type: 3}
+    sceneAssetGuidHex: f5ff613baed38bf069ef30ee2c7557bc
+  - sceneAsset: {fileID: 102900000, guid: ab16ecd832b3bbd58b73c184034e5e90, type: 3}
+    sceneAssetGuidHex: ab16ecd832b3bbd58b73c184034e5e90
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
@@ -3500,8 +3428,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.11022, y: 1.5751697, z: 1.1315308}
-  m_Center: {x: -0.055109978, y: 0.0258798, z: 0.06576538}
+  m_Size: {x: 3.534626, y: 1.5751697, z: 1.1315308}
+  m_Center: {x: 0.20179749, y: 0.0258798, z: 0.06576538}
 --- !u!1001 &1071251070
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3682,9 +3610,7 @@ Transform:
   - {fileID: 1794290909}
   - {fileID: 526220237}
   - {fileID: 1029897860}
-  - {fileID: 73669589}
   - {fileID: 2014162372}
-  - {fileID: 1871239036}
   m_Father: {fileID: 1280276495}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -5532,84 +5458,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
   m_PrefabInstance: {fileID: 1794290908}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1794290910 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8320214804801100467, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
-  m_PrefabInstance: {fileID: 1794290908}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &1871239035
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1871239036}
-  - component: {fileID: 1871239038}
-  - component: {fileID: 1871239037}
-  m_Layer: 0
-  m_Name: GateToCloseAll
-  m_TagString: door
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &1871239036
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1871239035}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.74, y: 0.35230517, z: 23.24}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1104837137}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &1871239037
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1871239035}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.9547544, y: 1.5751697, z: 1.4219042}
-  m_Center: {x: 0.36715722, y: 0.0258798, z: 0.02369994}
---- !u!114 &1871239038
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1871239035}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ScenesToLoad: []
-  ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
-    sceneAssetGuidHex: 91277341fb3a40c4aa34a17eaf1ee1aa
-  - sceneAsset: {fileID: 102900000, guid: 3a5291929c0e1d24780b273a2535876c, type: 3}
-    sceneAssetGuidHex: 3a5291929c0e1d24780b273a2535876c
-  SceneBlockers: []
 --- !u!1001 &1879712148
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6040,7 +5888,13 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 3a5291929c0e1d24780b273a2535876c, type: 3}
     sceneAssetGuidHex: 3a5291929c0e1d24780b273a2535876c
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
+    sceneAssetGuidHex: 91277341fb3a40c4aa34a17eaf1ee1aa
+  - sceneAsset: {fileID: 102900000, guid: d1dbee755be594247ad776ed746d2345, type: 3}
+    sceneAssetGuidHex: d1dbee755be594247ad776ed746d2345
+  - sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
+    sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 3a5291929c0e1d24780b273a2535876c, type: 3}

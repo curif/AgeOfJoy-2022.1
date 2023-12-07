@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
-
+using System.Linq;
 
 //[RequireComponent(typeof(CabinetReplace))]
 public class CabinetController : MonoBehaviour
@@ -18,35 +18,69 @@ public class CabinetController : MonoBehaviour
 
     [Tooltip("Positions where the player can stay to load the cabinet")]
     public List<GameObject> AgentPlayerPositions;
+    [Tooltip("Positions where the player shouldn't be to unload the cabinet")]
+    public List<GameObject> AgentPlayerPositionsToUnload;
     [Tooltip("Teleport anchor for player teleportation")]
     public GameObject AgentPlayerTeleportAnchor;
     [Tooltip("Player/agent position assigned to the cabinet")]
     public AgentScenePosition AgentScenePosition;
 
+    public GameObject outOfOrderCabinet;
+
     private CabinetReplace cabinetReplaceComponent;
     private List<AgentScenePosition> AgentPlayerPositionComponents;
+    private List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
+
+    private bool coroutineIsRunning;
 
     void Start()
     {
-        AgentPlayerPositionComponents = new List<AgentScenePosition>();
-        foreach (GameObject playerPos in AgentPlayerPositions)
-        {
-            AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();
-            if (asp != null)
-                AgentPlayerPositionComponents.Add(asp);
-        }
+        AgentPlayerPositionComponents = AgentPlayerPositions
+       .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+       .Where(asp => asp != null)
+       .ToList();
 
-        StartCoroutine(load());
+        AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
+        .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+        .Where(asp => asp != null)
+        .ToList();
+
+        outOfOrderCabinet = gameObject;
+
+        StartLoad();
+    }
+
+    void OnEnable()
+    {
+        StartLoad();
+    }
+
+    void StartLoad()
+    {
+        if (!coroutineIsRunning)
+        {
+            coroutineIsRunning = true;
+            StartCoroutine(load());
+        }
+    }
+
+    // private bool playerIsNotInAnyUnloadPosition()
+    // {
+    //     foreach (AgentScenePosition asp in AgentPlayerPositionComponentsToUnload)
+    //     {
+    //         if (asp.IsPlayerPresent)
+    //             return false;
+    //     }
+    //     return true;
+    // }
+    private bool playerIsNotInAnyUnloadPosition()
+    {
+        return !AgentPlayerPositionComponentsToUnload.Any(asp => asp.IsPlayerPresent);
     }
 
     private bool playerIsInSomePosition()
     {
-        foreach (AgentScenePosition asp in AgentPlayerPositionComponents)
-        {
-            if (asp.IsPlayerPresent)
-                return true;
-        }
-        return false;
+        return AgentPlayerPositionComponents.Any(asp => asp.IsPlayerPresent);
     }
 
     IEnumerator load()
@@ -55,9 +89,14 @@ public class CabinetController : MonoBehaviour
         while (game == null || string.IsNullOrEmpty(game.CabinetDBName))
             yield return new WaitForSeconds(2f);
 
+        //load the new cabinet. 
+        // the load process repeats forever, because the new cabinet created can be unloaded an re-activate
+        // this object when that occurs.
         while (!playerIsInSomePosition())
+        {
+            // ConfigManager.WriteConsole($"[CabinetController] waiting for  {game.CabInfo?.name}");
             yield return new WaitForSeconds(1f);
-
+        }
         if (game.CabInfo == null)
         {
             game.CabInfo = CabinetInformation.fromName(game.CabinetDBName);
@@ -68,6 +107,8 @@ public class CabinetController : MonoBehaviour
             }
             yield return new WaitForSeconds(0.01f);
         }
+
+        ConfigManager.WriteConsole($"[CabinetController] Loading cabinet  {game.CabInfo.name} ******");
 
         Cabinet cab;
         Transform parent = transform.parent;
@@ -88,27 +129,37 @@ public class CabinetController : MonoBehaviour
             yield break;
         }
 
+        cab.gameObject.SetActive(false);
+
         if (game.CabInfo.Parts != null)
         {
             ConfigManager.WriteConsole($"[CabinetController] {game.CabInfo.name} texture parts");
-            //N seconds to load a cabinet
-            // float waitForSeconds = 1f / game.CabInfo.Parts.Count;
             foreach (CabinetInformation.Part part in game.CabInfo.Parts)
             {
                 yield return new WaitForSeconds(0.01f);
                 CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
             }
 
-            CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-            cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
-            cabReplaceComp.game = game;
-
-            //gameObject.SetActive(false);
-            yield return new WaitForSeconds(0.01f);
-            Destroy(gameObject); //destroy me
         }
 
+        CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
+        cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
+        cabReplaceComp.AgentPlayerPositionsToUnload = AgentPlayerPositionsToUnload;
+        cabReplaceComp.outOfOrderCabinet = outOfOrderCabinet;
+        cabReplaceComp.game = game;
 
+        //activate the new cabinet
+        cab.gameObject.SetActive(true);
         ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
+
+        //this didn't work:
+        //Coroutines are also stopped when the MonoBehaviour is destroyed or if the GameObject the 
+        // MonoBehaviour is attached to is disabled. Coroutines are not stopped when a MonoBehaviour 
+        // is disabled.
+
+        //deactivate the out of order cabinet.
+        coroutineIsRunning = false;
+        gameObject.SetActive(false);
+
     }
 }
