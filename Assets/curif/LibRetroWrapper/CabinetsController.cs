@@ -54,7 +54,7 @@ public class CabinetsController : MonoBehaviour
                 MeshRenderer renderer = cc.AgentPlayerTeleportAnchor?.GetComponent<MeshRenderer>();
                 if (renderer != null)
                 {
-                    string textureName = $"Cabinets/AgentPlayerPositionsNumbers/AgentPlayerPosition ({idx.ToString()})";
+                    string textureName = $"Cabinets/AgentPlayerPositionsNumbers/AgentPlayerPosition_{idx.ToString()}";
                     Texture2D numberTexture = Resources.Load<Texture2D>(textureName);
                     if (numberTexture != null)
                     {
