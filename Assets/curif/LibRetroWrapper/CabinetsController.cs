@@ -152,13 +152,15 @@ public class CabinetsController : MonoBehaviour
 
     IEnumerator load()
     {
+        int countAssigned = 0;
         List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(
-                                                Room, 
+                                                Room,
                                                 transform.childCount); //persist registry with the new assignation if any.
         ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {games.Count} cabinets to room {Room}");
         Loaded = false;
         foreach (CabinetPosition g in games)
         {
+            countAssigned++;
             if (!String.IsNullOrEmpty(g.CabinetDBName))
             {
                 CabinetController cc = GetCabinetControllerByPosition(g.Position);
@@ -170,6 +172,25 @@ public class CabinetsController : MonoBehaviour
                 }
                 else
                     ConfigManager.WriteConsole($"[CabinetsController.load] child #{g.Position} don´t have a CabinetController component or was assigned previously.");
+            }
+        }
+
+        if (games.Count() < transform.childCount)
+        {
+            //assign a random to non-assigned.        
+            List<string> RandomCabsName = gameRegistry.GetRandomizedAllCabinetNames();
+            int idx = 0;
+            foreach (CabinetController cc in transform.GetComponentsInChildren<CabinetController>())
+            {
+                if (string.IsNullOrEmpty(cc.game.CabinetDBName))
+                {
+                    cc.game.CabinetDBName = RandomCabsName[idx];
+                    ConfigManager.WriteConsole($"[CabinetsController.load] randomly assigned {cc.game}");
+                    idx++;
+                    yield return new WaitForSeconds(1f / 2f);
+                }
+                if (idx + 1 > RandomCabsName.Count())
+                    break;
             }
         }
         ConfigManager.WriteConsole($"[CabinetsController.load] loaded cabinets");
@@ -194,8 +215,6 @@ public class CabinetsController : MonoBehaviour
         }
         return null;
     }
-
-    
 
     public bool ReplaceInRoom(int position, string room, string cabinetDBName)
     {
