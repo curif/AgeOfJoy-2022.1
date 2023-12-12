@@ -313,12 +313,31 @@ public class GameRegistry : MonoBehaviour
                              select cab).ToList();
         return cabs;
     }
+    public List<string> GetRandomizedAllCabinetNames()
+    {
+        List<string> allCabinetNames = (from path in System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
+                                        let cab = CabinetDBAdmin.GetNameFromPath(path)
+                                        select cab).ToList();
+
+        // Use LINQ to order the cabinet names randomly
+        List<string> randomizedCabinetNames = allCabinetNames.OrderBy(x => UnityEngine.Random.value).ToList();
+
+        return randomizedCabinetNames;
+    }
+
 
     public bool CabinetExists(string cabinetName)
     {
         return Directory.EnumerateDirectories(ConfigManager.CabinetsDB)
                         .Any(path => CabinetDBAdmin.GetNameFromPath(path) == cabinetName);
     }
+
+    public string GetRandomCabinetDBName()
+    {
+        // Return null if UnassignedCabinets is null or empty, else return a random CabinetDBName
+        return UnassignedCabinets?.Count > 0 ? UnassignedCabinets[UnityEngine.Random.Range(0, UnassignedCabinets.Count)] : null;
+    }
+
 
     public GameRegistry Recover()
     {
