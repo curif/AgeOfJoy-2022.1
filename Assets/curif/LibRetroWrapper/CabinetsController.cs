@@ -168,7 +168,7 @@ public class CabinetsController : MonoBehaviour
                 {
                     ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {g}");
                     cc.game = g; //CabinetController will load the cabinet once asigned a cabinetName
-                    yield return new WaitForSeconds(1f / 2f);
+                    yield return new WaitForSeconds(1f / 3f);
                 }
                 else
                     ConfigManager.WriteConsole($"[CabinetsController.load] child #{g.Position} don´t have a CabinetController component or was assigned previously.");
@@ -187,7 +187,7 @@ public class CabinetsController : MonoBehaviour
                     cc.game.CabinetDBName = RandomCabsName[idx];
                     ConfigManager.WriteConsole($"[CabinetsController.load] randomly assigned {cc.game}");
                     idx++;
-                    yield return new WaitForSeconds(1f / 2f);
+                    yield return new WaitForSeconds(1f / 3f);
                 }
                 if (idx + 1 > RandomCabsName.Count())
                     break;

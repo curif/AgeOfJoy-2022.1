@@ -12,31 +12,16 @@ using System.Linq;
 
 public class CabinetReplace : MonoBehaviour
 {
-    [Tooltip("The system will find it")]
-    public List<GameObject> AgentPlayerPositions;
-    [Tooltip("The system will find it")]
-    public List<GameObject> AgentPlayerPositionsToUnload;
     public CabinetPosition game;
     public GameObject outOfOrderCabinet;
 
-    private List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
-    private List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
+    [Tooltip("The system will find it")]
+    public List<AgentScenePosition> AgentPlayerPositionComponents;
+    [Tooltip("The system will find it")]
+    public List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
+    [Tooltip("The system will find it")]
+    public List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
 
-    /*private bool playerIsNotInAnyUnloadPosition()
-    {
-        List<AgentScenePosition> positions = AgentPlayerPositionComponentsToUnload;
-
-        if (positions == null || positions.Count() == 0)
-            positions = AgentPlayerPositionComponentsToLoad;
-
-        foreach (AgentScenePosition asp in positions)
-        {
-            if (asp.IsPlayerPresent)
-                return false;
-        }
-        return true;
-    }
-    */
     private bool playerIsNotInAnyUnloadPosition()
     {
         List<AgentScenePosition> positions = AgentPlayerPositionComponentsToUnload;
@@ -49,15 +34,6 @@ public class CabinetReplace : MonoBehaviour
 
     void Start()
     {
-        AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
-            .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
-            .Where(asp => asp != null)
-            .ToList();
-        AgentPlayerPositionComponentsToLoad = AgentPlayerPositions
-            .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
-            .Where(asp => asp != null)
-            .ToList();
-
         StartCoroutine(unload());
     }
 
@@ -105,15 +81,16 @@ public class CabinetReplace : MonoBehaviour
             Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
                                                          adjustedPosition, transform.rotation,
-                                                         transform.parent, AgentPlayerPositions);
+                                                         transform.parent, AgentPlayerPositionComponentsToLoad);
 
             cab.gameObject.SetActive(false);
             CabinetFactory.skinFromInformation(cab, cbInfo);
 
             //add CabinetReplace for the next replacement. CabinetController do the same.
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-            cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
-            cabReplaceComp.AgentPlayerPositionsToUnload = AgentPlayerPositionsToUnload;
+            cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositionComponents;
+            cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
+            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad; 
             cabReplaceComp.game = newCabGame;
             cabReplaceComp.outOfOrderCabinet = gameObject;
             cab.gameObject.SetActive(true);

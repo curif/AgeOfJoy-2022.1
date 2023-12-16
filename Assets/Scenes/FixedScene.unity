@@ -4036,6 +4036,7 @@ GameObject:
   - component: {fileID: 1836024345}
   - component: {fileID: 1836024377}
   - component: {fileID: 1836024378}
+  - component: {fileID: 1836024379}
   m_Layer: 2
   m_Name: OVRPlayerControllerGalery
   m_TagString: Player
@@ -4367,6 +4368,20 @@ MonoBehaviour:
   CameraOffset: {fileID: 149079754}
   xrorigin: {fileID: 1836024372}
   characterController: {fileID: 1836024374}
+--- !u!114 &1836024379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1836024333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35a1d5e4a0328524fa25ebf07918306b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleTimeThreshold: 0.5
+  isStatic: 0
 --- !u!1 &1926537338
 GameObject:
   m_ObjectHideFlags: 0

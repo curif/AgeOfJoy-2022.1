@@ -165,7 +165,7 @@ public static class CabinetFactory
 
     public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number,
       Vector3 position, Quaternion rotation, Transform parent,
-      List<GameObject> agentPlayerPositions)
+      List<AgentScenePosition> agentPlayerPositions)
     {
         string modelFilePath = "";
         if (!String.IsNullOrEmpty(cbinfo.model.file))

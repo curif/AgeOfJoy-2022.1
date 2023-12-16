@@ -319,7 +319,7 @@ private void addBoxCollider(GameObject gameObject)
                              bool EnableSaveState = true, string StateFile = "state.nv",
                              Vector3? rotation = null, float scalePercentage = 0,
                              string gamma = "1.0", string brightness = "1.0",
-                             List<GameObject> agentPlayerPositions = null,
+                             List<AgentScenePosition> agentPlayerPositions = null,
                              string shaderName = "damage", Dictionary<string, string> shaderConfig = null,
                              ControlMapConfiguration cabinetControlMap = null,
                              LightGunInformation lightGunInformation = null,
