@@ -658,9 +658,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1787489584}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1787489584}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -2446,9 +2454,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1787489584}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1787489584}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -3268,6 +3284,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7369505817908819814, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_IncludeLayers.m_Bits
+      value: 264
+      objectReference: {fileID: 0}
     - target: {fileID: 8336078990134489005, guid: e0bc45deca399c8419693197d2990220, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -3406,9 +3426,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1787489584}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1787489584}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -5822,11 +5850,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1787489586
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5837,7 +5867,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -6501,6 +6531,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7369505817908819814, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_IncludeLayers.m_Bits
+      value: 264
+      objectReference: {fileID: 0}
     - target: {fileID: 8336078990134489005, guid: e0bc45deca399c8419693197d2990220, type: 3}
       propertyPath: m_Enabled
       value: 0
@@ -6925,6 +6959,10 @@ PrefabInstance:
     - target: {fileID: 1225618955148793713, guid: e0bc45deca399c8419693197d2990220, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7369505817908819814, guid: e0bc45deca399c8419693197d2990220, type: 3}
+      propertyPath: m_IncludeLayers.m_Bits
+      value: 264
       objectReference: {fileID: 0}
     - target: {fileID: 8336078990134489005, guid: e0bc45deca399c8419693197d2990220, type: 3}
       propertyPath: m_Enabled

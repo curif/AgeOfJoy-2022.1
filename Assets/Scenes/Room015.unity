@@ -913,7 +913,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 5
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &86594163
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1079,7 +1079,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &113632882
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1090,7 +1090,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -1187,7 +1187,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 2.5
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &115760432
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1270,7 +1270,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.4298934
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1361,9 +1361,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2089475133}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -2028,7 +2036,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -2098,7 +2106,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 169610764}
   m_LocalRotation: {x: -0, y: -0.9999286, z: -0, w: -0.011950593}
-  m_LocalPosition: {x: -2.03, y: -0.13109815, z: 0.16}
+  m_LocalPosition: {x: -2.03, y: -0.2, z: 0.16}
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3083,7 +3091,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -3289,7 +3297,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -4476,12 +4484,12 @@ Transform:
   - {fileID: 1594983863}
   - {fileID: 370702345}
   - {fileID: 1020863955}
+  - {fileID: 279138774}
   - {fileID: 1667151337}
   - {fileID: 1737355496}
   - {fileID: 1770377613}
   - {fileID: 2086583932}
   - {fileID: 1414254042}
-  - {fileID: 279138774}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -4913,7 +4921,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -5043,7 +5051,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &372903872
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5054,7 +5062,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -5148,9 +5156,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 875974445}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 987971546}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -11299,7 +11315,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 726314862}
   m_LocalRotation: {x: 0, y: 0.017101478, z: 0, w: 0.9998538}
-  m_LocalPosition: {x: -11.347, y: -0.634, z: -5.604}
+  m_LocalPosition: {x: -11.347, y: -0.7, z: -5.604}
   m_LocalScale: {x: 0.18027647, y: 0.027827412, z: 0.14314726}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11324,7 +11340,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &726314865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11335,7 +11351,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -11922,7 +11938,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &761637635
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11933,7 +11949,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -12118,7 +12134,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 643975773105895969, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.45249996
+      value: -0.52
       objectReference: {fileID: 0}
     - target: {fileID: 643975773105895969, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -12173,9 +12189,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2089475133}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -13504,7 +13528,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 4
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &838734260
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13515,7 +13539,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -13534,7 +13558,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 838734258}
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -6.75, y: 0.41999996, z: -6.21}
+  m_LocalPosition: {x: -6.75, y: 1.175, z: -6.21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -13953,7 +13977,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 4
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &875974447
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13964,7 +13988,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -13983,7 +14007,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 875974445}
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -15.7, y: -2.45, z: 0.41}
+  m_LocalPosition: {x: -15.7, y: -1.83, z: 0.41}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15452,9 +15476,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 987971546}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -16337,6 +16369,8 @@ Transform:
   - {fileID: 2089475136}
   - {fileID: 875974448}
   - {fileID: 838734261}
+  - {fileID: 1826432148}
+  - {fileID: 987971549}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -16414,6 +16448,79 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1593038524014086401, guid: 2d66723206fdd84d3adea673919bd0e6, type: 3}
   m_PrefabInstance: {fileID: 986928732}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &987971546
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 987971549}
+  - component: {fileID: 987971548}
+  - component: {fileID: 987971547}
+  m_Layer: 0
+  m_Name: firstFloorZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &987971547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987971546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
+  NPCPresentName: 
+  BoxColliderHeight: 2
+  boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
+--- !u!65 &987971548
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987971546}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 7.1560307, y: 2, z: 11.315461}
+  m_Center: {x: 1.0340552, y: 0, z: -2.407778}
+--- !u!4 &987971549
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 987971546}
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -10.37, y: -1.4, z: -4.61}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 986710397}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &991263228
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16703,7 +16810,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -16773,7 +16880,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1020863950}
   m_LocalRotation: {x: -0, y: -0.001422042, z: -0, w: -0.99999905}
-  m_LocalPosition: {x: -2.22, y: -0.13109815, z: -2.18}
+  m_LocalPosition: {x: -2.22, y: -0.2, z: -2.18}
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -17672,7 +17779,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1113672773
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -17683,7 +17790,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -17847,7 +17954,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 5
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1117604850
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18049,7 +18156,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2567084887410600938, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.443
+      value: -0.51
       objectReference: {fileID: 0}
     - target: {fileID: 2567084887410600938, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -18120,9 +18227,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1965953363}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -19232,7 +19347,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 643975773105895969, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.4525346
+      value: -0.52
       objectReference: {fileID: 0}
     - target: {fileID: 643975773105895969, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -19287,9 +19402,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2089475133}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -20791,7 +20914,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1282868789
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22719,7 +22842,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1395281876}
   m_LocalRotation: {x: -0, y: 0.99985045, z: -0, w: -0.017297193}
-  m_LocalPosition: {x: -3.538, y: -0.66109824, z: -6.5310006}
+  m_LocalPosition: {x: -3.538, y: -0.73, z: -6.5310006}
   m_LocalScale: {x: 0.18027647, y: 0.027827412, z: 0.14314726}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -22744,7 +22867,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1395281879
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22755,7 +22878,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -24061,7 +24184,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.42989346
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.z
@@ -24156,9 +24279,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 0}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -24326,7 +24457,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -25441,7 +25572,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2567084887410600938, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.48912963
+      value: -0.56
       objectReference: {fileID: 0}
     - target: {fileID: 2567084887410600938, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -25512,9 +25643,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1965953363}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -26009,7 +26148,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1564254750}
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.00012788175}
-  m_LocalPosition: {x: -6.8399997, y: -0.66109824, z: -3.699999}
+  m_LocalPosition: {x: -6.8399997, y: -0.73, z: -3.699999}
   m_LocalScale: {x: 0.1285613, y: 0.02359877, z: 0.1255606}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -26034,7 +26173,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1564254753
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26045,7 +26184,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -26220,9 +26359,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 875974445}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 987971546}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -26730,7 +26877,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -26800,7 +26947,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1594983858}
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0.00012788175}
-  m_LocalPosition: {x: -1.23, y: -0.13109815, z: 0.22}
+  m_LocalPosition: {x: -1.23, y: -0.2, z: 0.22}
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27295,7 +27442,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1621175393}
   m_LocalRotation: {x: -0, y: -0.001422042, z: -0, w: -0.99999905}
-  m_LocalPosition: {x: -7.9897747, y: -0.658, z: -5.4861155}
+  m_LocalPosition: {x: -7.9897747, y: -0.73, z: -5.4861155}
   m_LocalScale: {x: 0.1285613, y: 0.02359877, z: 0.1255606}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27320,7 +27467,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1621175396
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27331,7 +27478,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -27797,7 +27944,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 643975773105895969, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.45253468
+      value: -0.52
       objectReference: {fileID: 0}
     - target: {fileID: 643975773105895969, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: m_LocalPosition.z
@@ -27856,9 +28003,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 838734258}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -28323,7 +28478,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -28393,7 +28548,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1674584106}
   m_LocalRotation: {x: -0, y: 0.9993042, z: -0, w: 0.03729811}
-  m_LocalPosition: {x: -6.67, y: -0.13109803, z: 2.43}
+  m_LocalPosition: {x: -6.67, y: -0.2, z: 2.43}
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -28751,7 +28906,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1705963954}
   m_LocalRotation: {x: -0, y: -0.9999286, z: 0, w: -0.011950593}
-  m_LocalPosition: {x: -7.640001, y: -0.66109824, z: -3.7600005}
+  m_LocalPosition: {x: -7.640001, y: -0.73, z: -3.7600005}
   m_LocalScale: {x: 0.11446941, y: 0.025362205, z: 0.1355818}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -28776,7 +28931,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1705963957
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -28787,7 +28942,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -29459,7 +29614,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -29557,7 +29712,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 2.5
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1743164283
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30132,7 +30287,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -30641,7 +30796,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1799240962
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30652,7 +30807,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -30835,6 +30990,79 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 475c46ba9e0f312468a3d83f0edff7f6, type: 3}
   m_PrefabInstance: {fileID: 1815653876}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1826432145
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1826432148}
+  - component: {fileID: 1826432147}
+  - component: {fileID: 1826432146}
+  m_Layer: 0
+  m_Name: secFloorZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1826432146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826432145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
+  NPCPresentName: 
+  BoxColliderHeight: 2
+  boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
+--- !u!65 &1826432147
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826432145}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 9.218803, y: 2, z: 11.315461}
+  m_Center: {x: 2.0654411, y: 0, z: -2.4077783}
+--- !u!4 &1826432148
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826432145}
+  m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -10.37, y: 1.09, z: -4.61}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 986710397}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1835919233
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -30881,7 +31109,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.4298934
+      value: -0.5
       objectReference: {fileID: 0}
     - target: {fileID: 1880024393873662854, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: m_LocalPosition.z
@@ -30976,9 +31204,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 875974445}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -32001,9 +32237,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2089475133}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1826432145}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -32307,9 +32551,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 875974445}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 987971546}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -32425,7 +32677,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 5
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1910874464
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33023,7 +33275,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -33093,7 +33345,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1957418955}
   m_LocalRotation: {x: -0, y: 0.99997634, z: -0, w: -0.0068795034}
-  m_LocalPosition: {x: -5.64, y: -0.13109827, z: 2.37}
+  m_LocalPosition: {x: -5.64, y: -0.2, z: 2.37}
   m_LocalScale: {x: 0.050000004, y: 1, z: 0.050000004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -33134,9 +33386,9 @@ MonoBehaviour:
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
-  BoxColliderHeight: 4
+  BoxColliderHeight: 2
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1965953365
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33147,7 +33399,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -33156,7 +33408,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 4.07006, y: 1, z: 4.2780995}
+  m_Size: {x: 4.07006, y: 2, z: 4.2780995}
   m_Center: {x: 1.2059, y: 0, z: -2.9215283}
 --- !u!4 &1965953366
 Transform:
@@ -33166,7 +33418,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1965953363}
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -9.27, y: 0.41999996, z: -6.21}
+  m_LocalPosition: {x: -9.27, y: 1.09, z: -6.21}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -34820,7 +35072,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -34890,7 +35142,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2050985981}
   m_LocalRotation: {x: -0, y: 0.99985045, z: -0, w: -0.017297193}
-  m_LocalPosition: {x: 2.072, y: -0.13109827, z: -2.611}
+  m_LocalPosition: {x: 2.072, y: -0.2, z: -2.611}
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -35217,7 +35469,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 2.5
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2069555195
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -35559,7 +35811,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -35779,7 +36031,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -35877,7 +36129,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 4
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2089475135
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -35888,7 +36140,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -35907,7 +36159,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2089475133}
   m_LocalRotation: {x: -0, y: -0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -9.96, y: 0.41999996, z: -2.44}
+  m_LocalPosition: {x: -9.96, y: 1.21, z: -2.44}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -36713,7 +36965,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2122702214}
   m_LocalRotation: {x: -0, y: -0.025298191, z: -0, w: 0.99968}
-  m_LocalPosition: {x: -6.7599998, y: -0.66109824, z: -6.030001}
+  m_LocalPosition: {x: -6.7599998, y: -0.73, z: -6.030001}
   m_LocalScale: {x: 0.07936455, y: 0.025362205, z: 0.08892094}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -36738,7 +36990,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2122702217
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -36749,7 +37001,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -36838,7 +37090,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2126005498}
   m_LocalRotation: {x: -0, y: 0.99997634, z: -0, w: -0.0068795034}
-  m_LocalPosition: {x: -11.249999, y: -0.66109824, z: -1.5499995}
+  m_LocalPosition: {x: -11.249999, y: -0.73, z: -1.5499995}
   m_LocalScale: {x: 0.124495275, y: 0.025362205, z: 0.123929225}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -36863,7 +37115,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2126005501
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -36874,7 +37126,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -37064,7 +37316,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -37134,7 +37386,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2132198683}
   m_LocalRotation: {x: -0, y: 0.017101476, z: -0, w: 0.9998538}
-  m_LocalPosition: {x: -6.5, y: -0.13499999, z: 0.07}
+  m_LocalPosition: {x: -6.5, y: -0.21, z: 0.07}
   m_LocalScale: {x: 0.049999997, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -37344,7 +37596,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -37414,7 +37666,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2141109716}
   m_LocalRotation: {x: -0, y: -0.025298191, z: -0, w: 0.99968}
-  m_LocalPosition: {x: -1.15, y: -0.13109815, z: -2.11}
+  m_LocalPosition: {x: -1.15, y: -0.2, z: -2.11}
   m_LocalScale: {x: 0.05, y: 1, z: 0.05}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -37543,7 +37795,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2146299964}
   m_LocalRotation: {x: -0, y: 0.9993042, z: -0, w: 0.03729811}
-  m_LocalPosition: {x: -12.28, y: -0.661098, z: -1.49}
+  m_LocalPosition: {x: -12.28, y: -0.73, z: -1.49}
   m_LocalScale: {x: 0.1285613, y: 0.02359877, z: 0.1255606}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -37568,7 +37820,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2146299967
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -37579,7 +37831,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0

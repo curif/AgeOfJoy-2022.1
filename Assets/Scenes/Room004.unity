@@ -1384,11 +1384,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &108282755
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1739,9 +1741,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1216232922}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -3009,9 +3019,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1216232922}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -3167,11 +3185,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &279108382
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3182,7 +3202,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -3782,13 +3802,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -4123,11 +4151,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &356969979
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4138,7 +4168,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -5288,9 +5318,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1049871974}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -5522,11 +5560,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &432313555
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -5537,7 +5577,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -6292,11 +6332,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &472604361
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6307,7 +6349,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -6845,13 +6887,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -7763,9 +7813,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1049871974}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -9469,11 +9527,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &694505085
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9484,7 +9544,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -9720,13 +9780,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -11519,11 +11587,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &882978865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11903,9 +11973,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -13191,13 +13269,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -13301,11 +13387,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1049871977
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13316,7 +13404,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -13444,6 +13532,7 @@ Transform:
   - {fileID: 1049871975}
   - {fileID: 1216232923}
   - {fileID: 1620565218}
+  - {fileID: 1489351185}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -13876,11 +13965,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1117604850
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13999,11 +14090,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1118422249
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14014,7 +14107,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -14235,11 +14328,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1127521938
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14250,7 +14345,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -15184,13 +15279,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -15396,11 +15499,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1216232925
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15411,7 +15516,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -15559,9 +15664,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1049871974}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -15733,9 +15846,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1049871974}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -16230,11 +16351,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1282868789
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -20872,13 +20995,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -21327,6 +21458,79 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4298955583021570582, guid: 3f91f012bf7c3054a8f19358ec302a1d, type: 3}
   m_PrefabInstance: {fileID: 1484529473}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1489351184
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1489351185}
+  - component: {fileID: 1489351187}
+  - component: {fileID: 1489351186}
+  m_Layer: 0
+  m_Name: roomZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1489351185
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489351184}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.27, y: 0.65, z: -2.42}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1055181436}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1489351186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489351184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
+  NPCPresentName: 
+  BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
+--- !u!65 &1489351187
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1489351184}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10.726857, y: 1, z: 7.045576}
+  m_Center: {x: 0.5312333, y: 0, z: 0.8366709}
 --- !u!4 &1495434555 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7668740506201039929, guid: f1478ea583852b8cdab23c71b090c513, type: 3}
@@ -21429,11 +21633,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1501754496
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21444,7 +21650,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -21966,11 +22172,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1535934521
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22826,11 +23034,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1608465556
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22841,7 +23051,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -23045,11 +23255,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1620565220
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23060,7 +23272,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -23669,11 +23881,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1693930869
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23878,11 +24092,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1714072623
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -24482,13 +24698,21 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 1489351184}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
-      objectReference: {fileID: 1216232922}
+      objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[1]
       value: 
@@ -25824,11 +26048,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1901165420
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25839,7 +26065,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -26357,11 +26583,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1941433771
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26372,7 +26600,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -26593,11 +26821,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1973179992
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26608,7 +26838,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -27257,11 +27487,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2022803589
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -27272,7 +27504,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -28719,11 +28951,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2132604456
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -28734,7 +28968,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0

@@ -1006,7 +1006,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &108282755
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1263,9 +1263,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1216232922}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 3
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -2809,9 +2817,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1049871974}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 3
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -3075,7 +3091,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &279108382
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3417,7 +3433,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -3686,9 +3702,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -4107,7 +4131,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &356969979
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4977,7 +5001,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -5284,9 +5308,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1309321249}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 3
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -5532,7 +5564,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &432313555
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6308,7 +6340,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &472604361
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6916,9 +6948,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -7834,9 +7874,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 652040360}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 3
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -8326,7 +8374,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -8883,7 +8931,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &652040363
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8894,7 +8942,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -9121,6 +9169,79 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8160664758392565956, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
   m_PrefabInstance: {fileID: 664122520}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &668111372
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 668111373}
+  - component: {fileID: 668111375}
+  - component: {fileID: 668111374}
+  m_Layer: 0
+  m_Name: roomZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 5721338939258241955, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &668111373
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 668111372}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3.29, y: 0.65, z: -1.73}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1055181436}
+  m_RootOrder: -1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &668111374
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 668111372}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b54e6acc8ff99870a381f8c6f2c7b56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsPlayerColliding: 0
+  IsPlayerPresent: 0
+  IsNPCPresent: 0
+  NPCPresentName: 
+  BoxColliderHeight: 35
+  boxCollider: {fileID: 0}
+  playerStayDurationTimeSecs: 0
+--- !u!65 &668111375
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 668111372}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 11.821226, y: 1, z: 11.735089}
+  m_Center: {x: 4.0320168, y: 0, z: -1.7379432}
 --- !u!1 &671340500
 GameObject:
   m_ObjectHideFlags: 0
@@ -9265,7 +9386,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -9540,7 +9661,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &694505085
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9787,9 +9908,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -11102,7 +11231,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -11341,7 +11470,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &882978865
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11721,9 +11850,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -12807,7 +12944,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -12985,9 +13122,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -13175,7 +13320,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1049871977
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13186,7 +13331,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -13316,6 +13461,7 @@ Transform:
   - {fileID: 1309321250}
   - {fileID: 1216232923}
   - {fileID: 1620565218}
+  - {fileID: 668111373}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -13758,7 +13904,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1117604850
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13883,7 +14029,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1118422249
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14770,9 +14916,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1620565217}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 2
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -15074,7 +15228,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1216232925
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15085,7 +15239,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -15233,9 +15387,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 652040360}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 3
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -15415,9 +15577,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1309321249}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
-      propertyPath: AgentPlayerPositionsToUnload.Array.size
-      value: 3
+      propertyPath: AgentPlayerPositionsToLoad.Array.size
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToUnload.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: AgentPlayerPositionsToLoad.Array.data[0]
+      value: 
+      objectReference: {fileID: 668111372}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentPlayerPositionsToUnload.Array.data[0]
       value: 
@@ -18545,7 +18715,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -18658,7 +18828,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1309321252
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18669,7 +18839,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -19197,7 +19367,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -19821,7 +19991,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -20437,7 +20607,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1501754496
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -20890,7 +21060,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1535934521
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21760,7 +21930,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1608465556
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21981,7 +22151,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1620565220
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -21992,7 +22162,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -22610,7 +22780,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1693930869
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -22821,7 +22991,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1714072623
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23381,7 +23551,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -24490,7 +24660,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1901165420
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -24885,7 +25055,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1941433771
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25362,7 +25532,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -25742,7 +25912,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2022803589
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26678,7 +26848,7 @@ MeshCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 264
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -27327,7 +27497,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &2132604456
 BoxCollider:
   m_ObjectHideFlags: 0
