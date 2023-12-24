@@ -12,7 +12,7 @@ using System;
 public class CabinetAutoReload : MonoBehaviour
 {
   [Tooltip("Positions where the player can stay to load the cabinet")]
-  public List<GameObject> AgentPlayerPositions;
+  public List<AgentScenePosition> AgentPlayerPositions;
 
   static string testCabinetDir = ConfigManager.CabinetsDB + "/test";
   static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";

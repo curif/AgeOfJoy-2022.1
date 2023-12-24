@@ -29,8 +29,6 @@ public class GameVideoPlayer : MonoBehaviour
     {
         display = GetComponent<Renderer>();
         videoPlayer = GetComponent<UnityEngine.Video.VideoPlayer>();
-        videoPlayer.prepareCompleted += PrepareCompleted;
-        videoPlayer.errorReceived += ErrorReceived;
         isPreparing = false;
     }
 
@@ -45,9 +43,7 @@ public class GameVideoPlayer : MonoBehaviour
         this.inverty = inverty;
         this.shader = shader;
 
-        videoPlayer.playOnAwake = true;
-        videoPlayer.isLooping = true;
-        videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.APIOnly;
+
         //videoPlayer.targetMaterialRenderer = display;
         //VideoPlayer.targetMaterialProperty = shader.TargetMaterialProperty;
 
@@ -66,6 +62,9 @@ public class GameVideoPlayer : MonoBehaviour
 
     private void PrepareVideo()
     {
+        videoPlayer.prepareCompleted += PrepareCompleted;
+        videoPlayer.errorReceived += ErrorReceived;
+
         isPreparing = true;
         isReady = false;
         videoPlayer.Prepare();
@@ -81,6 +80,9 @@ public class GameVideoPlayer : MonoBehaviour
         if (videoPlayer.url != videoPath)
         {
             videoPlayer.url = videoPath;
+            videoPlayer.playOnAwake = true;
+            videoPlayer.isLooping = true;
+            videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.APIOnly;
         }
 
         // ConfigManager.WriteConsole($"[videoPlayer.Play] isPlaying: {videoPlayer.isPlaying} ====");
@@ -93,6 +95,8 @@ public class GameVideoPlayer : MonoBehaviour
         {
             ConfigManager.WriteConsole($"[videoPlayer.Play] PLAY {videoPath} ====");
             videoPlayer.isLooping = true;
+            if (videoPlayer.canSetSkipOnDrop)
+                videoPlayer.skipOnDrop = true;
             shader.Texture = videoPlayer.texture;
             shader.Invert(invertx, inverty);
             videoPlayer.Play();
@@ -105,7 +109,7 @@ public class GameVideoPlayer : MonoBehaviour
     {
 #if !DISABLE_VIDEO
         if (videoPlayer == null || string.IsNullOrEmpty(videoPath)
-            || !videoPlayer.isPrepared || videoPlayer.isPaused || isPreparing)
+            || !videoPlayer.isPrepared || isPreparing || videoPlayer.isPaused || !videoPlayer.isPlaying)
             return this;
 
         //is is necessary because the VideoPlayer.Pause method only works if isLooping is set to false. 
@@ -123,10 +127,10 @@ public class GameVideoPlayer : MonoBehaviour
     public GameVideoPlayer Stop()
     {
 #if !DISABLE_VIDEO
-        if (string.IsNullOrEmpty(videoPath) || !videoPlayer.isPrepared)
+        if (string.IsNullOrEmpty(videoPath) || videoPlayer == null)
             return this;
 
-        ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
+        // ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
         //destroy internal resources.
         videoPlayer.Stop();
 #endif
@@ -139,6 +143,8 @@ public class GameVideoPlayer : MonoBehaviour
         // The video is ready to play
         isPreparing = false;
         isReady = true;
+        vp.prepareCompleted -= PrepareCompleted;
+
         vp.Pause();
     }
 

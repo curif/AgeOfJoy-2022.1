@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000002, guid: e60df605519f6bd468c541b03f2fdda2, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: f77a6e88dff840b43ad0c2991d12b069, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -523,7 +523,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!43 &77506864
 Mesh:
   m_ObjectHideFlags: 0
@@ -806,7 +806,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 6e-44, z: 5.5e-44, w: 9.8721e-41}
+  m_BoundingSphereOverride: {x: 7.346955e-39, y: 7.346953e-39, z: 7.622461e-39, w: 7.255119e-39}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -5900,19 +5900,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 7.4290325e-34
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 5.73e-43
+      value: NaN
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 7.4290325e-34
+      value: 0.03515625
       objectReference: {fileID: 0}
     - target: {fileID: 1784628013458746815, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 5.73e-43
+      value: 0.057617188
       objectReference: {fileID: 0}
     - target: {fileID: 2815895704201418294, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -10991,7 +10991,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!114 &1086381196
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11010,7 +11010,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1086381197
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11842,7 +11842,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!1001 &1156434106
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13686,7 +13686,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!1001 &1201474453
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14118,7 +14118,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1283412765
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18457,19 +18457,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 148
+      value: 0.6435547
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 0
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 141
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 0
+      value: NaN
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -19783,7 +19783,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!1001 &1804037929
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19969,7 +19969,7 @@ MonoBehaviour:
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
-  playerStayDuration: 2.5
+  playerStayDurationTimeSecs: 0
 --- !u!65 &1808233429
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -20696,13 +20696,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1915306329}
-  - component: {fileID: 1915306330}
-  - component: {fileID: 1915306331}
-  - component: {fileID: 1915306332}
-  - component: {fileID: 1915306333}
-  - component: {fileID: 1915306334}
-  - component: {fileID: 1915306335}
-  - component: {fileID: 1915306336}
   m_Layer: 0
   m_Name: RoomInit
   m_TagString: Untagged
@@ -20753,186 +20746,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1915306330
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d6f50a9a07a03bc8eba24e26231d290a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1915306331
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa724125f3cfce7f79d3409fdaa6d117, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  CompatibilityTextList: {fileID: 4900000, guid: 41f0c4b7fa0d0920da9fa4209dc3bf6f, type: 3}
---- !u!114 &1915306332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16e58f50b62d26497899407c3548c53b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 0}
-  position: {x: -4.452, y: -0.533, z: 3.971}
---- !u!114 &1915306333
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0dfae2729a61603439fdb45f5b02fd58, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Scenes:
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
-      sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
-    SceneName: room001
-    Description: room001 - "PacMan"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom001
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: d30133f1fe4fc668e8bc7c95eb000f14, type: 3}
-      sceneAssetGuidHex: d30133f1fe4fc668e8bc7c95eb000f14
-    SceneName: room002
-    Description: room002 - "Xevious"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom002
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 20c6d912f757fb9eaab4bc33cc22b106, type: 3}
-      sceneAssetGuidHex: 20c6d912f757fb9eaab4bc33cc22b106
-    SceneName: room003
-    Description: room003 - "Juno First"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom003
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
-      sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
-    SceneName: room004
-    Description: room004 - "galaga"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom004
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: dae2049ed93a1f23590ea1c44263e494, type: 3}
-      sceneAssetGuidHex: dae2049ed93a1f23590ea1c44263e494
-    SceneName: room005
-    Description: room005 - "Diner"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom005
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: be539a000da5d98b3bab4b266cb714b0, type: 3}
-      sceneAssetGuidHex: be539a000da5d98b3bab4b266cb714b0
-    SceneName: room006
-    Description: room006 - "asteroids"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom006
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
-      sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
-    SceneName: room007
-    Description: room007 - "The billards"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom007
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: f5ff613baed38bf069ef30ee2c7557bc, type: 3}
-      sceneAssetGuidHex: f5ff613baed38bf069ef30ee2c7557bc
-    SceneName: room008
-    Description: room008 - "Space Invaders"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom008
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 91277341fb3a40c4aa34a17eaf1ee1aa, type: 3}
-      sceneAssetGuidHex: 91277341fb3a40c4aa34a17eaf1ee1aa
-    SceneName: room009
-    Description: room009 - "Frogger"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom009
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 64fd20b20f1ca8c889969d613bef4583, type: 3}
-      sceneAssetGuidHex: 64fd20b20f1ca8c889969d613bef4583
-    SceneName: roominit
-    Description: roominit - "The Lobby"
-    PlayerSpawnGameObjectName: PlayerSpawnRoomInit
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 159e12c1f8b371b41913da02f9f144bc, type: 3}
-      sceneAssetGuidHex: 159e12c1f8b371b41913da02f9f144bc
-    SceneName: room010
-    Description: room010 - "tempest"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom010
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 374c759e75035eb439f5c7570cd6cbcd, type: 3}
-      sceneAssetGuidHex: 374c759e75035eb439f5c7570cd6cbcd
-    SceneName: room011
-    Description: room011 - "Elevator Action"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom011
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 5cbdea80f764d604f8ea168b168db4d8, type: 3}
-      sceneAssetGuidHex: 5cbdea80f764d604f8ea168b168db4d8
-    SceneName: room012
-    Description: room012 - "Altered Beast"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom012
-  - Scene:
-      sceneAsset: {fileID: 102900000, guid: 4d732da02b6933145b2d6025b96bb878, type: 3}
-      sceneAssetGuidHex: 4d732da02b6933145b2d6025b96bb878
-    SceneName: room013
-    Description: room013 - "Golden Axe"
-    PlayerSpawnGameObjectName: PlayerSpawnRoom013
---- !u!114 &1915306334
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e692b7af0199e124c8394215ec4054a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1915306335
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c272e5d2405d561449f9b7403b5af15e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigurationController: {fileID: 0}
-  ScreenGenerator: {fileID: 0}
-  GameRegistry: {fileID: 0}
-  CabinetsController: {fileID: 0}
-  Teleportation: {fileID: 0}
-  SceneDatabase: {fileID: 0}
-  nameToExecute: comments.bas
-  path: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\core
---- !u!114 &1915306336
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915306328}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2627e419c496b884680fc9125fa980db, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &1928664612
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21108,7 +20921,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 2.17e-43, z: 1.65654e-40, w: 0}
+  m_BoundingSphereOverride: {x: 7.346955e-39, y: 7.346953e-39, z: 7.622461e-39, w: 7.255119e-39}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0

@@ -32,7 +32,6 @@ public class AgentScenePosition : MonoBehaviour
         size.y = BoxColliderHeight;
         boxCollider.size = size;
         playerTimer = 0f;
-
     }
 
     public bool ItsMe(string name)
@@ -42,7 +41,7 @@ public class AgentScenePosition : MonoBehaviour
 
     public bool NPCIsPresent(string name)
     {
-        return IsNPCPresent && ItsMe(name);
+        return IsNPCPresent && NPCPresentName == name;
     }
 
     public bool IsTaken
@@ -63,7 +62,7 @@ public class AgentScenePosition : MonoBehaviour
         // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
         if (colliderIsPlayer(collision))
         {
-            ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
+            // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
             IsPlayerColliding = true;
             playerTimer = 0f;
             IsNPCPresent = false;
@@ -96,7 +95,7 @@ public class AgentScenePosition : MonoBehaviour
         //ConfigManager.WriteConsole($"[OnTriggerExit] {name}: {collision.gameObject.name}");
         if (colliderIsPlayer(collision))
         {
-            ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: {collision.gameObject.name}");
+            // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: {collision.gameObject.name}");
             IsPlayerColliding = false;
             IsPlayerPresent = false;
             playerTimer = 0f;
@@ -105,7 +104,7 @@ public class AgentScenePosition : MonoBehaviour
         {
             if (collision.gameObject.tag == "NPC" && collision.gameObject.name == NPCPresentName)
             {
-                ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: NPC left the position {collision.gameObject.name}");
+                // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: NPC left the position {collision.gameObject.name}");
                 IsNPCPresent = false;
                 NPCPresentName = "";
             }

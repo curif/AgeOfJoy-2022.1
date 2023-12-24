@@ -16,8 +16,12 @@ public class CabinetController : MonoBehaviour
     public CabinetPosition game;
     public string Name;
 
-    [Tooltip("Positions where the player can stay to load the cabinet")]
+    [Tooltip("Positions where the player could stay to see videos")]
     public List<GameObject> AgentPlayerPositions;
+
+    [Tooltip("Positions where the player could stay to load the cabinet")]
+    public List<GameObject> AgentPlayerPositionsToLoad;
+
     [Tooltip("Positions where the player shouldn't be to unload the cabinet")]
     public List<GameObject> AgentPlayerPositionsToUnload;
     [Tooltip("Teleport anchor for player teleportation")]
@@ -28,24 +32,50 @@ public class CabinetController : MonoBehaviour
     public GameObject outOfOrderCabinet;
 
     private CabinetReplace cabinetReplaceComponent;
+    // videos
     private List<AgentScenePosition> AgentPlayerPositionComponents;
+    //videos
     private List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
 
+    //load cabinets
+    private List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
+
+
     private bool coroutineIsRunning;
+    private StaticCheck staticCheck;
 
     void Start()
     {
         AgentPlayerPositionComponents = AgentPlayerPositions
-       .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
-       .Where(asp => asp != null)
-       .ToList();
+            .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+            .Where(asp => asp != null)
+            .ToList();
 
-        AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
-        .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
-        .Where(asp => asp != null)
-        .ToList();
+        if (AgentPlayerPositionsToLoad == null || !AgentPlayerPositionsToLoad.Any())
+            AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponents;
+        else
+        {
+            AgentPlayerPositionComponentsToLoad = AgentPlayerPositionsToLoad
+                .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+                .Where(asp => asp != null)
+                .ToList();
+        }
+
+        if (AgentPlayerPositionsToUnload == null || !AgentPlayerPositionsToUnload.Any())
+            AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToLoad;
+        else
+        {
+            AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
+                .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
+                .Where(asp => asp != null)
+                .ToList();
+        }
 
         outOfOrderCabinet = gameObject;
+
+        GameObject player;
+        player = GameObject.Find("OVRPlayerControllerGalery");
+        staticCheck = player?.GetComponent<StaticCheck>();
 
         StartLoad();
     }
@@ -80,7 +110,7 @@ public class CabinetController : MonoBehaviour
 
     private bool playerIsInSomePosition()
     {
-        return AgentPlayerPositionComponents.Any(asp => asp.IsPlayerPresent);
+        return AgentPlayerPositionComponentsToLoad.Any(asp => asp.IsPlayerPresent);
     }
 
     IEnumerator load()
@@ -92,7 +122,7 @@ public class CabinetController : MonoBehaviour
         //load the new cabinet. 
         // the load process repeats forever, because the new cabinet created can be unloaded an re-activate
         // this object when that occurs.
-        while (!playerIsInSomePosition())
+        while (!(playerIsInSomePosition() && staticCheck.isStatic))
         {
             // ConfigManager.WriteConsole($"[CabinetController] waiting for  {game.CabInfo?.name}");
             yield return new WaitForSeconds(1f);
@@ -116,7 +146,9 @@ public class CabinetController : MonoBehaviour
         {
             //cabinet inception
             ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game}");
-            cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position, transform.position, transform.rotation, parent, AgentPlayerPositions);
+            cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position,
+                                                 transform.position, transform.rotation, 
+                                                 parent, AgentPlayerPositionComponents);
         }
         catch (System.Exception ex)
         {
@@ -143,8 +175,9 @@ public class CabinetController : MonoBehaviour
         }
 
         CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-        cabReplaceComp.AgentPlayerPositions = AgentPlayerPositions;
-        cabReplaceComp.AgentPlayerPositionsToUnload = AgentPlayerPositionsToUnload;
+        cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositionComponents;
+        cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
+        cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
         cabReplaceComp.outOfOrderCabinet = outOfOrderCabinet;
         cabReplaceComp.game = game;
 

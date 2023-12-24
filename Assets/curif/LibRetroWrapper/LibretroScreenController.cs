@@ -16,6 +16,8 @@ using System;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
+using System.Linq;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -79,7 +81,7 @@ public class LibretroScreenController : MonoBehaviour
     [Tooltip("Path that holds cabinet information, save states there.")]
     public string PathBase;
     [Tooltip("Positions where the player can stay to activate atraction videos")]
-    public List<GameObject> AgentPlayerPositions;
+    public List<AgentScenePosition> AgentPlayerPositions;
 
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
@@ -90,7 +92,6 @@ public class LibretroScreenController : MonoBehaviour
     // public InputActionManager inputActionManager;
 
     private ShaderScreenBase shader;
-    private List<AgentScenePosition> agentPlayerPositionComponents;
     private GameObject player;
     private ChangeControls changeControls;
     private CoinSlotController CoinSlot;
@@ -123,15 +124,7 @@ public class LibretroScreenController : MonoBehaviour
 
     private bool playerIsInSomePosition()
     {
-        if (agentPlayerPositionComponents == null)
-            return false;
-
-        foreach (AgentScenePosition asp in agentPlayerPositionComponents)
-        {
-            if (asp.IsPlayerPresent)
-                return true;
-        }
-        return false;
+        return AgentPlayerPositions != null && AgentPlayerPositions.Any(asp => asp.IsPlayerPresent);
     }
 
     // Start is called before the first frame update
@@ -158,17 +151,6 @@ public class LibretroScreenController : MonoBehaviour
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
-
-        agentPlayerPositionComponents = new List<AgentScenePosition>();
-        if (AgentPlayerPositions != null)
-        {
-            foreach (GameObject playerPos in AgentPlayerPositions)
-            {
-                AgentScenePosition asp = playerPos.GetComponent<AgentScenePosition>();
-                if (asp != null)
-                    agentPlayerPositionComponents.Add(asp);
-            }
-        }
 
         StartCoroutine(runBT());
 
@@ -198,7 +180,7 @@ public class LibretroScreenController : MonoBehaviour
         {
             tree.Tick();
             // LibretroMameCore.WriteConsole($"[runBT] {gameObject.name} Is visible: {isVisible} Not running any game: {!LibretroMameCore.GameLoaded} There are coins: {CoinSlot.hasCoins()} Player looking screen: {isPlayerLookingAtScreen()}");
-            yield return new WaitForSeconds(1f / 2f);
+            yield return new WaitForSeconds(1f);
         }
     }
 
@@ -343,13 +325,20 @@ public class LibretroScreenController : MonoBehaviour
               //.Condition("Have video player", () => videoPlayer != null)
               .Selector()
                 .Sequence()
+                  .Condition("Player not in the zone?", () => !playerIsInSomePosition())
+                  .Do("Stop video player", () =>
+                  {
+                      videoPlayer.Stop();
+                      return TaskStatus.Success;
+                  })
+                .End()
+                .Sequence()
                   //.Condition("Is visible", () => videoPlayer.isVisible())
-                  .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
+                  //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
                   //.Condition("Is visible", () => display.isVisible)
                   // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
-                  //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
-                  .Condition("Player in the zone?", () => playerIsInSomePosition())
-                  //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
+                  .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
+                  .Condition("Player looking screen", () => isPlayerLookingAtScreen4())
                   .Do("Play video player", () =>
                   {
                       videoPlayer.Play();
@@ -417,16 +406,19 @@ public class LibretroScreenController : MonoBehaviour
 
     private bool isPlayerLookingAtScreen4()
     {
+        LayerMask layerMask = 1 << gameObject.layer; // 10:CRT
         Vector3 screenPos = cameraComponentCenterEye.WorldToViewportPoint(transform.position);
-        if (screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1 && screenPos.z > 0)
+        if (screenPos.z > 0 && screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1)
         {
             // The target object is within the viewport bounds
             RaycastHit hitInfo;
-            if (Physics.Linecast(cameraComponentCenterEye.transform.position, transform.position, out hitInfo))
+            if (Physics.Linecast(cameraComponentCenterEye.transform.position, 
+                                    transform.position, out hitInfo, layerMask))
             {
                 // The linecast hit something, check if it was the target object
                 //special case when the screen is blocked with the cabine's box collider (it's own parent)
-                return hitInfo.transform == transform || hitInfo.transform == display.transform.parent;
+                // return hitInfo.transform == transform || hitInfo.transform == display.transform.parent;
+                return hitInfo.transform == transform;
             }
         }
         return false;
