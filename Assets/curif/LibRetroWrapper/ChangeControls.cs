@@ -79,7 +79,7 @@ public class ChangeControls : MonoBehaviour
 
         if (modelFilePath != alternativeModelFilePath && alternativeRightJoystick != null)
         {
-            ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] destroy old model {alternativeModelFilePath} async: {true}");
+            ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] destroy old model {alternativeModelFilePath} async: {async}");
             Destroy(alternativeRightJoystick);
             alternativeModelFilePath = "";
             alternativeRightJoystick = null;
@@ -91,7 +91,7 @@ public class ChangeControls : MonoBehaviour
         }
 
         alternativeModelFilePath = modelFilePath;
-        ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] loading {modelFilePath} async: {true}");
+        ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] loading {modelFilePath} async: {async}");
 
         try
         {
@@ -115,12 +115,10 @@ public class ChangeControls : MonoBehaviour
         }
 
         alternativeRightJoystick = model;
-        model.transform.parent = controllerRightHand.modelParent;
         useAlternativeRightJoystick();
 
         return;
     }
-
     void OnFinishAsync(GameObject model, AnimationClip[] animations)
     {
         ConfigManager.WriteConsole($"[ChangeControls.OnFinishAsync] finished async load {alternativeModelFilePath}");
@@ -130,15 +128,17 @@ public class ChangeControls : MonoBehaviour
             ConfigManager.WriteConsoleError($"[ChangeControls.OnFinishAsync] ERROR loading model {alternativeModelFilePath}");
             return;
         }
-
-        alternativeRightJoystick = model;
-        model.transform.parent = controllerRightHand.modelParent;
-        useAlternativeRightJoystick();
-        changeMode(true);
+        if (isPlaying)
+        {
+            alternativeRightJoystick = model;
+            useAlternativeRightJoystick();
+            // changeMode(true);
+        }
     }
     private void useAlternativeRightJoystick()
     {
-        alternativeRightJoystick.SetActive(false);
+        alternativeRightJoystick.SetActive(true);
+        alternativeRightJoystick.transform.parent = controllerRightHand.modelParent;
         alternativeRightJoystick.transform.position = controllerRightHand.transform.position;
         alternativeRightJoystick.transform.rotation = controllerRightHand.transform.rotation;
 
@@ -162,9 +162,9 @@ public class ChangeControls : MonoBehaviour
 
     public void PlayerMode(bool modePlaying)
     {
-        ConfigManager.WriteConsole($"[ChangeControls.Playermode] modePlaying: {modePlaying} actual status playing: {isPlaying}");
         if (isPlaying == modePlaying)
             return;
+        ConfigManager.WriteConsole($"[ChangeControls.Playermode] modePlaying: {modePlaying} actual status playing: {isPlaying}");
         changeMode(modePlaying);
     }
 
@@ -182,8 +182,8 @@ public class ChangeControls : MonoBehaviour
     }
     private void changeMode(bool playerIsPlaying)
     {
-        if (isPlaying == playerIsPlaying)
-            return;
+        // if (isPlaying == playerIsPlaying)
+        //     return;
 
         isPlaying = playerIsPlaying;
 

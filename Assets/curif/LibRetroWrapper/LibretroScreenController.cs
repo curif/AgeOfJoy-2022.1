@@ -257,10 +257,9 @@ public class LibretroScreenController : MonoBehaviour
                       cabinetAGEBasic.ExecInsertCoinBas();
                   }
 
+                  PreparePlayerToPlayGame(true);
                   if (lightGunTarget != null)
                       changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
-
-                  PreparePlayerToPlayGame(true);
 
                   //admit user interactions (like insert coins)
                   LibretroMameCore.StartInteractions();
