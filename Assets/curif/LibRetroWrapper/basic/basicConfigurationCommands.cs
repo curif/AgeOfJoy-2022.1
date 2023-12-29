@@ -27,4 +27,6 @@ public class ConfigurationCommands
     public GameObject Cabinet;
 
     public CoinSlotController CoinSlot;
+
+    public MoviePosterController PostersController;
 }

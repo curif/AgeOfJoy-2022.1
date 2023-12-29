@@ -73,6 +73,8 @@ public class basicAGE : MonoBehaviour
     public Teleportation Teleportation;
 
     public SceneDatabase SceneDatabase = null;
+    public MoviePosterController PostersController;
+
 
 #if UNITY_EDITOR
     public string nameToExecute;
@@ -118,6 +120,7 @@ public class basicAGE : MonoBehaviour
         configCommands.CabinetsController = CabinetsController;
         configCommands.GameRegistry = GameRegistry;
         configCommands.Teleportation = Teleportation;
+        configCommands.PostersController = PostersController;
 
     }
 

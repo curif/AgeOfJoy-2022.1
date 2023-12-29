@@ -6,60 +6,87 @@ You should have received a copy of the GNU General Public License along with thi
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
+
 
 public class MoviePosterController : MonoBehaviour
 {
-    [Tooltip("The decade of the posters (70/80/90)")]
-    [SerializeField]
-    int decade = 80;
+  [Tooltip("The decade of the posters (70/80/90)")]
+  [SerializeField]
+  int decade = 80;
 
-    void Start()
+  void Start()
+  {
+    StartCoroutine(RandomizePosters());
+  }
+
+  IEnumerator RandomizePosters()
+  {
+    UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
+
+    // Yielding one frame allows Unity to finish initializing objects
+    yield return null;
+
+    //load and randomize
+    if (gameObject.transform.childCount > 0)
     {
-        StartCoroutine(RandomizePosters());
-    }
+      List<Texture2D> textures = new List<Texture2D>();
+      textures.AddRange(Resources.LoadAll<Texture2D>($"Decoration/MoviePoster/Pictures/{decade}"));
+      textures.Sort((x, y) => UnityEngine.Random.Range(0f, 1f) > UnityEngine.Random.Range(0f, 1f) ? 1 : -1);
+      int idx = textures.Count - 1;
+      ConfigManager.WriteConsole($"[MoviePosterController] {idx}+1 movie posters of decade {decade}");
 
-    IEnumerator RandomizePosters()
-    {
-        UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
+      for (int childIdx = 0; childIdx < gameObject.transform.childCount; childIdx++)
+      {
+        if (idx < 0)
+        {
+          idx = textures.Count - 1;
+        }
+        gameObject.transform.GetChild(childIdx).gameObject.GetComponent<Renderer>().material.SetTexture("_MainTex", textures[idx]);
+        idx--;
 
-        // Yielding one frame allows Unity to finish initializing objects
+        // Adding a small delay between setting textures in each iteration
         yield return null;
-
-        //load and randomize
-        if (gameObject.transform.childCount > 0)
-        {
-            List<Texture2D> textures = new List<Texture2D>();
-            textures.AddRange(Resources.LoadAll<Texture2D>($"Decoration/MoviePoster/Pictures/{decade}"));
-            textures.Sort((x, y) => UnityEngine.Random.Range(0f, 1f) > UnityEngine.Random.Range(0f, 1f) ? 1 : -1);
-            int idx = textures.Count - 1;
-            ConfigManager.WriteConsole($"[MoviePosterController] {idx}+1 movie posters of decade {decade}");
-
-            for (int childIdx = 0; childIdx < gameObject.transform.childCount; childIdx++)
-            {
-                if (idx < 0)
-                {
-                    idx = textures.Count - 1;
-                }
-                gameObject.transform.GetChild(childIdx).gameObject.GetComponent<Renderer>().material.SetTexture("_MainTex", textures[idx]);
-                idx--;
-
-                // Adding a small delay between setting textures in each iteration
-                yield return null;
-            }
-        }
+      }
     }
+  }
 
-    public void ReplaceChildTexture(int childIndex, Texture2D newTexture)
+  // load a texture from disk.
+  private static Texture2D LoadTexture(string filePath)
+  {
+    Texture2D tex = null;
+    byte[] fileData;
+
+    if (File.Exists(filePath))
     {
-        if (childIndex >= 0 && childIndex < gameObject.transform.childCount)
-        {
-            GameObject childObject = gameObject.transform.GetChild(childIndex).gameObject;
-            Renderer renderer = childObject.GetComponent<Renderer>();
-
-            if (renderer != null)
-            {
-                renderer.material.SetTexture("_MainTex", newTexture);
-            }
-        }
+      fileData = File.ReadAllBytes(filePath);
+      tex = new Texture2D(2, 2);
+      tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
     }
+    return tex;
+  }
+  public bool Replace(int childIndex, string newTexturePath)
+  {
+    if (childIndex >= 0 && childIndex < gameObject.transform.childCount)
+    {
+      GameObject childObject = gameObject.transform.GetChild(childIndex).gameObject;
+      Renderer renderer = childObject.GetComponent<Renderer>();
+
+      if (renderer == null)
+        return false;
+      
+      Texture2D newTexture = LoadTexture(newTexturePath);
+      if (newTexture == null)
+        return false;
+
+      renderer.material.SetTexture("_MainTex", newTexture);
+      return true;
+    }
+    return false;
+  }
+
+  public int Count()
+  {
+    return gameObject.transform.childCount;
+  }
 }

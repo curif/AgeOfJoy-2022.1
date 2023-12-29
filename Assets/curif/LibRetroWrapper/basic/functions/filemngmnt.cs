@@ -62,3 +62,23 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
         }
     }
 }
+
+class CommandFunctionFILEEXISTS : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionFILEEXISTS(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "FILEEXISTS";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        
+        BasicValue val = expr.Execute(vars);
+        string filePath = val.GetValueAsString();
+
+        bool fileExists = File.Exists(filePath);
+
+        return new BasicValue(fileExists? 1:0);
+    }
+}
