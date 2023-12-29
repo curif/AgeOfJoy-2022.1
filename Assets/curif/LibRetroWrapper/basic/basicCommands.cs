@@ -53,7 +53,10 @@ public static class Commands
         functions["STR"] = typeof(CommandFunctionSTR);
         functions["GETMEMBER"] = typeof(CommandFunctionGETMEMBER);
         functions["COUNTMEMBERS"] = typeof(CommandFunctionCOUNTMEMBERS);
-
+        
+        //files
+        functions["GETFILES"] = typeof(CommandFunctionGETFILES);
+        
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
 
