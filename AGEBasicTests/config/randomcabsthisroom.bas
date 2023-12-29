@@ -13,7 +13,7 @@
 
 112   if newCabinetName = "" then goto 170
 
-115   print 0, 4+cabinetIndex, "#" + str(cabinetIndex) + " by DB #" +str(randomIndex) + ": " + str(newCabinetName) + "        "
+115   print 0, 4 + MOD(cabinetIndex, 10), "#" + str(cabinetIndex) + " by DB #" +str(randomIndex) + ": " + str(newCabinetName) + "        "
 
 120   REM Replace the cabinet in the current room with the random cabinet
 

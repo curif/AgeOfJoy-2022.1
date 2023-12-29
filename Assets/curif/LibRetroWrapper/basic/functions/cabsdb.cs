@@ -125,11 +125,10 @@ class CommandFunctionCABDBDELETE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        BasicValue ret = new BasicValue(0);
 
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
-            return ret;
+            return BasicValue.False;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0], " - room name");
@@ -141,7 +140,7 @@ class CommandFunctionCABDBDELETE : CommandFunctionExpressionListBase
         if (cabpos == null)
             throw new Exception($"{CmdToken}: {room} pos:{position} not found ");
 
-        return null;
+        return BasicValue.True;
     }
 }
 
@@ -157,11 +156,10 @@ class CommandFunctionCABDBADD : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        BasicValue ret = new BasicValue(0);
 
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
-            return ret;
+            return BasicValue.False;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0], " - room name");
@@ -177,7 +175,7 @@ class CommandFunctionCABDBADD : CommandFunctionExpressionListBase
         cabpos.Room = room;
         config.GameRegistry.Add(cabpos); //throws when repeated
 
-        return null;
+        return BasicValue.True;
     }
 }
 
@@ -193,25 +191,22 @@ class CommandFunctionCABDBASSIGN : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        BasicValue ret = new BasicValue(0);
-
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
-            return ret;
+            return BasicValue.False;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0], " - room name");
         FunctionHelper.ExpectedNumber(vals[1], " - cabinet position");
-        FunctionHelper.ExpectedString(vals[2], " - new cabinet name");
-
-        string room = vals[0].GetValueAsString();
-        int position = (int)vals[1].GetValueAsNumber();
-
+        
+        //1942 issue.
+        // FunctionHelper.ExpectedString(vals[2], " - new cabinet name");
+        
         config.GameRegistry.AssignOrAddCabinet(vals[0].GetString(), 
                                                 (int)vals[1].GetNumber(), 
-                                                vals[2].GetString());
+                                                vals[2].CastTo(BasicValue.BasicValueType.String).GetString());
 
-        return null;
+        return BasicValue.True;
     }
 }
 
@@ -227,11 +222,10 @@ class CommandFunctionCABDBGETASSIGNED : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        BasicValue ret = new BasicValue(0);
 
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
-            return ret;
+            return new BasicValue("");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0], " - room name");
@@ -258,14 +252,13 @@ class CommandFunctionCABDBSAVE : CommandFunctionNoExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        BasicValue ret = new BasicValue(0);
 
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
-            return ret;
+            return BasicValue.False;
 
         config.GameRegistry.Persist();
-        return null;
+        return BasicValue.True;
     }
 }
 
