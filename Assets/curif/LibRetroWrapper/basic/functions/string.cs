@@ -144,3 +144,63 @@ class CommandFunctionSTR : CommandFunctionSingleExpressionBase
     }
 }
 
+class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
+{
+    public CommandFunctionGETMEMBER(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "GETMEMBER";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 3);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+
+        string input = vals[0].GetValueAsString();
+        int memberIndex = (int)vals[1].GetValueAsNumber();
+        string separator = vals[2].GetValueAsString(); 
+
+        string[] parts = input.Split(new[] { separator }, StringSplitOptions.None);
+
+        if (memberIndex >= 0 && memberIndex < parts.Length)
+        {
+            string ret = parts[memberIndex];
+            return new BasicValue(ret);
+        }
+        else
+        {
+            // Handle index out of bounds or invalid member
+            return new BasicValue(""); // Return an empty string or handle the error accordingly
+        }
+    }
+}
+
+
+class CommandFunctionCOUNTMEMBERS : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCOUNTMEMBERS(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "COUNTMEMBERS";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+
+        string input = vals[0].GetValueAsString();
+        string separator = vals[1].GetValueAsString(); 
+        int count = input.Split(new[] { separator }, StringSplitOptions.None).Length;
+
+        return new BasicValue(count);
+    }
+}

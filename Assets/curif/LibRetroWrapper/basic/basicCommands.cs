@@ -51,6 +51,8 @@ public static class Commands
         functions["LTRIM"] = typeof(CommandFunctionLTRIM);
         functions["TRIM"] = typeof(CommandFunctionTRIM);
         functions["STR"] = typeof(CommandFunctionSTR);
+        functions["GETMEMBER"] = typeof(CommandFunctionGETMEMBER);
+        functions["COUNTMEMBERS"] = typeof(CommandFunctionCOUNTMEMBERS);
 
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
