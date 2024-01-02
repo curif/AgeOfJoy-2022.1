@@ -2,6 +2,7 @@ using System.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
@@ -240,6 +241,9 @@ public class ConfigurationController : MonoBehaviour
             GameObject player = GameObject.Find("OVRPlayerControllerGalery");
             changeControls = player.GetComponent<ChangeControls>();
         }
+
+        if (AGEBasic == null)
+            AGEBasic = GetComponent<basicAGE>();
 
         if (canTeleport)
         {
@@ -1015,8 +1019,6 @@ public class ConfigurationController : MonoBehaviour
         scr.Print(0, 24, "press b to continue");
     }
 
-
-
     private void AGEBasicWindowDraw()
     {
         scr.Clear();
@@ -1127,6 +1129,7 @@ public class ConfigurationController : MonoBehaviour
         configHelper.Save(true, config);
     }
 
+
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
@@ -1163,8 +1166,73 @@ public class ConfigurationController : MonoBehaviour
         //create widgets
         SetGlobalWidgets();
 
-        //main cycle
+        //init status
         status = StatusOptions.init;
+
+        //AGEBASIC
+        ConfigInformation config = configHelper.getConfigInformation(false);
+        ConfigInformation.AGEBasicInformation ageBasicInformation = config?.agebasic;
+        if (ageBasicInformation != null && ageBasicInformation.active)
+        {
+            ConfigManager.WriteConsole($"[ConfigurationController] run after load agebasic program {ageBasicInformation.afterLoad}");
+
+            scr.Clear();
+            scr.PrintCentered(1, "Running After-load");
+            scr.PrintCentered(2, "program");
+            scr.PrintCentered(3, ageBasicInformation.afterLoad, true);
+            scr.DrawScreen();
+
+            bool compilationError = false;
+            string program = Path.Combine(ConfigManager.AGEBasicDir, ageBasicInformation.afterLoad);
+            ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] {program}");
+            try
+            {
+                AGEBasic.ParseFile(program);
+            }
+            catch (CompilationException ex)
+            {
+                ConfigManager.WriteConsoleException($"[ConfigurationController] [{ageBasicInformation.afterLoad}] compilation error", ex);
+
+                compilationError = true;
+                scr.PrintCentered(5, "compilation error:", true);
+                scr.Print(0, 6, $"Line: {ex.LineNumber}");
+                scr.Print(0, 7, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                ConfigManager.WriteConsoleException($"[ConfigurationController] [{ageBasicInformation.afterLoad}]", ex);
+            }
+
+            if (!compilationError)
+            {
+                ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] start run");
+                AGEBasic.DebugMode = ageBasicInformation.debug;
+                AGEBasic.Run(ageBasicInformation.afterLoad, true);
+
+                while (AGEBasic.IsRunning(ageBasicInformation.afterLoad))
+                    yield return new WaitForSeconds(1f / 2f);
+                
+                if (AGEBasic.ExceptionOccurred())
+                {
+                    ConfigManager.WriteConsoleException($"[ConfigurationController] [{ageBasicInformation.afterLoad}] runtime", AGEBasic.LastRuntimeException);
+                    scr.Print(0, 5, "runtime exception:", true);
+                    scr.Print(0, 6, $"Line: {AGEBasic.LastRuntimeException.LineNumber}");
+                    scr.Print(0, 7, AGEBasic.LastRuntimeException.Message);
+                }
+                else
+                {
+                    scr.PrintCentered(5, "FINISHED - RUN OK", true);
+                }
+            }
+
+            ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] OK");
+
+            scr.DrawScreen();
+
+            status = StatusOptions.waitingForCoin;
+        }
+
+        //main cycle
         tree = buildBT();
         while (true)
         {

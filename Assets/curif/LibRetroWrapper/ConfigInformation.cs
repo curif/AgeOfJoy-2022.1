@@ -28,6 +28,8 @@ public class ConfigInformation
     public LocomotionConfiguration locomotion;
     public Player player = new();
 
+    public AGEBasicInformation agebasic = null;
+
     /** don't. create an empty object. Merge didn't works if both are loaded.
     public ConfigInformation() {
       audio = new Audio();
@@ -401,8 +403,32 @@ public class ConfigInformation
             ret.player.scale = ci2?.player != null ? ci2.player.scale : ci1.player.scale;
         }
 
+        if (ci1?.agebasic != null || ci2?.agebasic != null)
+        {
+            ret.agebasic = ci2?.agebasic != null ? (AGEBasicInformation)ci2.agebasic.Clone() : 
+                                                    (AGEBasicInformation)ci1.agebasic.Clone();
+        }
+
         return ret;
 
     }
-}
 
+    public class AGEBasicInformation : ICloneable
+    {
+        public bool active = true;
+        public bool debug = false;
+
+        [YamlMember(Alias = "after-load", ApplyNamingConventions = false)]
+        public string afterLoad;
+
+        public object Clone()
+        {
+            AGEBasicInformation aGEBasicInformation = new();
+            aGEBasicInformation.active = this.active;
+            aGEBasicInformation.debug = this.debug;
+            aGEBasicInformation.afterLoad = this.afterLoad;
+            return aGEBasicInformation;
+        }
+
+    }
+}

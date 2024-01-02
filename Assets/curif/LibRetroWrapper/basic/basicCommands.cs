@@ -53,7 +53,11 @@ public static class Commands
         functions["STR"] = typeof(CommandFunctionSTR);
         functions["GETMEMBER"] = typeof(CommandFunctionGETMEMBER);
         functions["COUNTMEMBERS"] = typeof(CommandFunctionCOUNTMEMBERS);
-
+        
+        //files
+        functions["GETFILES"] = typeof(CommandFunctionGETFILES);
+        functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);
+        
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
 
@@ -67,6 +71,10 @@ public static class Commands
         functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
         functions["ROOMTELEPORT"] = typeof(CommandFunctionROOMTELEPORT);
         
+        //posters
+        functions["POSTERROOMCOUNT"] = typeof(CommandFunctionPOSTERROOMCOUNT);
+        functions["POSTERROOMREPLACE"] = typeof(CommandFunctionPOSTERROOMREPLACE);
+
         //Controllers
         functions["CONTROLACTIVE"] = typeof(CommandFunctionCONTROLACTIVE);
 

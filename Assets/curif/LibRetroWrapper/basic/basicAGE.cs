@@ -73,6 +73,8 @@ public class basicAGE : MonoBehaviour
     public Teleportation Teleportation;
 
     public SceneDatabase SceneDatabase = null;
+    public MoviePosterController PostersController;
+
 
 #if UNITY_EDITOR
     public string nameToExecute;
@@ -118,6 +120,7 @@ public class basicAGE : MonoBehaviour
         configCommands.CabinetsController = CabinetsController;
         configCommands.GameRegistry = GameRegistry;
         configCommands.Teleportation = Teleportation;
+        configCommands.PostersController = PostersController;
 
     }
 
@@ -149,7 +152,7 @@ public class basicAGE : MonoBehaviour
     {
         return programs.ContainsKey(name);
     }
-    public void ParseFile(string filePath)
+    public AGEProgram ParseFile(string filePath)
     {
         string name = Path.GetFileName(filePath);
 
@@ -174,6 +177,7 @@ public class basicAGE : MonoBehaviour
             throw ce;
         }
         programs[name] = prg;
+        return prg;
     }
 
     public void ListPrograms()
@@ -215,6 +219,7 @@ public class basicAGE : MonoBehaviour
         if (running != null)
             throw new Exception($"you can't run {name}, {running.Name} is runnig");
 
+        PrepareToRun();
         running = programs[name];
         running.PrepareToRun();
 
@@ -234,16 +239,16 @@ public class basicAGE : MonoBehaviour
                     string strerror = errorMessage(running, e);
                     ConfigManager.WriteConsoleError(strerror);
                     LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
-                    running = null;
                     if (configCommands.DebugMode)
                         SaveDebug(name, null, LastRuntimeException);
+                    running = null;
+                    return;
                 }
             }
             ConfigManager.WriteConsole($"{running.Name} END.");
-            running = null;
-            LastRuntimeException = null;
             if (configCommands.DebugMode)
                 SaveDebug(name);
+            running = null;
         }
         return;
     }
@@ -278,36 +283,60 @@ public class basicAGE : MonoBehaviour
         }
     }
 
+    public void PrepareToRun()
+    {
+        running = null;
+        LastRuntimeException = null;
+    }
+
+    public bool IsRunning(string name)
+    {
+        return (running != null && running.Name == name);
+    }
+    public bool ExceptionOccurred()
+    {
+        return LastRuntimeException != null;
+    }
+
+
     IEnumerator runProgram()
     {
         bool moreLines = true;
+        LastRuntimeException = null;
         while (moreLines)
         {
-            try
-            {
-                moreLines = running.runNextLine();
-            }
-            catch (Exception e)
-            {
-                string strerror = errorMessage(running, e);
-                ConfigManager.WriteConsoleError(strerror);
-                LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
-                running = null;
-                if (configCommands.DebugMode)
-                    SaveDebug(name, null, LastRuntimeException);
-
-                yield break;
-            }
+            moreLines = RunALine();
             yield return new WaitForSeconds(0.01f);
         }
+
         ConfigManager.WriteConsole($"{running.Name} END. {running.ContLinesExecuted} lines executed.");
 
         if (configCommands.DebugMode)
-            SaveDebug(running.Name);
-        
+            if (LastRuntimeException != null)
+                SaveDebug(name, null, LastRuntimeException);
+            else
+                SaveDebug(running.Name);
+
         running = null;
         LastRuntimeException = null;
+    }
 
+    //run a line of an started program
+    public bool RunALine()
+    {
+        bool moreLines = false;
+        try
+        {
+            moreLines = running.runNextLine();
+        }
+        catch (Exception e)
+        {
+            string strerror = errorMessage(running, e);
+            ConfigManager.WriteConsoleError(strerror);
+            LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
+            return false;
+        }
+        return moreLines;
     }
 
 #if UNITY_EDITOR
