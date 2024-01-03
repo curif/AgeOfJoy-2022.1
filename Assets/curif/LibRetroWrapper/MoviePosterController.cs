@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System;
 
 
 public class MoviePosterController : MonoBehaviour
@@ -73,15 +74,18 @@ public class MoviePosterController : MonoBehaviour
       Renderer renderer = childObject.GetComponent<Renderer>();
 
       if (renderer == null)
-        return false;
-      
+        throw new Exception($"Poster #{childIndex} doesn't have a renderer");
+
       Texture2D newTexture = LoadTexture(newTexturePath);
       if (newTexture == null)
-        return false;
+        throw new Exception($"Texture #{childIndex} not loaded, path: {newTexturePath}");
 
       renderer.material.SetTexture("_MainTex", newTexture);
       return true;
     }
+    else
+      throw new Exception($"Poster #{childIndex} doesn't exist");
+
     return false;
   }
 

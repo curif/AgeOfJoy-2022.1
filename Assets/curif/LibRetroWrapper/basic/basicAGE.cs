@@ -201,10 +201,20 @@ public class basicAGE : MonoBehaviour
         return str;
     }
 
-    public bool Running()
+    public bool IsRunning()
     {
-        return running == null;
+        return running != null;
     }
+    public bool IsRunning(string name)
+    {
+        return (running != null && running.Name == name);
+    }
+    public bool ExceptionOccurred()
+    {
+        return LastRuntimeException != null;
+    }
+
+
     public void Stop()
     {
         if (running == null)
@@ -224,32 +234,21 @@ public class basicAGE : MonoBehaviour
         running.PrepareToRun();
 
         if (!blocking)
-            StartCoroutine(runProgram());
-        else
         {
-            bool moreLines = true;
-            while (moreLines)
-            {
-                try
-                {
-                    moreLines = running.runNextLine();
-                }
-                catch (Exception e)
-                {
-                    string strerror = errorMessage(running, e);
-                    ConfigManager.WriteConsoleError(strerror);
-                    LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
-                    if (configCommands.DebugMode)
-                        SaveDebug(name, null, LastRuntimeException);
-                    running = null;
-                    return;
-                }
-            }
-            ConfigManager.WriteConsole($"{running.Name} END.");
-            if (configCommands.DebugMode)
-                SaveDebug(name);
-            running = null;
+            StartCoroutine(runProgram());
+            return;
         }
+
+        bool moreLines = true;
+        while (moreLines)
+        {
+            moreLines = RunALine();
+        }
+
+        if (configCommands.DebugMode)
+            SaveDebug(running.Name, null, LastRuntimeException);
+
+        running = null;
         return;
     }
 
@@ -289,15 +288,6 @@ public class basicAGE : MonoBehaviour
         LastRuntimeException = null;
     }
 
-    public bool IsRunning(string name)
-    {
-        return (running != null && running.Name == name);
-    }
-    public bool ExceptionOccurred()
-    {
-        return LastRuntimeException != null;
-    }
-
 
     IEnumerator runProgram()
     {
@@ -309,34 +299,28 @@ public class basicAGE : MonoBehaviour
             yield return new WaitForSeconds(0.01f);
         }
 
-        ConfigManager.WriteConsole($"{running.Name} END. {running.ContLinesExecuted} lines executed.");
+        ConfigManager.WriteConsole($"[runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
 
         if (configCommands.DebugMode)
-            if (LastRuntimeException != null)
-                SaveDebug(name, null, LastRuntimeException);
-            else
-                SaveDebug(running.Name);
+            SaveDebug(running.Name, null, LastRuntimeException);
 
         running = null;
-        LastRuntimeException = null;
     }
 
     //run a line of an started program
     public bool RunALine()
     {
-        bool moreLines = false;
         try
         {
-            moreLines = running.runNextLine();
+            return running.runNextLine();
         }
         catch (Exception e)
         {
             string strerror = errorMessage(running, e);
-            ConfigManager.WriteConsoleError(strerror);
+            ConfigManager.WriteConsoleError($"[RunALine] {strerror}");
             LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
             return false;
         }
-        return moreLines;
     }
 
 #if UNITY_EDITOR
