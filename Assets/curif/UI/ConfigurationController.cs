@@ -1200,17 +1200,22 @@ public class ConfigurationController : MonoBehaviour
             }
             catch (Exception ex)
             {
+                compilationError = true;
                 ConfigManager.WriteConsoleException($"[ConfigurationController] [{ageBasicInformation.afterLoad}]", ex);
+                scr.PrintCentered(5, "compilation error:", true);
+                scr.Print(0, 6, ex.Message);
             }
 
             if (!compilationError)
             {
                 ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] start run");
                 AGEBasic.DebugMode = ageBasicInformation.debug;
-                AGEBasic.Run(ageBasicInformation.afterLoad, true);
+                AGEBasic.Run(ageBasicInformation.afterLoad, blocking: false);
 
-                while (AGEBasic.IsRunning(ageBasicInformation.afterLoad))
+                while (AGEBasic.IsRunning())
                     yield return new WaitForSeconds(1f / 2f);
+
+                ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] ended. Error: [{AGEBasic.LastRuntimeException}]");
                 
                 if (AGEBasic.ExceptionOccurred())
                 {
@@ -1735,7 +1740,7 @@ public class ConfigurationController : MonoBehaviour
                   if (AGEBasic.LastRuntimeException != null)
                       ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
 
-                  if (!AGEBasic.Running())
+                  if (AGEBasic.IsRunning())
                       return TaskStatus.Continue;
 
                   status = StatusOptions.onRunAGEBasic;

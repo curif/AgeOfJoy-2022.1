@@ -57,6 +57,12 @@ public static class Commands
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);
+        functions["COMBINEPATH"] = typeof(CommandFunctionCOMBINEPATH);
+        functions["CONFIGPATH"] = typeof(CommandFunctionCONFIGPATH);
+        functions["AGEBASICPATH"] = typeof(CommandFunctionAGEBASICPATH);
+        functions["CABINETSDBPATH"] = typeof(CommandFunctionCABINETSDBPATH);
+        functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
+        functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
         
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);

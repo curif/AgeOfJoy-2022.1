@@ -39,14 +39,9 @@ class CommandFunctionPOSTERROOMREPLACE : CommandFunctionExpressionListBase
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedNumber(vals[0], " - poster position");
-        FunctionHelper.ExpectedString(vals[1], " - image path");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - image path");
 
-        string path = vals[1].GetString();
-        if (string.IsNullOrEmpty(path))
-            return BasicValue.False; //fail
-
-        bool result = config.PostersController.Replace((int)vals[0].GetNumber(), path);
-
+        bool result = config.PostersController.Replace((int)vals[0].GetNumber(), vals[1].GetString());
         return new BasicValue(result ? 1 : 0);
     }
 }

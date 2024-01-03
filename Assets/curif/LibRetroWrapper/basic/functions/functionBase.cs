@@ -140,5 +140,11 @@ public static class FunctionHelper
             throw new Exception("Parameter should be a string " + msg);
         return true;
     }
+    public static bool ExpectedNonEmptyString(BasicValue val, string msg = "")
+    {
+        if (!val.IsString() || string.IsNullOrEmpty(val.GetString()))
+            throw new Exception("Parameter should be a non empty string " + msg);
+        return true;
+    }
 
 }

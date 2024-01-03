@@ -5,7 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 // coment the next line for releases build
-// #define FORCE_DEBUG
+#define FORCE_DEBUG
 #if UNITY_EDITOR
 #define DEBUG_ACTIVE
 #elif FORCE_DEBUG
@@ -20,21 +20,20 @@ public static class ConfigManager
 {
     //paths
 #if UNITY_EDITOR
-  //public static string BaseDir = Environment.GetEnvironmentVariable("HOME") + "/cabs";
-    public static string BaseDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+ "/cabs";
+    public static string BaseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cabs");
 #else
     public static string BaseDir = "/sdcard/Android/data/com.curif.AgeOfJoy";
 #endif
 
-    public static string Cabinets = $"{BaseDir}/cabinets"; //compressed
-    public static string CabinetsDB = $"{BaseDir}/cabinetsdb"; //uncompressed cabinets
-    public static string SystemDir = $"{BaseDir}/system";
-    public static string RomsDir = $"{BaseDir}/downloads";
-    public static string GameSaveDir = $"{BaseDir}/save";
-    public static string GameStatesDir = $"{BaseDir}/startstates";
-    public static string ConfigDir = $"{BaseDir}/configuration";
-    public static string ConfigControllersDir = $"{BaseDir}/configuration/controllers";
-    public static string AGEBasicDir = $"{BaseDir}/AGEBasic";
+    public static string Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
+    public static string CabinetsDB = Path.Combine(BaseDir,"cabinetsdb"); //uncompressed cabinets
+    public static string SystemDir = Path.Combine(BaseDir,"system");
+    public static string RomsDir = Path.Combine(BaseDir,"downloads");
+    public static string GameSaveDir = Path.Combine(BaseDir,"save");
+    public static string GameStatesDir = Path.Combine(BaseDir, "startstates");
+    public static string ConfigDir = Path.Combine(BaseDir,"configuration");
+    public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
+    public static string AGEBasicDir = Path.Combine(BaseDir,"AGEBasic");
 
     public static ConfigInformation configuration;
     public static bool DebugActive
