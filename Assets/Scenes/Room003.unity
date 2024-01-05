@@ -1049,8 +1049,9 @@ GameObject:
   m_Component:
   - component: {fileID: 152539564}
   - component: {fileID: 152539565}
+  - component: {fileID: 152539566}
   m_Layer: 0
-  m_Name: Point Light
+  m_Name: CeilingLight1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1083,7 +1084,7 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 0.9433962, g: 0.941446, b: 0.86774653, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.3
   m_Range: 4.579603
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -1128,11 +1129,25 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 2.41e-43, z: 2.9431e-41, w: 0}
+  m_BoundingSphereOverride: {x: 0, y: 1e-45, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &152539566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 152539563}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 1910830342}
+  intensity: 0
 --- !u!1 &157997213
 GameObject:
   m_ObjectHideFlags: 0
@@ -7101,8 +7116,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1130408796}
   - component: {fileID: 1130408797}
+  - component: {fileID: 1130408798}
   m_Layer: 0
-  m_Name: Point Light (1)
+  m_Name: CeilingLight2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7135,7 +7151,7 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 0.9433962, g: 0.941446, b: 0.86774653, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.3
   m_Range: 4.579603
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -7180,11 +7196,25 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0.33333334}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &1130408798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130408795}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 1910830342}
+  intensity: 0
 --- !u!1001 &1139912536
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12053,8 +12083,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1770855841}
   - component: {fileID: 1770855842}
+  - component: {fileID: 1770855843}
   m_Layer: 0
-  m_Name: Point Light (2)
+  m_Name: CeilingLight3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12087,7 +12118,7 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 0.9433962, g: 0.941446, b: 0.86774653, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.3
   m_Range: 4.579603
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -12132,11 +12163,25 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 8.1e-44, z: 4.728e-41, w: -5767552}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &1770855843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1770855840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 1910830342}
+  intensity: 0
 --- !u!1001 &1778094518
 PrefabInstance:
   m_ObjectHideFlags: 0
