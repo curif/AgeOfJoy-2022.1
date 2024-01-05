@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class LightManagerController : MonoBehaviour
 {
@@ -9,7 +10,7 @@ public class LightManagerController : MonoBehaviour
     // New property to get the light name
     public string LightName
     {
-        get { return roomConfiguration.Room + ":" + gameObject.name; }
+        get { return roomConfiguration.Room.ToUpper() + ":" + gameObject.name.ToUpper(); }
     }
 
     // Start is called before the first frame update
