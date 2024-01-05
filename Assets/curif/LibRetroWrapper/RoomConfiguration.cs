@@ -10,6 +10,7 @@ public class RoomConfiguration : MonoBehaviour
     public GameObject FileMonitorGameObject;
     public GameObject GlobalConfigurationGameObject;
     public UnityEvent OnRoomConfigChanged;
+    public string Room;
 
     public string yamlPath;
     private FileMonitor fileMonitor;
