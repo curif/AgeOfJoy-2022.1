@@ -1520,7 +1520,7 @@ GameObject:
   - component: {fileID: 129922451}
   m_Layer: 0
   m_Name: CeilingLight2
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -1538,12 +1538,12 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 0.999829, b: 0.9386792, a: 1}
   m_Intensity: 0.3
-  m_Range: 3.2536743
+  m_Range: 3.5673618
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -1582,7 +1582,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 1.4e-43, z: 3.053e-42, w: -3.3998056e-28}
+  m_BoundingSphereOverride: {x: 1.005e-42, y: 1e-45, z: 6e-44, w: 5.3e-44}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -2069,6 +2069,10 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 2436629314506147462, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
+      propertyPath: intensity
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2436629314506147462, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: roomConfiguration
       value: 
       objectReference: {fileID: 62110612}
@@ -2093,12 +2097,16 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
+      propertyPath: m_Range
+      value: 2.0013428
+      objectReference: {fileID: 0}
+    - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_Intensity
       value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 299
+      value: 5.0093776e+23
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -2106,11 +2114,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 292
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 0
+      value: 2.1e-44
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_RootOrder
@@ -4654,7 +4662,7 @@ GameObject:
   - component: {fileID: 395634482}
   m_Layer: 0
   m_Name: CeilingLight3
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -4692,7 +4700,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -4731,7 +4739,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 1.3e-43, z: 3.053e-42, w: 1.0403e-41}
+  m_BoundingSphereOverride: {x: 1.005e-42, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -6708,6 +6716,10 @@ PrefabInstance:
     - target: {fileID: 2899029163532484432, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 5347497587485064072, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
+      propertyPath: m_TagString
+      value: Light
       objectReference: {fileID: 0}
     - target: {fileID: 5347497587485064072, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -10320,7 +10332,7 @@ GameObject:
   - component: {fileID: 800048587}
   m_Layer: 0
   m_Name: CeilingLight
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -10343,7 +10355,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -10382,7 +10394,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 2.8e-44, z: 2.503e-41, w: -1.5774899e-38}
+  m_BoundingSphereOverride: {x: 0, y: -2.3113846e-37, z: 1.005e-42, w: -5.2510676e-37}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -10573,7 +10585,7 @@ GameObject:
   - component: {fileID: 821118123}
   m_Layer: 0
   m_Name: CeilingLight5
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -10611,7 +10623,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -10650,7 +10662,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 5.2e-44, z: 4.062e-41, w: 4.1003012e-19}
+  m_BoundingSphereOverride: {x: 1.005e-42, y: 9.4e-44, z: 0, w: -1.789901e-38}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -11788,7 +11800,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -5.6044483
+      value: -4.27
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -14199,12 +14211,12 @@ Transform:
   - {fileID: 1572059808}
   - {fileID: 1119277368}
   - {fileID: 211513636}
+  - {fileID: 1302739697}
   - {fileID: 1734239007}
   - {fileID: 1763148153}
   - {fileID: 2109445331}
   - {fileID: 473506430}
   - {fileID: 800048586}
-  - {fileID: 1302739697}
   - {fileID: 129922450}
   - {fileID: 395634480}
   - {fileID: 1149092789}
@@ -14664,7 +14676,7 @@ GameObject:
   - component: {fileID: 1149092791}
   m_Layer: 0
   m_Name: CeilingLight4
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -14702,7 +14714,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -16467,7 +16479,7 @@ GameObject:
   - component: {fileID: 1302739698}
   m_Layer: 0
   m_Name: CeilingLight1
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -16485,12 +16497,12 @@ Light:
   m_Shape: 0
   m_Color: {r: 1, g: 0.999829, b: 0.9386792, a: 1}
   m_Intensity: 0.3
-  m_Range: 3.1581771
+  m_Range: 3.8412352
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -16529,7 +16541,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 2.58e-43, z: 1.8124e-41, w: -6.2992772e+29}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 6.428577e-39, w: -6.5473896e-26}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -16542,7 +16554,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1302739695}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -5.6194477, y: 1.9190981, z: -5.742941}
+  m_LocalPosition: {x: -4.285, y: 1.9190981, z: -5.742941}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -25242,7 +25254,7 @@ GameObject:
   - component: {fileID: 1859884912}
   m_Layer: 0
   m_Name: CeilingLight6
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -25280,7 +25292,7 @@ Light:
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -25319,7 +25331,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 4.3e-44, z: 2.8917e-41, w: 2.6905e-41}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 3.8e-44, z: 4.5087e-41, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
