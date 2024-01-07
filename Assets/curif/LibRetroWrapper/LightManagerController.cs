@@ -5,7 +5,7 @@ public class LightManagerController : MonoBehaviour
 {
     // Public properties
     public RoomConfiguration roomConfiguration;
-    public float intensity;
+    public float intensity = 1;
 
     // New property to get the light name
     public string LightName
