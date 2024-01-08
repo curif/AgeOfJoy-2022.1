@@ -140,3 +140,51 @@ class CommandFunctionLIGHTSCOUNT : CommandFunctionNoExpressionBase
         return new BasicValue((double)lightsCount);
     }
 }
+
+class CommandFunctionSETLIGHTCOLOR : CommandFunctionExpressionListBase
+{
+    public CommandFunctionSETLIGHTCOLOR(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "SETLIGHTCOLOR";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 4); // Expecting 4 parameters: lightname, R, G, B
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        // Retrieve the parameters "lightname", "R", "G", and "B"
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], "- light name");
+        FunctionHelper.ExpectedNumber(vals[1], "- R");
+        FunctionHelper.ExpectedNumber(vals[2], "- G");
+        FunctionHelper.ExpectedNumber(vals[3], "- B");
+
+        string lightName = vals[0].GetValueAsString();
+        float r = (float)vals[1].GetValueAsNumber();
+        float g = (float)vals[2].GetValueAsNumber();
+        float b = (float)vals[3].GetValueAsNumber();
+
+        // Find the correct GameObject with the specified LightName
+        GameObject[] lightObjects = GameObject.FindGameObjectsWithTag("Light");
+
+        foreach (GameObject lightObject in lightObjects)
+        {
+            LightManagerController lightController = lightObject.GetComponent<LightManagerController>();
+
+            if (lightController != null && lightController.LightName == lightName)
+            {
+                // Set the color using the LightController method
+                lightController.SetColor(new Color(r, g, b));
+
+                ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Color set for light '{lightName}' to ({r}, {g}, {b})");
+
+                return new BasicValue(1); // Indicate success
+            }
+        }
+
+        return new BasicValue(0); // Indicate failure
+    }
+}

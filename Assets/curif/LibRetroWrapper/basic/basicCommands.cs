@@ -116,6 +116,8 @@ public static class Commands
         functions["GETLIGHTINTENSITY"] = typeof(CommandFunctionGETLIGHTINTENSITY);
         functions["SETLIGHTINTENSITY"] = typeof(CommandFunctionSETLIGHTINTENSITY);
         functions["LIGHTSCOUNT"] = typeof(CommandFunctionLIGHTSCOUNT);
+        functions["SETLIGHTCOLOR"] = typeof(CommandFunctionSETLIGHTCOLOR);
+        
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

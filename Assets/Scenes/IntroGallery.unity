@@ -2930,25 +2930,6 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
---- !u!1 &415493172 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
-  m_PrefabInstance: {fileID: 1544796026}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &415493173
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 415493172}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  roomConfiguration: {fileID: 1762873378}
-  intensity: 1.5
 --- !u!1 &434999383
 GameObject:
   m_ObjectHideFlags: 0
@@ -6100,18 +6081,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6850902116468457983, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
       insertIndex: -1
       addedObject: {fileID: 606318148}
-    - targetCorrespondingSourceObject: {fileID: 5347497587485064072, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 606318147}
   m_SourcePrefab: {fileID: 100100000, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
 --- !u!4 &606318141 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7680544480046538979, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
-  m_PrefabInstance: {fileID: 606318140}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &606318142 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5347497587485064072, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
   m_PrefabInstance: {fileID: 606318140}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &606318143 stripped
@@ -6134,20 +6107,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7680544480046538976, guid: 4425ba3abc34131a0955d365d30356a3, type: 3}
   m_PrefabInstance: {fileID: 606318140}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &606318147
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 606318142}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  roomConfiguration: {fileID: 1762873378}
-  intensity: 1
 --- !u!114 &606318148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18584,10 +18543,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 415493173}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
 --- !u!4 &1544796027 stripped
 Transform:
