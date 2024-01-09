@@ -66,6 +66,7 @@ public static class Commands
 
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
+        functions["TYPE"] = typeof(CommandFunctionTYPE);
 
         // configuration settings -------
 

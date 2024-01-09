@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 public class BasicValue
 {
@@ -49,6 +50,14 @@ public class BasicValue
     public BasicValue(double number)
     {
         SetValue(number);
+    }
+    public BasicValue(int number)
+    {
+        SetValue((double)number);
+    }
+    public BasicValue(float number)
+    {
+        SetValue((double)number);
     }
 
     public BasicValue(BasicValue val)
@@ -231,7 +240,7 @@ public class BasicValue
         if (obj1.type != obj2.type)
             throw new Exception($"Invalid operator - (minus) between {obj1.type} and {obj2.type}");
         if (obj1.type == BasicValueType.String)
-            throw new Exception($"Invalid operator - (minus) can't decrement strings");
+            throw new Exception($"Invalid operator - (minus) can't substract strings");
         return new BasicValue(obj1.number - obj2.number);
     }
 
@@ -240,8 +249,14 @@ public class BasicValue
         if (obj1.type != obj2.type)
             throw new Exception($"Invalid operator * (multiply) between {obj1.type} and {obj2.type}");
 
+        if (obj1.type == BasicValueType.String && obj2.type == BasicValueType.Number)
+            return new BasicValue(string.Concat(Enumerable.Repeat(obj1.str, (int)obj2.number)));
+
+        if (obj1.type == BasicValueType.Number && obj2.type == BasicValueType.String)
+            return new BasicValue(string.Concat(Enumerable.Repeat(obj2.str, (int)obj1.number)));
+
         if (obj1.type == BasicValueType.String)
-            throw new Exception("Invalid operation: String cannot be multiplied.");
+            throw new Exception("Invalid operation: String cannot be multiplied by another string.");
 
         return new BasicValue(obj1.number * obj2.number);
     }
@@ -256,7 +271,6 @@ public class BasicValue
 
         if (obj2.number == 0)
             throw new Exception("Divide by zero error.");
-
 
         return new BasicValue(obj1.number / obj2.number);
     }

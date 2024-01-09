@@ -180,7 +180,6 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
     }
 }
 
-
 class CommandFunctionCOUNTMEMBERS : CommandFunctionExpressionListBase
 {
     public CommandFunctionCOUNTMEMBERS(ConfigurationCommands config) : base(config)
