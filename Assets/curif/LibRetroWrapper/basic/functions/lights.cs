@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using System.Text;
 
 class CommandFunctionGETLIGHTS : CommandFunctionNoExpressionBase
 {
@@ -12,7 +13,7 @@ class CommandFunctionGETLIGHTS : CommandFunctionNoExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        List<string> lightNames = new List<string>();
+        StringBuilder resultBuilder = new StringBuilder();
 
         GameObject[] lightObjects = GameObject.FindGameObjectsWithTag("Light");
 
@@ -20,18 +21,24 @@ class CommandFunctionGETLIGHTS : CommandFunctionNoExpressionBase
         {
             LightManagerController lightController = lightObject.GetComponent<LightManagerController>();
 
-            if (lightController != null)
+            if (lightController != null && !string.IsNullOrEmpty(lightController.LightName))
             {
-                lightNames.Add(lightController.LightName);
+                if (resultBuilder.Length > 0)
+                {
+                    resultBuilder.Append("|");
+                }
+
+                resultBuilder.Append(lightController.LightName);
             }
         }
 
-        string result = string.Join("|", lightNames);
+        string result = resultBuilder.ToString();
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Result: {result}");
 
         return new BasicValue(result);
     }
 }
+
 
 class CommandFunctionGETLIGHTINTENSITY : CommandFunctionSingleExpressionBase
 {
