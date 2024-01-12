@@ -241,6 +241,7 @@ MonoBehaviour:
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
+  Room: Room006
   yamlPath: 
 --- !u!1 &50194821
 GameObject:
@@ -6864,9 +6865,10 @@ GameObject:
   m_Component:
   - component: {fileID: 2131980909}
   - component: {fileID: 2131980908}
+  - component: {fileID: 2131980910}
   m_Layer: 0
   m_Name: Point Light
-  m_TagString: Untagged
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -6883,7 +6885,7 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.3
   m_Range: 4.5101204
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -6948,6 +6950,20 @@ Transform:
   m_Father: {fileID: 1624279458}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2131980910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2131980907}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 29778829}
+  intensity: 1
 --- !u!1001 &2145572949
 PrefabInstance:
   m_ObjectHideFlags: 0

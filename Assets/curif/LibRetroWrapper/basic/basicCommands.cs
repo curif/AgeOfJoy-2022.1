@@ -23,7 +23,7 @@ public static class Commands
         commands["CALL"] = typeof(CommandCALL);
         commands["FOR"] = typeof(CommandFORTO);
         commands["NEXT"] = typeof(CommandNEXT);
-        
+
         //screen
         commands["CLS"] = typeof(CommandCLS);
         commands["PRINT"] = typeof(CommandPRINT);
@@ -53,7 +53,7 @@ public static class Commands
         functions["STR"] = typeof(CommandFunctionSTR);
         functions["GETMEMBER"] = typeof(CommandFunctionGETMEMBER);
         functions["COUNTMEMBERS"] = typeof(CommandFunctionCOUNTMEMBERS);
-        
+
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);
@@ -63,9 +63,10 @@ public static class Commands
         functions["CABINETSDBPATH"] = typeof(CommandFunctionCABINETSDBPATH);
         functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
         functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
-        
+
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
+        functions["TYPE"] = typeof(CommandFunctionTYPE);
 
         // configuration settings -------
 
@@ -76,7 +77,7 @@ public static class Commands
         functions["ROOMGETNAME"] = typeof(CommandFunctionROOMGETNAME);
         functions["ROOMGETDESC"] = typeof(CommandFunctionROOMGETDESC);
         functions["ROOMTELEPORT"] = typeof(CommandFunctionROOMTELEPORT);
-        
+
         //posters
         functions["POSTERROOMCOUNT"] = typeof(CommandFunctionPOSTERROOMCOUNT);
         functions["POSTERROOMREPLACE"] = typeof(CommandFunctionPOSTERROOMREPLACE);
@@ -111,6 +112,13 @@ public static class Commands
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);
 
+        //lights
+        functions["GETLIGHTS"] = typeof(CommandFunctionGETLIGHTS);
+        functions["GETLIGHTINTENSITY"] = typeof(CommandFunctionGETLIGHTINTENSITY);
+        functions["SETLIGHTINTENSITY"] = typeof(CommandFunctionSETLIGHTINTENSITY);
+        functions["LIGHTSCOUNT"] = typeof(CommandFunctionLIGHTSCOUNT);
+        functions["SETLIGHTCOLOR"] = typeof(CommandFunctionSETLIGHTCOLOR);
+        
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

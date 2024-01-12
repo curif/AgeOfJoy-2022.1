@@ -18,7 +18,7 @@ class CommandPRINT : ICommandBase
     public bool Parse(TokenConsumer tokens)
     {
         exprs.Parse(tokens);
-        if (exprs.Count < 3 )
+        if (exprs.Count < 3)
             throw new Exception($"{CmdToken}() parameter/s missing, expected x,y, expr, 1/0.");
         return true;
     }
@@ -27,27 +27,25 @@ class CommandPRINT : ICommandBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.ScreenGenerator == null)
-        {
             return null;
-        }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-
-        if (vals[2].IsNumber())
-            vals[2].CastTo(BasicValue.BasicValueType.String);
+        FunctionHelper.ExpectedNumber(vals[0], " - pos X");
+        FunctionHelper.ExpectedNumber(vals[1], " - pos Y");
 
         int x = (int)vals[0].GetValueAsNumber();
         int y = (int)vals[1].GetValueAsNumber();
 
-        if (x < 0 ||
-            x >= config.ScreenGenerator.CharactersWidth ||
-            y < 0 ||
-            y >= config.ScreenGenerator.CharactersHeight
-        )
-            throw new Exception("printing out of screen");
+        if (x < 0 || x >= config.ScreenGenerator.CharactersWidth)
+            throw new Exception("printing out of screen (width)");
+        if (y < 0 || y >= config.ScreenGenerator.CharactersHeight)
+            throw new Exception("printing out of screen (height)");
 
-        string text = vals[2].GetValueAsString();
-        
+        BasicValue str = new BasicValue(vals[2]);
+        if (str.IsNumber())
+            str.CastTo(BasicValue.BasicValueType.String);
+        string text = str.GetValueAsString();
+
         bool inverted = false;
         if (vals[3] != null)
             inverted = vals[3].GetValueAsNumber() != 0;
@@ -56,7 +54,9 @@ class CommandPRINT : ICommandBase
             draw = vals[4].GetValueAsNumber() != 0;
 
         ConfigManager.WriteConsole($"print {x}, {y}, {text}, {inverted}  ");
-        config.ScreenGenerator.Print(x, y, text, inverted);
+        config.ScreenGenerator.Print(x, y,
+                                     text,
+                                     inverted);
         if (draw)
             config.ScreenGenerator.DrawScreen();
 

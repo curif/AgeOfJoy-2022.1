@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000002, guid: 7a01746941af250488af61d45e5e61d9, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 7a01746941af250488af61d45e5e61d9, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -699,6 +699,7 @@ MonoBehaviour:
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
+  Room: Room016
   yamlPath: 
 --- !u!1 &68383148
 GameObject:
@@ -1354,7 +1355,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -6.8550005
+      value: -8
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1665,6 +1666,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 1862072339}
     m_Modifications:
     - target: {fileID: 1937074276340983008, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
+      propertyPath: m_Name
+      value: LampLight4
+      objectReference: {fileID: 0}
+    - target: {fileID: 1937074276340983008, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
@@ -1676,6 +1681,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 2436629314506147462, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 62110612}
     - target: {fileID: 2642921809569907686, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
@@ -1697,8 +1706,12 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 1.1693356e-19
+      value: 1.4546743e-37
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -1706,11 +1719,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 4.88e-43
+      value: 1.4e-44
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 6.50624e-40
+      value: 1.7599e-41
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_RootOrder
@@ -2472,7 +2485,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -6.5050006
+      value: -8.5
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2480,7 +2493,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -5.7629414
+      value: -6.27
       objectReference: {fileID: 0}
     - target: {fileID: 3563754588736878886, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2638,6 +2651,10 @@ PrefabInstance:
     - target: {fileID: 309346822875052208, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_Name
       value: TubeLamp
+      objectReference: {fileID: 0}
+    - target: {fileID: 309346822875052208, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 309346822875052208, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -2904,9 +2921,10 @@ GameObject:
   m_Component:
   - component: {fileID: 266557605}
   - component: {fileID: 266557606}
+  - component: {fileID: 266557607}
   m_Layer: 0
-  m_Name: Point Light (3)
-  m_TagString: Untagged
+  m_Name: Light2
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -2919,7 +2937,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 266557604}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.52, y: 1.9190981, z: -5.742941}
+  m_LocalPosition: {x: -8.514999, y: 1.9190981, z: -6.249999}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2938,8 +2956,8 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 0.999829, b: 0.9386792, a: 1}
-  m_Intensity: 1
-  m_Range: 3.013358
+  m_Intensity: 0.3
+  m_Range: 3.2930603
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -2983,11 +3001,25 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 50, y: 0, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 2.7e-44, z: 7.591e-42, w: 15123.25}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &266557607
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 266557604}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 62110612}
+  intensity: 1.5
 --- !u!1 &279108377
 GameObject:
   m_ObjectHideFlags: 0
@@ -4260,9 +4292,17 @@ PrefabInstance:
       value: 0.212
       objectReference: {fileID: 0}
     - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: LampLight3
+      objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 62110612}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (2)
@@ -4281,7 +4321,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7795294111037369456, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2.493
+      value: -1.84
       objectReference: {fileID: 0}
     - target: {fileID: 7795294111037369456, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_LocalRotation.w
@@ -4313,7 +4353,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Range
-      value: 3.413723
+      value: 1.8783875
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
@@ -4328,20 +4368,24 @@ PrefabInstance:
       value: 0.9528302
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: NaN
+      value: 4.591775e-39
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: NaN
+      value: 1.02e-43
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: NaN
+      value: 1.4e-44
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: NaN
+      value: 7.24e-42
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10510,7 +10554,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &800048585
 Light:
   m_ObjectHideFlags: 0
@@ -11667,6 +11711,10 @@ PrefabInstance:
     - target: {fileID: 309346822875052208, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_Name
       value: TubeLamp (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 309346822875052208, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 309346822875052208, guid: ff07de99ec46be76c854a3d582fc82a3, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -14567,9 +14615,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1167126970}
   - component: {fileID: 1167126971}
+  - component: {fileID: 1167126972}
   m_Layer: 0
-  m_Name: Point Light (2)
-  m_TagString: Untagged
+  m_Name: Light1
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
@@ -14582,7 +14631,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1167126969}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.87, y: 1.9190981, z: -2.4398394}
+  m_LocalPosition: {x: -8.014999, y: 1.9190981, z: -2.4398394}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14601,8 +14650,8 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 0.999829, b: 0.9386792, a: 1}
-  m_Intensity: 1
-  m_Range: 2.6858149
+  m_Intensity: 0.3
+  m_Range: 3.8775952
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -14646,11 +14695,25 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: NaN, y: 1, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 1.02e-43, y: 1.3e-44, z: 7.675e-42, w: 7.533e-42}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &1167126972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1167126969}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 62110612}
+  intensity: 1.5
 --- !u!1001 &1173703679
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -16017,7 +16080,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!108 &1302739696
 Light:
   m_ObjectHideFlags: 0
@@ -24859,9 +24922,17 @@ PrefabInstance:
       value: 0.212
       objectReference: {fileID: 0}
     - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: LampLight1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 62110612}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (1)
@@ -24912,7 +24983,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Range
-      value: 3.413723
+      value: 2.3958492
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
@@ -24927,8 +24998,12 @@ PrefabInstance:
       value: 0.9528302
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0.033332825
+      value: 9.403955e-38
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -24936,11 +25011,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 2.12e-43
+      value: 7.3e-44
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 3.30736e-40
+      value: 1.1321e-41
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -26291,6 +26366,10 @@ PrefabInstance:
       value: 0.212
       objectReference: {fileID: 0}
     - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: LampLight2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
@@ -26298,6 +26377,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 62110612}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab
@@ -26348,7 +26431,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Range
-      value: 1.9482665
+      value: 1.4915323
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
@@ -26363,8 +26446,12 @@ PrefabInstance:
       value: 0.9528302
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 4.43393e-40
+      value: 1.399e-41
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -26372,11 +26459,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 2.02e-43
+      value: 1.5e-44
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 5.27735e-40
+      value: 8.443e-42
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

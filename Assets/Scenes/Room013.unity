@@ -757,6 +757,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: CeilingLampLight2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 423336114}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (7)
@@ -827,31 +835,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
-      value: 0.6541474
+      value: 0.19607839
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.g
-      value: 0.9433962
+      value: 0.76697165
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.r
-      value: 0.9433962
+      value: 0.9607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 3.1568e-41
+      value: 2.9999e-41
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 1.02e-43
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 2e-44
+      value: 6e-44
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 3.7284e-41
+      value: 2.16e-43
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -937,6 +949,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2326113972034812258, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5745087462042225409, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_StaticEditorFlags
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6269652312372406501, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
@@ -1648,6 +1664,14 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: -130167230
       objectReference: {fileID: 0}
@@ -1732,7 +1756,6 @@ GameObject:
   - component: {fileID: 213211368}
   - component: {fileID: 213211371}
   - component: {fileID: 213211370}
-  - component: {fileID: 213211369}
   m_Layer: 0
   m_Name: NeonRed (7)
   m_TagString: Untagged
@@ -1755,29 +1778,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
---- !u!136 &213211369
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 213211367}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &213211370
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3486,6 +3486,14 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: 1.06e-43
       objectReference: {fileID: 0}
@@ -4256,6 +4264,7 @@ MonoBehaviour:
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
+  Room: Room013
   yamlPath: 
 --- !u!1001 &425642585
 PrefabInstance:
@@ -4426,7 +4435,6 @@ GameObject:
   - component: {fileID: 426537387}
   - component: {fileID: 426537390}
   - component: {fileID: 426537389}
-  - component: {fileID: 426537388}
   m_Layer: 0
   m_Name: NeonRed (3)
   m_TagString: Untagged
@@ -4449,29 +4457,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
---- !u!136 &426537388
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 426537386}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &426537389
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4799,7 +4784,6 @@ GameObject:
   - component: {fileID: 444530441}
   - component: {fileID: 444530444}
   - component: {fileID: 444530443}
-  - component: {fileID: 444530442}
   m_Layer: 0
   m_Name: NeonRed (5)
   m_TagString: Untagged
@@ -4822,29 +4806,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
---- !u!136 &444530442
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 444530440}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &444530443
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6048,6 +6009,14 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 1.1059875
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: 0
       objectReference: {fileID: 0}
@@ -6073,7 +6042,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2326113972034812258, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.003
       objectReference: {fileID: 0}
     - target: {fileID: 2326113972034812258, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6840,6 +6809,14 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: 3.8743e-41
       objectReference: {fileID: 0}
@@ -7006,7 +6983,6 @@ GameObject:
   - component: {fileID: 669697261}
   - component: {fileID: 669697264}
   - component: {fileID: 669697263}
-  - component: {fileID: 669697262}
   m_Layer: 0
   m_Name: NeonRed (11)
   m_TagString: Untagged
@@ -7029,29 +7005,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
---- !u!136 &669697262
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 669697260}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &669697263
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7641,6 +7594,10 @@ PrefabInstance:
     - target: {fileID: 87892524764652749, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -9578,7 +9535,6 @@ GameObject:
   - component: {fileID: 895021469}
   - component: {fileID: 895021472}
   - component: {fileID: 895021471}
-  - component: {fileID: 895021470}
   m_Layer: 0
   m_Name: NeonRed (4)
   m_TagString: Untagged
@@ -9601,29 +9557,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
---- !u!136 &895021470
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 895021468}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &895021471
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10480,7 +10413,6 @@ GameObject:
   - component: {fileID: 969279946}
   - component: {fileID: 969279949}
   - component: {fileID: 969279948}
-  - component: {fileID: 969279947}
   m_Layer: 0
   m_Name: NeonRed (8)
   m_TagString: Untagged
@@ -10503,29 +10435,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
---- !u!136 &969279947
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 969279945}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &969279948
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10673,6 +10582,14 @@ PrefabInstance:
     - target: {fileID: 87892524764652749, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 0.86723137
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
@@ -11199,6 +11116,18 @@ PrefabInstance:
     - target: {fileID: 426769915038927901, guid: 55378871f5edcae4fbaa618b9ad9336a, type: 3}
       propertyPath: m_Name
       value: MedievalFirewood
+      objectReference: {fileID: 0}
+    - target: {fileID: 1625877924007475719, guid: 55378871f5edcae4fbaa618b9ad9336a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.08
+      objectReference: {fileID: 0}
+    - target: {fileID: 1625877924007475719, guid: 55378871f5edcae4fbaa618b9ad9336a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.618
+      objectReference: {fileID: 0}
+    - target: {fileID: 1625877924007475719, guid: 55378871f5edcae4fbaa618b9ad9336a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.047
       objectReference: {fileID: 0}
     - target: {fileID: 8743496814619241481, guid: 55378871f5edcae4fbaa618b9ad9336a, type: 3}
       propertyPath: m_RootOrder
@@ -12135,6 +12064,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: CeilingLampLight3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 423336114}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (6)
@@ -12205,19 +12142,23 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
-      value: 0.6541474
+      value: 0.19607839
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.g
-      value: 0.9433962
+      value: 0.76697165
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.r
-      value: 0.9433962
+      value: 0.9607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0
+      value: 4.5881e-41
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -12225,11 +12166,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 37
+      value: 6e-44
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 12
+      value: 6.2e-44
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13321,7 +13262,6 @@ GameObject:
   - component: {fileID: 1236658514}
   - component: {fileID: 1236658517}
   - component: {fileID: 1236658516}
-  - component: {fileID: 1236658515}
   m_Layer: 0
   m_Name: NeonRed (6)
   m_TagString: Untagged
@@ -13344,29 +13284,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 90}
---- !u!136 &1236658515
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1236658513}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &1236658516
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -15268,7 +15185,6 @@ GameObject:
   - component: {fileID: 1404262349}
   - component: {fileID: 1404262348}
   - component: {fileID: 1404262347}
-  - component: {fileID: 1404262346}
   m_Layer: 0
   m_Name: NeonRed
   m_TagString: Untagged
@@ -15276,29 +15192,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
   m_IsActive: 1
---- !u!136 &1404262346
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1404262345}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &1404262347
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -16370,7 +16263,6 @@ GameObject:
   - component: {fileID: 1455958317}
   - component: {fileID: 1455958320}
   - component: {fileID: 1455958319}
-  - component: {fileID: 1455958318}
   m_Layer: 0
   m_Name: NeonRed (9)
   m_TagString: Untagged
@@ -16393,29 +16285,6 @@ Transform:
   m_Father: {fileID: 1157114492}
   m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
---- !u!136 &1455958318
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1455958316}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
 --- !u!23 &1455958319
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -17687,6 +17556,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: CeilingLampLight4
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 423336114}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (8)
@@ -17757,31 +17634,35 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
-      value: 0.6541474
+      value: 0.19607839
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.g
-      value: 0.9433962
+      value: 0.76697165
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.r
-      value: 0.9433962
+      value: 0.9607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0
+      value: -2.1688674e-37
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 0.03515625
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 101
+      value: -2.9854618e-35
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 9
+      value: 1.005e-42
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18849,6 +18730,14 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: 66
       objectReference: {fileID: 0}
@@ -19207,6 +19096,14 @@ PrefabInstance:
     - target: {fileID: 87892524764652749, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
@@ -20650,6 +20547,14 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Range
+      value: 1.0364075
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 187424621150630853, guid: a6014fefac368604eba3a31a80c694c1, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: 144
       objectReference: {fileID: 0}
@@ -20839,9 +20744,9 @@ Transform:
   m_Children:
   - {fileID: 1388098676}
   - {fileID: 1516534473}
+  - {fileID: 1250446164}
   - {fileID: 828747344}
   - {fileID: 1341974359}
-  - {fileID: 1250446164}
   - {fileID: 1937865231}
   - {fileID: 1444067221}
   - {fileID: 238278363}
@@ -20889,6 +20794,14 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: CeilingLampLight1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 423336114}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (5)
@@ -20959,15 +20872,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.b
-      value: 0.6541474
+      value: 0.19607839
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.g
-      value: 0.9433962
+      value: 0.76697165
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Color.r
-      value: 0.9433962
+      value: 0.9607843
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
@@ -20975,15 +20892,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 1.0653053e-38
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 20
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 12
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

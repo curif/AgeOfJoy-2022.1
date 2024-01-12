@@ -259,9 +259,10 @@ GameObject:
   m_Component:
   - component: {fileID: 6011415619317630997}
   - component: {fileID: 8947349169253468306}
+  - component: {fileID: 7068553600110080938}
   m_Layer: 0
-  m_Name: Spot Light
-  m_TagString: Untagged
+  m_Name: CeilingLampLight
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -343,6 +344,20 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &7068553600110080938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6424938701775049164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 0}
+  intensity: 1
 --- !u!1 &7450539407257630410
 GameObject:
   m_ObjectHideFlags: 0
@@ -377,14 +392,14 @@ Transform:
   - {fileID: 6011415619317630997}
   - {fileID: 2614955442559436724}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: -1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &285683637875953237
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    serializedVersion: 2
+    serializedVersion: 3
     m_TransformParent: {fileID: 7795294111037369456}
     m_Modifications:
     - target: {fileID: 332981773730317056, guid: 6f270905056af966d8b4dfa5b3205479, type: 3}
@@ -452,7 +467,9 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
     m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6f270905056af966d8b4dfa5b3205479, type: 3}
 --- !u!4 &2614955442559436724 stripped
 Transform:

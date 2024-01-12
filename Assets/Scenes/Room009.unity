@@ -1415,6 +1415,7 @@ MonoBehaviour:
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
+  Room: Room009
   yamlPath: 
 --- !u!1001 &147550569
 PrefabInstance:
@@ -3783,100 +3784,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 486906784}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &495736417
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 495736419}
-  - component: {fileID: 495736418}
-  m_Layer: 0
-  m_Name: Spot Light
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!108 &495736418
-Light:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 495736417}
-  m_Enabled: 1
-  serializedVersion: 10
-  m_Type: 0
-  m_Shape: 0
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
-  m_Range: 5.0843554
-  m_SpotAngle: 59.534763
-  m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
-  m_Shadows:
-    m_Type: 0
-    m_Resolution: -1
-    m_CustomResolution: -1
-    m_Strength: 1
-    m_Bias: 0.05
-    m_NormalBias: 0.4
-    m_NearPlane: 0.2
-    m_CullingMatrixOverride:
-      e00: 1
-      e01: 0
-      e02: 0
-      e03: 0
-      e10: 0
-      e11: 1
-      e12: 0
-      e13: 0
-      e20: 0
-      e21: 0
-      e22: 1
-      e23: 0
-      e30: 0
-      e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
-  m_DrawHalo: 0
-  m_Flare: {fileID: 0}
-  m_RenderMode: 0
-  m_CullingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_RenderingLayerMask: 1
-  m_Lightmapping: 1
-  m_LightShadowCasterMode: 0
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
-  m_ColorTemperature: 6570
-  m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 2.1e-44, y: 1.1565e-41, z: 6e-44, w: 2.524355e-29}
-  m_UseBoundingSphereOverride: 0
-  m_UseViewFrustumForShadowCasterCull: 1
-  m_ShadowRadius: 0
-  m_ShadowAngle: 0
---- !u!4 &495736419
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 495736417}
-  m_LocalRotation: {x: 0.99955046, y: -0, z: -0, w: -0.02998266}
-  m_LocalPosition: {x: -6.6544485, y: 1.1031013, z: -4.3775797}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1862072339}
-  m_RootOrder: 6
-  m_LocalEulerAnglesHint: {x: 183.436, y: 0, z: 0}
 --- !u!1001 &512779956
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5756,9 +5663,10 @@ GameObject:
   m_Component:
   - component: {fileID: 800048586}
   - component: {fileID: 800048585}
+  - component: {fileID: 800048587}
   m_Layer: 0
-  m_Name: Point Light
-  m_TagString: Untagged
+  m_Name: CeilingLight1
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -5775,13 +5683,13 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 0.999829, b: 0.9386792, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.3
   m_Range: 3.809898
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -5820,7 +5728,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 5.469543e-15}
+  m_BoundingSphereOverride: {x: 4.5914e-41, y: 0, z: 0, w: 2.23956e-40}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -5840,6 +5748,20 @@ Transform:
   m_Father: {fileID: 1862072339}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &800048587
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 800048584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 140535417}
+  intensity: 1
 --- !u!1001 &801919706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6382,6 +6304,18 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: CeilingLampLight2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: intensity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 140535417}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab (1)
@@ -6439,20 +6373,24 @@ PrefabInstance:
       value: 3.4764006
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0.000025896137
+      value: 1.0400022e-36
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 0
+      value: NaN
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 0
+      value: -0.11604771
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 0
+      value: NaN
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9983,9 +9921,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1302739697}
   - component: {fileID: 1302739696}
+  - component: {fileID: 1302739698}
   m_Layer: 0
-  m_Name: Point Light (1)
-  m_TagString: Untagged
+  m_Name: CeilingLight2
+  m_TagString: Light
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483639
@@ -10002,13 +9941,13 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 1, g: 0.999829, b: 0.9386792, a: 1}
-  m_Intensity: 1
+  m_Intensity: 0.3
   m_Range: 3.5991046
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 2
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -10047,7 +9986,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 5.76e-43, w: 1.20254686e-35}
+  m_BoundingSphereOverride: {x: 0, y: -2.3113846e-37, z: 1.005e-42, w: -5.2510676e-37}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -10067,6 +10006,20 @@ Transform:
   m_Father: {fileID: 1862072339}
   m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1302739698
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1302739695}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 140535417}
+  intensity: 1
 --- !u!1001 &1331319598
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -12453,6 +12406,18 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6424938701775049164, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Name
+      value: CeilingLampLight1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: intensity
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7068553600110080938, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: roomConfiguration
+      value: 
+      objectReference: {fileID: 140535417}
     - target: {fileID: 7450539407257630410, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_Name
       value: HangLampPrefab
@@ -12510,12 +12475,16 @@ PrefabInstance:
       value: 3.1144931
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
+      propertyPath: m_Intensity
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.w
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 2
+      value: 0.0078125
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.y
@@ -12523,7 +12492,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8947349169253468306, guid: 97e5605b9144cc12baa2df1474563b66, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 0.16666667
+      value: 0.0078125
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13210,7 +13179,6 @@ Transform:
   - {fileID: 1661450830}
   - {fileID: 800048586}
   - {fileID: 1302739697}
-  - {fileID: 495736419}
   - {fileID: 1572059808}
   - {fileID: 1502047631}
   - {fileID: 964701108}
