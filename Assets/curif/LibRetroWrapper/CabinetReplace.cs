@@ -15,6 +15,8 @@ public class CabinetReplace : MonoBehaviour
     public CabinetPosition game;
     public GameObject outOfOrderCabinet;
 
+    public BackgroundSoundController backgroundSoundController;
+
     [Tooltip("The system will find it")]
     public List<AgentScenePosition> AgentPlayerPositionComponents;
     [Tooltip("The system will find it")]
@@ -81,7 +83,10 @@ public class CabinetReplace : MonoBehaviour
             Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
                                                          adjustedPosition, transform.rotation,
-                                                         transform.parent, AgentPlayerPositionComponentsToLoad);
+                                                         transform.parent, 
+                                                         AgentPlayerPositionComponentsToLoad,
+                                                         backgroundSoundController
+                                                         );
 
             cab.gameObject.SetActive(false);
             CabinetFactory.skinFromInformation(cab, cbInfo);
@@ -90,9 +95,10 @@ public class CabinetReplace : MonoBehaviour
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
             cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositionComponents;
             cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
-            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad; 
+            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
             cabReplaceComp.game = newCabGame;
             cabReplaceComp.outOfOrderCabinet = gameObject;
+            cabReplaceComp.backgroundSoundController = backgroundSoundController;
             cab.gameObject.SetActive(true);
 
             UnityEngine.Object.Destroy(gameObject);

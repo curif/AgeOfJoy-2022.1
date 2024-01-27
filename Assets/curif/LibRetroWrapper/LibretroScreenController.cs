@@ -111,6 +111,7 @@ public class LibretroScreenController : MonoBehaviour
     //age basic
     public CabinetAGEBasicInformation ageBasicInformation;
     private CabinetAGEBasic cabinetAGEBasic;
+    public BackgroundSoundController backgroundSoundController;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -362,6 +363,9 @@ public class LibretroScreenController : MonoBehaviour
         changeControls.PlayerMode(isPlaying);
 
         //change sound configuration
+        if (backgroundSoundController != null)
+            backgroundSoundController.InGame(isPlaying);
+/*
         GameObject[] allSpeakers = GameObject.FindGameObjectsWithTag("speaker");
         foreach (GameObject speaker in allSpeakers)
         {
@@ -369,7 +373,7 @@ public class LibretroScreenController : MonoBehaviour
             if (bsc)
                 bsc.InGame(isPlaying);
         }
-
+*/
         //enable-disable inputMap
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
         libretroControlMap.Enable(isPlaying);
@@ -411,7 +415,7 @@ public class LibretroScreenController : MonoBehaviour
         {
             // The target object is within the viewport bounds
             RaycastHit hitInfo;
-            if (Physics.Linecast(cameraComponentCenterEye.transform.position, 
+            if (Physics.Linecast(cameraComponentCenterEye.transform.position,
                                     transform.position, out hitInfo, layerMask))
             {
                 // The linecast hit something, check if it was the target object

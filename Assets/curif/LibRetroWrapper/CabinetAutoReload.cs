@@ -11,81 +11,86 @@ using System;
 
 public class CabinetAutoReload : MonoBehaviour
 {
-  [Tooltip("Positions where the player can stay to load the cabinet")]
-  public List<AgentScenePosition> AgentPlayerPositions;
+    [Tooltip("Positions where the player can stay to load the cabinet")]
+    public List<AgentScenePosition> AgentPlayerPositions;
+    public BackgroundSoundController backgroundSoundController;
 
-  static string testCabinetDir = ConfigManager.CabinetsDB + "/test";
-  static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
-  static string testFile = ConfigManager.Cabinets + "/test.zip";
 
-  void Start()
-  {
-    //it's not possible to use filesystemwatcher
+    static string testCabinetDir = ConfigManager.CabinetsDB + "/test";
+    static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
+    static string testFile = ConfigManager.Cabinets + "/test.zip";
 
-    ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
-
-    //this start() will be excecuted every time the component is loaded, do not excecute LoadCabinet() here.
-    // LoadCabinet();
-
-    StartCoroutine(reload());
-
-  }
-
-  IEnumerator reload()
-  {
-    while (true)
+    void Start()
     {
-      // ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
-      if (File.Exists(testFile))
-      {
-        //also deletes the zip file
-        ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from {testFile}");
-        CabinetDBAdmin.loadCabinetFromZip(testFile);
-        LoadCabinet();
-      }
+        //it's not possible to use filesystemwatcher
 
-      yield return new WaitForSeconds(2f);
+        ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
+
+        //this start() will be excecuted every time the component is loaded, do not excecute LoadCabinet() here.
+        // LoadCabinet();
+
+        StartCoroutine(reload());
+
     }
-  }
 
-  private void LoadCabinet()
-  {
+    IEnumerator reload()
+    {
+        while (true)
+        {
+            // ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
+            if (File.Exists(testFile))
+            {
+                //also deletes the zip file
+                ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from {testFile}");
+                CabinetDBAdmin.loadCabinetFromZip(testFile);
+                LoadCabinet();
+            }
 
-    if (!File.Exists(testDescriptionCabinetFile))
-      return;
+            yield return new WaitForSeconds(2f);
+        }
+    }
 
-    ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile}");
-
-    //new cabinet to test
-    CabinetInformation cbInfo = null;
-    try
+    private void LoadCabinet()
     {
 
-      ConfigManager.WriteConsole($"[CabinetAutoReload] new cabinet from yaml: {testCabinetDir}");
+        if (!File.Exists(testDescriptionCabinetFile))
+            return;
 
-      cbInfo = CabinetInformation.fromYaml(testCabinetDir); //description.yaml
-      if (cbInfo == null)
-      {
-        ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR NULL cabinet - new cabinet from yaml: {testCabinetDir}");
-        throw new IOException();
-      }
+        ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile}");
 
-      ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):..."); 
-      CabinetInformation.showCabinetProblems(cbInfo);
+        //new cabinet to test
+        CabinetInformation cbInfo = null;
+        try
+        {
 
-      //cabinet inseption
-      ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
-      Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position, transform.rotation, transform.parent, AgentPlayerPositions);
-      CabinetFactory.skinFromInformation(cab, cbInfo);
-      UnityEngine.Object.Destroy(gameObject);
-      CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
-      cba.AgentPlayerPositions = AgentPlayerPositions;
+            ConfigManager.WriteConsole($"[CabinetAutoReload] new cabinet from yaml: {testCabinetDir}");
 
-      ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
+            cbInfo = CabinetInformation.fromYaml(testCabinetDir); //description.yaml
+            if (cbInfo == null)
+            {
+                ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR NULL cabinet - new cabinet from yaml: {testCabinetDir}");
+                throw new IOException();
+            }
+
+            ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
+            CabinetInformation.showCabinetProblems(cbInfo);
+
+            //cabinet inseption
+            ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
+            Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position,
+                                                         transform.rotation, transform.parent,
+                                                         AgentPlayerPositions, backgroundSoundController);
+            CabinetFactory.skinFromInformation(cab, cbInfo);
+            UnityEngine.Object.Destroy(gameObject);
+            CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
+            cba.AgentPlayerPositions = AgentPlayerPositions;
+            cba.backgroundSoundController = backgroundSoundController;
+
+            ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
+        }
+        catch (System.Exception ex)
+        {
+            ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}: {ex}");
+        }
     }
-    catch (System.Exception ex)
-    {
-      ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}: {ex}");
-    }
-  }
 }

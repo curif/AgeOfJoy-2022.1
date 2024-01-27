@@ -323,7 +323,8 @@ private void addBoxCollider(GameObject gameObject)
                              string shaderName = "damage", Dictionary<string, string> shaderConfig = null,
                              ControlMapConfiguration cabinetControlMap = null,
                              LightGunInformation lightGunInformation = null,
-                             CabinetAGEBasicInformation agebasic = null
+                             CabinetAGEBasicInformation agebasic = null,
+                             BackgroundSoundController backgroundSoundController = null
                           )
     {
         string CRTType = $"screen-mock-{orientation}";
@@ -377,6 +378,9 @@ private void addBoxCollider(GameObject gameObject)
 
         //age basic
         libretroScreenController.ageBasicInformation = agebasic;
+
+        //sound
+        libretroScreenController.backgroundSoundController = backgroundSoundController;
 
         return this;
     }

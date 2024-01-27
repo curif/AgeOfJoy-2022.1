@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Audio;
+
 
 public class ConfigurationCommands
 {
@@ -29,4 +31,8 @@ public class ConfigurationCommands
     public CoinSlotController CoinSlot;
 
     public MoviePosterController PostersController;
+
+    public AudioMixer audioMixerAmbience; // Drag your Audio Mixer asset here in the Unity Editor
+    public AudioMixer audioMixerGame; // Drag your Audio Mixer asset here in the Unity Editor
+
 }

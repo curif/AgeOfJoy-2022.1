@@ -31,6 +31,9 @@ public class CabinetController : MonoBehaviour
 
     public GameObject outOfOrderCabinet;
 
+    public BackgroundSoundController backgroundSoundController;
+
+
     private CabinetReplace cabinetReplaceComponent;
     // videos
     private List<AgentScenePosition> AgentPlayerPositionComponents;
@@ -147,8 +150,8 @@ public class CabinetController : MonoBehaviour
             //cabinet inception
             ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game}");
             cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position,
-                                                 transform.position, transform.rotation, 
-                                                 parent, AgentPlayerPositionComponents);
+                                                 transform.position, transform.rotation,
+                                                 parent, AgentPlayerPositionComponents, backgroundSoundController);
         }
         catch (System.Exception ex)
         {
@@ -179,6 +182,7 @@ public class CabinetController : MonoBehaviour
         cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
         cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
         cabReplaceComp.outOfOrderCabinet = outOfOrderCabinet;
+        cabReplaceComp.backgroundSoundController = backgroundSoundController;
         cabReplaceComp.game = game;
 
         //activate the new cabinet

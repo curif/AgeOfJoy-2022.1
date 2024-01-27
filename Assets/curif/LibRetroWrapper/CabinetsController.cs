@@ -17,6 +17,7 @@ public class CabinetsController : MonoBehaviour
     //public LightProbeGroup ClosestLightProbeGroup = null;
 
     public GameRegistry gameRegistry;
+    public BackgroundSoundController backgroundSoundController;
 
     public bool Loaded = false; //set when the room cabinets where assigned.
 
@@ -49,6 +50,7 @@ public class CabinetsController : MonoBehaviour
             {
                 cc.game = new();
                 cc.game.Position = idx;
+                cc.backgroundSoundController = backgroundSoundController;
 
                 //assign the cabinet number to the teleport area
                 MeshRenderer renderer = cc.AgentPlayerTeleportAnchor?.GetComponent<MeshRenderer>();

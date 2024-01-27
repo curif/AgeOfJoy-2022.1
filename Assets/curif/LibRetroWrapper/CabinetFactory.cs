@@ -165,7 +165,7 @@ public static class CabinetFactory
 
     public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number,
       Vector3 position, Quaternion rotation, Transform parent,
-      List<AgentScenePosition> agentPlayerPositions)
+      List<AgentScenePosition> agentPlayerPositions, BackgroundSoundController backgroundSoundController)
     {
         string modelFilePath = "";
         if (!String.IsNullOrEmpty(cbinfo.model.file))
@@ -220,7 +220,7 @@ public static class CabinetFactory
 				cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
 				cbinfo.ControlMap,
                 cbinfo.lightGunInformation,
-                cbinfo.agebasic);
+                cbinfo.agebasic, backgroundSoundController);
 
         ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
 

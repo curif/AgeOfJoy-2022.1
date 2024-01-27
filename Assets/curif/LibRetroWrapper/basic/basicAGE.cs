@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Audio;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -74,6 +75,8 @@ public class basicAGE : MonoBehaviour
 
     public SceneDatabase SceneDatabase = null;
     public MoviePosterController PostersController;
+    public AudioMixer audioMixerAmbience; // Drag your Audio Mixer asset here in the Unity Editor
+    public AudioMixer audioMixerGame; // Drag your Audio Mixer asset here in the Unity Editor
 
 
 #if UNITY_EDITOR
@@ -113,6 +116,8 @@ public class basicAGE : MonoBehaviour
             GameRegistry = roomInit.GetComponent<GameRegistry>();
         if (Teleportation == null)
             Teleportation = GetComponent<Teleportation>();
+        // if (Audio == null)
+        //     Audio = GetComponent<AudioSource>();
 
         configCommands.ConfigurationController = ConfigurationController;
         configCommands.ScreenGenerator = ScreenGenerator;
@@ -121,6 +126,9 @@ public class basicAGE : MonoBehaviour
         configCommands.GameRegistry = GameRegistry;
         configCommands.Teleportation = Teleportation;
         configCommands.PostersController = PostersController;
+        // configCommands.Audio = Audio;
+        configCommands.audioMixerAmbience = audioMixerAmbience;
+        configCommands.audioMixerGame = audioMixerGame;
 
     }
 
