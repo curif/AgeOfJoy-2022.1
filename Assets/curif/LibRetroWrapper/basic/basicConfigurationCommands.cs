@@ -32,7 +32,5 @@ public class ConfigurationCommands
 
     public MoviePosterController PostersController;
 
-    public AudioMixer audioMixerAmbience; // Drag your Audio Mixer asset here in the Unity Editor
-    public AudioMixer audioMixerGame; // Drag your Audio Mixer asset here in the Unity Editor
-
+    public AudioMixer audioMixer;
 }

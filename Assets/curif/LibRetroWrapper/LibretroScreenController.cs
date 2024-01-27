@@ -365,15 +365,7 @@ public class LibretroScreenController : MonoBehaviour
         //change sound configuration
         if (backgroundSoundController != null)
             backgroundSoundController.InGame(isPlaying);
-/*
-        GameObject[] allSpeakers = GameObject.FindGameObjectsWithTag("speaker");
-        foreach (GameObject speaker in allSpeakers)
-        {
-            BackgroundSoundController bsc = speaker.GetComponent<BackgroundSoundController>();
-            if (bsc)
-                bsc.InGame(isPlaying);
-        }
-*/
+
         //enable-disable inputMap
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
         libretroControlMap.Enable(isPlaying);

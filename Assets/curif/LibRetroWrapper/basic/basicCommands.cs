@@ -119,6 +119,11 @@ public static class Commands
         functions["LIGHTSCOUNT"] = typeof(CommandFunctionLIGHTSCOUNT);
         functions["SETLIGHTCOLOR"] = typeof(CommandFunctionSETLIGHTCOLOR);
         
+        //audio
+        functions["AUDIOGAMEGETVOLUME"] = typeof(CommandFunctionAUDIOGAMEGETVOLUME);
+        functions["nAUDIOMUSICGETVOLUME"] = typeof(CommandFunctionAUDIOMUSICGETVOLUME);
+        functions["AUDIOAMBIENCEGETVOLUME"] = typeof(CommandFunctionAUDIOAMBIENCEGETVOLUME);
+
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
