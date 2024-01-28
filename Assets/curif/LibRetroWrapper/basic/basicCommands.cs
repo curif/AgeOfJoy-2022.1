@@ -123,6 +123,9 @@ public static class Commands
         functions["AUDIOGAMEGETVOLUME"] = typeof(CommandFunctionAUDIOGAMEGETVOLUME);
         functions["nAUDIOMUSICGETVOLUME"] = typeof(CommandFunctionAUDIOMUSICGETVOLUME);
         functions["AUDIOAMBIENCEGETVOLUME"] = typeof(CommandFunctionAUDIOAMBIENCEGETVOLUME);
+        functions["AUDIOGAMESETVOLUME"] = typeof(CommandFunctionAUDIOGAMESETVOLUME);
+        functions["nAUDIOMUSICSETVOLUME"] = typeof(CommandFunctionAUDIOMUSICSETVOLUME);
+        functions["AUDIOAMBIENCESETVOLUME"] = typeof(CommandFunctionAUDIOAMBIENCESETVOLUME);
 
     }
 

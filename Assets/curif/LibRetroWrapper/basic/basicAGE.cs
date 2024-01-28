@@ -26,6 +26,13 @@ public class CompilationException : Exception
         Program = program;
     }
 
+    public override string ToString()
+    {
+        string str = $"COMPILATION ERROR: {Program} \n line: {LineNumber}\n";
+        str += $"Exception: {Message}\n";
+        return str;
+    }
+
     public void Show(ScreenGenerator scr)
     {
         scr.Clear();
@@ -55,7 +62,7 @@ public class RuntimeException : Exception
     }
     public override string ToString()
     {
-        string str = $"COMPILATION ERROR: {Program} \n line: {LineNumber}\n";
+        string str = $"RUNTIME ERROR: {Program} \n line: {LineNumber}\n";
         str += $"Exception: {Message}\n";
         return str;
     }
@@ -227,7 +234,7 @@ public class basicAGE : MonoBehaviour
             return;
         configCommands.stop = true;
     }
-    public void Run(string name, bool blocking = false)
+    public void Run(string name, bool blocking = false, BasicVars pvars = null)
     {
         if (!programs.ContainsKey(name))
             throw new Exception($"program {name} doesn't exists");
@@ -237,7 +244,7 @@ public class basicAGE : MonoBehaviour
 
         PrepareToRun();
         running = programs[name];
-        running.PrepareToRun();
+        running.PrepareToRun(pvars);
 
         if (!blocking)
         {

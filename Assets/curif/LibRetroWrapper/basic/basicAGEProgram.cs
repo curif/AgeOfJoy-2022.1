@@ -35,13 +35,16 @@ public class AGEProgram
         this.name = name;
     }
 
-    public void PrepareToRun()
+    public void PrepareToRun(BasicVars pvars = null)
     {
         this.nextLineToExecute = -1;
         config.Gosub = new Stack<int>();
         config.LineNumber = config.JumpNextTo = config.JumpTo = ContLinesExecuted = 0;
         config.stop = false;
-        vars = new();
+        if (pvars == null)
+            vars = new();
+        else
+            vars = pvars;
     }
 
     public BasicValue GetVarValue(string varName)

@@ -28,9 +28,9 @@ public class CabinetAGEBasic : MonoBehaviour
 
     basicAGE ageBasic;
 
-    string pathBase;
+    BasicVars vars = new(); //variable's space.
 
-    CompilationException afterInsertCoinException;
+    string pathBase;
 
     CabinetAGEBasicInformation AGEInfo = new();
     public void SetDebugMode(bool debug)
@@ -61,12 +61,11 @@ public class CabinetAGEBasic : MonoBehaviour
                 }
                 catch (CompilationException e)
                 {
-                    afterInsertCoinException = e;
                     ConfigManager.WriteConsoleException($"[Execute] parsing {prgName}", (Exception)e);
                 }
             }
 
-            ageBasic.Run(prgName, blocking); //async blocking=false
+            ageBasic.Run(prgName, blocking, vars); //async blocking=false
         }
     }
 

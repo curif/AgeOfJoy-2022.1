@@ -5,37 +5,18 @@ using System.Linq.Expressions;
 using UnityEngine.Audio;
 
 
-class CommandFunctionAudioMixerBase : CommandFunctionNoExpressionBase
+class CommandFunctionAudioMixerGetVolBase : CommandFunctionNoExpressionBase
 {
-    public enum audioMixerType
-    {
-        Ambience = 0,
-        Game = 1,
-        Music = 2
-    }
-
-    protected audioMixerType type;
     protected string volumeParam;
 
-    public CommandFunctionAudioMixerBase(ConfigurationCommands config, 
+    public CommandFunctionAudioMixerGetVolBase(ConfigurationCommands config, 
                                             string token, 
-                                            CommandFunctionAudioMixerBase.audioMixerType typeparam) 
+                                            string volPar) 
             : base(config)
     {
         cmdToken = token;
-        type = typeparam;
-        if (type == audioMixerType.Ambience)
-        {
-            volumeParam = "AmbienceVolume";
-        }
-        else if (type == audioMixerType.Music)
-        {
-            volumeParam = "MusicVolume";
-        }
-        else if (type == audioMixerType.Game)
-        {
-            volumeParam = "GameVolume";
-        }
+        //check the Spatializer mixer exposed parameters in Unity editor audio mixer.
+        volumeParam = volPar + "Volume"; 
     }
 
     public override BasicValue Execute(BasicVars vars)
@@ -51,26 +32,82 @@ class CommandFunctionAudioMixerBase : CommandFunctionNoExpressionBase
     }
 }
 
-class CommandFunctionAUDIOGAMEGETVOLUME : CommandFunctionAudioMixerBase
+class CommandFunctionAUDIOGAMEGETVOLUME : CommandFunctionAudioMixerGetVolBase
 {
     public CommandFunctionAUDIOGAMEGETVOLUME(ConfigurationCommands config) : 
-        base(config, "AUDIOGAMEGETVOLUME", audioMixerType.Game)
+        base(config, "AUDIOGAMEGETVOLUME", "Game")
     {
     }
 
 }
-class CommandFunctionAUDIOMUSICGETVOLUME : CommandFunctionAudioMixerBase
+class CommandFunctionAUDIOMUSICGETVOLUME : CommandFunctionAudioMixerGetVolBase
 {
     public CommandFunctionAUDIOMUSICGETVOLUME(ConfigurationCommands config) : 
-        base(config, "AUDIOMUSICGETVOLUME", audioMixerType.Music)
+        base(config, "AUDIOMUSICGETVOLUME", "Music")
     {
     }
 }
 
-class CommandFunctionAUDIOAMBIENCEGETVOLUME : CommandFunctionAudioMixerBase
+class CommandFunctionAUDIOAMBIENCEGETVOLUME : CommandFunctionAudioMixerGetVolBase
 {
     public CommandFunctionAUDIOAMBIENCEGETVOLUME(ConfigurationCommands config) : 
-        base(config, "AUDIOAMBIENCEGETVOLUME", audioMixerType.Ambience)
+        base(config, "AUDIOAMBIENCEGETVOLUME", "Ambience")
     {
     }
 }
+
+
+class CommandFunctionAudioMixerSetVolBase : CommandFunctionSingleExpressionBase
+{
+    protected string volumeParam;
+
+    public CommandFunctionAudioMixerSetVolBase(ConfigurationCommands config, 
+                                            string token, 
+                                            string volPar) 
+            : base(config)
+    {
+        cmdToken = token;
+        //check the Spatializer mixer exposed parameters in Unity editor audio mixer.
+        volumeParam = volPar + "Volume"; 
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config.audioMixer == null)
+            return new BasicValue(0);
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val, "Volume");
+
+        float vol = (float)val.GetValueAsNumber(); 
+        config.audioMixer.SetFloat(volumeParam, vol);
+       
+        return new BasicValue(1);
+    }
+}
+
+class CommandFunctionAUDIOGAMESETVOLUME : CommandFunctionAudioMixerSetVolBase
+{
+    public CommandFunctionAUDIOGAMESETVOLUME(ConfigurationCommands config) : 
+        base(config, "AUDIOGAMEGETVOLUME", "Game")
+    {
+    }
+}
+
+class CommandFunctionAUDIOMUSICSETVOLUME : CommandFunctionAudioMixerSetVolBase
+{
+    public CommandFunctionAUDIOMUSICSETVOLUME(ConfigurationCommands config) : 
+        base(config, "AUDIOMUSICSETVOLUME", "Music")
+    {
+    }
+}
+
+class CommandFunctionAUDIOAMBIENCESETVOLUME : CommandFunctionAudioMixerSetVolBase
+{
+    public CommandFunctionAUDIOAMBIENCESETVOLUME(ConfigurationCommands config) : 
+        base(config, "AUDIOAMBIENCESETVOLUME", "Ambience")
+    {
+    }
+}
+
