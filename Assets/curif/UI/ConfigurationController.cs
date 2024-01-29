@@ -1782,7 +1782,7 @@ public class ConfigurationController : MonoBehaviour
                         else if (w.name == "run")
                         {
                             AGEBasicRun();
-                            AGEBasicRunTimeout = DateTime.Now.AddSeconds(60); //if not reach in time abort
+                            AGEBasicRunTimeout = DateTime.Now.AddSeconds(60 * 30); //if not reach in time abort
                             status = StatusOptions.onRunAGEBasicRunning;
                             return TaskStatus.Success;
                         }

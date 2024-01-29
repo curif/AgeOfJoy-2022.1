@@ -55,14 +55,23 @@ public class AGEProgram
     public bool runNextLine()
     {
         if (config.stop)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop");
             return false;
+        }
 
         if (ContLinesExecuted > 10000)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > 10000");
             throw new Exception("program has reached the maximum execution lines available.");
-
+        }
+        
         KeyValuePair<int, ICommandBase> cmd = getNext();
         if (cmd.Key == 0)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} by line # is zero (getNext())");
             return false;
+        }
 
         ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
 
@@ -71,7 +80,10 @@ public class AGEProgram
         ContLinesExecuted++;
 
         if (config.stop)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
             return false;
+        }
 
         if (config.JumpTo != 0)
         {
@@ -115,9 +127,13 @@ public class AGEProgram
     public string Log()
     {
         string str = $"PROGRAM: {Name}\n";
-        str += $"Last line parsed: {lastLineNumberParsed} executed: {nextLineToExecute}\n";
-        str += $"vars: \n";
+        str += $"Last line parsed: #{lastLineNumberParsed}\n";
+        str += $"Next line to execute: > #{nextLineToExecute}\n";
+        str += $"Executed lines counter: {ContLinesExecuted}\n";
+
+        str += $"VARS: ----------------\n";
         str += vars.ToString() + "\n";
+        str += $"----------------\n";
         return str;
     }
 

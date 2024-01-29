@@ -1,3 +1,4 @@
+5 call DebugMode(1)
 10 REM Replace each cabinet in all rooms with a random cabinet
 20 LET totalRooms = RoomCount()
 30 LET totalCabinetsDB = CabDbCount()

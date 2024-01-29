@@ -283,7 +283,7 @@ public class basicAGE : MonoBehaviour
 
                 if (Exists(prgName))
                 {
-                    writer.WriteLine("PROGRAM STATUS ---");
+                    writer.WriteLine("---PROGRAM STATUS ---");
                     writer.WriteLine(programs[prgName].Log());
                     writer.WriteLine("---");
                 }
@@ -315,7 +315,7 @@ public class basicAGE : MonoBehaviour
         ConfigManager.WriteConsole($"[runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
 
         if (configCommands.DebugMode)
-            SaveDebug(running.Name, null, LastRuntimeException);
+            SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
 
         running = null;
     }
