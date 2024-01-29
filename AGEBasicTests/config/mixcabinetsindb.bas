@@ -7,30 +7,28 @@
 40 REM Loop through each room
 50 FOR roomIndex = 0 TO totalRooms - 1
 60     LET currentRoomName = RoomGetName(roomIndex)
-70     LET totalCabinetsRoom = CabDBCountInRoom(currentRoomName)
-72     if (totalCabinetsRoom = 0) then goto 180
+65     LET countReplaced = 0
+70     gosub 500
 
-75     gosub 500
+80     REM there is no way to know how many cabinets can hold a room, so it assumes 60 max.
+81     rem obviously it will assing more than the room capacity.
+90     FOR cabinetIndex = 0 TO 59
+95         print 20,3, "#" + str(cabinetIndex)
 
-80     REM Loop through each cabinet in the current room
-90     FOR cabinetIndex = 0 TO totalCabinetsRoom - 1
+100        REM is a cabinet assigned? we need one to proceed to change it.
+110        if CabDBGetAssigned(currentRoomName, cabinetIndex) = "" then goto 170
 
-100        LET randomIndex = INT(RND(1, totalCabinetsDB)) - 1
-110        LET newCabinetName = CabDbGetName(randomIndex)
+120        LET randomIndex = INT(RND(1, totalCabinetsDB)) - 1
+121        LET newCabinetName = CabDbGetName(randomIndex)
+122        if newCabinetName = "" then goto 170
 
-112        if newCabinetName = "" then goto 170
+130        rem change the database by assigning the cabinet to the old position
+140        if CabDBAssign(currentRoomName, cabinetIndex, newCabinetName) = 0 then goto 990
 
-115        print 0, 4 + MOD(cabinetIndex, 10), "#" + str(cabinetIndex) + " by DB #" + str(randomIndex) + ": " + str(newCabinetName) + "        "
+145        LET countReplaced = countReplaced + 1
+146        print 0, 4 + MOD(countReplaced, 10), "#" + str(cabinetIndex) + " by DB #" + str(randomIndex) + ": " + str(newCabinetName) + "        "
 
-120        REM Replace the cabinet in the current room with the random cabinet
-
-129        REM is a cabinet assigned? we need one to proceed to change it.
-130        if CabDBGetAssigned(currentRoomName, cabinetIndex) = "" then goto 170
-
-139        rem change the database by assining the cabinet on the old position
-140        CALL CabDBAssign(currentRoomName, cabinetIndex, newCabinetName)
-
-149        rem change in current playerRoom if it is the same to see it inmediatly
+149        rem change in current Room if it is the same to see it inmediatly
 150        if playerRoom = currentRoomName then call CabRoomReplace(cabinetIndex, newCabinetName)
 
 160        let cont=cont+1
@@ -45,9 +43,12 @@
 510 CLS
 520 print 0,1, "Rooms: " + str(totalRooms), 0, 0
 530 print 0,2, "Cabinets in DB:" + str(totalCabinetsDB), 0, 0
-540 print 0,3, "room:" + currentRoomName + " cabs:" + str(totalCabinetsRoom), 1, 0
+540 print 0,3, "room:" + currentRoomName, 1, 0
 550 show
 560 return
+
+990 print 0,19, "assignment error", 1
+995 print 0,20, "room:" + currentRoomName + "#" + str(cabinetIndex) + "cab:" + newCabinetName
 
 10000 print 0, 23, "replaced: " + str(cont)
 10010 print 0, 24, "PRESS B to end", 1
