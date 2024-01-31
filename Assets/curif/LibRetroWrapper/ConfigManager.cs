@@ -34,6 +34,7 @@ public static class ConfigManager
     public static string ConfigDir = Path.Combine(BaseDir,"configuration");
     public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
     public static string AGEBasicDir = Path.Combine(BaseDir,"AGEBasic");
+    public static string DebugDir = Path.Combine(BaseDir,"debug");
 
     public static ConfigInformation configuration;
     public static bool DebugActive
@@ -62,6 +63,8 @@ public static class ConfigManager
             Directory.CreateDirectory(ConfigManager.ConfigControllersDir);
         if (!Directory.Exists(ConfigManager.AGEBasicDir))
             Directory.CreateDirectory(ConfigManager.AGEBasicDir);
+        if (!Directory.Exists(ConfigManager.DebugDir))
+            Directory.CreateDirectory(ConfigManager.DebugDir);
 
         if (!Directory.Exists(ConfigManager.SystemDir))
         {

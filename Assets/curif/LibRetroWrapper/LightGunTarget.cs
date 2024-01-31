@@ -4,6 +4,7 @@ using UnityEngine;
 using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
+using System.IO;
 
 public class LightGunInformation
 {
@@ -48,6 +49,23 @@ public class LightGunInformation
         public float borderSizeY = 1f;
         public bool invertx = true;
         public bool inverty = true;
+    }
+
+    public Exception Validate(string cabinetPath)
+    {
+        string errors = "";
+        if (!String.IsNullOrEmpty(gun.model))
+        {
+            string path = Path.Combine(cabinetPath, gun.model);
+            if (!File.Exists(path))
+            {
+                errors += $"file {gun.model} doesn't exists. ";
+            }
+        }
+
+        if (!String.IsNullOrEmpty(errors))
+            return new Exception($"{errors}]");
+        return null;
     }
 
     public override string ToString()
