@@ -11,6 +11,7 @@ using System.IO;
 using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
+using System.Linq.Expressions;
 
 
 public class CabinetInformation
@@ -191,7 +192,8 @@ public class CabinetInformation
         public string material;
         public Art art;
         public RGBColor color;
-        public string type = "normal"; // or bezel or marquee
+        public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker"};
+        public string type = Types[0]; 
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
     }
@@ -328,16 +330,12 @@ public class CabinetInformation
             foreach (Part p in Parts)
             {
                 if (string.IsNullOrEmpty(name))
-                {
                     exceptions.Add($"Part #{number}", new System.Exception($"Doesn't have a name"));
-                }
 
-                /*
-                else if (! cabinetPartNames.Contains(p.name)) {
-                    exceptions.Add($"Part #{number}: {p.name}", new System.Exception($"The part name is not a part of the cabinet"));
-                }
-                */
                 exceptions.Add($"Part #{number}: {p.name} ART", p.art != null ? p.art.validate(pathBase) : null);
+                exceptions.Add($"Part #{number}: {p.name} TYPE", !Part.Types.Contains(p.type)?
+                        new System.Exception($"Unknown part type {p.type}")
+                        : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL",
                     !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)
                         ? new System.Exception($"Unknown material {p.material}")
@@ -346,6 +344,7 @@ public class CabinetInformation
                     !string.IsNullOrEmpty(p.material) && p.art != null
                         ? new System.Exception("Can't assign a material and ART to the same part")
                         : null);
+
                 number++;
             }
         }
