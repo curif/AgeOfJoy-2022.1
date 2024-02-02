@@ -39,12 +39,13 @@ public static class CabinetFactory
 
     public static Cabinet Factory(string style, string name, string modelFilePath,
                                     int number, string room, Vector3 position,
-                                    Quaternion rotation, Transform parent)
+                                    Quaternion rotation, Transform parent,
+                                    bool cacheGlbModels = true)
     {
         GameObject model;
         if (!String.IsNullOrEmpty(modelFilePath))
         {
-            if (CabinetStyles.ContainsKey(modelFilePath))
+            if (cacheGlbModels && CabinetStyles.ContainsKey(modelFilePath))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
                 model = CabinetStyles[modelFilePath];
@@ -68,8 +69,11 @@ public static class CabinetFactory
                 }
                 else
                 {
-                    ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
-                    CabinetStyles.Add(modelFilePath, model);
+                    if (cacheGlbModels)
+                    {
+                        ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
+                        CabinetStyles.Add(modelFilePath, model);
+                    }
                 }
             }
         }
@@ -171,7 +175,8 @@ public static class CabinetFactory
     public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number,
                                              Vector3 position, Quaternion rotation, Transform parent,
                                             List<AgentScenePosition> agentPlayerPositions,
-                                            BackgroundSoundController backgroundSoundController)
+                                            BackgroundSoundController backgroundSoundController,
+                                            bool cacheGlbModels = true)
     {
         string modelFilePath = "";
         if (!String.IsNullOrEmpty(cbinfo.model.file))
@@ -189,7 +194,8 @@ public static class CabinetFactory
         }
 
         Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, modelFilePath,
-                                                    number, room, position, rotation, parent);
+                                                    number, room, position, rotation, parent,
+                                                    cacheGlbModels: cacheGlbModels);
 
         //box colliders
         //addRigidBody();

@@ -79,7 +79,8 @@ public class CabinetAutoReload : MonoBehaviour
             ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position,
                                                          transform.rotation, transform.parent,
-                                                         AgentPlayerPositions, backgroundSoundController);
+                                                         AgentPlayerPositions, backgroundSoundController,
+                                                         cacheGlbModels: false);
             CabinetFactory.skinFromInformation(cab, cbInfo);
             UnityEngine.Object.Destroy(gameObject);
             CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
