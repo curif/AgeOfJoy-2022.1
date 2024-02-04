@@ -80,8 +80,8 @@ Shader "Shader Forge/AOJ_Emissive" {
             };
             VertexOutput vert (VertexInput v) {
                 VertexOutput o = (VertexOutput)0;
-                UNITY_SETUP_INSTANCE_ID( v );
-                UNITY_TRANSFER_INSTANCE_ID( v, o );
+                //UNITY_SETUP_INSTANCE_ID( v );
+                //UNITY_TRANSFER_INSTANCE_ID( v, o );
                 o.uv0 = v.texcoord0;
                 o.uv1 = v.texcoord1;
                 o.uv2 = v.texcoord2;
