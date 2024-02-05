@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -33,4 +34,9 @@ public class ConfigurationCommands
     public MoviePosterController PostersController;
 
     public AudioMixer audioMixer;
+
+    //convenience player component
+    public PlayerController Player;
+    public GameObject PlayerGameObject;
+    public XROrigin PlayerOrigin;
 }

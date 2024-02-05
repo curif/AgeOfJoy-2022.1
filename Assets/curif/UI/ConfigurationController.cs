@@ -1869,7 +1869,7 @@ public class ConfigurationController : MonoBehaviour
         if (action.type == InputActionType.Button)
         {
             // ConfigManager.WriteConsole($"[ConfigurationController.ControlActive] {mameControl}: {action.WasReleasedThisFrame()}");
-            return action.WasReleasedThisFrame();
+            return action.triggered;
         }
 
         else if (action.type == InputActionType.Value)

@@ -476,8 +476,10 @@ public class Cabinet
         if (rotation != null)
             newCRT.transform.Rotate((Vector3)rotation);
 
-        Object.Destroy(Parts("screen-mock-horizontal"));
-        Object.Destroy(Parts("screen-mock-vertical"));
+        // Object.Destroy(Parts("screen-mock-horizontal"));
+        // Object.Destroy(Parts("screen-mock-vertical"));
+        Parts("screen-mock-vertical").SetActive(false);
+        Parts("screen-mock-horizontal").SetActive(false);
 
         //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
         LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();

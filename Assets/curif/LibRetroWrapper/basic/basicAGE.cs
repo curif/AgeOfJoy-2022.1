@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -84,6 +85,9 @@ public class basicAGE : MonoBehaviour
     public MoviePosterController PostersController;
     public AudioMixer audioMixer; // Drag your Audio Mixer asset here in the Unity Editor
 
+    public PlayerController Player;
+    public XROrigin PlayerOrigin;
+    public GameObject PlayerControllerGameObject;
 
 #if UNITY_EDITOR
     public string nameToExecute;
@@ -122,6 +126,17 @@ public class basicAGE : MonoBehaviour
             GameRegistry = roomInit.GetComponent<GameRegistry>();
         if (Teleportation == null)
             Teleportation = GetComponent<Teleportation>();
+        if (PlayerControllerGameObject == null)
+        {
+            PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
+            if (PlayerControllerGameObject != null)
+            {
+                if (Player == null)
+                    Player = PlayerControllerGameObject.GetComponent<PlayerController>();
+                if (PlayerOrigin == null)
+                    PlayerOrigin = PlayerControllerGameObject.GetComponent<XROrigin>();
+            }
+        }
         // if (Audio == null)
         //     Audio = GetComponent<AudioSource>();
 
@@ -134,6 +149,9 @@ public class basicAGE : MonoBehaviour
         configCommands.PostersController = PostersController;
         // configCommands.Audio = Audio;
         configCommands.audioMixer = audioMixer;
+        configCommands.Player = Player;
+        configCommands.PlayerGameObject = PlayerControllerGameObject;
+        configCommands.PlayerOrigin = PlayerOrigin;
 
     }
 

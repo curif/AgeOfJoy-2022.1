@@ -17,8 +17,7 @@ class CommandFunctionCONTROLACTIVE : CommandFunctionSingleExpressionBase
             throw new Exception("no controller assigned.");
         
         BasicValue val = expr.Execute(vars);
-        if (!val.IsString())
-            return new BasicValue(0);
+        FunctionHelper.ExpectedNonEmptyString(val, "- Control");
 
         string mameControl = val.GetValueAsString();
 
