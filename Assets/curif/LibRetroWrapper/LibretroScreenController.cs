@@ -113,6 +113,8 @@ public class LibretroScreenController : MonoBehaviour
     private CabinetAGEBasic cabinetAGEBasic;
     public BackgroundSoundController backgroundSoundController;
 
+    private Coroutine coroutine;
+
     private CoinSlotController getCoinSlotController()
     {
         Transform coinslot = cabinet.transform.Find("coin-slot-added");
@@ -153,21 +155,9 @@ public class LibretroScreenController : MonoBehaviour
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
 
-        StartCoroutine(runBT());
-
-        return;
-    }
-
-    IEnumerator runBT()
-    {
-        tree = buildScreenBT();
-
         //material and shader
         shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
         ConfigManager.WriteConsole($"[LibretroScreenController.Start] shader created: {shader}");
-
-        videoPlayer.setVideo(GameVideoFile, shader, GameVideoInvertX, GameVideoInvertY);
-        // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
 
         // age basic
         if (ageBasicInformation.active)
@@ -177,6 +167,31 @@ public class LibretroScreenController : MonoBehaviour
             cabinetAGEBasic.ExecAfterLoadBas();
         }
 
+        coroutine = StartCoroutine(runBT());
+
+        return;
+    }
+
+    private void OnEnable()
+    {
+        if (coroutine == null)
+            coroutine = StartCoroutine(runBT());
+    }
+
+    private void OnDisable()
+    {
+        if (coroutine != null)
+        {
+            StopCoroutine(coroutine);
+            coroutine = null;
+        }
+    }
+
+    IEnumerator runBT()
+    {
+        // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
+        videoPlayer.setVideo(GameVideoFile, shader, GameVideoInvertX, GameVideoInvertY);
+        tree = buildScreenBT();
         while (true)
         {
             tree.Tick();
