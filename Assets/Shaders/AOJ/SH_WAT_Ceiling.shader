@@ -6,6 +6,8 @@ Shader "Custom/AOJ_WorldAligned_Ceiling"
         _BumpMap("Normal", 2D) = "bump" {}
         _Tile("Tile Size", Float) = 1
         _TintColor("Tint Color", Color) = (1,1,1,1) // Default to white (no tint)
+        _Smoothness("Smoothness", Range(0, 1)) = 0.5 // Add smoothness property, default 0.5
+        _Metallic("Metallic", Range(0, 1)) = 0.0 // Add metallic property, default 0
     }
         SubShader
         {
@@ -24,6 +26,8 @@ Shader "Custom/AOJ_WorldAligned_Ceiling"
             sampler2D _BumpMap;
             float _Tile;
             fixed4 _TintColor; // Tint color
+            float _Smoothness; // User-controlled smoothness
+            float _Metallic; // User-controlled metallic
 
             void surf(Input IN, inout SurfaceOutputStandard o)
             {
@@ -35,9 +39,9 @@ Shader "Custom/AOJ_WorldAligned_Ceiling"
                 o.Albedo = c.rgb;
                 o.Normal = UnpackNormal(tex2D(_BumpMap, uv));
 
-                // Roughness and metallic settings
-                o.Smoothness = 0; // Roughness of 1 means smoothness is 0
-                o.Metallic = 0; // Non-metallic surface
+                // Apply user-defined roughness and metallic settings
+                o.Smoothness = _Smoothness; // Use the user-defined smoothness
+                o.Metallic = _Metallic; // Use the user-defined metallic value
             }
             ENDCG
         }

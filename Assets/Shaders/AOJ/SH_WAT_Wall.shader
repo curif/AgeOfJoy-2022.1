@@ -5,6 +5,8 @@ Shader "Custom/AOJ_WorldAligned_Wall"
         _MainTex("Texture", 2D) = "white" {}
         _Tiling("Tiling", Float) = 1.0
         _Color("Color Multiplier", Color) = (1,1,1,1)
+        _Metallic("Metallic", Range(0,1)) = 0.5 // Add metallic property
+        _Smoothness("Smoothness", Range(0,1)) = 0.5 // Add smoothness property
     }
         SubShader
         {
@@ -27,6 +29,8 @@ Shader "Custom/AOJ_WorldAligned_Wall"
             sampler2D _MainTex;
             float _Tiling;
             fixed4 _Color;
+            float _Metallic; // Declare metallic variable
+            float _Smoothness; // Declare smoothness variable
 
             void surf(Input IN, inout SurfaceOutputStandard o)
             {
@@ -48,6 +52,10 @@ Shader "Custom/AOJ_WorldAligned_Wall"
                 fixed4 c = tex2D(_MainTex, uv) * _Color;
                 o.Albedo = c.rgb;
                 o.Alpha = c.a;
+
+                // Set the metallic and smoothness values
+                o.Metallic = _Metallic;
+                o.Smoothness = _Smoothness;
             }
             ENDCG
         }
