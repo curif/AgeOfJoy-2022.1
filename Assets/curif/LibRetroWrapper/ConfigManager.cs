@@ -35,6 +35,9 @@ public static class ConfigManager
     public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
     public static string AGEBasicDir = Path.Combine(BaseDir,"AGEBasic");
     public static string DebugDir = Path.Combine(BaseDir,"debug");
+    public static string SamplesDir = Path.Combine(SystemDir,"samples");
+    public static string MameConfigDir = Path.Combine(GameSaveDir,"cfg");
+    public static string nvramDir = Path.Combine(GameSaveDir,"nvram");
 
     public static ConfigInformation configuration;
     public static bool DebugActive
@@ -67,11 +70,17 @@ public static class ConfigManager
             Directory.CreateDirectory(ConfigManager.DebugDir);
 
         if (!Directory.Exists(ConfigManager.SystemDir))
-        {
             Directory.CreateDirectory(ConfigManager.SystemDir);
+        if (!Directory.Exists(ConfigManager.RomsDir))
             Directory.CreateDirectory(ConfigManager.RomsDir);
+        if (!Directory.Exists(ConfigManager.GameSaveDir))
             Directory.CreateDirectory(ConfigManager.GameSaveDir);
-        }
+        if (!Directory.Exists(ConfigManager.SamplesDir))
+            Directory.CreateDirectory(ConfigManager.SamplesDir);
+        if (!Directory.Exists(ConfigManager.MameConfigDir))
+            Directory.CreateDirectory(ConfigManager.MameConfigDir);
+        if (!Directory.Exists(ConfigManager.nvramDir))
+            Directory.CreateDirectory(ConfigManager.nvramDir);
 
     }
 

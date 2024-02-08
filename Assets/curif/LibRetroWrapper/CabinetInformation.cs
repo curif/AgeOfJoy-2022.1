@@ -33,6 +33,9 @@ public class CabinetInformation
     public Video video = new Video();
     public string md5sum;
 
+    [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
+    public List<MameFile> MameFiles { get; set; }
+
     [YamlMember(Alias = "controllers", ApplyNamingConventions = false)]
     public ControlMapConfiguration ControlMap;
 
@@ -105,7 +108,7 @@ public class CabinetInformation
 
     public static CabinetInformation fromYaml(string cabPath)
     {
-        string yamlPath = $"{cabPath}/description.yaml";
+        string yamlPath = Path.Combine(cabPath, "description.yaml");
         ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
 
         if (!File.Exists(yamlPath))
@@ -192,8 +195,8 @@ public class CabinetInformation
         public string material;
         public Art art;
         public RGBColor color;
-        public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker"};
-        public string type = Types[0]; 
+        public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker" };
+        public string type = Types[0];
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
     }
@@ -301,11 +304,62 @@ public class CabinetInformation
 
     }
 
+    public static class MameFileType
+    {
+        private static readonly Dictionary<string, string> FileTypes = new Dictionary<string, string>
+            {
+                { "config", ConfigManager.MameConfigDir },
+                { "disk-image", ConfigManager.RomsDir },
+                { "sample", ConfigManager.SamplesDir },
+                { "nvram", ConfigManager.nvramDir }
+            };
+        
+
+        // Method to verify if the key is in the dictionary
+        public static bool IsValid(string fileType)
+        {
+            return FileTypes.ContainsKey(fileType);
+        }
+
+        // Method to get the path associated with a given key
+        public static string GetAndCreatePath(string fileType, string romPath = "")
+        {
+            if (!FileTypes.TryGetValue(fileType, out string path))
+                throw new Exception("unknown file type:" + fileType);
+
+            //special case:
+            if (fileType == "disk-image")
+            {
+                if (String.IsNullOrEmpty(romPath))
+                    throw new Exception("you should provide a rom name to save disk images (chd) files");
+
+                string romName = Path.GetFileNameWithoutExtension(romPath);
+                path = Path.Combine(ConfigManager.RomsDir, romName);
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+            }
+
+            return path;
+        }
+    }
+
+    public class MameFile
+    {
+        public string type;
+        public string file; //file name
+
+        public bool IsValid(string pathBase)
+        {
+            return File.Exists(Path.Combine(pathBase, file)) 
+                        && MameFileType.IsValid(type);
+        }
+    }
+
     public string getPath(string file)
     {
         if (String.IsNullOrEmpty(file))
             return null;
-        return $"{pathBase}/{file}";
+        return Path.Combine(pathBase, file);
     }
 
     public bool fileExists(string filename)
@@ -333,7 +387,7 @@ public class CabinetInformation
                     exceptions.Add($"Part #{number}", new System.Exception($"Doesn't have a name"));
 
                 exceptions.Add($"Part #{number}: {p.name} ART", p.art != null ? p.art.validate(pathBase) : null);
-                exceptions.Add($"Part #{number}: {p.name} TYPE", !Part.Types.Contains(p.type)?
+                exceptions.Add($"Part #{number}: {p.name} TYPE", !Part.Types.Contains(p.type) ?
                         new System.Exception($"Unknown part type {p.type}")
                         : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL",
@@ -346,6 +400,18 @@ public class CabinetInformation
                         : null);
 
                 number++;
+            }
+        }
+
+        if (MameFiles != null)
+        {
+            foreach(MameFile mf in MameFiles)
+            {
+                if (!mf.IsValid(mf.type))
+                {
+                    exceptions.Add($"MAME file {mf.file} type: {mf.type}",
+                        new System.Exception($"type unknown or file doesn't exists"));
+                }
             }
         }
 
@@ -364,7 +430,7 @@ public class CabinetInformation
         }
         if (video != null)
         {
-            exceptions.Add($"video", String.IsNullOrEmpty(video.file) || !fileExists(video.file)? 
+            exceptions.Add($"video", String.IsNullOrEmpty(video.file) || !fileExists(video.file) ?
                                         new System.ArgumentException($"video undeclared or file [{video.file}] doesn't exists") :
                                         null);
         }
