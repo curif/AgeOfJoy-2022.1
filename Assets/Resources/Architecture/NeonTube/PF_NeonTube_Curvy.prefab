@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 65645554876218947}
   m_Layer: 0
-  m_Name: PF_NeonTube
+  m_Name: PF_NeonTube_Curvy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -82,7 +82,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_CastShadows
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_ReceiveShadows
@@ -92,6 +92,14 @@ PrefabInstance:
       propertyPath: m_ScaleInLightmap
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
+    - target: {fileID: -5754084199372789682, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -5791668268958369495, guid: 44f6e950c2db3684c9424ff9e9f05bff, type: 3}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube
