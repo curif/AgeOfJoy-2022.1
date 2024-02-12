@@ -115,7 +115,9 @@ public class ConfigurationController : MonoBehaviour
 {
     public ScreenGenerator scr;
     public CoinSlotController CoinSlot;
-    public InputActionMap actionMap;
+    
+    [SerializeField]
+    public LibretroControlMap libretroControlMap;
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
 
@@ -215,8 +217,6 @@ public class ConfigurationController : MonoBehaviour
     private GenericOptions playerScale;
     private GenericWidgetContainer playerContainer;
 
-    private DefaultControlMap map;
-
     private ConfigurationHelper configHelper;
 
     private Dictionary<string, bool> inputDictionary = new Dictionary<string, bool>();
@@ -270,7 +270,7 @@ public class ConfigurationController : MonoBehaviour
         StartCoroutine(run());
     }
 
-    void Update()
+    void UpdateInputValues()
     {
         inputDictionary["up"] = inputDictionary["up"] || ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP");
         inputDictionary["down"] = inputDictionary["down"] || ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN");
@@ -284,15 +284,18 @@ public class ConfigurationController : MonoBehaviour
         // Reset all input values to false
         inputKeys.ForEach(key => inputDictionary[key] = false);
     }
+
     private void setupActionMap()
     {
-        map = new();
+        if (libretroControlMap == null)
+            libretroControlMap = GetComponent<LibretroControlMap>();
+
         ControlMapConfiguration conf = new DefaultControlMap();
         conf.AddMap("KEYB-UP", "keyboard-w");
         conf.AddMap("KEYB-DOWN", "keyboard-s");
         conf.AddMap("KEYB-LEFT", "keyboard-a");
         conf.AddMap("KEYB-RIGHT", "keyboard-d");
-        actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
+        libretroControlMap.CreateFromConfiguration(conf);
     }
 
     public void NPCScreenDraw()
@@ -1241,6 +1244,7 @@ public class ConfigurationController : MonoBehaviour
         tree = buildBT();
         while (true)
         {
+            UpdateInputValues();
             tree.Tick();
             ResetInputValues();
 
@@ -1827,83 +1831,13 @@ public class ConfigurationController : MonoBehaviour
     public void ControlEnable(bool enable)
     {
         changeControls.PlayerMode(enable);
-        if (enable)
-        {
-            // inputActionManager?.EnableInput();
-            actionMap.Enable();
-            return;
-        }
-        // cant disable, headset goes crazy.
-        // inputActionManager?.DisableInput();
-        actionMap.Disable();
-
+        libretroControlMap.Enable(enable);
         return;
     }
 
-    // public bool ControlEnabled()
-    // {
-    //     return actionMap != null && actionMap.enabled;
-    // }
-
     public bool ControlActive(string mameControl)
     {
-        bool ret = false;
-
-        //creates an segfault
-        //if (!ControlEnabled())
-        //    return false;
-
-        if (actionMap == null)
-            return false;
-
-        InputAction action = actionMap.FindAction(mameControl + "_0");
-        if (action == null)
-        {
-            //ConfigManager.WriteConsoleError($"[ConfigurationControl.Active] [{mameControl}] not found in controlMap");
-            return false;
-        }
-        if (!action.enabled)
-            return false;
-
-        //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
-        if (action.type == InputActionType.Button)
-        {
-            // ConfigManager.WriteConsole($"[ConfigurationController.ControlActive] {mameControl}: {action.WasReleasedThisFrame()}");
-            return action.triggered;
-        }
-
-        else if (action.type == InputActionType.Value)
-        {
-            Vector2 val = action.ReadValue<Vector2>();
-            switch (mameControl)
-            {
-                case "JOYPAD_UP":
-                    if (val.y > 0.5)
-                    {
-                        return true;
-                    }
-                    break;
-                case "JOYPAD_DOWN":
-                    if (val.y < -0.5)
-                    {
-                        return true;
-                    }
-                    break;
-                case "JOYPAD_RIGHT":
-                    if (val.x > 0.5)
-                    {
-                        return true;
-                    }
-                    break;
-                case "JOYPAD_LEFT":
-                    if (val.x < -0.5)
-                    {
-                        return true;
-                    }
-                    break;
-            }
-        }
-        return ret;
+        return libretroControlMap.Active(mameControl) != 0;
     }
 
     private void changeContainerSelection(GenericWidgetContainer gwc)

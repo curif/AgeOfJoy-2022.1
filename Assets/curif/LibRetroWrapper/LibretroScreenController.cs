@@ -41,6 +41,7 @@ public class LibretroScreenController : MonoBehaviour
     public bool GameVideoInvertX = false;
     [SerializeField]
     public bool GameVideoInvertY = false;
+    public GameVideoPlayer videoPlayer;
 
     [SerializeField]
     public bool GameInvertX = false;
@@ -98,7 +99,6 @@ public class LibretroScreenController : MonoBehaviour
     private GameObject centerEyeCamera;
     private Camera cameraComponentCenterEye;
     private Renderer display;
-    private GameVideoPlayer videoPlayer;
     private DateTime timeToExit = DateTime.MinValue;
     private GameObject cabinet;
     private CabinetReplace cabinetReplace;
@@ -452,7 +452,6 @@ public class LibretroScreenController : MonoBehaviour
         CoinSlot.insertCoin();
     }
 }
-
 
 #if UNITY_EDITOR
 [CustomEditor(typeof(LibretroScreenController))]

@@ -27,18 +27,23 @@ public static class ControlMapPathDictionary
         { "quest-y", "<XRController>{LeftHand}/secondaryButton" },
         { "quest-start", "<OculusTouchController>/start" },
         { "quest-left-grip", "<XRController>{LeftHand}/gripButton" },
-        { "quest-left-trigger", "<OculusTouchController>{LeftHand}/triggerPressed" },
+        { "quest-left-trigger", "<XRController>{LeftHand}/trigger" },
+        //{ "quest-left-trigger", "<OculusTouchController>{LeftHand}/triggerPressed" },
         { "quest-left-thumbstick", "<XRController>{LeftHand}/Primary2DAxis" },
         { "quest-left-thumbstick-press", "<XRController>{LeftHand}/thumbstickClicked" },
+        { "quest-left-haptic-device", "<XRController>{LeftHand}/*" },
         
         // Right VR controller mappings
         { "quest-a", "<XRController>{RightHand}/primaryButton" },
         { "quest-b", "<XRController>{RightHand}/secondaryButton" },
         { "quest-select", "<XRController>{RightHand}/menuButton" },
         { "quest-right-grip", "<XRController>{RightHand}/gripButton" },
-        { "quest-right-trigger", "<OculusTouchController>{RightHand}/triggerPressed" },
+        { "quest-right-trigger", "<XRController>{RightHand}/trigger" },
+        //{ "quest-right-trigger", "<OculusTouchController>{RightHand}/triggerPressed" },
         { "quest-right-thumbstick", "<XRController>{RightHand}/Primary2DAxis" },
         { "quest-right-thumbstick-press", "<XRController>{RightHand}/thumbstickClicked" },
+        { "quest-right-haptic-device", "<XRController>{RightHand}/*" },
+
 /*
         // Left VR controller mappings
         { "quest-x", "<OculusTouchController>{LeftHand}/primaryButton" }, //primaryButton

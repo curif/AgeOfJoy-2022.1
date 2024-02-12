@@ -9,6 +9,7 @@ using UnityEngine.Audio;
 public class ConfigurationCommands
 {
     public ConfigurationController ConfigurationController = null;
+    public LibretroControlMap ControlMap = null;
     public ScreenGenerator ScreenGenerator = null;
     public SceneDatabase SceneDatabase = null;
     public Teleportation Teleportation = null;

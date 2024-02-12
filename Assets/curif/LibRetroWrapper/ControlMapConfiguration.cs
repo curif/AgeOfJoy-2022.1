@@ -238,14 +238,17 @@ public class DefaultControlMap : ControlMapConfiguration
 
         AddMap("JOYPAD_UP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("JOYPAD_DOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("JOYPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("JOYPAD_RIGHT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
+        AddMap("JOYPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
 
         //also map port 1 to the right one (roboton issue #204)
         AddMap("JOYPAD_UP", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
         AddMap("JOYPAD_DOWN", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("JOYPAD_LEFT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
         AddMap("JOYPAD_RIGHT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+        AddMap("JOYPAD_LEFT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
+       
+        AddMap("JOYPAD_LEFT_RUMBLE", new string[] { "quest-left-haptic-device"});
+        AddMap("JOYPAD_RIGHT_RUMBLE", new string[] { "quest-right-haptic-device"});
 
         AddMap("JOYPAD_L", new string[] { "quest-left-trigger", "gamepad-left-trigger" });
         AddMap("JOYPAD_R", new string[] { "quest-right-trigger", "gamepad-right-trigger" });

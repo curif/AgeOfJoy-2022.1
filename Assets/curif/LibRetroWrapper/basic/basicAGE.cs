@@ -76,6 +76,7 @@ public class basicAGE : MonoBehaviour
     private AGEProgram running;
 
     public ConfigurationController ConfigurationController;
+    public LibretroControlMap libretroControlMap;
     public ScreenGenerator ScreenGenerator;
     public GameRegistry GameRegistry;
     public CabinetsController CabinetsController;
@@ -113,17 +114,22 @@ public class basicAGE : MonoBehaviour
     public void Start()
     {
         GameObject roomInit = GameObject.Find("FixedObject");
-
+        if (roomInit != null)
+        {
+            if (SceneDatabase == null && roomInit != null)
+                SceneDatabase = roomInit.GetComponent<SceneDatabase>();
+            if (GameRegistry == null && roomInit != null)
+                GameRegistry = roomInit.GetComponent<GameRegistry>();
+        }
+        
         if (ConfigurationController == null)
             ConfigurationController = GetComponent<ConfigurationController>();
+        if (libretroControlMap == null)
+            libretroControlMap = GetComponent<LibretroControlMap>();
         if (ScreenGenerator == null)
             ScreenGenerator = GetComponent<ScreenGenerator>();
         if (CabinetsController == null && ConfigurationController != null)
             CabinetsController = ConfigurationController.cabinetsController;
-        if (SceneDatabase == null && roomInit != null)
-            SceneDatabase = roomInit.GetComponent<SceneDatabase>();
-        if (GameRegistry == null && roomInit != null)
-            GameRegistry = roomInit.GetComponent<GameRegistry>();
         if (Teleportation == null)
             Teleportation = GetComponent<Teleportation>();
         if (PlayerControllerGameObject == null)
@@ -141,6 +147,7 @@ public class basicAGE : MonoBehaviour
         //     Audio = GetComponent<AudioSource>();
 
         configCommands.ConfigurationController = ConfigurationController;
+        configCommands.ControlMap = libretroControlMap;
         configCommands.ScreenGenerator = ScreenGenerator;
         configCommands.SceneDatabase = SceneDatabase;
         configCommands.CabinetsController = CabinetsController;

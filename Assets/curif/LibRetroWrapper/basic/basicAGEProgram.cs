@@ -73,7 +73,7 @@ public class AGEProgram
             return false;
         }
 
-        ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
+        // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
 
         config.LineNumber = cmd.Key;
         cmd.Value.Execute(vars);

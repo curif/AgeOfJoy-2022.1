@@ -84,6 +84,7 @@ public static class Commands
 
         //Controllers
         functions["CONTROLACTIVE"] = typeof(CommandFunctionCONTROLACTIVE);
+        functions["CONTROLRUMBLE"] = typeof(CommandFunctionCONTROLRUMBLE);
 
         //cabinets in the room
         functions["CABROOMCOUNT"] = typeof(CommandFunctionCABROOMCOUNT);
