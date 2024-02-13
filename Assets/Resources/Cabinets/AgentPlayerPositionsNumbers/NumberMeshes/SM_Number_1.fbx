@@ -8,11 +8,11 @@ FBXHeaderExtension:  {
 		Version: 1000
 		Year: 2024
 		Month: 2
-		Day: 11
-		Hour: 11
-		Minute: 29
-		Second: 42
-		Millisecond: 23
+		Day: 14
+		Hour: 0
+		Minute: 1
+		Second: 7
+		Millisecond: 178
 	}
 	Creator: "FBX SDK/FBX Plugins version 2020.0.1"
 	OtherFlags:  {
@@ -37,13 +37,13 @@ FBXHeaderExtension:  {
 			P: "Original|ApplicationVendor", "KString", "", "", "SideFX Software"
 			P: "Original|ApplicationName", "KString", "", "", "Houdini"
 			P: "Original|ApplicationVersion", "KString", "", "", "19.5.682"
-			P: "Original|DateTime_GMT", "DateTime", "", "", "11/02/2024 02:29:41.528"
+			P: "Original|DateTime_GMT", "DateTime", "", "", "13/02/2024 15:01:07.173"
 			P: "Original|FileName", "KString", "", "", "E:\AOJ\fbx\Numbers\SM_Number_1"
 			P: "LastSaved", "Compound", "", ""
 			P: "LastSaved|ApplicationVendor", "KString", "", "", "SideFX Software"
 			P: "LastSaved|ApplicationName", "KString", "", "", "Houdini"
 			P: "LastSaved|ApplicationVersion", "KString", "", "", "19.5.682"
-			P: "LastSaved|DateTime_GMT", "DateTime", "", "", "11/02/2024 02:29:41.528"
+			P: "LastSaved|DateTime_GMT", "DateTime", "", "", "13/02/2024 15:01:07.173"
 			P: "Original|ApplicationActiveProject", "KString", "", "", "C:\Users\PCUser"
 			P: "Original|ApplicationNativeFile", "KString", "", "", "E:\AOJ\houdini\SM_Numbers_ForLoop.hiplc"
 		}
@@ -64,12 +64,12 @@ GlobalSettings:  {
 		P: "OriginalUnitScaleFactor", "double", "Number", "",1
 		P: "AmbientColor", "ColorRGB", "Color", "",0,0,0
 		P: "DefaultCamera", "KString", "", "", "Producer Perspective"
-		P: "TimeMode", "enum", "", "",11
+		P: "TimeMode", "enum", "", "",0
 		P: "TimeProtocol", "enum", "", "",2
 		P: "SnapOnFrameMode", "enum", "", "",0
-		P: "TimeSpanStart", "KTime", "Time", "",1924423250
-		P: "TimeSpanStop", "KTime", "Time", "",192442325000
-		P: "CustomFrameRate", "double", "Number", "",24
+		P: "TimeSpanStart", "KTime", "Time", "",0
+		P: "TimeSpanStop", "KTime", "Time", "",46186158000
+		P: "CustomFrameRate", "double", "Number", "",-1
 		P: "TimeMarker", "Compound", "", ""
 		P: "CurrentTimeMarker", "int", "Integer", "",-1
 	}
@@ -80,7 +80,7 @@ GlobalSettings:  {
 
 Documents:  {
 	Count: 1
-	Document: 1305067776, "", "Scene" {
+	Document: 110749440, "", "Scene" {
 		Properties70:  {
 			P: "SourceObject", "object", "", ""
 			P: "ActiveAnimStackName", "KString", "", "", ""
@@ -100,7 +100,7 @@ References:  {
 
 Definitions:  {
 	Version: 100
-	Count: 7
+	Count: 3
 	ObjectType: "GlobalSettings" {
 		Count: 1
 	}
@@ -195,72 +195,95 @@ Definitions:  {
 			}
 		}
 	}
-	ObjectType: "AnimationLayer" {
-		Count: 1
-		PropertyTemplate: "FbxAnimLayer" {
-			Properties70:  {
-				P: "Weight", "Number", "", "A",100
-				P: "Mute", "bool", "", "",0
-				P: "Solo", "bool", "", "",0
-				P: "Lock", "bool", "", "",0
-				P: "Color", "ColorRGB", "Color", "",0.8,0.8,0.8
-				P: "BlendMode", "enum", "", "",0
-				P: "RotationAccumulationMode", "enum", "", "",0
-				P: "ScaleAccumulationMode", "enum", "", "",0
-				P: "BlendModeBypass", "ULongLong", "", "",0
-			}
-		}
-	}
-	ObjectType: "AnimationStack" {
-		Count: 1
-		PropertyTemplate: "FbxAnimStack" {
-			Properties70:  {
-				P: "Description", "KString", "", "", ""
-				P: "LocalStart", "KTime", "Time", "",0
-				P: "LocalStop", "KTime", "Time", "",0
-				P: "ReferenceStart", "KTime", "Time", "",0
-				P: "ReferenceStop", "KTime", "Time", "",0
-			}
-		}
-	}
-	ObjectType: "Deformer" {
-		Count: 1
-		PropertyTemplate: "FbxVertexCacheDeformer" {
-			Properties70:  {
-				P: "ChannelName", "KString", "", "", ""
-				P: "Active", "bool", "", "",1
-				P: "CacheSet", "KString", "", "", "FbxCacheExport"
-				P: "ChannelType", "enum", "", "",0
-			}
-		}
-	}
-	ObjectType: "Cache" {
-		Count: 1
-		PropertyTemplate: "FbxCache" {
-			Properties70:  {
-				P: "CacheFileName", "KString", "", "", ""
-				P: "CacheAbsoluteFileName", "KString", "", "", ""
-				P: "CacheFileType", "enum", "", "",0
-			}
-		}
-	}
 }
 
 ; Object properties
 ;------------------------------------------------------------------
 
 Objects:  {
-	Geometry: 4988907136, "Geometry::FBX_OUT", "Mesh" {
-		Vertices: *900 {
-			a: 3.48234796524048,0.291669994592667,10.3033990859985,-1.62765204906464,0.291669994592667,10.3033990859985,-1.62765204906464,0.291669994592667,-8.00160026550293,-3.48265171051025,0.291669994592667,-12.9015989303589,-1.62765204906464,0.291669994592667,-8.00160026550293,-3.48265171051025,0.291669994592667,-8.00160026550293,-3.48265171051025,0.291669994592667,-12.9015989303589,3.48234796524048,0.291669994592667,-12.9015989303589,-1.62765204906464,0.291669994592667,-8.00160026550293,3.48234796524048,0.291669994592667,-12.9015989303589,3.48234796524048,0.291669994592667,10.3033990859985,-1.62765204906464,0.291669994592667,-8.00160026550293,-12.5000019073486,0,24.8549289703369,-25,0,-2.50903372034372e-06,-12.4999980926514,0,-24.8549308776855,25,0,0,12.4999990463257,0,24.8549308776855,12.4999980926514,0,-24.8549308776855,12.4999990463257,0,24.8549308776855,-12.5000019073486,0,24.8549289703369,12.4999980926514,0,-24.8549308776855,-12.5000019073486,0,24.8549289703369,-12.4999980926514,0,-24.8549308776855,12.4999980926514,0,-24.8549308776855,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	Geometry: 126460928, "Geometry::FBX_OUT", "Mesh" {
+		Vertices: *36 {
+			a: -3.48265171051025,0.291669994592667,-12.9015989303589,3.48234796524048,0.291669994592667,-12.9015989303589,3.48234796524048,0.291669994592667,10.3033990859985,-1.62765204906464,0.291669994592667,10.3033990859985,-1.62765204906464,0.291669994592667,-8.00160026550293,-3.48265171051025,0.291669994592667,-8.00160026550293,25,0,0,12.4999990463257,0,24.8549308776855,-12.5000019073486,0,24.8549289703369,-25,0,-2.50903372034372e-06,-12.4999980926514,0,-24.8549308776855,12.4999980926514,0,-24.8549308776855
 		} 
-		PolygonVertexIndex: *300 {
-			a: 2,1,-1,5,4,-4,8,7,-7,11,10,-10,14,13,-13,17,16,-16,20,19,-19,23,22,-22,26,25,-25,29,28,-28,32,31,-31,35,34,-34,38,37,-37,41,40,-40,44,43,-43,47,46,-46,50,49,-49,53,52,-52,56,55,-55,59,58,-58,62,61,-61,65,64,-64,68,67,-67,71,70,-70,74,73,-73,77,76,-76,80,79,-79,83,82,-82,86,85,-85,89,88,-88,92,91,-91,95,94,-94,98,97,-97,101,100,-100,104,103,-103,107,106,-106,110,109,-109,113,112,-112,116,115,-115,119,118,-118,122,121,-121,125,124,-124,128,127,-127,131,130,-130,134,133,-133,137,136,-136,140,139,-139,143,142,-142,146,145,-145,149,148,-148,152,151,-151,155,154,-154,158,157,-157,161,160,-160,164,163,-163,167,166,-166,170,169,-169,173,172,-172,176,175,-175,179,178,-178,182,181,-181,185,184,-184,188,187,-187,191,190,-190,194,193,-193,197,196,-196,200,199,-199,203,202,-202,206,205,-205,209,208,-208,212,211,-211,215,214,-214,218,217,-217,221,220,-220,224,223,-223,227,226,-226,230,229,-229,233,232,-232,236,235,-235,239,238,-238,242,241,-241,245,244,-244,248,247,-247,251,250,-250,254,253,-253,257,256,-256,260,259,-259,263,262,-262,266,265,-265,269,268,-268,272,271,-271,275,274,-274,278,277,-277,281,280,-280,284,283,-283,287,286,-286,290,289,-289,293,292,-292,296,295,-295,299,298,-298
+		PolygonVertexIndex: *24 {
+			a: 4,3,-3,5,4,-1,4,1,-1,4,2,-2,10,9,-9,11,7,-7,11,8,-8,11,10,-9
 		} 
 		GeometryVersion: 124
+		LayerElementNormal: 0 {
+			Version: 102
+			Name: "N"
+			MappingInformationType: "ByPolygonVertex"
+			ReferenceInformationType: "Direct"
+			Normals: *72 {
+				a: 0,1,0,0,1,0,0,0.999999940395355,0,0,0.999999940395355,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0.999999940395355,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0.999999940395355,0,0,1,-0,0,1,0,0,1,0,0,0.999999940395355,0,0,1,0,0,1,0,0,1,0
+			} 
+			NormalsW: *24 {
+				a: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+			} 
+		}
+		LayerElementColor: 0 {
+			Version: 101
+			Name: "Cd"
+			MappingInformationType: "ByVertice"
+			ReferenceInformationType: "Direct"
+			Colors: *48 {
+				a: 0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1
+			} 
+		}
+		LayerElementUV: 0 {
+			Version: 101
+			Name: "uv"
+			MappingInformationType: "ByPolygonVertex"
+			ReferenceInformationType: "IndexToDirect"
+			UV: *24 {
+				a: 0.0789876282215118,0.77944403886795,0.0789876282215118,0,0.296576201915741,0,0,0.77944403886795,0,0.988090634346008,0.296576201915741,0.988090634346008,2.3168253093786e-08,0.249994903802872,0.497088432312012,0,0.994176864624023,0.249994874000549,0,0.749984622001648,0.994176864624023,0.749984681606293,0.497088432312012,0.999979496002197
+			} 
+			UVIndex: *24 {
+				a: 0,1,2,3,0,4,0,5,4,0,2,5,6,7,8,9,10,11,9,8,10,9,6,8
+			} 
+		}
+		LayerElementUserData: 0 {
+			Version: 101
+			Name: "UserDataLayer0"
+			MappingInformationType: "AllSame"
+			ReferenceInformationType: "Direct"
+			UserDataId: 0
+			UserDataArray:  {
+				UserDataType: "Float"
+				UserDataName: "coverage"
+				UserData: *1 {
+					a: 0.7475471
+				} 
+			}
+			UserDataArray:  {
+				UserDataType: "Integer"
+				UserDataName: "numnonpacked"
+				UserData: *1 {
+					a: 0
+				} 
+			}
+		}
+		Layer: 0 {
+			Version: 100
+			LayerElement:  {
+				Type: "LayerElementNormal"
+				TypedIndex: 0
+			}
+			LayerElement:  {
+				Type: "LayerElementColor"
+				TypedIndex: 0
+			}
+			LayerElement:  {
+				Type: "LayerElementUserData"
+				TypedIndex: 0
+			}
+			LayerElement:  {
+				Type: "LayerElementUV"
+				TypedIndex: 0
+			}
+		}
 	}
-	Model: 4987243392, "Model::FBX_OUT", "Mesh" {
+	Model: 126003968, "Model::FBX_OUT", "Mesh" {
 		Version: 232
 		Properties70:  {
 			P: "ScalingMax", "Vector3D", "Vector", "",0,0,0
@@ -270,24 +293,6 @@ Objects:  {
 		Shading: Y
 		Culling: "CullingOff"
 	}
-	Deformer: 3887360576, "Deformer::FBX_OUT", "VertexCacheDeformer" {
-		Version: 100
-		Properties70:  {
-			P: "ChannelName", "KString", "", "", "FBX_OUT"
-		}
-	}
-	Cache: 2159913280, "Cache::FBX_OUT", "" {
-		Version: 100
-		Properties70:  {
-			P: "CacheFileName", "KString", "", "", "SM_Number_1.fpc/FBX_OUT.xml"
-			P: "CacheAbsoluteFileName", "KString", "", "", "E:/AOJ/fbx/Numbers/SM_Number_1.fpc/FBX_OUT.xml"
-			P: "CacheFileType", "enum", "", "",2
-		}
-	}
-	AnimationStack: 2159908800, "AnimStack::Main", "" {
-	}
-	AnimationLayer: 3886396608, "AnimLayer::Base Layer", "" {
-	}
 }
 
 ; Object connections
@@ -296,28 +301,14 @@ Objects:  {
 Connections:  {
 	
 	;Model::FBX_OUT, Model::RootNode
-	C: "OO",4987243392,0
+	C: "OO",126003968,0
 	
 	;Geometry::FBX_OUT, Model::FBX_OUT
-	C: "OO",4988907136,4987243392
-	
-	;Deformer::FBX_OUT, Geometry::FBX_OUT
-	C: "OO",3887360576,4988907136
-	
-	;AnimLayer::Base Layer, AnimStack::Main
-	C: "OO",3886396608,2159908800
-	
-	;Cache::FBX_OUT, Deformer::FBX_OUT
-	C: "OO",2159913280,3887360576
+	C: "OO",126460928,126003968
 }
 ;Takes section
 ;----------------------------------------------------
 
 Takes:  {
 	Current: ""
-	Take: "Main" {
-		FileName: "Main.tak"
-		LocalTime: 1924423250,192442325000
-		ReferenceTime: 1924423250,192442325000
-	}
 }

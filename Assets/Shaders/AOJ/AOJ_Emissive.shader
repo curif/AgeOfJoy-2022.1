@@ -464,5 +464,5 @@ Shader "Shader Forge/AOJ_Emissive" {
         }
     }
     FallBack "Diffuse"
-    CustomEditor "ShaderForgeMaterialInspector"
+    //CustomEditor "ShaderForgeMaterialInspector"
 }
