@@ -74,6 +74,7 @@ public class basicAGE : MonoBehaviour
     //program list
     public Dictionary<string, AGEProgram> programs = new();
     private AGEProgram running;
+    private Coroutine runningProgramCoroutine;
 
     public ConfigurationController ConfigurationController;
     public LibretroControlMap libretroControlMap;
@@ -259,6 +260,24 @@ public class basicAGE : MonoBehaviour
             return;
         configCommands.stop = true;
     }
+
+    public void ForceStop()
+    {
+        if (running == null)
+            return;
+        
+        if (runningProgramCoroutine != null)
+            StopCoroutine(runningProgramCoroutine);
+
+        if (configCommands.DebugMode)
+            SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
+
+        ConfigManager.WriteConsole($"[ForceStop] {running.Name} forced to END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+
+        runningProgramCoroutine = null;
+        running = null;
+    }
+
     public void Run(string name, bool blocking = false, BasicVars pvars = null)
     {
         if (!programs.ContainsKey(name))
@@ -274,7 +293,7 @@ public class basicAGE : MonoBehaviour
 
         if (!blocking)
         {
-            StartCoroutine(runProgram());
+            runningProgramCoroutine = StartCoroutine(runProgram());
             return;
         }
 

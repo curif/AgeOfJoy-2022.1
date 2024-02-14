@@ -297,10 +297,6 @@ public class LibretroScreenController : MonoBehaviour
                       if (libretroControlMap.Active("EXIT") == 1)
                           return true;
 
-                      //agebasic (repeat each cycle)
-                      //   if (ageBasicInformation.active)
-                      //       cabinetAGEBasic.ExecAfterStartBas();
-
                       timeToExit = DateTime.MinValue;
                       return false;
                   })
@@ -328,7 +324,7 @@ public class LibretroScreenController : MonoBehaviour
                   // age basic
                   if (ageBasicInformation.active)
                   {
-                      cabinetAGEBasic.StopInsertCoinBas();
+                      cabinetAGEBasic.StopInsertCoinBas(); //force
                       cabinetAGEBasic.ExecAfterLeaveBas();
                   }
                   return TaskStatus.Success;

@@ -62,19 +62,21 @@ public class CabinetAGEBasic : MonoBehaviour
         ageBasic.SetCoinSlot(coinSlot);
         ageBasic.SetCabinet(cabinet);
 
-        //variable injection
-        foreach (CabinetAGEBasicInformation.Variable var in AGEInfo.Variables)
-        {
-            BasicValue bv;
-            if (var.type.ToUpper() == "STRING")
-                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
-            else if (var.type.ToUpper() == "NUMBER")
-                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
-            else
-                throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
+        if (AGEInfo.Variables != null)
+        {        //variable injection
+            foreach (CabinetAGEBasicInformation.Variable var in AGEInfo.Variables)
+            {
+                BasicValue bv;
+                if (var.type.ToUpper() == "STRING")
+                    bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
+                else if (var.type.ToUpper() == "NUMBER")
+                    bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
+                else
+                    throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
 
-            vars.SetValue(var.name, bv);
-            ConfigManager.WriteConsole($"[CabinetAGEBasic.Init] inject variable: {var.name}: {bv}");
+                vars.SetValue(var.name, bv);
+                ConfigManager.WriteConsole($"[CabinetAGEBasic.Init] inject variable: {var.name}: {bv}");
+            }
         }
     }
 
@@ -108,10 +110,8 @@ public class CabinetAGEBasic : MonoBehaviour
     public void StopInsertCoinBas()
     {
         if (ageBasic.IsRunning(AGEInfo.afterInsertCoin))
-        {
-            ageBasic.Stop();
-            while (ageBasic.IsRunning(AGEInfo.afterInsertCoin)) { }
-        }
+            ageBasic.ForceStop();
+
         return;
     }
 
