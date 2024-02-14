@@ -113,7 +113,7 @@ public class LibretroScreenController : MonoBehaviour
     private CabinetAGEBasic cabinetAGEBasic;
     public BackgroundSoundController backgroundSoundController;
 
-    private Coroutine coroutine;
+    private Coroutine mainCoroutine;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -163,27 +163,26 @@ public class LibretroScreenController : MonoBehaviour
         if (ageBasicInformation.active)
         {
             cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
-            cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
             cabinetAGEBasic.ExecAfterLoadBas();
         }
 
-        coroutine = StartCoroutine(runBT());
+        mainCoroutine = StartCoroutine(runBT());
 
         return;
     }
 
     private void OnEnable()
     {
-        if (coroutine == null)
-            coroutine = StartCoroutine(runBT());
+        if (mainCoroutine == null)
+            mainCoroutine = StartCoroutine(runBT());
     }
 
     private void OnDisable()
     {
-        if (coroutine != null)
+        if (mainCoroutine != null)
         {
-            StopCoroutine(coroutine);
-            coroutine = null;
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
         }
     }
 
@@ -268,10 +267,7 @@ public class LibretroScreenController : MonoBehaviour
 
                   // age basic
                   if (ageBasicInformation.active)
-                  {
-                      cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
                       cabinetAGEBasic.ExecInsertCoinBas();
-                  }
 
                   PreparePlayerToPlayGame(true);
                   if (lightGunTarget != null)
@@ -301,6 +297,10 @@ public class LibretroScreenController : MonoBehaviour
                       if (libretroControlMap.Active("EXIT") == 1)
                           return true;
 
+                      //agebasic (repeat each cycle)
+                      //   if (ageBasicInformation.active)
+                      //       cabinetAGEBasic.ExecAfterStartBas();
+
                       timeToExit = DateTime.MinValue;
                       return false;
                   })
@@ -310,7 +310,6 @@ public class LibretroScreenController : MonoBehaviour
                           timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
                       else if (DateTime.Now > timeToExit)
                           return true;
-
                       return false;
                   })
                 .End()
@@ -321,17 +320,17 @@ public class LibretroScreenController : MonoBehaviour
                   videoPlayer.Play();
 
                   LibretroMameCore.End(name, GameFile);
+                  timeToExit = DateTime.MinValue;
+
                   PreparePlayerToPlayGame(false);
                   libretroControlMap.Clean();
-                  timeToExit = DateTime.MinValue;
 
                   // age basic
                   if (ageBasicInformation.active)
                   {
-                      cabinetAGEBasic.SetDebugMode(ageBasicInformation.debug);
+                      cabinetAGEBasic.StopInsertCoinBas();
                       cabinetAGEBasic.ExecAfterLeaveBas();
                   }
-
                   return TaskStatus.Success;
               })
             .End()

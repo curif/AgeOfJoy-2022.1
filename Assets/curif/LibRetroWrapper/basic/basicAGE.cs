@@ -245,13 +245,13 @@ public class basicAGE : MonoBehaviour
     }
     public bool IsRunning(string name)
     {
-        return (running != null && running.Name == name);
+        return (!String.IsNullOrEmpty(running?.Name) && running.Name == name);
     }
+
     public bool ExceptionOccurred()
     {
         return LastRuntimeException != null;
     }
-
 
     public void Stop()
     {
@@ -267,7 +267,8 @@ public class basicAGE : MonoBehaviour
         if (running != null)
             throw new Exception($"you can't run {name}, {running.Name} is runnig");
 
-        PrepareToRun();
+        running = null;
+        LastRuntimeException = null;
         running = programs[name];
         running.PrepareToRun(pvars);
 
@@ -320,21 +321,14 @@ public class basicAGE : MonoBehaviour
         }
     }
 
-    public void PrepareToRun()
-    {
-        running = null;
-        LastRuntimeException = null;
-    }
-
-
     IEnumerator runProgram()
     {
         bool moreLines = true;
         LastRuntimeException = null;
         while (moreLines)
         {
-            moreLines = RunALine();
             yield return new WaitForSeconds(0.01f);
+            moreLines = RunALine();
         }
 
         ConfigManager.WriteConsole($"[runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");

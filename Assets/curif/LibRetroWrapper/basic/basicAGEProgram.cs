@@ -90,13 +90,13 @@ public class AGEProgram
             if (!lines.ContainsKey(config.JumpTo))
                 throw new Exception($"Line number not found: {config.JumpTo}");
 
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
+            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
             nextLineToExecute = config.JumpTo;
             config.JumpTo = 0;
         }
         else if (config.JumpNextTo != 0)
         {
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
+            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
             nextLineToExecute = config.JumpNextTo + 1;
             config.JumpNextTo = 0;
         }
@@ -105,24 +105,6 @@ public class AGEProgram
 
         return true;
     }
-
-    /*public List<string> ParseString(string input)
-    {
-        List<string> result = new List<string>();
-
-        string pattern = "\"(.*?)\"|(\\S+)";
-        MatchCollection matches = Regex.Matches(input, pattern);
-
-        foreach (Match match in matches)
-        {
-            string parsedElement = match.Value;
-
-            result.Add(parsedElement);
-        }
-
-        return result;
-    }
-    */
 
     public string Log()
     {

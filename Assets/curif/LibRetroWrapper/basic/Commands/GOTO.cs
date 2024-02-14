@@ -30,7 +30,7 @@ class CommandGOTO : ICommandBase
 
         config.JumpTo = (int) lineNumber.GetValueAsNumber(); 
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Jump to {config.JumpTo} ");
+        // ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Jump to {config.JumpTo} ");
 
         return null;
     }
