@@ -15,6 +15,8 @@ public class CabinetReplace : MonoBehaviour
     public CabinetPosition game;
     public GameObject outOfOrderCabinet;
 
+    public BackgroundSoundController backgroundSoundController;
+
     [Tooltip("The system will find it")]
     public List<AgentScenePosition> AgentPlayerPositionComponents;
     [Tooltip("The system will find it")]
@@ -22,7 +24,7 @@ public class CabinetReplace : MonoBehaviour
     [Tooltip("The system will find it")]
     public List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
 
-    private bool playerIsNotInAnyUnloadPosition()
+    public bool playerIsNotInAnyUnloadPosition()
     {
         List<AgentScenePosition> positions = AgentPlayerPositionComponentsToUnload;
 
@@ -32,21 +34,7 @@ public class CabinetReplace : MonoBehaviour
         return positions.All(asp => !asp.IsPlayerPresent);
     }
 
-    void Start()
-    {
-        StartCoroutine(unload());
-    }
-
-    IEnumerator unload()
-    {
-        while (!playerIsNotInAnyUnloadPosition())
-            yield return new WaitForSeconds(2f);
-
-        outOfOrderCabinet.SetActive(true); //reactivate the out of order cabinet before destruction
-        Destroy(gameObject); //destroy me
-    }
-
-    public void ReplaceWith(CabinetPosition newCabGame)
+    public GameObject ReplaceWith(CabinetPosition newCabGame)
     {
         ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] game: {newCabGame}");
 
@@ -55,7 +43,7 @@ public class CabinetReplace : MonoBehaviour
         if (!File.Exists(descriptionPath))
         {
             ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] not found: {descriptionPath}");
-            return;
+            return null;
         }
 
         ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] replace {name} with {descriptionPath}");
@@ -68,7 +56,7 @@ public class CabinetReplace : MonoBehaviour
             if (cbInfo == null)
             {
                 ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR NULL cabinet - new cabinet from yaml: {descriptionPath}");
-                return;
+                return null;
             }
 
             ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] cabinet problems (if any):...");
@@ -81,7 +69,10 @@ public class CabinetReplace : MonoBehaviour
             Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
                                                          adjustedPosition, transform.rotation,
-                                                         transform.parent, AgentPlayerPositionComponentsToLoad);
+                                                         transform.parent, 
+                                                         AgentPlayerPositionComponentsToLoad,
+                                                         backgroundSoundController
+                                                         );
 
             cab.gameObject.SetActive(false);
             CabinetFactory.skinFromInformation(cab, cbInfo);
@@ -90,18 +81,21 @@ public class CabinetReplace : MonoBehaviour
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
             cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositionComponents;
             cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
-            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad; 
+            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
             cabReplaceComp.game = newCabGame;
             cabReplaceComp.outOfOrderCabinet = gameObject;
+            cabReplaceComp.backgroundSoundController = backgroundSoundController;
             cab.gameObject.SetActive(true);
 
             UnityEngine.Object.Destroy(gameObject);
 
             ConfigManager.WriteConsole("[CabinetReplace.ReplaceWith] New Tested Cabinet deployed ******");
+            return cab.gameObject;
         }
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from description {descriptionPath}: {ex}");
+            return null;
         }
     }
 

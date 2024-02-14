@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Audio;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -23,6 +25,13 @@ public class CompilationException : Exception
     {
         LineNumber = lineNumber;
         Program = program;
+    }
+
+    public override string ToString()
+    {
+        string str = $"COMPILATION ERROR: {Program} \n line: {LineNumber}\n";
+        str += $"Exception: {Message}\n";
+        return str;
     }
 
     public void Show(ScreenGenerator scr)
@@ -54,7 +63,7 @@ public class RuntimeException : Exception
     }
     public override string ToString()
     {
-        string str = $"COMPILATION ERROR: {Program} \n line: {LineNumber}\n";
+        string str = $"RUNTIME ERROR: {Program} \n line: {LineNumber}\n";
         str += $"Exception: {Message}\n";
         return str;
     }
@@ -65,8 +74,10 @@ public class basicAGE : MonoBehaviour
     //program list
     public Dictionary<string, AGEProgram> programs = new();
     private AGEProgram running;
+    private Coroutine runningProgramCoroutine;
 
     public ConfigurationController ConfigurationController;
+    public LibretroControlMap libretroControlMap;
     public ScreenGenerator ScreenGenerator;
     public GameRegistry GameRegistry;
     public CabinetsController CabinetsController;
@@ -74,7 +85,11 @@ public class basicAGE : MonoBehaviour
 
     public SceneDatabase SceneDatabase = null;
     public MoviePosterController PostersController;
+    public AudioMixer audioMixer; // Drag your Audio Mixer asset here in the Unity Editor
 
+    public PlayerController Player;
+    public XROrigin PlayerOrigin;
+    public GameObject PlayerControllerGameObject;
 
 #if UNITY_EDITOR
     public string nameToExecute;
@@ -100,27 +115,51 @@ public class basicAGE : MonoBehaviour
     public void Start()
     {
         GameObject roomInit = GameObject.Find("FixedObject");
-
+        if (roomInit != null)
+        {
+            if (SceneDatabase == null && roomInit != null)
+                SceneDatabase = roomInit.GetComponent<SceneDatabase>();
+            if (GameRegistry == null && roomInit != null)
+                GameRegistry = roomInit.GetComponent<GameRegistry>();
+        }
+        
         if (ConfigurationController == null)
             ConfigurationController = GetComponent<ConfigurationController>();
+        if (libretroControlMap == null)
+            libretroControlMap = GetComponent<LibretroControlMap>();
         if (ScreenGenerator == null)
             ScreenGenerator = GetComponent<ScreenGenerator>();
         if (CabinetsController == null && ConfigurationController != null)
             CabinetsController = ConfigurationController.cabinetsController;
-        if (SceneDatabase == null && roomInit != null)
-            SceneDatabase = roomInit.GetComponent<SceneDatabase>();
-        if (GameRegistry == null && roomInit != null)
-            GameRegistry = roomInit.GetComponent<GameRegistry>();
         if (Teleportation == null)
             Teleportation = GetComponent<Teleportation>();
+        if (PlayerControllerGameObject == null)
+        {
+            PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
+            if (PlayerControllerGameObject != null)
+            {
+                if (Player == null)
+                    Player = PlayerControllerGameObject.GetComponent<PlayerController>();
+                if (PlayerOrigin == null)
+                    PlayerOrigin = PlayerControllerGameObject.GetComponent<XROrigin>();
+            }
+        }
+        // if (Audio == null)
+        //     Audio = GetComponent<AudioSource>();
 
         configCommands.ConfigurationController = ConfigurationController;
+        configCommands.ControlMap = libretroControlMap;
         configCommands.ScreenGenerator = ScreenGenerator;
         configCommands.SceneDatabase = SceneDatabase;
         configCommands.CabinetsController = CabinetsController;
         configCommands.GameRegistry = GameRegistry;
         configCommands.Teleportation = Teleportation;
         configCommands.PostersController = PostersController;
+        // configCommands.Audio = Audio;
+        configCommands.audioMixer = audioMixer;
+        configCommands.Player = Player;
+        configCommands.PlayerGameObject = PlayerControllerGameObject;
+        configCommands.PlayerOrigin = PlayerOrigin;
 
     }
 
@@ -207,13 +246,13 @@ public class basicAGE : MonoBehaviour
     }
     public bool IsRunning(string name)
     {
-        return (running != null && running.Name == name);
+        return (!String.IsNullOrEmpty(running?.Name) && running.Name == name);
     }
+
     public bool ExceptionOccurred()
     {
         return LastRuntimeException != null;
     }
-
 
     public void Stop()
     {
@@ -221,7 +260,25 @@ public class basicAGE : MonoBehaviour
             return;
         configCommands.stop = true;
     }
-    public void Run(string name, bool blocking = false)
+
+    public void ForceStop()
+    {
+        if (running == null)
+            return;
+        
+        if (runningProgramCoroutine != null)
+            StopCoroutine(runningProgramCoroutine);
+
+        if (configCommands.DebugMode)
+            SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
+
+        ConfigManager.WriteConsole($"[ForceStop] {running.Name} forced to END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+
+        runningProgramCoroutine = null;
+        running = null;
+    }
+
+    public void Run(string name, bool blocking = false, BasicVars pvars = null)
     {
         if (!programs.ContainsKey(name))
             throw new Exception($"program {name} doesn't exists");
@@ -229,13 +286,14 @@ public class basicAGE : MonoBehaviour
         if (running != null)
             throw new Exception($"you can't run {name}, {running.Name} is runnig");
 
-        PrepareToRun();
+        running = null;
+        LastRuntimeException = null;
         running = programs[name];
-        running.PrepareToRun();
+        running.PrepareToRun(pvars);
 
         if (!blocking)
         {
-            StartCoroutine(runProgram());
+            runningProgramCoroutine = StartCoroutine(runProgram());
             return;
         }
 
@@ -270,7 +328,7 @@ public class basicAGE : MonoBehaviour
 
                 if (Exists(prgName))
                 {
-                    writer.WriteLine("PROGRAM STATUS ---");
+                    writer.WriteLine("---PROGRAM STATUS ---");
                     writer.WriteLine(programs[prgName].Log());
                     writer.WriteLine("---");
                 }
@@ -282,27 +340,20 @@ public class basicAGE : MonoBehaviour
         }
     }
 
-    public void PrepareToRun()
-    {
-        running = null;
-        LastRuntimeException = null;
-    }
-
-
     IEnumerator runProgram()
     {
         bool moreLines = true;
         LastRuntimeException = null;
         while (moreLines)
         {
-            moreLines = RunALine();
             yield return new WaitForSeconds(0.01f);
+            moreLines = RunALine();
         }
 
         ConfigManager.WriteConsole($"[runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
 
         if (configCommands.DebugMode)
-            SaveDebug(running.Name, null, LastRuntimeException);
+            SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
 
         running = null;
     }

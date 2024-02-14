@@ -35,13 +35,16 @@ public class AGEProgram
         this.name = name;
     }
 
-    public void PrepareToRun()
+    public void PrepareToRun(BasicVars pvars = null)
     {
         this.nextLineToExecute = -1;
         config.Gosub = new Stack<int>();
         config.LineNumber = config.JumpNextTo = config.JumpTo = ContLinesExecuted = 0;
         config.stop = false;
-        vars = new();
+        if (pvars == null)
+            vars = new();
+        else
+            vars = pvars;
     }
 
     public BasicValue GetVarValue(string varName)
@@ -52,36 +55,48 @@ public class AGEProgram
     public bool runNextLine()
     {
         if (config.stop)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop");
             return false;
+        }
 
         if (ContLinesExecuted > 10000)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > 10000");
             throw new Exception("program has reached the maximum execution lines available.");
-
+        }
+        
         KeyValuePair<int, ICommandBase> cmd = getNext();
         if (cmd.Key == 0)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} by line # is zero (getNext())");
             return false;
+        }
 
-        ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
+        // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
 
         config.LineNumber = cmd.Key;
         cmd.Value.Execute(vars);
         ContLinesExecuted++;
 
         if (config.stop)
+        {
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
             return false;
+        }
 
         if (config.JumpTo != 0)
         {
             if (!lines.ContainsKey(config.JumpTo))
                 throw new Exception($"Line number not found: {config.JumpTo}");
 
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
+            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
             nextLineToExecute = config.JumpTo;
             config.JumpTo = 0;
         }
         else if (config.JumpNextTo != 0)
         {
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
+            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
             nextLineToExecute = config.JumpNextTo + 1;
             config.JumpNextTo = 0;
         }
@@ -91,30 +106,16 @@ public class AGEProgram
         return true;
     }
 
-    /*public List<string> ParseString(string input)
-    {
-        List<string> result = new List<string>();
-
-        string pattern = "\"(.*?)\"|(\\S+)";
-        MatchCollection matches = Regex.Matches(input, pattern);
-
-        foreach (Match match in matches)
-        {
-            string parsedElement = match.Value;
-
-            result.Add(parsedElement);
-        }
-
-        return result;
-    }
-    */
-
     public string Log()
     {
         string str = $"PROGRAM: {Name}\n";
-        str += $"Last line parsed: {lastLineNumberParsed} executed: {nextLineToExecute}\n";
-        str += $"vars: \n";
+        str += $"Last line parsed: #{lastLineNumberParsed}\n";
+        str += $"Next line to execute: > #{nextLineToExecute}\n";
+        str += $"Executed lines counter: {ContLinesExecuted}\n";
+
+        str += $"VARS: ----------------\n";
         str += vars.ToString() + "\n";
+        str += $"----------------\n";
         return str;
     }
 

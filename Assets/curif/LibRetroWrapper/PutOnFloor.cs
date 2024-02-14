@@ -34,7 +34,17 @@ public static class PlaceOnFloorFromBoxCollider
         }
         return true;
     }
+    /*public static void CreateSphere(Vector3 position, string name)
+    {
+        // Create a new sphere GameObject
+        GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        sphere.name = name + "_boxlowpart";
+        // Set the position of the sphere to the specified position
+        sphere.transform.position = position;
 
+        // Set the scale of the sphere to 0.1 in all dimensions
+        sphere.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+    }*/
     private static bool AlignLowerPartToFloor(Transform transform, BoxCollider boxCollider)
     {
 
@@ -44,13 +54,15 @@ public static class PlaceOnFloorFromBoxCollider
                                                 transform.position.z);
         Ray ray = new Ray(lowBoxCollider, Vector3.down);
 
+        // CreateSphere(lowBoxCollider, transform.gameObject.name);
+
         // Perform a raycast to check for the floor
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit))
         {
             float yOffset = lowBoxCollider.y - hit.point.y;
-            // ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] lowBoxCollider.y: {lowBoxCollider.y} hit.point.y: {hit.point.y} {name}");
-            // ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] yOffset: {yOffset} {name}");
+            ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] lowBoxCollider.y: {lowBoxCollider.y} hit.point.y: {hit.point.y} {transform.gameObject.name}");
+            ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] yOffset: {yOffset} {transform.gameObject.name}");
 
             // Adjust the position of the GameObject
             transform.position -= new Vector3(0f, yOffset, 0f);
@@ -90,7 +102,7 @@ public class PutOnFloor : MonoBehaviour
             return;
         }
 
-        if (! PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
+        if (!PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
             ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
     }
 

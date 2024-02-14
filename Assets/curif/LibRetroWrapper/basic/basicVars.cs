@@ -31,7 +31,7 @@ public class BasicVars
 
     public BasicValue SetValue(string name, BasicValue val)
     {
-        vars[name] = val;
+        vars[name.ToUpper()] = val;
         return val;
     }
 

@@ -31,18 +31,21 @@ public class CabinetController : MonoBehaviour
 
     public GameObject outOfOrderCabinet;
 
+    public BackgroundSoundController backgroundSoundController;
+
     private CabinetReplace cabinetReplaceComponent;
     // videos
-    private List<AgentScenePosition> AgentPlayerPositionComponents;
+    public List<AgentScenePosition> AgentPlayerPositionComponents;
     //videos
-    private List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
+    public List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
 
     //load cabinets
-    private List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
-
+    public List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
 
     private bool coroutineIsRunning;
-    private StaticCheck staticCheck;
+
+    //check if the player don't moves.
+    public StaticCheck staticCheck;
 
     void Start()
     {
@@ -52,7 +55,9 @@ public class CabinetController : MonoBehaviour
             .ToList();
 
         if (AgentPlayerPositionsToLoad == null || !AgentPlayerPositionsToLoad.Any())
+        {
             AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponents;
+        }
         else
         {
             AgentPlayerPositionComponentsToLoad = AgentPlayerPositionsToLoad
@@ -62,7 +67,9 @@ public class CabinetController : MonoBehaviour
         }
 
         if (AgentPlayerPositionsToUnload == null || !AgentPlayerPositionsToUnload.Any())
+        {
             AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToLoad;
+        }
         else
         {
             AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
@@ -77,122 +84,15 @@ public class CabinetController : MonoBehaviour
         player = GameObject.Find("OVRPlayerControllerGalery");
         staticCheck = player?.GetComponent<StaticCheck>();
 
-        StartLoad();
     }
 
-    void OnEnable()
-    {
-        StartLoad();
-    }
-
-    void StartLoad()
-    {
-        if (!coroutineIsRunning)
-        {
-            coroutineIsRunning = true;
-            StartCoroutine(load());
-        }
-    }
-
-    // private bool playerIsNotInAnyUnloadPosition()
-    // {
-    //     foreach (AgentScenePosition asp in AgentPlayerPositionComponentsToUnload)
-    //     {
-    //         if (asp.IsPlayerPresent)
-    //             return false;
-    //     }
-    //     return true;
-    // }
-    private bool playerIsNotInAnyUnloadPosition()
+    public bool playerIsNotInAnyUnloadPosition()
     {
         return !AgentPlayerPositionComponentsToUnload.Any(asp => asp.IsPlayerPresent);
     }
 
-    private bool playerIsInSomePosition()
+    public bool playerIsInSomePosition()
     {
         return AgentPlayerPositionComponentsToLoad.Any(asp => asp.IsPlayerPresent);
-    }
-
-    IEnumerator load()
-    {
-
-        while (game == null || string.IsNullOrEmpty(game.CabinetDBName))
-            yield return new WaitForSeconds(2f);
-
-        //load the new cabinet. 
-        // the load process repeats forever, because the new cabinet created can be unloaded an re-activate
-        // this object when that occurs.
-        while (!(playerIsInSomePosition() && staticCheck.isStatic))
-        {
-            // ConfigManager.WriteConsole($"[CabinetController] waiting for  {game.CabInfo?.name}");
-            yield return new WaitForSeconds(1f);
-        }
-        if (game.CabInfo == null)
-        {
-            game.CabInfo = CabinetInformation.fromName(game.CabinetDBName);
-            if (game.CabInfo == null)
-            {
-                ConfigManager.WriteConsoleError($"[CabinetController.load] loading cabinet from description fails {game}");
-                yield break;
-            }
-            yield return new WaitForSeconds(0.01f);
-        }
-
-        ConfigManager.WriteConsole($"[CabinetController] Loading cabinet  {game.CabInfo.name} ******");
-
-        Cabinet cab;
-        Transform parent = transform.parent;
-        try
-        {
-            //cabinet inception
-            ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {game}");
-            cab = CabinetFactory.fromInformation(game.CabInfo, game.Room, game.Position,
-                                                 transform.position, transform.rotation, 
-                                                 parent, AgentPlayerPositionComponents);
-        }
-        catch (System.Exception ex)
-        {
-            ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {game.CabInfo.name}", ex);
-            yield break;
-        }
-        if (cab == null)
-        {
-            ConfigManager.WriteConsoleError($"[CabinetController] loading cabinet from description {game.CabInfo.name}");
-            yield break;
-        }
-
-        cab.gameObject.SetActive(false);
-
-        if (game.CabInfo.Parts != null)
-        {
-            ConfigManager.WriteConsole($"[CabinetController] {game.CabInfo.name} texture parts");
-            foreach (CabinetInformation.Part part in game.CabInfo.Parts)
-            {
-                yield return new WaitForSeconds(0.01f);
-                CabinetFactory.skinCabinetPart(cab, game.CabInfo, part);
-            }
-
-        }
-
-        CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-        cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositionComponents;
-        cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
-        cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
-        cabReplaceComp.outOfOrderCabinet = outOfOrderCabinet;
-        cabReplaceComp.game = game;
-
-        //activate the new cabinet
-        cab.gameObject.SetActive(true);
-        ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {game.CabInfo.name} ******");
-
-        //this didn't work:
-        //Coroutines are also stopped when the MonoBehaviour is destroyed or if the GameObject the 
-        // MonoBehaviour is attached to is disabled. Coroutines are not stopped when a MonoBehaviour 
-        // is disabled.
-
-        //deactivate the out of order cabinet.
-        coroutineIsRunning = false;
-        gameObject.SetActive(false);
-
     }
 }

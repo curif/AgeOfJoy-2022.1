@@ -5,10 +5,13 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.XR;
+
 
 public class LibretroControlMap : MonoBehaviour
 {
-    [Tooltip("The Game action map.")]
+    [Tooltip("The control action map.")]
     public InputActionMap actionMap;
 
     // [Tooltip("The global action manager in the main rig")]
@@ -48,6 +51,23 @@ public class LibretroControlMap : MonoBehaviour
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
     }
 
+    public bool SendHapticImpulse(string mameControl, float amplitude, float duration)
+    {
+        InputAction action = actionMap.FindAction(mameControl+ "_0");
+        ConfigManager.WriteConsole($"[LibretroControlMap.SendHapticImpulse] {mameControl} action: {action}");
+        ConfigManager.WriteConsole($"[LibretroControlMap.SendHapticImpulse] {mameControl} active control: {action?.activeControl}");
+        ConfigManager.WriteConsole($"[LibretroControlMap.SendHapticImpulse] {mameControl} device: {action?.activeControl?.device}");
+
+        if (action?.activeControl?.device is XRControllerWithRumble rumbleController)
+        {
+            ConfigManager.WriteConsole($"[LibretroControlMap.SendHapticImpulse] SendImpulse...");
+            rumbleController.SendImpulse(amplitude, duration);
+            return true;
+        }
+
+        return false;
+    }
+
     public int Active(string mameControl, int port = 0)
     {
         int ret = 0;
@@ -71,7 +91,6 @@ public class LibretroControlMap : MonoBehaviour
             }
             return 0;
         }
-
         else if (action.type == InputActionType.Value)
         {
             Vector2 val = action.ReadValue<Vector2>();
