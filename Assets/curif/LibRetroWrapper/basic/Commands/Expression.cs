@@ -141,7 +141,7 @@ public class CommandExpression : ICommandBase
                     CommandExpression expr = new(config);
                     expr.Parse(tokens);
                     if (tokens.Token != ")")
-                        throw new Exception($"unbalanced parentesis: {tokens.ToString()}");
+                        throw new Exception($"unbalanced parentesis or function don't recognized: {tokens.ToString()}");
                     // tokens++; //consumes )
                     elements.Add(new Element(expr));
                     ConfigManager.WriteConsole($"[CommandExpression.Parse] expression parse end -  {tokens.ToString()}");

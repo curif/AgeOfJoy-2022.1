@@ -42,6 +42,8 @@ public static class Commands
         functions["MOD"] = typeof(CommandFunctionMOD);
         functions["INT"] = typeof(CommandFunctionINT);
         functions["NOT"] = typeof(CommandFunctionNOT);
+        functions["AND"] = typeof(CommandFunctionAND);
+        functions["OR"] = typeof(CommandFunctionOR);
         // strings
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
@@ -108,9 +110,11 @@ public static class Commands
         functions["CABPARTSNAME"] = typeof(CommandFunctionCABPARTSNAME);
         functions["CABPARTSPOSITION"] = typeof(CommandFunctionCABPARTSPOSITION);
         functions["CABPARTSENABLE"] = typeof(CommandFunctionCABPARTSENABLE);
-        functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
         functions["CABPARTSGETCOORDINATE"] = typeof(CommandFunctionCABPARTSGETCOORDINATE);
         functions["CABPARTSSETCOORDINATE"] = typeof(CommandFunctionCABPARTSSETCOORDINATE);
+        functions["CABPARTSSETROTATION"] = typeof(CommandFunctionCABPARTSSETROTATION);
+        functions["CABPARTSGETROTATION"] = typeof(CommandFunctionCABPARTSGETROTATION);
+        functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
 
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);
@@ -124,10 +128,10 @@ public static class Commands
         
         //audio
         functions["AUDIOGAMEGETVOLUME"] = typeof(CommandFunctionAUDIOGAMEGETVOLUME);
-        functions["nAUDIOMUSICGETVOLUME"] = typeof(CommandFunctionAUDIOMUSICGETVOLUME);
+        functions["AUDIOMUSICGETVOLUME"] = typeof(CommandFunctionAUDIOMUSICGETVOLUME);
         functions["AUDIOAMBIENCEGETVOLUME"] = typeof(CommandFunctionAUDIOAMBIENCEGETVOLUME);
         functions["AUDIOGAMESETVOLUME"] = typeof(CommandFunctionAUDIOGAMESETVOLUME);
-        functions["nAUDIOMUSICSETVOLUME"] = typeof(CommandFunctionAUDIOMUSICSETVOLUME);
+        functions["AUDIOMUSICSETVOLUME"] = typeof(CommandFunctionAUDIOMUSICSETVOLUME);
         functions["AUDIOAMBIENCESETVOLUME"] = typeof(CommandFunctionAUDIOAMBIENCESETVOLUME);
 
         //player
