@@ -31,9 +31,9 @@ public class CabinetAGEBasicInformation
     [Serializable]
     public class Variable
     {
-        public string name;
-        public string type;
-        public string value = "";
+        public string name; //variable name
+        public string type; //STRING or NUMBER
+        public string value = ""; //first asigned value.
     }
 
 }
@@ -78,7 +78,7 @@ public class CabinetAGEBasic : MonoBehaviour
                 else if (var.type.ToUpper() == "NUMBER")
                     bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
                 else
-                    throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
+                    throw new Exception($"[CabinetAGEBasic.init] AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
 
                 vars.SetValue(var.name, bv);
                 ConfigManager.WriteConsole($"[CabinetAGEBasic.Init] inject variable: {var.name}: {bv}");
@@ -133,7 +133,7 @@ public class CabinetAGEBasic : MonoBehaviour
         ageBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLoad);
     }
-    public bool ExecAfterStartBas()
+/*    public bool ExecAfterStartBas()
     {
         if (ageBasic.IsRunning())
             return false;
@@ -146,7 +146,7 @@ public class CabinetAGEBasic : MonoBehaviour
         if (ageBasic.IsRunning(AGEInfo.afterStart))
             ageBasic.Stop();
     }
-
+*/
 }
 
 #if UNITY_EDITOR
@@ -181,6 +181,7 @@ public class CabinetAGEBasicEditor : Editor
             myScript.ExecAfterLoadBas();
         }
 
+        /*
         if (GUILayout.Button("Exec After Start Bas"))
         {
             myScript.ExecAfterStartBas();
@@ -190,6 +191,7 @@ public class CabinetAGEBasicEditor : Editor
         {
             myScript.StopAfterStartBas();
         }
+        */
     }
 }
 #endif
