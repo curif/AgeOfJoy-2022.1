@@ -7,12 +7,11 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MI_NeonTube_Blue
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 2100000, guid: 180ad3c662bc50c4eaadfb715e2b24d6, type: 2}
+  m_Name: MI_Doorfx_Room001
+  m_Shader: {fileID: 4800000, guid: be8b0727911f0c1419b86ffc84a79177, type: 3}
+  m_Parent: {fileID: 2100000, guid: 319e572b3fbdba248abd522c10102689, type: 2}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -23,12 +22,12 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _CubeMap:
+        m_Texture: {fileID: 8900000, guid: 8572496c029995a48b49ab7072afe53b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats:
-    - _Glossiness: 0.786
-    - _Metallic: 1
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 0, g: 0.1453209, b: 2.6390157, a: 1}
+    m_Floats: []
+    m_Colors: []
   m_BuildTextureStacks: []
