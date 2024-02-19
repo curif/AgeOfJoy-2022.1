@@ -15,9 +15,9 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 0
-  m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  m_FogMode: 3
-  m_FogDensity: 0.01
+  m_FogColor: {r: 1, g: 0, b: 0, a: 1}
+  m_FogMode: 2
+  m_FogDensity: 1
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
   m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
@@ -6100,6 +6100,57 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6014422382818911613, guid: fe5d848757949f54b97a217696b50ccb, type: 3}
   m_PrefabInstance: {fileID: 1925093262}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1991218757
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1991218759}
+  - component: {fileID: 1991218758}
+  m_Layer: 0
+  m_Name: FogSettings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1991218758
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1991218757}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32ecdc65a5ff292409679c55921400b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  settings:
+    fogEnabled: 1
+    fogColor: {r: 0.6608964, g: 1, b: 0, a: 1}
+    fogMode: 2
+    fogDensity: 0.1
+    startDistance: 0
+    endDistance: 100
+--- !u!4 &1991218759
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1991218757}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.0874958, y: 1.0049874, z: 6.8798046}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2094549558
 GameObject:
   m_ObjectHideFlags: 0
@@ -6380,3 +6431,4 @@ SceneRoots:
   - {fileID: 1015625888}
   - {fileID: 660008372}
   - {fileID: 930795023}
+  - {fileID: 1991218759}
