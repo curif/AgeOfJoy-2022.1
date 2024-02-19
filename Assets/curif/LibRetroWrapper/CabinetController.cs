@@ -9,6 +9,8 @@ using UnityEngine;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Configuration;
+
 
 //[RequireComponent(typeof(CabinetReplace))]
 public class CabinetController : MonoBehaviour
@@ -46,6 +48,8 @@ public class CabinetController : MonoBehaviour
 
     //check if the player don't moves.
     public StaticCheck staticCheck;
+
+    public CabinetSpaceType Space;
 
     void Start()
     {

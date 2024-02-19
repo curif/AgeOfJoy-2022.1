@@ -11,6 +11,7 @@ using System;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Reflection;
+using System.IO;
 
 //distribute cabinets games in the room for respawn.
 
@@ -39,6 +40,7 @@ public class CabinetsController : MonoBehaviour
         }
     }
 
+    /// <summary> Gameobjects in the cabinets' tree in the room </summary>
     [Serializable]
     public class CabinetControllerInformation
     {
@@ -82,6 +84,15 @@ public class CabinetsController : MonoBehaviour
             GameObjectOutOfOrder.SetActive(true);
             GameObjectReplacement?.SetActive(false);
         }
+    }
+
+    void Start()
+    {
+        gameRegistry = GameObject.Find("FixedObject").GetComponent<GameRegistry>();
+
+        loadCabinetList();
+        initalizeCabinets();
+        load();
     }
 
     void loadCabinetList()
@@ -143,14 +154,7 @@ public class CabinetsController : MonoBehaviour
         }
     }
 
-    void Start()
-    {
-        gameRegistry = GameObject.Find("FixedObject").GetComponent<GameRegistry>();
 
-        loadCabinetList();
-        initalizeCabinets();
-        load();
-    }
 
     public CabinetController GetCabinetControllerByPosition(int position)
     {
@@ -192,37 +196,88 @@ public class CabinetsController : MonoBehaviour
         Loaded = false;
 
         //persist registry with the new assignation if any.
-        List<CabinetPosition> games = gameRegistry.GetSetCabinetsAssignedToRoom(Room,
+        List<CabinetPosition> cabsPos = gameRegistry.GetSetCabinetsAssignedToRoom(Room,
                                                                                 transform.childCount);
-        ConfigManager.WriteConsole($"[CabinetsController.load] Assigning {games.Count} cabinets to room {Room}");
+        ConfigManager.WriteConsole($"[CabinetsController.load] Assigning {cabsPos.Count} cabinets to room {Room}");
 
-        //assign games to cabinets
-        foreach (CabinetPosition g in games)
+        //load already assigned games to cabinets
+        foreach (CabinetPosition cabPos in cabsPos)
         {
-            CabinetControllerInformation cabInfo = GetCabinetControllerInformationByPosition(g.Position);
+            CabinetControllerInformation cabInfo = GetCabinetControllerInformationByPosition(cabPos.Position);
             //CabinetController will load the cabinet once asigned a cabinetName
-            cabInfo.CabinetController.game = g;
-            ConfigManager.WriteConsole($"[CabinetsController.load] Assigned {g}");
+            cabInfo.CabinetController.game = cabPos;
+            ConfigManager.WriteConsole($"[CabinetsController.load] Load previously assigned {cabPos}");
         }
 
-        if (games.Count() < Cabinets.Count())
+        //load unnasigned cabinets. Cabinets that aren't assigned to any room. New cabinets.
+        if (cabsPos.Count() < Cabinets.Count())
         {
-            //assign a random to non-assigned.        
-            List<string> RandomCabsName = gameRegistry.GetRandomizedAllCabinetNames();
-            int idx = 0;
-            foreach (CabinetControllerInformation cabInfo in Cabinets)
+            List<CabinetControllerInformation> remainingOutOfOrderCabs = Cabinets.Where(cab =>
+                        string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
+            List<string> cabNames = gameRegistry.GetUnassignedCabinets();
+            List<string> occupiedSpaces = cabNames.Select(cabName =>
             {
-                if (string.IsNullOrEmpty(cabInfo.CabinetController.game.CabinetDBName))
+                string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+                CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+                return cabInfo.space;
+            }).ToList();
+            foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
+            {
+                int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
+                if (bestFitIndex != -1)
                 {
-                    cabInfo.CabinetController.game.CabinetDBName = RandomCabsName[idx];
-                    ConfigManager.WriteConsole($"[CabinetsController.load] randomly assigned {cabInfo.CabinetController.game}");
-                    idx++;
+                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                            cabCtrl.Position,
+                                                            cabNames[bestFitIndex]);
+                    cabCtrl.CabinetController.game = cabPos;
+                    ConfigManager.WriteConsole($"[CabinetsController.load] #{cabCtrl.Position}"
+                                                + $" assigned cab: {cabNames[bestFitIndex]}"
+                                                + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                    occupiedSpaces.RemoveAt(bestFitIndex);
+                    cabNames.RemoveAt(bestFitIndex);
                 }
-                if (idx + 1 > RandomCabsName.Count())
-                    break;
             }
-            ConfigManager.WriteConsole($"[CabinetsController.load] loaded cabinets");
+
+            if (gameRegistry.NeedsSave())
+                gameRegistry.Persist();
+
+            //assign a random to non-assigned.
+            //don't persist in gameRegistry.   
+
+            remainingOutOfOrderCabs = Cabinets.Where(cab =>
+                            string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
+            if (remainingOutOfOrderCabs.Count() > 0)
+            {
+                cabNames = gameRegistry.GetRandomizedAllCabinetNames();
+                occupiedSpaces = cabNames.Select(cabName =>
+                    {
+                        string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+                        CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+                        return cabInfo.space;
+                    }).ToList();
+
+                foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
+                {
+                    int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
+                    if (bestFitIndex != -1)
+                    {
+                        CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                                cabCtrl.Position,
+                                                                cabNames[bestFitIndex]);
+                        cabCtrl.CabinetController.game = cabPos;
+                        ConfigManager.WriteConsole($"[CabinetsController.load] #{cabCtrl.Position} "
+                                                    + $" randomly assigned cab: {cabNames[bestFitIndex]}"
+                                                    + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                        occupiedSpaces.RemoveAt(bestFitIndex);
+                        cabNames.RemoveAt(bestFitIndex);
+                    }
+                }
+            }
         }
+
+        ConfigManager.WriteConsole($"[CabinetsController.load] END loaded cabinets");
         Loaded = true;
     }
 
