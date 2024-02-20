@@ -1,4 +1,4 @@
-Shader "Custom/AOJ_WorldAligned_Wall"
+Shader "AgeOfJoy/WorldAligned_WallMaster"
 {
     Properties
     {
