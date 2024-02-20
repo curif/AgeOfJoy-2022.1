@@ -212,6 +212,8 @@ public class CabinetsController : MonoBehaviour
         //load unnasigned cabinets. Cabinets that aren't assigned to any room. New cabinets.
         if (cabsPos.Count() < Cabinets.Count())
         {
+            ConfigManager.WriteConsole($"[CabinetsController.load] {Room} there are {Cabinets.Count() - cabsPos.Count()} pending assignments");
+
             List<CabinetControllerInformation> remainingOutOfOrderCabs = Cabinets.Where(cab =>
                         string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
             List<string> cabNames = gameRegistry.GetUnassignedCabinets();
@@ -221,6 +223,8 @@ public class CabinetsController : MonoBehaviour
                 CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
                 return cabInfo.space;
             }).ToList();
+            ConfigManager.WriteConsole($"[CabinetsController.load] {Room}"
+                                        + $" unnasigned cabinets count: {cabNames.Count}");
             foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
             {
                 int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
@@ -230,7 +234,7 @@ public class CabinetsController : MonoBehaviour
                                                             cabCtrl.Position,
                                                             cabNames[bestFitIndex]);
                     cabCtrl.CabinetController.game = cabPos;
-                    ConfigManager.WriteConsole($"[CabinetsController.load] #{cabCtrl.Position}"
+                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
                                                 + $" assigned cab: {cabNames[bestFitIndex]}"
                                                 + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
 
@@ -249,6 +253,8 @@ public class CabinetsController : MonoBehaviour
                             string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
             if (remainingOutOfOrderCabs.Count() > 0)
             {
+                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} random {remainingOutOfOrderCabs.Count} pending assignments");
+
                 cabNames = gameRegistry.GetRandomizedAllCabinetNames();
                 occupiedSpaces = cabNames.Select(cabName =>
                     {
@@ -256,28 +262,32 @@ public class CabinetsController : MonoBehaviour
                         CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
                         return cabInfo.space;
                     }).ToList();
+                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
 
                 foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
                 {
                     int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
                     if (bestFitIndex != -1)
                     {
-                        CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
-                                                                cabCtrl.Position,
-                                                                cabNames[bestFitIndex]);
-                        cabCtrl.CabinetController.game = cabPos;
-                        ConfigManager.WriteConsole($"[CabinetsController.load] #{cabCtrl.Position} "
-                                                    + $" randomly assigned cab: {cabNames[bestFitIndex]}"
-                                                    + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
-
-                        occupiedSpaces.RemoveAt(bestFitIndex);
-                        cabNames.RemoveAt(bestFitIndex);
+                        ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
+                                                + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} not fit found in: {occupiedSpaces}");
+                        continue;
                     }
+                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                            cabCtrl.Position,
+                                                            cabNames[bestFitIndex]);
+                    cabCtrl.CabinetController.game = cabPos;
+                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position} "
+                                                + $" randomly assigned cab: {cabNames[bestFitIndex]}"
+                                                + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                    occupiedSpaces.RemoveAt(bestFitIndex);
+                    cabNames.RemoveAt(bestFitIndex);
                 }
             }
         }
 
-        ConfigManager.WriteConsole($"[CabinetsController.load] END loaded cabinets");
+        ConfigManager.WriteConsole($"[CabinetsController.load] {Room} END loaded cabinets");
         Loaded = true;
     }
 
