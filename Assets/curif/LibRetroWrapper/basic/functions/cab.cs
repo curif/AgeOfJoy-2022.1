@@ -14,7 +14,7 @@ class CommandFunctionCABPARTSCOUNT : CommandFunctionNoExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
-            return new BasicValue(0);
+            throw new Exception("AGEBasic can't access the Cabinet data.");
 
         return new BasicValue((double)config.Cabinet.transform.childCount);
     }
@@ -31,7 +31,7 @@ class CommandFunctionCABPARTSNAME : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
-            return new BasicValue("");
+            throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(val);
@@ -58,7 +58,7 @@ class CommandFunctionCABPARTSPOSITION : CommandFunctionSingleExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
-            return new BasicValue(-1);
+            throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedString(val);
@@ -84,11 +84,11 @@ class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
-            return new BasicValue(-1);
+            throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedNumber(vals[0], " - part number");
-        FunctionHelper.ExpectedNumber(vals[1], " - enabled 1/0");
+        FunctionHelper.ExpectedNumber(vals[1], " - enabled true/false");
 
         int partNum = (int)vals[0].GetNumber();
         // Check if the parent has at least N children
@@ -99,6 +99,106 @@ class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
         child.gameObject.SetActive(vals[1].GetNumber() != 0);
 
         return new BasicValue(1);
+    }
+}
+
+
+class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
+{
+
+    public CommandFunctionCABPARTSGETCOORDINATE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSGETCOORDINATE";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y or Z");
+
+        int partNum = (int)vals[0].GetNumber();
+        // Check if the parent has at least N children
+        if (config.Cabinet.transform.childCount < partNum + 1)
+            throw new Exception("cabPartsGetCoordinate: invalid part number");
+
+        Transform child = config.Cabinet.transform.GetChild(partNum);
+        string coord = vals[1].GetString().ToUpper();
+        if (coord == "X")
+            return new BasicValue(child.position.x);
+        else if (coord == "Y")
+            return new BasicValue(child.position.y);
+        else if (coord == "Z")
+            return new BasicValue(child.position.z);
+        else if (coord == "H")
+            return new BasicValue(child.localPosition.y);
+
+        throw new Exception("cabPartsGetCoordinate: coordinate should be X, Y, Z or H");
+
+    }
+}
+
+class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
+{
+
+    public CommandFunctionCABPARTSSETCOORDINATE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETCOORDINATE";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 3);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate");
+        FunctionHelper.ExpectedNumber(vals[2], " - coordinate value");
+
+        int partNum = (int)vals[0].GetNumber();
+        // Check if the parent has at least N children
+        if (config.Cabinet.transform.childCount < partNum + 1)
+            throw new Exception("cabPartsSetCoordinate: invalid part number");
+
+        Transform child = config.Cabinet.transform.GetChild(partNum);
+        Vector3 newPosition;
+        string coord = vals[1].GetString().ToUpper();
+        if (coord == "H")
+        {
+            newPosition = new Vector3(child.localPosition.x,
+                                        child.localPosition.y,
+                                        child.localPosition.z);
+            newPosition.y = (float)vals[2].GetNumber();
+            child.localPosition = newPosition;
+            return BasicValue.True;
+        }
+
+        newPosition = new Vector3(child.position.x,
+                                                    child.position.y,
+                                                    child.position.z);
+        if (coord == "X")
+            newPosition.x = (float)vals[2].GetNumber();
+        else if (coord == "Y")
+            newPosition.y = (float)vals[2].GetNumber();
+        else if (coord == "Z")
+            newPosition.z = (float)vals[2].GetNumber();
+        else
+            throw new Exception("coordinate should be X, Y, Z or H");
+
+        child.position = newPosition;
+        return BasicValue.True;
     }
 }
 
@@ -113,9 +213,9 @@ class CommandFunctionCABINSERTCOIN : CommandFunctionNoExpressionBase
     {
         ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.CoinSlot == null)
-            return new BasicValue(-1);
+            throw new Exception("Cabinet hasn't a coin slot.");
 
         config.CoinSlot.insertCoin();
-        return new BasicValue(1);
+        return BasicValue.True;
     }
 }

@@ -2288,18 +2288,60 @@ PrefabInstance:
       propertyPath: inputActions
       value: 
       objectReference: {fileID: -944628639613478452, guid: aaa3c415e8298d44d8809061d0cbde62, type: 3}
+    - target: {fileID: 4703797651494189707, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
+      propertyPath: libretroControlMap
+      value: 
+      objectReference: {fileID: 364159868029234944}
+    - target: {fileID: 7350981469054557136, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
+      propertyPath: audioMixer
+      value: 
+      objectReference: {fileID: 24100000, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
+    - target: {fileID: 7350981469054557136, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
+      propertyPath: audioMixerGame
+      value: 
+      objectReference: {fileID: 24100000, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
+    - target: {fileID: 7350981469054557136, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
+      propertyPath: audioMixerAmbience
+      value: 
+      objectReference: {fileID: 24100000, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
     m_RemovedComponents:
     - {fileID: -6857671861487439488, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
     - {fileID: 3607137671920533558, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4579439272377624362, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 364159868029234944}
   m_SourcePrefab: {fileID: 100100000, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
 --- !u!4 &5938743694331903043 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3802937413559057808, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
   m_PrefabInstance: {fileID: 7398315230704730579}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &6422545661476873977 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4579439272377624362, guid: a1c669c1214377c8eb50256c5913f07d, type: 3}
+  m_PrefabInstance: {fileID: 7398315230704730579}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &364159868029234944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6422545661476873977}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79a1812a17a2dd284b99a56f0cecdcac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  actionMap:
+    m_Name: Action Map
+    m_Id: 65660f93-367c-4a32-bd49-c9bbc9dde34c
+    m_Asset: {fileID: 0}
+    m_Actions: []
+    m_Bindings: []
 --- !u!1001 &7673390866579303982
 PrefabInstance:
   m_ObjectHideFlags: 0

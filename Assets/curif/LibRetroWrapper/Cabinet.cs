@@ -7,6 +7,7 @@ You should have received a copy of the GNU General Public License along with thi
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
+using System.ComponentModel;
 
 public class Cabinet
 {
@@ -59,7 +60,171 @@ public class Cabinet
 
     }
 
+    public void AddAColliderBlocker(string part, bool debugmode = false)
+    {
+        GameObject blocker = Parts(part);
+        if (blocker == null)
+            return;
 
+        Renderer renderer = blocker.GetComponent<Renderer>();
+        if (renderer != null)
+        {
+            // get/create a collider on the blocker. The collider will adjust to the blocker size.
+            BoxCollider collider = blocker.GetComponent<BoxCollider>();
+            if (collider == null)
+                collider = blocker.AddComponent<BoxCollider>();
+
+            collider.includeLayers = LayerMask.GetMask("Player");
+
+            renderer.enabled = false;
+            if (debugmode)
+                DrawBoxCollider(collider);
+        }
+    }
+    /*
+        public BoxCollider addBoxCollider()
+        {
+            BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
+            if (boxCollider == null)
+                boxCollider = gameObject.AddComponent<BoxCollider>();
+
+            Renderer[] childRenderers = gameObject.GetComponentsInChildren<Renderer>();
+
+            if (childRenderers.Length == 0)
+            {
+                ConfigManager.WriteConsoleWarning($"[addBoxCollider] {gameObject.name} No child renderers found.");
+                return boxCollider;
+            }
+
+            Bounds bounds = childRenderers[0].bounds;
+
+            for (int i = 1; i < childRenderers.Length; i++)
+            {
+                bounds.Encapsulate(childRenderers[i].bounds);
+            }
+
+            boxCollider.size = bounds.size;
+            // Adjust the center and size of the box collider to match the parent game object
+            Vector3 centerOffset = bounds.center - gameObject.transform.position;
+            Vector3 adjustedCenter = new Vector3(centerOffset.x / gameObject.transform.lossyScale.x,
+                                                  centerOffset.y / gameObject.transform.lossyScale.y,
+                                                  centerOffset.z / gameObject.transform.lossyScale.z);
+            boxCollider.center = adjustedCenter;
+
+            return boxCollider;
+        }
+    */
+
+    void DrawBounds(Bounds bounds)
+    {
+        LineRenderer lineRenderer = gameObject.AddComponent<LineRenderer>();
+        lineRenderer.startWidth = 0.001f; // Set the width of the line
+        lineRenderer.endWidth = 0.001f;
+        lineRenderer.positionCount = 8;
+        lineRenderer.startColor = Color.red;
+        lineRenderer.endColor = Color.red;
+
+        Vector3[] corners = new Vector3[8];
+
+        // Get the corners of the bounding box
+        corners[0] = bounds.center + new Vector3(bounds.extents.x, bounds.extents.y, bounds.extents.z);
+        corners[1] = bounds.center + new Vector3(bounds.extents.x, bounds.extents.y, -bounds.extents.z);
+        corners[2] = bounds.center + new Vector3(-bounds.extents.x, bounds.extents.y, -bounds.extents.z);
+        corners[3] = bounds.center + new Vector3(-bounds.extents.x, bounds.extents.y, bounds.extents.z);
+
+        corners[4] = bounds.center + new Vector3(bounds.extents.x, -bounds.extents.y, bounds.extents.z);
+        corners[5] = bounds.center + new Vector3(bounds.extents.x, -bounds.extents.y, -bounds.extents.z);
+        corners[6] = bounds.center + new Vector3(-bounds.extents.x, -bounds.extents.y, -bounds.extents.z);
+        corners[7] = bounds.center + new Vector3(-bounds.extents.x, -bounds.extents.y, bounds.extents.z);
+
+        for (int i = 0; i < corners.Length; i++)
+        {
+            lineRenderer.SetPosition(i, corners[i]);
+        }
+
+        // Connect the corners to form the Bounds lines
+        lineRenderer.loop = true;
+    }
+    void DrawBoxCollider(BoxCollider collider)
+    {
+        LineRenderer lineRenderer = gameObject.AddComponent<LineRenderer>();
+
+        lineRenderer.positionCount = 8;
+        lineRenderer.startColor = Color.blue;
+        lineRenderer.endColor = Color.blue;
+
+        lineRenderer.startWidth = 0.001f; // Set the width of the line
+        lineRenderer.endWidth = 0.001f;
+
+        Vector3 center = collider.bounds.center;
+        Vector3 size = collider.size / 2;
+
+        // Get the corners of the BoxCollider
+        Vector3[] corners = new Vector3[8];
+        corners[0] = center + new Vector3(size.x, size.y, size.z);
+        corners[1] = center + new Vector3(size.x, size.y, -size.z);
+        corners[2] = center + new Vector3(-size.x, size.y, -size.z);
+        corners[3] = center + new Vector3(-size.x, size.y, size.z);
+
+        corners[4] = center + new Vector3(size.x, -size.y, size.z);
+        corners[5] = center + new Vector3(size.x, -size.y, -size.z);
+        corners[6] = center + new Vector3(-size.x, -size.y, -size.z);
+        corners[7] = center + new Vector3(-size.x, -size.y, size.z);
+
+        // Draw lines between corners to visualize the BoxCollider
+        for (int i = 0; i < corners.Length; i++)
+        {
+            lineRenderer.SetPosition(i, corners[i]);
+        }
+
+        // Connect the corners to form the BoxCollider lines
+        lineRenderer.loop = true;
+    }
+    public BoxCollider addBoxCollider(bool debugmode = false)
+    {
+        //https://www.reddit.com/r/Unity3D/comments/8qma81/how_to_add_a_collider_at_runtime_to_an_object/
+        Quaternion currentRotation = gameObject.transform.rotation;
+        gameObject.transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+        Vector3 currentScale = gameObject.transform.localScale;
+        gameObject.transform.localScale = Vector3.one;
+
+        BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
+        if (boxCollider == null)
+            boxCollider = gameObject.AddComponent<BoxCollider>();
+
+        Renderer[] childRenderers = gameObject.GetComponentsInChildren<Renderer>();
+        if (childRenderers.Length == 0)
+        {
+            ConfigManager.WriteConsoleWarning($"[addBoxCollider] {gameObject.name} No child renderers found.");
+            return boxCollider;
+        }
+
+        Bounds bounds = new Bounds(gameObject.transform.position, Vector3.zero);
+        foreach (Renderer renderer in childRenderers)
+        {
+            bounds.Encapsulate(renderer.bounds);
+            if (debugmode)
+                DrawBounds(renderer.bounds);
+        }
+
+        // Set the size of the box collider to match the bounds.
+        boxCollider.size = bounds.size;
+
+        // Calculate the center offset relative to the transform position.
+        Vector3 centerOffset = bounds.center - gameObject.transform.position;
+        boxCollider.center = centerOffset;
+
+        gameObject.transform.rotation = currentRotation;
+        gameObject.transform.localScale = currentScale;
+
+        if (debugmode)
+            DrawBoxCollider(boxCollider);
+
+        return boxCollider;
+    }
+
+    /*
+    Another approach:
     private void addBoxCollider(GameObject gameObject)
     {
         BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
@@ -74,77 +239,48 @@ public class Cabinet
             return;
         }
 
-        Bounds bounds = childRenderers[0].bounds;
+        // Initialize minimum and maximum corner points in world space
+        Vector3 minWorldCorner = childRenderers[0].bounds.min;
+        Vector3 maxWorldCorner = childRenderers[0].bounds.max;
 
         for (int i = 1; i < childRenderers.Length; i++)
         {
-            bounds.Encapsulate(childRenderers[i].bounds);
+            Vector3 rendererMin = childRenderers[i].bounds.min;
+            Vector3 rendererMax = childRenderers[i].bounds.max;
+
+            // Update min and max corner points in world space
+            minWorldCorner = Vector3.Min(minWorldCorner, rendererMin);
+            maxWorldCorner = Vector3.Max(maxWorldCorner, rendererMax);
         }
 
-        boxCollider.size = bounds.size;
-        //boxCollider.center = bounds.center - gameObject.transform.position;
-        // Adjust the center and size of the box collider to match the parent game object
-        Vector3 centerOffset = bounds.center - gameObject.transform.position;
-        Vector3 adjustedCenter = new Vector3(centerOffset.x / gameObject.transform.lossyScale.x, 
-                                              centerOffset.y / gameObject.transform.lossyScale.y, 
-                                              centerOffset.z / gameObject.transform.lossyScale.z);
+        // Convert world space corner points to local space
+        Vector3 minLocalCorner = gameObject.transform.InverseTransformPoint(minWorldCorner);
+        Vector3 maxLocalCorner = gameObject.transform.InverseTransformPoint(maxWorldCorner);
+
+        // Calculate the center and size of the box collider in local space
+        Vector3 center = (minLocalCorner + maxLocalCorner) * 0.5f;
+        Vector3 size = maxLocalCorner - minLocalCorner;
+
+        // Adjust the center based on the parent's scale
+        Vector3 adjustedCenter = new Vector3(center.x / gameObject.transform.localScale.x,
+                                              center.y / gameObject.transform.localScale.y,
+                                              center.z / gameObject.transform.localScale.z);
         boxCollider.center = adjustedCenter;
+        boxCollider.size = size;
     }
+    */
 
-/*
-Another approach:
-private void addBoxCollider(GameObject gameObject)
-{
-    BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
-    if (boxCollider == null)
-        boxCollider = gameObject.AddComponent<BoxCollider>();
 
-    Renderer[] childRenderers = gameObject.GetComponentsInChildren<Renderer>();
-
-    if (childRenderers.Length == 0)
+    public PutOnFloor toFloor()
     {
-        ConfigManager.WriteConsoleWarning($"[addBoxCollider] {gameObject.name} No child renderers found.");
-        return;
+        PutOnFloor onFloor = gameObject.GetComponent<PutOnFloor>();
+        if (onFloor == null)
+            onFloor = gameObject.AddComponent<PutOnFloor>();
+        return onFloor;
     }
 
-    // Initialize minimum and maximum corner points in world space
-    Vector3 minWorldCorner = childRenderers[0].bounds.min;
-    Vector3 maxWorldCorner = childRenderers[0].bounds.max;
-
-    for (int i = 1; i < childRenderers.Length; i++)
-    {
-        Vector3 rendererMin = childRenderers[i].bounds.min;
-        Vector3 rendererMax = childRenderers[i].bounds.max;
-
-        // Update min and max corner points in world space
-        minWorldCorner = Vector3.Min(minWorldCorner, rendererMin);
-        maxWorldCorner = Vector3.Max(maxWorldCorner, rendererMax);
-    }
-
-    // Convert world space corner points to local space
-    Vector3 minLocalCorner = gameObject.transform.InverseTransformPoint(minWorldCorner);
-    Vector3 maxLocalCorner = gameObject.transform.InverseTransformPoint(maxWorldCorner);
-
-    // Calculate the center and size of the box collider in local space
-    Vector3 center = (minLocalCorner + maxLocalCorner) * 0.5f;
-    Vector3 size = maxLocalCorner - minLocalCorner;
-
-    // Adjust the center based on the parent's scale
-    Vector3 adjustedCenter = new Vector3(center.x / gameObject.transform.localScale.x,
-                                          center.y / gameObject.transform.localScale.y,
-                                          center.z / gameObject.transform.localScale.z);
-    boxCollider.center = adjustedCenter;
-    boxCollider.size = size;
-}
-*/
-
-
-    private void toFloor()
-    {
-        gameObject.AddComponent<PutOnFloor>();
-    }
-
-    public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent, GameObject go = null, string model = "galaga")
+    public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent,
+                        GameObject go = null, string model = "galaga")
     {
         Name = name;
         if (go == null)
@@ -158,11 +294,6 @@ private void addBoxCollider(GameObject gameObject)
         //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
         gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
         gameObject.name = name;
-
-        //add neccesary components
-        //addRigidBody();
-        addBoxCollider(gameObject);
-        toFloor();
 
         if (!IsValid)
             throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
@@ -323,7 +454,8 @@ private void addBoxCollider(GameObject gameObject)
                              string shaderName = "damage", Dictionary<string, string> shaderConfig = null,
                              ControlMapConfiguration cabinetControlMap = null,
                              LightGunInformation lightGunInformation = null,
-                             CabinetAGEBasicInformation agebasic = null
+                             CabinetAGEBasicInformation agebasic = null,
+                             BackgroundSoundController backgroundSoundController = null
                           )
     {
         string CRTType = $"screen-mock-{orientation}";
@@ -344,8 +476,10 @@ private void addBoxCollider(GameObject gameObject)
         if (rotation != null)
             newCRT.transform.Rotate((Vector3)rotation);
 
-        Object.Destroy(Parts("screen-mock-horizontal"));
-        Object.Destroy(Parts("screen-mock-vertical"));
+        // Object.Destroy(Parts("screen-mock-horizontal"));
+        // Object.Destroy(Parts("screen-mock-vertical"));
+        Parts("screen-mock-vertical").SetActive(false);
+        Parts("screen-mock-horizontal").SetActive(false);
 
         //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
         LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
@@ -377,6 +511,9 @@ private void addBoxCollider(GameObject gameObject)
 
         //age basic
         libretroScreenController.ageBasicInformation = agebasic;
+
+        //sound
+        libretroScreenController.backgroundSoundController = backgroundSoundController;
 
         return this;
     }

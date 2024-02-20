@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Audio;
+
 
 public class ConfigurationCommands
 {
     public ConfigurationController ConfigurationController = null;
+    public LibretroControlMap ControlMap = null;
     public ScreenGenerator ScreenGenerator = null;
     public SceneDatabase SceneDatabase = null;
     public Teleportation Teleportation = null;
@@ -29,4 +33,11 @@ public class ConfigurationCommands
     public CoinSlotController CoinSlot;
 
     public MoviePosterController PostersController;
+
+    public AudioMixer audioMixer;
+
+    //convenience player component
+    public PlayerController Player;
+    public GameObject PlayerGameObject;
+    public XROrigin PlayerOrigin;
 }

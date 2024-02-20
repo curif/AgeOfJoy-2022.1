@@ -106,7 +106,7 @@ public class CabinetsPosition
 public class GameRegistry : MonoBehaviour
 {
 
-    CabinetsPosition cabinetsPosition;
+    public CabinetsPosition cabinetsPosition;
     List<string> UnassignedCabinets;
 
     public int CabinetsInRegistry

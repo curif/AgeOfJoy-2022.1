@@ -19,6 +19,8 @@ GameObject:
   - component: {fileID: 6109179531164059863}
   - component: {fileID: 3077526320661963279}
   - component: {fileID: 4338790136356453863}
+  - component: {fileID: 8972917328849416490}
+  - component: {fileID: 3707607308854403927}
   m_Layer: 10
   m_Name: screen19i
   m_TagString: Untagged
@@ -101,7 +103,7 @@ AudioSource:
   m_GameObject: {fileID: 4579439272377624362}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -7497472737411550252, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
@@ -274,6 +276,7 @@ MonoBehaviour:
   ShaderName: damage
   PathBase: 
   AgentPlayerPositions: []
+  backgroundSoundController: {fileID: 0}
 --- !u!328 &3607137671920533558
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -363,6 +366,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spaceGun: {fileID: 0}
+  invertForward: 0
+  HitX: 0
+  HitY: 0
+  showHitPosition: 0
+  InvertX: 1
+  InvertY: 1
+  scaleFactorX: 0.01
+  scaleFactorY: 0.01
+  borderSizeX: 1.5
+  borderSizeY: 1
+  adjustSightVertical: 0
+  adjustSightHorizontal: 0
 --- !u!120 &4338790136356453863
 LineRenderer:
   serializedVersion: 2
@@ -467,3 +482,37 @@ LineRenderer:
   m_UseWorldSpace: 1
   m_Loop: 0
   m_ApplyActiveColorSpace: 1
+--- !u!114 &8972917328849416490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c272e5d2405d561449f9b7403b5af15e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ConfigurationController: {fileID: 0}
+  ScreenGenerator: {fileID: 0}
+  GameRegistry: {fileID: 0}
+  CabinetsController: {fileID: 0}
+  Teleportation: {fileID: 0}
+  SceneDatabase: {fileID: 0}
+  PostersController: {fileID: 0}
+  audioMixer: {fileID: 24100000, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
+  nameToExecute: 
+  path: 
+--- !u!114 &3707607308854403927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47103058da7d3104eb74ba34ce1a8c77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -11,6 +11,7 @@ using System.IO;
 using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
+using System.Linq.Expressions;
 
 
 public class CabinetInformation
@@ -28,9 +29,12 @@ public class CabinetInformation
     public Geometry coinslotgeometry = new Geometry();
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
-    public string statefile = "state.nv"; 
+    public string statefile = "state.nv";
     public Video video = new Video();
     public string md5sum;
+
+    [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
+    public List<MameFile> MameFiles { get; set; }
 
     [YamlMember(Alias = "controllers", ApplyNamingConventions = false)]
     public ControlMapConfiguration ControlMap;
@@ -40,6 +44,9 @@ public class CabinetInformation
 
     public CabinetAGEBasicInformation agebasic = new();
 
+    [YamlMember(Alias = "debug-mode", ApplyNamingConventions = false)]
+    public bool debug = false;
+
     [YamlIgnore]
     public string pathBase;
 
@@ -48,44 +55,98 @@ public class CabinetInformation
                 .IgnoreUnmatchedProperties()
                 .Build();
 
-    public CabinetInformation() {}
-    
+    public CabinetInformation() { }
+
     public static CabinetInformation fromName(string cabName)
     {
-      return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
+        return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
+    }
+
+    private static string debugLogPath(string cabinetName)
+    {
+        string filename = cabinetName + ".log";
+        return Path.Combine(ConfigManager.DebugDir, filename);
+    }
+    public static string getNameFromPath(string path)
+    {
+        string directoryName = Path.GetDirectoryName(path);
+
+        // If directoryName is null, it means the filePath is not a valid path
+        if (directoryName == null)
+            throw new Exception($"invalid path: {path}");
+
+        // Split the directory path by directory separator and get the last element
+        string[] directories = directoryName.Split(Path.DirectorySeparatorChar);
+        return directories[directories.Length - 1];
+    }
+
+    public static void WriteExceptionLog(string path, Exception exception, string comments = "")
+    {
+        try
+        {
+            string cabinetName = getNameFromPath(path);
+            string debugpath = debugLogPath(cabinetName);
+            ConfigManager.WriteConsole($"[WriteExceptionLog] cab:{cabinetName} {debugpath}");
+            using (StreamWriter writer = new StreamWriter(debugpath, true))
+            {
+                writer.WriteLine($"CABINET: {cabinetName}");
+                writer.WriteLine($"YAML file: {path}");
+                writer.WriteLine($"{comments}");
+                writer.WriteLine($"[DateTime: {DateTime.Now.ToString()}]");
+                writer.WriteLine($"[Exception Type]: {exception.GetType()}");
+                writer.WriteLine($"[Message]: {exception.Message}");
+                writer.WriteLine($"[StackTrace]: {exception.StackTrace}");
+                writer.WriteLine(new string('-', 50)); // Separator
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions related to logging itself
+            ConfigManager.WriteConsoleException($"Error writing to log file: {path}", ex);
+        }
     }
 
     public static CabinetInformation fromYaml(string cabPath)
     {
-      string yamlPath = $"{cabPath}/description.yaml";
-      ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
-      
-      if (!File.Exists(yamlPath))
-      {
-        ConfigManager.WriteConsoleError($"[CabinetInformation]: Description YAML file (description.yaml) doesn't exists in cabinet folder: {cabPath}");
+        string yamlPath = Path.Combine(cabPath, "description.yaml");
+        ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
+
+        if (!File.Exists(yamlPath))
+        {
+            ConfigManager.WriteConsoleError($"[CabinetInformation]: Description YAML file (description.yaml) doesn't exists in cabinet folder: {cabPath}");
+            return null;
+        }
+
+        string yaml = "";
+        try
+        {
+            var input = File.OpenText(yamlPath);
+            yaml = input.ReadToEnd();
+            input.Close();
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] YAML file {yamlPath} ", e);
+            WriteExceptionLog(yamlPath, e, "ERROR trying to open the yaml file from disk");
+        }
+
+        try
+        {
+            //ConfigManager.WriteConsole($"[CabinetInformation]: {yamlPath} \n {yaml}");
+            var cabInfo = deserializer.Deserialize<CabinetInformation>(yaml);
+            if (cabInfo == null)
+                throw new IOException();
+
+            cabInfo.pathBase = cabPath;
+
+            return cabInfo;
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
+            WriteExceptionLog(yamlPath, e, "ERROR when decoding yaml file, syntax or semantic error");
+        }
         return null;
-      }
-
-      try
-      {
-        var input = File.OpenText(yamlPath);
-        var yaml = input.ReadToEnd();
-        input.Close();
-
-        //ConfigManager.WriteConsole($"[CabinetInformation]: {yamlPath} \n {yaml}");
-        var cabInfo = deserializer.Deserialize<CabinetInformation>(yaml);
-        if (cabInfo == null)
-          throw new IOException();
-
-        cabInfo.pathBase = cabPath;
-
-        return cabInfo;
-      }
-      catch (Exception e)
-      {
-        ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
-      }
-      return null;
     }
 
     public class Model
@@ -108,95 +169,96 @@ public class CabinetInformation
     }
     public class Art
     {
-      public string file;
-      public bool invertx = false;
-      public bool inverty = false;
+        public string file;
+        public bool invertx = false;
+        public bool inverty = false;
 
-      public System.Exception validate(string pathBase)
-      {
-        string filePath = $"{pathBase}/{file}";
-        if (!File.Exists(filePath))
+        public System.Exception validate(string pathBase)
         {
-            return new System.IO.FileNotFoundException($"{filePath}");
-        }
+            string filePath = $"{pathBase}/{file}";
+            if (!File.Exists(filePath))
+            {
+                return new System.IO.FileNotFoundException($"{filePath}");
+            }
 
-        return null;
-      }
+            return null;
+        }
     }
     public class Marquee
     {
-      [YamlMember(Alias = "illumination-type", ApplyNamingConventions = false)]
-      public string illuminationType = "one-lamp";
+        [YamlMember(Alias = "illumination-type", ApplyNamingConventions = false)]
+        public string illuminationType = "one-lamp";
     }
     public class Part
     {
-      public string name;
-      public string material;
-      public Art art;
-      public RGBColor color;
-      public string type = "normal"; // or bezel or marquee
-      public Geometry geometry = new Geometry();
-      public Marquee marquee = new Marquee();
+        public string name;
+        public string material;
+        public Art art;
+        public RGBColor color;
+        public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker" };
+        public string type = Types[0];
+        public Geometry geometry = new Geometry();
+        public Marquee marquee = new Marquee();
     }
 
     public class CRT
     {
-      public string type = "19i";
-      public string orientation = "vertical";
-      public Screen screen = new Screen();
-      public Geometry geometry = new Geometry();
+        public string type = "19i";
+        public string orientation = "vertical";
+        public Screen screen = new Screen();
+        public Geometry geometry = new Geometry();
 
-      public System.Exception validate(List<string> crtTypes)
-      {
-        if (!crtTypes.Contains(type))
+        public System.Exception validate(List<string> crtTypes)
         {
-          return new System.ArgumentException($"{type} is not a known CRT type");
-        }
+            if (!crtTypes.Contains(type))
+            {
+                return new System.ArgumentException($"{type} is not a known CRT type");
+            }
 
-        if (orientation != "vertical" && orientation != "horizontal")
-        {
-          return new System.ArgumentException($"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
-        }
+            if (orientation != "vertical" && orientation != "horizontal")
+            {
+                return new System.ArgumentException($"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
+            }
 
-        return screen.validate();
-      }
+            return screen.validate();
+        }
     }
 
     public class Screen
     {
-      public string shader = "damage";
-      public string damage = "low";
-      public bool invertx = false;
-      public bool inverty = false;
-      public string gamma = LibretroMameCore.DefaultGamma;
-      public string brightness = LibretroMameCore.DefaultBrightness;
+        public string shader = "damage";
+        public string damage = "low";
+        public bool invertx = false;
+        public bool inverty = false;
+        public string gamma = LibretroMameCore.DefaultGamma;
+        public string brightness = LibretroMameCore.DefaultBrightness;
 
-      public Dictionary<string, string> config() 
-      {
-        Dictionary<string, string> dic = new Dictionary<string, string>();
-        dic["damage"] = damage;
-        return dic;
-      }
-
-      public System.Exception validate()
-      {
-        if (shader != "damage" && shader != "clean")
+        public Dictionary<string, string> config()
         {
-          return new System.ArgumentException($"Erroneous Shader {shader}");
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic["damage"] = damage;
+            return dic;
         }
 
-        if (! LibretroMameCore.IsGammaValid(gamma))
+        public System.Exception validate()
         {
-            return new System.ArgumentException($"Erroneous Gamma {gamma}");
-        }
+            if (shader != "damage" && shader != "clean")
+            {
+                return new System.ArgumentException($"Erroneous Shader {shader}");
+            }
 
-        if (! LibretroMameCore.IsBrightnessValid(brightness))
-        {
-            return new System.ArgumentException($"Erroneous Brightness {brightness}");
-        }
+            if (!LibretroMameCore.IsGammaValid(gamma))
+            {
+                return new System.ArgumentException($"Erroneous Gamma {gamma}");
+            }
 
-        return null;
-      }
+            if (!LibretroMameCore.IsBrightnessValid(brightness))
+            {
+                return new System.ArgumentException($"Erroneous Brightness {brightness}");
+            }
+
+            return null;
+        }
     }
 
     public class RGBColor
@@ -230,7 +292,7 @@ public class CabinetInformation
         }
         public virtual Color getColorNoIntensity()
         {
-          return new Color32(r, g, b, a);
+            return new Color32(r, g, b, a);
         }
     }
 
@@ -239,13 +301,71 @@ public class CabinetInformation
         public string file;
         public bool invertx = false;
         public bool inverty = false;
+
+    }
+
+    public static class MameFileType
+    {
+        private static readonly Dictionary<string, string> FileTypes = new Dictionary<string, string>
+            {
+                { "config", ConfigManager.MameConfigDir },
+                { "disk-image", ConfigManager.RomsDir },
+                { "sample", ConfigManager.SamplesDir },
+                { "nvram", ConfigManager.nvramDir }
+            };
+        
+
+        // Method to verify if the key is in the dictionary
+        public static bool IsValid(string fileType)
+        {
+            return FileTypes.ContainsKey(fileType);
+        }
+
+        // Method to get the path associated with a given key
+        public static string GetAndCreatePath(string fileType, string romPath = "")
+        {
+            if (!FileTypes.TryGetValue(fileType, out string path))
+                throw new Exception("unknown file type:" + fileType);
+
+            //special case:
+            if (fileType == "disk-image")
+            {
+                if (String.IsNullOrEmpty(romPath))
+                    throw new Exception("you should provide a rom name to save disk images (chd) files");
+
+                string romName = Path.GetFileNameWithoutExtension(romPath);
+                path = Path.Combine(ConfigManager.RomsDir, romName);
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+            }
+
+            return path;
+        }
+    }
+
+    public class MameFile
+    {
+        public string type;
+        public string file; //file name
+
+        public bool IsValid(string pathBase)
+        {
+            return File.Exists(Path.Combine(pathBase, file)) 
+                        && MameFileType.IsValid(type);
+        }
     }
 
     public string getPath(string file)
     {
         if (String.IsNullOrEmpty(file))
             return null;
-        return $"{pathBase}/{file}";
+        return Path.Combine(pathBase, file);
+    }
+
+    public bool fileExists(string filename)
+    {
+        string path = Path.Combine(pathBase, filename);
+        return File.Exists(path);
     }
 
     public Dictionary<string, System.Exception> checkForProblems(List<string> materialListNames,
@@ -264,16 +384,12 @@ public class CabinetInformation
             foreach (Part p in Parts)
             {
                 if (string.IsNullOrEmpty(name))
-                {
                     exceptions.Add($"Part #{number}", new System.Exception($"Doesn't have a name"));
-                }
 
-                /*
-                else if (! cabinetPartNames.Contains(p.name)) {
-                    exceptions.Add($"Part #{number}: {p.name}", new System.Exception($"The part name is not a part of the cabinet"));
-                }
-                */
                 exceptions.Add($"Part #{number}: {p.name} ART", p.art != null ? p.art.validate(pathBase) : null);
+                exceptions.Add($"Part #{number}: {p.name} TYPE", !Part.Types.Contains(p.type) ?
+                        new System.Exception($"Unknown part type {p.type}")
+                        : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL",
                     !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)
                         ? new System.Exception($"Unknown material {p.material}")
@@ -282,7 +398,20 @@ public class CabinetInformation
                     !string.IsNullOrEmpty(p.material) && p.art != null
                         ? new System.Exception("Can't assign a material and ART to the same part")
                         : null);
+
                 number++;
+            }
+        }
+
+        if (MameFiles != null)
+        {
+            foreach(MameFile mf in MameFiles)
+            {
+                if (!mf.IsValid(mf.type))
+                {
+                    exceptions.Add($"MAME file {mf.file} type: {mf.type}",
+                        new System.Exception($"type unknown or file doesn't exists"));
+                }
             }
         }
 
@@ -295,15 +424,42 @@ public class CabinetInformation
         exceptions.Add($"Coin Slot",
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
         exceptions.Add($"CRT", crt.validate(crtTypes));
+        if (lightGunInformation != null && lightGunInformation.active)
+        {
+            exceptions.Add($"lightgun", lightGunInformation.Validate(pathBase));
+        }
+        if (video != null)
+        {
+            exceptions.Add($"video", String.IsNullOrEmpty(video.file) || !fileExists(video.file) ?
+                                        new System.ArgumentException($"video undeclared or file [{video.file}] doesn't exists") :
+                                        null);
+        }
 
         return exceptions;
     }
 
+    private static void showCabinetProblemsLog(CabinetInformation cbInfo,
+                                                Dictionary<string, System.Exception> exceptions)
+    {
+
+        string path = debugLogPath(cbInfo.name);
+        ConfigManager.WriteConsole($"[showCabinetProblemsLog] {path}");
+        // Write exception details to the log file
+        using (StreamWriter writer = new StreamWriter(path, true))
+        {
+            writer.WriteLine($"CABINET: {cbInfo.name}");
+            foreach (KeyValuePair<string, System.Exception> error in exceptions)
+            {
+                writer.WriteLine($"{error.Key}: {(error.Value == null ? "OK" : error.Value.ToString())}");
+            }
+            writer.WriteLine(new string('-', 50)); // Separator
+        }
+    }
 
     public static void showCabinetProblems(CabinetInformation cbInfo)
     {
         //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
-        ConfigManager.WriteConsole("Alerts and errors");
+        ConfigManager.WriteConsole("[showCabinetProblems] Alerts and errors");
         Dictionary<string, System.Exception> exceptions = cbInfo.checkForProblems(
             new List<string>(CabinetMaterials.materialList.Keys),
             Cabinet.userStandarConfigurableParts,
@@ -312,10 +468,16 @@ public class CabinetInformation
             new List<string>(CRTsFactory.objects.Keys));
         foreach (KeyValuePair<string, System.Exception> error in exceptions)
         {
-          ConfigManager.WriteConsole($"{cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
+            ConfigManager.WriteConsole($"[showCabinetProblems] {cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
         }
 
-        ConfigManager.WriteConsole("===================");
+        ConfigManager.WriteConsole("[showCabinetProblems] ===================");
+
+        if (cbInfo.debug)
+        {
+            showCabinetProblemsLog(cbInfo, exceptions);
+        }
+
         return;
     }
 }

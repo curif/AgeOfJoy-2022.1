@@ -105,52 +105,92 @@ public static class CabinetDBAdmin
     }
 
     //load the contents of the zip file and move them to the database cabinet directory. Deletes the original zip file.
-    public static void loadCabinetFromZip(string path)
+    public static string loadCabinetFromZip(string zipPath)
     {
-        string cabZipFileName = GetNameFromPath(path);
-        string pathDest = $"{ConfigManager.CabinetsDB}/{cabZipFileName}/";
+        string cabZipFileName = GetNameFromPath(zipPath);
+        string pathDest = Path.Combine(ConfigManager.CabinetsDB, cabZipFileName);
         if (!Directory.Exists(pathDest))
             Directory.CreateDirectory(pathDest);
         else
             emptyDir(pathDest);
 
         // Object.ZipUtility.UncompressFromZip(path, null, $"{ConfigManager.CabinetsDB}/{cabZipFileName}");
-        DecompressFile(path, $"{ConfigManager.CabinetsDB}/{cabZipFileName}/");
-        File.Delete(path);
+        DecompressFile(zipPath, pathDest);
+        File.Delete(zipPath);
+
+        return pathDest;
     }
 
 
     public static bool ZipFileContainsDescriptionYaml(string zipFilePath)
     {
-      using (ZipArchive zip = ZipFile.OpenRead(zipFilePath))
-      {
-        foreach (ZipArchiveEntry entry in zip.Entries)
+        using (ZipArchive zip = ZipFile.OpenRead(zipFilePath))
         {
-          if (entry.FullName == "description.yaml")
-          {
-            return true;
-          }
+            foreach (ZipArchiveEntry entry in zip.Entries)
+            {
+                if (entry.FullName == "description.yaml")
+                {
+                    return true;
+                }
+            }
         }
-      }
 
-      return false;
+        return false;
+    }
+
+    public static void MoveMameFiles(CabinetInformation cbInfo)
+    {
+        if (cbInfo.MameFiles == null || cbInfo.MameFiles.Count == 0)
+            return;
+        
+        foreach (CabinetInformation.MameFile mf in cbInfo.MameFiles)
+        {
+            
+            if (!CabinetInformation.MameFileType.IsValid(mf.type))
+                throw new Exception($"invalid MAME file type '{mf.type}' for file ${mf.file}");
+
+            string destPath = CabinetInformation.MameFileType.GetAndCreatePath(mf.type, 
+                                                                                cbInfo.getPath(cbInfo.rom));
+            string destFilePath = Path.Combine(destPath, mf.file);
+            string sourceFile = cbInfo.getPath(mf.file);
+
+            File.Copy(sourceFile, destFilePath, true); //overwrite
+            File.Delete(sourceFile);
+        }
     }
 
     // check for new zip files, decompress and storage them into the cabinet DB
     public static void loadCabinets()
     {
         string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
-        foreach (string file in files)
+
+        foreach (string zipFile in files)
         {
-          if (File.Exists(file) && !file.EndsWith("/test.zip") && ZipFileContainsDescriptionYaml(file))
+            string cabPath = "";
+            if (File.Exists(zipFile) && !zipFile.EndsWith("/test.zip") && 
+                ZipFileContainsDescriptionYaml(zipFile))
             {
+                ConfigManager.WriteConsole($"[loadCabinets] {zipFile}");
                 try
                 {
-                    loadCabinetFromZip(file);
+                    cabPath = loadCabinetFromZip(zipFile);
                 }
                 catch (System.Exception e)
                 {
-                    ConfigManager.WriteConsole($"ERROR decompressing Cabinet {file} Exception: {e}");
+                    ConfigManager.WriteConsoleException($"ERROR decompressing Cabinet {zipFile}", e);
+                }
+
+                if (!String.IsNullOrEmpty(cabPath))
+                {
+                    try
+                    {
+                        CabinetInformation cbInfo = CabinetInformation.fromYaml(cabPath);
+                        MoveMameFiles(cbInfo);
+                    }
+                    catch (System.Exception e)
+                    {
+                        ConfigManager.WriteConsoleException($"ERROR moving MAME files from {zipFile}", e);
+                    }
                 }
             }
         }

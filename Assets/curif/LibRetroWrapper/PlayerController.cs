@@ -13,6 +13,7 @@ using UnityEngine.XR;
 using Unity.XR.CoreUtils;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEditor;
+using System.Collections.Specialized;
 
 public class PlayerController : MonoBehaviour
 {
@@ -44,6 +45,12 @@ public class PlayerController : MonoBehaviour
             AdjustScale();
         }
     }
+
+    // public void JumpTo(Vector3 pos)
+    // {
+    //     Vector3 pos = new Vector3()
+    //     MoveCameraToWorldLocation
+    // }
 
     // Start is called before the first frame update
     void Start()

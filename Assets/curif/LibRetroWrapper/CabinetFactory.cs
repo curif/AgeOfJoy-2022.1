@@ -37,12 +37,15 @@ public static class CabinetFactory
         CabinetStyles.Add("joust", Resources.Load<GameObject>($"Cabinets/PreFab/Joust"));
     }
 
-    public static Cabinet Factory(string style, string name, string modelFilePath, int number, string room, Vector3 position, Quaternion rotation, Transform parent)
+    public static Cabinet Factory(string style, string name, string modelFilePath,
+                                    int number, string room, Vector3 position,
+                                    Quaternion rotation, Transform parent,
+                                    bool cacheGlbModels = true)
     {
         GameObject model;
         if (!String.IsNullOrEmpty(modelFilePath))
         {
-            if (CabinetStyles.ContainsKey(modelFilePath))
+            if (cacheGlbModels && CabinetStyles.ContainsKey(modelFilePath))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
                 model = CabinetStyles[modelFilePath];
@@ -66,8 +69,11 @@ public static class CabinetFactory
                 }
                 else
                 {
-                    ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
-                    CabinetStyles.Add(modelFilePath, model);
+                    if (cacheGlbModels)
+                    {
+                        ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
+                        CabinetStyles.Add(modelFilePath, model);
+                    }
                 }
             }
         }
@@ -81,6 +87,8 @@ public static class CabinetFactory
             model = CabinetStyles[style];
         }
         string cabinetName = $"cabinet-{name}-{room}-{number}";
+
+
         return new Cabinet(cabinetName, position, rotation, parent, go: model);
     }
 
@@ -144,6 +152,7 @@ public static class CabinetFactory
         // Part scale and rotation
         cabinet.ScalePart(p.name, p.geometry.scalepercentage);
         cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
+
         return cabinet;
     }
 
@@ -164,8 +173,10 @@ public static class CabinetFactory
     }
 
     public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number,
-      Vector3 position, Quaternion rotation, Transform parent,
-      List<AgentScenePosition> agentPlayerPositions)
+                                             Vector3 position, Quaternion rotation, Transform parent,
+                                            List<AgentScenePosition> agentPlayerPositions,
+                                            BackgroundSoundController backgroundSoundController,
+                                            bool cacheGlbModels = true)
     {
         string modelFilePath = "";
         if (!String.IsNullOrEmpty(cbinfo.model.file))
@@ -182,7 +193,15 @@ public static class CabinetFactory
             }
         }
 
-        Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, modelFilePath, number, room, position, rotation, parent);
+        Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, modelFilePath,
+                                                    number, room, position, rotation, parent,
+                                                    cacheGlbModels: cacheGlbModels);
+
+        //box colliders
+        //addRigidBody();
+        // cbinfo.debug = true;
+        BoxCollider boxCollider = cabinet.addBoxCollider(false);
+        cabinet.toFloor();
 
         if (cbinfo.material != null)
         {
@@ -209,20 +228,36 @@ public static class CabinetFactory
                 cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
                 cbinfo.timetoload, cbinfo.pathBase,
                 invertX: cbinfo.crt.screen.invertx,
-        		invertY: cbinfo.crt.screen.inverty,
+                invertY: cbinfo.crt.screen.inverty,
                 GameVideoFileInvertX: cbinfo.video.invertx,
-        		GameVideoFileInvertY: cbinfo.video.inverty,
+                GameVideoFileInvertY: cbinfo.video.inverty,
                 EnableSaveState: cbinfo.enablesavestate,
-				StateFile: cbinfo.statefile,
-				rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage,
-				cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
-				agentPlayerPositions,
-				cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
-				cbinfo.ControlMap,
+                StateFile: cbinfo.statefile,
+                rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage,
+                cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
+                agentPlayerPositions,
+                cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
+                cbinfo.ControlMap,
                 cbinfo.lightGunInformation,
-                cbinfo.agebasic);
+                cbinfo.agebasic, backgroundSoundController);
 
         ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
+
+        //blockers
+        if (cbinfo.Parts != null)
+        {
+            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} blockers");
+            foreach (CabinetInformation.Part p in cbinfo.Parts)
+            {
+                if (p.type == "blocker")
+                {
+                    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} part {p.name} blockers");
+                    cabinet.AddAColliderBlocker(p.name, false);
+                    //disable main box collider for collissions but works on put on floor.
+                    boxCollider.excludeLayers = ~0;
+                }
+            }
+        }
 
         return cabinet;
     }
