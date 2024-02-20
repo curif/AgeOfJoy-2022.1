@@ -19,6 +19,7 @@ Shader "Custom/CubemapViewWithPanningSmoke" {
                 CGPROGRAM
                 #pragma vertex vert
                 #pragma fragment frag
+                #pragma multi_compile_fog // Support different fog modes
                 #include "UnityCG.cginc"
 
                 struct appdata {
@@ -31,6 +32,7 @@ Shader "Custom/CubemapViewWithPanningSmoke" {
                     float2 uv : TEXCOORD1;
                     float2 originalUv : TEXCOORD2; // For stationary sampling
                     float4 vertex : SV_POSITION;
+                    UNITY_FOG_COORDS(3) // Declare fog coordinates
                 };
 
                 uniform samplerCUBE _CubeMap;
@@ -48,6 +50,7 @@ Shader "Custom/CubemapViewWithPanningSmoke" {
                     o.uv = (v.uv + _Time.xy * _PanningSpeed.xy) * _Tiling.xy;
                     // Pass through original UVs for stationary sampling
                     o.originalUv = v.uv * _Tiling.xy;
+                    UNITY_TRANSFER_FOG(o,o.vertex); // Assign fog coordinates
                     return o;
                 }
 
@@ -72,6 +75,9 @@ Shader "Custom/CubemapViewWithPanningSmoke" {
 
                     // Apply global transparency correctly
                     result.a = _Transparency;
+
+                    // Apply fog
+                    UNITY_APPLY_FOG(i.fogCoord, result); // Apply fog to the result color
 
                     return result;
                 }
