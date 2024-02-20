@@ -1,5 +1,5 @@
 using UnityEngine;
-
+//Automatically updates fog settings when loaded.
 public class SceneFogSettings : MonoBehaviour
 {
     public FogSettings settings; // This variable holds the fog settings for the scene.
