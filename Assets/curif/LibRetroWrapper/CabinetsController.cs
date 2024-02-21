@@ -195,6 +195,8 @@ public class CabinetsController : MonoBehaviour
     {
         Loaded = false;
 
+        ConfigManager.WriteConsole($"[CabinetsController.load] ==== {Room} ====");
+
         //persist registry with the new assignation if any.
         List<CabinetPosition> cabsPos = gameRegistry.GetSetCabinetsAssignedToRoom(Room,
                                                                                 transform.childCount);
@@ -216,7 +218,8 @@ public class CabinetsController : MonoBehaviour
 
             List<CabinetControllerInformation> remainingOutOfOrderCabs = Cabinets.Where(cab =>
                         string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
-            List<string> cabNames = gameRegistry.GetUnassignedCabinets();
+            List<string> cabNames = gameRegistry.GetUnassignedCabinets().
+                                                    OrderBy(x => UnityEngine.Random.value).ToList();
             List<string> occupiedSpaces = cabNames.Select(cabName =>
             {
                 string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
@@ -267,10 +270,11 @@ public class CabinetsController : MonoBehaviour
                 foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
                 {
                     int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
-                    if (bestFitIndex != -1)
+                    if (bestFitIndex == -1)
                     {
                         ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
-                                                + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} not fit found in: {occupiedSpaces}");
+                                                + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} "
+                                                + $" not fit found in: {occupiedSpaces.ToString()}");
                         continue;
                     }
                     CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
