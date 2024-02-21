@@ -130,11 +130,11 @@ public class CabinetInformation
     {
         if (CabinetInformationCache.Contains(cabPath))
         {
-            ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
+            // ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
             return CabinetInformationCache.GetFromCache(cabPath);
         }
         string yamlPath = Path.Combine(cabPath, "description.yaml");
-        ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
+        // ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
         string yaml = yamlFileToString(yamlPath);
         CabinetInformation cabInfo = parseYaml(cabPath, yamlPath, yaml);
         CabinetInformationCache.AddToCache(cabPath, cabInfo);
