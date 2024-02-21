@@ -12,6 +12,7 @@ using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
 public static class CabinetInformationCache
 {
     private static readonly Dictionary<string, CabinetInformation> _cache = new Dictionary<string, CabinetInformation>();
@@ -477,7 +478,45 @@ public class CabinetInformation
 
         return exceptions;
     }
+/*    private static int CountFacesRecursively(Transform parent)
+    {
+        int totalFaces = 0;
 
+        // Loop through each child of the current parent
+        foreach (Transform child in parent)
+        {
+            // Check if the child has a MeshFilter component
+            MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.mesh != null)
+            {
+                // If the child has a MeshFilter and a mesh is assigned
+                Mesh mesh = meshFilter.sharedMesh;
+                if (!mesh.isReadable)
+                {
+                    // Set the mesh to be readable
+                    mesh.MarkDynamic(); // Alternatively, you can use mesh.UploadMeshData(true) if MarkDynamic() is not sufficient
+                    
+                    if (!mesh.isReadable)
+                        mesh.UploadMeshData(true);
+                    // Log a warning message
+                    ConfigManager.WriteConsoleWarning("Mesh is not marked as readable. Marking the mesh as readable. Performance may be affected.");
+                }
+                // Get the triangles of the mesh
+                int[] triangles = mesh.triangles;
+                // Check if triangles array is null or empty
+                if (triangles != null || triangles.Length > 0)
+                    totalFaces += triangles.Length / 3; 
+
+            }
+
+            // Check recursively for the children of the child
+            totalFaces += CountFacesRecursively(child);
+        }
+
+        return totalFaces;
+    }
+    */
+    
     private static void showCabinetProblemsLog(CabinetInformation cbInfo,
                                                 Dictionary<string, System.Exception> exceptions)
     {
@@ -493,10 +532,19 @@ public class CabinetInformation
                 writer.WriteLine($"{error.Key}: {(error.Value == null ? "OK" : error.Value.ToString())}");
             }
             writer.WriteLine(new string('-', 50)); // Separator
+/*
+            if (cabinet)
+            {
+                int count = CountFacesRecursively(cabinet);
+                if (count > 10000)
+                    writer.WriteLine($"--WARNING: ");
+                writer.WriteLine($"Cabinet faces total count: {count}");
+            }
+            */
         }
     }
 
-    public static void showCabinetProblems(CabinetInformation cbInfo)
+    public static void showCabinetProblems(CabinetInformation cbInfo, Transform cabinet = null)
     {
         //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
         ConfigManager.WriteConsole("[showCabinetProblems] Alerts and errors");
