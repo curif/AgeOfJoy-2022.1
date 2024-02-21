@@ -222,27 +222,30 @@ public static class CabinetFactory
                     cbinfo.coinslotgeometry.scalepercentage);
         }
 
-        Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
+        if (cabinet.PartsExist("screen-mock-vertical") || cabinet.PartsExist("screen-mock-horizontal"))
+        {
+            Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
 
-        cabinet.addCRT(
-                cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
-                cbinfo.timetoload, cbinfo.pathBase,
-                invertX: cbinfo.crt.screen.invertx,
-                invertY: cbinfo.crt.screen.inverty,
-                GameVideoFileInvertX: cbinfo.video.invertx,
-                GameVideoFileInvertY: cbinfo.video.inverty,
-                EnableSaveState: cbinfo.enablesavestate,
-                StateFile: cbinfo.statefile,
-                rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage,
-                cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
-                agentPlayerPositions,
-                cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
-                cbinfo.ControlMap,
-                cbinfo.lightGunInformation,
-                cbinfo.agebasic, backgroundSoundController);
+            cabinet.addCRT(
+                    cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
+                    cbinfo.timetoload, cbinfo.pathBase,
+                    invertX: cbinfo.crt.screen.invertx,
+                    invertY: cbinfo.crt.screen.inverty,
+                    GameVideoFileInvertX: cbinfo.video.invertx,
+                    GameVideoFileInvertY: cbinfo.video.inverty,
+                    EnableSaveState: cbinfo.enablesavestate,
+                    StateFile: cbinfo.statefile,
+                    rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage,
+                    cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
+                    agentPlayerPositions,
+                    cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
+                    cbinfo.ControlMap,
+                    cbinfo.lightGunInformation,
+                    cbinfo.agebasic, backgroundSoundController);
 
-        ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
-
+            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
+        }
+        
         //blockers
         if (cbinfo.Parts != null)
         {
