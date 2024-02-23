@@ -5,7 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
+using UnityEditor;
 
+[Serializable]
 public class CabinetAGEBasicInformation
 {
     public bool active = false;
@@ -21,13 +23,17 @@ public class CabinetAGEBasicInformation
     [YamlMember(Alias = "after-start", ApplyNamingConventions = false)]
     public string afterStart;
 
-    public List<Variable> Variables { get; set; }
+    // Serialize this field to show it in the editor
+    [SerializeField]
+    private List<Variable> variables;
+    public List<Variable> Variables { get { return variables; } set { variables = value; } }
 
+    [Serializable]
     public class Variable
     {
-        public string name;
-        public string type;
-        public string value = "";
+        public string name; //variable name
+        public string type; //STRING or NUMBER
+        public string value = ""; //first asigned value.
     }
 
 }
@@ -41,9 +47,9 @@ public class CabinetAGEBasic : MonoBehaviour
 
     BasicVars vars = new(); //variable's space.
 
-    string pathBase;
+    public string pathBase;
 
-    CabinetAGEBasicInformation AGEInfo = new();
+    public CabinetAGEBasicInformation AGEInfo = new();
     public void SetDebugMode(bool debug)
     {
         ageBasic.DebugMode = debug;
@@ -72,7 +78,7 @@ public class CabinetAGEBasic : MonoBehaviour
                 else if (var.type.ToUpper() == "NUMBER")
                     bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
                 else
-                    throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
+                    throw new Exception($"[CabinetAGEBasic.init] AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
 
                 vars.SetValue(var.name, bv);
                 ConfigManager.WriteConsole($"[CabinetAGEBasic.Init] inject variable: {var.name}: {bv}");
@@ -107,6 +113,8 @@ public class CabinetAGEBasic : MonoBehaviour
         ageBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterInsertCoin);
     }
+
+
     public void StopInsertCoinBas()
     {
         if (ageBasic.IsRunning(AGEInfo.afterInsertCoin))
@@ -125,7 +133,7 @@ public class CabinetAGEBasic : MonoBehaviour
         ageBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLoad);
     }
-    public bool ExecAfterStartBas()
+/*    public bool ExecAfterStartBas()
     {
         if (ageBasic.IsRunning())
             return false;
@@ -138,5 +146,52 @@ public class CabinetAGEBasic : MonoBehaviour
         if (ageBasic.IsRunning(AGEInfo.afterStart))
             ageBasic.Stop();
     }
-
+*/
 }
+
+#if UNITY_EDITOR
+
+
+[CustomEditor(typeof(CabinetAGEBasic))]
+public class CabinetAGEBasicEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+
+        CabinetAGEBasic myScript = (CabinetAGEBasic)target;
+
+        if (GUILayout.Button("Exec Insert Coin Bas"))
+        {
+            myScript.ExecInsertCoinBas();
+        }
+
+        if (GUILayout.Button("Stop Insert Coin Bas"))
+        {
+            myScript.StopInsertCoinBas();
+        }
+
+        if (GUILayout.Button("Exec After Leave Bas"))
+        {
+            myScript.ExecAfterLeaveBas();
+        }
+
+        if (GUILayout.Button("Exec After Load Bas"))
+        {
+            myScript.ExecAfterLoadBas();
+        }
+
+        /*
+        if (GUILayout.Button("Exec After Start Bas"))
+        {
+            myScript.ExecAfterStartBas();
+        }
+
+        if (GUILayout.Button("Stop After Start Bas"))
+        {
+            myScript.StopAfterStartBas();
+        }
+        */
+    }
+}
+#endif

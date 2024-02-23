@@ -221,3 +221,50 @@ class CommandFunctionMOD : CommandFunctionExpressionListBase
         return new BasicValue(ret);
     }
 }
+
+class CommandFunctionAND : CommandFunctionExpressionListBase
+{
+    public CommandFunctionAND(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "AND";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        
+        bool result = vals[0].IsTrue() && vals[1].IsTrue();
+
+        return new BasicValue(result ? 1 : 0);
+    }
+}
+
+class CommandFunctionOR : CommandFunctionExpressionListBase
+{
+    public CommandFunctionOR(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "OR";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        
+        bool result = vals[0].IsTrue() || vals[1].IsTrue();
+
+        return new BasicValue(result ? 1 : 0);
+    }
+}
+

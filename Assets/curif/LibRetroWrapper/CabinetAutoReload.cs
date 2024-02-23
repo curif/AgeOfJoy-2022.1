@@ -65,15 +65,13 @@ public class CabinetAutoReload : MonoBehaviour
 
             ConfigManager.WriteConsole($"[CabinetAutoReload] new cabinet from yaml: {testCabinetDir}");
 
-            cbInfo = CabinetInformation.fromYaml(testCabinetDir); //description.yaml
+            cbInfo = CabinetInformation.fromYaml(testCabinetDir, cache: false); //description.yaml
             if (cbInfo == null)
             {
                 ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR NULL cabinet - new cabinet from yaml: {testCabinetDir}");
                 throw new IOException();
             }
 
-            ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
-            CabinetInformation.showCabinetProblems(cbInfo);
 
             //cabinet inseption
             ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
@@ -87,11 +85,15 @@ public class CabinetAutoReload : MonoBehaviour
             cba.AgentPlayerPositions = AgentPlayerPositions;
             cba.backgroundSoundController = backgroundSoundController;
 
+            ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
+            CabinetInformation.showCabinetProblems(cbInfo);
+
             ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
         }
         catch (System.Exception ex)
         {
-            ConfigManager.WriteConsole($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}: {ex}");
+            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
+            CabinetInformation.showCabinetProblems(cbInfo, moreProblems: ex.Message);
         }
     }
 }

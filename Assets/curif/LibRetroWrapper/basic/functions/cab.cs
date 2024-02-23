@@ -219,3 +219,107 @@ class CommandFunctionCABINSERTCOIN : CommandFunctionNoExpressionBase
         return BasicValue.True;
     }
 }
+
+class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSSETROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 3); // Assuming the syntax is like: partNum, axis(X/Y/Z), angle
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
+        FunctionHelper.ExpectedNumber(vals[2], " - angle");
+
+        int partNum = (int)vals[0].GetNumber();
+        // Check if the parent has at least N children
+        if (config.Cabinet.transform.childCount < partNum + 1)
+            throw new Exception("cabPartsSetRotation: invalid part number");
+
+        Transform child = config.Cabinet.transform.GetChild(partNum);
+        string axis = vals[1].GetString().ToUpper();
+        float angle = (float)vals[2].GetNumber();
+
+        Quaternion newRotation = Quaternion.identity;
+        switch (axis)
+        {
+            case "X":
+                newRotation = Quaternion.Euler(angle, 0, 0);
+                break;
+            case "Y":
+                newRotation = Quaternion.Euler(0, angle, 0);
+                break;
+            case "Z":
+                newRotation = Quaternion.Euler(0, 0, angle);
+                break;
+            default:
+                throw new Exception("cabPartsSetRotation: axis should be X, Y, or Z");
+        }
+
+        child.rotation = newRotation;
+        return BasicValue.True;
+    }
+}
+
+class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSGETROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSGETROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // Assuming the syntax is like: partNum, axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
+
+        int partNum = (int)vals[0].GetNumber();
+        // Check if the parent has at least N children
+        if (config.Cabinet.transform.childCount < partNum + 1)
+            throw new Exception("cabPartsGetRotation: invalid part number");
+
+        Transform child = config.Cabinet.transform.GetChild(partNum);
+        string axis = vals[1].GetString().ToUpper();
+
+        float rotationValue = 0f;
+        switch (axis)
+        {
+            case "X":
+                rotationValue = child.rotation.eulerAngles.x;
+                break;
+            case "Y":
+                rotationValue = child.rotation.eulerAngles.y;
+                break;
+            case "Z":
+                rotationValue = child.rotation.eulerAngles.z;
+                break;
+            default:
+                throw new Exception("cabPartsGetRotation: axis should be X, Y, or Z");
+        }
+
+        return new BasicValue(rotationValue);
+    }
+}
+
