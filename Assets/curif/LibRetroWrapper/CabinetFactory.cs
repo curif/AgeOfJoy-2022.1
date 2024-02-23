@@ -35,6 +35,7 @@ public static class CabinetFactory
         CabinetStyles.Add("digdug", Resources.Load<GameObject>($"Cabinets/PreFab/DigDug"));
         CabinetStyles.Add("tron", Resources.Load<GameObject>($"Cabinets/PreFab/Tron"));
         CabinetStyles.Add("joust", Resources.Load<GameObject>($"Cabinets/PreFab/Joust"));
+        CabinetStyles.Add("cocktail", Resources.Load<GameObject>($"Cabinets/PreFab/Cocktail"));
     }
 
     public static Cabinet Factory(string style, string name, string modelFilePath,
@@ -245,7 +246,7 @@ public static class CabinetFactory
 
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
         }
-        
+
         //blockers
         if (cbinfo.Parts != null)
         {

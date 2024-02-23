@@ -14,6 +14,8 @@ public static class CabinetMaterials {
     public static Material LightWood;
     public static Material DarkWood;
     public static Material Plastic;
+    public static Material CleanGlass;
+    public static Material DirtyGlass;
     public static Material TVBorder;
     public static Material FrontGlassWithBezel;
     public static Material MarqueeNoLamps;
@@ -34,15 +36,19 @@ public static class CabinetMaterials {
 
         //pre created in Unity editor
         Black = Resources.Load<Material>("Cabinets/Materials/CabinetBlack");
-        LightWood = Resources.Load<Material>("Cabinets/Materials/LightWood");
-        DarkWood = Resources.Load<Material>("Cabinets/Materials/DarkWood");
+        LightWood = Resources.Load<Material>("Cabinets/Materials/LightWoodStandard");
+        DarkWood = Resources.Load<Material>("Cabinets/Materials/DarkWoodStandard");
         Plastic = Resources.Load<Material>("Cabinets/Materials/Plastic");
+        CleanGlass = Resources.Load<Material>("Cabinets/Materials/GlassClean");
+        DirtyGlass = Resources.Load<Material>("Cabinets/Materials/GlassDirt");
 
         materialList.Add("black", Black);
         materialList.Add("base", Base);
         materialList.Add("lightwood", LightWood);
         materialList.Add("darkwood", DarkWood);
         materialList.Add("plastic", Plastic);
+        materialList.Add("dirty glass", DirtyGlass);
+        materialList.Add("clean glass", CleanGlass);
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
 

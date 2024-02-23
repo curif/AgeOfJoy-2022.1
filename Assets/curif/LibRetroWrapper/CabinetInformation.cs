@@ -127,9 +127,9 @@ public class CabinetInformation
         }
     }
 
-    public static CabinetInformation fromYaml(string cabPath)
+    public static CabinetInformation fromYaml(string cabPath, bool cache = true)
     {
-        if (CabinetInformationCache.Contains(cabPath))
+        if (cache && CabinetInformationCache.Contains(cabPath))
         {
             // ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
             return CabinetInformationCache.GetFromCache(cabPath);
@@ -138,7 +138,8 @@ public class CabinetInformation
         // ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
         string yaml = yamlFileToString(yamlPath);
         CabinetInformation cabInfo = parseYaml(cabPath, yamlPath, yaml);
-        CabinetInformationCache.AddToCache(cabPath, cabInfo);
+        if (cache)
+            CabinetInformationCache.AddToCache(cabPath, cabInfo);
         return cabInfo;
     }
 
@@ -431,7 +432,7 @@ public class CabinetInformation
                         : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL",
                     !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)
-                        ? new System.Exception($"Unknown material {p.material}")
+                        ? new System.Exception($"Unknown material: {p.material}")
                         : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL/ART",
                     !string.IsNullOrEmpty(p.material) && p.art != null
@@ -518,7 +519,8 @@ public class CabinetInformation
     */
     
     private static void showCabinetProblemsLog(CabinetInformation cbInfo,
-                                                Dictionary<string, System.Exception> exceptions)
+                                                Dictionary<string, System.Exception> exceptions,
+                                                string moreProblems)
     {
 
         string path = debugLogPath(cbInfo.name);
@@ -532,8 +534,10 @@ public class CabinetInformation
                 writer.WriteLine($"{error.Key}: {(error.Value == null ? "OK" : error.Value.ToString())}");
             }
             writer.WriteLine(new string('-', 50)); // Separator
+            if (!String.IsNullOrEmpty(moreProblems))
+                writer.WriteLine(moreProblems); // Separator
 /*
-            if (cabinet)
+            if (cabinet) transform
             {
                 int count = CountFacesRecursively(cabinet);
                 if (count > 10000)
@@ -544,7 +548,7 @@ public class CabinetInformation
         }
     }
 
-    public static void showCabinetProblems(CabinetInformation cbInfo, Transform cabinet = null)
+    public static void showCabinetProblems(CabinetInformation cbInfo, string moreProblems = "")
     {
         //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
         ConfigManager.WriteConsole("[showCabinetProblems] Alerts and errors");
@@ -559,11 +563,12 @@ public class CabinetInformation
             ConfigManager.WriteConsole($"[showCabinetProblems] {cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
         }
 
+        ConfigManager.WriteConsole($"[showCabinetProblems] {moreProblems}");
         ConfigManager.WriteConsole("[showCabinetProblems] ===================");
 
         if (cbInfo.debug)
         {
-            showCabinetProblemsLog(cbInfo, exceptions);
+            showCabinetProblemsLog(cbInfo, exceptions, moreProblems);
         }
 
         return;
