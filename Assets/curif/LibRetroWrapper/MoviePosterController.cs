@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System;
-
+using System.Security.Cryptography;
 
 public class MoviePosterController : MonoBehaviour
 {
@@ -35,22 +35,40 @@ public class MoviePosterController : MonoBehaviour
             textures.AddRange(Resources.LoadAll<Texture2D>($"Decoration/MoviePoster/Pictures/{decade}"));
             textures.Sort((x, y) => UnityEngine.Random.Range(0f, 1f) > UnityEngine.Random.Range(0f, 1f) ? 1 : -1);
             int idx = textures.Count - 1;
-            ConfigManager.WriteConsole($"[MoviePosterController] {idx}+1 movie posters of decade {decade}");
+            ConfigManager.WriteConsole($"[MoviePosterController] {idx+1} movie posters of decade {decade}");
 
             for (int childIdx = 0; childIdx < gameObject.transform.childCount; childIdx++)
             {
                 if (idx < 0)
-                {
                     idx = textures.Count - 1;
-                }
-                gameObject.transform.GetChild(childIdx).gameObject.GetComponent<Renderer>().material.SetTexture("_MainTex", textures[idx]);
-                idx--;
 
-                // Adding a small delay between setting textures in each iteration
-                yield return null;
+                Transform poster = gameObject.transform.GetChild(childIdx);
+                if (poster.childCount > 0)
+                {
+                    //it's a framedPoster
+                    ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} framedPoster: {poster.gameObject.name}");
+                    Transform picture = poster.GetChild(0);
+                    ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} picture: {picture.gameObject.name}");
+                    Renderer renderer = picture.gameObject.GetComponent<Renderer>();
+                    renderer.material.SetTexture("_Albedo", textures[idx]);
+
+                    if (UnityEngine.Random.Range(0f, 1f) > 0.7f)
+                        renderer.material.SetFloat("_EmissiveAmount", 0.6f);
+                    
+                    idx--;
+                }
+                else
+                {
+                    //old style
+                    poster.gameObject.GetComponent<Renderer>().material.SetTexture("_MainTex", textures[idx]);
+                }
             }
+
+            // Adding a small delay between setting textures in each iteration
+            yield return null;
         }
     }
+
 
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)
@@ -75,7 +93,7 @@ public class MoviePosterController : MonoBehaviour
         if (childIndex >= 0 && childIndex < gameObject.transform.childCount)
         {
             GameObject childObject = gameObject.transform.GetChild(childIndex).gameObject;
-            Renderer renderer = childObject.GetComponent<Renderer>();
+            Renderer renderer = childObject.transform.GetChild(0).GetComponent<Renderer>();
 
             if (renderer == null)
                 throw new Exception($"Poster #{childIndex} doesn't have a renderer");
@@ -85,19 +103,18 @@ public class MoviePosterController : MonoBehaviour
             {
                 newTexture = LoadTexture(newTexturePath);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-              ConfigManager.WriteConsoleException($"[MoviePosterController.Replace] loading texture #{childIndex}  from disk: {newTexturePath} ", e);
-              throw;
+                ConfigManager.WriteConsoleException($"[MoviePosterController.Replace] loading texture #{childIndex}  from disk: {newTexturePath} ", e);
+                throw;
             }
-            
+
             renderer.material.SetTexture("_MainTex", newTexture);
             return true;
         }
         else
             throw new Exception($"Poster #{childIndex} doesn't exist");
 
-        return false;
     }
 
     public int Count()
