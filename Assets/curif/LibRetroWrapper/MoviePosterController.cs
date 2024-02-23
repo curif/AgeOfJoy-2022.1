@@ -46,9 +46,9 @@ public class MoviePosterController : MonoBehaviour
                 if (poster.childCount > 0)
                 {
                     //it's a framedPoster
-                    ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} framedPoster: {poster.gameObject.name}");
+                    // ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} framedPoster: {poster.gameObject.name}");
                     Transform picture = poster.GetChild(0);
-                    ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} picture: {picture.gameObject.name}");
+                    // ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} picture: {picture.gameObject.name}");
                     Renderer renderer = picture.gameObject.GetComponent<Renderer>();
                     renderer.material.SetTexture("_Albedo", textures[idx]);
 
