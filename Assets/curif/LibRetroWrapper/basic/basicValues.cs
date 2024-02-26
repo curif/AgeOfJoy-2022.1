@@ -282,6 +282,11 @@ public class BasicValue
                     this != BasicValue.False);
     }
 
+    public bool IsFalse()
+    {
+        return !IsTrue();
+    }
+
     public static BasicValue operator &(BasicValue obj1, BasicValue obj2)
     {
         bool left = obj1.IsTrue();

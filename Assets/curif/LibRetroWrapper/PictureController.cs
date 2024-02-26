@@ -31,11 +31,27 @@ public class PictureController : MonoBehaviour
             {
                 if (idx < 0)
                     idx = textures.Count - 1;
-                //Assets/Resources/Decoration/Pictures/FramedPicturePrefab.prefab
-                GameObject framePrefab = gameObject.transform.GetChild(childIdx).gameObject;
-                GameObject picture = framePrefab.transform.GetChild(1).gameObject;
-                picture.GetComponent<Renderer>().material.SetTexture("_MainTex", textures[idx]);
+                
+                Transform FramePicture = gameObject.transform.GetChild(childIdx);
+                if (FramePicture.childCount > 0)
+                {
+                    //it's a framedPoster
+                    // ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} framedPoster: {poster.gameObject.name}");
+                    Transform picture = FramePicture.GetChild(0);
+                    // ConfigManager.WriteConsole($"[MoviePosterController] #{childIdx} picture: {picture.gameObject.name}");
+                    Renderer renderer = picture.gameObject.GetComponent<Renderer>();
+                    renderer.material.SetTexture("_Albedo", textures[idx]);
 
+                    // if (UnityEngine.Random.Range(0f, 1f) > 0.7f)
+                    //     renderer.material.SetFloat("_EmissiveAmount", 0.6f);
+                    
+                    idx--;
+                }
+                else
+                {
+                    //old style
+                    FramePicture.gameObject.GetComponent<Renderer>().material.SetTexture("_MainTex", textures[idx]);
+                }
                 idx--;
             }
         }

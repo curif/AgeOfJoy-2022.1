@@ -227,14 +227,6 @@ public class ConfigurationController : MonoBehaviour
     void Start()
     {
         ConfigManager.WriteConsole("[ConfigurationController] start");
-        setupActionMap();
-        // Initialize the dictionary with default values (false for all keys)
-        inputDictionary.Add("up", false);
-        inputDictionary.Add("down", false);
-        inputDictionary.Add("left", false);
-        inputDictionary.Add("right", false);
-        inputDictionary.Add("action", false);
-        inputKeys = inputDictionary.Keys.ToList();
 
         if (changeControls == null)
         {
@@ -289,6 +281,11 @@ public class ConfigurationController : MonoBehaviour
     {
         if (libretroControlMap == null)
             libretroControlMap = GetComponent<LibretroControlMap>();
+        if (libretroControlMap == null)
+        {
+            ConfigManager.WriteConsoleError($"[ConfigurationController.setupActionMap] ControlMap component not found.");
+            return;
+        }
 
         ControlMapConfiguration conf = new DefaultControlMap();
         conf.AddMap("KEYB-UP", "keyboard-w");
@@ -1136,6 +1133,15 @@ public class ConfigurationController : MonoBehaviour
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
+        
+        setupActionMap();
+        // Initialize the dictionary with default values (false for all keys)
+        inputDictionary.Add("up", false);
+        inputDictionary.Add("down", false);
+        inputDictionary.Add("left", false);
+        inputDictionary.Add("right", false);
+        inputDictionary.Add("action", false);
+        inputKeys = inputDictionary.Keys.ToList();
 
         scr.Clear();
         scr.PrintCentered(1, "BIOS ROM firmware loaded", true);

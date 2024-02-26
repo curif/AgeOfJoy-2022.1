@@ -15,7 +15,7 @@ public class Cabinet
     public GameObject gameObject;
 
     //Al the parts in the gabinet that must exists, can be others.
-    static List<string> RequiredParts = new List<string>() { "front", "left", "right", "joystick", "screen-base", "screen-mock-vertical", "screen-mock-horizontal" };
+    // static List<string> RequiredParts = new List<string>() { "screen-mock-vertical", "screen-mock-horizontal" };
     //Known parts that can exists or not.
     static List<string> NonStandardParts = new List<string>() { "Marquee", "bezel", "coin-slot", "screen" };
     //those parts that the user can configure, but is not limited to.
@@ -36,16 +36,16 @@ public class Cabinet
         return tex;
     }
 
-    public bool IsValid
-    {
-        get
-        {
-            foreach (string key in RequiredParts)
-                if (!PartsExist(key))
-                    return false;
-            return true;
-        }
-    }
+    // public bool IsValid
+    // {
+    //     get
+    //     {
+    //         foreach (string key in RequiredParts)
+    //             if (!PartsExist(key))
+    //                 return false;
+    //         return true;
+    //     }
+    // }
 
     private void addRigidBody()
     {
@@ -295,8 +295,8 @@ public class Cabinet
         gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
         gameObject.name = name;
 
-        if (!IsValid)
-            throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
+        // if (!IsValid)
+        //     throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
 
         SetMaterial(CabinetMaterials.Black);
         if (PartsExist("bezel"))
@@ -458,6 +458,7 @@ public class Cabinet
                              BackgroundSoundController backgroundSoundController = null
                           )
     {
+        
         string CRTType = $"screen-mock-{orientation}";
         GameObject CRT = Parts(CRTType);
         if (CRT == null)

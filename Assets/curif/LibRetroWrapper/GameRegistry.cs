@@ -9,10 +9,11 @@ using UnityEngine;
 using System;
 using System.Linq;
 using System.IO;
+using System.Threading;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 
-
+///<summary> Cabinet associated to its possition on a room </summary>
 [Serializable]
 public class CabinetPosition //: IEquatable<Part>
 {
@@ -30,24 +31,43 @@ public class CabinetPosition //: IEquatable<Part>
     }
 }
 
+///<summary> cabinet database, contains and control the registry </sumary>
 [Serializable]
 public class CabinetsPosition
 {
     public List<CabinetPosition> Registry = new();
+    private System.Object registryLock = new object();
 
     static string JsonFile = ConfigManager.CabinetsDB + "/registry.json";
     static string YamlFile = ConfigManager.CabinetsDB + "/registry.yaml";
+
+    //modifications needs to be saved.
+    bool dirty = false;
     public CabinetPosition Add(CabinetPosition g)
     {
-        Registry.Add(g);
+        lock (registryLock)
+        {
+            Registry.Add(g);
+            dirty = true;
+        }
         return g;
     }
 
     public CabinetPosition Remove(CabinetPosition g)
     {
-        Registry.Remove(g);
+        lock (registryLock)
+        {
+            Registry.Remove(g);
+            dirty = true;
+        }
         return g;
     }
+
+    public bool NeedsSave()
+    {
+        return dirty;
+    }
+
 
     public CabinetsPosition SaveAsYaml(string fileName)
     {
@@ -55,11 +75,17 @@ public class CabinetsPosition
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
 
-        string yaml = serializer.Serialize(this);
-
+        string yaml;
+        lock (registryLock)
+        {
+            yaml = serializer.Serialize(this);
+        }
         File.WriteAllText(fileName, yaml);
+        dirty = false;
+
         return this;
     }
+    /// <summary> loads cabinetsdb.yaml </summary> 
     public static CabinetsPosition LoadFromYaml(string fileName)
     {
         if (!File.Exists(fileName))
@@ -71,8 +97,8 @@ public class CabinetsPosition
             .Build();
 
         string yaml = File.ReadAllText(fileName);
-
-        return deserializer.Deserialize<CabinetsPosition>(yaml);
+        CabinetsPosition ret = deserializer.Deserialize<CabinetsPosition>(yaml);
+        return ret;
     }
     public CabinetsPosition Persist()
     {
@@ -84,6 +110,9 @@ public class CabinetsPosition
 
     public static CabinetsPosition ReadFromFile()
     {
+        if (File.Exists(YamlFile))
+            return LoadFromYaml(YamlFile);
+
         if (File.Exists(JsonFile))
         {
             ConfigManager.WriteConsole($"[CabinetsPosition.ReadFromFile] from {JsonFile}");
@@ -93,10 +122,7 @@ public class CabinetsPosition
             File.Move(JsonFile, JsonFile + ".bak");
             return cabinetsPosition;
         }
-        else if (File.Exists(YamlFile))
-        {
-            return LoadFromYaml(YamlFile);
-        }
+
         return new CabinetsPosition();
     }
 }
@@ -107,7 +133,7 @@ public class GameRegistry : MonoBehaviour
 {
 
     public CabinetsPosition cabinetsPosition;
-    List<string> UnassignedCabinets;
+    public List<string> UnassignedCabinets = new List<string>();
 
     public int CabinetsInRegistry
     {
@@ -121,7 +147,12 @@ public class GameRegistry : MonoBehaviour
         //Init.OnRuntimeMethodLoad runs before
 
         Recover();
-        ConfigManager.WriteConsole($"[GameRegistry.Start] {cabinetsPosition.Registry.Count} cabinets from registry");
+        ConfigManager.WriteConsole($"[GameRegistry.Start] {cabinetsPosition.Registry.Count} cabinets from registry, {UnassignedCabinets.Count} unassigned");
+    }
+
+    public bool NeedsSave()
+    {
+        return cabinetsPosition.NeedsSave();
     }
 
     public CabinetPosition Add(string cabinetDBName = null, string rom = null,
@@ -214,7 +245,7 @@ public class GameRegistry : MonoBehaviour
         cabinetsPosition.Persist();
         return this;
     }
-    public void AssignOrAddCabinet(string room, int position, string cabinetDBName)
+    public CabinetPosition AssignOrAddCabinet(string room, int position, string cabinetDBName)
     {
         // Check if the cabinet already exists in the specified room and position
         CabinetPosition existingCabinet = cabinetsPosition.Registry.FirstOrDefault(cabPos =>
@@ -225,6 +256,7 @@ public class GameRegistry : MonoBehaviour
         {
             // Update the CabinetDBName of the existing cabinet
             existingCabinet.CabinetDBName = cabinetDBName;
+            return existingCabinet;
         }
         else
         {
@@ -236,7 +268,9 @@ public class GameRegistry : MonoBehaviour
                 Position = position
             };
 
-            cabinetsPosition.Registry.Add(newCabinet);
+            cabinetsPosition.Add(newCabinet);
+            DeleteUnassigned(cabinetDBName);
+            return newCabinet;
         }
     }
 
@@ -270,6 +304,14 @@ public class GameRegistry : MonoBehaviour
         return this;
     }
 
+    public GameRegistry DeleteUnassigned(string cabinetName)
+    {
+        if (UnassignedCabinets.Contains(cabinetName))
+            UnassignedCabinets.Remove(cabinetName);
+
+        return this;
+    }
+
     public string GetCabinetNameByPosition(int position)
     {
         if (position < 0)
@@ -292,8 +334,8 @@ public class GameRegistry : MonoBehaviour
     {
         List<string> cabsInDB = GetAllCabinetsName();
         List<CabinetPosition> cabsToDelete = cabinetsPosition.Registry
-            .Where(cab => !cabsInDB.Contains(cab.CabinetDBName))
-            .ToList();
+                                                .Where(cab => !cabsInDB.Contains(cab.CabinetDBName))
+                                                .ToList();
 
         foreach (CabinetPosition cab in cabsToDelete)
         {
@@ -332,17 +374,23 @@ public class GameRegistry : MonoBehaviour
                         .Any(path => CabinetDBAdmin.GetNameFromPath(path) == cabinetName);
     }
 
-    public string GetRandomCabinetDBName()
+    public string GetRandomUnassignedCabinetDBName()
     {
         // Return null if UnassignedCabinets is null or empty, else return a random CabinetDBName
         return UnassignedCabinets?.Count > 0 ? UnassignedCabinets[UnityEngine.Random.Range(0, UnassignedCabinets.Count)] : null;
     }
 
 
+    /// <summary> 
+    /// load cabinets from file and store unnasigned, also delete cabinets that doesn't exists on disk
+    /// </summary>
     public GameRegistry Recover()
     {
         cabinetsPosition = CabinetsPosition.ReadFromFile();
+        ConfigManager.WriteConsole($"[Gameregistry.Recover] recovered: {cabinetsPosition.Registry.Count} cabinets from registry file");
         LoadUnnasigned().DeleteMissingCabinets();
+        ConfigManager.WriteConsole($"[Gameregistry.Recover] Unnasigned: {UnassignedCabinets.Count} cabinets");
+
         return this;
     }
 
@@ -404,13 +452,13 @@ public class GameRegistry : MonoBehaviour
 
         Recover(); //user can modify it.
 
-        bool dirty = false;
         List<CabinetPosition> cabsPosition = GetCabinetsAndPositionsAssignedToRoom(room);
         if (cabsPosition == null)
             cabsPosition = new();
 
         ConfigManager.WriteConsole($"[GetSetCabinetsAssignedToRoom] {cabsPosition.Count} cabinets from Registry in room {room}");
 
+        //remove exceeded cabinets (because the position disapear from room)
         if (cabsPosition.Count > quantity)
         {
             ConfigManager.WriteConsole($"[GetSetCabinetsAssignedToRoom] Room: {room} - {cabsPosition.Count} > space in room: {quantity} there are more cabinets in the list than in the room. Developer remove some cabinets? adjusting.");
@@ -421,40 +469,46 @@ public class GameRegistry : MonoBehaviour
             }
             //reload
             cabsPosition = GetCabinetsAndPositionsAssignedToRoom(room);
-            dirty = true;
         }
-
-        // add cabinets in free positions:
-        // LoadUnnasigned(); //done in Recover()
-        if (UnassignedCabinets.Count > 0)
-        {
-            List<int> freePos = GetFreePositions(cabsPosition, quantity);
-            ConfigManager.WriteConsole($"[GetSetCabinetsAssignedToRoom] there are {freePos.Count} positions free in {room}");
-            foreach (int free in freePos)
-            {
-                cabsPosition.Add(
-                                   Add(cabinetDBName: UnassignedCabinets[0],
-                                       room: room,
-                                       position: free
-                                    )
-                                );
-                UnassignedCabinets.RemoveAt(0);
-                dirty = true;
-                if (UnassignedCabinets.Count == 0)
-                    break;
-            }
-        }
-        if (dirty)
-            Persist();
-        Show();
-
-        //load cabinets information
-        /*foreach (CabinetPosition cab in cabsPosition.Where(g => g.CabInfo == null))
-        {
-
-        }*/
-
+        /*
+                // add cabinets in free positions:
+                // LoadUnnasigned(); //done in Recover()
+                if (UnassignedCabinets.Count > 0)
+                {
+                    List<int> freePos = GetFreePositions(cabsPosition, quantity);
+                    ConfigManager.WriteConsole($"[GetSetCabinetsAssignedToRoom] there are {freePos.Count} positions free in {room}");
+                    foreach (int free in freePos)
+                    {
+                        cabsPosition.Add(
+                                           Add(cabinetDBName: UnassignedCabinets[0],
+                                               room: room,
+                                               position: free
+                                            )
+                                        );
+                        UnassignedCabinets.RemoveAt(0);
+                        dirty = true;
+                        if (UnassignedCabinets.Count == 0)
+                            break;
+                    }
+                }
+                if (dirty)
+                    Persist();
+                Show();
+        */
         return cabsPosition;
+    }
+
+    public string GetUnassignedCabinet(int pos)
+    {
+        if (pos > UnassignedCabinets.Count() - 1)
+            return null;
+
+        return UnassignedCabinets[pos];
+    }
+
+    public List<string> GetUnassignedCabinets()
+    {
+        return new List<string>(UnassignedCabinets);
     }
 
 }

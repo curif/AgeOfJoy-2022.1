@@ -12,6 +12,26 @@ using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
+public static class CabinetInformationCache
+{
+    private static readonly Dictionary<string, CabinetInformation> _cache = new Dictionary<string, CabinetInformation>();
+
+    public static void AddToCache(string key, CabinetInformation cabInfo)
+    {
+        _cache[key] = cabInfo;
+    }
+
+    public static CabinetInformation GetFromCache(string key)
+    {
+        return _cache.TryGetValue(key, out var cabInfo) ? cabInfo : null;
+    }
+
+    public static bool Contains(string key)
+    {
+        return _cache.ContainsKey(key);
+    }
+}
 
 
 public class CabinetInformation
@@ -32,6 +52,7 @@ public class CabinetInformation
     public string statefile = "state.nv";
     public Video video = new Video();
     public string md5sum;
+    public string space = "1x1x2";
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
     public List<MameFile> MameFiles { get; set; }
@@ -106,30 +127,24 @@ public class CabinetInformation
         }
     }
 
-    public static CabinetInformation fromYaml(string cabPath)
+    public static CabinetInformation fromYaml(string cabPath, bool cache = true)
     {
+        if (cache && CabinetInformationCache.Contains(cabPath))
+        {
+            // ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
+            return CabinetInformationCache.GetFromCache(cabPath);
+        }
         string yamlPath = Path.Combine(cabPath, "description.yaml");
-        ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
+        // ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
+        string yaml = yamlFileToString(yamlPath);
+        CabinetInformation cabInfo = parseYaml(cabPath, yamlPath, yaml);
+        if (cache)
+            CabinetInformationCache.AddToCache(cabPath, cabInfo);
+        return cabInfo;
+    }
 
-        if (!File.Exists(yamlPath))
-        {
-            ConfigManager.WriteConsoleError($"[CabinetInformation]: Description YAML file (description.yaml) doesn't exists in cabinet folder: {cabPath}");
-            return null;
-        }
-
-        string yaml = "";
-        try
-        {
-            var input = File.OpenText(yamlPath);
-            yaml = input.ReadToEnd();
-            input.Close();
-        }
-        catch (Exception e)
-        {
-            ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] YAML file {yamlPath} ", e);
-            WriteExceptionLog(yamlPath, e, "ERROR trying to open the yaml file from disk");
-        }
-
+    private static CabinetInformation parseYaml(string cabPath, string yamlPath, string yaml)
+    {
         try
         {
             //ConfigManager.WriteConsole($"[CabinetInformation]: {yamlPath} \n {yaml}");
@@ -145,8 +160,33 @@ public class CabinetInformation
         {
             ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
             WriteExceptionLog(yamlPath, e, "ERROR when decoding yaml file, syntax or semantic error");
+            return null;
         }
-        return null;
+    }
+
+    private static string yamlFileToString(string yamlPath)
+    {
+        string yaml = null;
+
+        if (!File.Exists(yamlPath))
+        {
+            ConfigManager.WriteConsoleError($"[CabinetInformation]: Description YAML file (description.yaml) doesn't exists in cabinet folder: {yamlPath}");
+            return null;
+        }
+        try
+        {
+            StreamReader input = File.OpenText(yamlPath);
+            yaml = input.ReadToEnd();
+            input.Close();
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] YAML file {yamlPath} ", e);
+            WriteExceptionLog(yamlPath, e, "ERROR trying to open the yaml file from disk");
+            return null;
+        }
+
+        return yaml;
     }
 
     public class Model
@@ -313,7 +353,7 @@ public class CabinetInformation
                 { "sample", ConfigManager.SamplesDir },
                 { "nvram", ConfigManager.nvramDir }
             };
-        
+
 
         // Method to verify if the key is in the dictionary
         public static bool IsValid(string fileType)
@@ -350,7 +390,7 @@ public class CabinetInformation
 
         public bool IsValid(string pathBase)
         {
-            return File.Exists(Path.Combine(pathBase, file)) 
+            return File.Exists(Path.Combine(pathBase, file))
                         && MameFileType.IsValid(type);
         }
     }
@@ -392,7 +432,7 @@ public class CabinetInformation
                         : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL",
                     !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)
-                        ? new System.Exception($"Unknown material {p.material}")
+                        ? new System.Exception($"Unknown material: {p.material}")
                         : null);
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL/ART",
                     !string.IsNullOrEmpty(p.material) && p.art != null
@@ -405,7 +445,7 @@ public class CabinetInformation
 
         if (MameFiles != null)
         {
-            foreach(MameFile mf in MameFiles)
+            foreach (MameFile mf in MameFiles)
             {
                 if (!mf.IsValid(mf.type))
                 {
@@ -419,6 +459,8 @@ public class CabinetInformation
         // exceptions.Add($"Marquee ART", marquee != null && marquee.art != null? marquee.art.validate(pathBase) : null);
         // exceptions.Add($"Marquee Light Color", marquee != null? marquee.lightcolor.checkForProblems() : null);
         exceptions.Add($"Year", year >= 1970 && year < 2010 ? null : new System.ArgumentException("Year out of range"));
+        exceptions.Add($"Space", CabinetSpaceType.IsValidSpace(space) ? null :
+                        new System.ArgumentException($"Unknown space type: {space} valids are: {CabinetSpaceType.GetValidSpaceTypes()}"));
         exceptions.Add($"Style",
             cabinetStyles.Contains(style) ? null : new System.ArgumentException($"Unknown cabinet style: {style}"));
         exceptions.Add($"Coin Slot",
@@ -437,9 +479,48 @@ public class CabinetInformation
 
         return exceptions;
     }
+/*    private static int CountFacesRecursively(Transform parent)
+    {
+        int totalFaces = 0;
 
+        // Loop through each child of the current parent
+        foreach (Transform child in parent)
+        {
+            // Check if the child has a MeshFilter component
+            MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+            if (meshFilter != null && meshFilter.mesh != null)
+            {
+                // If the child has a MeshFilter and a mesh is assigned
+                Mesh mesh = meshFilter.sharedMesh;
+                if (!mesh.isReadable)
+                {
+                    // Set the mesh to be readable
+                    mesh.MarkDynamic(); // Alternatively, you can use mesh.UploadMeshData(true) if MarkDynamic() is not sufficient
+                    
+                    if (!mesh.isReadable)
+                        mesh.UploadMeshData(true);
+                    // Log a warning message
+                    ConfigManager.WriteConsoleWarning("Mesh is not marked as readable. Marking the mesh as readable. Performance may be affected.");
+                }
+                // Get the triangles of the mesh
+                int[] triangles = mesh.triangles;
+                // Check if triangles array is null or empty
+                if (triangles != null || triangles.Length > 0)
+                    totalFaces += triangles.Length / 3; 
+
+            }
+
+            // Check recursively for the children of the child
+            totalFaces += CountFacesRecursively(child);
+        }
+
+        return totalFaces;
+    }
+    */
+    
     private static void showCabinetProblemsLog(CabinetInformation cbInfo,
-                                                Dictionary<string, System.Exception> exceptions)
+                                                Dictionary<string, System.Exception> exceptions,
+                                                string moreProblems)
     {
 
         string path = debugLogPath(cbInfo.name);
@@ -453,10 +534,21 @@ public class CabinetInformation
                 writer.WriteLine($"{error.Key}: {(error.Value == null ? "OK" : error.Value.ToString())}");
             }
             writer.WriteLine(new string('-', 50)); // Separator
+            if (!String.IsNullOrEmpty(moreProblems))
+                writer.WriteLine(moreProblems); // Separator
+/*
+            if (cabinet) transform
+            {
+                int count = CountFacesRecursively(cabinet);
+                if (count > 10000)
+                    writer.WriteLine($"--WARNING: ");
+                writer.WriteLine($"Cabinet faces total count: {count}");
+            }
+            */
         }
     }
 
-    public static void showCabinetProblems(CabinetInformation cbInfo)
+    public static void showCabinetProblems(CabinetInformation cbInfo, string moreProblems = "")
     {
         //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
         ConfigManager.WriteConsole("[showCabinetProblems] Alerts and errors");
@@ -471,11 +563,12 @@ public class CabinetInformation
             ConfigManager.WriteConsole($"[showCabinetProblems] {cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
         }
 
+        ConfigManager.WriteConsole($"[showCabinetProblems] {moreProblems}");
         ConfigManager.WriteConsole("[showCabinetProblems] ===================");
 
         if (cbInfo.debug)
         {
-            showCabinetProblemsLog(cbInfo, exceptions);
+            showCabinetProblemsLog(cbInfo, exceptions, moreProblems);
         }
 
         return;
