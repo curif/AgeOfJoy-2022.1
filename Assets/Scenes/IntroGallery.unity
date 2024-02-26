@@ -790,6 +790,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5974755784434538608, guid: 70a3a606deb64c44a9dc9ae583576956, type: 3}
   m_PrefabInstance: {fileID: 130386122}
   m_PrefabAsset: {fileID: 0}
+
 --- !u!1 &133903115
 GameObject:
   m_ObjectHideFlags: 0
@@ -899,6 +900,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomConfiguration: {fileID: 1762873378}
   intensity: 1
+
 --- !u!1001 &139052886
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11774,6 +11776,62 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 38
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1105977300
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1105977302}
+  - component: {fileID: 1105977301}
+  m_Layer: 0
+  m_Name: Audio Reverb Zone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!167 &1105977301
+AudioReverbZone:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1105977300}
+  m_Enabled: 1
+  m_MinDistance: 4.1
+  m_MaxDistance: 5.57
+  m_ReverbPreset: 7
+  m_Room: -1000
+  m_RoomHF: -476
+  m_DecayTime: 4.32
+  m_DecayHFRatio: 0.59
+  m_Reflections: -789
+  m_ReflectionsDelay: 0.02
+  m_Reverb: -289
+  m_ReverbDelay: 0.03
+  m_HFReference: 5000
+  m_Diffusion: 100
+  m_Density: 100
+  m_LFReference: 250
+  m_RoomLF: 0
+--- !u!4 &1105977302
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1105977300}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.79, y: 0.47, z: -0.61}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1124595504
 GameObject:
@@ -22762,6 +22820,7 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
+
 --- !u!1 &1929235568
 GameObject:
   m_ObjectHideFlags: 0
@@ -22871,6 +22930,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomConfiguration: {fileID: 1762873378}
   intensity: 1.5
+
 --- !u!1001 &1941451884
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26219,3 +26279,62 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.841847, y: 1.3987429, z: 1.718856}
   m_Center: {x: -0.42092547, y: 0.19937156, z: 0.35942882}
+
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 1747751390}
+  - {fileID: 1105977302}
+  - {fileID: 1634376504}
+  - {fileID: 1125707506}
+  - {fileID: 591936501}
+  - {fileID: 1882389186}
+  - {fileID: 1915306329}
+  - {fileID: 889896752}
+  - {fileID: 2116498385}
+  - {fileID: 1873620896}
+  - {fileID: 257393849}
+  - {fileID: 1159580963}
+  - {fileID: 624554300}
+  - {fileID: 1177767477}
+  - {fileID: 309176214}
+  - {fileID: 348084397}
+  - {fileID: 217277933}
+  - {fileID: 394593703}
+  - {fileID: 1618515146}
+  - {fileID: 1242621041}
+  - {fileID: 1097466486}
+  - {fileID: 1226594865}
+  - {fileID: 1498940091}
+  - {fileID: 1136243991}
+  - {fileID: 1582659507}
+  - {fileID: 1788350594}
+  - {fileID: 337936001}
+  - {fileID: 494315294}
+  - {fileID: 1801469593}
+  - {fileID: 895971562}
+  - {fileID: 989348830}
+  - {fileID: 1181261848}
+  - {fileID: 1959010735}
+  - {fileID: 2142659413}
+  - {fileID: 2073417463}
+  - {fileID: 1999661029}
+  - {fileID: 509516386}
+  - {fileID: 640704265}
+  - {fileID: 1474595620}
+  - {fileID: 1821484906}
+  - {fileID: 330029532}
+  - {fileID: 763764649}
+  - {fileID: 165290122}
+  - {fileID: 580371073}
+  - {fileID: 622338888}
+  - {fileID: 1879640371}
+  - {fileID: 1390636069}
+  - {fileID: 1252129199}
+  - {fileID: 1825276974}
+  - {fileID: 1720611797}
+  - {fileID: 746884369}
+  - {fileID: 191663438}
+  - {fileID: 921978201}
+

@@ -3785,6 +3785,7 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 797229978}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+
 --- !u!1 &797281255
 GameObject:
   m_ObjectHideFlags: 0
@@ -3879,6 +3880,7 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+
 --- !u!1 &800368934
 GameObject:
   m_ObjectHideFlags: 0
@@ -3915,6 +3917,10 @@ Transform:
   - {fileID: 105995073}
   - {fileID: 1685110364}
   m_Father: {fileID: 822165243}
+
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &805763703
+GameObject:
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &805763703
@@ -4007,55 +4013,38 @@ BoxCollider:
   m_Center: {x: -0.00006987076, y: 0.00000011702995, z: 0.031423964}
 --- !u!23 &816781664
 MeshRenderer:
+
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 816781661}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: -2138252962470926213, guid: e5f9f7cf9db8f374ca579feb7300b9f3, type: 3}
-  - {fileID: 2100000, guid: e33beb7eb22584542a2495dbcfc35a58, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &816781665
-MeshFilter:
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 805763704}
+  m_Layer: 0
+  m_Name: SideWalkEntry
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &805763704
+Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 816781661}
-  m_Mesh: {fileID: 6239881831769578202, guid: e5f9f7cf9db8f374ca579feb7300b9f3, type: 3}
+  m_GameObject: {fileID: 805763703}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 3.82, y: -2.189925, z: -7.8329086}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 954623872}
+  - {fileID: 1264540500}
+  m_Father: {fileID: 9948310}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &817182904
 GameObject:
   m_ObjectHideFlags: 0
@@ -8889,3 +8878,56 @@ Transform:
   m_Father: {fileID: 1007640898}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 822165243}
+  - {fileID: 254826249}
+  - {fileID: 161576380}
+  - {fileID: 534422588}
+  - {fileID: 1658074370}
+  - {fileID: 990049837}
+  - {fileID: 629914340}
+  - {fileID: 1313595868}
+  - {fileID: 451891325}
+  - {fileID: 1015625888}
+  - {fileID: 660008372}
+  - {fileID: 930795023}
+  - {fileID: 1078281285}
+  - {fileID: 865919475}
+  - {fileID: 464612742}
+  - {fileID: 2102814959}
+  - {fileID: 2046823}
+  - {fileID: 404920458}
+  - {fileID: 593586739}
+  - {fileID: 572847267}
+  - {fileID: 1168984864}
+  - {fileID: 1571512202}
+  - {fileID: 425671412}
+  - {fileID: 1186877774}
+  - {fileID: 696373795}
+  - {fileID: 1880780020}
+  - {fileID: 851900920}
+  - {fileID: 792157198}
+  - {fileID: 84596707}
+  - {fileID: 1313523900}
+  - {fileID: 1085745379}
+  - {fileID: 609816572}
+  - {fileID: 839832782}
+  - {fileID: 425317304}
+  - {fileID: 954392787}
+  - {fileID: 2083838763}
+  - {fileID: 1514554377}
+  - {fileID: 2019712345}
+  - {fileID: 263624439}
+  - {fileID: 2068407932}
+  - {fileID: 239047102}
+  - {fileID: 765914832}
+  - {fileID: 2040980547}
+  - {fileID: 1170913834}
+  - {fileID: 2059871}
+  - {fileID: 606683987}
+  - {fileID: 2123975705}
+
