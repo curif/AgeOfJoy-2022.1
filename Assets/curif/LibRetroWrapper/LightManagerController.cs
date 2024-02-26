@@ -18,6 +18,9 @@ public class LightManagerController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (roomConfiguration == null)
+            return;
+        
         lightName = roomConfiguration.Room.ToUpper() + ":" + gameObject.name.ToUpper();
         // Set the initial light intensity
         SetIntensity(intensity);
