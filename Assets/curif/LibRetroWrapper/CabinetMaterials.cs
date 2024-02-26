@@ -14,6 +14,7 @@ public static class CabinetMaterials {
     public static Material LightWood;
     public static Material DarkWood;
     public static Material Plastic;
+    public static Material GlassLayer;
     public static Material CleanGlass;
     public static Material DirtyGlass;
     public static Material TVBorder;
@@ -41,6 +42,7 @@ public static class CabinetMaterials {
         Plastic = Resources.Load<Material>("Cabinets/Materials/Plastic");
         CleanGlass = Resources.Load<Material>("Cabinets/Materials/GlassClean");
         DirtyGlass = Resources.Load<Material>("Cabinets/Materials/GlassDirt");
+        GlassLayer = Resources.Load<Material>("Cabinets/Materials/GlassTranspLayer");
 
         materialList.Add("black", Black);
         materialList.Add("base", Base);
@@ -48,7 +50,7 @@ public static class CabinetMaterials {
         materialList.Add("darkwood", DarkWood);
         materialList.Add("plastic", Plastic);
         materialList.Add("dirty glass", DirtyGlass);
-        materialList.Add("clean glass", CleanGlass);
+        materialList.Add("layer glass", GlassLayer);
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
 

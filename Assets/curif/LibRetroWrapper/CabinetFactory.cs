@@ -93,7 +93,8 @@ public static class CabinetFactory
         return new Cabinet(cabinetName, position, rotation, parent, go: model);
     }
 
-    public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo, CabinetInformation.Part p)
+    public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo,
+                                            CabinetInformation.Part p)
     {
         switch (p.type)
         {
@@ -135,24 +136,38 @@ public static class CabinetFactory
 
             default:
                 {
-                    if (p.material != null)
-                        cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
-                    else if (p.art != null)
-                        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
-                    else if (p.color != null)
-                    {
-                        Material matColor = new Material(CabinetMaterials.Base);
-                        matColor.SetColor("_Color", p.color.getColor());
-                        cabinet.SetMaterial(p.name, matColor);
-                    }
+                    if (p.material == null &&
+                        p.art == null &&
+                        p.color == null &&
+                        p.transparency == 0)
+                        cabinet.SetMaterialFrom(p.name, CabinetMaterials.Black);
                     else
-                        cabinet.SetMaterial(p.name, CabinetMaterials.Black);
+                    {
+                        ConfigManager.WriteConsole($"[CabinetFactory.skinCabinetPart] {p.name}: type: {p.type} material: {p.material} color: {p.color} tramsp:{p.transparency}");
+                        if (p.material != null)
+                            cabinet.SetMaterialFrom(p.name, CabinetMaterials.fromName(p.material));
+                        else
+                            cabinet.SetMaterialFrom(p.name, CabinetMaterials.Base);
+
+                        if (p.art != null)
+                            cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), 
+                                null, invertX: p.art.invertx, invertY: p.art.inverty);
+
+                        if (p.color != null)
+                            cabinet.SetColorPart(p.name, p.color.getColor());
+
+                        if (p.transparency != 0)
+                            cabinet.SetTransparencyPart(p.name, p.transparency);
+                    }
                 }
                 break;
         }
         // Part scale and rotation
         cabinet.ScalePart(p.name, p.geometry.scalepercentage);
         cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
+
+        //enable / disable
+        cabinet.EnablePart(p.name, p.visible);
 
         return cabinet;
     }

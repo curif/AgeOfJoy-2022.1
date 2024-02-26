@@ -235,6 +235,8 @@ public class CabinetInformation
         public string material;
         public Art art;
         public RGBColor color;
+        public int transparency = 0;
+        public bool visible = true;
         public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker" };
         public string type = Types[0];
         public Geometry geometry = new Geometry();
@@ -438,6 +440,11 @@ public class CabinetInformation
                     !string.IsNullOrEmpty(p.material) && p.art != null
                         ? new System.Exception("Can't assign a material and ART to the same part")
                         : null);
+                if (p.transparency != 0)
+                    exceptions.Add($"Part #{number}: {p.name} TRANSPARENCY",
+                        p.transparency < 0 || p.transparency > 100? 
+                            new System.Exception("Transparency 0 to 100 only.")
+                            : null);
 
                 number++;
             }

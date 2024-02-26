@@ -8,6 +8,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using System.ComponentModel;
+using System;
+using System.Collections.Specialized;
 
 public class Cabinet
 {
@@ -343,24 +345,85 @@ public class Cabinet
         Parts(cabinetPart).transform.Rotate(angleX, angleY, angleZ);
         return this;
     }
-
-    //change a material, and
-    public Cabinet SetTextureTo(string cabinetPart, string textureFile, Material mat, bool invertX = false, bool invertY = false)
+    public Cabinet EnablePart(string cabinetPart, bool enabled)
     {
-
         if (!PartsExist(cabinetPart))
             return this;
-        if (mat == null && string.IsNullOrEmpty(textureFile))
+
+        Parts(cabinetPart).SetActive(enabled);
+
+        return this;
+    }
+    public Cabinet SetColorPart(string cabinetPart, Color color)
+    {
+        if (!PartsExist(cabinetPart))
             return this;
 
         Renderer r = Parts(cabinetPart).GetComponent<Renderer>();
         if (r == null)
             return this;
 
+        Material mat = r.material;
         if (mat == null)
-            mat = CabinetMaterials.Base;
+            return this;
+        
+        mat.color = color;
+        return this;
+    }
 
-        Material m = new Material(mat);
+    public Cabinet SetTransparencyPart(string cabinetPart, int transpPercent)
+    {
+        if (!PartsExist(cabinetPart))
+            return this;
+
+        Renderer r = Parts(cabinetPart).GetComponent<Renderer>();
+        if (r == null)
+            return this;
+    
+        Material mat = r.material;
+        if (mat == null)
+            return this;
+
+        if (transpPercent < 0)
+            transpPercent = 0;
+        if (transpPercent > 100)
+            transpPercent = 100;
+
+        Color currentColor = mat.color;
+
+        // Convert percentage to alpha value (0-1)
+        float alpha = (100 - transpPercent) / 100f;
+
+        currentColor.a = alpha;
+        mat.color = currentColor;
+
+        return this;
+    }
+
+    //change a material, or create a new one and change it.
+    public Cabinet SetTextureTo(string part, string textureFile, Material mat,
+                                    bool invertX = false, bool invertY = false)
+    {
+
+        if (!PartsExist(part))
+            return this;
+
+        if (string.IsNullOrEmpty(textureFile))
+            return this;
+
+        Renderer r = Parts(part).GetComponent<Renderer>();
+        if (r == null)
+            return this;
+
+        Material m;
+        if (mat == null)
+            m = r.material;
+        else
+        {
+            m = new Material(mat);
+            m.name = $"{part}_from_{mat.name}";
+        }
+
         //tiling
         Vector2 mainTextureScale = new Vector2(1, 1);
         if (invertX)
@@ -369,18 +432,15 @@ public class Cabinet
             mainTextureScale.y = -1;
         m.mainTextureScale = mainTextureScale;
 
-        if (!string.IsNullOrEmpty(textureFile))
+        //main texture
+        Texture2D t = LoadTexture(textureFile);
+        if (t == null)
         {
-            //main texture
-            Texture2D t = LoadTexture(textureFile);
-            if (t == null)
-            {
-                ConfigManager.WriteConsole($"ERROR Cabinet {Name} texture error {textureFile}");
-                return this;
-            }
-            else
-                m.SetTexture("_MainTex", t);
+            ConfigManager.WriteConsoleError($"Cabinet {Name} texture error {textureFile}");
+            return this;
         }
+        else
+            m.SetTexture("_MainTex", t);
 
         r.material = m;
 
@@ -426,6 +486,22 @@ public class Cabinet
         return this;
     }
 
+    //set a new created material from another one.
+    public Cabinet SetMaterialFrom(string part, Material mat)
+    {
+        if (!PartsExist(part))
+            return this;
+        Renderer r = Parts(part).GetComponent<Renderer>();
+        if (r == null)
+            return this;
+
+        Material m = new Material(mat);
+        m.name = $"{part}_from_{mat.name}";
+        r.material = mat;
+
+        return this;
+    }
+
     //set the material to a component. Don't create new.
     public Cabinet SetMaterial(string part, Material mat)
     {
@@ -458,7 +534,7 @@ public class Cabinet
                              BackgroundSoundController backgroundSoundController = null
                           )
     {
-        
+
         string CRTType = $"screen-mock-{orientation}";
         GameObject CRT = Parts(CRTType);
         if (CRT == null)
@@ -543,7 +619,7 @@ public class Cabinet
         newCoinSlot.transform.localScale *= scale;
         newCoinSlot.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
 
-        Object.Destroy(coinSlotMock);
+        UnityEngine.Object.Destroy(coinSlotMock);
 
         return this;
     }
