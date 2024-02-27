@@ -51,7 +51,7 @@ public static class CabinetMaterials {
         materialList.Add("plastic", Plastic);
         materialList.Add("dirty glass", DirtyGlass);
         materialList.Add("layer glass", GlassLayer);
-        materialList.Add("clean glass", GlassLayer);
+        materialList.Add("clean glass", CleanGlass);
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
 
