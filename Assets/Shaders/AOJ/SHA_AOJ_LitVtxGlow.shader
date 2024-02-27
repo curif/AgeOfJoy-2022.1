@@ -2033,7 +2033,7 @@ Node;AmplifyShaderEditor.RangedFloatNode;39;1626.334,375.666;Inherit;False;Prope
 Node;AmplifyShaderEditor.RangedFloatNode;40;1748.334,500.3327;Inherit;False;Property;_Smoothness;Smoothness;6;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;41;1292.018,101.4697;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
 Node;AmplifyShaderEditor.LerpOp;45;1252.052,325.2939;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.ColorNode;42;902.1187,177.385;Inherit;False;Property;_EmissiveTint;EmissiveTint;7;0;Create;True;0;0;0;False;0;False;1,1,1,0;0.259434,0.6328662,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;42;902.1187,177.385;Inherit;False;Property;_EmissiveTint;EmissiveTint;7;0;Create;True;0;0;0;False;0;False;1,1,1,0;0.2594339,0.6328662,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;46;933.8756,368.2907;Inherit;False;Property;_EmissiveTintFresnel;EmissiveTintFresnel;8;0;Create;True;0;0;0;False;0;False;1,1,1,0;0.5330188,1,0.9395671,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.FresnelNode;47;1094.397,558.4325;Inherit;False;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.StaticSwitch;44;1540.121,-135.3106;Inherit;False;Property;_useEmissiveTint;useEmissiveTint;9;0;Create;True;0;0;0;False;0;False;0;0;1;True;;Toggle;2;Key0;Key1;Create;True;True;All;9;1;COLOR;0,0,0,0;False;0;COLOR;0,0,0,0;False;2;COLOR;0,0,0,0;False;3;COLOR;0,0,0,0;False;4;COLOR;0,0,0,0;False;5;COLOR;0,0,0,0;False;6;COLOR;0,0,0,0;False;7;COLOR;0,0,0,0;False;8;COLOR;0,0,0,0;False;1;COLOR;0
@@ -2077,4 +2077,4 @@ WireConnection;10;2;44;0
 WireConnection;10;4;39;0
 WireConnection;10;5;40;0
 ASEEND*/
-//CHKSM=8928700E77CECE466BA21BA34B4046862379303F
+//CHKSM=EC0106764701BF8D41AEA8B0E33D45953A3587B9
