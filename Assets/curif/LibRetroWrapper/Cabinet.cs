@@ -315,105 +315,163 @@ public class Cabinet
             return Parts(part);
         }
     }
-    public GameObject Parts(string part)
+    public GameObject Parts(string partName)
     {
-        Transform childTransform = gameObject.transform.Find(part);
-        //ConfigManager.WriteConsole($"Part: {childTransform}");
+        Transform childTransform = gameObject.transform.Find(partName);
         if (childTransform == null)
-            return null;
+            throw new Exception($"Unknown cabinet part: {partName}");
         return childTransform.gameObject;
+    }
+    public GameObject Parts(int partNum)
+    {
+        Transform childTransform = gameObject.transform.GetChild(partNum);
+        if (childTransform == null)
+            throw new Exception($"Unknown cabinet part: #{partNum}");
+        return childTransform.gameObject;
+    }
+    public Transform PartsTransform(string partName)
+    {
+        Transform childTransform = gameObject.transform.Find(partName);
+        if (childTransform == null)
+            throw new Exception($"Unknown cabinet part: {partName}");
+        return childTransform;
+    }
+    public Transform PartsTransform(int partNum)
+    {
+        Transform childTransform = gameObject.transform.GetChild(partNum);
+        if (childTransform == null)
+            throw new Exception($"Unknown cabinet part: #{partNum}");
+        return childTransform;
+    }
+    public string PartsName(int partNum)
+    {
+        Transform t = PartsTransform(partNum);
+        return t.name;
+    }
+    public int PartsPosition(string partName)
+    {
+        Transform t = PartsTransform(partName);
+        return t.GetSiblingIndex();
     }
     public bool PartsExist(string part)
     {
         return gameObject.transform.Find(part) != null;
     }
-
-    public Cabinet ScalePart(string cabinetPart, float percentage)
+    public bool PartsExist(int partNum)
     {
-        if (!PartsExist(cabinetPart))
-            return this;
+        return partNum >= 0 && gameObject.transform.childCount < partNum + 1;
+    }
+    public int PartsCount()
+    {
+        return gameObject.transform.childCount;
+    }
 
-        float scale = percentage / 100f;
-        Parts(cabinetPart).transform.localScale *= scale;
+    public Cabinet ScalePart(string partName, float percentage)
+    {
+        Scale(Parts(partName), percentage);
         return this;
     }
-    public Cabinet RotatePart(string cabinetPart, float angleX, float angleY, float angleZ)
+    public Cabinet ScalePart(int partNum, float percentage)
     {
-        if (!PartsExist(cabinetPart))
-            return this;
+        Scale(Parts(partNum), percentage);
+        return this;
+    }
 
-        Parts(cabinetPart).transform.Rotate(angleX, angleY, angleZ);
+    public Cabinet RotatePart(string partName, float angleX, float angleY, float angleZ)
+    {
+        Parts(partName).transform.Rotate(angleX, angleY, angleZ);
         return this;
     }
     public Cabinet EnablePart(string cabinetPart, bool enabled)
     {
-        if (!PartsExist(cabinetPart))
-            return this;
-
         Parts(cabinetPart).SetActive(enabled);
-
         return this;
     }
-    public Cabinet SetColorPart(string cabinetPart, Color color)
+    public Cabinet EnablePart(int cabinetNum, bool enabled)
     {
-        if (!PartsExist(cabinetPart))
-            return this;
-
-        Renderer r = Parts(cabinetPart).GetComponent<Renderer>();
-        if (r == null)
-            return this;
-
-        Material mat = r.material;
-        if (mat == null)
-            return this;
-        
-        mat.color = color;
+        Parts(cabinetNum).SetActive(enabled);
         return this;
     }
-
+    public Cabinet SetColorPart(string partName, Color color)
+    {
+        SetColor(Parts(partName), color);
+        return this;
+    }
+    public Cabinet SetColorPart(int partNum, Color color)
+    {
+        SetColor(Parts(partNum), color);
+        return this;
+    }
+    public int GetTransparencyPart(string cabinetPart)
+    {
+        return GetTransparency(Parts(cabinetPart));
+    }
+    public int GetTransparencyPart(int partNum)
+    {
+        return GetTransparency(Parts(partNum));
+    }
+    public Cabinet SetTransparencyPart(int partNum, int transpPercent)
+    {
+        SetTransparency(Parts(partNum), ref transpPercent);
+        return this;
+    }
     public Cabinet SetTransparencyPart(string cabinetPart, int transpPercent)
     {
-        if (!PartsExist(cabinetPart))
-            return this;
-
-        Renderer r = Parts(cabinetPart).GetComponent<Renderer>();
-        if (r == null)
-            return this;
-    
-        Material mat = r.material;
-        if (mat == null)
-            return this;
-
-        if (transpPercent < 0)
-            transpPercent = 0;
-        if (transpPercent > 100)
-            transpPercent = 100;
-
-        Color currentColor = mat.color;
-
-        // Convert percentage to alpha value (0-1)
-        float alpha = (100 - transpPercent) / 100f;
-
-        currentColor.a = alpha;
-        mat.color = currentColor;
-
+        SetTransparency(Parts(cabinetPart), ref transpPercent);
+        return this;
+    }
+    public Cabinet SetEmissionEnabledPart(int partNum, bool enabled)
+    {
+        SetEmissionEnabled(Parts(partNum), enabled);
+        return this;
+    }
+    public Cabinet SetEmissionEnabledPart(string cabinetPart, bool enabled)
+    {
+        SetEmissionEnabled(Parts(cabinetPart), enabled);
+        return this;
+    }
+    public Cabinet SetEmissionColorPart(int partNum, Color emissionColor)
+    {
+        SetEmissionColor(Parts(partNum), emissionColor);
+        return this;
+    }
+    public Cabinet SetEmissionColorPart(string cabinetPart, Color emissionColor)
+    {
+        SetEmissionColor(Parts(cabinetPart), emissionColor);
         return this;
     }
 
+
     //change a material, or create a new one and change it.
-    public Cabinet SetTextureTo(string part, string textureFile, Material mat,
+    public Cabinet SetTextureTo(string partName, string textureFile, Material mat,
                                     bool invertX = false, bool invertY = false)
     {
+        if (!string.IsNullOrEmpty(textureFile))
+            SetTextureFromFile(Parts(partName), textureFile, mat, invertX, invertY);
+        return this;
+    }
+    public Cabinet SetTextureTo(int partNum, string textureFile, Material mat,
+                                    bool invertX = false, bool invertY = false)
+    {
+        if (!string.IsNullOrEmpty(textureFile))
+            SetTextureFromFile(Parts(partNum), textureFile, mat, invertX, invertY);
+        return this;
+    }
 
-        if (!PartsExist(part))
-            return this;
 
-        if (string.IsNullOrEmpty(textureFile))
-            return this;
 
-        Renderer r = Parts(part).GetComponent<Renderer>();
+
+    public static void Scale(GameObject go, float percentage)
+    {
+        float scale = percentage / 100f;
+        go.transform.localScale *= scale;
+    }
+    public static void SetTextureFromFile(GameObject go, string textureFile,
+                                            Material mat, bool invertX, bool invertY)
+    {
+        Renderer r = go.GetComponent<Renderer>();
         if (r == null)
-            return this;
+            return;
 
         Material m;
         if (mat == null)
@@ -421,7 +479,7 @@ public class Cabinet
         else
         {
             m = new Material(mat);
-            m.name = $"{part}_from_{mat.name}";
+            m.name = $"{go.name}_from_{mat.name}";
         }
 
         //tiling
@@ -436,15 +494,118 @@ public class Cabinet
         Texture2D t = LoadTexture(textureFile);
         if (t == null)
         {
-            ConfigManager.WriteConsoleError($"Cabinet {Name} texture error {textureFile}");
-            return this;
+            ConfigManager.WriteConsoleError($"Cabinet {go.name} texture error {textureFile}");
+            return;
         }
         else
             m.SetTexture("_MainTex", t);
 
         r.material = m;
+    }
 
-        return this;
+    public static void SetColor(GameObject go, Color color)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return;
+
+        Material mat = r.material;
+        if (mat == null)
+            return;
+
+        mat.color = color;
+    }
+
+    public static void SetEmissionColor(GameObject go, Color emissionColor)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return;
+
+        Material m = r.material;
+        if (m == null)
+            return;
+
+        // Set emission color
+        m.SetColor("_EmissionColor", emissionColor);
+        Texture mainTexture = r.sharedMaterial.mainTexture;
+        if (mainTexture != null)
+            // Set the emission map to be the same as the main texture
+            r.sharedMaterial.SetTexture("_EmissionMap", mainTexture);
+
+        r.material = m;
+    }
+
+    public static void SetEmissionEnabled(GameObject go, bool enabled)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return;
+
+        Material m = r.material;
+        if (m == null)
+            return;
+
+        // Set emission enabled
+        m.EnableKeyword("_EMISSION"); // Enable emission if true
+        if (enabled)
+        {
+            Texture mainTexture = r.sharedMaterial.mainTexture;
+            if (mainTexture != null)
+                // Set the emission map to be the same as the main texture
+                r.sharedMaterial.SetTexture("_EmissionMap", mainTexture);
+        }
+        else
+            m.DisableKeyword("_EMISSION"); // Disable emission if false
+
+        r.material = m;
+    }
+
+    public static int GetTransparency(GameObject go)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return 0; // Default to 0% transparency if no Renderer found
+
+        Material mat = r.material;
+        if (mat == null)
+            return 0; // Default to 0% transparency if no Material found
+
+        return (int)(mat.color.a * 100f);
+    }
+
+    public static void SetTransparency(GameObject go, ref int transpPercent)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return;
+
+        Material mat = r.material;
+        if (mat == null)
+            return;
+
+        if (transpPercent < 0)
+            transpPercent = 0;
+        if (transpPercent > 100)
+            transpPercent = 100;
+
+        Color currentColor = mat.color;
+
+        float alpha = (float)transpPercent / 100f;
+
+        currentColor.a = alpha;
+        mat.color = currentColor;
+    }
+
+    public static void SetMaterialFromMaterial(GameObject go, Material mat)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return;
+
+        Material m = new Material(mat);
+        m.name = $"{go.name}_from_{mat.name}";
+        r.material = mat;
     }
 
     public Cabinet SetMarquee(string part, string texturePath, Material marqueeMaterial, bool invertX = false, bool invertY = false)
@@ -489,26 +650,22 @@ public class Cabinet
     //set a new created material from another one.
     public Cabinet SetMaterialFrom(string part, Material mat)
     {
-        if (!PartsExist(part))
-            return this;
-        Renderer r = Parts(part).GetComponent<Renderer>();
-        if (r == null)
-            return this;
-
-        Material m = new Material(mat);
-        m.name = $"{part}_from_{mat.name}";
-        r.material = mat;
-
+        return SetMaterialFrom(PartsPosition(part), mat);
+    }
+    public Cabinet SetMaterialFrom(int partNum, Material mat)
+    {
+        SetMaterialFromMaterial(Parts(partNum), mat);
         return this;
     }
 
     //set the material to a component. Don't create new.
-    public Cabinet SetMaterial(string part, Material mat)
+    public Cabinet SetMaterial(string partName, Material mat)
     {
-        if (!PartsExist(part))
-            throw new System.Exception($"Unknown part {part} to set material in cabinet {Name}");
-
-        Renderer r = Parts(part).GetComponent<Renderer>();
+        return SetMaterial(PartsPosition(partName), mat);
+    }
+    public Cabinet SetMaterial(int partNum, Material mat)
+    {
+        Renderer r = Parts(partNum).GetComponent<Renderer>();
         if (r != null)
             r.material = mat;
 
@@ -571,6 +728,7 @@ public class Cabinet
         libretroScreenController.GameInvertY = invertY;
         libretroScreenController.Gamma = gamma;
         libretroScreenController.Brightness = brightness;
+        libretroScreenController.cabinet = this;
 
         libretroScreenController.ShaderName = shaderName;
         libretroScreenController.ShaderConfig = shaderConfig;

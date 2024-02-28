@@ -229,6 +229,12 @@ public class CabinetInformation
         [YamlMember(Alias = "illumination-type", ApplyNamingConventions = false)]
         public string illuminationType = "one-lamp";
     }
+
+    public class Emission
+    {
+        public bool emissive = false;
+        public RGBColor color;
+    }
     public class Part
     {
         public string name;
@@ -236,6 +242,7 @@ public class CabinetInformation
         public Art art;
         public RGBColor color;
         public int transparency = 0;
+        public Emission emission;
         public bool visible = true;
         public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker" };
         public string type = Types[0];

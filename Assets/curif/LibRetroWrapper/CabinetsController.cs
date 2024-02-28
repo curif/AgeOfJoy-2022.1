@@ -426,6 +426,7 @@ public class CabinetsController : MonoBehaviour
         cabReplaceComp.AgentPlayerPositionComponentsToLoad = cc.AgentPlayerPositionComponentsToLoad;
         cabReplaceComp.outOfOrderCabinet = cci.GameObjectOutOfOrder;
         cabReplaceComp.backgroundSoundController = backgroundSoundController;
+        cabReplaceComp.cabinet = cab;
         cabReplaceComp.game = cc.game;
         cci.CabinetReplace = cabReplaceComp;
 

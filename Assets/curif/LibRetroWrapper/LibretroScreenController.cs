@@ -88,6 +88,7 @@ public class LibretroScreenController : MonoBehaviour
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
     public LightGunInformation lightGunInformation;
+    public Cabinet cabinet;
 
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
@@ -100,7 +101,7 @@ public class LibretroScreenController : MonoBehaviour
     private Camera cameraComponentCenterEye;
     private Renderer display;
     private DateTime timeToExit = DateTime.MinValue;
-    private GameObject cabinet;
+    // private GameObject cabinet;
     private CabinetReplace cabinetReplace;
     private LightGunTarget lightGunTarget;
 
@@ -117,7 +118,7 @@ public class LibretroScreenController : MonoBehaviour
 
     private CoinSlotController getCoinSlotController()
     {
-        Transform coinslot = cabinet.transform.Find("coin-slot-added");
+        Transform coinslot = cabinet.gameObject.transform.Find("coin-slot-added");
 
         if (!coinslot)
             return null;
@@ -136,7 +137,7 @@ public class LibretroScreenController : MonoBehaviour
         LibretroMameCore.WriteConsole($"[LibretroScreenController.Start] {gameObject.name}");
 
         display = GetComponent<Renderer>();
-        cabinet = gameObject.transform.parent.gameObject;
+        // cabinet = gameObject.transform.parent.gameObject;
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
@@ -228,7 +229,7 @@ public class LibretroScreenController : MonoBehaviour
 #endif
 
                   //controllers
-                  cabinetReplace = cabinet.GetComponent<CabinetReplace>();
+                  cabinetReplace = cabinet.gameObject.GetComponent<CabinetReplace>();
                   ControlMapConfiguration controlConf;
                   if (CabinetControlMapConfig != null)
                   {
