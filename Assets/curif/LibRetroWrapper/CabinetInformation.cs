@@ -54,6 +54,8 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
+    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+"};
+
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
     public List<MameFile> MameFiles { get; set; }
@@ -481,6 +483,9 @@ public class CabinetInformation
         exceptions.Add($"Coin Slot",
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
         exceptions.Add($"CRT", crt.validate(crtTypes));
+        exceptions.Add($"CORE", Cores.Contains(core)? null : 
+                    new System.ArgumentException($"Unknown core: {core}"));
+
         if (lightGunInformation != null && lightGunInformation.active)
         {
             exceptions.Add($"lightgun", lightGunInformation.Validate(pathBase));
