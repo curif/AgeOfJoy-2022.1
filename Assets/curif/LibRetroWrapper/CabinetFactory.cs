@@ -93,7 +93,8 @@ public static class CabinetFactory
         return new Cabinet(cabinetName, position, rotation, parent, go: model);
     }
 
-    public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo, CabinetInformation.Part p)
+    public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo,
+                                            CabinetInformation.Part p)
     {
         switch (p.type)
         {
@@ -135,24 +136,47 @@ public static class CabinetFactory
 
             default:
                 {
-                    if (p.material != null)
-                        cabinet.SetMaterial(p.name, CabinetMaterials.fromName(p.material));
-                    else if (p.art != null)
-                        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), CabinetMaterials.Base, invertX: p.art.invertx, invertY: p.art.inverty);
-                    else if (p.color != null)
-                    {
-                        Material matColor = new Material(CabinetMaterials.Base);
-                        matColor.SetColor("_Color", p.color.getColor());
-                        cabinet.SetMaterial(p.name, matColor);
-                    }
+                    if (p.material == null &&
+                        p.art == null &&
+                        p.color == null &&
+                        p.emission == null &&
+                        p.transparency == 0)
+                        cabinet.SetMaterialFrom(p.name, CabinetMaterials.Black);
                     else
-                        cabinet.SetMaterial(p.name, CabinetMaterials.Black);
+                    {
+                        int pos = cabinet.PartsPosition(p.name); //performance
+                        ConfigManager.WriteConsole($"[CabinetFactory.skinCabinetPart] #{pos} {p.name}: type: {p.type} material: {p.material} color: {p.color} transp:{p.transparency} emission: {p.emission}");
+                        if (p.material != null)
+                            cabinet.SetMaterialFrom(pos, CabinetMaterials.fromName(p.material));
+                        else
+                            cabinet.SetMaterialFrom(pos, CabinetMaterials.Base);
+
+                        if (p.art != null)
+                            cabinet.SetTextureTo(pos, cbinfo.getPath(p.art.file), 
+                                null, invertX: p.art.invertx, invertY: p.art.inverty);
+
+                        if (p.color != null)
+                            cabinet.SetColorPart(pos, p.color.getColor());
+
+                        if (p.transparency != 0)
+                            cabinet.SetTransparencyPart(pos, p.transparency);
+                        
+                        if (p.emission != null)
+                        {
+                            cabinet.SetEmissionEnabledPart(pos, p.emission.emissive);
+                            if (p.emission.color != null)
+                                cabinet.SetEmissionColorPart(pos, p.emission.color.getColor());
+                        }
+                    }
                 }
                 break;
         }
         // Part scale and rotation
         cabinet.ScalePart(p.name, p.geometry.scalepercentage);
         cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
+
+        //enable / disable
+        cabinet.EnablePart(p.name, p.visible);
 
         return cabinet;
     }
@@ -242,7 +266,8 @@ public static class CabinetFactory
                     cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
                     cbinfo.ControlMap,
                     cbinfo.lightGunInformation,
-                    cbinfo.agebasic, backgroundSoundController);
+                    cbinfo.agebasic, backgroundSoundController,
+                    cbinfo.core);
 
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
         }

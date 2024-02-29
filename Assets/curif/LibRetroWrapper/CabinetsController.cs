@@ -415,8 +415,14 @@ public class CabinetsController : MonoBehaviour
             ConfigManager.WriteConsole($"[CabinetController] {cc.game.CabInfo.name} texture parts");
             foreach (CabinetInformation.Part part in cc.game.CabInfo.Parts)
             {
-                // yield return new WaitForSeconds(0.01f);
-                CabinetFactory.skinCabinetPart(cab, cc.game.CabInfo, part);
+                try
+                {
+                    CabinetFactory.skinCabinetPart(cab, cc.game.CabInfo, part);
+                }
+                catch (System.Exception ex)
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetController] skinCabinetPart {cc.game.CabInfo.name}", ex);
+                }
             }
         }
 
@@ -426,6 +432,7 @@ public class CabinetsController : MonoBehaviour
         cabReplaceComp.AgentPlayerPositionComponentsToLoad = cc.AgentPlayerPositionComponentsToLoad;
         cabReplaceComp.outOfOrderCabinet = cci.GameObjectOutOfOrder;
         cabReplaceComp.backgroundSoundController = backgroundSoundController;
+        cabReplaceComp.cabinet = cab;
         cabReplaceComp.game = cc.game;
         cci.CabinetReplace = cabReplaceComp;
 

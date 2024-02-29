@@ -161,8 +161,12 @@ public class ConfigInformation
         public int? moveSpeed;
         [YamlMember(Alias = "turn-speed", ApplyNamingConventions = false)]
         public int? turnSpeed;
-    }
 
+        [YamlMember(Alias = "snap-turn-amout", ApplyNamingConventions = false)]
+        public int? SnapTurnAmount;
+        [YamlMember(Alias = "snap-turn-active", ApplyNamingConventions = false)]
+        public bool? SnapTurnActive;
+    }
 
     //global audio config
     public class Audio : ConfigInformationBase

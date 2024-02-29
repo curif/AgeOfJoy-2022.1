@@ -137,10 +137,10 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedNumber(val, " part number");
 
         int partNum = (int)val.GetNumber();
-        if (config.Cabinet.transform.childCount < partNum + 1)
+        if (config.Cabinet.gameObject.transform.childCount < partNum + 1)
             throw new Exception("Invalid cabinet part number.");
 
-        Transform objectToLookAt = config.Cabinet.transform.GetChild(partNum);
+        Transform objectToLookAt = config.Cabinet.gameObject.transform.GetChild(partNum);
 
         // Calculate the direction from the player's head to the object
         Vector3 directionToLookAt = objectToLookAt.transform.position - config.PlayerOrigin.Origin.transform.position;

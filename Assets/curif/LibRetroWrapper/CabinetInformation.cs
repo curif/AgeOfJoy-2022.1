@@ -53,6 +53,9 @@ public class CabinetInformation
     public Video video = new Video();
     public string md5sum;
     public string space = "1x1x2";
+    public string core = "mame2003+";
+    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+"};
+
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
     public List<MameFile> MameFiles { get; set; }
@@ -229,12 +232,21 @@ public class CabinetInformation
         [YamlMember(Alias = "illumination-type", ApplyNamingConventions = false)]
         public string illuminationType = "one-lamp";
     }
+
+    public class Emission
+    {
+        public bool emissive = false;
+        public RGBColor color;
+    }
     public class Part
     {
         public string name;
         public string material;
         public Art art;
         public RGBColor color;
+        public int transparency = 0;
+        public Emission emission;
+        public bool visible = true;
         public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker" };
         public string type = Types[0];
         public Geometry geometry = new Geometry();
@@ -287,15 +299,15 @@ public class CabinetInformation
                 return new System.ArgumentException($"Erroneous Shader {shader}");
             }
 
-            if (!LibretroMameCore.IsGammaValid(gamma))
-            {
-                return new System.ArgumentException($"Erroneous Gamma {gamma}");
-            }
+            // if (!LibretroMameCore.IsGammaValid(gamma))
+            // {
+            //     return new System.ArgumentException($"Erroneous Gamma {gamma}");
+            // }
 
-            if (!LibretroMameCore.IsBrightnessValid(brightness))
-            {
-                return new System.ArgumentException($"Erroneous Brightness {brightness}");
-            }
+            // if (!LibretroMameCore.IsBrightnessValid(brightness))
+            // {
+            //     return new System.ArgumentException($"Erroneous Brightness {brightness}");
+            // }
 
             return null;
         }
@@ -438,6 +450,11 @@ public class CabinetInformation
                     !string.IsNullOrEmpty(p.material) && p.art != null
                         ? new System.Exception("Can't assign a material and ART to the same part")
                         : null);
+                if (p.transparency != 0)
+                    exceptions.Add($"Part #{number}: {p.name} TRANSPARENCY",
+                        p.transparency < 0 || p.transparency > 100? 
+                            new System.Exception("Transparency 0 to 100 only.")
+                            : null);
 
                 number++;
             }
@@ -466,6 +483,9 @@ public class CabinetInformation
         exceptions.Add($"Coin Slot",
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
         exceptions.Add($"CRT", crt.validate(crtTypes));
+        exceptions.Add($"CORE", Cores.Contains(core)? null : 
+                    new System.ArgumentException($"Unknown core: {core}"));
+
         if (lightGunInformation != null && lightGunInformation.active)
         {
             exceptions.Add($"lightgun", lightGunInformation.Validate(pathBase));

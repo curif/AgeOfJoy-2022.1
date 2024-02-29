@@ -177,7 +177,7 @@ public class basicAGE : MonoBehaviour
         }
     }
 
-    public void SetCabinet(GameObject cabinet)
+    public void SetCabinet(Cabinet cabinet)
     {
         configCommands.Cabinet = cabinet;
     }

@@ -133,6 +133,11 @@ public class BasicValue
         return number;
     }
 
+    public int GetInt()
+    {
+        return (int)number;
+    }
+
     public string GetString()
     {
         return str;

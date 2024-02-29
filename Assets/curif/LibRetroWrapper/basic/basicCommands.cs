@@ -114,7 +114,10 @@ public static class Commands
         functions["CABPARTSSETCOORDINATE"] = typeof(CommandFunctionCABPARTSSETCOORDINATE);
         functions["CABPARTSSETROTATION"] = typeof(CommandFunctionCABPARTSSETROTATION);
         functions["CABPARTSGETROTATION"] = typeof(CommandFunctionCABPARTSGETROTATION);
-        functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
+        functions["CABPARTSGETTRANSPARENCY"] = typeof(CommandFunctionCABPARTSGETTRANSPARENCY);
+        functions["CABPARTSSETTRANSPARENCY"] = typeof(CommandFunctionCABPARTSSETTRANSPARENCY);
+        functions["CABPARTSEMISSION"] = typeof(CommandFunctionCABPARTSEMISSION);
+        functions["CABPARTSEMISSIONCOLOR"] = typeof(CommandFunctionCABPARTSEMISSIONCOLOR);
 
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);

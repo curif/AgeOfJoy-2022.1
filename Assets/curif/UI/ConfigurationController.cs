@@ -115,7 +115,7 @@ public class ConfigurationController : MonoBehaviour
 {
     public ScreenGenerator scr;
     public CoinSlotController CoinSlot;
-    
+
     [SerializeField]
     public LibretroControlMap libretroControlMap;
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
@@ -153,9 +153,9 @@ public class ConfigurationController : MonoBehaviour
 
     //locomotion
     private GenericWidgetContainer locomotionContainer;
-    private GenericBool locomotionTeleportOn;
+    private GenericBool locomotionTeleportOn, locomotionSnapTurnOn;
     private GenericOptionsInteger locomotionSpeed;
-    private GenericOptionsInteger locomotionTurnSpeed;
+    private GenericOptionsInteger locomotionTurnSpeed, locomotionSnapTurnAmount;
 
     //AGEBasic
     private GenericWidgetContainer AGEBasicContainer;
@@ -906,21 +906,6 @@ public class ConfigurationController : MonoBehaviour
         scr.Print(2, 24, "b to select");
     }
 
-    private void LocomotionUpdateConfigurationFromWidgets()
-    {
-        if (!isGlobalConfigurationWidget.value)
-            return;
-
-        ConfigInformation config = configHelper.getConfigInformation(true);
-        config.locomotion = new();
-        config.locomotion.moveSpeed = locomotionSpeed.GetSelectedOption();
-        config.locomotion.turnSpeed = locomotionTurnSpeed.GetSelectedOption();
-        config.locomotion.teleportEnabled = locomotionTeleportOn.value;
-        configHelper.Save(true, config);
-        //after save the LocomotionConfigController (in introGallery configuration)
-        //should detect the file change and configure the controls via ChangeControls component.
-    }
-
     private void SetAGEBasicWidgets()
     {
         if (AGEBasic == null)
@@ -1039,15 +1024,20 @@ public class ConfigurationController : MonoBehaviour
 
         locomotionTurnSpeed = new GenericOptionsInteger(scr, "locomotionTurnSpeed",
                                           "Turn Speed:", 10, 100, 4, 7);
+        locomotionSnapTurnAmount = new GenericOptionsInteger(scr, "locomotionSnapTurnAmount",
+                                          "Snap Turn Amount:", 10, 180, 4, 7);
         locomotionTeleportOn = new GenericBool(scr, "teleport", "teleport on/off: ", false, 4, 8);
-
+        locomotionSnapTurnOn = new GenericBool(scr, "snap", "snap turn on/off: ", false, 4, 8);
         locomotionContainer = new(scr, "locmotionContainer");
         locomotionContainer.Add(new GenericWindow(scr, 2, 4, "locomotionwin", 37, 12, " locomotion "))
-                            .Add(new GenericLabel(scr, "descrip1", "in units per second:", 4, 6))
+                            .Add(new GenericLabel(scr, "uxs", "in units per second:", 4, 6))
                             .Add(locomotionSpeed, 6, locomotionContainer.lastYAdded + 1)
-                            .Add(new GenericLabel(scr, "descrip2", "degrees/second to rotate:", 4, locomotionContainer.lastYAdded + 1))
+                            .Add(new GenericLabel(scr, "degrotate", "degrees/second to rotate:", 4, locomotionContainer.lastYAdded + 1))
                             .Add(locomotionTurnSpeed, 6, locomotionContainer.lastYAdded + 1)
-                            .Add(new GenericLabel(scr, "descrip3", "activate/deactivate teleportation:", 4, locomotionContainer.lastYAdded + 1))
+                            .Add(new GenericLabel(scr, "sanp", "snap turn:", 4, locomotionContainer.lastYAdded + 1))
+                            .Add(locomotionSnapTurnOn, 6, locomotionContainer.lastYAdded + 1)
+                            .Add(locomotionSnapTurnAmount, 6, locomotionContainer.lastYAdded + 1)
+                            .Add(new GenericLabel(scr, "teleport", "activate/deactivate teleportation:", 4, locomotionContainer.lastYAdded + 1))
                             .Add(locomotionTeleportOn, 6, locomotionContainer.lastYAdded + 1)
                             .Add(new GenericButton(scr, "save", "save", 4, locomotionContainer.lastYAdded + 2, true))
                             .Add(new GenericButton(scr, "exit", "exit", 4, locomotionContainer.lastYAdded + 1, true));
@@ -1066,6 +1056,26 @@ public class ConfigurationController : MonoBehaviour
         locomotionSpeed.SetCurrent((int)changeControls.moveSpeed);
         locomotionTurnSpeed.SetCurrent((int)changeControls.turnSpeed);
         locomotionTeleportOn.value = changeControls.teleportationEnabled;
+        locomotionSnapTurnOn.value = changeControls.SnapTurnActive;
+        locomotionSnapTurnAmount.SetCurrent((int)changeControls.SnapTurnAmount);
+    }
+
+
+    private void LocomotionUpdateConfigurationFromWidgets()
+    {
+        if (!isGlobalConfigurationWidget.value)
+            return;
+
+        ConfigInformation config = configHelper.getConfigInformation(true);
+        config.locomotion = new();
+        config.locomotion.moveSpeed = locomotionSpeed.GetSelectedOption();
+        config.locomotion.turnSpeed = locomotionTurnSpeed.GetSelectedOption();
+        config.locomotion.SnapTurnActive = locomotionSnapTurnOn.value;
+        config.locomotion.SnapTurnAmount = locomotionSnapTurnAmount.GetSelectedOption();
+        config.locomotion.teleportEnabled = locomotionTeleportOn.value;
+        configHelper.Save(true, config);
+        //after save the LocomotionConfigController (in introGallery configuration)
+        //should detect the file change and configure the controls via ChangeControls component.
     }
 
     private void PlayerWindowDraw()
@@ -1133,7 +1143,7 @@ public class ConfigurationController : MonoBehaviour
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
-        
+
         setupActionMap();
         // Initialize the dictionary with default values (false for all keys)
         inputDictionary.Add("up", false);
@@ -1225,7 +1235,7 @@ public class ConfigurationController : MonoBehaviour
                     yield return new WaitForSeconds(1f / 2f);
 
                 ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] ended. Error: [{AGEBasic.LastRuntimeException}]");
-                
+
                 if (AGEBasic.ExceptionOccurred())
                 {
                     ConfigManager.WriteConsoleException($"[ConfigurationController] [{ageBasicInformation.afterLoad}] runtime", AGEBasic.LastRuntimeException);
@@ -1727,6 +1737,10 @@ public class ConfigurationController : MonoBehaviour
                         else if (w.name == "teleport")
                         {
                             locomotionTeleportOn.Action();
+                        }
+                        else if (w.name == "snap")
+                        {
+                            locomotionSnapTurnOn.Action();
                         }
                         else if (w.name == "save")
                         {

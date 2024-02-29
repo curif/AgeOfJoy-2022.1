@@ -12,7 +12,7 @@ public class LocomotionConfigController : MonoBehaviour
 
     void Start()
     {
-        OnEnable(); 
+        OnEnable();
         change();
     }
 
@@ -38,6 +38,12 @@ public class LocomotionConfigController : MonoBehaviour
         {
             changeControls.moveSpeed = (float)config.locomotion.moveSpeed;
         }
+
+        if (config.locomotion?.SnapTurnActive != null)
+            changeControls.SnapTurnActive = (bool)config.locomotion.SnapTurnActive;
+
+        if (config.locomotion?.SnapTurnAmount != null)
+            changeControls.SnapTurnAmount = (float)config.locomotion.SnapTurnAmount;
 
         ConfigManager.WriteConsole("[LocomotionConfigController.change] applied locomotion configuration");
     }

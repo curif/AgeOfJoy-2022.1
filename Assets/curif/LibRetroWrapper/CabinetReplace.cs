@@ -14,6 +14,7 @@ public class CabinetReplace : MonoBehaviour
 {
     public CabinetPosition game;
     public GameObject outOfOrderCabinet;
+    public Cabinet cabinet;
 
     public BackgroundSoundController backgroundSoundController;
 
