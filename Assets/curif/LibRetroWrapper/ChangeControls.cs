@@ -20,8 +20,9 @@ public class ChangeControls : MonoBehaviour
 
     public ActionBasedContinuousTurnProvider actionBasedContinuousTurnProvider;
     public ActionBasedContinuousMoveProvider actionBasedContinuousMoveProvider;
-
-    InputActionProperty rightHandTurnAction;
+    public ActionBasedSnapTurnProvider actionBasedSnapTurnProvider;
+    InputActionProperty rightHandSnapTurnAction;
+    InputActionProperty rightHandContinuousTurnAction;
     InputActionProperty leftHandMoveAction;
     bool reservedTeleportationEnabled;
     ActionBasedController controllerLeftHand;
@@ -57,7 +58,8 @@ public class ChangeControls : MonoBehaviour
         controllerLeftHand.model = leftHandModel.transform;
         controllerRightHand.model = rightHandModel.transform;
 
-        rightHandTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
+        rightHandContinuousTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
+        rightHandSnapTurnAction = actionBasedSnapTurnProvider.rightHandSnapTurnAction;
         leftHandMoveAction = actionBasedContinuousMoveProvider.leftHandMoveAction;
 
         leftJoystickModel.SetActive(false);
@@ -193,7 +195,8 @@ public class ChangeControls : MonoBehaviour
         if (playerIsPlaying)
         {
             reserveValues();
-            rightHandTurnAction.action.Disable();
+            rightHandContinuousTurnAction.action.Disable();
+            rightHandSnapTurnAction.action.Disable();
             leftHandMoveAction.action.Disable();
 
             beamController.enabled = false;
@@ -201,12 +204,35 @@ public class ChangeControls : MonoBehaviour
         else
         {
             restoreReservedValues();
-            rightHandTurnAction.action.Enable();
+            rightHandContinuousTurnAction.action.Enable();
+            rightHandSnapTurnAction.action.Enable();
             leftHandMoveAction.action.Enable();
         }
-
     }
 
+    public bool SnapTurnActive
+    {
+        get
+        {
+            return actionBasedSnapTurnProvider.enableTurnLeftRight;
+        }
+        set
+        {
+            actionBasedContinuousTurnProvider.enabled = !value;
+            actionBasedSnapTurnProvider.enableTurnLeftRight = value;
+        }
+    }
+    public float SnapTurnAmount
+    {
+        get
+        {
+            return actionBasedSnapTurnProvider.turnAmount;
+        }
+        set
+        {
+            actionBasedSnapTurnProvider.turnAmount = value;
+        }
+    }
     //units by second
     public float moveSpeed
     {
