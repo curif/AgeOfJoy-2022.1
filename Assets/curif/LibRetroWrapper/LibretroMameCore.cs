@@ -233,6 +233,7 @@ public static unsafe class LibretroMameCore
     public static AudioSource Speaker;
     public static CoinSlotController CoinSlot;
     public static int SecondsToWaitToFinishLoad = 2;
+    public static string Core;
 
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
@@ -291,19 +292,20 @@ public static unsafe class LibretroMameCore
                                                         string _save_directory,
                                                         string _system_directory,
                                                         string _sample_rate,
-                                                        inputStateHandler _input_state_handler_cb);
+                                                        inputStateHandler _input_state_handler_cb, 
+                                                        string core);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_init();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern double wrapper_environment_get_fps();
 
-    public static string[] GammaOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
-    public static string[] BrightnessOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
+    // public static string[] GammaOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
+    // public static string[] BrightnessOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
     public static readonly string DefaultGamma = "0.5"; //tested feb/2023
     public static readonly string DefaultBrightness = "1.0";
-    public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
-    public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
+    // public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
+    // public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
     //parameters gama and brightness
     public static string Gamma = DefaultGamma;
     public static string Brightness = DefaultBrightness;
@@ -424,7 +426,8 @@ public static unsafe class LibretroMameCore
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
-                                                new inputStateHandler(inputStateCB)
+                                                new inputStateHandler(inputStateCB), 
+                                                Core
                                                 );
         if (result != 0)
         {

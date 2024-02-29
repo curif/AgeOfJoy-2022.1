@@ -688,7 +688,8 @@ public class Cabinet
                              ControlMapConfiguration cabinetControlMap = null,
                              LightGunInformation lightGunInformation = null,
                              CabinetAGEBasicInformation agebasic = null,
-                             BackgroundSoundController backgroundSoundController = null
+                             BackgroundSoundController backgroundSoundController = null,
+                             string core = "mame2003+"
                           )
     {
 
@@ -729,6 +730,7 @@ public class Cabinet
         libretroScreenController.Gamma = gamma;
         libretroScreenController.Brightness = brightness;
         libretroScreenController.cabinet = this;
+        libretroScreenController.Core = core;
 
         libretroScreenController.ShaderName = shaderName;
         libretroScreenController.ShaderConfig = shaderConfig;

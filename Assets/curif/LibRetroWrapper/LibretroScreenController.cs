@@ -76,6 +76,9 @@ public class LibretroScreenController : MonoBehaviour
     public string Brightness = "1.0";
 
     [SerializeField]
+    public string Core = "mame2003+";
+
+    [SerializeField]
     public string ShaderName = "damage";
 
     [SerializeField]
@@ -223,6 +226,7 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Brightness = Brightness;
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
+                  LibretroMameCore.Core = Core;
 #if _serialize_
                   LibretroMameCore.EnableSaveState = EnableSaveState;
                   LibretroMameCore.StateFile = StateFile;

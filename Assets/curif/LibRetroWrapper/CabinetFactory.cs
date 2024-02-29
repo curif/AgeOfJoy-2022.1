@@ -266,7 +266,8 @@ public static class CabinetFactory
                     cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
                     cbinfo.ControlMap,
                     cbinfo.lightGunInformation,
-                    cbinfo.agebasic, backgroundSoundController);
+                    cbinfo.agebasic, backgroundSoundController,
+                    cbinfo.core);
 
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
         }

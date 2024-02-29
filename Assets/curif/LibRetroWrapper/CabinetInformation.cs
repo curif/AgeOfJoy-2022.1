@@ -53,6 +53,7 @@ public class CabinetInformation
     public Video video = new Video();
     public string md5sum;
     public string space = "1x1x2";
+    public string core = "mame2003+";
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
     public List<MameFile> MameFiles { get; set; }
@@ -296,15 +297,15 @@ public class CabinetInformation
                 return new System.ArgumentException($"Erroneous Shader {shader}");
             }
 
-            if (!LibretroMameCore.IsGammaValid(gamma))
-            {
-                return new System.ArgumentException($"Erroneous Gamma {gamma}");
-            }
+            // if (!LibretroMameCore.IsGammaValid(gamma))
+            // {
+            //     return new System.ArgumentException($"Erroneous Gamma {gamma}");
+            // }
 
-            if (!LibretroMameCore.IsBrightnessValid(brightness))
-            {
-                return new System.ArgumentException($"Erroneous Brightness {brightness}");
-            }
+            // if (!LibretroMameCore.IsBrightnessValid(brightness))
+            // {
+            //     return new System.ArgumentException($"Erroneous Brightness {brightness}");
+            // }
 
             return null;
         }
