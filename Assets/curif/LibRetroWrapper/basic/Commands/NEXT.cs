@@ -29,7 +29,7 @@ class CommandNEXT : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}]");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}]");
 
         if (!config.ForToNext.ContainsKey(var.Name))
             throw new Exception($"NEXT without FOR: {var.Name}");
@@ -53,7 +53,7 @@ class CommandNEXT : ICommandBase
         //it's faster than create a new instance and assign to the vars dic.
         actualValue.SetValue(actualValue.GetNumber() + step);
         // vars.SetValue(var, actualValue);
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name}: {actualValue.ToString()} to {endValue.ToString()} step {step}");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name}: {actualValue.ToString()} to {endValue.ToString()} step {step}");
 
         if (actualValue > endValue)
             config.ForToNext.Remove(var.Name);

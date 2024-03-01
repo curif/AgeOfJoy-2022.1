@@ -54,7 +54,7 @@ class CommandFunctionCONTROLRUMBLE : CommandFunctionExpressionListBase
         float amplitude = (float)vals[1].GetNumber();
         float duration = (float)vals[2].GetNumber();
 
-        ConfigManager.WriteConsole($"[CommandFunctionCONTROLRUMBLE] {mameControl} amp: {amplitude} dur: {duration}");
+        AGEBasicDebug.WriteConsole($"[CommandFunctionCONTROLRUMBLE] {mameControl} amp: {amplitude} dur: {duration}");
         if (config.ControlMap.SendHapticImpulse(mameControl, amplitude, duration))
             return BasicValue.True;
 

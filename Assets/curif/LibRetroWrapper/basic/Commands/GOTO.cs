@@ -22,7 +22,7 @@ class CommandGOTO : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
 
         BasicValue lineNumber = expr.Execute(vars);
         if (! lineNumber.IsNumber())
@@ -30,7 +30,7 @@ class CommandGOTO : ICommandBase
 
         config.JumpTo = (int) lineNumber.GetValueAsNumber(); 
 
-        // ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Jump to {config.JumpTo} ");
+        // AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] Jump to {config.JumpTo} ");
 
         return null;
     }

@@ -33,7 +33,7 @@ class CommandFunctionGETLIGHTS : CommandFunctionNoExpressionBase
         }
 
         string result = resultBuilder.ToString();
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Result: {result}");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] Result: {result}");
 
         return new BasicValue(result);
     }
@@ -108,7 +108,7 @@ class CommandFunctionSETLIGHTINTENSITY : CommandFunctionExpressionListBase
                 // Set the intensity using the LightController method
                 lightController.SetIntensity(intensity);
 
-                ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Intensity set for light '{lightName}' to {intensity}");
+                AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] Intensity set for light '{lightName}' to {intensity}");
 
                 return new BasicValue(intensity);
             }
@@ -142,7 +142,7 @@ class CommandFunctionLIGHTSCOUNT : CommandFunctionNoExpressionBase
             }
         }
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Counted {lightsCount} lights with LightController.");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] Counted {lightsCount} lights with LightController.");
 
         return new BasicValue((double)lightsCount);
     }
@@ -186,7 +186,7 @@ class CommandFunctionSETLIGHTCOLOR : CommandFunctionExpressionListBase
                 // Set the color using the LightController method
                 lightController.SetColor(new Color(r, g, b));
 
-                ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] Color set for light '{lightName}' to ({r}, {g}, {b})");
+                AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] Color set for light '{lightName}' to ({r}, {g}, {b})");
 
                 return new BasicValue(1); // Indicate success
             }

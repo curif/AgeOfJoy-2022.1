@@ -11,7 +11,7 @@ class CommandFunctionLEN : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         double ret = val.GetValueAsString().Length;
         return new BasicValue(ret);
@@ -26,7 +26,7 @@ class CommandFunctionUCASE : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         string ret = val.GetValueAsString().ToUpper();
         return new BasicValue(ret);
@@ -43,7 +43,7 @@ class CommandFunctionLCASE : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         string ret = val.GetValueAsString().ToLower();
         return new BasicValue(ret);
@@ -59,7 +59,7 @@ class CommandFunctionRTRIM : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         string ret = val.GetValueAsString().TrimEnd();
 
@@ -76,7 +76,7 @@ class CommandFunctionLTRIM : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         string ret = val.GetValueAsString().TrimStart();
 
@@ -92,7 +92,7 @@ class CommandFunctionTRIM : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         string ret = val.GetValueAsString().Trim();
 
@@ -113,7 +113,7 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
 
@@ -136,7 +136,7 @@ class CommandFunctionSTR : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         BasicValue ret = new BasicValue(val);
         ret.CastTo(BasicValue.BasicValueType.String);
@@ -157,7 +157,7 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
 
@@ -192,7 +192,7 @@ class CommandFunctionCOUNTMEMBERS : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
 

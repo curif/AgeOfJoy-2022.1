@@ -12,7 +12,7 @@ class CommandFunctionCABPARTSCOUNT : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -29,7 +29,7 @@ class CommandFunctionCABPARTSNAME : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -52,7 +52,7 @@ class CommandFunctionCABPARTSPOSITION : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -77,7 +77,7 @@ class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -108,7 +108,7 @@ class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -150,7 +150,7 @@ class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -203,7 +203,7 @@ class CommandFunctionCABINSERTCOIN : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.CoinSlot == null)
             throw new Exception("Cabinet hasn't a coin slot.");
 
@@ -226,7 +226,7 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -279,7 +279,7 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -324,7 +324,7 @@ class CommandFunctionCABPARTSGETTRANSPARENCY : CommandFunctionSingleExpressionBa
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -352,7 +352,7 @@ class CommandFunctionCABPARTSSETTRANSPARENCY : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -385,7 +385,7 @@ class CommandFunctionCABPARTSEMISSION : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -418,7 +418,7 @@ class CommandFunctionCABPARTSSETEMISSIONCOLOR : CommandFunctionExpressionListBas
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -456,7 +456,7 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 

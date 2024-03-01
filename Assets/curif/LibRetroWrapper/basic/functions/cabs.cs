@@ -11,7 +11,7 @@ class CommandFunctionCABROOMCOUNT : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.CabinetsController == null)
             return new BasicValue(0);
 
@@ -28,7 +28,7 @@ class CommandFunctionCABROOMGETNAME : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
 
         if (config?.CabinetsController == null)
             return new BasicValue("");
@@ -58,7 +58,7 @@ class CommandFunctionCABROOMREPLACE : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         if (config?.CabinetsController == null || config?.ConfigurationController == null)
             return new BasicValue(0);
