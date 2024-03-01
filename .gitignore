@@ -106,8 +106,11 @@ Assets/AmplifyShaderEditor.meta
 Assets/AmplifyShaderPack.meta
 ProjectSettings/ProjectVersion.txt
 
-# ligthing maps
-*Lightmap-*
-*LightingData*
-*OcclusionCullingData*
-*ReflectionProble*
+# Ignore Unity lightmap files
+Assets/*/Lightmap/*.exr
+Assets/*/Lightmap/*.png
+# Ignore Unity occlusion data files
+Assets/*/Occlusion/*.asset
+# Ignore Unity reflection probe files
+Assets/*/ReflectionProbes/*.exr
+Assets/*/ReflectionProbes/*.png
