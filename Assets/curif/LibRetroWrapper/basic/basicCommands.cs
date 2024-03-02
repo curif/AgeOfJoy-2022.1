@@ -117,7 +117,8 @@ public static class Commands
         functions["CABPARTSGETTRANSPARENCY"] = typeof(CommandFunctionCABPARTSGETTRANSPARENCY);
         functions["CABPARTSSETTRANSPARENCY"] = typeof(CommandFunctionCABPARTSSETTRANSPARENCY);
         functions["CABPARTSEMISSION"] = typeof(CommandFunctionCABPARTSEMISSION);
-        functions["CABPARTSEMISSIONCOLOR"] = typeof(CommandFunctionCABPARTSEMISSIONCOLOR);
+        functions["CABPARTSSETEMISSIONCOLOR"] = typeof(CommandFunctionCABPARTSSETEMISSIONCOLOR);
+        functions["CABPARTSSETCOLOR"] = typeof(CommandFunctionCABPARTSSETCOLOR);
 
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);

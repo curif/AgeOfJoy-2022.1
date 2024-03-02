@@ -36,6 +36,8 @@ class CommandIFTHEN : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
         BasicValue condition = expr.Execute(vars);
         if (condition.IsTrue())
             return cmd.Execute(vars);

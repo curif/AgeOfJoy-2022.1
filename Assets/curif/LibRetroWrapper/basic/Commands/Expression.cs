@@ -104,12 +104,12 @@ public class CommandExpression : ICommandBase
     {
         // Implementation specific to CommandImplementation class
         // expr operator expr
-        ConfigManager.WriteConsole($"[CommandExpression.Parse] START PARSE {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] START PARSE {tokens.ToString()}");
 
         do
         {
             CommandType.Type tokenType = CommandType.TokenType(tokens);
-            ConfigManager.WriteConsole($"[CommandExpression.Parse] token: {tokens.Token} type: {tokenType}");
+            AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] token: {tokens.Token} type: {tokenType}");
             switch (tokenType)
             {
                 case CommandType.Type.Variable:
@@ -130,13 +130,13 @@ public class CommandExpression : ICommandBase
                     if (exprList != null)
                         throw new Exception($" fnct list cant be part of an expression {tokens.Token}");
 
-                    ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens.ToString()}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens.ToString()}");
                     fnct.Parse(tokens);
-                    ConfigManager.WriteConsole($"[CommandExpression.Parse] FUNCTION parse END -  {tokens.ToString()}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] FUNCTION parse END -  {tokens.ToString()}");
                     elements.Add(new Element(fnct));
                     break;
                 case CommandType.Type.Expression:
-                    ConfigManager.WriteConsole($"[CommandExpression.Parse] nested expression token: {tokens.Token}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] nested expression token: {tokens.Token}");
                     tokens++; //consumes (
                     CommandExpression expr = new(config);
                     expr.Parse(tokens);
@@ -144,14 +144,14 @@ public class CommandExpression : ICommandBase
                         throw new Exception($"unbalanced parentesis or function don't recognized: {tokens.ToString()}");
                     // tokens++; //consumes )
                     elements.Add(new Element(expr));
-                    ConfigManager.WriteConsole($"[CommandExpression.Parse] expression parse end -  {tokens.ToString()}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] expression parse end -  {tokens.ToString()}");
                     break;
                 case CommandType.Type.Unknown:
                     throw new Exception($"invalid expression {tokens.ToString()}");
             }
         } while (tokens.Next() != null && !constantStoppers.Contains(tokens.Token.ToUpper()));
 
-        ConfigManager.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
         return true;
     }
 
@@ -162,7 +162,7 @@ public class CommandExpression : ICommandBase
         {
             str += el.ToString() + "\n";
         }
-        ConfigManager.WriteConsole($"[CommandExpression.ElementsLog] {str}\n");
+        AGEBasicDebug.WriteConsole($"[CommandExpression.ElementsLog] {str}\n");
     }
     public override string ToString()
     {
@@ -176,7 +176,7 @@ public class CommandExpression : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        // ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] [expression execution]");
+        // AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] [expression execution]");
         //ElementsLog();
 
         Stack<BasicValue> operands = new Stack<BasicValue>();

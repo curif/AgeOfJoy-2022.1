@@ -11,7 +11,7 @@ class CommandFunctionCABDBCOUNT : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return new BasicValue(0);
 
@@ -31,7 +31,7 @@ class CommandFunctionCABDBCOUNTINROOM : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return new BasicValue(0);
 
@@ -52,7 +52,7 @@ class CommandFunctionCABDBGETNAME : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return new BasicValue("");
 
@@ -89,7 +89,7 @@ class CommandFunctionCABDBGET : CommandFunctionExpressionListBase, ICommandFunct
                 new BasicValue(-1)
         };
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return ret;
 
@@ -126,7 +126,7 @@ class CommandFunctionCABDBDELETE : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return BasicValue.False;
 
@@ -157,7 +157,7 @@ class CommandFunctionCABDBADD : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return BasicValue.False;
 
@@ -191,7 +191,7 @@ class CommandFunctionCABDBASSIGN : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return BasicValue.False;
 
@@ -223,7 +223,7 @@ class CommandFunctionCABDBGETASSIGNED : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return new BasicValue("");
 
@@ -253,7 +253,7 @@ class CommandFunctionCABDBSAVE : CommandFunctionNoExpressionBase
     public override BasicValue Execute(BasicVars vars)
     {
 
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.GameRegistry == null)
             return BasicValue.False;
 
@@ -276,7 +276,7 @@ class CommandFunctionCABDBREPLACE : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         if (config?.GameRegistry == null)
             return new BasicValue(0);
@@ -302,7 +302,7 @@ class CommandFunctionCABDBREPLACE : CommandFunctionExpressionListBase
         toAdd.CabinetDBName = cabinetDBName;
 
         CabinetPosition toBeReplaced = config.GameRegistry.GetCabinetPositionInRoom(position, roomName);
-        ConfigManager.WriteConsole($"[CommandFunctionCABDBREPLACE] [{toBeReplaced}] by [{toAdd}] ");
+        AGEBasicDebug.WriteConsole($"[CommandFunctionCABDBREPLACE] [{toBeReplaced}] by [{toAdd}] ");
         config.GameRegistry.Replace(toBeReplaced, toAdd); //persists changes
 
         return new BasicValue(1);

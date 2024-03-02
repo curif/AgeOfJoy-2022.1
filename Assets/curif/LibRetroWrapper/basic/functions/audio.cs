@@ -21,7 +21,7 @@ class CommandFunctionAudioMixerGetVolBase : CommandFunctionNoExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config.audioMixer == null)
             return new BasicValue(0);    
 
@@ -73,7 +73,7 @@ class CommandFunctionAudioMixerSetVolBase : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config.audioMixer == null)
             return new BasicValue(0);
 

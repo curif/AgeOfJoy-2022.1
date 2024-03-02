@@ -25,7 +25,7 @@ class CommandPRINT : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.ScreenGenerator == null)
             return null;
 
@@ -53,7 +53,7 @@ class CommandPRINT : ICommandBase
         if (vals[4] != null)
             draw = vals[4].GetValueAsNumber() != 0;
 
-        ConfigManager.WriteConsole($"print {x}, {y}, {text}, {inverted}  ");
+        AGEBasicDebug.WriteConsole($"print {x}, {y}, {text}, {inverted}  ");
         config.ScreenGenerator.Print(x, y,
                                      text,
                                      inverted);

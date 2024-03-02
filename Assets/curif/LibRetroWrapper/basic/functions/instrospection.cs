@@ -11,7 +11,7 @@ class CommandFunctionEXIST : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedString(val, " - require a variable name to operate.");
         string var = val.GetValueAsString();
