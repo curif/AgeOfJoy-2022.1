@@ -292,7 +292,7 @@ public static unsafe class LibretroMameCore
                                                         string _save_directory,
                                                         string _system_directory,
                                                         string _sample_rate,
-                                                        inputStateHandler _input_state_handler_cb, 
+                                                        inputStateHandler _input_state_handler_cb,
                                                         string core);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_init();
@@ -426,7 +426,7 @@ public static unsafe class LibretroMameCore
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
-                                                new inputStateHandler(inputStateCB), 
+                                                new inputStateHandler(inputStateCB),
                                                 Core
                                                 );
         if (result != 0)
@@ -483,6 +483,17 @@ public static unsafe class LibretroMameCore
 
         return true;
     }
+
+#if UNITY_EDITOR
+    public static void simulateInEditor(string screenName, string gameFileName)
+    {
+        WriteConsole("[LibRetroMameCore.Start] Libretro simulated.");
+        GameFileName = gameFileName;
+        ScreenName = screenName;
+        GameLoaded = true;
+    }
+#endif
+
 
     public static bool isRunning(string screenName, string gameFileName)
     {
@@ -660,13 +671,14 @@ public static unsafe class LibretroMameCore
 
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
 
+#if !UNITY_EDITOR
         StopRunThread();
-
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         if (GameLoaded)
             wrapper_unload_game();
 
         wrapper_retro_deinit();
+#endif
 
         ClearAll();
 
@@ -925,6 +937,7 @@ public static unsafe class LibretroMameCore
     }
     public static void MoveAudioStreamTo(string gameFileName, float[] audioData)
     {
+#if !UNITY_EDITOR
         if (!GameLoaded || GameFileName != gameFileName)
             return;
 
@@ -945,6 +958,7 @@ public static unsafe class LibretroMameCore
                 wrapper_audio_consume_buffer(toCopy);
             }
         }
+#endif
     }
 
 #if _serialize_

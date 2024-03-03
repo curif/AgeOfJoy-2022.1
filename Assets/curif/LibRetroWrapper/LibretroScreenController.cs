@@ -93,6 +93,8 @@ public class LibretroScreenController : MonoBehaviour
     public LightGunInformation lightGunInformation;
     public Cabinet cabinet;
 
+    public bool SimulateExitGame;
+
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
 
@@ -262,6 +264,7 @@ public class LibretroScreenController : MonoBehaviour
                       lightGunTarget.Init(lightGunInformation, PathBase);
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
+#if !UNITY_EDITOR
 
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
@@ -269,7 +272,9 @@ public class LibretroScreenController : MonoBehaviour
                       CoinSlot.clean();
                       return TaskStatus.Failure;
                   }
-
+#else
+                  LibretroMameCore.simulateInEditor(name, GameFile);
+#endif
                   // age basic
                   if (ageBasicInformation.active)
                       cabinetAGEBasic.ExecInsertCoinBas();
@@ -282,7 +287,9 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.StartInteractions();
 
                   // start retro_run cycle
+#if !UNITY_EDITOR
                   LibretroMameCore.StartRunThread();
+#endif
 
                   shader.Texture = LibretroMameCore.GameTexture;
                   shader.Invert(GameInvertX, GameInvertY);
@@ -301,6 +308,11 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       if (libretroControlMap.Active("EXIT") == 1)
                           return true;
+
+#if UNIT_EDITOR
+                      if (SimulateExitGame)
+                        return true;
+#endif
 
                       timeToExit = DateTime.MinValue;
                       return false;
@@ -332,6 +344,9 @@ public class LibretroScreenController : MonoBehaviour
                       cabinetAGEBasic.StopInsertCoinBas(); //force
                       cabinetAGEBasic.ExecAfterLeaveBas();
                   }
+#if UNIT_EDITOR
+                  SimulateExitGame = false;
+#endif
                   return TaskStatus.Success;
               })
             .End()
@@ -447,10 +462,16 @@ public class LibretroScreenController : MonoBehaviour
         LibretroMameCore.End(name, GameFile);
     }
 
+#if UNITY_EDITOR
     public void InsertCoin()
     {
         CoinSlot.insertCoin();
     }
+    public void ExitGame()
+    {
+        SimulateExitGame = true;
+    }
+#endif
 }
 
 #if UNITY_EDITOR
@@ -465,6 +486,10 @@ public class LibretroScreenControllerEditor : Editor
         if(GUILayout.Button("InsertCoin"))
         {
           myScript.InsertCoin();
+        }
+        if(GUILayout.Button("Simulate Exit Game"))
+        {
+          myScript.ExitGame();
         }
     }
 }
