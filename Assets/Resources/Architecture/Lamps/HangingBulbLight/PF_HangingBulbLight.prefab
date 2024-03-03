@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4462996463704918970}
   - component: {fileID: 3257520339749008480}
+  - component: {fileID: 1185288775076284552}
   m_Layer: 0
   m_Name: Point Light_HangingBulbLight
   m_TagString: Untagged
@@ -24,13 +25,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2628336623049054953}
-  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -0.1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4004674771835167059}
+  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!108 &3257520339749008480
 Light:
@@ -44,8 +45,8 @@ Light:
   m_Type: 2
   m_Shape: 0
   m_Color: {r: 0.9929246, g: 1, b: 0.759434, a: 1}
-  m_Intensity: 0.5
-  m_Range: 3
+  m_Intensity: 0.75
+  m_Range: 4
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
@@ -94,6 +95,20 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &1185288775076284552
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2628336623049054953}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 0}
+  intensity: 0.75
 --- !u!1 &6766372196550400319
 GameObject:
   m_ObjectHideFlags: 0
@@ -117,7 +132,6 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6766372196550400319}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -126,6 +140,7 @@ Transform:
   - {fileID: 3273844466437704806}
   - {fileID: 4462996463704918970}
   m_Father: {fileID: 0}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &3091071672813923213
 PrefabInstance:
