@@ -3112,6 +3112,62 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
+--- !u!1 &390764711
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 390764713}
+  - component: {fileID: 390764712}
+  m_Layer: 0
+  m_Name: Audio Reverb Zone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!167 &390764712
+AudioReverbZone:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 390764711}
+  m_Enabled: 1
+  m_MinDistance: 5
+  m_MaxDistance: 7
+  m_ReverbPreset: 7
+  m_Room: -1000
+  m_RoomHF: -476
+  m_DecayTime: 4.32
+  m_DecayHFRatio: 0.59
+  m_Reflections: -789
+  m_ReflectionsDelay: 0.02
+  m_Reverb: -289
+  m_ReverbDelay: 0.03
+  m_HFReference: 5000
+  m_Diffusion: 100
+  m_Density: 100
+  m_LFReference: 250
+  m_RoomLF: 0
+--- !u!4 &390764713
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 390764711}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -19.43, y: 2.18, z: -18.869108}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &392986039
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7266,6 +7322,14 @@ PrefabInstance:
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.08
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.189
       objectReference: {fileID: 0}
     - target: {fileID: 5614758927437073876, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
