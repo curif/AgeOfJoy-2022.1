@@ -66,7 +66,7 @@ public class ScreenGenerator : MonoBehaviour
         ScreenWidth = CharactersWidth * 8;  // Width of the target texture
         ScreenHeight = CharactersHeight * 8; // Height of the target texture
         // Create the target texture with the specified width and height
-        c64Screen = new Texture2D(TextureWidth, TextureHeight);
+        c64Screen = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGB565, false);
 
         // Set the target texture to be readable and writable
         c64Screen.wrapMode = TextureWrapMode.Clamp;
