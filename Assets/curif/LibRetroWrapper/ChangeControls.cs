@@ -137,7 +137,7 @@ public class ChangeControls : MonoBehaviour
             // changeMode(true);
         }
     }
-void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
+    void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
     {
         // Check if the parent has a mesh renderer component
         MeshRenderer renderer = parent.GetComponent<MeshRenderer>();
@@ -154,15 +154,37 @@ void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
             EnableDisableMeshRenderersRecursively(child, enable);
         }
     }
-    private void useAlternativeRightJoystick()
+
+    private void rigthJoystickVisible(bool enabled)
     {
+        EnableDisableMeshRenderersRecursively(reservedRightJoystickModel.transform, enabled);
+    }
+
+    private void activateAlternativeRigthJoystick()
+    {
+        if (alternativeRightJoystick == null)
+            return;
+            
         alternativeRightJoystick.SetActive(true);
         alternativeRightJoystick.transform.parent = controllerRightHand.modelParent;
         alternativeRightJoystick.transform.position = controllerRightHand.transform.position;
         alternativeRightJoystick.transform.rotation = controllerRightHand.transform.rotation;
+    }
+    private void deactivateAlternativeRigthJoystick()
+    {
+        if (alternativeRightJoystick != null && alternativeRightJoystick.activeSelf)
+        {
+            alternativeRightJoystick.SetActive(false);
+            rightJoystickModel = reservedRightJoystickModel;
+            rigthJoystickVisible(true);
+        }
+    }
 
-        // rightJoystickModel.SetActive(false);
-        EnableDisableMeshRenderersRecursively(rightJoystickModel.transform, false);
+    private void useAlternativeRightJoystick()
+    {
+        activateAlternativeRigthJoystick();
+        rigthJoystickVisible(false);
+
         rightJoystickModel = alternativeRightJoystick;
 
         lightGunTarget.spaceGun = alternativeRightJoystick;
@@ -176,9 +198,7 @@ void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
     private void restoreReservedValues()
     {
         beamController.enabled = reservedTeleportationEnabled;
-        EnableDisableMeshRenderersRecursively(rightJoystickModel.transform, true);
         rightJoystickModel = reservedRightJoystickModel;
-        EnableDisableMeshRenderersRecursively(rightJoystickModel.transform, true);
     }
 
     public void PlayerMode(bool modePlaying)
@@ -203,16 +223,12 @@ void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
     }
     private void changeMode(bool playerIsPlaying)
     {
-        // if (isPlaying == playerIsPlaying)
-        //     return;
-
         isPlaying = playerIsPlaying;
-
-        activateDeactivateControls(playerIsPlaying);
-        setControllers(playerIsPlaying);
 
         if (playerIsPlaying)
         {
+            activateDeactivateControls(true);
+            setControllers(true);
             reserveValues();
             rightHandContinuousTurnAction.action.Disable();
             rightHandSnapTurnAction.action.Disable();
@@ -222,7 +238,11 @@ void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
         }
         else
         {
+            deactivateAlternativeRigthJoystick();
             restoreReservedValues();
+            activateDeactivateControls(false);
+            setControllers(false);
+
             rightHandContinuousTurnAction.action.Enable();
             rightHandSnapTurnAction.action.Enable();
             leftHandMoveAction.action.Enable();
