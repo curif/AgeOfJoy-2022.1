@@ -137,6 +137,23 @@ public class ChangeControls : MonoBehaviour
             // changeMode(true);
         }
     }
+void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
+    {
+        // Check if the parent has a mesh renderer component
+        MeshRenderer renderer = parent.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            // Enable or disable the mesh renderer based on the parameter
+            renderer.enabled = enable;
+        }
+
+        // Loop through all children of the parent
+        foreach (Transform child in parent)
+        {
+            // Recursively enable/disable mesh renderers of children
+            EnableDisableMeshRenderersRecursively(child, enable);
+        }
+    }
     private void useAlternativeRightJoystick()
     {
         alternativeRightJoystick.SetActive(true);
@@ -144,7 +161,8 @@ public class ChangeControls : MonoBehaviour
         alternativeRightJoystick.transform.position = controllerRightHand.transform.position;
         alternativeRightJoystick.transform.rotation = controllerRightHand.transform.rotation;
 
-        rightJoystickModel.SetActive(false);
+        // rightJoystickModel.SetActive(false);
+        EnableDisableMeshRenderersRecursively(rightJoystickModel.transform, false);
         rightJoystickModel = alternativeRightJoystick;
 
         lightGunTarget.spaceGun = alternativeRightJoystick;
@@ -158,8 +176,9 @@ public class ChangeControls : MonoBehaviour
     private void restoreReservedValues()
     {
         beamController.enabled = reservedTeleportationEnabled;
+        EnableDisableMeshRenderersRecursively(rightJoystickModel.transform, true);
         rightJoystickModel = reservedRightJoystickModel;
-
+        EnableDisableMeshRenderersRecursively(rightJoystickModel.transform, true);
     }
 
     public void PlayerMode(bool modePlaying)
