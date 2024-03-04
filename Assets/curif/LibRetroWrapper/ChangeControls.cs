@@ -137,14 +137,54 @@ public class ChangeControls : MonoBehaviour
             // changeMode(true);
         }
     }
-    private void useAlternativeRightJoystick()
+    void EnableDisableMeshRenderersRecursively(Transform parent, bool enable)
     {
+        // Check if the parent has a mesh renderer component
+        MeshRenderer renderer = parent.GetComponent<MeshRenderer>();
+        if (renderer != null)
+        {
+            // Enable or disable the mesh renderer based on the parameter
+            renderer.enabled = enable;
+        }
+
+        // Loop through all children of the parent
+        foreach (Transform child in parent)
+        {
+            // Recursively enable/disable mesh renderers of children
+            EnableDisableMeshRenderersRecursively(child, enable);
+        }
+    }
+
+    private void rigthJoystickVisible(bool enabled)
+    {
+        EnableDisableMeshRenderersRecursively(reservedRightJoystickModel.transform, enabled);
+    }
+
+    private void activateAlternativeRigthJoystick()
+    {
+        if (alternativeRightJoystick == null)
+            return;
+            
         alternativeRightJoystick.SetActive(true);
         alternativeRightJoystick.transform.parent = controllerRightHand.modelParent;
         alternativeRightJoystick.transform.position = controllerRightHand.transform.position;
         alternativeRightJoystick.transform.rotation = controllerRightHand.transform.rotation;
+    }
+    private void deactivateAlternativeRigthJoystick()
+    {
+        if (alternativeRightJoystick != null && alternativeRightJoystick.activeSelf)
+        {
+            alternativeRightJoystick.SetActive(false);
+            rightJoystickModel = reservedRightJoystickModel;
+            rigthJoystickVisible(true);
+        }
+    }
 
-        rightJoystickModel.SetActive(false);
+    private void useAlternativeRightJoystick()
+    {
+        activateAlternativeRigthJoystick();
+        rigthJoystickVisible(false);
+
         rightJoystickModel = alternativeRightJoystick;
 
         lightGunTarget.spaceGun = alternativeRightJoystick;
@@ -159,7 +199,6 @@ public class ChangeControls : MonoBehaviour
     {
         beamController.enabled = reservedTeleportationEnabled;
         rightJoystickModel = reservedRightJoystickModel;
-
     }
 
     public void PlayerMode(bool modePlaying)
@@ -184,16 +223,12 @@ public class ChangeControls : MonoBehaviour
     }
     private void changeMode(bool playerIsPlaying)
     {
-        // if (isPlaying == playerIsPlaying)
-        //     return;
-
         isPlaying = playerIsPlaying;
-
-        activateDeactivateControls(playerIsPlaying);
-        setControllers(playerIsPlaying);
 
         if (playerIsPlaying)
         {
+            activateDeactivateControls(true);
+            setControllers(true);
             reserveValues();
             rightHandContinuousTurnAction.action.Disable();
             rightHandSnapTurnAction.action.Disable();
@@ -203,7 +238,11 @@ public class ChangeControls : MonoBehaviour
         }
         else
         {
+            deactivateAlternativeRigthJoystick();
             restoreReservedValues();
+            activateDeactivateControls(false);
+            setControllers(false);
+
             rightHandContinuousTurnAction.action.Enable();
             rightHandSnapTurnAction.action.Enable();
             leftHandMoveAction.action.Enable();
