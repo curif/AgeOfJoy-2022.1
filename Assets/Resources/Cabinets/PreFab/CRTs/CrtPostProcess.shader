@@ -11,7 +11,7 @@ Shader "Custom/CrtPostProcess"
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
-		u_time ("Time (change with each frame)", Float) = 0.01
+		//u_time ("Time (change with each frame)", Float) = 0.01
 		u_bend ("Bend", Float) = 0
 		u_scanline_size_1("scanline_size_1", Float) = 9.49
 		u_scanline_speed_1("scanline_speed_1", Float) = -10
@@ -80,7 +80,7 @@ Shader "Custom/CrtPostProcess"
 			};
 
 			sampler2D _MainTex;
-			uniform float u_time;
+			//uniform float u_time;
 			uniform float u_bend;
 			uniform float u_scanline_size_1;
 			uniform float u_scanline_speed_1;
@@ -148,12 +148,12 @@ Shader "Custom/CrtPostProcess"
 
 			float scanline(half2 uv, float lines, float speed)
 			{
-				return sin(uv.y * lines + u_time * speed);
+				return sin(uv.y * lines + _Time.y * speed);
 			}
 
 			float random(half2 uv)
 			{
-				return frac(sin(dot(uv, half2(15.1511, 42.5225))) * 12341.51611 * sin(u_time * 0.03));
+				return frac(sin(dot(uv, half2(15.1511, 42.5225))) * 12341.51611 * sin(_Time.y * 0.03));
 			}
 
 			float noise(half2 uv)
