@@ -189,7 +189,12 @@ Shader "Custom/CrtPostProcess"
 				float s1 = scanline(i.uv, u_scanline_size_1, u_scanline_speed_1);
 				float s2 = scanline(i.uv, u_scanline_size_2, u_scanline_speed_2);
 
-				col = lerp(col, fixed(s1 + s2), u_scanline_amount);
+				// Calculate a combined scanline effect that reduces brightness
+				float scanlineEffect = (1.0 - s1 * 0.5) * (1.0 - s2 * 0.5);
+
+				// Apply the scanline effect by multiplying it, controlling the effect with u_scanline_amount
+				col.rgb *= lerp(1.0, scanlineEffect, u_scanline_amount);
+
 				col = lerp(col, fixed(noise(i.uv * u_noise_size)), u_noise_amount) * vignette(i.uv, u_vignette_size, u_vignette_smoothness, u_vignette_edge_round);
 
 				return col;
