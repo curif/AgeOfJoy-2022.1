@@ -80,7 +80,7 @@ public class MoviePosterController : MonoBehaviour
             throw new Exception($"loading picture, file doesn't exists: {filePath}");
 
         fileData = File.ReadAllBytes(filePath);
-        tex = new Texture2D(2, 2, TextureFormat.RGB565, false);
+        tex = new Texture2D(2, 2, TextureFormat.RGB565, true);
         if (tex == null)
             throw new Exception($"Error creating texture for {filePath}");
 

@@ -32,7 +32,7 @@ public class Cabinet
         if (File.Exists(filePath))
         {
             fileData = File.ReadAllBytes(filePath);
-            tex = new Texture2D(2, 2, TextureFormat.RGB565, false);
+            tex = new Texture2D(2, 2, TextureFormat.RGB565, true);
             tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
         }
         return tex;
