@@ -33,6 +33,8 @@ public class Cabinet
         {
             fileData = File.ReadAllBytes(filePath);
             tex = new Texture2D(2, 2, TextureFormat.RGB565, true);
+            tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
+            tex.mipMapBias = -0.7f; // setting mip bias to -0.7 in Unity is recommended by meta for high-detail textures
             tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
         }
         return tex;
