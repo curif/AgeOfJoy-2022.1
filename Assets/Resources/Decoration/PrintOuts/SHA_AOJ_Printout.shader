@@ -46,7 +46,7 @@ Shader "AgeOfJoy/Printout"
 		{
 			float4 _TextureSample1_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_TextureSample1_ST_arr, _TextureSample1_ST);
 			float2 uv_TextureSample1 = i.uv_texcoord * _TextureSample1_ST_Instance.xy + _TextureSample1_ST_Instance.zw;
-			float4 tex2DNode2 = tex2D( _TextureSample1, uv_TextureSample1 );
+			float4 tex2DNode2 = tex2Dbias( _TextureSample1, float4( uv_TextureSample1, 0, -0.7) );
 			float _RChannelPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_RChannelPower_arr, _RChannelPower);
 			float _GChannelPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_GChannelPower_arr, _GChannelPower);
 			float _BChannelPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_BChannelPower_arr, _BChannelPower);
@@ -67,10 +67,10 @@ Shader "AgeOfJoy/Printout"
 }
 /*ASEBEGIN
 Version=19302
-Node;AmplifyShaderEditor.SamplerNode;2;-932,-191.5001;Inherit;True;Property;_TextureSample1;Texture Sample 1;1;0;Create;True;0;0;0;False;0;False;-1;86647280307750f47b15cd0564f48f0d;86647280307750f47b15cd0564f48f0d;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;11;-574.3334,136.5002;Inherit;False;InstancedProperty;_GChannelPower;G Channel Power;3;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;12;-525.3334,232.5003;Inherit;False;InstancedProperty;_BChannelPower;B Channel Power;4;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;10;-576.3334,-123.4997;Inherit;False;InstancedProperty;_RChannelPower;R Channel Power;2;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode;2;-932,-191.5001;Inherit;True;Property;_TextureSample1;Texture Sample 1;1;0;Create;True;0;0;0;False;0;False;-1;86647280307750f47b15cd0564f48f0d;86647280307750f47b15cd0564f48f0d;True;0;False;white;Auto;False;Object;-1;MipBias;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;-0.7;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;7;-212.3334,-262.4998;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;8;-181.3334,-140.4997;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;9;-182.3334,29.50024;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
@@ -96,4 +96,4 @@ WireConnection;0;3;3;0
 WireConnection;0;4;3;0
 WireConnection;0;10;2;4
 ASEEND*/
-//CHKSM=B087D37E68867F8B2FACF9AE8B0958CF2F360B7F
+//CHKSM=F1D11D825CF473BEA855B3EA080B275DD5BC6193
