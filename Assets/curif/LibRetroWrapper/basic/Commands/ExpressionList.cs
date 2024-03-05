@@ -24,7 +24,7 @@ class CommandExpressionList : ICommandBase, ICommandList
 
     public bool Parse(TokenConsumer tokens)
     {
-        ConfigManager.WriteConsole($"[ExpressionList.Parse] START  {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] START  {tokens.ToString()}");
 
         int idx = -1;
         do
@@ -34,7 +34,7 @@ class CommandExpressionList : ICommandBase, ICommandList
             if (idx + 1 > maxAllowed - 1)
                 throw new Exception($"More than {maxAllowed} members in an expressionList {tokens.ToString()}");
 
-            ConfigManager.WriteConsole($"[ExpressionList.Parse] parsing  {tokens.ToString()}");
+            AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] parsing  {tokens.ToString()}");
             CommandExpression expr = new(config);
             expr.Parse(tokens);
 
@@ -45,7 +45,7 @@ class CommandExpressionList : ICommandBase, ICommandList
 
         this.count = idx + 1;
 
-        ConfigManager.WriteConsole($"[ExpressionList.Parse] END members: {this.Count} {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] END members: {this.Count} {tokens.ToString()}");
 
         return true;
     }
@@ -57,12 +57,12 @@ class CommandExpressionList : ICommandBase, ICommandList
 
     public BasicValue[] ExecuteList(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] ExecuteList");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] ExecuteList");
         BasicValue[] vals = new BasicValue[exprs.Length];
         int idx = 0;
         while (exprs[idx] != null)
         {
-            ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] execute expression idx: {idx}");
+            AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] execute expression idx: {idx}");
             ICommandList exprList = exprs[idx] as ICommandList;
             if (exprList != null)
             {

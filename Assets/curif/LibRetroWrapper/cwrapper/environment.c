@@ -1,6 +1,6 @@
 #include "environment.h"
 
-#define ENVIRONMENT_DEBUG
+//#define ENVIRONMENT_DEBUG
 
 static enum retro_pixel_format pixel_format;
 static char system_directory[500];

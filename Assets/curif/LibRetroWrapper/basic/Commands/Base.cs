@@ -1,3 +1,5 @@
+// #define AGEBASIC_DEBUG_ACTIVE
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,5 +69,15 @@ public class CommandType
 
         return Type.Constant;
         // return Type.Unknown;
+    }
+}
+
+public static class AGEBasicDebug
+{
+    public static void WriteConsole(string st)
+    {
+#if AGEBASIC_DEBUG_ACTIVE
+        ConfigManager.WriteConsole(st);
+#endif
     }
 }

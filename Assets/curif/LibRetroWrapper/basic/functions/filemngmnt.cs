@@ -17,7 +17,7 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
 
@@ -57,7 +57,7 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
         catch (Exception ex)
         {
             // Handle any exceptions that may occur (e.g., invalid path)
-            ConfigManager.WriteConsole($"Error: {ex.Message}");
+            AGEBasicDebug.WriteConsole($"Error: {ex.Message}");
             return new BasicValue("");
         }
     }
@@ -72,7 +72,7 @@ class CommandFunctionFILEEXISTS : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
 
         BasicValue val = expr.Execute(vars);
         string filePath = val.GetValueAsString();
@@ -97,7 +97,7 @@ class CommandFunctionCOMBINEPATH : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
 
@@ -112,7 +112,7 @@ class CommandFunctionCOMBINEPATH : CommandFunctionExpressionListBase
         catch (Exception ex)
         {
             // Handle any exceptions that may occur (e.g., invalid paths)
-            ConfigManager.WriteConsole($"Error: {ex.Message}");
+            AGEBasicDebug.WriteConsole($"Error: {ex.Message}");
             return new BasicValue("");
         }
     }
@@ -127,7 +127,7 @@ class PathFunctionsBase : CommandFunctionNoExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}]");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}]");
         switch (cmdToken)
         {
             case "CONFIGPATH":

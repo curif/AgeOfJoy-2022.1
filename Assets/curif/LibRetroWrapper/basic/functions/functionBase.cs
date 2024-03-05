@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+
 class CommandFunctionBase : ICommandBase
 {
     protected string cmdToken = "UNKNOWN";
@@ -31,6 +32,7 @@ class CommandFunctionBase : ICommandBase
         return "Func: " + CmdToken;
     }
 
+    
 }
 
 class CommandFunctionExpressionListBase : CommandFunctionBase
@@ -47,13 +49,13 @@ class CommandFunctionExpressionListBase : CommandFunctionBase
         // FNCT ( expr ,  ... )
         // tokens points to FNCT
 
-        ConfigManager.WriteConsole($"[functionBase.Parse] START  {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[functionBase.Parse] START  {tokens.ToString()}");
 
         if (tokens.Next() != "(")
             throw new Exception($"function without enclosing (): {tokens.ToString()}");
         tokens++; //consumes (
 
-        ConfigManager.WriteConsole($"[FunctionBase.Parse] EXPR LIST {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[FunctionBase.Parse] EXPR LIST {tokens.ToString()}");
         exprs.Parse(tokens);
 
         if (tokens.Token != ")")
@@ -64,7 +66,7 @@ class CommandFunctionExpressionListBase : CommandFunctionBase
         if (exprs.Count < cantParametersRequired)
             throw new Exception($"{cmdToken}() parameter missing, {cantParametersRequired} expected.");
 
-        ConfigManager.WriteConsole($"[functionBase.Parse] END {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[functionBase.Parse] END {tokens.ToString()}");
         return true;
     }
 
@@ -84,13 +86,13 @@ class CommandFunctionSingleExpressionBase : CommandFunctionBase
         // FNCT ( expr ,  ... )
         // tokens points to FNCT
 
-        ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] START  {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] START  {tokens.ToString()}");
 
         if (tokens.Next() != "(")
             throw new Exception($"function without enclosing (): {tokens.ToString()}");
         tokens++; //consumes (
 
-        //ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] EXPR {tokens.ToString()}");
+        //AGEBasicDebug.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] EXPR {tokens.ToString()}");
         expr.Parse(tokens);
 
         if (tokens.Token != ")")
@@ -101,7 +103,7 @@ class CommandFunctionSingleExpressionBase : CommandFunctionBase
         if (expr.Count < 1)
             throw new Exception($"At least one parameter is required in {CmdToken}");
 
-        //ConfigManager.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] END {tokens.ToString()}");
+        //AGEBasicDebug.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] END {tokens.ToString()}");
         return true;
     }
 }

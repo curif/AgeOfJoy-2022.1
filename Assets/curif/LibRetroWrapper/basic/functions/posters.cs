@@ -10,7 +10,7 @@ class CommandFunctionPOSTERROOMCOUNT : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.PostersController == null)
             return new BasicValue(0);
 
@@ -32,7 +32,7 @@ class CommandFunctionPOSTERROOMREPLACE : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         if (config?.PostersController == null)
             return BasicValue.False;

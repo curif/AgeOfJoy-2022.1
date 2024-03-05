@@ -218,7 +218,7 @@ public class LightGunTarget : MonoBehaviour
     }
     public void Shoot()
     {
-        if (spaceGun?.transform == null)
+        if (spaceGun == null || spaceGun.transform == null)
             return;
 
         //adjust vertical/horizontal sight (in centimeters)

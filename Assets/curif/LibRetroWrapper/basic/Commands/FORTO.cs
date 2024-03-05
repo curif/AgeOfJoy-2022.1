@@ -61,7 +61,7 @@ class CommandFORTO : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}]");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}]");
 
         BasicValue startVal = new(expr.Execute(vars));
         FunctionHelper.ExpectedNumber(startVal, "- FOR must have an expression or number");
@@ -73,7 +73,7 @@ class CommandFORTO : ICommandBase
         ft.endExpr = exprTo;
         ft.stepExpr = exprStep;
 
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name} from {startVal.ToString()} expr:({expr.ToString()}) to expr: ({exprTo.ToString()})  lineNumber:{ft.lineNumber}");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name} from {startVal.ToString()} expr:({expr.ToString()}) to expr: ({exprTo.ToString()})  lineNumber:{ft.lineNumber}");
         config.ForToNext[var.Name] = ft;
 
         return null;
