@@ -120,6 +120,7 @@ public class LibretroScreenController : MonoBehaviour
     public BackgroundSoundController backgroundSoundController;
 
     private Coroutine mainCoroutine;
+    private bool initialized = false;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -144,6 +145,9 @@ public class LibretroScreenController : MonoBehaviour
         display = GetComponent<Renderer>();
         // cabinet = gameObject.transform.parent.gameObject;
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
+        if (videoPlayer == null)
+            ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} video player doesn't exists on screen.");
+
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
 
@@ -159,11 +163,11 @@ public class LibretroScreenController : MonoBehaviour
 
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
-            ConfigManager.WriteConsoleError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
+            ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} Coin Slot not found in cabinet !!!! no one can play this game.");
 
         //material and shader
         shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
-        ConfigManager.WriteConsole($"[LibretroScreenController.Start] shader created: {shader}");
+        ConfigManager.WriteConsole($"[LibretroScreenController.Start]  {name} shader created: {shader}");
 
         // age basic
         if (ageBasicInformation.active)
@@ -173,18 +177,32 @@ public class LibretroScreenController : MonoBehaviour
         }
 
         mainCoroutine = StartCoroutine(runBT());
+        initialized = true;
 
         return;
     }
 
+    //runs before Start()
     private void OnEnable()
     {
+        if (!initialized)
+            return;
         if (mainCoroutine == null)
             mainCoroutine = StartCoroutine(runBT());
     }
 
+    private void OnApplicationPause()
+    {
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
+    }
     private void OnDisable()
     {
+        if (!initialized)
+            return;
         if (mainCoroutine != null)
         {
             StopCoroutine(mainCoroutine);
@@ -204,7 +222,6 @@ public class LibretroScreenController : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
     }
-
 
     private BehaviorTree buildScreenBT()
     {
