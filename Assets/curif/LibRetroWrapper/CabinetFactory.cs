@@ -152,20 +152,26 @@ public static class CabinetFactory
                             cabinet.SetMaterialFrom(pos, CabinetMaterials.Base);
 
                         if (p.art != null)
-                            cabinet.SetTextureTo(pos, cbinfo.getPath(p.art.file), 
-                                null, invertX: p.art.invertx, invertY: p.art.inverty);
+                            cabinet.SetTextureTo(pos, cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
 
                         if (p.color != null)
                             cabinet.SetColorPart(pos, p.color.getColor());
 
                         if (p.transparency != 0)
                             cabinet.SetTransparencyPart(pos, p.transparency);
-                        
+
                         if (p.emission != null)
                         {
                             cabinet.SetEmissionEnabledPart(pos, p.emission.emissive);
                             if (p.emission.color != null)
                                 cabinet.SetEmissionColorPart(pos, p.emission.color.getColor());
+                            if (p.emission.art != null)
+                            {
+                                cabinet.SetEmissionTextureTo(pos,
+                                                                cbinfo.getPath(p.emission.art.file),
+                                                                invertX: p.emission.art.invertx,
+                                                                invertY: p.emission.art.inverty);
+                            }
                         }
                     }
                 }

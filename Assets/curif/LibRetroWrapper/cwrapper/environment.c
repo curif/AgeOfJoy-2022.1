@@ -71,6 +71,10 @@ int wrapper_dlopen() {
   {
     _core = "libmame2010_libretro_android.so"; 
   }
+  else if (strcmp(core, "fbneo") == 0) 
+  {
+    _core = "libfbneo_libretro_android.so"; 
+  }
   else 
   {
     wrapper_environment_log(RETRO_LOG_ERROR, "core: %s unknown\n", core);

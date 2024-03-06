@@ -457,6 +457,13 @@ public class Cabinet
             SetTextureFromFile(Parts(partNum), textureFile, mat, invertX, invertY);
         return this;
     }
+    public Cabinet SetEmissionTextureTo(int partNum, string textureFile,
+                                        bool invertX = false, bool invertY = false)
+    {
+        if (!string.IsNullOrEmpty(textureFile))
+            SetEmissionTextureFromFile(Parts(partNum), textureFile, invertX, invertY);
+        return this;
+    }
 
 
 
@@ -499,6 +506,43 @@ public class Cabinet
         }
         else
             m.SetTexture("_MainTex", t);
+
+        r.material = m;
+    }
+    public static void SetEmissionTextureFromFile(GameObject go, string textureFile,
+                                                     bool invertX = false, bool invertY = false)
+    {
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)
+            return;
+
+        Material m = r.material;
+        if (m == null)
+            return;
+
+        // Tiling
+        Vector2 emissionTextureScale = new Vector2(1, 1);
+        if (invertX)
+        {
+            emissionTextureScale.x = -1;
+        }
+        if (invertY)
+        {
+            emissionTextureScale.y = -1;
+        }
+        m.SetTextureScale("_EmissionMap", emissionTextureScale);
+
+        // Emission texture
+        Texture2D t = LoadTexture(textureFile);
+        if (t == null)
+        {
+            ConfigManager.WriteConsoleError($"Error loading emission texture for {go.name}: {textureFile}");
+            return;
+        }
+        else
+        {
+            m.SetTexture("_EmissionMap", t);
+        }
 
         r.material = m;
     }
