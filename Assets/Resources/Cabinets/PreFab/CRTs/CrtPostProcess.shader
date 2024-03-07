@@ -11,7 +11,7 @@ Shader "Custom/CrtPostProcess"
 	Properties
 	{
 		_MainTex ("Texture", 2D) = "white" {}
-		u_time ("Time (change with each frame)", Float) = 0.01
+		//u_time ("Time (change with each frame)", Float) = 0.01
 		u_bend ("Bend", Float) = 0
 		u_scanline_size_1("scanline_size_1", Float) = 9.49
 		u_scanline_speed_1("scanline_speed_1", Float) = -10
@@ -80,7 +80,7 @@ Shader "Custom/CrtPostProcess"
 			};
 
 			sampler2D _MainTex;
-			uniform float u_time;
+			//uniform float u_time;
 			uniform float u_bend;
 			uniform float u_scanline_size_1;
 			uniform float u_scanline_speed_1;
@@ -148,12 +148,12 @@ Shader "Custom/CrtPostProcess"
 
 			float scanline(half2 uv, float lines, float speed)
 			{
-				return sin(uv.y * lines + u_time * speed);
+				return sin(uv.y * lines + _Time.y * speed);
 			}
 
 			float random(half2 uv)
 			{
-				return frac(sin(dot(uv, half2(15.1511, 42.5225))) * 12341.51611 * sin(u_time * 0.03));
+				return frac(sin(dot(uv, half2(15.1511, 42.5225))) * 12341.51611 * sin(_Time.y * 0.03));
 			}
 
 			float noise(half2 uv)
@@ -189,7 +189,12 @@ Shader "Custom/CrtPostProcess"
 				float s1 = scanline(i.uv, u_scanline_size_1, u_scanline_speed_1);
 				float s2 = scanline(i.uv, u_scanline_size_2, u_scanline_speed_2);
 
-				col = lerp(col, fixed(s1 + s2), u_scanline_amount);
+				// Calculate a combined scanline effect that reduces brightness
+				float scanlineEffect = (1.0 - s1 * 0.5) * (1.0 - s2 * 0.5);
+
+				// Apply the scanline effect by multiplying it, controlling the effect with u_scanline_amount
+				col.rgb *= lerp(1.0, scanlineEffect, u_scanline_amount);
+
 				col = lerp(col, fixed(noise(i.uv * u_noise_size)), u_noise_amount) * vignette(i.uv, u_vignette_size, u_vignette_smoothness, u_vignette_edge_round);
 
 				return col;
