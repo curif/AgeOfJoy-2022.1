@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0034538922, g: 0.0037039225, b: 0.0056806104, a: 1}
+  m_IndirectSpecularColor: {r: 0.0037149177, g: 0.003848325, b: 0.005816616, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -633,6 +633,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -2875,6 +2876,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -3633,6 +3635,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -4491,6 +4494,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -7290,6 +7294,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -9007,7 +9012,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7277189896210793098, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.639
+      value: -0.688
       objectReference: {fileID: 0}
     - target: {fileID: 7277189896210793098, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_LocalPosition.z
@@ -9149,7 +9154,8 @@ PrefabInstance:
       propertyPath: ScenesToUnload.Array.data[8].sceneAssetGuidHex
       value: 031f00a80841cb5d88f0e31e56a93044
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4534220393362270316, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -10152,6 +10158,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -11094,6 +11101,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -11368,6 +11376,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -11441,6 +11450,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -13902,12 +13912,14 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
     MaxTimeSpentThere: 30
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 1714072622}
+    MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 108282750}
@@ -13915,6 +13927,7 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 140535415}
   IsStatic: 0
@@ -13935,6 +13948,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!95 &1303032307
 Animator:
@@ -14916,12 +14930,14 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
     MaxTimeSpentThere: 20
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1282868784}
@@ -14929,6 +14945,7 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 140535415}
   IsStatic: 0
@@ -14949,6 +14966,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!195 &1419345625
 NavMeshAgent:
@@ -16176,6 +16194,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -16936,6 +16955,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -17009,6 +17029,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 2
   boxCollider: {fileID: 0}
@@ -17134,6 +17155,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -18406,6 +18428,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -18633,6 +18656,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -19604,6 +19628,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}

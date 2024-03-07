@@ -511,6 +511,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -5301,24 +5302,28 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1086381190}
     MaxTimeSpentThere: 20
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 1154431153}
     MaxTimeSpentThere: 60
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 1780507664}
     MaxTimeSpentThere: 60
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   DefaultDestination:
     Place: {fileID: 1154431153}
@@ -5326,6 +5331,7 @@ MonoBehaviour:
     MinTimeSpentThere: 20
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 1762873376}
   IsStatic: 0
@@ -5346,6 +5352,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!136 &517459348
 CapsuleCollider:
@@ -9723,18 +9730,21 @@ MonoBehaviour:
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1086381190}
     MaxTimeSpentThere: 20
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 76297461}
     MaxTimeSpentThere: 120
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   DefaultDestination:
     Place: {fileID: 76297461}
@@ -9742,6 +9752,7 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 1762873376}
   IsStatic: 0
@@ -9762,6 +9773,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!136 &868527583
 CapsuleCollider:
@@ -11420,6 +11432,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -11439,6 +11452,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -12179,12 +12193,14 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 1188394946}
     MaxTimeSpentThere: 120
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   DefaultDestination:
     Place: {fileID: 1188394946}
@@ -12192,6 +12208,7 @@ MonoBehaviour:
     MinTimeSpentThere: 20
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 1762873376}
   IsStatic: 0
@@ -12212,6 +12229,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!136 &1151057713
 CapsuleCollider:
@@ -12397,6 +12415,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -14412,6 +14431,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -15247,6 +15267,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -18719,7 +18740,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 246717293}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 42af03ee7f443c3f38d7b24835fcc485, type: 3}
   m_Name: 
@@ -21026,6 +21047,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -21448,6 +21470,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
