@@ -384,7 +384,7 @@ public class LibretroScreenController : MonoBehaviour
                   //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
                   //.Condition("Is visible", () => display.isVisible)
                   .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
-                  .Condition("Is Player near or looking the screen", () => IsNearPlayer() ||  isPlayerLookingAtScreen4())
+                  .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
                   //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
                   .Do("Play video player", () =>
                   {
