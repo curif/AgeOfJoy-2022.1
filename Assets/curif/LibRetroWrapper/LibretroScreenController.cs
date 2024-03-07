@@ -53,9 +53,9 @@ public class LibretroScreenController : MonoBehaviour
 
     //[SerializeField]
     //public GameObject Player;
-    [Tooltip("The minimal distance between the player and the screen to be active.")]
+    [Tooltip("The minimal distance between the player and the screen to active video.")]
     [SerializeField]
-    public float DistanceMinToPlayerToActivate = 2f;
+    public float DistanceMinToPlayerToActivate = 4f;
     [Tooltip("The time in secs that the player has to look to another side to exit the game and recover mobility.")]
     [SerializeField]
     public int SecondsToWaitToExitGame = 2;
@@ -383,9 +383,9 @@ public class LibretroScreenController : MonoBehaviour
                   //.Condition("Is visible", () => videoPlayer.isVisible())
                   //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
                   //.Condition("Is visible", () => display.isVisible)
-                  // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
                   .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
-                  .Condition("Player looking screen", () => isPlayerLookingAtScreen4())
+                  .Condition("Is Player near or looking the screen", () => IsNearPlayer() ||  isPlayerLookingAtScreen4())
+                  //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
                   .Do("Play video player", () =>
                   {
                       videoPlayer.Play();
@@ -436,15 +436,11 @@ public class LibretroScreenController : MonoBehaviour
 
         return;
     }
-
-    /*
-    bool isPlayerCloser(GameObject _camera, Renderer _display, float _distanceMinToPlayerToStartGame)
+    public bool IsNearPlayer()
     {
-      float d = Vector3.Distance(_camera.transform.position, _display.transform.position);
-      // WriteConsole($"[curif.LibRetroMameCore.isPlayerClose] distance: {d} < {_distanceMinToPlayerToStartGame} {d < _distanceMinToPlayerToStartGame}");
-      return d < _distanceMinToPlayerToStartGame;
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+        return distance <= DistanceMinToPlayerToActivate;
     }
-    */
 
     private bool isPlayerLookingAtScreen4()
     {
