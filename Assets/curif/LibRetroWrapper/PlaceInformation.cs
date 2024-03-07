@@ -14,6 +14,8 @@ public class PlaceInformation
   public int MinTimeSpentThere = 1;
   public float MinimalDistanceToReachObject = 1.5f;
   public AgentScenePosition ScenePosition = null;
+  public string MaxAllowedSpace = "1x1x2";
+
   [SerializeField]
   public PlaceType Type;
 
@@ -25,7 +27,8 @@ public class PlaceInformation
 
   public PlaceInformation(GameObject place, int maxTimeSpentThere, int minTimeSpentThere,
                           float minimalDistanceToReachObject, PlaceType type = PlaceType.Generic,
-                          AgentScenePosition scenePosition = null)
+                          AgentScenePosition scenePosition = null,
+                          string maxAllowedSpace = "1x1x2")
   {
     this.Place = place;
     this.MaxTimeSpentThere = maxTimeSpentThere;
@@ -33,6 +36,7 @@ public class PlaceInformation
     this.MinimalDistanceToReachObject = minimalDistanceToReachObject;
     this.Type = type;
     this.ScenePosition = scenePosition; 
+    this.MaxAllowedSpace = maxAllowedSpace;
   }
 
   public bool IsTaken

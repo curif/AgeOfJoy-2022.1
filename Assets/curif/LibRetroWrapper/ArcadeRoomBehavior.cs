@@ -117,6 +117,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
             {
                 if (place.ScenePosition == null)
                     place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
+                place.MaxAllowedSpace = place.ScenePosition.MaxAllowedSpace;
             }
 
             DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
@@ -266,6 +267,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
                     // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
                     return TaskStatus.Failure;
                 }
+
                 destination = null;
                 return TaskStatus.Success;
             })
@@ -275,6 +277,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
                     DefaultDestination != null
                     && (IsStatic ||
                         selectedDestination.IsTaken ||
+                        selectedDestination.MaxAllowedSpace != "1x1x2" ||  //only cabinets size 1x1x2 (no animation for others yet)
                         othersNPC.FirstOrDefault(npc =>
                                                   npc?.Destination != null &&
                                                   UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null))
