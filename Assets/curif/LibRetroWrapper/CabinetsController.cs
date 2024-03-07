@@ -64,6 +64,7 @@ public class CabinetsController : MonoBehaviour
             return GameObjectReplacement;
         }
 
+
         public CabinetPosition Game()
         {
             if (IsOutOfOrderActive)
@@ -105,9 +106,8 @@ public class CabinetsController : MonoBehaviour
             cabInfo.GameObjectOutOfOrder = transform.GetChild(idx).gameObject;
             cabInfo.CabinetController = cabInfo.GameObjectOutOfOrder.GetComponent<CabinetController>();
             if (cabInfo.CabinetController == null)
-            {
                 cabInfo.CabinetController = cabInfo.GameObjectOutOfOrder.AddComponent<CabinetController>();
-            }
+
             Cabinets.Add(cabInfo);
         }
     }
@@ -126,6 +126,11 @@ public class CabinetsController : MonoBehaviour
             cabInfo.CabinetController.game = new();
             cabInfo.CabinetController.game.Position = idx;
             cabInfo.CabinetController.backgroundSoundController = backgroundSoundController;
+
+            //MaxAllowedSpace to identify NPC animation
+            AgentScenePosition pos = cabInfo.CabinetController.AgentScenePosition?.GetComponent<AgentScenePosition>();
+            if (pos != null)
+                pos.MaxAllowedSpace = cabInfo.CabinetController.Space.MaxAllowedSpace;
 
             //assign the cabinet number to the teleport area
             MeshRenderer renderer = cabInfo.CabinetController.AgentPlayerTeleportAnchor?.GetComponent<MeshRenderer>();

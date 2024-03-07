@@ -10,6 +10,7 @@ public class AgentScenePosition : MonoBehaviour
     public bool IsPlayerPresent = false;
 
     public bool IsNPCPresent = false;
+    public string MaxAllowedSpace = "1x1x2";
     public string NPCPresentName = "";
     public float BoxColliderHeight = 5f;
     public BoxCollider boxCollider;

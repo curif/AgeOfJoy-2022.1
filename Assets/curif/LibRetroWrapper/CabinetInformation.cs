@@ -54,7 +54,7 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
-    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+"};
+    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+", "fbneo"};
 
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
@@ -237,6 +237,7 @@ public class CabinetInformation
     {
         public bool emissive = false;
         public RGBColor color;
+        public Art art;
     }
     public class Part
     {

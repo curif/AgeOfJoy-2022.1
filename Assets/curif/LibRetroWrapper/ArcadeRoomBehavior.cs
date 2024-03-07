@@ -84,12 +84,51 @@ public class ArcadeRoomBehavior : MonoBehaviour
     // private bool inPathToCollisionWithPlayer = false;
     private DateTime avoidCollisionAnalysis = DateTime.Now;
     private Rigidbody npcRigidbody;
+    private Coroutine mainCoroutine;
+
+    private bool initialized = false;
+
 
     void Start()
     {
+        agent = gameObject.GetComponent<NavMeshAgent>();
+        animator = gameObject.GetComponent<Animator>();
+        player = GameObject.Find("OVRPlayerControllerGalery");
+        roomConfiguration = RoomConfiguration.GetComponent<RoomConfiguration>();
+        enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
+
+        if (totalDestinationsList.Count == 0)
+        {
+            totalDestinationsList.AddRange(Destinations);
+            othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
+                         where npc != gameObject
+                         select npc.GetComponent<ArcadeRoomBehavior>()).
+                                ToList<ArcadeRoomBehavior>();
+            if (PlayerPositions != null)
+                //The cabinets where not loaded when this code runs
+                totalDestinationsList.AddRange(
+                    (from Transform playerPosition in PlayerPositions.transform
+                     select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
+                                             MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine,
+                                             playerPosition.gameObject.GetComponent<AgentScenePosition>())
+                    ).ToList());
+            //get the agent ScenePosition Component for all the places
+            foreach (PlaceInformation place in totalDestinationsList)
+            {
+                if (place.ScenePosition == null)
+                    place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
+                place.MaxAllowedSpace = place.ScenePosition.MaxAllowedSpace;
+            }
+
+            DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
+        }
+        tree = buildBT();
+
         configureCollider();
         configureNavMesh();
         forceToDefaultDestination();
+        mainCoroutine = StartCoroutine(runBT());
+        initialized = true;
     }
     void configureNavMesh()
     {
@@ -176,40 +215,31 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     void OnEnable()
     {
-        agent = gameObject.GetComponent<NavMeshAgent>();
-        animator = gameObject.GetComponent<Animator>();
-        player = GameObject.Find("OVRPlayerControllerGalery");
-        roomConfiguration = RoomConfiguration.GetComponent<RoomConfiguration>();
-        enableDisableRenderers = gameObject.GetComponent<EnableDisableRenderers>();
+        if (!initialized)
+            return;
 
-        if (totalDestinationsList.Count == 0)
-        {
-            totalDestinationsList.AddRange(Destinations);
-            othersNPC = (from npc in GameObject.FindGameObjectsWithTag("NPC")
-                         where npc != gameObject
-                         select npc.GetComponent<ArcadeRoomBehavior>()).
-                                ToList<ArcadeRoomBehavior>();
-            if (PlayerPositions != null)
-                //The cabinets where not loaded when this code runs
-                totalDestinationsList.AddRange(
-                    (from Transform playerPosition in PlayerPositions.transform
-                     select new PlaceInformation(playerPosition.gameObject, MaxTimeSpentGaming, MinTimeSpentGaming,
-                                             MinimalDistanceToReachArcade, PlaceInformation.PlaceType.ArcadeMachine,
-                                             playerPosition.gameObject.GetComponent<AgentScenePosition>())
-                    ).ToList());
-            //get the agent ScenePosition Component for all the places
-            foreach (PlaceInformation place in totalDestinationsList)
-            {
-                if (place.ScenePosition == null)
-                    place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
-            }
-
-            DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
-        }
-        tree = buildBT();
-        StartCoroutine(runBT());
+        if (mainCoroutine == null)
+            mainCoroutine = StartCoroutine(runBT());
 
         ConfigManager.WriteConsole($"[ArcadeRoomBehavior.OnEnabled] {gameObject.name} is enabled");
+    }
+    private void OnApplicationPause()
+    {
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
+    }
+    private void OnDisable()
+    {
+        if (!initialized)
+            return;
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
     }
 
     IEnumerator runBT()
@@ -237,6 +267,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
                     // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
                     return TaskStatus.Failure;
                 }
+
                 destination = null;
                 return TaskStatus.Success;
             })
@@ -246,6 +277,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
                     DefaultDestination != null
                     && (IsStatic ||
                         selectedDestination.IsTaken ||
+                        selectedDestination.MaxAllowedSpace != "1x1x2" ||  //only cabinets size 1x1x2 (no animation for others yet)
                         othersNPC.FirstOrDefault(npc =>
                                                   npc?.Destination != null &&
                                                   UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null))
