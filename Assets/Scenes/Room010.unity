@@ -719,6 +719,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -807,12 +808,14 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
     MaxTimeSpentThere: 30
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 108282750}
@@ -820,6 +823,7 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 62110610}
   IsStatic: 0
@@ -840,6 +844,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!95 &118493732
 Animator:
@@ -1472,19 +1477,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: -2.3110831e-38
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 6.12e-43
+      value: 0.0078125
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 2.3363147
+      value: NaN
       objectReference: {fileID: 0}
     - target: {fileID: 4603655004515122622, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 4.2830487e+12
+      value: 0.0078125
       objectReference: {fileID: 0}
     - target: {fileID: 4884199424174521766, guid: 9d1faef16b2592397bdf2a4e44cf7a49, type: 3}
       propertyPath: m_RootOrder
@@ -2508,6 +2513,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -3346,6 +3352,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -4413,6 +4420,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -5166,6 +5174,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -7957,6 +7966,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -9343,7 +9353,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.18e-43, y: 1e-45, z: 2.7e-44, w: 1e-45}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -10373,6 +10383,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -12040,6 +12051,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -12375,6 +12387,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -12687,6 +12700,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -12812,6 +12826,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -13059,12 +13074,14 @@ MonoBehaviour:
     MinTimeSpentThere: 20
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
     MaxTimeSpentThere: 60
     MinTimeSpentThere: 20
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1117604845}
@@ -13072,6 +13089,7 @@ MonoBehaviour:
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
   RoomConfiguration: {fileID: 62110610}
   IsStatic: 0
@@ -13092,6 +13110,7 @@ MonoBehaviour:
     MinTimeSpentThere: 0
     MinimalDistanceToReachObject: 0
     ScenePosition: {fileID: 0}
+    MaxAllowedSpace: 
     Type: 0
 --- !u!136 &1128843709
 CapsuleCollider:
@@ -13459,7 +13478,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.7077718e+19, y: 1.9283795e+31, z: 9.31247e-39, w: 1.5954394e+31}
+  m_BoundingSphereOverride: {x: 1e-45, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -13955,6 +13974,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -14007,6 +14027,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -15318,7 +15339,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 4.8529165e+33, y: 0, z: Infinity, w: 0}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -17305,6 +17326,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -19435,6 +19457,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -20461,6 +20484,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -20672,6 +20696,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -24147,7 +24172,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 1.05e-43, z: 5.5e-44, w: 7.5585e-41}
+  m_BoundingSphereOverride: {x: 1e-45, y: NaN, z: NaN, w: NaN}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -24715,6 +24740,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -25046,6 +25072,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -25782,6 +25809,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
@@ -26872,6 +26900,7 @@ MonoBehaviour:
   IsPlayerColliding: 0
   IsPlayerPresent: 0
   IsNPCPresent: 0
+  MaxAllowedSpace: 1x1x2
   NPCPresentName: 
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
