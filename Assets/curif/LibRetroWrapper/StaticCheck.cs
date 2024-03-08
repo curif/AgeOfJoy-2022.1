@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class StaticCheck : MonoBehaviour
 {
-    public float idleTimeThreshold = 3.0f;  // Adjust this threshold as needed
+    public float idleTimeThreshold = 1.0f;  // Adjust this threshold as needed
     private Vector2 lastPosition;
     private float idleTimer;
     public bool isStatic;
