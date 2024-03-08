@@ -8,9 +8,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Video;
-
+using System.IO;
+using System;
 
 [RequireComponent(typeof(UnityEngine.Video.VideoPlayer))]
+[RequireComponent(typeof(TextureCache))]
+
 public class GameVideoPlayer : MonoBehaviour
 {
 
@@ -23,6 +26,10 @@ public class GameVideoPlayer : MonoBehaviour
     public string videoPath;
     private bool isPreparing = false;
     private bool isReady = false;
+    private bool isFirstTextureProcessed = false;
+    public string FirstTexturePath;
+    private Texture2D FirstTexture = null;
+    private TextureCache textureCache;
 
     // Start is called before the first frame update
     void Start()
@@ -30,6 +37,7 @@ public class GameVideoPlayer : MonoBehaviour
         display = GetComponent<Renderer>();
         videoPlayer = GetComponent<UnityEngine.Video.VideoPlayer>();
         isPreparing = false;
+        textureCache = GetComponent<TextureCache>();
     }
 
     public GameVideoPlayer setVideo(string path, ShaderScreenBase shader, bool invertx, bool inverty)
@@ -43,6 +51,12 @@ public class GameVideoPlayer : MonoBehaviour
         this.inverty = inverty;
         this.shader = shader;
 
+        textureCache.Init(path);
+        if (textureCache.AlreadyCached())
+        {
+            shader.Texture = textureCache.CachedTexture;
+            shader.Invert(invertx, inverty);
+        }
 
         //videoPlayer.targetMaterialRenderer = display;
         //VideoPlayer.targetMaterialProperty = shader.TargetMaterialProperty;
@@ -101,6 +115,12 @@ public class GameVideoPlayer : MonoBehaviour
             shader.Invert(invertx, inverty);
             videoPlayer.Play();
         }
+
+        if (isReady && videoPlayer.isPlaying && !textureCache.AlreadyCached())
+        {
+            textureCache.Load(videoPlayer.texture);
+        }
+
 #endif
         return this;
     }
@@ -118,6 +138,7 @@ public class GameVideoPlayer : MonoBehaviour
         ConfigManager.WriteConsole($"[videoPlayer.Pause] {videoPath} ====");
         videoPlayer.isLooping = false;
         videoPlayer.Pause();
+
         // ConfigManager.WriteConsole($"[videoPlayer.Pause] isPlaying: {videoPlayer.isPlaying} ====");
         // isReady = false;
 #endif
@@ -133,6 +154,9 @@ public class GameVideoPlayer : MonoBehaviour
         // ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
         //destroy internal resources.
         videoPlayer.Stop();
+        if (textureCache.AlreadyCached())
+            shader.Texture = textureCache.CachedTexture;
+
 #endif
         return this;
     }
@@ -151,6 +175,8 @@ public class GameVideoPlayer : MonoBehaviour
     void ErrorReceived(VideoPlayer vp, string message)
     {
         ConfigManager.WriteConsoleError($"[videoPlayer] ERROR {videoPath} - {message}");
-    }
+        if (textureCache.AlreadyCached())
+            shader.Texture = textureCache.CachedTexture;
 
+    }
 }
