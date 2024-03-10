@@ -13,6 +13,8 @@ class CommandFunctionLEN : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
+
         double ret = val.GetValueAsString().Length;
         return new BasicValue(ret);
     }
@@ -28,6 +30,8 @@ class CommandFunctionUCASE : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
+
         string ret = val.GetValueAsString().ToUpper();
         return new BasicValue(ret);
     }
@@ -45,6 +49,8 @@ class CommandFunctionLCASE : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
+
         string ret = val.GetValueAsString().ToLower();
         return new BasicValue(ret);
     }
@@ -61,6 +67,8 @@ class CommandFunctionRTRIM : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
+
         string ret = val.GetValueAsString().TrimEnd();
 
         return new BasicValue(ret);
@@ -78,6 +86,8 @@ class CommandFunctionLTRIM : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
+
         string ret = val.GetValueAsString().TrimStart();
 
         return new BasicValue(ret);
@@ -94,6 +104,7 @@ class CommandFunctionTRIM : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
         string ret = val.GetValueAsString().Trim();
 
         return new BasicValue(ret);
@@ -116,6 +127,9 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(vals[0]);
+        FunctionHelper.ExpectedNumber(vals[1], " - start");
+        FunctionHelper.ExpectedNumber(vals[2], " - length");
 
         string input = vals[0].GetValueAsString();
         int startIndex = (int)vals[1].GetValueAsNumber();
@@ -160,10 +174,13 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(vals[0]);
+        FunctionHelper.ExpectedNumber(vals[1], " - index");
+        FunctionHelper.ExpectedString(vals[2], " - separator");
 
         string input = vals[0].GetValueAsString();
         int memberIndex = (int)vals[1].GetValueAsNumber();
-        string separator = vals[2].GetValueAsString(); 
+        string separator = vals[2].GetValueAsString();
 
         string[] parts = input.Split(new[] { separator }, StringSplitOptions.None);
 
@@ -195,9 +212,11 @@ class CommandFunctionCOUNTMEMBERS : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(vals[0]);
+        FunctionHelper.ExpectedString(vals[1], " - separator");
 
         string input = vals[0].GetValueAsString();
-        string separator = vals[1].GetValueAsString(); 
+        string separator = vals[1].GetValueAsString();
         int count = input.Split(new[] { separator }, StringSplitOptions.None).Length;
 
         return new BasicValue(count);

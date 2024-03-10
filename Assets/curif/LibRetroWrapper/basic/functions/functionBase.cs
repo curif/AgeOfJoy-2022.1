@@ -32,7 +32,7 @@ class CommandFunctionBase : ICommandBase
         return "Func: " + CmdToken;
     }
 
-    
+
 }
 
 class CommandFunctionExpressionListBase : CommandFunctionBase
@@ -147,6 +147,14 @@ public static class FunctionHelper
         if (!val.IsString() || string.IsNullOrEmpty(val.GetString()))
             throw new Exception("Parameter should be a non empty string " + msg);
         return true;
+    }
+
+    public static string FileTraversalFree(string path, string allowedBasePath)
+    {
+        string normalizedPath = Path.GetFullPath(path);
+        if (!normalizedPath.StartsWith(allowedBasePath))
+            throw new Exception($"Invalid file path: {path} Traversal back to parent directories is not allowed.");
+        return normalizedPath;
     }
 
 }

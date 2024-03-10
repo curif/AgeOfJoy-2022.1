@@ -20,8 +20,11 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - separator");
+        FunctionHelper.ExpectedNumber(vals[2], " - order");
 
-        string path = vals[0].GetValueAsString();
+        string path = FunctionHelper.FileTraversalFree(vals[0].GetValueAsString(), ConfigManager.BaseDir);
         string separator = vals[1].GetValueAsString();
         int orderType = (int)vals[2].GetValueAsNumber();
 
@@ -75,8 +78,8 @@ class CommandFunctionFILEEXISTS : CommandFunctionSingleExpressionBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
 
         BasicValue val = expr.Execute(vars);
-        string filePath = val.GetValueAsString();
-
+        FunctionHelper.ExpectedNonEmptyString(val, " - file path");
+        string filePath = FunctionHelper.FileTraversalFree(val.GetValueAsString(), ConfigManager.BaseDir);
         bool fileExists = File.Exists(filePath);
 
         return new BasicValue(fileExists ? 1 : 0);
@@ -100,21 +103,14 @@ class CommandFunctionCOMBINEPATH : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path 1");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - file path 2");
 
         string path1 = vals[0].GetValueAsString();
         string path2 = vals[1].GetValueAsString();
 
-        try
-        {
-            string combinedPath = Path.Combine(path1, path2);
-            return new BasicValue(combinedPath);
-        }
-        catch (Exception ex)
-        {
-            // Handle any exceptions that may occur (e.g., invalid paths)
-            AGEBasicDebug.WriteConsole($"Error: {ex.Message}");
-            return new BasicValue("");
-        }
+        string combinedPath = FunctionHelper.FileTraversalFree(Path.Combine(path1, path2), ConfigManager.BaseDir);
+        return new BasicValue(combinedPath);
     }
 }
 
@@ -140,6 +136,8 @@ class PathFunctionsBase : CommandFunctionNoExpressionBase
                 return new BasicValue(ConfigManager.Cabinets);
             case "ROOTPATH":
                 return new BasicValue(ConfigManager.BaseDir);
+            case "MUSICPATH":
+                return new BasicValue(ConfigManager.MusicDir);
             default:
                 return new BasicValue("");
         }
@@ -171,3 +169,7 @@ class CommandFunctionROOTPATH : PathFunctionsBase
     public CommandFunctionROOTPATH(ConfigurationCommands config) : base(config, "ROOTPATH") { }
 }
 
+class CommandFunctionMUSICPATH : PathFunctionsBase
+{
+    public CommandFunctionMUSICPATH(ConfigurationCommands config) : base(config, "MUSICPATH") { }
+}
