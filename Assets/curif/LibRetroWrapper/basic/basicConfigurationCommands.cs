@@ -40,4 +40,6 @@ public class ConfigurationCommands
     public PlayerController Player;
     public GameObject PlayerGameObject;
     public XROrigin PlayerOrigin;
+
+    public MusicPlayer MusicPlayerQueue;
 }
