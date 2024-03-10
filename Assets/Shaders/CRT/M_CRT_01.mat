@@ -84,11 +84,20 @@ Material:
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
+    - _Distance_DotMask: 0.15
+    - _Distance_DotMask_Power: 5
+    - _Distance_Scanline: 0.5
+    - _Distance_Scanline_Power: 5
     - _DotMaskBrighten: 0.273
     - _DotMaskOffsetAdd: 0
     - _DotMaskSaturate: 0
     - _DotMaskTransitionDistance: 0.1
     - _DotMaskTransitionPower: 5
+    - _DotMask_Brighten: 0
+    - _DotMask_OffsetAdd: 0
+    - _DotMask_Saturate: 0
+    - _Dotmask_GameScreenBrightness: 3
+    - _Dotmask_ScanlineRemoval: 0.124
     - _DstBlend: 0
     - _FresnelBias: -0.86
     - _FresnelPower: 4
@@ -109,6 +118,11 @@ Material:
     - _ScanlinePower: 1
     - _ScanlineTransitionDistance: 0.5
     - _ScanlineTransitionPower: 5
+    - _Scanline_Amount: 1
+    - _Scanline_GameScreenBrightness: 2.5
+    - _Scanline_GameScreenBrightnessWithScanlines: 1
+    - _Scanline_Power: 1
+    - _Scanline_TransitionPower: 5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -118,8 +132,11 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DotmaskTiling: {r: 256, g: 256, b: 0, a: 0}
+    - _Dotmask_Tiling: {r: 512, g: 256, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _ScanlineMax: {r: 1, g: 1, b: 1, a: 0}
     - _ScanlineTiling: {r: 1, g: 256, b: 0, a: 0}
     - _ScanlineTiling1: {r: 512, g: 512, b: 0, a: 0}
+    - _Scanline_Color: {r: 1, g: 1, b: 1, a: 0}
+    - _Scanline_Tiling: {r: 1, g: 256, b: 0, a: 0}
   m_BuildTextureStacks: []
