@@ -11,6 +11,52 @@ using System.ComponentModel;
 using System;
 using System.Collections.Specialized;
 
+
+public static class CabinetTextureCache
+{
+    // Dictionary to store cached textures
+    private static Dictionary<string, Texture2D> cachedTextures = new Dictionary<string, Texture2D>();
+
+    // Method to load and cache a texture
+    public static Texture2D LoadAndCacheTexture(string path)
+    {
+        if (!IsTextureCached(path))
+        {
+            Texture2D tex = null;
+            byte[] fileData;
+
+            // Load the texture from disk
+            fileData = File.ReadAllBytes(path);
+            tex = new Texture2D(2, 2, TextureFormat.RGB565, true);
+            tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
+            tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
+            tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+
+            // Cache the loaded texture
+            cachedTextures.Add(path, tex);
+
+            return tex;
+        }
+
+        return GetCachedTexture(path);
+    }
+
+    // Method to retrieve a cached texture
+    public static Texture2D GetCachedTexture(string path)
+    {
+        if (IsTextureCached(path))
+        {
+            return cachedTextures[path];
+        }
+        return null;
+    }
+
+    public static bool IsTextureCached(string path)
+    {
+        return cachedTextures.ContainsKey(path);
+    }
+}
+
 public class Cabinet
 {
     public string Name = "";
@@ -26,9 +72,10 @@ public class Cabinet
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)
     {
+
+        /*
         Texture2D tex = null;
         byte[] fileData;
-
         if (File.Exists(filePath))
         {
             fileData = File.ReadAllBytes(filePath);
@@ -37,7 +84,8 @@ public class Cabinet
             tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
             tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
         }
-        return tex;
+        */
+        return CabinetTextureCache.LoadAndCacheTexture(filePath);
     }
 
     // public bool IsValid

@@ -364,6 +364,7 @@ public class CabinetInformation
                 { "config", ConfigManager.MameConfigDir },
                 { "disk-image", ConfigManager.RomsDir },
                 { "sample", ConfigManager.SamplesDir },
+                { "music", ConfigManager.MusicDir },
                 { "nvram", ConfigManager.nvramDir }
             };
 

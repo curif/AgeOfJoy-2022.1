@@ -38,6 +38,7 @@ public static class ConfigManager
     public static string SamplesDir = Path.Combine(SystemDir,"samples");
     public static string MameConfigDir = Path.Combine(GameSaveDir,"cfg");
     public static string nvramDir = Path.Combine(GameSaveDir,"nvram");
+    public static string MusicDir = Path.Combine(BaseDir,"music");
 
     public static ConfigInformation configuration;
     public static bool DebugActive
@@ -68,6 +69,8 @@ public static class ConfigManager
             Directory.CreateDirectory(ConfigManager.AGEBasicDir);
         if (!Directory.Exists(ConfigManager.DebugDir))
             Directory.CreateDirectory(ConfigManager.DebugDir);
+        if (!Directory.Exists(ConfigManager.MusicDir))
+            Directory.CreateDirectory(ConfigManager.MusicDir);
 
         if (!Directory.Exists(ConfigManager.SystemDir))
             Directory.CreateDirectory(ConfigManager.SystemDir);
