@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MI_CRT_99_50
+  m_Name: MI_CRT_99_15
   m_Shader: {fileID: 4800000, guid: 77d4b53848385294cb7dfbd390984976, type: 3}
   m_Parent: {fileID: 2100000, guid: a4ab9cccf96d0d642ae12930d5eff61a, type: 2}
   m_ModifiedSerializedProperties: 0
@@ -22,10 +22,20 @@ Material:
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
-    m_TexEnvs: []
+    m_TexEnvs:
+    - _TextureSample0:
+        m_Texture: {fileID: 8900000, guid: 1064b3af7c0210041ac63a494868bdef, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Distance_DotMask: 0.5
-    - _Distance_Scanline: 1
-    m_Colors: []
+    - _Distance_DotMask: 0.05
+    - _Distance_Scanline: 5
+    - _MipBias: 0.5
+    - _Scanline_Amount: 0.12
+    - _Scanline_GameScreenBrightness: 1.5
+    - __dirty: 0
+    m_Colors:
+    - _Dotmask_Tiling: {r: 256, g: 256, b: 0, a: 0}
+    - _Scanline_Tiling: {r: 1, g: 16, b: 0, a: 0}
   m_BuildTextureStacks: []
