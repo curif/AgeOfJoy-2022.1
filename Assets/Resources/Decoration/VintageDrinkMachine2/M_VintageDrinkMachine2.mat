@@ -11,7 +11,8 @@ Material:
   m_Shader: {fileID: 4800000, guid: 4252649f27bf9874b9bafc96248e7c30, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _USEEMISSIVETINT_ON
   m_InvalidKeywords:
   - _EMISSION
   - _NORMALMAP
@@ -79,23 +80,27 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _FresnelBias: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.072
     - _GlossyReflections: 1
-    - _GlowMax: 1
-    - _GlowMin: 0.7
+    - _GlowMax: 0.35
+    - _GlowMin: 0.25
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _PulseSpeed: 8
+    - _PulseSpeed: 4
     - _Smoothness: 0.085
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
+    - _useEmissiveTint: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0.6597539, g: 0.6597539, b: 0.6597539, a: 1}
+    - _EmissiveTint: {r: 1, g: 1, b: 1, a: 0}
+    - _EmissiveTintFresnel: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []

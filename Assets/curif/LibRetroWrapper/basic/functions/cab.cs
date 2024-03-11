@@ -12,11 +12,11 @@ class CommandFunctionCABPARTSCOUNT : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
-        return new BasicValue((double)config.Cabinet.transform.childCount);
+        return new BasicValue((double)config.Cabinet.PartsCount());
     }
 }
 
@@ -29,7 +29,7 @@ class CommandFunctionCABPARTSNAME : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -37,12 +37,8 @@ class CommandFunctionCABPARTSNAME : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedNumber(val);
 
         int partNum = (int)val.GetNumber();
-        // Check if the parent has at least 3 children
-        if (config.Cabinet.transform.childCount < partNum + 1)
-            return new BasicValue("");
 
-        Transform child = config.Cabinet.transform.GetChild(partNum);
-        return new BasicValue(child.name);
+        return new BasicValue(config.Cabinet.PartsName(partNum));
     }
 }
 
@@ -56,7 +52,7 @@ class CommandFunctionCABPARTSPOSITION : CommandFunctionSingleExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
@@ -64,8 +60,7 @@ class CommandFunctionCABPARTSPOSITION : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedString(val);
 
         string partName = val.GetString();
-        Transform child = config.Cabinet.transform.Find(partName);
-        return new BasicValue(child == null ? -1 : child.GetSiblingIndex());
+        return new BasicValue(config.Cabinet.PartsPosition(partName));
     }
 }
 
@@ -82,21 +77,18 @@ class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[0], " - part number");
-        FunctionHelper.ExpectedNumber(vals[1], " - enabled true/false");
+        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        // FunctionHelper.ExpectedNumber(vals[1], " - enabled true/false");
 
-        int partNum = (int)vals[0].GetNumber();
-        // Check if the parent has at least N children
-        if (config.Cabinet.transform.childCount < partNum + 1)
-            return new BasicValue(-1);
-
-        Transform child = config.Cabinet.transform.GetChild(partNum);
-        child.gameObject.SetActive(vals[1].GetNumber() != 0);
+        if (vals[0].IsString())
+            config.Cabinet.EnablePart(vals[0].GetString(), vals[1].IsTrue());
+        else
+            config.Cabinet.EnablePart(vals[0].GetInt(), vals[1].IsTrue());
 
         return new BasicValue(1);
     }
@@ -116,20 +108,20 @@ class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y or Z");
 
-        int partNum = (int)vals[0].GetNumber();
-        // Check if the parent has at least N children
-        if (config.Cabinet.transform.childCount < partNum + 1)
-            throw new Exception("cabPartsGetCoordinate: invalid part number");
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
-        Transform child = config.Cabinet.transform.GetChild(partNum);
         string coord = vals[1].GetString().ToUpper();
         if (coord == "X")
             return new BasicValue(child.position.x);
@@ -158,21 +150,21 @@ class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate");
         FunctionHelper.ExpectedNumber(vals[2], " - coordinate value");
 
-        int partNum = (int)vals[0].GetNumber();
-        // Check if the parent has at least N children
-        if (config.Cabinet.transform.childCount < partNum + 1)
-            throw new Exception("cabPartsSetCoordinate: invalid part number");
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
-        Transform child = config.Cabinet.transform.GetChild(partNum);
         Vector3 newPosition;
         string coord = vals[1].GetString().ToUpper();
         if (coord == "H")
@@ -211,7 +203,7 @@ class CommandFunctionCABINSERTCOIN : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.CoinSlot == null)
             throw new Exception("Cabinet hasn't a coin slot.");
 
@@ -234,21 +226,21 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
         FunctionHelper.ExpectedNumber(vals[2], " - angle");
 
-        int partNum = (int)vals[0].GetNumber();
-        // Check if the parent has at least N children
-        if (config.Cabinet.transform.childCount < partNum + 1)
-            throw new Exception("cabPartsSetRotation: invalid part number");
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
-        Transform child = config.Cabinet.transform.GetChild(partNum);
         string axis = vals[1].GetString().ToUpper();
         float angle = (float)vals[2].GetNumber();
 
@@ -287,20 +279,20 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[0], " - part number");
+        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
 
-        int partNum = (int)vals[0].GetNumber();
-        // Check if the parent has at least N children
-        if (config.Cabinet.transform.childCount < partNum + 1)
-            throw new Exception("cabPartsGetRotation: invalid part number");
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
-        Transform child = config.Cabinet.transform.GetChild(partNum);
         string axis = vals[1].GetString().ToUpper();
 
         float rotationValue = 0f;
@@ -320,6 +312,171 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
         }
 
         return new BasicValue(rotationValue);
+    }
+}
+
+class CommandFunctionCABPARTSGETTRANSPARENCY : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCABPARTSGETTRANSPARENCY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSGETTRANSPARENCY";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue val = expr.Execute(vars);
+
+        if (val.IsString())
+            return new BasicValue(config.Cabinet.GetTransparencyPart(val.GetString()));
+
+        return new BasicValue(config.Cabinet.GetTransparencyPart(val.GetInt()));
+
+    }
+}
+
+class CommandFunctionCABPARTSSETTRANSPARENCY : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSSETTRANSPARENCY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETTRANSPARENCY";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // Assuming the syntax is like: partNum, axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[1], " - percentaje from 0 to 100");
+
+        int percentage = (int)Mathf.Clamp((int)vals[1].GetNumber(), 0, 100);
+
+        if (vals[0].IsString())
+            config.Cabinet.SetTransparencyPart(vals[0].GetString(), percentage);
+        else
+            config.Cabinet.SetTransparencyPart(vals[0].GetInt(), percentage);
+
+        return new BasicValue(1);
+
+    }
+}
+
+class CommandFunctionCABPARTSEMISSION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSEMISSION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSEMISSION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // Assuming the syntax is like: partNum, axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[1], " - true/false");
+
+
+        if (vals[0].IsString())
+            config.Cabinet.SetEmissionEnabledPart(vals[0].GetString(), vals[1].IsTrue());
+        else
+            config.Cabinet.SetEmissionEnabledPart(vals[0].GetInt(), vals[1].IsTrue());
+
+        return new BasicValue(1);
+
+    }
+}
+
+
+class CommandFunctionCABPARTSSETEMISSIONCOLOR : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSSETEMISSIONCOLOR(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETEMISSIONCOLOR";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 4); // Assuming the syntax is like: partNum, axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[1], "- R");
+        FunctionHelper.ExpectedNumber(vals[2], "- G");
+        FunctionHelper.ExpectedNumber(vals[3], "- B");
+
+        float r = (float)vals[1].GetValueAsNumber();
+        float g = (float)vals[2].GetValueAsNumber();
+        float b = (float)vals[3].GetValueAsNumber();
+        Color color = new Color(r, g, b);
+
+        if (vals[0].IsString())
+            config.Cabinet.SetEmissionColorPart(vals[0].GetString(), color);
+        else
+            config.Cabinet.SetEmissionColorPart(vals[0].GetInt(), color);
+
+        return new BasicValue(1);
+
+    }
+}
+
+class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSSETCOLOR(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETCOLOR";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 4); // Assuming the syntax is like: partNum, axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[1], "- R");
+        FunctionHelper.ExpectedNumber(vals[2], "- G");
+        FunctionHelper.ExpectedNumber(vals[3], "- B");
+
+        float r = (float)vals[1].GetValueAsNumber();
+        float g = (float)vals[2].GetValueAsNumber();
+        float b = (float)vals[3].GetValueAsNumber();
+        Color color = new Color(r, g, b);
+
+        if (vals[0].IsString())
+            config.Cabinet.SetColorPart(vals[0].GetString(), color);
+        else
+            config.Cabinet.SetColorPart(vals[0].GetInt(), color);
+
+        return new BasicValue(1);
+
     }
 }
 

@@ -12,7 +12,7 @@ class CommandFunctionPLAYERGETHEIGHT : CommandFunctionNoExpressionBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Player == null)
             return new BasicValue(0);
 
@@ -30,7 +30,7 @@ class CommandFunctionPLAYERSETHEIGHT : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
 
         if (config?.Player == null)
             return new BasicValue(0);
@@ -57,7 +57,7 @@ class CommandFunctionPLAYERGETCOORDINATE : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.PlayerGameObject == null)
             throw new Exception("AGEBasic can't access the Player data.");
 
@@ -90,7 +90,7 @@ class CommandFunctionPLAYERSETCOORDINATE : CommandFunctionExpressionListBase
     }
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.PlayerOrigin == null)
             throw new Exception("AGEBasic can't access the Player data.");
 
@@ -127,7 +127,7 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.PlayerOrigin == null)
             throw new Exception("AGEBasic can't access the Player data.");
         if (config?.Cabinet == null)
@@ -137,10 +137,10 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedNumber(val, " part number");
 
         int partNum = (int)val.GetNumber();
-        if (config.Cabinet.transform.childCount < partNum + 1)
+        if (config.Cabinet.gameObject.transform.childCount < partNum + 1)
             throw new Exception("Invalid cabinet part number.");
 
-        Transform objectToLookAt = config.Cabinet.transform.GetChild(partNum);
+        Transform objectToLookAt = config.Cabinet.gameObject.transform.GetChild(partNum);
 
         // Calculate the direction from the player's head to the object
         Vector3 directionToLookAt = objectToLookAt.transform.position - config.PlayerOrigin.Origin.transform.position;

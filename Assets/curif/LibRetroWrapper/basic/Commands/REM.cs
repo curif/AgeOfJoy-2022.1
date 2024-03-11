@@ -18,7 +18,7 @@ class CommandREM : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] [] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] [] ");
         // Additional implementation specific to CommandImplementation class
         return null;
     }

@@ -53,9 +53,9 @@ public class LibretroScreenController : MonoBehaviour
 
     //[SerializeField]
     //public GameObject Player;
-    [Tooltip("The minimal distance between the player and the screen to be active.")]
+    [Tooltip("The minimal distance between the player and the screen to active video.")]
     [SerializeField]
-    public float DistanceMinToPlayerToActivate = 2f;
+    public float DistanceMinToPlayerToActivate = 4f;
     [Tooltip("The time in secs that the player has to look to another side to exit the game and recover mobility.")]
     [SerializeField]
     public int SecondsToWaitToExitGame = 2;
@@ -76,6 +76,9 @@ public class LibretroScreenController : MonoBehaviour
     public string Brightness = "1.0";
 
     [SerializeField]
+    public string Core = "mame2003+";
+
+    [SerializeField]
     public string ShaderName = "damage";
 
     [SerializeField]
@@ -88,6 +91,9 @@ public class LibretroScreenController : MonoBehaviour
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
     public LightGunInformation lightGunInformation;
+    public Cabinet cabinet;
+
+    public bool SimulateExitGame;
 
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
@@ -100,7 +106,7 @@ public class LibretroScreenController : MonoBehaviour
     private Camera cameraComponentCenterEye;
     private Renderer display;
     private DateTime timeToExit = DateTime.MinValue;
-    private GameObject cabinet;
+    // private GameObject cabinet;
     private CabinetReplace cabinetReplace;
     private LightGunTarget lightGunTarget;
 
@@ -114,10 +120,11 @@ public class LibretroScreenController : MonoBehaviour
     public BackgroundSoundController backgroundSoundController;
 
     private Coroutine mainCoroutine;
+    private bool initialized = false;
 
     private CoinSlotController getCoinSlotController()
     {
-        Transform coinslot = cabinet.transform.Find("coin-slot-added");
+        Transform coinslot = cabinet.gameObject.transform.Find("coin-slot-added");
 
         if (!coinslot)
             return null;
@@ -136,8 +143,11 @@ public class LibretroScreenController : MonoBehaviour
         LibretroMameCore.WriteConsole($"[LibretroScreenController.Start] {gameObject.name}");
 
         display = GetComponent<Renderer>();
-        cabinet = gameObject.transform.parent.gameObject;
+        // cabinet = gameObject.transform.parent.gameObject;
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
+        if (videoPlayer == null)
+            ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} video player doesn't exists on screen.");
+
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
 
@@ -153,11 +163,11 @@ public class LibretroScreenController : MonoBehaviour
 
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
-            ConfigManager.WriteConsoleError("[LibretroScreenController.Start] Coin Slot not found in cabinet !!!! no one can play this game.");
+            ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} Coin Slot not found in cabinet !!!! no one can play this game.");
 
         //material and shader
         shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
-        ConfigManager.WriteConsole($"[LibretroScreenController.Start] shader created: {shader}");
+        ConfigManager.WriteConsole($"[LibretroScreenController.Start]  {name} shader created: {shader}");
 
         // age basic
         if (ageBasicInformation.active)
@@ -167,18 +177,32 @@ public class LibretroScreenController : MonoBehaviour
         }
 
         mainCoroutine = StartCoroutine(runBT());
+        initialized = true;
 
         return;
     }
 
+    //runs before Start()
     private void OnEnable()
     {
+        if (!initialized)
+            return;
         if (mainCoroutine == null)
             mainCoroutine = StartCoroutine(runBT());
     }
 
+    private void OnApplicationPause()
+    {
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
+    }
     private void OnDisable()
     {
+        if (!initialized)
+            return;
         if (mainCoroutine != null)
         {
             StopCoroutine(mainCoroutine);
@@ -198,7 +222,6 @@ public class LibretroScreenController : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
     }
-
 
     private BehaviorTree buildScreenBT()
     {
@@ -222,13 +245,14 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Brightness = Brightness;
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
+                  LibretroMameCore.Core = Core;
 #if _serialize_
                   LibretroMameCore.EnableSaveState = EnableSaveState;
                   LibretroMameCore.StateFile = StateFile;
 #endif
 
                   //controllers
-                  cabinetReplace = cabinet.GetComponent<CabinetReplace>();
+                  cabinetReplace = cabinet.gameObject.GetComponent<CabinetReplace>();
                   ControlMapConfiguration controlConf;
                   if (CabinetControlMapConfig != null)
                   {
@@ -257,6 +281,7 @@ public class LibretroScreenController : MonoBehaviour
                       lightGunTarget.Init(lightGunInformation, PathBase);
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
+#if !UNITY_EDITOR
 
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
@@ -264,7 +289,9 @@ public class LibretroScreenController : MonoBehaviour
                       CoinSlot.clean();
                       return TaskStatus.Failure;
                   }
-
+#else
+                  LibretroMameCore.simulateInEditor(name, GameFile);
+#endif
                   // age basic
                   if (ageBasicInformation.active)
                       cabinetAGEBasic.ExecInsertCoinBas();
@@ -277,7 +304,9 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.StartInteractions();
 
                   // start retro_run cycle
+#if !UNITY_EDITOR
                   LibretroMameCore.StartRunThread();
+#endif
 
                   shader.Texture = LibretroMameCore.GameTexture;
                   shader.Invert(GameInvertX, GameInvertY);
@@ -296,6 +325,11 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       if (libretroControlMap.Active("EXIT") == 1)
                           return true;
+
+#if UNIT_EDITOR
+                      if (SimulateExitGame)
+                        return true;
+#endif
 
                       timeToExit = DateTime.MinValue;
                       return false;
@@ -327,6 +361,9 @@ public class LibretroScreenController : MonoBehaviour
                       cabinetAGEBasic.StopInsertCoinBas(); //force
                       cabinetAGEBasic.ExecAfterLeaveBas();
                   }
+#if UNIT_EDITOR
+                  SimulateExitGame = false;
+#endif
                   return TaskStatus.Success;
               })
             .End()
@@ -346,9 +383,9 @@ public class LibretroScreenController : MonoBehaviour
                   //.Condition("Is visible", () => videoPlayer.isVisible())
                   //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
                   //.Condition("Is visible", () => display.isVisible)
-                  // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
                   .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
-                  .Condition("Player looking screen", () => isPlayerLookingAtScreen4())
+                  .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
+                  //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
                   .Do("Play video player", () =>
                   {
                       videoPlayer.Play();
@@ -399,15 +436,11 @@ public class LibretroScreenController : MonoBehaviour
 
         return;
     }
-
-    /*
-    bool isPlayerCloser(GameObject _camera, Renderer _display, float _distanceMinToPlayerToStartGame)
+    public bool IsNearPlayer()
     {
-      float d = Vector3.Distance(_camera.transform.position, _display.transform.position);
-      // WriteConsole($"[curif.LibRetroMameCore.isPlayerClose] distance: {d} < {_distanceMinToPlayerToStartGame} {d < _distanceMinToPlayerToStartGame}");
-      return d < _distanceMinToPlayerToStartGame;
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+        return distance <= DistanceMinToPlayerToActivate;
     }
-    */
 
     private bool isPlayerLookingAtScreen4()
     {
@@ -442,10 +475,16 @@ public class LibretroScreenController : MonoBehaviour
         LibretroMameCore.End(name, GameFile);
     }
 
+#if UNITY_EDITOR
     public void InsertCoin()
     {
         CoinSlot.insertCoin();
     }
+    public void ExitGame()
+    {
+        SimulateExitGame = true;
+    }
+#endif
 }
 
 #if UNITY_EDITOR
@@ -460,6 +499,10 @@ public class LibretroScreenControllerEditor : Editor
         if(GUILayout.Button("InsertCoin"))
         {
           myScript.InsertCoin();
+        }
+        if(GUILayout.Button("Simulate Exit Game"))
+        {
+          myScript.ExitGame();
         }
     }
 }

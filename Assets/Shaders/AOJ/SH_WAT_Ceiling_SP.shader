@@ -9,6 +9,7 @@ Shader "Custom/AOJ_WorldAligned_Ceiling_SP"
         _MetallicStrength("Metallic Strength", Range(0, 1)) = 0 // Control for metallic effect strength
         _ColorA("Color A", Color) = (1,0,0,1) // First color for lerp
         _ColorB("Color B", Color) = (0,0,1,1) // Second color for lerp
+        _Smoothness("Smoothness", Range(0, 1)) = 0 // Smoothness control
     }
         SubShader
         {
@@ -30,6 +31,7 @@ Shader "Custom/AOJ_WorldAligned_Ceiling_SP"
             float _MetallicStrength; // Control for metallic effect strength
             fixed4 _ColorA; // First color for lerp
             fixed4 _ColorB; // Second color for lerp
+            float _Smoothness; // Smoothness control
 
             void surf(Input IN, inout SurfaceOutputStandard o)
             {
@@ -45,7 +47,7 @@ Shader "Custom/AOJ_WorldAligned_Ceiling_SP"
                 o.Normal = UnpackNormal(tex2D(_BumpMap, uv));
 
                 // Roughness and metallic settings
-                o.Smoothness = 1 - packedTexture.b; // Use B channel for roughness
+                o.Smoothness = _Smoothness; // Directly control smoothness with _Smoothness property
                 o.Metallic = (1 - packedTexture.r) * _MetallicStrength; // Inverse of R channel controls metallic, modulated by strength
             }
             ENDCG

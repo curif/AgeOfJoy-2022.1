@@ -86,6 +86,7 @@ class CommandFunctionROOMGETDESC : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}]");
         string name, desc = "";
         SceneDocument scene;
 
@@ -128,6 +129,7 @@ class CommandFunctionROOMGET : CommandFunctionSingleExpressionBase, ICommandFunc
 
     public BasicValue[] ExecuteList(BasicVars vars)
     {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         BasicValue[] ret = new BasicValue[2]
         {
                 new BasicValue(""),
@@ -167,6 +169,7 @@ class CommandFunctionROOMTELEPORT : CommandFunctionSingleExpressionBase
 
     public override BasicValue Execute(BasicVars vars)
     {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Teleportation == null)
             throw new Exception("teleportation capability not available");
         

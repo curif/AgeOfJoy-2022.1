@@ -56,7 +56,7 @@ public class CabinetAGEBasic : MonoBehaviour
     }
     public void Init(CabinetAGEBasicInformation AGEInfo,
             string pathBase,
-            GameObject cabinet,
+            Cabinet cabinet,
             CoinSlotController coinSlot)
     {
         if (ageBasic == null)

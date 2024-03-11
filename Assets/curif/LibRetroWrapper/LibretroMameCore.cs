@@ -233,6 +233,7 @@ public static unsafe class LibretroMameCore
     public static AudioSource Speaker;
     public static CoinSlotController CoinSlot;
     public static int SecondsToWaitToFinishLoad = 2;
+    public static string Core;
 
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
@@ -291,19 +292,20 @@ public static unsafe class LibretroMameCore
                                                         string _save_directory,
                                                         string _system_directory,
                                                         string _sample_rate,
-                                                        inputStateHandler _input_state_handler_cb);
+                                                        inputStateHandler _input_state_handler_cb,
+                                                        string core);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_init();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern double wrapper_environment_get_fps();
 
-    public static string[] GammaOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
-    public static string[] BrightnessOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
+    // public static string[] GammaOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
+    // public static string[] BrightnessOptionsList = new string[] { "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9", "2.0" };
     public static readonly string DefaultGamma = "0.5"; //tested feb/2023
     public static readonly string DefaultBrightness = "1.0";
-    public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
-    public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
+    // public static Func<string, bool> IsBrightnessValid = (input) => BrightnessOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
+    // public static Func<string, bool> IsGammaValid = (input) => GammaOptionsList.Any(x => x.Contains(input)); //, StringComparison.OrdinalIgnoreCase
     //parameters gama and brightness
     public static string Gamma = DefaultGamma;
     public static string Brightness = DefaultBrightness;
@@ -371,7 +373,8 @@ public static unsafe class LibretroMameCore
         deviceIdsCombined = mouse.Concat(joy).Concat(light).ToList();
 
         GameTexture = new Texture2D(200, 200, TextureFormat.RGB565, false);
-        GameTexture.filterMode = FilterMode.Point;
+        GameTexture.filterMode = FilterMode.Bilinear;
+        GameTexture.anisoLevel = 0;
     }
 
     static void assignControls()
@@ -424,7 +427,8 @@ public static unsafe class LibretroMameCore
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
-                                                new inputStateHandler(inputStateCB)
+                                                new inputStateHandler(inputStateCB),
+                                                Core
                                                 );
         if (result != 0)
         {
@@ -480,6 +484,17 @@ public static unsafe class LibretroMameCore
 
         return true;
     }
+
+#if UNITY_EDITOR
+    public static void simulateInEditor(string screenName, string gameFileName)
+    {
+        WriteConsole("[LibRetroMameCore.Start] Libretro simulated.");
+        GameFileName = gameFileName;
+        ScreenName = screenName;
+        GameLoaded = true;
+    }
+#endif
+
 
     public static bool isRunning(string screenName, string gameFileName)
     {
@@ -657,13 +672,14 @@ public static unsafe class LibretroMameCore
 
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
 
+#if !UNITY_EDITOR
         StopRunThread();
-
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         if (GameLoaded)
             wrapper_unload_game();
 
         wrapper_retro_deinit();
+#endif
 
         ClearAll();
 
@@ -922,6 +938,7 @@ public static unsafe class LibretroMameCore
     }
     public static void MoveAudioStreamTo(string gameFileName, float[] audioData)
     {
+#if !UNITY_EDITOR
         if (!GameLoaded || GameFileName != gameFileName)
             return;
 
@@ -942,6 +959,7 @@ public static unsafe class LibretroMameCore
                 wrapper_audio_consume_buffer(toCopy);
             }
         }
+#endif
     }
 
 #if _serialize_

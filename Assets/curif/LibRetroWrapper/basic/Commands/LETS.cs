@@ -53,7 +53,7 @@ class CommandLETS : ICommandBase
         //could be an expression list or a function that returns 
         // a list of values
         fnct = Commands.GetNew(tokens.Token, config) as ICommandFunctionList;
-        ConfigManager.WriteConsole($"Parse LETS: is function? {fnct != null} {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"Parse LETS: is function? {fnct != null} {tokens.ToString()}");
         if (fnct != null)
             fnct.Parse(tokens);
         else
@@ -64,7 +64,7 @@ class CommandLETS : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        ConfigManager.WriteConsole($"[AGE BASIC {CmdToken}] {count} variables assignment");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] {count} variables assignment");
         BasicValue[] vals;
         if (fnct == null)
             vals = exprs.ExecuteList(vars);

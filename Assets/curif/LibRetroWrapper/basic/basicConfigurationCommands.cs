@@ -28,7 +28,7 @@ public class ConfigurationCommands
     public bool DebugMode = false;
 
     //actual cabinet.
-    public GameObject Cabinet;
+    public Cabinet Cabinet;
 
     public CoinSlotController CoinSlot;
 
