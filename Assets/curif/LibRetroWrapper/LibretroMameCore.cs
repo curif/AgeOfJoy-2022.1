@@ -373,7 +373,8 @@ public static unsafe class LibretroMameCore
         deviceIdsCombined = mouse.Concat(joy).Concat(light).ToList();
 
         GameTexture = new Texture2D(200, 200, TextureFormat.RGB565, false);
-        GameTexture.filterMode = FilterMode.Point;
+        GameTexture.filterMode = FilterMode.Bilinear;
+        GameTexture.anisoLevel = 0;
     }
 
     static void assignControls()
