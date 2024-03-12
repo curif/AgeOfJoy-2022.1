@@ -367,17 +367,27 @@ public class Cabinet
     }
     public GameObject Parts(string partName)
     {
-        Transform childTransform = gameObject.transform.Find(partName);
-        if (childTransform == null)
+        GameObject go = PartsOrNull(partName);
+        if (go == null)
             throw new Exception($"Unknown cabinet part: {partName}");
-        return childTransform.gameObject;
+        return go;
     }
     public GameObject Parts(int partNum)
     {
-        Transform childTransform = gameObject.transform.GetChild(partNum);
-        if (childTransform == null)
+        GameObject go = PartsOrNull(partNum);
+        if (go == null)
             throw new Exception($"Unknown cabinet part: #{partNum}");
-        return childTransform.gameObject;
+        return go;
+    }
+    public GameObject PartsOrNull(string partName)
+    {
+        Transform childTransform = gameObject.transform.Find(partName);
+        return childTransform?.gameObject;
+    }
+    public GameObject PartsOrNull(int partNum)
+    {
+        Transform childTransform = gameObject.transform.GetChild(partNum);
+        return childTransform?.gameObject;
     }
     public Transform PartsTransform(string partName)
     {
@@ -788,7 +798,7 @@ public class Cabinet
     {
 
         string CRTType = $"screen-mock-{orientation}";
-        GameObject CRT = Parts(CRTType);
+        GameObject CRT = PartsOrNull(CRTType);
         if (CRT == null)
             throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
 
@@ -805,10 +815,8 @@ public class Cabinet
         if (rotation != null)
             newCRT.transform.Rotate((Vector3)rotation);
 
-        // Object.Destroy(Parts("screen-mock-horizontal"));
-        // Object.Destroy(Parts("screen-mock-vertical"));
-        Parts("screen-mock-vertical").SetActive(false);
-        Parts("screen-mock-horizontal").SetActive(false);
+        PartsOrNull("screen-mock-vertical")?.SetActive(false);
+        PartsOrNull("screen-mock-horizontal")?.SetActive(false);
 
         //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
         LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
