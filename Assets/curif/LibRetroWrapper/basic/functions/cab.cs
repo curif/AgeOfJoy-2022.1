@@ -439,14 +439,7 @@ class CommandFunctionCABPARTSSETEMISSIONCOLOR : CommandFunctionExpressionListBas
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[1], "- R");
-        FunctionHelper.ExpectedNumber(vals[2], "- G");
-        FunctionHelper.ExpectedNumber(vals[3], "- B");
-
-        float r = (float)vals[1].GetValueAsNumber();
-        float g = (float)vals[2].GetValueAsNumber();
-        float b = (float)vals[3].GetValueAsNumber();
-        Color color = new Color(r, g, b);
+        Color color = ColorConverter.ConvertToColor(vals[1], vals[2], vals[3]);
 
         if (vals[0].IsString())
             config.Cabinet.SetEmissionColorPart(vals[0].GetString(), color);
@@ -481,10 +474,7 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
         FunctionHelper.ExpectedNumber(vals[2], "- G");
         FunctionHelper.ExpectedNumber(vals[3], "- B");
 
-        float r = (float)vals[1].GetValueAsNumber();
-        float g = (float)vals[2].GetValueAsNumber();
-        float b = (float)vals[3].GetValueAsNumber();
-        Color color = new Color(r, g, b);
+        Color color = ColorConverter.ConvertToColor(vals[1], vals[2], vals[3]);
 
         if (vals[0].IsString())
             config.Cabinet.SetColorPart(vals[0].GetString(), color);
@@ -496,3 +486,22 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
     }
 }
 
+public static class ColorConverter
+{
+    public static Color ConvertToColor(BasicValue bvr, BasicValue bvg, BasicValue bvb)
+    {
+        FunctionHelper.ExpectedNumber(bvr, "- R");
+        FunctionHelper.ExpectedNumber(bvg, "- G");
+        FunctionHelper.ExpectedNumber(bvb, "- B");
+
+        byte r = (byte)bvr.GetNumber();
+        byte g = (byte)bvg.GetNumber();
+        byte b = (byte)bvb.GetNumber();
+        
+        // Ensure the input values are within the valid range
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+            throw new ArgumentException("RGB values must be between 0 and 255");
+
+        return new Color32(r, g, b, 255);
+    }
+}
