@@ -152,6 +152,8 @@ public static class Commands
         functions["MUSICCLEAR"] = typeof(CommandFunctionMUSICCLEAR);
         functions["MUSICLOOP"] = typeof(CommandFunctionMUSICLOOP);
         functions["MUSICADDLIST"] = typeof(CommandFunctionMUSICADDLIST);
+        functions["MUSICPREVIOUS"] = typeof(CommandFunctionMUSICPREVIOUS);
+        functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

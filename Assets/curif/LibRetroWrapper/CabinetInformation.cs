@@ -580,9 +580,13 @@ public class CabinetInformation
             new List<string>(CabinetFactory.CabinetStyles.Keys),
             new List<string>(CoinSlotsFactory.objects.Keys),
             new List<string>(CRTsFactory.objects.Keys));
+
+        string cabName = "unknown";
+        if (cbInfo != null)
+            cabName = cbInfo.name;
         foreach (KeyValuePair<string, System.Exception> error in exceptions)
         {
-            ConfigManager.WriteConsole($"[showCabinetProblems] {cbInfo.name} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
+            ConfigManager.WriteConsole($"[showCabinetProblems] {cabName} - {error.Key}: {(error.Value == null ? "-OK-" : error.Value.ToString())}");
         }
 
         ConfigManager.WriteConsole($"[showCabinetProblems] {moreProblems}");
