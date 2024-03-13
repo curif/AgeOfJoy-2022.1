@@ -71,7 +71,7 @@ class CommandFunctionPLAYERGETCOORDINATE : CommandFunctionSingleExpressionBase
         else if (coord == "Z")
             return new BasicValue(playerTransform.position.z);
 
-        throw new Exception("coordinate should be X or H");
+        throw new Exception("coordinate should be X or Z");
 
     }
 }
