@@ -120,4 +120,58 @@ public class MusicPlayer : MonoBehaviour
 
         PlayMusic();
     }
+    
+    public void Next()
+    {
+        if (musicQueue.Count > 0)
+        {
+            currentIndex++;
+            if (currentIndex >= musicQueue.Count)
+            {
+                if (Loop)
+                {
+                    currentIndex = 0;
+                }
+                else
+                {
+                    currentIndex = musicQueue.Count - 1;
+                    Stop();
+                    return;
+                }
+            }
+            Stop();
+            Play();
+        }
+    }
+
+    public void Previous()
+    {
+        if (musicQueue.Count > 0)
+        {
+            currentIndex--;
+            if (currentIndex < 0)
+            {
+                if (Loop)
+                {
+                    currentIndex = musicQueue.Count - 1;
+                }
+                else
+                {
+                    currentIndex = 0;
+                    Stop();
+                    return;
+                }
+            }
+            Stop();
+            Play();
+        }
+    }
+
+    private void Stop()
+    {
+        isPlaying = false;
+        audioSource.Stop();
+        audioSource.clip = null;
+        currentIndex = Mathf.Clamp(currentIndex, 0, musicQueue.Count - 1);
+    }
 }

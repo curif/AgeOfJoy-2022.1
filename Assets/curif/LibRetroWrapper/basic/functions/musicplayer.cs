@@ -129,3 +129,43 @@ class CommandFunctionMUSICADDLIST : CommandFunctionExpressionListBase
         return new BasicValue(1);
     }
 }
+
+class CommandFunctionMUSICNEXT : CommandFunctionNoExpressionBase
+{
+    public CommandFunctionMUSICNEXT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICNEXT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        config.MusicPlayerQueue.Next();        
+
+        return new BasicValue(1);
+    }
+}
+
+class CommandFunctionMUSICPREVIOUS : CommandFunctionNoExpressionBase
+{
+    public CommandFunctionMUSICPREVIOUS(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICPREVIOUS";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        config.MusicPlayerQueue.Previous();        
+
+        return new BasicValue(1);
+    }
+}
