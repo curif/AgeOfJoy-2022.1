@@ -101,6 +101,10 @@ public static class CabinetFactory
 
     public static string BuildKey(string name, string modelFilePath)
     {
+        if (String.IsNullOrWhiteSpace(modelFilePath))
+        {
+            return name;
+        }
         string modelDirectory = Path.GetFileName(Path.GetDirectoryName(modelFilePath)); // this gives us the actual folder, ie "tekken2a" for "tekken2"
         string modelFileName = Path.GetFileName(modelFilePath);
         ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] modelDirectory:{modelDirectory}");
