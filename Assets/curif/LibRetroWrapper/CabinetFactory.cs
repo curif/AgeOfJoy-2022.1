@@ -45,13 +45,13 @@ public static class CabinetFactory
 
         ConfigManager.WriteConsole($"[CabinetFactory] Loading Cabinet style:{style} name:{name} modelFilePath:{modelFilePath} number:{number} room:{room}");
 
-        string cacheKey = BuildKey(name, modelFilePath);
-        ConfigManager.WriteConsole($"[CabinetFactory] cache key:{cacheKey}");
-
 
         GameObject model;
         if (!String.IsNullOrEmpty(modelFilePath))
         {
+            string cacheKey = BuildKey(modelFilePath);
+            ConfigManager.WriteConsole($"[CabinetFactory] cache key:{cacheKey}");
+
             if (cacheGlbModels && CabinetStyles.ContainsKey(cacheKey))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
@@ -99,7 +99,7 @@ public static class CabinetFactory
         return new Cabinet(cabinetName, position, rotation, parent, go: model);
     }
 
-    public static string BuildKey(string name, string modelFilePath)
+    public static string BuildKey(string modelFilePath)
     {
         string modelDirectory = Path.GetFileName(Path.GetDirectoryName(modelFilePath)); // this gives us the actual folder, ie "tekken2a" for "tekken2"
         string modelFileName = Path.GetFileName(modelFilePath);
