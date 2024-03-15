@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Roomgate
-  m_Shader: {fileID: 4800000, guid: 0b8a7106d3f75a44891379dc4aaba16c, type: 3}
+  m_Shader: {fileID: 4800000, guid: e8f09f80c5901344982dcaeeea91d198, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -60,11 +60,19 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _RoomCubemap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 8900000, guid: efc6a4975d1c4244aa0b9f34aa7d4b20, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture0:
+        m_Texture: {fileID: 2800000, guid: 4809541d25f34dc499bbf5ff78b719f6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureSample0:
         m_Texture: {fileID: 8900000, guid: 47459a021f09a7c4296bc9c1184047b4, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -79,6 +87,7 @@ Material:
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
+    - _Offsetty: 0.15
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -88,5 +97,11 @@ Material:
     - __dirty: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorBottom: {r: 0, g: 0.5556111, b: 1, a: 0}
+    - _ColorTop: {r: 1, g: 0.4408099, b: 0, a: 0}
+    - _Color_Bottom: {r: 0, g: 0.5556111, b: 1, a: 0}
+    - _Color_Top: {r: 0, g: 0.5556111, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Vector1: {r: 1, g: 2, b: 0, a: 0}
+    - _Vector2: {r: 1, g: 2, b: 0, a: 0}
   m_BuildTextureStacks: []

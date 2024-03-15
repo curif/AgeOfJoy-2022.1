@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MI_Doorfx_Room001
-  m_Shader: {fileID: 4800000, guid: be8b0727911f0c1419b86ffc84a79177, type: 3}
-  m_Parent: {fileID: 2100000, guid: 319e572b3fbdba248abd522c10102689, type: 2}
+  m_Name: MI_Roomgate_Hall001
+  m_Shader: {fileID: 4800000, guid: e8f09f80c5901344982dcaeeea91d198, type: 3}
+  m_Parent: {fileID: 2100000, guid: cedac871c2ebcb44fac4a47e931c33d8, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -23,11 +23,14 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _CubeMap:
-        m_Texture: {fileID: 8900000, guid: efc6a4975d1c4244aa0b9f34aa7d4b20, type: 3}
+    - _RoomCubemap:
+        m_Texture: {fileID: 8900000, guid: dd6b53db5e6f0ae4a8e1b535c6d914c2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
-    m_Floats: []
-    m_Colors: []
+    m_Floats:
+    - _Offsetty: 0.1
+    m_Colors:
+    - _ColorBottom: {r: 0, g: 0.30469853, b: 0.5471698, a: 0}
+    - _ColorTop: {r: 0, g: 0.8105297, b: 1, a: 0}
   m_BuildTextureStacks: []
