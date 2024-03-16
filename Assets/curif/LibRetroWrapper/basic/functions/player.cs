@@ -16,6 +16,8 @@ class CommandFunctionPLAYERGETHEIGHT : CommandFunctionNoExpressionBase
         if (config?.Player == null)
             return new BasicValue(0);
 
+        ConfigManager.WriteConsole($"[PLAYEPLAYERGETHEIGHTRSETHEIGHT] get player height is {config.Player.CameraYOffset}");
+
         return new BasicValue((double)config.Player.CameraYOffset);
     }
 }
@@ -39,6 +41,7 @@ class CommandFunctionPLAYERSETHEIGHT : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedNumber(val, "Player height");
         float playerHeight = (float)val.GetValueAsNumber();
 
+        ConfigManager.WriteConsole($"[PLAYERSETHEIGHT] SEt player height to {playerHeight}");
         config.Player.CameraYOffset = playerHeight;
 
         return new BasicValue(1);
@@ -149,6 +152,9 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
 
         // Ignore changes in the y-axis
         directionToLookAt.y = 0;
+
+        // Normalize the direction vector
+        directionToLookAt.Normalize();
 
         // Rotate the player's head towards the calculated direction
         Quaternion newRotation = Quaternion.LookRotation(directionToLookAt);

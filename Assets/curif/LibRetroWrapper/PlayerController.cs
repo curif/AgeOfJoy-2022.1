@@ -30,7 +30,10 @@ public class PlayerController : MonoBehaviour
         set
         {
             cameraYOffset = value;
-            AdjustCameraYOffset();
+            if (cameraYOffset > 0)
+                AdjustCameraYOffset();
+            else
+                changeToCalculatedFromFloor();
         }
     }
 
@@ -101,6 +104,15 @@ public class PlayerController : MonoBehaviour
         characterController.center = center;
     }
 
+    void changeToCalculatedFromFloor()
+    {
+        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+        cameraYOffset = 0f;
+        xrorigin.CameraYOffset = 0f;
+
+        ConfigManager.WriteConsole($"[changeToCalculatedFromFloor] new player eye height calculated from floor");
+    }
+
     void changeWithPlayerData(ConfigInformation.Player player)
     {
         //player scale
@@ -111,20 +123,18 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-        #if ADJUST_SCALE
+#if ADJUST_SCALE
             PlayerScale = player.scale;
-        #else
+#else
             PlayerScale = 0.9f;
-        #endif
+#endif
         }
 
         //player height
         if (player.height == 0f)
         {
             //calculated
-            xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
-            // CameraYOffset = 0f;
-            ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height calculated from floor");
+            changeToCalculatedFromFloor();
         }
         else
         {
