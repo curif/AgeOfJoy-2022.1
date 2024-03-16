@@ -245,6 +245,7 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
                   LibretroMameCore.Core = Core;
+                  LibretroMameCore.Shader = shader;
 #if _serialize_
                   LibretroMameCore.EnableSaveState = EnableSaveState;
                   LibretroMameCore.StateFile = StateFile;
