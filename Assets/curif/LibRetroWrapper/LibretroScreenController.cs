@@ -245,6 +245,7 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
                   LibretroMameCore.Core = Core;
+                  LibretroMameCore.Shader = shader;
 #if _serialize_
                   LibretroMameCore.EnableSaveState = EnableSaveState;
                   LibretroMameCore.StateFile = StateFile;
@@ -323,13 +324,8 @@ public class LibretroScreenController : MonoBehaviour
                   //.Condition("Is visible", () => display.isVisible)
                   .Condition("user EXIT pressed?", () =>
                   {
-                      if (libretroControlMap.Active("EXIT") == 1)
+                      if (PlayerWantsToExit())
                           return true;
-
-#if UNIT_EDITOR
-                      if (SimulateExitGame)
-                        return true;
-#endif
 
                       timeToExit = DateTime.MinValue;
                       return false;
@@ -346,24 +342,7 @@ public class LibretroScreenController : MonoBehaviour
               .End()
               .Do("Exit game", () =>
               {
-                  //to replace the shader texture ASAP:
-                  videoPlayer.Play();
-
-                  LibretroMameCore.End(name, GameFile);
-                  timeToExit = DateTime.MinValue;
-
-                  PreparePlayerToPlayGame(false);
-                  libretroControlMap.Clean();
-
-                  // age basic
-                  if (ageBasicInformation.active)
-                  {
-                      cabinetAGEBasic.StopInsertCoinBas(); //force
-                      cabinetAGEBasic.ExecAfterLeaveBas();
-                  }
-#if UNIT_EDITOR
-                  SimulateExitGame = false;
-#endif
+                  ExitPlayerFromGame();
                   return TaskStatus.Success;
               })
             .End()
@@ -402,6 +381,43 @@ public class LibretroScreenController : MonoBehaviour
 
           .End()
         .Build();
+    }
+
+    bool PlayerWantsToExit()
+    {
+        if (libretroControlMap.Active("EXIT") == 1)
+            return true;
+#if UNITY_EDITOR
+        if (SimulateExitGame)
+        {
+            ConfigManager.WriteConsole($"SimulateExitGame: {SimulateExitGame}");
+            return true;
+        }
+#endif
+        return false;
+    }
+    void ExitPlayerFromGame()
+    {
+        //to replace the shader texture ASAP:
+        videoPlayer.Play();
+
+        LibretroMameCore.End(name, GameFile);
+        timeToExit = DateTime.MinValue;
+
+        PreparePlayerToPlayGame(false);
+        libretroControlMap.Clean();
+
+        // age basic
+        if (ageBasicInformation.active)
+        {
+            cabinetAGEBasic.StopInsertCoinBas(); //force
+            cabinetAGEBasic.ExecAfterLeaveBas();
+        }
+
+#if UNITY_EDITOR
+        SimulateExitGame = false;
+        ConfigManager.WriteConsole($"simulated player exit finished.");
+#endif
     }
 
     void PreparePlayerToPlayGame(bool isPlaying)
@@ -482,6 +498,7 @@ public class LibretroScreenController : MonoBehaviour
     }
     public void ExitGame()
     {
+        ConfigManager.WriteConsole("[LibretroScreenController] EXIT GAME ------ ");
         SimulateExitGame = true;
     }
 #endif

@@ -32,6 +32,7 @@ public static class ShaderScreen
     //dic["damage"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenDamage(display, position, config);
     dic["damage"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenDamage(display, position, config);
     dic["clean"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenClean(display, position,  config);
+    dic["CRT"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRT(display, position,  config);
   }
   
   public static ShaderScreenBase Factory(Renderer display, int position, string shaderName, Dictionary<string, string> config)

@@ -224,6 +224,8 @@ public static unsafe class LibretroMameCore
     static bool RecreateTexture = true;
     static object GameTextureLock = new();
     static object LightGunLock = new();
+    public static ShaderScreenBase Shader;
+
 
     static ManualResetEventSlim GameTextureBufferSem = new ManualResetEventSlim(false);
 
@@ -537,6 +539,8 @@ public static unsafe class LibretroMameCore
             GameTexture.Reinitialize((int)TextureWidth, (int)TextureHeight);
             WriteConsole($"[InitializeTexture] {GameTexture.width}, {GameTexture.height}- {GameTexture.format}");
             RecreateTexture = false;
+            //some shaders needs to refresh the texture once recreated.
+            Shader.Texture = GameTexture;
             return true;
         }
         return false;
@@ -701,6 +705,7 @@ public static unsafe class LibretroMameCore
         TextureWidth = 0;
         TextureHeight = 0;
         RecreateTexture = true;
+        Shader = null;
 
         AudioBufferLock = new();
 
