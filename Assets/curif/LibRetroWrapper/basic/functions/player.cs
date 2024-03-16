@@ -134,16 +134,18 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue val = expr.Execute(vars);
-        FunctionHelper.ExpectedNumber(val, " part number");
 
-        int partNum = (int)val.GetNumber();
-        if (config.Cabinet.gameObject.transform.childCount < partNum + 1)
-            throw new Exception("Invalid cabinet part number.");
+        Transform objectToLookAt;
+        if (val.IsString())
+            objectToLookAt = config.Cabinet.PartsTransform(val.GetString());
+        else
+            objectToLookAt = config.Cabinet.PartsTransform(val.GetInt());
 
-        Transform objectToLookAt = config.Cabinet.gameObject.transform.GetChild(partNum);
+        if (objectToLookAt == null)
+            throw new Exception("part not found in cabinet.");
 
         // Calculate the direction from the player's head to the object
-        Vector3 directionToLookAt = objectToLookAt.transform.position - config.PlayerOrigin.Origin.transform.position;
+        Vector3 directionToLookAt = objectToLookAt.position - config.PlayerOrigin.Origin.transform.position;
 
         // Ignore changes in the y-axis
         directionToLookAt.y = 0;

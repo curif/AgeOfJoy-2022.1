@@ -42,4 +42,6 @@ public class ConfigurationCommands
     public XROrigin PlayerOrigin;
 
     public MusicPlayer MusicPlayerQueue;
+
+    public float SleepTime;
 }

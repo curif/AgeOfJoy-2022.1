@@ -23,6 +23,7 @@ public static class Commands
         commands["CALL"] = typeof(CommandCALL);
         commands["FOR"] = typeof(CommandFORTO);
         commands["NEXT"] = typeof(CommandNEXT);
+        commands["SLEEP"] = typeof(CommandSLEEP);
 
         //screen
         commands["CLS"] = typeof(CommandCLS);
@@ -111,10 +112,19 @@ public static class Commands
         functions["CABPARTSNAME"] = typeof(CommandFunctionCABPARTSNAME);
         functions["CABPARTSPOSITION"] = typeof(CommandFunctionCABPARTSPOSITION);
         functions["CABPARTSENABLE"] = typeof(CommandFunctionCABPARTSENABLE);
+
         functions["CABPARTSGETCOORDINATE"] = typeof(CommandFunctionCABPARTSGETCOORDINATE);
+        functions["CABPARTSGETGLOBALCOORDINATE"] = typeof(CommandFunctionCABPARTSGETGLOBALCOORDINATE);
+
         functions["CABPARTSSETCOORDINATE"] = typeof(CommandFunctionCABPARTSSETCOORDINATE);
+        functions["CABPARTSSETGLOBALCOORDINATE"] = typeof(CommandFunctionCABPARTSSETGLOBALCOORDINATE);
+
         functions["CABPARTSSETROTATION"] = typeof(CommandFunctionCABPARTSSETROTATION);
+        functions["CABPARTSSETGLOBALROTATION"] = typeof(CommandFunctionCABPARTSSETGLOBALROTATION);
+
         functions["CABPARTSGETROTATION"] = typeof(CommandFunctionCABPARTSGETROTATION);
+        functions["CABPARTSGETGLOBALROTATION"] = typeof(CommandFunctionCABPARTSGETGLOBALROTATION);
+
         functions["CABPARTSGETTRANSPARENCY"] = typeof(CommandFunctionCABPARTSGETTRANSPARENCY);
         functions["CABPARTSSETTRANSPARENCY"] = typeof(CommandFunctionCABPARTSSETTRANSPARENCY);
         functions["CABPARTSEMISSION"] = typeof(CommandFunctionCABPARTSEMISSION);

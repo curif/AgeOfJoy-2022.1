@@ -52,6 +52,14 @@ public class AGEProgram
         return vars.GetValue(varName);
     }
 
+    private int maxExecutionLinesAllowed = 10000;
+    public int MaxExecutionLinesAllowed
+    {
+        get { return maxExecutionLinesAllowed; }
+        set { maxExecutionLinesAllowed = value; }
+    }
+    
+
     public bool runNextLine()
     {
         if (config.stop)
@@ -60,9 +68,9 @@ public class AGEProgram
             return false;
         }
 
-        if (ContLinesExecuted > 10000)
+        if (maxExecutionLinesAllowed > 0 && ContLinesExecuted > maxExecutionLinesAllowed)
         {
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > 10000");
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > {maxExecutionLinesAllowed}");
             throw new Exception("program has reached the maximum execution lines available.");
         }
         

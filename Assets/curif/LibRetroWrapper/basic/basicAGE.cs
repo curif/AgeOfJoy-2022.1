@@ -122,7 +122,7 @@ public class basicAGE : MonoBehaviour
             if (GameRegistry == null && roomInit != null)
                 GameRegistry = roomInit.GetComponent<GameRegistry>();
         }
-        
+
         if (ConfigurationController == null)
             ConfigurationController = GetComponent<ConfigurationController>();
         if (libretroControlMap == null)
@@ -160,7 +160,7 @@ public class basicAGE : MonoBehaviour
         configCommands.Player = Player;
         configCommands.PlayerGameObject = PlayerControllerGameObject;
         configCommands.PlayerOrigin = PlayerOrigin;
-        
+
         GameObject musicPlayer = GameObject.Find("JukeBox");
         configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
 
@@ -268,7 +268,7 @@ public class basicAGE : MonoBehaviour
     {
         if (running == null)
             return;
-        
+
         if (runningProgramCoroutine != null)
             StopCoroutine(runningProgramCoroutine);
 
@@ -281,8 +281,12 @@ public class basicAGE : MonoBehaviour
         running = null;
     }
 
-    public void Run(string name, bool blocking = false, BasicVars pvars = null)
+    public void Run(string name, bool blocking = false, BasicVars pvars = null,
+                        int maxExecutionLinesAllowed = 10000)
     {
+
+        ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
+
         if (!programs.ContainsKey(name))
             throw new Exception($"program {name} doesn't exists");
 
@@ -293,6 +297,7 @@ public class basicAGE : MonoBehaviour
         LastRuntimeException = null;
         running = programs[name];
         running.PrepareToRun(pvars);
+        running.MaxExecutionLinesAllowed = maxExecutionLinesAllowed;
 
         if (!blocking)
         {
@@ -310,13 +315,16 @@ public class basicAGE : MonoBehaviour
             SaveDebug(running.Name, null, LastRuntimeException);
 
         running = null;
+
+        ConfigManager.WriteConsole($"[BasicAGE.Run] {running.Name} ENDED. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+
         return;
     }
 
     public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null)
     {
         string filePathDebug = Path.Combine(ConfigManager.AGEBasicDir, prgName + ".debug");
-        ConfigManager.WriteConsole($"[SaveDebug] {filePathDebug}");
+        ConfigManager.WriteConsole($"[BasicAGE.SaveDebug] {filePathDebug}");
         try
         {
             // Create a new StreamWriter instance to write to the file
@@ -345,19 +353,24 @@ public class basicAGE : MonoBehaviour
 
     IEnumerator runProgram()
     {
+        ConfigManager.WriteConsole($"[BasicAGE.runProgram] START {running.Name}");
+
         bool moreLines = true;
         LastRuntimeException = null;
         while (moreLines)
         {
-            yield return new WaitForSeconds(0.01f);
             moreLines = RunALine();
+            float sleepTime = configCommands.SleepTime;
+            if (sleepTime == 0)
+                sleepTime = 0.01f;
+            yield return new WaitForSeconds(sleepTime);
+            configCommands.SleepTime = 0;
         }
-
-        ConfigManager.WriteConsole($"[runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
 
         if (configCommands.DebugMode)
             SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
 
+        ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
         running = null;
     }
 
@@ -371,7 +384,7 @@ public class basicAGE : MonoBehaviour
         catch (Exception e)
         {
             string strerror = errorMessage(running, e);
-            ConfigManager.WriteConsoleError($"[RunALine] {strerror}");
+            ConfigManager.WriteConsoleError($"[BasicAGE.RunALine] {strerror}");
             LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
             return false;
         }
