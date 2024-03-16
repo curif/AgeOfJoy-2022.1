@@ -883,7 +883,7 @@ ReflectionProbe:
   m_IntensityMultiplier: 1
   m_BlendDistance: 1
   m_HDR: 0
-  m_BoxProjection: 0
+  m_BoxProjection: 1
   m_RenderDynamicObjects: 0
   m_UseOcclusionCulling: 1
   m_Importance: 1
@@ -4515,6 +4515,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1127803519}
     m_Modifications:
+    - target: {fileID: 2479097821187861966, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 7f28c8652d38c754bab4a85e451c1861, type: 2}
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -4558,6 +4562,26 @@ PrefabInstance:
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3987887923022897827, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.815
+      objectReference: {fileID: 0}
+    - target: {fileID: 4014380684310295472, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.04000002
+      objectReference: {fileID: 0}
+    - target: {fileID: 4014380684310295472, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.0000029504295
+      objectReference: {fileID: 0}
+    - target: {fileID: 4014380684310295472, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4014380684310295472, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -180
       objectReference: {fileID: 0}
     - target: {fileID: 5614758927437073876, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
