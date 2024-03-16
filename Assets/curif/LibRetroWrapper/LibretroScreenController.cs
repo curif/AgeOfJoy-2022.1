@@ -124,9 +124,8 @@ public class LibretroScreenController : MonoBehaviour
 
     private CoinSlotController getCoinSlotController()
     {
-        Transform coinslot = cabinet.gameObject.transform.Find("coin-slot-added");
-
-        if (!coinslot)
+        Transform coinslot = cabinet?.gameObject?.transform.Find("coin-slot-added");
+        if (coinslot == null)
             return null;
 
         return coinslot.gameObject.GetComponent<CoinSlotController>();

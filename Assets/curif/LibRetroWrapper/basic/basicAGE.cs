@@ -160,6 +160,9 @@ public class basicAGE : MonoBehaviour
         configCommands.Player = Player;
         configCommands.PlayerGameObject = PlayerControllerGameObject;
         configCommands.PlayerOrigin = PlayerOrigin;
+        
+        GameObject musicPlayer = GameObject.Find("JukeBox");
+        configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
 
     }
 

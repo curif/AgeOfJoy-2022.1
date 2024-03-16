@@ -97,24 +97,26 @@ class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
 
 class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
 {
-
     public CommandFunctionCABPARTSGETCOORDINATE(ConfigurationCommands config) : base(config)
     {
         cmdToken = "CABPARTSGETCOORDINATE";
     }
+
     public override bool Parse(TokenConsumer tokens)
     {
         return Parse(tokens, 2);
     }
+
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
+        {
             throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
-        FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y or Z");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y, Z");
 
         Transform child;
         if (vals[0].IsString())
@@ -123,39 +125,49 @@ class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
             child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
         string coord = vals[1].GetString().ToUpper();
-        if (coord == "X")
-            return new BasicValue(child.position.x);
-        else if (coord == "Y")
-            return new BasicValue(child.position.y);
-        else if (coord == "Z")
-            return new BasicValue(child.position.z);
-        else if (coord == "H")
-            return new BasicValue(child.localPosition.y);
 
-        throw new Exception("cabPartsGetCoordinate: coordinate should be X, Y, Z or H");
+        float coordinateValue = 0f;
+        switch (coord)
+        {
+            case "X":
+                coordinateValue = child.localPosition.x;
+                break;
+            case "Y":
+                coordinateValue = child.localPosition.y;
+                break;
+            case "Z":
+                coordinateValue = child.localPosition.z;
+                break;
+            default:
+                throw new Exception("cabPartsGetCoordinate: coordinate should be X, Y or Z");
+        }
 
+        return new BasicValue(coordinateValue);
     }
 }
 
+
 class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
 {
-
     public CommandFunctionCABPARTSSETCOORDINATE(ConfigurationCommands config) : base(config)
     {
         cmdToken = "CABPARTSSETCOORDINATE";
     }
+
     public override bool Parse(TokenConsumer tokens)
     {
         return Parse(tokens, 3);
     }
+
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
+        {
             throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate");
         FunctionHelper.ExpectedNumber(vals[2], " - coordinate value");
 
@@ -165,31 +177,27 @@ class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
         else
             child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
-        Vector3 newPosition;
         string coord = vals[1].GetString().ToUpper();
-        if (coord == "H")
+        Vector3 currentPosition = child.localPosition; // Use localPosition
+
+
+        switch (coord)
         {
-            newPosition = new Vector3(child.localPosition.x,
-                                        child.localPosition.y,
-                                        child.localPosition.z);
-            newPosition.y = (float)vals[2].GetNumber();
-            child.localPosition = newPosition;
-            return BasicValue.True;
+            case "X":
+                currentPosition.x = (float)vals[2].GetNumber();
+                break;
+            case "Y":
+                currentPosition.y = (float)vals[2].GetNumber();
+                break;
+            case "Z":
+                currentPosition.z = (float)vals[2].GetNumber();
+                break;
+            default:
+                throw new Exception("coordinate should be X, Y or Z");
         }
 
-        newPosition = new Vector3(child.position.x,
-                                                    child.position.y,
-                                                    child.position.z);
-        if (coord == "X")
-            newPosition.x = (float)vals[2].GetNumber();
-        else if (coord == "Y")
-            newPosition.y = (float)vals[2].GetNumber();
-        else if (coord == "Z")
-            newPosition.z = (float)vals[2].GetNumber();
-        else
-            throw new Exception("coordinate should be X, Y, Z or H");
 
-        child.position = newPosition;
+        child.localPosition = currentPosition; // Set localPosition
         return BasicValue.True;
     }
 }
@@ -228,10 +236,11 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
+        {
             throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
         FunctionHelper.ExpectedNumber(vals[2], " - angle");
 
@@ -244,23 +253,30 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
         string axis = vals[1].GetString().ToUpper();
         float angle = (float)vals[2].GetNumber();
 
-        Quaternion newRotation = Quaternion.identity;
+        // Calculate rotation relative to parent
+        Vector3 localEuler = child.localEulerAngles;
+        float newLocalAngle;
         switch (axis)
         {
             case "X":
-                newRotation = Quaternion.Euler(angle, 0, 0);
+                newLocalAngle = localEuler.x + angle;
                 break;
             case "Y":
-                newRotation = Quaternion.Euler(0, angle, 0);
+                newLocalAngle = localEuler.y + angle;
                 break;
             case "Z":
-                newRotation = Quaternion.Euler(0, 0, angle);
+                newLocalAngle = localEuler.z + angle;
                 break;
             default:
                 throw new Exception("cabPartsSetRotation: axis should be X, Y, or Z");
         }
 
-        child.rotation = newRotation;
+        // Clamp the angle within 0-360 degrees
+        newLocalAngle = Mathf.Repeat(newLocalAngle, 360f);
+
+        // Set the new local rotation
+        child.localRotation = Quaternion.Euler(newLocalAngle, localEuler.y, localEuler.z);
+
         return BasicValue.True;
     }
 }
@@ -284,7 +300,6 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
 
         Transform child;
@@ -299,13 +314,13 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
         switch (axis)
         {
             case "X":
-                rotationValue = child.rotation.eulerAngles.x;
+                rotationValue = child.localEulerAngles.x;
                 break;
             case "Y":
-                rotationValue = child.rotation.eulerAngles.y;
+                rotationValue = child.localEulerAngles.y;
                 break;
             case "Z":
-                rotationValue = child.rotation.eulerAngles.z;
+                rotationValue = child.localEulerAngles.z;
                 break;
             default:
                 throw new Exception("cabPartsGetRotation: axis should be X, Y, or Z");
@@ -314,6 +329,7 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
         return new BasicValue(rotationValue);
     }
 }
+
 
 class CommandFunctionCABPARTSGETTRANSPARENCY : CommandFunctionSingleExpressionBase
 {
@@ -423,14 +439,7 @@ class CommandFunctionCABPARTSSETEMISSIONCOLOR : CommandFunctionExpressionListBas
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNumber(vals[1], "- R");
-        FunctionHelper.ExpectedNumber(vals[2], "- G");
-        FunctionHelper.ExpectedNumber(vals[3], "- B");
-
-        float r = (float)vals[1].GetValueAsNumber();
-        float g = (float)vals[2].GetValueAsNumber();
-        float b = (float)vals[3].GetValueAsNumber();
-        Color color = new Color(r, g, b);
+        Color color = ColorConverter.ConvertToColor(vals[1], vals[2], vals[3]);
 
         if (vals[0].IsString())
             config.Cabinet.SetEmissionColorPart(vals[0].GetString(), color);
@@ -465,10 +474,7 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
         FunctionHelper.ExpectedNumber(vals[2], "- G");
         FunctionHelper.ExpectedNumber(vals[3], "- B");
 
-        float r = (float)vals[1].GetValueAsNumber();
-        float g = (float)vals[2].GetValueAsNumber();
-        float b = (float)vals[3].GetValueAsNumber();
-        Color color = new Color(r, g, b);
+        Color color = ColorConverter.ConvertToColor(vals[1], vals[2], vals[3]);
 
         if (vals[0].IsString())
             config.Cabinet.SetColorPart(vals[0].GetString(), color);
@@ -480,3 +486,22 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
     }
 }
 
+public static class ColorConverter
+{
+    public static Color ConvertToColor(BasicValue bvr, BasicValue bvg, BasicValue bvb)
+    {
+        FunctionHelper.ExpectedNumber(bvr, "- R");
+        FunctionHelper.ExpectedNumber(bvg, "- G");
+        FunctionHelper.ExpectedNumber(bvb, "- B");
+
+        byte r = (byte)bvr.GetNumber();
+        byte g = (byte)bvg.GetNumber();
+        byte b = (byte)bvb.GetNumber();
+        
+        // Ensure the input values are within the valid range
+        if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
+            throw new ArgumentException("RGB values must be between 0 and 255");
+
+        return new Color32(r, g, b, 255);
+    }
+}

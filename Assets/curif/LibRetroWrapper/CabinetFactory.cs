@@ -11,7 +11,6 @@ using System.IO;
 using System;
 //using UnityEngine.Networking;
 using Siccity.GLTFUtility;
-using System.Threading.Tasks;
 
 //store Cabinets resources
 public static class CabinetFactory
@@ -43,13 +42,20 @@ public static class CabinetFactory
                                     Quaternion rotation, Transform parent,
                                     bool cacheGlbModels = true)
     {
+
+        ConfigManager.WriteConsole($"[CabinetFactory] Loading Cabinet style:{style} name:{name} modelFilePath:{modelFilePath} number:{number} room:{room}");
+
+
         GameObject model;
         if (!String.IsNullOrEmpty(modelFilePath))
         {
-            if (cacheGlbModels && CabinetStyles.ContainsKey(modelFilePath))
+            string cacheKey = BuildKey(modelFilePath);
+            ConfigManager.WriteConsole($"[CabinetFactory] cache key:{cacheKey}");
+
+            if (cacheGlbModels && CabinetStyles.ContainsKey(cacheKey))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
-                model = CabinetStyles[modelFilePath];
+                model = CabinetStyles[cacheKey];
             }
             else
             {
@@ -73,7 +79,7 @@ public static class CabinetFactory
                     if (cacheGlbModels)
                     {
                         ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
-                        CabinetStyles.Add(modelFilePath, model);
+                        CabinetStyles.Add(cacheKey, model);
                     }
                 }
             }
@@ -91,6 +97,18 @@ public static class CabinetFactory
 
 
         return new Cabinet(cabinetName, position, rotation, parent, go: model);
+    }
+
+    public static string BuildKey(string modelFilePath)
+    {
+        string modelDirectory = Path.GetFileName(Path.GetDirectoryName(modelFilePath)); // this gives us the actual folder, ie "tekken2a" for "tekken2"
+        string modelFileName = Path.GetFileName(modelFilePath);
+        ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] modelDirectory:{modelDirectory}");
+        CabinetMetadata cabinetMetadata = CabinetMetadata.fromName(modelDirectory);
+        ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] fetching hash for: {modelFileName}");
+        cabinetMetadata.Hashes.TryGetValue(modelFileName, out var hash);
+        ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] hash: {modelFileName}:{hash}");
+        return hash;
     }
 
     public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo,

@@ -7,9 +7,94 @@ You should have received a copy of the GNU General Public License along with thi
 using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
-using System.ComponentModel;
 using System;
-using System.Collections.Specialized;
+
+
+public static class CabinetTextureCache
+{
+    private static byte[] astcMagicNumber = new byte[] { 0x13, 0xAB, 0xA1, 0x5C };
+
+    // Dictionary to store cached textures
+    private static Dictionary<string, Texture2D> cachedTextures = new Dictionary<string, Texture2D>();
+
+    // Method to load and cache a texture
+    public static Texture2D LoadAndCacheTexture(string path)
+    {
+        if (!IsTextureCached(path))
+        {
+            Texture2D tex;
+
+            // Load the texture from disk
+            byte[] fileData = File.ReadAllBytes(path);
+            if (path.EndsWith(".astc", StringComparison.OrdinalIgnoreCase))
+            {
+                // Check for 16 bytes header. Skip if needed.  https://github.com/ARM-software/astc-encoder/blob/main/Docs/FileFormat.md
+                if (!StartsWithMagicNumber(fileData, astcMagicNumber))
+                {
+                    ConfigManager.WriteConsoleError($"[CabinetTextureCache.LoadAndCacheTexture] {path} is a valid ASTC texture.");
+                    throw new IOException();
+                }
+                int width = fileData[7] | (fileData[8] << 8) | (fileData[9] << 16);
+                int height = fileData[10] | (fileData[11] << 8) | (fileData[12] << 16);
+                ConfigManager.WriteConsole($"[CabinetTextureCache.LoadAndCacheTexture] {path} texture size:{width}x{height}");
+                tex = new Texture2D(width, height, TextureFormat.ASTC_6x6, false, false);
+                tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
+                tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
+                tex.LoadRawTextureData(fileData);
+            }
+            else
+            {
+                ConfigManager.WriteConsoleError($"[CabinetTextureCache.LoadAndCacheTexture] {path} is an RGB texture.");
+                tex = new Texture2D(512, 512, TextureFormat.RGB565, true);
+                tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
+                tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
+                tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
+            }
+            tex.Apply();
+
+
+            // Cache the loaded texture
+            cachedTextures.Add(path, tex);
+
+            return tex;
+        }
+
+        return GetCachedTexture(path);
+    }
+
+    private static bool StartsWithMagicNumber(byte[] byteArray, byte[] magicNumber)
+    {
+        if (byteArray == null || byteArray.Length < magicNumber.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < magicNumber.Length; i++)
+        {
+            if (byteArray[i] != magicNumber[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    // Method to retrieve a cached texture
+    public static Texture2D GetCachedTexture(string path)
+    {
+        if (IsTextureCached(path))
+        {
+            return cachedTextures[path];
+        }
+        return null;
+    }
+
+    public static bool IsTextureCached(string path)
+    {
+        return cachedTextures.ContainsKey(path);
+    }
+}
 
 public class Cabinet
 {
@@ -26,9 +111,10 @@ public class Cabinet
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)
     {
+
+        /*
         Texture2D tex = null;
         byte[] fileData;
-
         if (File.Exists(filePath))
         {
             fileData = File.ReadAllBytes(filePath);
@@ -37,7 +123,8 @@ public class Cabinet
             tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
             tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
         }
-        return tex;
+        */
+        return CabinetTextureCache.LoadAndCacheTexture(filePath);
     }
 
     // public bool IsValid
@@ -319,17 +406,27 @@ public class Cabinet
     }
     public GameObject Parts(string partName)
     {
-        Transform childTransform = gameObject.transform.Find(partName);
-        if (childTransform == null)
+        GameObject go = PartsOrNull(partName);
+        if (go == null)
             throw new Exception($"Unknown cabinet part: {partName}");
-        return childTransform.gameObject;
+        return go;
     }
     public GameObject Parts(int partNum)
     {
-        Transform childTransform = gameObject.transform.GetChild(partNum);
-        if (childTransform == null)
+        GameObject go = PartsOrNull(partNum);
+        if (go == null)
             throw new Exception($"Unknown cabinet part: #{partNum}");
-        return childTransform.gameObject;
+        return go;
+    }
+    public GameObject PartsOrNull(string partName)
+    {
+        Transform childTransform = gameObject.transform.Find(partName);
+        return childTransform?.gameObject;
+    }
+    public GameObject PartsOrNull(int partNum)
+    {
+        Transform childTransform = gameObject.transform.GetChild(partNum);
+        return childTransform?.gameObject;
     }
     public Transform PartsTransform(string partName)
     {
@@ -740,7 +837,7 @@ public class Cabinet
     {
 
         string CRTType = $"screen-mock-{orientation}";
-        GameObject CRT = Parts(CRTType);
+        GameObject CRT = PartsOrNull(CRTType);
         if (CRT == null)
             throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
 
@@ -757,10 +854,8 @@ public class Cabinet
         if (rotation != null)
             newCRT.transform.Rotate((Vector3)rotation);
 
-        // Object.Destroy(Parts("screen-mock-horizontal"));
-        // Object.Destroy(Parts("screen-mock-vertical"));
-        Parts("screen-mock-vertical").SetActive(false);
-        Parts("screen-mock-horizontal").SetActive(false);
+        PartsOrNull("screen-mock-vertical")?.SetActive(false);
+        PartsOrNull("screen-mock-horizontal")?.SetActive(false);
 
         //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
         LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();

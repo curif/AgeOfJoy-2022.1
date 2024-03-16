@@ -65,6 +65,7 @@ public static class Commands
         functions["CABINETSDBPATH"] = typeof(CommandFunctionCABINETSDBPATH);
         functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
         functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
+        functions["MUSICPATH"] = typeof(CommandFunctionMUSICPATH);
 
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
@@ -145,6 +146,14 @@ public static class Commands
         functions["PLAYERGETCOORDINATE"] = typeof(CommandFunctionPLAYERGETCOORDINATE);
         functions["PLAYERLOOKAT"] = typeof(CommandFunctionPLAYERLOOKAT);
 
+        //Music
+        functions["MUSICPLAY"] = typeof(CommandFunctionMUSICPLAY);
+        functions["MUSICADD"] = typeof(CommandFunctionMUSICADD);
+        functions["MUSICCLEAR"] = typeof(CommandFunctionMUSICCLEAR);
+        functions["MUSICLOOP"] = typeof(CommandFunctionMUSICLOOP);
+        functions["MUSICADDLIST"] = typeof(CommandFunctionMUSICADDLIST);
+        functions["MUSICPREVIOUS"] = typeof(CommandFunctionMUSICPREVIOUS);
+        functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
