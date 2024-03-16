@@ -86,34 +86,34 @@ public class CabinetAGEBasic : MonoBehaviour
         }
     }
 
-    private bool execute(string prgName, bool blocking = false)
+    private bool execute(string prgName, bool blocking = false, int maxExecutionLines = 10000)
     {
-        if (!string.IsNullOrEmpty(prgName))
-        {
-            if (!ageBasic.Exists(prgName) /*&& afterInsertCoinException == null*/)
-            {
-                try
-                {
-                    ageBasic.ParseFile(pathBase + "/" + prgName);
-                }
-                catch (CompilationException e)
-                {
-                    ConfigManager.WriteConsoleException($"[Execute] parsing {prgName}", (Exception)e);
-                }
-            }
+        if (string.IsNullOrEmpty(prgName))
+            return false;
 
-            ageBasic.Run(prgName, blocking, vars); //async blocking=false
-            return true;
+        if (!ageBasic.Exists(prgName) /*&& afterInsertCoinException == null*/)
+        {
+            try
+            {
+                ageBasic.ParseFile(pathBase + "/" + prgName);
+            }
+            catch (CompilationException e)
+            {
+                ConfigManager.WriteConsoleException($"[CabinetAGEBasic.execute] parsing {prgName}", (Exception)e);
+                return false;
+            }
         }
-        return false;
+
+        ConfigManager.WriteConsole($"[CabinetAGEBasic.execute] exec {prgName}");
+        ageBasic.Run(prgName, blocking, vars, maxExecutionLines); //async blocking=false
+        return true;
     }
 
     public void ExecInsertCoinBas()
     {
         ageBasic.DebugMode = AGEInfo.debug;
-        execute(AGEInfo.afterInsertCoin);
+        execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0);
     }
-
 
     public void StopInsertCoinBas()
     {
@@ -133,20 +133,20 @@ public class CabinetAGEBasic : MonoBehaviour
         ageBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLoad);
     }
-/*    public bool ExecAfterStartBas()
-    {
-        if (ageBasic.IsRunning())
-            return false;
+    /*    public bool ExecAfterStartBas()
+        {
+            if (ageBasic.IsRunning())
+                return false;
 
-        ageBasic.DebugMode = AGEInfo.debug;
-        return execute(AGEInfo.afterStart);
-    }
-    public void StopAfterStartBas()
-    {
-        if (ageBasic.IsRunning(AGEInfo.afterStart))
-            ageBasic.Stop();
-    }
-*/
+            ageBasic.DebugMode = AGEInfo.debug;
+            return execute(AGEInfo.afterStart);
+        }
+        public void StopAfterStartBas()
+        {
+            if (ageBasic.IsRunning(AGEInfo.afterStart))
+                ageBasic.Stop();
+        }
+    */
 }
 
 #if UNITY_EDITOR

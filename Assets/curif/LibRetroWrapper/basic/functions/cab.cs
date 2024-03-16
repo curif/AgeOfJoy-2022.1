@@ -202,6 +202,111 @@ class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
     }
 }
 
+class CommandFunctionCABPARTSGETGLOBALCOORDINATE : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSGETGLOBALCOORDINATE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSGETGLOBALCOORDINATE";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+        {
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y, Z");
+
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
+
+        string coord = vals[1].GetString().ToUpper();
+
+        float coordinateValue = 0f;
+        switch (coord)
+        {
+            case "X":
+                coordinateValue = child.position.x;
+                break;
+            case "Y":
+                coordinateValue = child.position.y;
+                break;
+            case "Z":
+                coordinateValue = child.position.z;
+                break;
+            default:
+                throw new Exception("cabPartsGetGlobalCoordinate: coordinate should be X, Y or Z");
+        }
+
+        return new BasicValue(coordinateValue);
+    }
+}
+
+class CommandFunctionCABPARTSSETGLOBALCOORDINATE : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSSETGLOBALCOORDINATE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETGLOBALCOORDINATE";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 3);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+        {
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate");
+        FunctionHelper.ExpectedNumber(vals[2], " - coordinate value");
+
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
+
+        string coord = vals[1].GetString().ToUpper();
+        Vector3 currentPosition = child.position;
+
+        switch (coord)
+        {
+            case "X":
+                currentPosition.x = (float)vals[2].GetNumber();
+                break;
+            case "Y":
+                currentPosition.y = (float)vals[2].GetNumber();
+                break;
+            case "Z":
+                currentPosition.z = (float)vals[2].GetNumber();
+                break;
+            default:
+                throw new Exception("coordinate should be X, Y or Z");
+        }
+
+        child.position = currentPosition;
+        return BasicValue.True;
+    }
+}
+
+
 class CommandFunctionCABINSERTCOIN : CommandFunctionNoExpressionBase
 {
 
@@ -330,6 +435,112 @@ class CommandFunctionCABPARTSGETROTATION : CommandFunctionExpressionListBase
     }
 }
 
+
+class CommandFunctionCABPARTSSETGLOBALROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSSETGLOBALROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSSETGLOBALROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 3); // Assuming the syntax is like: partNum, axis(X/Y/Z), angle
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+        {
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
+        FunctionHelper.ExpectedNumber(vals[2], " - angle");
+
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
+
+        string axis = vals[1].GetString().ToUpper();
+        float angle = (float)vals[2].GetNumber();
+
+        // Calculate new rotation
+        Quaternion newRotation;
+        switch (axis)
+        {
+            case "X":
+                newRotation = Quaternion.Euler(angle, child.rotation.eulerAngles.y, child.rotation.eulerAngles.z);
+                break;
+            case "Y":
+                newRotation = Quaternion.Euler(child.rotation.eulerAngles.x, angle, child.rotation.eulerAngles.z);
+                break;
+            case "Z":
+                newRotation = Quaternion.Euler(child.rotation.eulerAngles.x, child.rotation.eulerAngles.y, angle);
+                break;
+            default:
+                throw new Exception("cabPartsSetGlobalRotation: axis should be X, Y, or Z");
+        }
+
+        // Set the new global rotation
+        child.rotation = newRotation;
+
+        return BasicValue.True;
+    }
+}
+
+class CommandFunctionCABPARTSGETGLOBALROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSGETGLOBALROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSGETGLOBALROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // Assuming the syntax is like: partNum, axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
+
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
+
+        string axis = vals[1].GetString().ToUpper();
+
+        float rotationValue = 0f;
+        switch (axis)
+        {
+            case "X":
+                rotationValue = child.rotation.eulerAngles.x;
+                break;
+            case "Y":
+                rotationValue = child.rotation.eulerAngles.y;
+                break;
+            case "Z":
+                rotationValue = child.rotation.eulerAngles.z;
+                break;
+            default:
+                throw new Exception("cabPartsGetGlobalRotation: axis should be X, Y, or Z");
+        }
+
+        return new BasicValue(rotationValue);
+    }
+}
 
 class CommandFunctionCABPARTSGETTRANSPARENCY : CommandFunctionSingleExpressionBase
 {
@@ -497,7 +708,7 @@ public static class ColorConverter
         byte r = (byte)bvr.GetNumber();
         byte g = (byte)bvg.GetNumber();
         byte b = (byte)bvb.GetNumber();
-        
+
         // Ensure the input values are within the valid range
         if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255)
             throw new ArgumentException("RGB values must be between 0 and 255");

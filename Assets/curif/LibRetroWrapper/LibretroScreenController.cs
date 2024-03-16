@@ -280,8 +280,8 @@ public class LibretroScreenController : MonoBehaviour
                       lightGunTarget.Init(lightGunInformation, PathBase);
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
-#if !UNITY_EDITOR
 
+#if !UNITY_EDITOR
                   // start libretro
                   if (!LibretroMameCore.Start(name, GameFile))
                   {
@@ -291,9 +291,6 @@ public class LibretroScreenController : MonoBehaviour
 #else
                   LibretroMameCore.simulateInEditor(name, GameFile);
 #endif
-                  // age basic
-                  if (ageBasicInformation.active)
-                      cabinetAGEBasic.ExecInsertCoinBas();
 
                   PreparePlayerToPlayGame(true);
                   if (lightGunTarget != null)
@@ -309,6 +306,10 @@ public class LibretroScreenController : MonoBehaviour
 
                   shader.Texture = LibretroMameCore.GameTexture;
                   shader.Invert(GameInvertX, GameInvertY);
+
+                  // age basic Insert coin
+                  if (ageBasicInformation.active)
+                      cabinetAGEBasic.ExecInsertCoinBas();
 
                   return TaskStatus.Success;
               })
