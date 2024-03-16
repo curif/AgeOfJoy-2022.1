@@ -1,0 +1,170 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_CRT_LOD
+  m_Shader: {fileID: 4800000, guid: d187a95f3b2c2604eb318a54100d739b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 0
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CRTFX:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GameScreen:
+        m_Texture: {fileID: 2800000, guid: 1e4addacf63225541ad984df94a11789, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: 8f939eab460ea6041bc9d72da92c13a6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample0:
+        m_Texture: {fileID: 2800000, guid: 1bca5357adbdec0498a30ffa7acd80d3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSampleDotMask:
+        m_Texture: {fileID: 2800000, guid: 52fa22fcfb11d0e4280b2efa2ffb323b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSampleScanline:
+        m_Texture: {fileID: 2800000, guid: 2fd07d7dd5fe8b046a2eaaf43291b55e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSampleScanline_Far:
+        m_Texture: {fileID: 2800000, guid: 2fd07d7dd5fe8b046a2eaaf43291b55e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSampleScanline_Near:
+        m_Texture: {fileID: 2800000, guid: e03c6b81d5a1d1b40879ce22e711aed5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _BumpScale: 1
+    - _CRTBrightnessFlickerMax: 0.1
+    - _CRTBrightnessFlickerMin: 0.1
+    - _CRTBrightnessFlickerTime: 0
+    - _Cutoff: 0.5
+    - _Damage_Desaturation: 0
+    - _Damage_VIgnette_Radius: 0
+    - _Damage_Vignette_Hardness: 1
+    - _DetailNormalMapScale: 1
+    - _Distance_DotMask: 0.15
+    - _Distance_DotMask_Power: 5
+    - _Distance_Scanline: 0.5
+    - _Distance_Scanline_Far: 1
+    - _Distance_Scanline_Far_Power: 5
+    - _Distance_Scanline_Near: 0.05
+    - _Distance_Scanline_Near_Power: 5
+    - _Distance_Scanline_Power: 5
+    - _DotMaskBrighten: 0.273
+    - _DotMaskOffsetAdd: 0
+    - _DotMaskSaturate: 0
+    - _DotMaskTransitionDistance: 0.1
+    - _DotMaskTransitionPower: 5
+    - _DotMask_Brighten: 0
+    - _DotMask_OffsetAdd: 0
+    - _DotMask_Saturate: 0
+    - _Dotmask_GameScreenBrightness: 3
+    - _Dotmask_ScanlineRemoval: 0.124
+    - _DstBlend: 0
+    - _FresnelBias: 0
+    - _FresnelPower: 0
+    - _FresnelScale: 0
+    - _GameScreenBrightness: 1
+    - _GameScreenBrightnessWithScanlines: 3
+    - _GlossMapScale: 1
+    - _Glossiness: 0.5
+    - _GlossyReflections: 1
+    - _MaskVTXRedOnly: 0
+    - _Metallic: 0
+    - _MipBias: 0.5
+    - _Mode: 0
+    - _OcclusionStrength: 1
+    - _POwer: 5
+    - _Parallax: 0.02
+    - _Scanline01_TileU: 1
+    - _Scanline01_TileV: 1
+    - _ScanlinePOW: 1
+    - _ScanlinePower: 1
+    - _ScanlineTransitionDistance: 0.5
+    - _ScanlineTransitionPower: 5
+    - _Scanline_Amount: 1
+    - _Scanline_GameScreenBrightness: 2.5
+    - _Scanline_GameScreenBrightnessWithScanlines: 1
+    - _Scanline_Power: 1
+    - _Scanline_TransitionPower: 5
+    - _SmoothnessTextureChannel: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _TransitionDistance: 0.1
+    - _UVSec: 0
+    - _ZWrite: 1
+    - __dirty: 0
+    m_Colors:
+    - _CRTParameters: {r: 320, g: 240, b: 1, a: 0.59158}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}
+    - _Dirt_RGBAmount_APower: {r: 0, g: 1, b: 0, a: 0}
+    - _DotmaskTiling: {r: 256, g: 256, b: 0, a: 0}
+    - _Dotmask_Tiling: {r: 512, g: 256, b: 0, a: 0}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _ScanlineMax: {r: 1, g: 1, b: 1, a: 0}
+    - _ScanlineTiling: {r: 1, g: 256, b: 0, a: 0}
+    - _ScanlineTiling1: {r: 512, g: 512, b: 0, a: 0}
+    - _Scanline_Color: {r: 1, g: 1, b: 1, a: 0}
+    - _Scanline_Tiling: {r: 1, g: 32, b: 0, a: 0}
+  m_BuildTextureStacks: []

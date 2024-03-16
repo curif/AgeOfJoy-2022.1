@@ -27,6 +27,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _CRTFX:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -75,6 +79,14 @@ Material:
         m_Texture: {fileID: 2800000, guid: 2fd07d7dd5fe8b046a2eaaf43291b55e, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _TextureSampleScanline_Far:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSampleScanline_Near:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _texcoord:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -82,11 +94,21 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
+    - _CRTBrightnessFlickerMax: 0.1
+    - _CRTBrightnessFlickerMin: 0.1
+    - _CRTBrightnessFlickerTime: 0
     - _Cutoff: 0.5
+    - _Damage_Desaturation: 0
+    - _Damage_VIgnette_Radius: 0
+    - _Damage_Vignette_Hardness: 1
     - _DetailNormalMapScale: 1
     - _Distance_DotMask: 0.15
     - _Distance_DotMask_Power: 5
     - _Distance_Scanline: 0.5
+    - _Distance_Scanline_Far: 1
+    - _Distance_Scanline_Far_Power: 5
+    - _Distance_Scanline_Near: 0.05
+    - _Distance_Scanline_Near_Power: 5
     - _Distance_Scanline_Power: 5
     - _DotMaskBrighten: 0.273
     - _DotMaskOffsetAdd: 0
@@ -107,7 +129,9 @@ Material:
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _MaskVTXRedOnly: 0
     - _Metallic: 0
+    - _MipBias: 0.5
     - _Mode: 0
     - _OcclusionStrength: 1
     - _POwer: 5
@@ -130,7 +154,10 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
+    - _CRTParameters: {r: 320, g: 240, b: 1, a: 0.59158}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}
+    - _Dirt_RGBAmount_APower: {r: 0, g: 1, b: 0, a: 0}
     - _DotmaskTiling: {r: 256, g: 256, b: 0, a: 0}
     - _Dotmask_Tiling: {r: 512, g: 256, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

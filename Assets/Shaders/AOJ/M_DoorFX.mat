@@ -8,12 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_DoorFX
-  m_Shader: {fileID: 4800000, guid: be8b0727911f0c1419b86ffc84a79177, type: 3}
+  m_Shader: {fileID: 4800000, guid: e8f09f80c5901344982dcaeeea91d198, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -67,12 +67,28 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RoomCubemap:
+        m_Texture: {fileID: 8900000, guid: 1064b3af7c0210041ac63a494868bdef, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SmokeTex:
         m_Texture: {fileID: 2800000, guid: a11563a4124b96c4db654a9ea7217d2c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Tex:
         m_Texture: {fileID: 8900000, guid: 7c757f01e9416cdbf9b8fb5a09f12cc1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture0:
+        m_Texture: {fileID: 2800000, guid: 4809541d25f34dc499bbf5ff78b719f6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample3:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -88,6 +104,7 @@ Material:
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
+    - _Offsetty: 0.118
     - _Parallax: 0.02
     - _Rotation: 0
     - _SmoothnessTextureChannel: 0
@@ -96,11 +113,18 @@ Material:
     - _Transparency: 1
     - _UVSec: 0
     - _ZWrite: 1
+    - __dirty: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorBottom: {r: 0, g: 0.018978918, b: 0.028301895, a: 0}
+    - _ColorTop: {r: 0, g: 0.3414725, b: 0.6132076, a: 0}
+    - _Color_Bottom: {r: 0, g: 0.5556111, b: 1, a: 0}
+    - _Color_Top: {r: 0, g: 0.5556111, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _PanningSpeed: {r: 0, g: -0.25, b: 0, a: 0}
     - _SmokeColor: {r: 0.3584906, g: 0, b: 0.074857734, a: 1}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Tint: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+    - _Vector1: {r: 1, g: 2, b: 0, a: 0}
+    - _Vector2: {r: 1, g: 2, b: 0, a: 0}
   m_BuildTextureStacks: []
