@@ -167,7 +167,7 @@ public static class CabinetDBAdmin
         foreach (string zipFile in files)
         {
             string cabPath = "";
-            if (File.Exists(zipFile) && !zipFile.EndsWith("/test.zip") && 
+            if (File.Exists(zipFile) && !zipFile.EndsWith("test.zip") && 
                 ZipFileContainsDescriptionYaml(zipFile))
             {
                 ConfigManager.WriteConsole($"[loadCabinets] {zipFile}");
