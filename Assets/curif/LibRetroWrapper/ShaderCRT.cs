@@ -65,9 +65,10 @@ public class ShaderCRT : ShaderScreenBase
   {
     if (actual_invertx != invertx || actual_inverty != inverty)
     {
-      // ConfigManager.WriteConsole($"[ShaderScreenCRT.Invert] {invertx}, {inverty}");
-      // display.materials[position].SetFloat("MirrorX", invertx ? 1f : 0f);
-      // display.materials[position].SetFloat("MirrorY", inverty ? 1f : 0f);
+      Vector4 v4 = new Vector4(invertx? -1f : 1f, inverty? -1f : 1f, 0, 0);
+      display.materials[position].SetVector("_CRTTiling", v4); 
+      ConfigManager.WriteConsole($"[ShaderCRT.Invert] {invertx}, {inverty} = {v4}");
+
       actual_invertx = invertx; 
       actual_inverty = inverty;
     }

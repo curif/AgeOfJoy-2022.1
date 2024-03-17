@@ -295,7 +295,9 @@ public class CabinetInformation
 
         public System.Exception validate()
         {
-            if (shader != "damage" && shader != "clean")
+            if (shader.ToLower() != "damage" && 
+                shader.ToLower() != "clean" && 
+                shader.ToLower() != "crt")
             {
                 return new System.ArgumentException($"Erroneous Shader {shader}");
             }
