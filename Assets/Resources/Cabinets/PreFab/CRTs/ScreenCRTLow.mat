@@ -48,7 +48,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 8f939eab460ea6041bc9d72da92c13a6, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
@@ -84,24 +84,24 @@ Material:
     - MirrorX: 0
     - MirrorY: 0
     - _BumpScale: 1
-    - _CRTBrightnessFlickerMax: 0.1
-    - _CRTBrightnessFlickerMin: 0.1
-    - _CRTBrightnessFlickerTime: 0
+    - _CRTBrightnessFlickerMax: 0.005
+    - _CRTBrightnessFlickerMin: 0.005
+    - _CRTBrightnessFlickerTime: 35
     - _Cutoff: 0.5
-    - _Damage_Desaturation: -0.276
-    - _Damage_VIgnette_Radius: 0.028
-    - _Damage_Vignette_Hardness: 0
+    - _Damage_Desaturation: 0
+    - _Damage_VIgnette_Radius: 0.435
+    - _Damage_Vignette_Hardness: 0.253
     - _DetailNormalMapScale: 1
     - _Distance_DotMask: 0.15
     - _Distance_DotMask_Power: 5
     - _Distance_Scanline_Far: 1
     - _Distance_Scanline_Far_Power: 5
-    - _Distance_Scanline_Near: 0.05
+    - _Distance_Scanline_Near: 0.5
     - _Distance_Scanline_Near_Power: 5
-    - _DotMask_Brighten: 0.273
+    - _DotMask_Brighten: 0
     - _DotMask_Saturate: 0
-    - _Dotmask_GameScreenBrightness: 1
-    - _Dotmask_ScanlineRemoval: 0
+    - _Dotmask_GameScreenBrightness: 2.24
+    - _Dotmask_ScanlineRemoval: 0.124
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -112,8 +112,9 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
-    - _Scanline_Amount: 1
-    - _Scanline_GameScreenBrightness: 2.5
+    - _Scanline_Amount: 0.5
+    - _Scanline_GameScreenBrightness: 1.5
+    - _Scanline_MipBias: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -139,10 +140,11 @@ Material:
     - u_vignette_size: 0.5
     - u_vignette_smoothness: 0.4
     m_Colors:
-    - _CRTParameters: {r: 256, g: 256, b: 1, a: 0.59158}
+    - _CRTParameters: {r: 320, g: 240, b: 1, a: 0.59158}
+    - _CRTTiling: {r: 1, g: 1, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}
-    - _Dirt_RGBAmount_APower: {r: 0, g: 1, b: 0, a: 0}
+    - _Dirt_RGBAmount_APower: {r: 0, g: 0, b: 1, a: 0.15}
     - _EmissionColor: {r: 0.9433962, g: 0.93004626, b: 0.93004626, a: 1}
     - _Scanline_Color: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
