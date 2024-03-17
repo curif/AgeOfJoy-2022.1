@@ -37,7 +37,7 @@ public static class CabinetTextureCache
                 int width = fileData[7] | (fileData[8] << 8) | (fileData[9] << 16);
                 int height = fileData[10] | (fileData[11] << 8) | (fileData[12] << 16);
                 ConfigManager.WriteConsole($"[CabinetTextureCache.LoadAndCacheTexture] {path} texture size:{width}x{height}");
-                tex = new Texture2D(width, height, TextureFormat.ASTC_6x6, false, false);
+                tex = new Texture2D(width, height, TextureFormat.ASTC_6x6, false, true);
                 tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
                 tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
                 tex.LoadRawTextureData(fileData);
