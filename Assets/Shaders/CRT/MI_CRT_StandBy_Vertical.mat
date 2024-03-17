@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: MI_CRT_StandBy_Vertical
   m_Shader: {fileID: 4800000, guid: 77d4b53848385294cb7dfbd390984976, type: 3}
-  m_Parent: {fileID: 2100000, guid: a4ab9cccf96d0d642ae12930d5eff61a, type: 2}
+  m_Parent: {fileID: 2100000, guid: ee306ca110d345b4ba34452d41e0ec3f, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -23,6 +23,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _CRTFX:
+        m_Texture: {fileID: 2800000, guid: 3b4bc173790b8f34e918d52865e6eae0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _GameScreen:
         m_Texture: {fileID: 2800000, guid: b3358621a1dcf664789a24d68db36f06, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -75,6 +79,7 @@ Material:
     - _Vignette_Hardness: 0.587
     - __dirty: 0
     m_Colors:
+    - _CRTTiling: {r: 1, g: 1, b: 0, a: 0}
     - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}
     - _Dirt_RGBAmount_APower: {r: 0, g: 0, b: 1, a: 0.2}
     - _Dotmask_Tiling: {r: 256, g: 256, b: 0, a: 0}
