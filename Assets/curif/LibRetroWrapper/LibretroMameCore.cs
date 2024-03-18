@@ -945,12 +945,9 @@ public static unsafe class LibretroMameCore
         // ConfigManager.WriteConsole($"[AudioUnlockCB]");
         Monitor.Exit(AudioBufferLock);
     }
-    public static void MoveAudioStreamTo(string gameFileName, float[] audioData)
+    public static void MoveAudioStreamTo(float[] audioData)
     {
 #if !UNITY_EDITOR
-        if (!GameLoaded || GameFileName != gameFileName)
-            return;
-
         lock (AudioBufferLock)
         {
             // Call the C functions to access the audio data

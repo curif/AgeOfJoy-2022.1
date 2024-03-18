@@ -34,6 +34,7 @@ public class LibretroScreenController : MonoBehaviour
 {
     [SerializeField]
     public string GameFile = "1942.zip";
+    public string ScreenName = ""; //loaded on start, needed for the multitasking
 
     [SerializeField]
     public string GameVideoFile;
@@ -149,6 +150,8 @@ public class LibretroScreenController : MonoBehaviour
 
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
+        
+        ScreenName = name;
 
         //camera
         centerEyeCamera = GameObject.Find("Main Camera");
@@ -284,13 +287,13 @@ public class LibretroScreenController : MonoBehaviour
 
 #if !UNITY_EDITOR
                   // start libretro
-                  if (!LibretroMameCore.Start(name, GameFile))
+                  if (!LibretroMameCore.Start(ScreenName, GameFile))
                   {
                       CoinSlot.clean();
                       return TaskStatus.Failure;
                   }
 #else
-                  LibretroMameCore.simulateInEditor(name, GameFile);
+                  LibretroMameCore.simulateInEditor(ScreenName, GameFile);
 #endif
 
                   PreparePlayerToPlayGame(true);
@@ -317,7 +320,7 @@ public class LibretroScreenController : MonoBehaviour
             .End()
 
             .Sequence("Game Started")
-              .Condition("Game is running?", () => LibretroMameCore.isRunning(name, GameFile))
+              .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
               .RepeatUntilSuccess("Run until player exit")
                 .Sequence()
                   //.Condition("Player looking screen", () => isPlayerLookingAtScreen3())
@@ -401,7 +404,7 @@ public class LibretroScreenController : MonoBehaviour
         //to replace the shader texture ASAP:
         videoPlayer.Play();
 
-        LibretroMameCore.End(name, GameFile);
+        LibretroMameCore.End(ScreenName, GameFile);
         timeToExit = DateTime.MinValue;
 
         PreparePlayerToPlayGame(false);
@@ -441,7 +444,7 @@ public class LibretroScreenController : MonoBehaviour
         if (shader == null)
             return;
 
-        if (LibretroMameCore.isRunning(name, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
             LibretroMameCore.LoadTextureData();
 
@@ -480,15 +483,16 @@ public class LibretroScreenController : MonoBehaviour
 
     private void OnAudioFilterRead(float[] data, int channels)
     {
-        LibretroMameCore.MoveAudioStreamTo(GameFile, data);
+        if (LibretroMameCore.isRunning(ScreenName, GameFile))
+            LibretroMameCore.MoveAudioStreamTo(data);
     }
 
     private void OnDestroy()
     {
-        if (LibretroMameCore.isRunning(name, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName, GameFile))
             PreparePlayerToPlayGame(false);
 
-        LibretroMameCore.End(name, GameFile);
+        LibretroMameCore.End(ScreenName, GameFile);
     }
 
 #if UNITY_EDITOR
