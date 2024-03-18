@@ -10,10 +10,10 @@ Material:
   m_Name: MI_CRT_Default
   m_Shader: {fileID: 4800000, guid: 77d4b53848385294cb7dfbd390984976, type: 3}
   m_Parent: {fileID: 2100000, guid: a4ab9cccf96d0d642ae12930d5eff61a, type: 2}
-  m_ModifiedSerializedProperties: 0
+  m_ModifiedSerializedProperties: 2
   m_ValidKeywords: []
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -31,8 +31,16 @@ Material:
         m_Texture: {fileID: 2800000, guid: e57652f0ab2605e4cb8bae96179146ab, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MonitorFX:
         m_Texture: {fileID: 2800000, guid: 3b4bc173790b8f34e918d52865e6eae0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PackedScanlines:
+        m_Texture: {fileID: 2800000, guid: b9bcd261404598f49ada1f9d5ec82d41, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureSample0:
@@ -57,13 +65,15 @@ Material:
     - _Damage_Desaturation: 0
     - _Damage_VIgnette_Radius: 0.435
     - _Damage_Vignette_Hardness: 0.596
-    - _Distance_DotMask: 0.15
+    - _Distance_DotMask: 0.1
     - _Distance_DotMask_Power: 5
     - _Distance_Scanline: 5
     - _Distance_Scanline_Far: 1
     - _Distance_Scanline_Near: 0.5
     - _Dotmask_GameScreenBrightness: 2.24
+    - _Dotmask_ScanlineRemoval: 0.5
     - _EmissiveAmount: 1
+    - _MaskVTXRedOnly: 1
     - _Metallic: 0
     - _MipBias: 0.5
     - _Scanline_Amount: 0.5
@@ -74,7 +84,7 @@ Material:
     - __dirty: 0
     m_Colors:
     - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}
-    - _Dirt_RGBAmount_APower: {r: 0, g: 0, b: 1, a: 0.15}
+    - _Dirt_RGBAmount_APower: {r: 0, g: 1, b: 0, a: 0.15}
     - _Dotmask_Tiling: {r: 256, g: 256, b: 0, a: 0}
     - _Scanline_Tiling: {r: 1, g: 16, b: 0, a: 0}
     - _ScreenResolution: {r: 256, g: 240, b: 0, a: 0}
