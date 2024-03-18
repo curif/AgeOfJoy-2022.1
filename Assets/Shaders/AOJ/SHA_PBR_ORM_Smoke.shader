@@ -279,10 +279,15 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+				float mulTime13 = _Time.y * _FlickerSpeed;
+				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = lerpResult25;
+				o.ase_texcoord9.z = vertexToFrag40;
+				
 				o.ase_texcoord9.xy = v.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				o.ase_texcoord9.zw = 0;
+				o.ase_texcoord9.w = 0;
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					float3 defaultVertexValue = v.vertex.xyz;
 				#else
@@ -476,14 +481,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float2 texCoord12 = IN.ase_texcoord9.xy * float2( 4,2 ) + float2( 0,0 );
 				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
 				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = IN.ase_texcoord9.z;
 				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord9.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
 				o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
-				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * lerpResult25 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
+				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * vertexToFrag40 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
 				#if defined(_SPECULAR_SETUP)
 					o.Specular = fixed3( 0, 0, 0 );
 				#else
@@ -752,10 +756,15 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+				float mulTime13 = _Time.y * _FlickerSpeed;
+				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = lerpResult25;
+				o.ase_texcoord9.z = vertexToFrag40;
+				
 				o.ase_texcoord9.xy = v.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				o.ase_texcoord9.zw = 0;
+				o.ase_texcoord9.w = 0;
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					float3 defaultVertexValue = v.vertex.xyz;
 				#else
@@ -930,14 +939,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float2 texCoord12 = IN.ase_texcoord9.xy * float2( 4,2 ) + float2( 0,0 );
 				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
 				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = IN.ase_texcoord9.z;
 				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord9.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
 				o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
-				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * lerpResult25 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
+				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * vertexToFrag40 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
 				#if defined(_SPECULAR_SETUP)
 					o.Specular = fixed3( 0, 0, 0 );
 				#else
@@ -1147,10 +1155,15 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+				float mulTime13 = _Time.y * _FlickerSpeed;
+				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = lerpResult25;
+				o.ase_texcoord8.z = vertexToFrag40;
+				
 				o.ase_texcoord8.xy = v.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				o.ase_texcoord8.zw = 0;
+				o.ase_texcoord8.w = 0;
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					float3 defaultVertexValue = v.vertex.xyz;
 				#else
@@ -1326,14 +1339,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float2 texCoord12 = IN.ase_texcoord8.xy * float2( 4,2 ) + float2( 0,0 );
 				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
 				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = IN.ase_texcoord8.z;
 				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord8.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
 				o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
-				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * lerpResult25 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
+				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * vertexToFrag40 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
 				#if defined(_SPECULAR_SETUP)
 					o.Specular = fixed3( 0, 0, 0 );
 				#else
@@ -1523,10 +1535,15 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
+				float mulTime13 = _Time.y * _FlickerSpeed;
+				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = lerpResult25;
+				o.ase_texcoord3.z = vertexToFrag40;
+				
 				o.ase_texcoord3.xy = v.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				o.ase_texcoord3.zw = 0;
+				o.ase_texcoord3.w = 0;
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 					float3 defaultVertexValue = v.vertex.xyz;
 				#else
@@ -1673,14 +1690,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float2 texCoord12 = IN.ase_texcoord3.xy * float2( 4,2 ) + float2( 0,0 );
 				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
 				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				float vertexToFrag40 = IN.ase_texcoord3.z;
 				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord3.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
 				o.Normal = fixed3( 0, 0, 1 );
-				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * lerpResult25 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
+				o.Emission = ( ( ( tex2D( _Texture1, ( panner15 + ( _Warpyamount * tex2DNode34.b ) ) ).g * vertexToFrag40 ) * lerpResult39 ) * tex2D( _Texture1, uv_Texture1 ).r ).rgb;
 				o.Alpha = 1;
 				float AlphaClipThreshold = 0.5;
 
@@ -1977,18 +1993,19 @@ Node;AmplifyShaderEditor.RangedFloatNode;31;-57.93604,50.33807;Inherit;False;Pro
 Node;AmplifyShaderEditor.RangedFloatNode;29;-84.93604,-54.66196;Inherit;False;Property;_Metallic;Metallic;8;0;Create;True;0;0;0;False;0;False;0;0.61;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;32;432.064,224.3381;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.TexturePropertyNode;33;-1966.936,12.33817;Inherit;True;Property;_Texture1;Texture 1;10;0;Create;True;0;0;0;False;0;False;None;d3bfaa2f87f1576439629283e303e82a;False;white;Auto;Texture2D;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
-Node;AmplifyShaderEditor.PannerNode;16;-1868.851,785.7772;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;-0.05,-0.1;False;1;FLOAT;1;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.SamplerNode;34;-1575.936,510.3382;Inherit;True;Property;_TextureSample2;Texture Sample 2;10;0;Create;True;0;0;0;False;0;False;-1;None;a11563a4124b96c4db654a9ea7217d2c;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;36;-1191.936,505.3382;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;37;-1557.936,729.3381;Inherit;False;Property;_Warpyamount;Warpyamount;11;0;Create;True;0;0;0;False;0;False;0;0.186;0;0.25;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SamplerNode;19;-946.618,345.5149;Inherit;True;Property;_TextureSample0;Texture Sample 0;2;0;Create;True;0;0;0;False;0;False;-1;None;a11563a4124b96c4db654a9ea7217d2c;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleAddOpNode;35;-1115.936,286.3382;Inherit;False;2;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.TextureCoordinatesNode;12;-1933.851,549.7773;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;4,2;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SamplerNode;8;-728.3334,54.50015;Inherit;True;Property;_ORM;ORM;2;0;Create;True;0;0;0;False;0;False;-1;None;6ea362dd54ffb254b806653db9ae9062;True;0;False;linearGrey;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SamplerNode;18;317.5593,365.8644;Inherit;True;Property;_TextureSample1;Texture Sample 1;1;0;Create;True;0;0;0;False;0;False;-1;None;d3bfaa2f87f1576439629283e303e82a;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;28;-328.2368,683.8147;Inherit;False;Property;_SmokeColorA;Smoke ColorA;6;0;Create;True;0;0;0;False;0;False;0,0.6354194,1,0;0.419811,0.788402,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;38;-326.936,887.3383;Inherit;False;Property;_SmokeColorB;Smoke ColorB;7;0;Create;True;0;0;0;False;0;False;0,0.6354194,1,0;0.419811,0.788402,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.LerpOp;39;-9.936035,598.3383;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
+Node;AmplifyShaderEditor.PannerNode;16;-2346.463,757.4044;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;-0.05,-0.1;False;1;FLOAT;1;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.TextureCoordinatesNode;12;-2411.463,521.4045;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;4,2;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.VertexToFragmentNode;40;-734.5188,827.8442;Inherit;False;False;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;-147,-330;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ExtraPrePass;0;0;ExtraPrePass;6;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardAdd;0;2;ForwardAdd;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;4;1;False;;1;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;True;1;LightMode=ForwardAdd;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Deferred;0;3;Deferred;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Deferred;True;2;False;0;;0;0;Standard;0;False;0
@@ -2002,13 +2019,12 @@ WireConnection;25;0;22;0
 WireConnection;25;1;21;0
 WireConnection;25;2;23;0
 WireConnection;26;0;19;2
-WireConnection;26;1;25;0
+WireConnection;26;1;40;0
 WireConnection;15;0;11;0
 WireConnection;27;0;26;0
 WireConnection;27;1;39;0
 WireConnection;32;0;27;0
 WireConnection;32;1;18;1
-WireConnection;16;0;12;0
 WireConnection;34;0;33;0
 WireConnection;34;1;16;0
 WireConnection;36;0;37;0
@@ -2021,10 +2037,12 @@ WireConnection;18;0;33;0
 WireConnection;39;0;28;0
 WireConnection;39;1;38;0
 WireConnection;39;2;34;3
+WireConnection;16;0;12;0
+WireConnection;40;0;25;0
 WireConnection;1;0;6;0
 WireConnection;1;1;7;0
 WireConnection;1;2;32;0
 WireConnection;1;4;29;0
 WireConnection;1;5;31;0
 ASEEND*/
-//CHKSM=1B405B6842DEF2B4180D7F8F73A147967F2BD2C5
+//CHKSM=2C88ECDE03E7F57745C03FA86E12A39622DB5CE9
