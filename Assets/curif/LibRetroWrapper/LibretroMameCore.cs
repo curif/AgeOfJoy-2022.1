@@ -378,9 +378,9 @@ public static unsafe class LibretroMameCore
         GameTexture.filterMode = FilterMode.Bilinear;
         GameTexture.anisoLevel = 0;
         */
-        GameTexture = new Texture2D(200, 200, TextureFormat.RGB565, true);
-        GameTexture.filterMode = FilterMode.Trilinear;
-        GameTexture.anisoLevel = 4;
+        GameTexture = new Texture2D(200, 200, TextureFormat.RGB565, false);
+        GameTexture.filterMode = FilterMode.Bilinear;
+        //GameTexture.anisoLevel = 0;
     }
 
     static void assignControls()
