@@ -1,6 +1,6 @@
 #include "environment.h"
 
-//#define ENVIRONMENT_DEBUG
+#define ENVIRONMENT_DEBUG
 
 static enum retro_pixel_format pixel_format;
 static char system_directory[500];
@@ -410,10 +410,12 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
   struct retro_variable *var;
   unsigned int *ptr;
 
+/*
 #ifdef ENVIRONMENT_DEBUG
   wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_cb] cmd: %i\n",
                           (int)cmd);
-#endif /* ifdef ENVIRONMENT_DEBUG */
+#endif 
+*/
 
   if (cmd == RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE) {
     // *(bool*)data = false;
@@ -500,7 +502,14 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
                               "[wrapper_environment_cb] get var: %s: %s",
                               var->key, var->value);
       return true;
+    } else if (strcmp(var->key, "fbneo-lightgun-crosshair-emulation") == 0) {
+      var->value = enabled;
+      wrapper_environment_log(RETRO_LOG_INFO,
+                              "[wrapper_environment_cb] get var: %s: %s",
+                              var->key, var->value);
+      return true;
     }
+    
 
     return false;
 
@@ -631,9 +640,11 @@ int wrapper_load_game(char *path, char *_gamma, char *_brightness,
   wrapper_environment_set_game_parameters(
       _gamma, _brightness, _xy_control_type); // 0 mouse, 1 ligthgun
 
+
   wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s)--\n",
                           game_info.path);
   bool ret = handlers.retro_load_game(&game_info);
+  handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
 
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_load_game] END (ret:%i) --------- \n", ret);

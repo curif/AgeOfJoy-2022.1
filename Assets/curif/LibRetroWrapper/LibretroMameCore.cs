@@ -881,14 +881,14 @@ public static unsafe class LibretroMameCore
                     lightGunTarget?.lightGunInformation != null &&
                     lightGunTarget.lightGunInformation.active)
         {
-            //WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
+            WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
 
             switch (id)
             {
                 case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
                     if (port == 0)
                     {
-                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
+                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
                         ret = checkForCoins();
                     }
                     break;
@@ -901,7 +901,7 @@ public static unsafe class LibretroMameCore
                     {
                         lock (LightGunLock)
                         {
-                            // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                            WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
                             ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
                         }
                     }
@@ -909,21 +909,22 @@ public static unsafe class LibretroMameCore
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
                     lock (LightGunLock)
                     {
-                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitX})");
+                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
                         ret = (Int16)lightGunTarget.HitX;
                     }
                     break;
                 case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
                     lock (LightGunLock)
                     {
-                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
+                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
                         ret = (Int16)lightGunTarget.HitY;
                     }
                     break;
+
                 default:
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} - port: {port}");
+                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} - port: {port}");
                     ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
-                    // WriteConsole($"[inputStateCB] active: {ret}");
+                    WriteConsole($"[inputStateCB] active: {ret}");
                     break;
             }
         }

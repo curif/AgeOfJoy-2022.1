@@ -112,4 +112,9 @@ public class AgentScenePosition : MonoBehaviour
         }
     }
 
+    public override string ToString()
+    {
+        return $"AgentScenePosition: {name} [IsPlayerColliding: {IsPlayerColliding}, IsPlayerPresent: {IsPlayerPresent}, IsNPCPresent: {IsNPCPresent}, MaxAllowedSpace: {MaxAllowedSpace}, NPCPresentName: {NPCPresentName}, BoxColliderHeight: {BoxColliderHeight}]";
+    }
+
 }

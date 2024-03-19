@@ -8,6 +8,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.IO;
 using System;
+using System.Linq;
 
 
 public static class CabinetTextureCache
@@ -883,6 +884,7 @@ public class Cabinet
         libretroScreenController.ShaderName = shaderName;
         libretroScreenController.ShaderConfig = shaderConfig;
 
+        ConfigManager.WriteConsole($"[addCRT]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
         libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
 
         //video
