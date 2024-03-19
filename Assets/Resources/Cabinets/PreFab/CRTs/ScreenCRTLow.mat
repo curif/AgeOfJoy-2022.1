@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: ScreenCRTLow
-  m_Shader: {fileID: 4800000, guid: 77d4b53848385294cb7dfbd390984976, type: 3}
+  m_Shader: {fileID: 4800000, guid: f77cdcb250896d54a957bf5d326b39db, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -41,6 +41,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _DetailNormalMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Dotmask_Scanlines:
+        m_Texture: {fileID: 2800000, guid: 5691e46c711683e4a80cc7e1322070d0, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
@@ -90,24 +94,26 @@ Material:
     - _BumpScale: 1
     - _CRTBrightnessFlickerMax: 0.004
     - _CRTBrightnessFlickerMin: 0.005
-    - _CRTBrightnessFlickerTime: 35
+    - _CRTBrightnessFlickerTime: 36
     - _Cutoff: 0.5
     - _Damage_Desaturation: 0
     - _Damage_VIgnette_Radius: 0.435
     - _Damage_Vignette_Hardness: 0.596
     - _DetailNormalMapScale: 1
-    - _Distance_DotMask: 0.075
+    - _Distance_DotMask: 0.1
     - _Distance_DotMask_Power: 5
-    - _Distance_Scanline_Far: 0.9
+    - _Distance_Scanline: 0.5
+    - _Distance_Scanline_Far: 0.5
     - _Distance_Scanline_Far_Power: 5
-    - _Distance_Scanline_Near: 0.5
+    - _Distance_Scanline_Near: 0.395
     - _Distance_Scanline_Near_Power: 5
-    - _DotMask_Brighten: 0.287
+    - _Distance_Scanline_Power: 5
+    - _DotMask_Brighten: 0
     - _DotMask_Saturate: 0
-    - _Dotmask_GameScreenBrightness: 1.21
-    - _Dotmask_ScanlineRemoval: 0.5
+    - _Dotmask_GameScreenBrightness: 3.19
+    - _Dotmask_ScanlineRemoval: 1
     - _DstBlend: 0
-    - _FarScanline_Fade: 0.5
+    - _FarScanline_Fade: 0.279
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -118,7 +124,7 @@ Material:
     - _OcclusionStrength: 1
     - _Parallax: 0.02
     - _Scanline_Amount: 0.5
-    - _Scanline_GameScreenBrightness: 1.75
+    - _Scanline_GameScreenBrightness: 1.5
     - _Scanline_MipBias: 0.5
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -126,6 +132,7 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     - __dirty: 0
+    - _fart: 0.03125
     - u_bend: 0
     - u_blueOffset_x: 0
     - u_blueOffset_y: 0
@@ -145,7 +152,7 @@ Material:
     - u_vignette_size: 0.5
     - u_vignette_smoothness: 0.4
     m_Colors:
-    - _CRTParameters: {r: 320, g: 256, b: 1, a: 0.59158}
+    - _CRTParameters: {r: 320, g: 240, b: 1, a: 0.59158}
     - _CRTTiling: {r: 1, g: 1, b: 0, a: 0}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}

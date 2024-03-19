@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: MI_CRT_StandBy_Vertical
   m_Shader: {fileID: 4800000, guid: 77d4b53848385294cb7dfbd390984976, type: 3}
-  m_Parent: {fileID: 2100000, guid: ee306ca110d345b4ba34452d41e0ec3f, type: 2}
+  m_Parent: {fileID: 2100000, guid: f51fb07d1991b42478437fc903711904, type: 2}
   m_ModifiedSerializedProperties: 2
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -55,19 +55,19 @@ Material:
     m_Floats:
     - _AlbedoAmount: 0
     - _CRTBrightness: 0.0058
-    - _CRTBrightnessFlickerMax: 0.02
-    - _CRTBrightnessFlickerMin: 0.015
-    - _CRTBrightnessFlickerTime: 35
+    - _CRTBrightnessFlickerMax: 0.004
+    - _CRTBrightnessFlickerMin: 0.005
+    - _CRTBrightnessFlickerTime: 36
     - _Damage_Desaturation: 0
     - _Damage_VIgnette_Radius: 0.435
     - _Damage_Vignette_Hardness: 0.596
     - _Distance_DotMask: 0.1
     - _Distance_DotMask_Power: 5
-    - _Distance_Scanline: 5
+    - _Distance_Scanline: 0.5
     - _Distance_Scanline_Far: 1
     - _Distance_Scanline_Near: 0.5
-    - _Dotmask_GameScreenBrightness: 2.24
-    - _Dotmask_ScanlineRemoval: 0.5
+    - _Dotmask_GameScreenBrightness: 3.19
+    - _Dotmask_ScanlineRemoval: 1
     - _EmissiveAmount: 1
     - _MaskVTXRedOnly: 1
     - _Metallic: 0
@@ -82,7 +82,7 @@ Material:
     m_Colors:
     - _CRTTiling: {r: 1, g: 1, b: 0, a: 0}
     - _Damage_RGB_Offset: {r: 1, g: 1, b: 1, a: 0}
-    - _Dirt_RGBAmount_APower: {r: 0, g: 1, b: 0, a: 0.15}
+    - _Dirt_RGBAmount_APower: {r: 0, g: 0, b: 1, a: 0.5}
     - _Dotmask_Tiling: {r: 256, g: 256, b: 0, a: 0}
     - _Scanline_Tiling: {r: 1, g: 16, b: 0, a: 0}
     - _ScreenResolution: {r: 256, g: 240, b: 0, a: 0}
