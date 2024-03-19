@@ -8,12 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: ScreenCRTMedium
-  m_Shader: {fileID: 4800000, guid: 77d4b53848385294cb7dfbd390984976, type: 3}
+  m_Shader: {fileID: 4800000, guid: f77cdcb250896d54a957bf5d326b39db, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
-  m_LightmapFlags: 4
+  m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -43,6 +43,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Dotmask_Scanlines:
+        m_Texture: {fileID: 2800000, guid: 5691e46c711683e4a80cc7e1322070d0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -56,6 +60,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _PackedScanlines:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -92,16 +100,18 @@ Material:
     - _Damage_VIgnette_Radius: 0.464
     - _Damage_Vignette_Hardness: 0.805
     - _DetailNormalMapScale: 1
-    - _Distance_DotMask: 0.15
+    - _Distance_DotMask: 0.1
     - _Distance_DotMask_Power: 5
+    - _Distance_Scanline: 0.5
     - _Distance_Scanline_Far: 1
     - _Distance_Scanline_Far_Power: 5
     - _Distance_Scanline_Near: 0.5
     - _Distance_Scanline_Near_Power: 5
+    - _Distance_Scanline_Power: 5
     - _DotMask_Brighten: 0
     - _DotMask_Saturate: 0
-    - _Dotmask_GameScreenBrightness: 2.24
-    - _Dotmask_ScanlineRemoval: 0.124
+    - _Dotmask_GameScreenBrightness: 3.19
+    - _Dotmask_ScanlineRemoval: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
@@ -120,7 +130,7 @@ Material:
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - __dirty: 1
+    - __dirty: 0
     - u_bend: 0
     - u_blueOffset_x: 0
     - u_blueOffset_y: 0
