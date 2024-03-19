@@ -9,6 +9,8 @@ using System.Collections.Generic;
 using System.IO;
 //using UnityEditor;
 using System;
+using System.Linq;
+
 //using UnityEngine.Networking;
 using Siccity.GLTFUtility;
 
@@ -274,6 +276,7 @@ public static class CabinetFactory
         if (cabinet.PartsExist("screen-mock-vertical") || cabinet.PartsExist("screen-mock-horizontal"))
         {
             Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
+            ConfigManager.WriteConsole($"[fromInformation]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
 
             cabinet.addCRT(
                     cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),

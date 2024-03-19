@@ -86,7 +86,7 @@ public class CabinetInformation
         return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
     }
 
-    private static string debugLogPath(string cabinetName)
+    public static string debugLogPath(string cabinetName)
     {
         string filename = cabinetName + ".log";
         return Path.Combine(ConfigManager.DebugDir, filename);

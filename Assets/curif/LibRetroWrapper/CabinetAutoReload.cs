@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System;
+using System.Linq;
 
 public class CabinetAutoReload : MonoBehaviour
 {
@@ -42,12 +43,40 @@ public class CabinetAutoReload : MonoBehaviour
             {
                 //also deletes the zip file
                 ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from {testFile}");
-                CabinetDBAdmin.loadCabinetFromZip(testFile);
-                LoadCabinet();
+                try
+                {
+                    CabinetDBAdmin.loadCabinetFromZip(testFile);
+                }
+                catch (System.Exception ex)
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading zip file {testFile}", ex);
+                    writeGenericException(testFile, "ERROR loading zip file", ex);
+                }
+                finally
+                {
+                    LoadCabinet();
+                }
+
             }
 
             yield return new WaitForSeconds(2f);
         }
+    }
+
+    private void writeGenericException(string cabName, string message, Exception ex)
+    {
+        string path = CabinetInformation.debugLogPath(cabName);
+        ConfigManager.WriteConsole($"[CabinetAutoReload] {path}");
+        // Write exception details to the log file
+        using (StreamWriter writer = new StreamWriter(path, true))
+        {
+            writer.WriteLine($"CABINET: {cabName}");
+            writer.WriteLine(new string('-', 50)); // Separator
+            writer.WriteLine(message);
+            writer.WriteLine(ex.Message);
+            writer.WriteLine(new string('-', 50)); // Separator
+        }
+        return;
     }
 
     private void LoadCabinet()
@@ -62,7 +91,6 @@ public class CabinetAutoReload : MonoBehaviour
         CabinetInformation cbInfo = null;
         try
         {
-
             ConfigManager.WriteConsole($"[CabinetAutoReload] new cabinet from yaml: {testCabinetDir}");
 
             cbInfo = CabinetInformation.fromYaml(testCabinetDir, cache: false); //description.yaml
@@ -74,8 +102,8 @@ public class CabinetAutoReload : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading parsing description {testDescriptionCabinetFile}", ex);
-            CabinetInformation.showCabinetProblems(cbInfo, moreProblems: ex.Message);
+            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR  parsing description {testDescriptionCabinetFile}", ex);
+            writeGenericException(testDescriptionCabinetFile, "ERROR  parsing description", ex);
             return;
         }
 
@@ -83,22 +111,25 @@ public class CabinetAutoReload : MonoBehaviour
         {
             //cabinet inseption
             ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
+            ConfigManager.WriteConsole($"[CabinetAutoReload]AgentPlayerPositions: {string.Join(",", AgentPlayerPositions.Select(x => x.ToString()))}");
+
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position,
                                                          transform.rotation, transform.parent,
                                                          AgentPlayerPositions, backgroundSoundController,
                                                          cacheGlbModels: false);
-            CabinetFactory.skinFromInformation(cab, cbInfo);
-            
+
             CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
             cba.AgentPlayerPositions = AgentPlayerPositions;
             cba.backgroundSoundController = backgroundSoundController;
+
+            CabinetFactory.skinFromInformation(cab, cbInfo);
 
             ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
             CabinetInformation.showCabinetProblems(cbInfo);
 
             ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
             UnityEngine.Object.Destroy(gameObject);
-        
+
         }
         catch (System.Exception ex)
         {
