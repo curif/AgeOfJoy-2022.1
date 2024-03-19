@@ -150,7 +150,7 @@ public class LibretroScreenController : MonoBehaviour
 
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
-        
+
         ScreenName = name;
 
         //camera
@@ -215,7 +215,7 @@ public class LibretroScreenController : MonoBehaviour
     IEnumerator runBT()
     {
         // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
-        
+
         videoPlayer.setVideo(GameVideoFile, shader, GameVideoInvertX, GameVideoInvertY);
         tree = buildScreenBT();
         while (true)

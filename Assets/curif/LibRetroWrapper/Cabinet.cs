@@ -884,7 +884,6 @@ public class Cabinet
         libretroScreenController.ShaderName = shaderName;
         libretroScreenController.ShaderConfig = shaderConfig;
 
-        ConfigManager.WriteConsole($"[addCRT]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
         libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
 
         //video

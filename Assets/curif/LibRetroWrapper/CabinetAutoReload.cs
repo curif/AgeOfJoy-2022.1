@@ -21,44 +21,75 @@ public class CabinetAutoReload : MonoBehaviour
     static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
     static string testFile = ConfigManager.Cabinets + "/test.zip";
 
+    private Coroutine mainCoroutine;
+    private bool initialized = false;
+
     void Start()
     {
-        //it's not possible to use filesystemwatcher
-
         ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
+        mainCoroutine = StartCoroutine(reload());
+        initialized = true;
+    }
 
-        //this start() will be excecuted every time the component is loaded, do not excecute LoadCabinet() here.
-        // LoadCabinet();
+    private void OnEnable()
+    {
+        if (!initialized)
+            return;
+        if (mainCoroutine == null)
+            mainCoroutine = StartCoroutine(reload());
+    }
 
-        StartCoroutine(reload());
+    private void OnApplicationPause()
+    {
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
+    }
 
+    private void OnDisable()
+    {
+        if (!initialized)
+            return;
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
     }
 
     IEnumerator reload()
     {
+        bool loadedSuccesfully = false;
         while (true)
         {
             // ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
             if (File.Exists(testFile))
             {
                 //also deletes the zip file
-                ConfigManager.WriteConsole($"[CabinetAutoReload] load cabinet from {testFile}");
+                ConfigManager.WriteConsole($"[CabinetAutoReload.reload] loading cabinet from {testFile}");
                 try
                 {
                     CabinetDBAdmin.loadCabinetFromZip(testFile);
                 }
                 catch (System.Exception ex)
                 {
-                    ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading zip file {testFile}", ex);
+                    ConfigManager.WriteConsoleException($"[CabinetAutoReload.reload] ERROR loading zip file {testFile}", ex);
                     writeGenericException(testFile, "ERROR loading zip file", ex);
                 }
                 finally
                 {
-                    LoadCabinet();
+                    loadedSuccesfully = LoadCabinet();
                 }
 
+                if (loadedSuccesfully)
+                {
+                    ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} successfully loaded ");
+                    gameObject.SetActive(false); //don't destroy it
+                    yield break;
+                }
             }
-
             yield return new WaitForSeconds(2f);
         }
     }
@@ -79,11 +110,11 @@ public class CabinetAutoReload : MonoBehaviour
         return;
     }
 
-    private void LoadCabinet()
+    private bool LoadCabinet()
     {
 
         if (!File.Exists(testDescriptionCabinetFile))
-            return;
+            return false;
 
         // ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile}");
 
@@ -103,8 +134,8 @@ public class CabinetAutoReload : MonoBehaviour
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR  parsing description {testDescriptionCabinetFile}", ex);
-            writeGenericException(testDescriptionCabinetFile, "ERROR  parsing description", ex);
-            return;
+            writeGenericException(testDescriptionCabinetFile, "ERROR parsing description", ex);
+            return false;
         }
 
         try
@@ -118,6 +149,7 @@ public class CabinetAutoReload : MonoBehaviour
                                                          AgentPlayerPositions, backgroundSoundController,
                                                          cacheGlbModels: false);
 
+
             // invalidate all cached textures for test cabinet
             foreach (CabinetInformation.Part p in cbInfo.Parts)
             {
@@ -128,24 +160,23 @@ public class CabinetAutoReload : MonoBehaviour
             }
 
             CabinetFactory.skinFromInformation(cab, cbInfo);
-            
-            CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
-            cba.AgentPlayerPositions = AgentPlayerPositions;
-            cba.backgroundSoundController = backgroundSoundController;
-
-            CabinetFactory.skinFromInformation(cab, cbInfo);
 
             ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
             CabinetInformation.showCabinetProblems(cbInfo);
 
-            ConfigManager.WriteConsole("[CabinetAutoReload] New Tested Cabinet deployed ******");
-            UnityEngine.Object.Destroy(gameObject);
+            ConfigManager.WriteConsole("[CabinetAutoReload] New Test Cabinet deployed ******");
+            //UnityEngine.Object.Destroy(gameObject);
 
+            CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
+            cba.AgentPlayerPositions = AgentPlayerPositions;
+            cba.backgroundSoundController = backgroundSoundController;
+            return true;
         }
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
             CabinetInformation.showCabinetProblems(cbInfo, moreProblems: ex.Message);
+            return false;
         }
     }
 }
