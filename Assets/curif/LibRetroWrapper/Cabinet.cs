@@ -81,6 +81,13 @@ public static class CabinetTextureCache
         return true;
     }
 
+    public static void InvalidateCachedTexture(string path)
+    {
+        if (IsTextureCached(path)) { 
+            cachedTextures.Remove(path);
+        }
+    }
+
     // Method to retrieve a cached texture
     public static Texture2D GetCachedTexture(string path)
     {
