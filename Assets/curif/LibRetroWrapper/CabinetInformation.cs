@@ -54,7 +54,7 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
-    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+", "fbneo"};
+    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+", "fbneo" };
 
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
@@ -264,14 +264,10 @@ public class CabinetInformation
         public System.Exception validate(List<string> crtTypes)
         {
             if (!crtTypes.Contains(type))
-            {
                 return new System.ArgumentException($"{type} is not a known CRT type");
-            }
 
             if (orientation != "vertical" && orientation != "horizontal")
-            {
                 return new System.ArgumentException($"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
-            }
 
             return screen.validate();
         }
@@ -293,27 +289,16 @@ public class CabinetInformation
             return dic;
         }
 
-        public System.Exception validate()
+        public System.ArgumentException validate()
         {
-            if (shader.ToLower() != "damage" && 
-                shader.ToLower() != "clean" && 
-                shader.ToLower() != "crt")
+            if (!ShaderScreen.Exists(shader))
             {
                 return new System.ArgumentException($"Erroneous Shader {shader}");
             }
 
-            // if (!LibretroMameCore.IsGammaValid(gamma))
-            // {
-            //     return new System.ArgumentException($"Erroneous Gamma {gamma}");
-            // }
-
-            // if (!LibretroMameCore.IsBrightnessValid(brightness))
-            // {
-            //     return new System.ArgumentException($"Erroneous Brightness {brightness}");
-            // }
-
             return null;
         }
+
     }
 
     public class RGBColor
@@ -456,7 +441,7 @@ public class CabinetInformation
                         : null);
                 if (p.transparency != 0)
                     exceptions.Add($"Part #{number}: {p.name} TRANSPARENCY",
-                        p.transparency < 0 || p.transparency > 100? 
+                        p.transparency < 0 || p.transparency > 100 ?
                             new System.Exception("Transparency 0 to 100 only.")
                             : null);
 
@@ -487,7 +472,7 @@ public class CabinetInformation
         exceptions.Add($"Coin Slot",
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
         exceptions.Add($"CRT", crt.validate(crtTypes));
-        exceptions.Add($"CORE", Cores.Contains(core)? null : 
+        exceptions.Add($"CORE", Cores.Contains(core) ? null :
                     new System.ArgumentException($"Unknown core: {core}"));
 
         if (lightGunInformation != null && lightGunInformation.active)
@@ -503,45 +488,45 @@ public class CabinetInformation
 
         return exceptions;
     }
-/*    private static int CountFacesRecursively(Transform parent)
-    {
-        int totalFaces = 0;
-
-        // Loop through each child of the current parent
-        foreach (Transform child in parent)
+    /*    private static int CountFacesRecursively(Transform parent)
         {
-            // Check if the child has a MeshFilter component
-            MeshFilter meshFilter = child.GetComponent<MeshFilter>();
-            if (meshFilter != null && meshFilter.mesh != null)
-            {
-                // If the child has a MeshFilter and a mesh is assigned
-                Mesh mesh = meshFilter.sharedMesh;
-                if (!mesh.isReadable)
-                {
-                    // Set the mesh to be readable
-                    mesh.MarkDynamic(); // Alternatively, you can use mesh.UploadMeshData(true) if MarkDynamic() is not sufficient
-                    
-                    if (!mesh.isReadable)
-                        mesh.UploadMeshData(true);
-                    // Log a warning message
-                    ConfigManager.WriteConsoleWarning("Mesh is not marked as readable. Marking the mesh as readable. Performance may be affected.");
-                }
-                // Get the triangles of the mesh
-                int[] triangles = mesh.triangles;
-                // Check if triangles array is null or empty
-                if (triangles != null || triangles.Length > 0)
-                    totalFaces += triangles.Length / 3; 
+            int totalFaces = 0;
 
+            // Loop through each child of the current parent
+            foreach (Transform child in parent)
+            {
+                // Check if the child has a MeshFilter component
+                MeshFilter meshFilter = child.GetComponent<MeshFilter>();
+                if (meshFilter != null && meshFilter.mesh != null)
+                {
+                    // If the child has a MeshFilter and a mesh is assigned
+                    Mesh mesh = meshFilter.sharedMesh;
+                    if (!mesh.isReadable)
+                    {
+                        // Set the mesh to be readable
+                        mesh.MarkDynamic(); // Alternatively, you can use mesh.UploadMeshData(true) if MarkDynamic() is not sufficient
+
+                        if (!mesh.isReadable)
+                            mesh.UploadMeshData(true);
+                        // Log a warning message
+                        ConfigManager.WriteConsoleWarning("Mesh is not marked as readable. Marking the mesh as readable. Performance may be affected.");
+                    }
+                    // Get the triangles of the mesh
+                    int[] triangles = mesh.triangles;
+                    // Check if triangles array is null or empty
+                    if (triangles != null || triangles.Length > 0)
+                        totalFaces += triangles.Length / 3; 
+
+                }
+
+                // Check recursively for the children of the child
+                totalFaces += CountFacesRecursively(child);
             }
 
-            // Check recursively for the children of the child
-            totalFaces += CountFacesRecursively(child);
+            return totalFaces;
         }
+        */
 
-        return totalFaces;
-    }
-    */
-    
     private static void showCabinetProblemsLog(CabinetInformation cbInfo,
                                                 Dictionary<string, System.Exception> exceptions,
                                                 string moreProblems)
@@ -560,15 +545,15 @@ public class CabinetInformation
             writer.WriteLine(new string('-', 50)); // Separator
             if (!String.IsNullOrEmpty(moreProblems))
                 writer.WriteLine(moreProblems); // Separator
-/*
-            if (cabinet) transform
-            {
-                int count = CountFacesRecursively(cabinet);
-                if (count > 10000)
-                    writer.WriteLine($"--WARNING: ");
-                writer.WriteLine($"Cabinet faces total count: {count}");
-            }
-            */
+            /*
+                        if (cabinet) transform
+                        {
+                            int count = CountFacesRecursively(cabinet);
+                            if (count > 10000)
+                                writer.WriteLine($"--WARNING: ");
+                            writer.WriteLine($"Cabinet faces total count: {count}");
+                        }
+                        */
         }
     }
 
