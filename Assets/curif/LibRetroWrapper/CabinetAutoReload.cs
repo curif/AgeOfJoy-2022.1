@@ -87,6 +87,16 @@ public class CabinetAutoReload : MonoBehaviour
                                                          transform.rotation, transform.parent,
                                                          AgentPlayerPositions, backgroundSoundController,
                                                          cacheGlbModels: false);
+
+            // invalidate all cached textures for test cabinet
+            foreach (CabinetInformation.Part p in cbInfo.Parts)
+            {
+                if (p?.art?.file != null)
+                {
+                    CabinetTextureCache.InvalidateCachedTexture(cbInfo.getPath(p.art.file));
+                }
+            }
+
             CabinetFactory.skinFromInformation(cab, cbInfo);
             
             CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
