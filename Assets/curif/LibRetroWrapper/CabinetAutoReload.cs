@@ -39,12 +39,21 @@ public class CabinetAutoReload : MonoBehaviour
             mainCoroutine = StartCoroutine(reload());
     }
 
-    private void OnApplicationPause()
+    private void OnApplicationPause(bool pauseStatus)
     {
-        if (mainCoroutine != null)
+        if (pauseStatus)
         {
-            StopCoroutine(mainCoroutine);
-            mainCoroutine = null;
+            //is pausing
+            if (mainCoroutine != null)
+            {
+                StopCoroutine(mainCoroutine);
+                mainCoroutine = null;
+            }
+        }
+        else
+        {
+            if (initialized)
+                mainCoroutine = StartCoroutine(reload());
         }
     }
 
@@ -90,6 +99,7 @@ public class CabinetAutoReload : MonoBehaviour
                     yield break;
                 }
             }
+            ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} waiting for a new cabinet... ");
             yield return new WaitForSeconds(2f);
         }
     }

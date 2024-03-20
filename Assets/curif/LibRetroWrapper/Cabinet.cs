@@ -46,7 +46,7 @@ public static class CabinetTextureCache
             else
             {
                 ConfigManager.WriteConsole($"[CabinetTextureCache.LoadAndCacheTexture] {path} is an RGB texture.");
-                tex = new Texture2D(512, 512, TextureFormat.RGB565, true);
+                tex = new Texture2D(2, 2, TextureFormat.RGB565, true);
                 tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
                 tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
                 tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.

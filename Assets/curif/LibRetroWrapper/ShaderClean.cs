@@ -20,12 +20,7 @@ public class ShaderScreenClean: ShaderScreenBase
     else if (damage == "low")
       materialPrefab = "Cabinets/PreFab/CRTs/ScreenCleanScanlines";
 
-    Material mat = new Material(Resources.Load<Material>(materialPrefab));
-
-    //materials property of the MeshRenderer component returns a copy of the materials array, not the actual array itself.
-    Material[] mats = display.materials;
-    mats[position] = mat;
-    display.materials = mats;
+    material = new Material(Resources.Load<Material>(materialPrefab));
     
     return;
   }

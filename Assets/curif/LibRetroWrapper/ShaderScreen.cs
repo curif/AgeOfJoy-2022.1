@@ -7,6 +7,13 @@ public abstract class ShaderScreenBase
 {
     protected int position;
     protected Renderer display;
+    protected Material material;
+
+    public static Texture2D StandByTexture { get; private set; }
+    static ShaderScreenBase()
+    {
+        StandByTexture = Resources.Load<Texture2D>("Cabinets/OutOfOrder/Prefab/CRTOff");
+    }
     protected ShaderScreenBase(Renderer display, int position, Dictionary<string, string> config)
     {
         this.position = position;
@@ -19,6 +26,18 @@ public abstract class ShaderScreenBase
         return this.Name;
     }
     public virtual void Update() { }
+
+    // sets the material to the display
+    public virtual void Activate()
+    {
+        //materials property of the MeshRenderer component returns a copy of the materials array, not the actual array itself.
+        if (material == null)
+            return;
+
+        Material[] mats = display.materials;
+        mats[this.position] = material;
+        display.materials = mats;
+    }
     public abstract Texture Texture { get; set; }
     public abstract string TargetMaterialProperty { get; }
 }
@@ -26,15 +45,15 @@ public abstract class ShaderScreenBase
 //Factory
 public static class ShaderScreen
 {
-    //private static Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>> dic = new Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>>();
     private static Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>> dic = new();
-    private static string[] ShaderNames = new[] {"damage", "clean", "crt"};
+    private static string[] ShaderNames = new[] { "damage", "clean", "crt", "crtlod" };
+
     static ShaderScreen()
     {
-        //dic["damage"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenDamage(display, position, config);
         dic["damage"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenDamage(display, position, config);
         dic["clean"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenClean(display, position, config);
         dic["crt"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRT(display, position, config);
+        dic["crtlod"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRTLOD(display, position, config);
     }
 
     public static ShaderScreenBase Factory(Renderer display, int position, string shaderName, Dictionary<string, string> config)
@@ -45,10 +64,10 @@ public static class ShaderScreen
 
         return shd(display, position, config);
     }
-    
+
     public static bool Exists(string shaderName)
     {
-      return ShaderNames.Contains(shaderName.ToLower());
+        return ShaderNames.Contains(shaderName.ToLower());
     }
 
 }

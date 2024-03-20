@@ -80,7 +80,7 @@ public class LibretroScreenController : MonoBehaviour
     public string Core = "mame2003+";
 
     [SerializeField]
-    public string ShaderName = "damage";
+    public string ShaderName = "crt";
 
     [SerializeField]
     [Tooltip("Path that holds cabinet information, save states there.")]
@@ -99,7 +99,7 @@ public class LibretroScreenController : MonoBehaviour
     // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
     // public InputActionManager inputActionManager;
 
-    private ShaderScreenBase shader;
+    private ShaderScreenBase shader, videoShader;
     private GameObject player;
     private ChangeControls changeControls;
     private CoinSlotController CoinSlot;
@@ -171,6 +171,12 @@ public class LibretroScreenController : MonoBehaviour
         shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
         ConfigManager.WriteConsole($"[LibretroScreenController.Start]  {name} shader created: {shader}");
 
+        // shader hack to replace the CRT for the LOD version in attraction videos (if the user select CRT)
+        if (ShaderName == "crt")
+            videoShader = ShaderScreen.Factory(display, 1, "crtlod", ShaderConfig);
+        else
+            videoShader = shader;
+
         // age basic
         if (ageBasicInformation.active)
         {
@@ -193,12 +199,21 @@ public class LibretroScreenController : MonoBehaviour
             mainCoroutine = StartCoroutine(runBT());
     }
 
-    private void OnApplicationPause()
+    private void OnApplicationPause(bool pauseStatus)
     {
-        if (mainCoroutine != null)
+        if (pauseStatus)
         {
-            StopCoroutine(mainCoroutine);
-            mainCoroutine = null;
+            //is pausing
+            if (mainCoroutine != null)
+            {
+                StopCoroutine(mainCoroutine);
+                mainCoroutine = null;
+            }
+        }
+        else
+        {
+            if (initialized)
+                mainCoroutine = StartCoroutine(runBT());
         }
     }
     private void OnDisable()
@@ -216,7 +231,7 @@ public class LibretroScreenController : MonoBehaviour
     {
         // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
 
-        videoPlayer.setVideo(GameVideoFile, shader, GameVideoInvertX, GameVideoInvertY);
+        videoPlayer.setVideo(GameVideoFile, videoShader, GameVideoInvertX, GameVideoInvertY);
         tree = buildScreenBT();
         while (true)
         {
@@ -309,6 +324,7 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.StartRunThread();
 #endif
 
+                  shader.Activate();
                   shader.Texture = LibretroMameCore.GameTexture;
                   shader.Invert(GameInvertX, GameInvertY);
 
