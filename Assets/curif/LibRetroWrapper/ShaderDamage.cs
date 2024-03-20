@@ -18,15 +18,10 @@ public class ShaderScreenDamage : ShaderScreenBase
     else if (damage == "medium")
       materialPrefab = "Cabinets/PreFab/CRTs/ScreenDamageMedium";
 
-    Material mat = Object.Instantiate(Resources.Load<Material>(materialPrefab));
-    mat.SetFloat("MirrorX", 0f);
-    mat.SetFloat("MirrorY", 0f);
+    material = Object.Instantiate(Resources.Load<Material>(materialPrefab));
+    material.SetFloat("MirrorX", 0f);
+    material.SetFloat("MirrorY", 0f);
 
-    //materials property of the MeshRenderer component returns a copy of the materials array, not the actual array itself.
-    Material[] mats = display.materials;
-    mats[this.position] = mat;
-    display.materials = mats;
-    
     return;
   }
 
