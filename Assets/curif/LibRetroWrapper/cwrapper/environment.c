@@ -1,6 +1,6 @@
 #include "environment.h"
 
-#define ENVIRONMENT_DEBUG
+// #define ENVIRONMENT_DEBUG
 
 static enum retro_pixel_format pixel_format;
 static char system_directory[500];
@@ -63,24 +63,17 @@ void wrapper_environment_log(enum retro_log_level level, const char *format,
 int wrapper_dlopen() {
   INIT_STRUCT(handlers);
   char *_core = NULL;
-  if (strcmp(core, "mame2003+") == 0)
-  {
+  if (strcmp(core, "mame2003+") == 0) {
     _core = "libmame2003_plus_libretro_android.so";
-  }
-  else if (strcmp(core, "mame2010") == 0) 
-  {
-    _core = "libmame2010_libretro_android.so"; 
-  }
-  else if (strcmp(core, "fbneo") == 0) 
-  {
-    _core = "libfbneo_libretro_android.so"; 
-  }
-  else 
-  {
+  } else if (strcmp(core, "mame2010") == 0) {
+    _core = "libmame2010_libretro_android.so";
+  } else if (strcmp(core, "fbneo") == 0) {
+    _core = "libfbneo_libretro_android.so";
+  } else {
     wrapper_environment_log(RETRO_LOG_ERROR, "core: %s unknown\n", core);
     return false;
   }
-  
+
   // char *core = "libmame2003_plus_libretro_android.so";
   // wrapper_environment_log(RETRO_LOG_INFO,
   //                         "[wrapper_environment_open] start -----------\n");
@@ -88,10 +81,12 @@ int wrapper_dlopen() {
   if (handlers.handle == NULL) {
     const char *error = dlerror();
     if (error != NULL) {
-      wrapper_environment_log(RETRO_LOG_ERROR, "core: %s dlopen Error: %s\n", _core, error);
+      wrapper_environment_log(RETRO_LOG_ERROR, "core: %s dlopen Error: %s\n",
+                              _core, error);
     }
-    wrapper_environment_log(
-        RETRO_LOG_ERROR, "[wrapper_environment_open] dlopen %s failed\n", _core);
+    wrapper_environment_log(RETRO_LOG_ERROR,
+                            "[wrapper_environment_open] dlopen %s failed\n",
+                            _core);
     return false;
   }
   return true;
@@ -110,8 +105,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
                              enum retro_log_level _minLogLevel,
                              char *_save_directory, char *_system_directory,
                              char *_sample_rate,
-                             retro_input_state_t _input_state_cb,
-                             char *_core) {
+                             retro_input_state_t _input_state_cb, char *_core) {
   log = _log;
   minLogLevel = _minLogLevel;
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
@@ -410,12 +404,11 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
   struct retro_variable *var;
   unsigned int *ptr;
 
-/*
-#ifdef ENVIRONMENT_DEBUG
-  wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_cb] cmd: %i\n",
-                          (int)cmd);
-#endif 
-*/
+  /*
+  #ifdef ENVIRONMENT_DEBUG
+    wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_cb] cmd:
+  %i\n", (int)cmd); #endif
+  */
 
   if (cmd == RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE) {
     // *(bool*)data = false;
@@ -458,14 +451,14 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
                               var->key, var->value);
       return true;
     } else if (strcmp(var->key, "mame2003-plus_gamma") == 0 ||
-                strcmp(var->key, "mame_current_adj_gamma") == 0) {
+               strcmp(var->key, "mame_current_adj_gamma") == 0) {
       var->value = gamma;
       wrapper_environment_log(RETRO_LOG_INFO,
                               "[wrapper_environment_cb] get var: %s: %s",
                               var->key, var->value);
       return true;
-    } else if (strcmp(var->key, "mame2003-plus_brightness") == 0 || 
-                strcmp(var->key, "mame_current_adj_brightness") == 0) {
+    } else if (strcmp(var->key, "mame2003-plus_brightness") == 0 ||
+               strcmp(var->key, "mame_current_adj_brightness") == 0) {
       var->value = brightness;
       wrapper_environment_log(RETRO_LOG_INFO,
                               "[wrapper_environment_cb] get var: %s: %s",
@@ -509,7 +502,6 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
                               var->key, var->value);
       return true;
     }
-    
 
     return false;
 
@@ -640,11 +632,14 @@ int wrapper_load_game(char *path, char *_gamma, char *_brightness,
   wrapper_environment_set_game_parameters(
       _gamma, _brightness, _xy_control_type); // 0 mouse, 1 ligthgun
 
-
   wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s)--\n",
                           game_info.path);
   bool ret = handlers.retro_load_game(&game_info);
-  handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
+
+  if (_xy_control_type != 0) {
+    //there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
+    handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
+  }
 
   wrapper_environment_log(RETRO_LOG_INFO,
                           "[wrapper_load_game] END (ret:%i) --------- \n", ret);
