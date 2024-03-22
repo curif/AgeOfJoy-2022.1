@@ -1,12 +1,6 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System;
-using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
-using UnityEngine.XR;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.InputSystem;
 using System.Text;
 using System.IO;
 using YamlDotNet.Serialization;
@@ -357,6 +351,39 @@ public class GameControlMap : GlobalControlMap
     {
         ControlMapConfiguration gameConfig = ControlMapConfiguration.LoadFromYaml(getFileName());
         Merge(gameConfig);
+    }
+}
+
+public class ControlSchemeControlMap : DefaultControlMap
+{
+    private string controlScheme;
+    public ControlSchemeControlMap(string controlScheme) : base()
+    {
+        this.controlScheme = controlScheme;
+        Load();
+    }
+
+    public static string Path(string controlScheme)
+    {
+        return ConfigManager.ConfigControllerSchemesDir + "/" + controlScheme + ".yaml";
+    }
+
+    private string getFileName()
+    {
+        return Path(controlScheme);
+    }
+
+    public static bool ExistsConfiguration(string controlScheme)
+    {
+        string path = Path(controlScheme);
+        bool exists = File.Exists(Path(controlScheme));
+        ConfigManager.WriteConsole($"[GameControlMap] configuration exists for control scheme {controlScheme}: {exists}");
+        return exists;
+    }
+    public override void Load()
+    {
+        ControlMapConfiguration schemeConfig = ControlMapConfiguration.LoadFromYaml(getFileName());
+        Merge(schemeConfig);
     }
 }
 

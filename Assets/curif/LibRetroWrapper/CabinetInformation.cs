@@ -68,6 +68,9 @@ public class CabinetInformation
     [YamlMember(Alias = "debug-mode", ApplyNamingConventions = false)]
     public bool debug = false;
 
+    [YamlMember(Alias = "control-scheme", ApplyNamingConventions = false)]
+    public string controlScheme;
+
     [YamlIgnore]
     public string pathBase;
 
