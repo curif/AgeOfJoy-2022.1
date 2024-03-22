@@ -4,15 +4,12 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.IO;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
-using System.Linq.Expressions;
-using System.Security.Cryptography;
 public static class CabinetInformationCache
 {
     private static readonly Dictionary<string, CabinetInformation> _cache = new Dictionary<string, CabinetInformation>();
@@ -80,6 +77,39 @@ public class CabinetInformation
                 .Build();
 
     public CabinetInformation() { }
+
+    public void Validate()
+    {
+        CheckResourcePath(rom);
+        CheckResourcePath(statefile);
+        CheckResourcePath(model?.file);
+        CheckResourcePath(video?.file);
+
+        if (Parts != null)
+        {
+            foreach (Part p in Parts)
+            {
+                CheckResourcePath(p.art?.file);
+                CheckResourcePath(p.emission?.art?.file);
+            }
+        }
+
+        if (MameFiles != null)
+        {
+            foreach (MameFile mf in MameFiles)
+            {
+                CheckResourcePath(mf?.file);
+            }
+        }
+    }
+
+    public static void CheckResourcePath(string path)
+    {
+        if (path != null && (path.Contains("/") || path.Contains("\\")))
+        {
+            throw new Exception("Resource path " + path + " cannot contain '/' or '\\' characters");
+        }
+    }
 
     public static CabinetInformation fromName(string cabName)
     {
@@ -156,6 +186,8 @@ public class CabinetInformation
                 throw new IOException();
 
             cabInfo.pathBase = cabPath;
+
+            cabInfo.Validate();
 
             return cabInfo;
         }
