@@ -12,9 +12,9 @@ You should have received a copy of the GNU General Public License along with thi
 #define DEBUG_ACTIVE
 #endif
 
-using UnityEngine;
-using System.IO;
 using System;
+using System.IO;
+using UnityEngine;
 
 public static class ConfigManager
 {
@@ -26,30 +26,31 @@ public static class ConfigManager
 #endif
 
     public static string Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
-    public static string CabinetsDB = Path.Combine(BaseDir,"cabinetsdb"); //uncompressed cabinets
-    public static string SystemDir = Path.Combine(BaseDir,"system");
-    public static string RomsDir = Path.Combine(BaseDir,"downloads");
-    public static string GameSaveDir = Path.Combine(BaseDir,"save");
+    public static string CabinetsDB = Path.Combine(BaseDir, "cabinetsdb"); //uncompressed cabinets
+    public static string SystemDir = Path.Combine(BaseDir, "system");
+    public static string RomsDir = Path.Combine(BaseDir, "downloads");
+    public static string GameSaveDir = Path.Combine(BaseDir, "save");
     public static string GameStatesDir = Path.Combine(BaseDir, "startstates");
-    public static string ConfigDir = Path.Combine(BaseDir,"configuration");
+    public static string ConfigDir = Path.Combine(BaseDir, "configuration");
     public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
-    public static string AGEBasicDir = Path.Combine(BaseDir,"AGEBasic");
-    public static string DebugDir = Path.Combine(BaseDir,"debug");
-    public static string SamplesDir = Path.Combine(SystemDir,"samples");
-    public static string MameConfigDir = Path.Combine(GameSaveDir,"cfg");
-    public static string nvramDir = Path.Combine(GameSaveDir,"nvram");
-    public static string MusicDir = Path.Combine(BaseDir,"music");
+    public static string ConfigControllerSchemesDir = Path.Combine(ConfigDir, "controllers/schemes");
+    public static string AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
+    public static string DebugDir = Path.Combine(BaseDir, "debug");
+    public static string SamplesDir = Path.Combine(SystemDir, "samples");
+    public static string MameConfigDir = Path.Combine(GameSaveDir, "cfg");
+    public static string nvramDir = Path.Combine(GameSaveDir, "nvram");
+    public static string MusicDir = Path.Combine(BaseDir, "music");
 
     public static ConfigInformation configuration;
     public static bool DebugActive
     {
         get
         {
-            #if DEBUG_ACTIVE
+#if DEBUG_ACTIVE
             return true;
-            #else
+#else
             return false;
-            #endif
+#endif
         }
     }
 
@@ -57,34 +58,27 @@ public static class ConfigManager
     {
         Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
 
-        if (!Directory.Exists(ConfigManager.Cabinets))
-            Directory.CreateDirectory(ConfigManager.Cabinets);
-        if (!Directory.Exists(ConfigManager.CabinetsDB))
-            Directory.CreateDirectory(ConfigManager.CabinetsDB);
-        if (!Directory.Exists(ConfigManager.ConfigDir))
-            Directory.CreateDirectory(ConfigManager.ConfigDir);
-        if (!Directory.Exists(ConfigManager.ConfigControllersDir))
-            Directory.CreateDirectory(ConfigManager.ConfigControllersDir);
-        if (!Directory.Exists(ConfigManager.AGEBasicDir))
-            Directory.CreateDirectory(ConfigManager.AGEBasicDir);
-        if (!Directory.Exists(ConfigManager.DebugDir))
-            Directory.CreateDirectory(ConfigManager.DebugDir);
-        if (!Directory.Exists(ConfigManager.MusicDir))
-            Directory.CreateDirectory(ConfigManager.MusicDir);
+        CreateDirectory(ConfigManager.Cabinets);
+        CreateDirectory(ConfigManager.CabinetsDB);
+        CreateDirectory(ConfigManager.ConfigDir);
+        CreateDirectory(ConfigManager.ConfigControllersDir);
+        CreateDirectory(ConfigManager.ConfigControllerSchemesDir);
+        CreateDirectory(ConfigManager.AGEBasicDir);
+        CreateDirectory(ConfigManager.DebugDir);
+        CreateDirectory(ConfigManager.MusicDir);
 
-        if (!Directory.Exists(ConfigManager.SystemDir))
-            Directory.CreateDirectory(ConfigManager.SystemDir);
-        if (!Directory.Exists(ConfigManager.RomsDir))
-            Directory.CreateDirectory(ConfigManager.RomsDir);
-        if (!Directory.Exists(ConfigManager.GameSaveDir))
-            Directory.CreateDirectory(ConfigManager.GameSaveDir);
-        if (!Directory.Exists(ConfigManager.SamplesDir))
-            Directory.CreateDirectory(ConfigManager.SamplesDir);
-        if (!Directory.Exists(ConfigManager.MameConfigDir))
-            Directory.CreateDirectory(ConfigManager.MameConfigDir);
-        if (!Directory.Exists(ConfigManager.nvramDir))
-            Directory.CreateDirectory(ConfigManager.nvramDir);
+        CreateDirectory(ConfigManager.SystemDir);
+        CreateDirectory(ConfigManager.RomsDir);
+        CreateDirectory(ConfigManager.GameSaveDir);
+        CreateDirectory(ConfigManager.SamplesDir);
+        CreateDirectory(ConfigManager.MameConfigDir);
+        CreateDirectory(ConfigManager.nvramDir);
+    }
 
+    public static void CreateDirectory(string path)
+    {
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
     }
 
     /*
@@ -95,32 +89,31 @@ public static class ConfigManager
 
     public static void WriteConsole(string st)
     {
-        #if DEBUG_ACTIVE
+#if DEBUG_ACTIVE
         UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[AGE] {0}", st);
-        #endif
+#endif
     }
     // [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleError(string st)
     {
-        #if DEBUG_ACTIVE
+#if DEBUG_ACTIVE
         UnityEngine.Debug.LogFormat(LogType.Error, LogOption.None, null, "[AGE ERROR] {0}", st);
-        #endif
+#endif
     }
     // [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleWarning(string st)
     {
-        #if DEBUG_ACTIVE
+#if DEBUG_ACTIVE
         UnityEngine.Debug.LogFormat(LogType.Warning, LogOption.None, null, "[AGE WARNING] {0}", st);
-        #endif
+#endif
     }
     // [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleException(string st, Exception e)
     {
-        #if DEBUG_ACTIVE
+#if DEBUG_ACTIVE
         UnityEngine.Debug.LogFormat(LogType.Exception, LogOption.None, null,
                     "[AGE ERROR EXCEPTION] {0} Exception {1} StackTrace: \n {2}", st, e, e.StackTrace);
-        #endif
+#endif
     }
 
 }
- 

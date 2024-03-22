@@ -107,6 +107,7 @@ public static class CabinetTextureCache
 public class Cabinet
 {
     public string Name = "";
+    public string ControlScheme = "";
     public GameObject gameObject;
 
     //Al the parts in the gabinet that must exists, can be others.
@@ -378,10 +379,11 @@ public class Cabinet
         return onFloor;
     }
 
-    public Cabinet(string name, Vector3 position, Quaternion rotation, Transform parent,
+    public Cabinet(string name, string controlScheme, Vector3 position, Quaternion rotation, Transform parent,
                         GameObject go = null, string model = "galaga")
     {
         Name = name;
+        ControlScheme = controlScheme;
         if (go == null)
         {
             // Assets/Resources/Cabinets/PreFab/xxx.prefab
