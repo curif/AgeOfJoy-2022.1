@@ -400,7 +400,12 @@ public static unsafe class LibretroMameCore
 
     public static bool Start(string screenName, string gameFileName)
     {
-        string path = ConfigManager.RomsDir + "/" + gameFileName;
+        string path = ConfigManager.RomsDir + "/" +  Core + "/" + gameFileName;
+
+        if (!File.Exists(path)) {
+            path = ConfigManager.RomsDir + "/" + gameFileName;
+        }
+
         if (GameLoaded)
         {
             WriteConsole($"[LibRetroMameCore.Start] ERROR a game was loaded previously ({GameFileName}), it's neccesary to call End() before the Start()");
