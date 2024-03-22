@@ -307,7 +307,7 @@ public class CabinetInformation
 
     public class Screen
     {
-        public string shader = "damage";
+        public string shader = "crt";
         public string damage = "low";
         public bool invertx = false;
         public bool inverty = false;

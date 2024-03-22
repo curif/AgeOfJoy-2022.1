@@ -51,15 +51,13 @@ public class GameVideoPlayer : MonoBehaviour
         this.inverty = inverty;
         this.shader = shader;
 
+        shader.Activate();
+        shader.Invert(invertx, inverty);
         textureCache.Init(path);
         if (textureCache.AlreadyCached())
-        {
             shader.Texture = textureCache.CachedTexture;
-            shader.Invert(invertx, inverty);
-        }
-
-        //videoPlayer.targetMaterialRenderer = display;
-        //VideoPlayer.targetMaterialProperty = shader.TargetMaterialProperty;
+        else
+            shader.Texture = ShaderScreenBase.StandByTexture;
 
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
 #endif
@@ -111,6 +109,7 @@ public class GameVideoPlayer : MonoBehaviour
             videoPlayer.isLooping = true;
             if (videoPlayer.canSetSkipOnDrop)
                 videoPlayer.skipOnDrop = true;
+            shader.Activate();
             shader.Texture = videoPlayer.texture;
             shader.Invert(invertx, inverty);
             videoPlayer.Play();

@@ -13,7 +13,7 @@ public class ScreenGenerator : MonoBehaviour
     public Color BackgroundColor;
     public Color CenteredAreaColor;
 
-    public string ShaderName = "damage";
+    public string ShaderName = "crt";
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
