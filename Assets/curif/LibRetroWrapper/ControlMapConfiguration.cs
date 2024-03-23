@@ -235,6 +235,11 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap("JOYPAD_RIGHT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("JOYPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
 
+        AddMap("JOYPAD_UP", new string[] { "gamepad-dpad-up" });
+        AddMap("JOYPAD_DOWN", new string[] { "gamepad-dpad-down" });
+        AddMap("JOYPAD_RIGHT", new string[] { "gamepad-dpad-right" });
+        AddMap("JOYPAD_LEFT", new string[] { "gamepad-dpad-left" });
+
         //also map port 1 to the right one (roboton issue #204)
         AddMap("JOYPAD_UP", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
         AddMap("JOYPAD_DOWN", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
