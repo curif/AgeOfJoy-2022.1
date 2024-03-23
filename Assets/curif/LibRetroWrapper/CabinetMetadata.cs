@@ -15,7 +15,7 @@ using YamlDotNet.Serialization.NamingConventions;
 public class CabinetMetadata
 {
     [YamlMember(Alias = "hashes", ApplyNamingConventions = false)]
-    public Dictionary<string, string> Hashes { get; set; }
+    public Dictionary<string, string> Hashes { get; private set; }
 
     private static IDeserializer deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
@@ -26,6 +26,12 @@ public class CabinetMetadata
             .Build();
 
     public CabinetMetadata() { }
+
+    public string getHash(string file)
+    {
+        var hashedFile = file.ToLower();
+        return Hashes.ContainsKey(hashedFile) ? Hashes[hashedFile] : null;
+    }
 
     public static CabinetMetadata fromName(string cabName)
     {
@@ -46,7 +52,7 @@ public class CabinetMetadata
             string hash = computeHash(file);
             string glbFile = Path.GetFileName(file);
             ConfigManager.WriteConsole($"[CabinetMetadata.init]: {glbFile}:{hash}");
-            hashes.Add(glbFile, hash);
+            hashes.Add(glbFile.ToLower(), hash);
         }
 
         toYaml(cabPath, metadata);

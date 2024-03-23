@@ -108,7 +108,7 @@ public static class CabinetFactory
         ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] modelDirectory:{modelDirectory}");
         CabinetMetadata cabinetMetadata = CabinetMetadata.fromName(modelDirectory);
         ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] fetching hash for: {modelFileName}");
-        cabinetMetadata.Hashes.TryGetValue(modelFileName, out var hash);
+        string hash = cabinetMetadata.getHash(modelFileName);
         ConfigManager.WriteConsole($"[CabinetFactory.BuildKey] hash: {modelFileName}:{hash}");
         return hash;
     }
