@@ -7,7 +7,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.XR;
-
+using System.Diagnostics;
 
 public class LibretroControlMap : MonoBehaviour
 {
@@ -75,13 +75,14 @@ public class LibretroControlMap : MonoBehaviour
         string inputActionMapId = mameControl + "_" + port.ToString();
 
         InputAction action = actionMap.FindAction(inputActionMapId);
+
         if (action == null)
         {
             //ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{inputActionMapId}] not found in controlMap");
             return 0;
         }
 
-        //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
+                //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
         if (action.type == InputActionType.Button)
         {
             if (action.IsPressed())
@@ -93,33 +94,44 @@ public class LibretroControlMap : MonoBehaviour
         }
         else if (action.type == InputActionType.Value)
         {
-            Vector2 val = action.ReadValue<Vector2>();
+            Vector2 resultVector = new Vector2(0, 0);
+            float resultFloat = 0;
+
+            var result = action.ReadValueAsObject();
+            if (result is Vector2)
+            {
+                resultVector = (Vector2)result;
+            }
+            else if (result is float)
+            {
+                resultFloat = (float)result;
+            }
 
             switch (mameControl)
             {
                 case "JOYPAD_UP":
-                    if (val.y > 0.5)
+                    if (resultVector.y > 0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_DOWN":
-                    if (val.y < -0.5)
+                    if (resultVector.y < -0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_RIGHT":
-                    if (val.x > 0.5)
+                    if (resultVector.x > 0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
                     }
                     break;
                 case "JOYPAD_LEFT":
-                    if (val.x < -0.5)
+                    if (resultVector.x < -0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
                         return 1;
@@ -127,36 +139,36 @@ public class LibretroControlMap : MonoBehaviour
                     break;
                 case "MOUSE_X":
                     //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-                    if (val.x > 0.5)
+                    if (resultVector.x > 0.5)
                         ret = 10;
-                    else if (val.x < -0.5)
+                    else if (resultVector.x < -0.5)
                         ret = -10;
                     break;
                 case "MOUSE_Y":
                     //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-                    if (val.y > 0.5)
+                    if (resultVector.y > 0.5)
                         ret = 10;
-                    else if (val.y < -0.5)
+                    else if (resultVector.y < -0.5)
                         ret = -10;
                     break;
                 case "MOUSE_WHEELUP":
                     //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-                    if (val.y > wheelDelta)
+                    if (resultVector.y > wheelDelta)
                         ret = 10;
                     break;
                 case "MOUSE_WHEELDOWN":
                     //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-                    if (val.y < -wheelDelta)
+                    if (resultVector.y < -wheelDelta)
                         ret = -10;
                     break;
                 case "MOUSE_HORIZ_WHEELUP":
                     //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-                    if (val.x > wheelDelta)
+                    if (resultVector.x > wheelDelta)
                         ret = 10;
                     break;
                 case "MOUSE_HORIZ_WHEELDOWN":
                     //left-to-right movement, range of [-0x7fff, 0x7fff], -32768 to 32767
-                    if (val.x < -wheelDelta)
+                    if (resultVector.x < -wheelDelta)
                         ret = -10;
                     break;
             }
