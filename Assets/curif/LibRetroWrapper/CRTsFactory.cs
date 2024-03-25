@@ -5,22 +5,26 @@ You should have received a copy of the GNU General Public License along with thi
 */
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
-public static class CRTsFactory {
+public static class CRTsFactory
+{
     public static Dictionary<string, GameObject> objects = new Dictionary<string, GameObject>();
-    
-    static CRTsFactory() {
+
+    static CRTsFactory()
+    {
         //CRTs
         // Assets/Resources/Cabinets/PreFab/CRTs/screen19i.prefab
         objects.Add("19i", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i"));
+        objects.Add("19i-agebasic", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19iAGEBasic"));
     }
 
-    public static GameObject Instantiate(string type, Vector3 position, Quaternion rotation, Transform parent) {
-        if (objects.ContainsKey(type)) {
-          ConfigManager.WriteConsole($"[CRTsFactory] {type}");
-          return GameObject.Instantiate<GameObject>(objects[type], position, rotation, parent);
-        }
-        Debug.LogError($"CRTsFactory Factory don't have a {type} object in list: {objects.Keys.ToString()}");
-        return null;
+    public static GameObject Instantiate(string type, Vector3 position, Quaternion rotation, Transform parent)
+    {
+        if (!objects.ContainsKey(type))
+            throw new Exception($"[CRTFactory] screen type {type} doesn't exists");
+
+        ConfigManager.WriteConsole($"[CRTsFactory] {type}");
+        return GameObject.Instantiate<GameObject>(objects[type], position, rotation, parent);
     }
 }

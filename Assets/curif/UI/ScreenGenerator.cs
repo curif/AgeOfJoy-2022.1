@@ -54,28 +54,9 @@ public class ScreenGenerator : MonoBehaviour
     private void Start()
     {
         display = GetComponent<Renderer>();
-
-        // Calculate the width and height of the centered area
-        int centeredWidth = CharactersWidth * 8;
-        int centeredHeight = CharactersHeight * 8;
-
-        // Calculate the position of the centered area based on the whole texture size
-        centerX = (TextureWidth - centeredWidth) / 2;
-        centerY = (TextureHeight - centeredHeight) / 2;
-
+        
         ScreenWidth = CharactersWidth * 8;  // Width of the target texture
         ScreenHeight = CharactersHeight * 8; // Height of the target texture
-        // Create the target texture with the specified width and height, no mips
-        c64Screen = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGB565, false);
-
-        // Set the target texture to be readable and writable
-        c64Screen.wrapMode = TextureWrapMode.Clamp;
-        c64Screen.filterMode = FilterMode.Bilinear;
-        c64Screen.anisoLevel = 0;
-
-        ShaderConfig["damage"] = "low";
-        shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
-        shader.Texture = c64Screen;
 
         //characters
         // Initialize the list
@@ -100,10 +81,47 @@ public class ScreenGenerator : MonoBehaviour
         {
             colorsBackgroundMatrix[i] = CenteredAreaColor;
         }
-        setBackgroundColor();
-        Clear();
+
+        createTexture();
+
     }
 
+    private Texture2D createTexture()
+    {
+        if (c64Screen != null)
+            return c64Screen;
+
+        // Calculate the width and height of the centered area
+        int centeredWidth = CharactersWidth * 8;
+        int centeredHeight = CharactersHeight * 8;
+
+        // Calculate the position of the centered area based on the whole texture size
+        centerX = (TextureWidth - centeredWidth) / 2;
+        centerY = (TextureHeight - centeredHeight) / 2;
+
+        // Create the target texture with the specified width and height, no mips
+        c64Screen = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGB565, false);
+        c64Screen.name = "c64";
+
+        //c64Screen.wrapMode = TextureWrapMode.Clamp;
+        c64Screen.filterMode = FilterMode.Bilinear;
+        c64Screen.anisoLevel = 0;
+        
+        setBackgroundColor();
+        Clear();
+
+        return c64Screen;
+    }
+
+    public void ActivateShader(ShaderScreenBase changeShader)
+    {
+        if (c64Screen == null)
+            createTexture();
+
+        shader = changeShader;
+        shader.Activate(c64Screen);
+    }
+    
     public void Update()
     {
         shader?.Update();
@@ -220,7 +238,7 @@ public class ScreenGenerator : MonoBehaviour
     {
         // Fill the screen texture with the given color
         if (c64Screen == null)
-            return this;
+            createTexture();
 
         c64Screen.SetPixels(centerX, centerY, ScreenWidth, ScreenHeight, colorsBackgroundMatrix);
         needsDraw = true;

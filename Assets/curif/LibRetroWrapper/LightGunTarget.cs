@@ -187,6 +187,11 @@ public class LightGunTarget : MonoBehaviour
         factorY = CRTAreaHeight / transform.localScale.y;
     }
 
+    public bool Initialized()
+    {
+        return lightGunInformation != null;
+    }
+
 #if ON_DEBUG
     void Update()
     {

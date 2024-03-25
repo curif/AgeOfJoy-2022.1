@@ -43,7 +43,7 @@ public class CabinetAGEBasicInformation
 public class CabinetAGEBasic : MonoBehaviour
 {
 
-    basicAGE ageBasic;
+    public basicAGE AGEBasic;
 
     BasicVars vars = new(); //variable's space.
 
@@ -52,21 +52,21 @@ public class CabinetAGEBasic : MonoBehaviour
     public CabinetAGEBasicInformation AGEInfo = new();
     public void SetDebugMode(bool debug)
     {
-        ageBasic.DebugMode = debug;
+        AGEBasic.DebugMode = debug;
     }
     public void Init(CabinetAGEBasicInformation AGEInfo,
             string pathBase,
             Cabinet cabinet,
             CoinSlotController coinSlot)
     {
-        if (ageBasic == null)
-            ageBasic = GetComponent<basicAGE>();
+        if (AGEBasic == null)
+            AGEBasic = GetComponent<basicAGE>();
 
         this.AGEInfo = AGEInfo;
         this.pathBase = pathBase;
 
-        ageBasic.SetCoinSlot(coinSlot);
-        ageBasic.SetCabinet(cabinet);
+        AGEBasic.SetCoinSlot(coinSlot);
+        AGEBasic.SetCabinet(cabinet);
 
         if (AGEInfo.Variables != null)
         {        //variable injection
@@ -91,11 +91,11 @@ public class CabinetAGEBasic : MonoBehaviour
         if (string.IsNullOrEmpty(prgName))
             return false;
 
-        if (!ageBasic.Exists(prgName) /*&& afterInsertCoinException == null*/)
+        if (!AGEBasic.Exists(prgName) /*&& afterInsertCoinException == null*/)
         {
             try
             {
-                ageBasic.ParseFile(pathBase + "/" + prgName);
+                AGEBasic.ParseFile(pathBase + "/" + prgName);
             }
             catch (CompilationException e)
             {
@@ -105,32 +105,37 @@ public class CabinetAGEBasic : MonoBehaviour
         }
 
         ConfigManager.WriteConsole($"[CabinetAGEBasic.execute] exec {prgName}");
-        ageBasic.Run(prgName, blocking, vars, maxExecutionLines); //async blocking=false
+        AGEBasic.Run(prgName, blocking, vars, maxExecutionLines); //async blocking=false
         return true;
+    }
+
+    public void ActivateShader(ShaderScreenBase shader)
+    {
+        AGEBasic.ScreenGenerator.ActivateShader(shader);
     }
 
     public void ExecInsertCoinBas()
     {
-        ageBasic.DebugMode = AGEInfo.debug;
+        AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0);
     }
 
     public void StopInsertCoinBas()
     {
-        if (ageBasic.IsRunning(AGEInfo.afterInsertCoin))
-            ageBasic.ForceStop();
+        if (AGEBasic.IsRunning(AGEInfo.afterInsertCoin))
+            AGEBasic.ForceStop();
 
         return;
     }
 
     public void ExecAfterLeaveBas()
     {
-        ageBasic.DebugMode = AGEInfo.debug;
+        AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLeave);
     }
     public void ExecAfterLoadBas()
     {
-        ageBasic.DebugMode = AGEInfo.debug;
+        AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLoad);
     }
     /*    public bool ExecAfterStartBas()

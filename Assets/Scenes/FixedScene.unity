@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 32968376c638dad4bb1c843f90d03854, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0034538922, g: 0.0037039225, b: 0.0056806104, a: 1}
+  m_IndirectSpecularColor: {r: 0.0037149177, g: 0.003848325, b: 0.005816616, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1145,6 +1145,7 @@ GameObject:
   - component: {fileID: 484994780}
   - component: {fileID: 484994779}
   - component: {fileID: 484994778}
+  - component: {fileID: 484994783}
   m_Layer: 0
   m_Name: FixedObject
   m_TagString: Untagged
@@ -1339,6 +1340,20 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &484994783
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 484994777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 105a6ecd17cbd634b8518485b30d3707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourceFilePath: D:\AgeOfJoyCabinetMaking\AgeOfJoyCabinets\1942_poc/test.zip
+  destinationFilePath: C:\Users\curif\cabs\cabinets/test.zip
 --- !u!4 &707082713
 Transform:
   m_ObjectHideFlags: 0

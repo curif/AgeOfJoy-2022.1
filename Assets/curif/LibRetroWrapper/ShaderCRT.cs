@@ -4,24 +4,31 @@ using System.Collections.Generic;
 
 public class ShaderCRT : ShaderScreenBase
 {
-    protected virtual string MaterialPrefabDamageLow { get { return "Cabinets/PreFab/CRTs/ScreenCRTLow"; } }
-    protected virtual string MaterialPrefabDamageMedium { get { return "Cabinets/PreFab/CRTs/ScreenCRTMedium"; } }
-    protected virtual string MaterialPrefabDamageHigh { get { return "Cabinets/PreFab/CRTs/ScreenCRTHigh"; } }
+    protected virtual Material MaterialPrefabDamageLow { get { return Low; } }
+    protected virtual Material MaterialPrefabDamageMedium { get { return Medium; } }
+    protected virtual Material MaterialPrefabDamageHigh { get { return High; } }
     private bool actual_invertx = false, actual_inverty = false;
     protected string damage;
 
+    protected static Material Low, Medium, High;
+
+    static ShaderCRT()
+    {
+      Low = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTLow");
+      Medium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTMedium");
+      High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTHigh");
+    }
+    
     public ShaderCRT(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
     {
 
-        string materialPrefab = MaterialPrefabDamageLow;
+        material = MaterialPrefabDamageLow;
         config.TryGetValue("damage", out damage);
 
         if (damage == "high")
-            materialPrefab = MaterialPrefabDamageHigh;
+            material = MaterialPrefabDamageMedium;
         else if (damage == "medium")
-            materialPrefab = MaterialPrefabDamageMedium;
-
-        material = Object.Instantiate(Resources.Load<Material>(materialPrefab));
+            material = MaterialPrefabDamageHigh;
 
         return;
     }

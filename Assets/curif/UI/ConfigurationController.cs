@@ -1143,6 +1143,7 @@ public class ConfigurationController : MonoBehaviour
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
+        yield return new WaitForEndOfFrame();
 
         setupActionMap();
         // Initialize the dictionary with default values (false for all keys)

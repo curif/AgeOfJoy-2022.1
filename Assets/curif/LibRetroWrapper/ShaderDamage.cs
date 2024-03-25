@@ -7,20 +7,27 @@ public class ShaderScreenDamage : ShaderScreenBase
   private bool actual_invertx = false, actual_inverty = false;
   private string damage;
 
-  public ShaderScreenDamage(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
-  {
+    static Material DamageLow;
+    static Material DamageHigh;
+    static Material DamageMedium;
+    
+    static ShaderScreenDamage()
+    {
+        DamageLow = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenDamageLow");
+        DamageHigh = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenDamageHigh");
+        DamageMedium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenDamageMedium");
+    }
 
-    string materialPrefab = "Cabinets/PreFab/CRTs/ScreenDamageLow";
+    public ShaderScreenDamage(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
+  {
+    string damage;
+    material = DamageLow;
     config.TryGetValue("damage", out damage);
 
     if (damage == "high")
-      materialPrefab = "Cabinets/PreFab/CRTs/ScreenDamageHigh";
+        material = DamageHigh;
     else if (damage == "medium")
-      materialPrefab = "Cabinets/PreFab/CRTs/ScreenDamageMedium";
-
-    material = Object.Instantiate(Resources.Load<Material>(materialPrefab));
-    material.SetFloat("MirrorX", 0f);
-    material.SetFloat("MirrorY", 0f);
+        material = DamageMedium;
 
     return;
   }
@@ -46,6 +53,8 @@ public class ShaderScreenDamage : ShaderScreenBase
     }
     set 
     {
+      ConfigManager.WriteConsole($"[ShaderScreenDamage.Texture] SET tex:{(Texture)value} material: {material}");
+
       display.materials[position].SetTexture("_MainTex", (Texture)value);
     }
   }

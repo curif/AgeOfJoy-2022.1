@@ -83,7 +83,8 @@ public static class CabinetTextureCache
 
     public static void InvalidateCachedTexture(string path)
     {
-        if (IsTextureCached(path)) { 
+        if (IsTextureCached(path))
+        {
             cachedTextures.Remove(path);
         }
     }
@@ -851,7 +852,7 @@ public class Cabinet
         if (CRT == null)
             throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
 
-        GameObject newCRT = CRTsFactory.Instantiate(type, CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
+        GameObject newCRT = CRTsFactory.Instantiate(type.ToLower(), CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
         if (newCRT == null)
             throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
 
@@ -867,42 +868,71 @@ public class Cabinet
         PartsOrNull("screen-mock-vertical")?.SetActive(false);
         PartsOrNull("screen-mock-horizontal")?.SetActive(false);
 
-        //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
-        LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
+        if (type.ToLower() == "19i-agebasic")
+        {
+            AGEBasicScreenController ageb = newCRT.GetComponent<AGEBasicScreenController>();
+            ageb.PathBase = pathBase;
+            ageb.cabinet = this;
+            ageb.ShaderName = shaderName;
+            ageb.ShaderConfig = shaderConfig;
 
-        libretroScreenController.GameFile = gameFile;
-        libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
-        libretroScreenController.EnableSaveState = EnableSaveState;
-        libretroScreenController.StateFile = StateFile;
-        libretroScreenController.PathBase = pathBase;
+            ageb.AgentPlayerPositions = agentPlayerPositions;
 
-        libretroScreenController.GameInvertX = invertX;
-        libretroScreenController.GameInvertY = invertY;
-        libretroScreenController.Gamma = gamma;
-        libretroScreenController.Brightness = brightness;
-        libretroScreenController.cabinet = this;
-        libretroScreenController.Core = core;
+            ageb.InvertX = invertX;
+            ageb.InvertY = invertY;
+            //video
+            ageb.VideoFile = GameVideoFile;
+            ageb.VideoInvertX = GameVideoFileInvertX;
+            ageb.VideoInvertY = GameVideoFileInvertY;
 
-        libretroScreenController.ShaderName = shaderName;
-        libretroScreenController.ShaderConfig = shaderConfig;
+            //control mapping
+            ageb.CabinetControlMapConfig = cabinetControlMap;
+            ageb.lightGunInformation = lightGunInformation;
 
-        libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
+            //age basic
+            ageb.ageBasicInformation = agebasic;
 
-        //video
-        libretroScreenController.GameVideoFile = GameVideoFile;
-        libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
-        libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
+            //sound
+            ageb.backgroundSoundController = backgroundSoundController;
+        }
+        else
+        {   
+            //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
+            LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
-        //control mapping
-        libretroScreenController.CabinetControlMapConfig = cabinetControlMap;
-        libretroScreenController.lightGunInformation = lightGunInformation;
+            libretroScreenController.GameFile = gameFile;
+            libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
+            libretroScreenController.EnableSaveState = EnableSaveState;
+            libretroScreenController.StateFile = StateFile;
+            libretroScreenController.PathBase = pathBase;
 
-        //age basic
-        libretroScreenController.ageBasicInformation = agebasic;
+            libretroScreenController.GameInvertX = invertX;
+            libretroScreenController.GameInvertY = invertY;
+            libretroScreenController.Gamma = gamma;
+            libretroScreenController.Brightness = brightness;
+            libretroScreenController.cabinet = this;
+            libretroScreenController.Core = core;
 
-        //sound
-        libretroScreenController.backgroundSoundController = backgroundSoundController;
+            libretroScreenController.ShaderName = shaderName;
+            libretroScreenController.ShaderConfig = shaderConfig;
 
+            libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
+
+            //video
+            libretroScreenController.GameVideoFile = GameVideoFile;
+            libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
+            libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
+
+            //control mapping
+            libretroScreenController.CabinetControlMapConfig = cabinetControlMap;
+            libretroScreenController.lightGunInformation = lightGunInformation;
+
+            //age basic
+            libretroScreenController.ageBasicInformation = agebasic;
+
+            //sound
+            libretroScreenController.backgroundSoundController = backgroundSoundController;
+        }
         return this;
     }
 

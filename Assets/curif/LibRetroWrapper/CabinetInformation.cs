@@ -499,7 +499,7 @@ public class CabinetInformation
         // exceptions.Add($"Bezel ART", bezel != null && bezel.art != null? bezel.art.validate(pathBase) : null);
         // exceptions.Add($"Marquee ART", marquee != null && marquee.art != null? marquee.art.validate(pathBase) : null);
         // exceptions.Add($"Marquee Light Color", marquee != null? marquee.lightcolor.checkForProblems() : null);
-        exceptions.Add($"Year", year >= 1970 && year < 2010 ? null : new System.ArgumentException("Year out of range"));
+        // exceptions.Add($"Year", year >= 1970 && year < 2010 ? null : new System.ArgumentException("Year out of range"));
         exceptions.Add($"Space", CabinetSpaceType.IsValidSpace(space) ? null :
                         new System.ArgumentException($"Unknown space type: {space} valids are: {CabinetSpaceType.GetValidSpaceTypes()}"));
         exceptions.Add($"Style",

@@ -28,20 +28,33 @@ public abstract class ShaderScreenBase
     public virtual void Update() { }
 
     // sets the material to the display
-    public virtual void Activate()
+    public virtual void Activate(Texture texture = null)
     {
         //materials property of the MeshRenderer component returns a copy of the materials array, not the actual array itself.
         if (material == null)
             return;
 
+        /* Note that like all arrays returned by Unity, this returns a COPY of materials array. 
+        * If you want to change some materials in it, get the value, change an entry and set materials back.
+        * This function automatically **instantiates** the materials and makes them unique to this renderer. 
+        * It is your responsibility to destroy the materials when the game object is being destroyed. 
+        * Resources.UnloadUnusedAssets also destroys the materials but it is usually only called when 
+        * loading a new level.  
+        * In Unity, when you assign a material to a renderer, Unity automatically creates a new instance 
+        * of that material specific to that renderer.
+        */
+        ConfigManager.WriteConsole($"[ShaderScreenBase.Activate] {ToString()} tex:{texture} material: {material} position: {position}");
         Material[] mats = display.materials;
-        mats[this.position] = material;
+        mats[position] = material;
         display.materials = mats;
+        
+        if (texture != null)
+            Texture = texture; //child should change it in render material by position
     }
+
     public abstract Texture Texture { get; set; }
     public abstract string TargetMaterialProperty { get; }
 }
-
 //Factory
 public static class ShaderScreen
 {
