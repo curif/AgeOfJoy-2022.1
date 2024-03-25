@@ -51,13 +51,8 @@ public class GameVideoPlayer : MonoBehaviour
         this.inverty = inverty;
         this.shader = shader;
 
-        shader.Activate();
         shader.Invert(invertx, inverty);
         textureCache.Init(path);
-        if (textureCache.AlreadyCached())
-            shader.Texture = textureCache.CachedTexture;
-        else
-            shader.Texture = ShaderScreenBase.StandByTexture;
 
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
 #endif
@@ -102,6 +97,11 @@ public class GameVideoPlayer : MonoBehaviour
         {
             ConfigManager.WriteConsole($"[videoPlayer.Play] prepare {videoPath} ====");
             PrepareVideo();
+            shader.Invert(invertx, inverty);
+            if (textureCache.AlreadyCached())
+                shader.Activate(textureCache.CachedTexture);
+            else
+                shader.Activate(ShaderScreenBase.StandByTexture);
         }
         else if (isReady && !videoPlayer.isPlaying)
         {
@@ -109,9 +109,10 @@ public class GameVideoPlayer : MonoBehaviour
             videoPlayer.isLooping = true;
             if (videoPlayer.canSetSkipOnDrop)
                 videoPlayer.skipOnDrop = true;
-            shader.Activate();
-            shader.Texture = videoPlayer.texture;
             shader.Invert(invertx, inverty);
+            videoPlayer.texture.filterMode = FilterMode.Bilinear;
+            videoPlayer.texture.anisoLevel = 0;
+            shader.Activate(videoPlayer.texture);
             videoPlayer.Play();
         }
 
@@ -153,8 +154,9 @@ public class GameVideoPlayer : MonoBehaviour
         // ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
         //destroy internal resources.
         videoPlayer.Stop();
-        if (textureCache.AlreadyCached())
+        if (textureCache.AlreadyCached() && shader.Texture != textureCache.CachedTexture)
             shader.Texture = textureCache.CachedTexture;
+        // shader.Activate(textureCache.CachedTexture);
 
 #endif
         return this;
@@ -175,7 +177,7 @@ public class GameVideoPlayer : MonoBehaviour
     {
         ConfigManager.WriteConsoleError($"[videoPlayer] ERROR {videoPath} - {message}");
         if (textureCache.AlreadyCached())
-            shader.Texture = textureCache.CachedTexture;
+            shader.Activate(textureCache.CachedTexture);
 
     }
 }
