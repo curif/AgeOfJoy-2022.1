@@ -356,31 +356,30 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
             child = config.Cabinet.PartsTransform(vals[0].GetInt());
 
         string axis = vals[1].GetString().ToUpper();
-        float angle = (float)vals[2].GetNumber();
+        float rotationValue = (float)vals[2].GetNumber();
+        // Validate rotation value to be within 0 to 360 degrees
+        if (rotationValue < -360 || rotationValue > 360)
+            throw new Exception("Rotation value must be between -360 and 360 degrees.");
 
         // Calculate rotation relative to parent
-        Vector3 localEuler = child.localEulerAngles;
-        float newLocalAngle;
+        Vector3 newRotation = child.localEulerAngles;
+
         switch (axis)
         {
             case "X":
-                newLocalAngle = localEuler.x + angle;
+                newRotation.x = rotationValue;
                 break;
             case "Y":
-                newLocalAngle = localEuler.y + angle;
+                newRotation.y = rotationValue;
                 break;
             case "Z":
-                newLocalAngle = localEuler.z + angle;
+                newRotation.z = rotationValue;
                 break;
             default:
                 throw new Exception("cabPartsSetRotation: axis should be X, Y, or Z");
         }
 
-        // Clamp the angle within 0-360 degrees
-        newLocalAngle = Mathf.Repeat(newLocalAngle, 360f);
-
-        // Set the new local rotation
-        child.localRotation = Quaternion.Euler(newLocalAngle, localEuler.y, localEuler.z);
+        child.localEulerAngles = newRotation;
 
         return BasicValue.True;
     }

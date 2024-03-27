@@ -84,8 +84,10 @@ public class CabinetReplace : MonoBehaviour
             cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
             cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
             cabReplaceComp.game = newCabGame;
+            cabReplaceComp.cabinet = cab;
             cabReplaceComp.outOfOrderCabinet = gameObject;
             cabReplaceComp.backgroundSoundController = backgroundSoundController;
+            
             cab.gameObject.SetActive(true);
 
             UnityEngine.Object.Destroy(gameObject);

@@ -169,7 +169,6 @@ public class CabinetAutoReload : MonoBehaviour
                                                          AgentPlayerPositions, backgroundSoundController,
                                                          cacheGlbModels: false);
 
-
             // invalidate all cached textures for test cabinet
             if (cbInfo.Parts != null)
             { 
@@ -192,6 +191,20 @@ public class CabinetAutoReload : MonoBehaviour
             CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
             cba.AgentPlayerPositions = AgentPlayerPositions;
             cba.backgroundSoundController = backgroundSoundController;
+
+            //add CabinetReplace, needed for libretroController
+            CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
+            cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositions;
+            cabReplaceComp.cabinet = cab;
+            /*cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
+            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
+            cabReplaceComp.game = newCabGame;
+            cabReplaceComp.outOfOrderCabinet = gameObject;
+            */
+            cabReplaceComp.backgroundSoundController = backgroundSoundController;
+            
+            cab.gameObject.SetActive(true);
+
             return true;
         }
         catch (System.Exception ex)
