@@ -26,7 +26,7 @@ public class MoviePosterController : MonoBehaviour
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
         // Yielding one frame allows Unity to finish initializing objects
-        yield return null;
+        yield return new WaitForEndOfFrame();
 
         //load and randomize
         if (gameObject.transform.childCount > 0)
