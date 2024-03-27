@@ -36,7 +36,7 @@ public class CabinetInformation
     public string name;
     public string rom;
     public List<Part> Parts { get; set; }
-    public CRT crt = new CRT();
+    public CRT crt; // = new CRT();
     public string style = "galaga";
     public Model model = new Model();
     public string material;
@@ -47,7 +47,7 @@ public class CabinetInformation
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
     public string statefile = "state.nv";
-    public Video video = new Video();
+    public Video video;// = new Video();
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
@@ -63,7 +63,7 @@ public class CabinetInformation
     [YamlMember(Alias = "light-gun", ApplyNamingConventions = false)]
     public LightGunInformation lightGunInformation = new();
 
-    public CabinetAGEBasicInformation agebasic = new();
+    public CabinetAGEBasicInformation agebasic;// = new();
 
     [YamlMember(Alias = "debug-mode", ApplyNamingConventions = false)]
     public bool debug = false;
@@ -488,7 +488,7 @@ public class CabinetInformation
         {
             foreach (MameFile mf in MameFiles)
             {
-                if (!mf.IsValid(mf.type))
+                if (!mf.IsValid(pathBase))
                 {
                     exceptions.Add($"MAME file {mf.file} type: {mf.type}",
                         new System.Exception($"type unknown or file doesn't exists"));
@@ -506,7 +506,8 @@ public class CabinetInformation
             cabinetStyles.Contains(style) ? null : new System.ArgumentException($"Unknown cabinet style: {style}"));
         exceptions.Add($"Coin Slot",
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
-        exceptions.Add($"CRT", crt.validate(crtTypes));
+        if (crt != null)
+            exceptions.Add($"CRT", crt.validate(crtTypes));
         exceptions.Add($"CORE", Cores.Contains(core) ? null :
                     new System.ArgumentException($"Unknown core: {core}"));
 
@@ -514,7 +515,7 @@ public class CabinetInformation
         {
             exceptions.Add($"lightgun", lightGunInformation.Validate(pathBase));
         }
-        if (video != null)
+        if (video != null && string.IsNullOrEmpty(video.file))
         {
             exceptions.Add($"video", String.IsNullOrEmpty(video.file) || !fileExists(video.file) ?
                                         new System.ArgumentException($"video undeclared or file [{video.file}] doesn't exists") :

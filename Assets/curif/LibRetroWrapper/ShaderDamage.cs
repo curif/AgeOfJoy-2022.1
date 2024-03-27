@@ -58,11 +58,19 @@ public class ShaderScreenDamage : ShaderScreenBase
       display.materials[position].SetTexture("_MainTex", (Texture)value);
     }
   }
-  
-  public override void Update() 
-  {
-    display.materials[position].SetFloat("u_time", Time.fixedTime);
-  }
+
+    public override void Refresh(Texture texture)
+    {
+        Texture = texture;
+        Vector4 v4 = new Vector4(actual_invertx ? -1f : 1f, actual_inverty ? -1f : 1f, 0, 0);
+        display.materials[position].SetFloat("MirrorX", actual_invertx ? 1f : 0f);
+        display.materials[position].SetFloat("MirrorY", actual_inverty ? 1f : 0f);
+    }
+
+    public override void Update() 
+    {
+        display.materials[position].SetFloat("u_time", Time.fixedTime);
+    }
   
   public override ShaderScreenBase Invert(bool invertx, bool inverty)
   {

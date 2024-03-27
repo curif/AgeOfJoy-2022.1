@@ -178,7 +178,7 @@ public class LibretroScreenController : MonoBehaviour
             videoShader = shader;
 
         // age basic
-        if (ageBasicInformation.active)
+        if (ageBasicInformation != null && ageBasicInformation.active)
         {
             cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
             cabinetAGEBasic.ExecAfterLoadBas();
@@ -232,6 +232,7 @@ public class LibretroScreenController : MonoBehaviour
         // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
 
         videoPlayer.setVideo(GameVideoFile, videoShader, GameVideoInvertX, GameVideoInvertY);
+
         tree = buildScreenBT();
         while (true)
         {
@@ -330,11 +331,11 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.StartRunThread();
 #endif
 
-                  shader.Invert(GameInvertX, GameInvertY);
                   shader.Activate(LibretroMameCore.GameTexture);
+                  shader.Invert(GameInvertX, GameInvertY);
 
                   // age basic Insert coin
-                  if (ageBasicInformation.active)
+                  if (ageBasicInformation != null && ageBasicInformation.active)
                       cabinetAGEBasic.ExecInsertCoinBas();
 
                   return TaskStatus.Success;
@@ -433,7 +434,7 @@ public class LibretroScreenController : MonoBehaviour
         libretroControlMap.Clean();
 
         // age basic
-        if (ageBasicInformation.active)
+        if (ageBasicInformation != null && ageBasicInformation.active)
         {
             cabinetAGEBasic.StopInsertCoinBas(); //force
             cabinetAGEBasic.ExecAfterLeaveBas();

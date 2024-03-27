@@ -13,7 +13,7 @@ public class ScreenGenerator : MonoBehaviour
     public Color BackgroundColor;
     public Color CenteredAreaColor;
 
-    public string ShaderName = "crt";
+    //public string ShaderName = "crt";
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
@@ -39,7 +39,6 @@ public class ScreenGenerator : MonoBehaviour
     private bool needsDraw = false;
 
     //Renderer
-    private Renderer display;
     private ShaderScreenBase shader;
 
     public Texture2D Screen
@@ -53,7 +52,6 @@ public class ScreenGenerator : MonoBehaviour
     // The method that runs at the start of the game
     private void Start()
     {
-        display = GetComponent<Renderer>();
         
         ScreenWidth = CharactersWidth * 8;  // Width of the target texture
         ScreenHeight = CharactersHeight * 8; // Height of the target texture

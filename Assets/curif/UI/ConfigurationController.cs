@@ -222,6 +222,8 @@ public class ConfigurationController : MonoBehaviour
     private Dictionary<string, bool> inputDictionary = new Dictionary<string, bool>();
     private List<string> inputKeys;
 
+    private ShaderScreenBase shader;
+    private Renderer display;
 
     // Start is called before the first frame update
     void Start()
@@ -258,6 +260,8 @@ public class ConfigurationController : MonoBehaviour
         }
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
+
+        display = GetComponent<Renderer>();
 
         StartCoroutine(run());
     }
@@ -1143,8 +1147,7 @@ public class ConfigurationController : MonoBehaviour
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
-        yield return new WaitForEndOfFrame();
-
+        
         setupActionMap();
         // Initialize the dictionary with default values (false for all keys)
         inputDictionary.Add("up", false);
@@ -1153,6 +1156,12 @@ public class ConfigurationController : MonoBehaviour
         inputDictionary.Add("right", false);
         inputDictionary.Add("action", false);
         inputKeys = inputDictionary.Keys.ToList();
+
+        Dictionary<string, string> shaderConfig = new Dictionary<string, string>();
+        shaderConfig["damage"] = "none";
+        shader = ShaderScreen.Factory(display, 1, "clean", shaderConfig);
+        scr.ActivateShader(shader);
+        yield return new WaitForEndOfFrame();
 
         scr.Clear();
         scr.PrintCentered(1, "BIOS ROM firmware loaded", true);

@@ -92,6 +92,7 @@ public class CabinetAutoReload : MonoBehaviour
                     loadedSuccesfully = LoadCabinet();
                 }
 
+                
                 if (loadedSuccesfully)
                 {
                     ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} successfully loaded ");
@@ -150,6 +151,15 @@ public class CabinetAutoReload : MonoBehaviour
 
         try
         {
+            CabinetDBAdmin.MoveMameFiles(cbInfo);
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR moving MAME files", e);
+        }
+
+        try
+        {
             //cabinet inseption
             ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
             ConfigManager.WriteConsole($"[CabinetAutoReload]AgentPlayerPositions: {string.Join(",", AgentPlayerPositions.Select(x => x.ToString()))}");
@@ -161,14 +171,16 @@ public class CabinetAutoReload : MonoBehaviour
 
 
             // invalidate all cached textures for test cabinet
-            foreach (CabinetInformation.Part p in cbInfo.Parts)
-            {
-                if (p?.art?.file != null)
+            if (cbInfo.Parts != null)
+            { 
+                foreach (CabinetInformation.Part p in cbInfo.Parts)
                 {
-                    CabinetTextureCache.InvalidateCachedTexture(cbInfo.getPath(p.art.file));
+                    if (p?.art?.file != null)
+                    {
+                        CabinetTextureCache.InvalidateCachedTexture(cbInfo.getPath(p.art.file));
+                    }
                 }
             }
-
             CabinetFactory.skinFromInformation(cab, cbInfo);
 
             ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");

@@ -54,7 +54,7 @@ public static class CabinetFactory
             string cacheKey = BuildKey(modelFilePath);
             ConfigManager.WriteConsole($"[CabinetFactory] cache key:{cacheKey}");
 
-            if (cacheGlbModels && CabinetStyles.ContainsKey(cacheKey))
+            if (cacheGlbModels && cacheKey != null && CabinetStyles.ContainsKey(cacheKey))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
                 model = CabinetStyles[cacheKey];
@@ -78,7 +78,7 @@ public static class CabinetFactory
                 }
                 else
                 {
-                    if (cacheGlbModels)
+                    if (cacheGlbModels && cacheKey != null)
                     {
                         ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
                         CabinetStyles.Add(cacheKey, model);
@@ -273,9 +273,13 @@ public static class CabinetFactory
                     cbinfo.coinslotgeometry.scalepercentage);
         }
 
-        if (cabinet.PartsExist("screen-mock-vertical") || cabinet.PartsExist("screen-mock-horizontal"))
+        if (cbinfo.crt != null &&
+            (cabinet.PartsExist("screen-mock-vertical") || 
+                cabinet.PartsExist("screen-mock-horizontal")))
         {
-            Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, cbinfo.crt.geometry.rotation.y, cbinfo.crt.geometry.rotation.z);
+            Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, 
+                                                cbinfo.crt.geometry.rotation.y, 
+                                                cbinfo.crt.geometry.rotation.z);
             ConfigManager.WriteConsole($"[fromInformation]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
 
             cabinet.addCRT(
@@ -297,6 +301,16 @@ public static class CabinetFactory
                     cbinfo.core);
 
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
+        }
+        else if (cbinfo.agebasic != null)
+        {
+            cabinet.addController(cbinfo.pathBase,
+                                        cbinfo.ControlMap,
+                                        cbinfo.lightGunInformation,
+                                        cbinfo.agebasic,
+                                        backgroundSoundController
+                                    );
+            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} NO-CRT controller added");
         }
 
         //blockers

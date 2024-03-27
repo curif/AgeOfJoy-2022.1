@@ -65,6 +65,13 @@ public class ShaderCRT : ShaderScreenBase
         }
     }
 
+    public override void Refresh(Texture texture)
+    {
+        Texture = texture;
+        Vector4 v4 = new Vector4(actual_invertx ? -1f : 1f, actual_inverty ? -1f : 1f, 0, 0);
+        display.materials[position].SetVector("_CRTTiling", v4);
+    }
+
     public override ShaderScreenBase Invert(bool invertx, bool inverty)
     {
         if (actual_invertx != invertx || actual_inverty != inverty)

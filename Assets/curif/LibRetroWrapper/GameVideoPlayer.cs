@@ -53,6 +53,7 @@ public class GameVideoPlayer : MonoBehaviour
 
         shader.Invert(invertx, inverty);
         textureCache.Init(path);
+        showCachedImage();
 
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
 #endif
@@ -65,6 +66,12 @@ public class GameVideoPlayer : MonoBehaviour
         {
             return videoPlayer.texture;
         }
+    }
+
+    public void showCachedImage()
+    {
+        if (textureCache.AlreadyCached())
+            shader.Activate(textureCache.CachedTexture);
     }
 
     private void PrepareVideo()
@@ -176,8 +183,6 @@ public class GameVideoPlayer : MonoBehaviour
     void ErrorReceived(VideoPlayer vp, string message)
     {
         ConfigManager.WriteConsoleError($"[videoPlayer] ERROR {videoPath} - {message}");
-        if (textureCache.AlreadyCached())
-            shader.Activate(textureCache.CachedTexture);
-
+        showCachedImage();
     }
 }

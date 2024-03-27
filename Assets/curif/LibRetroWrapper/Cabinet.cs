@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 
 
 public static class CabinetTextureCache
@@ -831,6 +832,35 @@ public class Cabinet
         return "screen-" + cabinetName + "-" + gameFile;
     }
 
+    //used instead of addCRT for cabinets without a CRT
+    public Cabinet addController(string pathBase, 
+                                     ControlMapConfiguration cabinetControlMap = null,
+                                     LightGunInformation lightGunInformation = null,
+                                     CabinetAGEBasicInformation agebasic = null,
+                                     BackgroundSoundController backgroundSoundController = null
+                                     )
+    {
+        GameObject newCRT = CRTsFactory.Instantiate("no-crt", Vector3.zero, Quaternion.identity, gameObject.transform);
+        if (newCRT == null)
+            throw new System.Exception($"Cabinet {Name} problem: can't create a no-crt controller");
+
+        //LibretroScreenController will find the object using this name:
+        newCRT.name = CRTName(Name, "no-crt");
+        AGEBasicCabinetController agec = newCRT.GetComponent<AGEBasicCabinetController>();
+        agec.PathBase = pathBase;
+        agec.cabinet = this;
+        //control mapping
+        agec.CabinetControlMapConfig = cabinetControlMap;
+        agec.lightGunInformation = lightGunInformation;
+
+        //age basic
+        agec.ageBasicInformation = agebasic;
+
+        //sound
+        agec.backgroundSoundController = backgroundSoundController;
+        return this;
+    }
+
     public Cabinet addCRT(string type, string orientation, string gameFile, string GameVideoFile, int timeToLoad, string pathBase,
                              bool invertX = false, bool invertY = false,
                              bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
@@ -846,7 +876,6 @@ public class Cabinet
                              string core = "mame2003+"
                           )
     {
-
         string CRTType = $"screen-mock-{orientation}";
         GameObject CRT = PartsOrNull(CRTType);
         if (CRT == null)
