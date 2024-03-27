@@ -21,7 +21,8 @@ public class FileCopier : MonoBehaviour
         // Check if source file exists
         if (!File.Exists(sourceFilePath))
         {
-            throw new Exception($"Source file does not exist! {sourceFilePath} -> {destinationFilePath}");
+            ConfigManager.WriteConsoleError($"Source file does not exist! {sourceFilePath} -> {destinationFilePath}");
+            yield break;
         }
 
         // Copy the file

@@ -51,6 +51,7 @@ public abstract class ShaderScreenBase
         if (texture != null)
             Texture = texture; //child should change it in render material by position
     }
+    public virtual void Refresh(Texture texture) { }
 
     public abstract Texture Texture { get; set; }
     public abstract string TargetMaterialProperty { get; }

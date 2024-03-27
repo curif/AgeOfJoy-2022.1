@@ -497,12 +497,21 @@ public static unsafe class LibretroMameCore
     }
 
 #if UNITY_EDITOR
+
     public static void simulateInEditor(string screenName, string gameFileName)
     {
-        WriteConsole("[LibRetroMameCore.Start] Libretro simulated.");
+        WriteConsole("[LibRetroMameCore.simulateInEditor] Libretro simulated.");
         GameFileName = gameFileName;
         ScreenName = screenName;
         GameLoaded = true;
+        /*var sourceTexture = Resources.Load<Texture2D>("Decoration/MoviePoster/Pictures/18/kingsOfDragons.png");
+        TextureWidth = (uint)sourceTexture.width;
+        TextureHeight = (uint)sourceTexture.height;
+        GameTexture.Reinitialize((int)TextureWidth, (int)TextureHeight);
+        GameTexture.SetPixels(sourceTexture.GetPixels());
+        GameTexture.Apply();
+        WriteConsole($"[simulateInEditor] {GameTexture.width}, {GameTexture.height}- {GameTexture.format}");
+        */
     }
 #endif
 
@@ -549,7 +558,7 @@ public static unsafe class LibretroMameCore
             WriteConsole($"[InitializeTexture] {GameTexture.width}, {GameTexture.height}- {GameTexture.format}");
             RecreateTexture = false;
             //some shaders needs to refresh the texture once recreated.
-            Shader.Texture = GameTexture;
+            Shader.Refresh(GameTexture);
             return true;
         }
         return false;
