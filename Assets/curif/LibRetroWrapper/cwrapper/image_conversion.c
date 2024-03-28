@@ -61,17 +61,12 @@ unsigned char *wrapper_image_conversion_convert0RGB1555ToRGB565(
   int inputOffset = 0;
   int outputOffset = 0;
   for (int y = 0; y < height; y++) {
-    unsigned char *inputRow = (unsigned char *)data + inputOffset;
-    unsigned short *outputRow =
-        (unsigned short *)(outputData[idxBuf] + outputOffset);
+    unsigned short *inputRow = (unsigned short*)((unsigned char *)data + inputOffset);
+    unsigned short *outputRow = (unsigned short *)(outputData[idxBuf] + outputOffset);
 
     for (int x = 0; x < width; x++) {
-      unsigned short pixel = *(unsigned short *)inputRow;
-      unsigned char r = ((pixel >> 10) & 0x1F) << 3;
-      unsigned char g = ((pixel >> 5) & 0x1F) << 2;
-      unsigned char b = (pixel & 0x1F) << 3;
-      *outputRow++ = (unsigned short)((r << 8) | (g << 3) | (b >> 3));
-      inputRow += 2;
+      unsigned short pixel = *inputRow++;
+      *outputRow++ = ((pixel & 0x7FE0) << 1) | (pixel & 0x1F);
     }
 
     inputOffset += pitch;
