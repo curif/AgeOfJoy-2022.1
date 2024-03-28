@@ -100,7 +100,8 @@ Shader "AgeOfJoy/CRT_01"
 			float2 uv_TexCoord61 = i.uv_texcoord * appendResult236;
 			half3 lerpResult28 = lerp( temp_output_17_0 , temp_output_126_0 , saturate( pow( ( distance( ase_worldPos , _WorldSpaceCameraPos ) / _Distance_Scanline ) , _Distance_Scanline_Power ) ));
 			half4 lerpResult58 = lerp( ( half4( temp_output_17_0 , 0.0 ) * tex2D( _Dotmask_Scanlines, uv_TexCoord61 ) ) , half4( lerpResult28 , 0.0 ) , temp_output_263_0);
-			o.Emission = ( lerpResult233 * lerpResult58 ).rgb;
+			half3 gammaCorrectedColor = pow((lerpResult233 * lerpResult58).rgb, half3(2, 2, 2));
+			o.Emission = gammaCorrectedColor;
 			o.Metallic = 0.0;
 			float2 uv_CRTFX = i.uv_texcoord * _CRTFX_ST.xy + _CRTFX_ST.zw;
 			half4 tex2DNode237 = tex2D( _CRTFX, uv_CRTFX );
