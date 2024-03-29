@@ -175,7 +175,7 @@ public class LibretroScreenController : MonoBehaviour
         if (ShaderName == "crt")
             videoShader = ShaderScreen.Factory(display, 1, "crtlod", ShaderConfig);
         else
-            videoShader = shader;
+            videoShader = ShaderScreen.Factory(display, 1, "clean", ShaderConfig);
 
         // age basic
         if (ageBasicInformation != null && ageBasicInformation.active)
