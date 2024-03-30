@@ -168,7 +168,11 @@ void wrapper_image_video_refresh_cb(const void *data, unsigned width,
     //     height, pitch, imageSize);
 
     imageBuf = wrapper_image_preserve(data, imageSize, bufIdx);
-    // imageBuf = storeRGB565Image(data, width, height, pitch, bufIdx);
+    if (pitch == width * 2) {
+        imageBuf = wrapper_image_preserve(data, imageSize, bufIdx);
+    } else {
+        imageBuf = storeRGB565Image(data, width, height, pitch, bufIdx);
+	}
     if (imageBuf)
       swapBuffers(imageBuf, imageSize);
 
