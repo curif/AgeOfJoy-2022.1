@@ -456,12 +456,12 @@ public static unsafe class LibretroMameCore
                             new AudioUnlockHandler(AudioUnlockCB));
         wrapper_environment_init();
 
-        if (wrapper_system_info_need_full_path() == 0)
-        {
-            ClearAll();
-            WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
-            return false;
-        }
+        //if (wrapper_system_info_need_full_path() == 0)
+        //{
+        //    ClearAll();
+        //    WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
+        //    return false;
+        //}
 
         WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
         GameFileName = gameFileName;
