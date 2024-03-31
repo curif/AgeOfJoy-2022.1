@@ -21,8 +21,11 @@ public static class ConfigManager
     //paths
 #if UNITY_EDITOR
     public static string BaseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cabs");
+    public static string BaseAppDir = BaseDir + "/data";
 #else
-    public static string BaseDir = "/sdcard/Android/data/com.curif.AgeOfJoy";
+    public static string Bundle = "com.curif.AgeOfJoy";
+    public static string BaseAppDir = "/data/data/" + Bundle;
+    public static string BaseDir = "/sdcard/Android/data/" + Bundle;
 #endif
 
     public static string Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
@@ -40,6 +43,9 @@ public static class ConfigManager
     public static string MameConfigDir = Path.Combine(GameSaveDir, "cfg");
     public static string nvramDir = Path.Combine(GameSaveDir, "nvram");
     public static string MusicDir = Path.Combine(BaseDir, "music");
+    public static string CoresDir = Path.Combine(BaseDir, "cores");
+
+    public static string InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
 
     public static ConfigInformation configuration;
     public static bool DebugActive
@@ -66,6 +72,8 @@ public static class ConfigManager
         CreateDirectory(ConfigManager.AGEBasicDir);
         CreateDirectory(ConfigManager.DebugDir);
         CreateDirectory(ConfigManager.MusicDir);
+        CreateDirectory(ConfigManager.CoresDir);
+        CreateDirectory(ConfigManager.InternalCoresDir);
 
         CreateDirectory(ConfigManager.SystemDir);
         CreateDirectory(ConfigManager.RomsDir);
@@ -73,6 +81,10 @@ public static class ConfigManager
         CreateDirectory(ConfigManager.SamplesDir);
         CreateDirectory(ConfigManager.MameConfigDir);
         CreateDirectory(ConfigManager.nvramDir);
+
+#if UNITY_EDITOR
+        CreateDirectory(BaseAppDir);
+#endif
     }
 
     public static void CreateDirectory(string path)

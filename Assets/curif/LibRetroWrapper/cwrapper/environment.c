@@ -13,7 +13,7 @@ static char enabled[10];
 static char disabled[10];
 static char xy_input_type[15];
 static char vector_intensity[5];
-static char core[50];
+static char core[500];
 
 static handlers_t handlers;
 static wrapper_log_printf_t log;
@@ -62,39 +62,16 @@ void wrapper_environment_log(enum retro_log_level level, const char *format,
 
 int wrapper_dlopen() {
   INIT_STRUCT(handlers);
-  char *_core = NULL;
-  if (strcmp(core, "mame2003+") == 0) {
-    _core = "libmame2003_plus_libretro_android.so";
-  } else if (strcmp(core, "mame2010") == 0) {
-    _core = "libmame2010_libretro_android.so";
-  } else if (strcmp(core, "fbneo") == 0) {
-    _core = "libfbneo_libretro_android.so";
-  } else if (strcmp(core, "snes9x") == 0) {
-      _core = "libsnes9x_libretro_android.so";
-  } else if (strcmp(core, "flycast") == 0) {
-      _core = "libflycast_libretro_android.so";
-  } else if (strcmp(core, "swanstation") == 0) {
-      _core = "libswanstation_libretro_android.so";
-  } else if (strcmp(core, "mednafen_saturn") == 0) {
-      _core = "libmednafen_saturn_libretro_android.so";
-  } else {
-    wrapper_environment_log(RETRO_LOG_ERROR, "core: %s unknown\n", core);
-    return false;
-  }
-
-  // char *core = "libmame2003_plus_libretro_android.so";
-  // wrapper_environment_log(RETRO_LOG_INFO,
-  //                         "[wrapper_environment_open] start -----------\n");
-  handlers.handle = dlopen(_core, RTLD_LAZY | RTLD_LOCAL);
+  handlers.handle = dlopen(core, RTLD_LAZY | RTLD_LOCAL);
   if (handlers.handle == NULL) {
     const char *error = dlerror();
     if (error != NULL) {
       wrapper_environment_log(RETRO_LOG_ERROR, "core: %s dlopen Error: %s\n",
-                              _core, error);
+                              core, error);
     }
     wrapper_environment_log(RETRO_LOG_ERROR,
                             "[wrapper_environment_open] dlopen %s failed\n",
-                            _core);
+                            core);
     return false;
   }
   return true;
