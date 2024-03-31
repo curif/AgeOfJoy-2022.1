@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Assets.curif.LibRetroWrapper;
 
 
 /*
@@ -433,13 +434,15 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
 
         WriteConsole("[LibRetroMameCore.Start] Init environmnet and call retro_init()");
+        string coreLib = CoresController.GetCorePath(Core);
+        WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{coreLib} for {Core}");
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
                                                 new inputStateHandler(inputStateCB),
-                                                Core
+                                                coreLib
                                                 );
         if (result != 0)
         {

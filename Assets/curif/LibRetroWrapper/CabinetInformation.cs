@@ -4,6 +4,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+using Assets.curif.LibRetroWrapper;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -51,7 +52,6 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
-    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+", "fbneo", "snes9x", "flycast" };
 
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
@@ -508,7 +508,7 @@ public class CabinetInformation
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
         if (crt != null)
             exceptions.Add($"CRT", crt.validate(crtTypes));
-        exceptions.Add($"CORE", Cores.Contains(core) ? null :
+        exceptions.Add($"CORE", CoresController.Contains(core) ? null :
                     new System.ArgumentException($"Unknown core: {core}"));
 
         if (lightGunInformation != null && lightGunInformation.active)
