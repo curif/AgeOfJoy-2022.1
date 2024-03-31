@@ -1,3 +1,5 @@
+// Upgrade NOTE: upgraded instancing buffer 'AgeOfJoyCRT_01' to new syntax.
+
 // Made with Amplify Shader Editor v1.9.3.2
 // Available at the Unity Asset Store - http://u3d.as/y3X 
 Shader "AgeOfJoy/CRT_01"
@@ -26,6 +28,7 @@ Shader "AgeOfJoy/CRT_01"
 		_Dirt_RGBAmount_APower("Dirt_RGBAmount_APower", Vector) = (0,1,0,0)
 		_CRTTiling("CRTTiling", Vector) = (1,1,0,0)
 		_Dotmask_Scanlines("Dotmask_Scanlines", 2D) = "white" {}
+		_MipBias("MipBias", Range( -1 , 1)) = 0
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
@@ -37,6 +40,7 @@ Shader "AgeOfJoy/CRT_01"
 		CGPROGRAM
 		#include "UnityShaderVariables.cginc"
 		#pragma target 3.0
+		#pragma multi_compile_instancing
 		#pragma surface surf Standard keepalpha noshadow exclude_path:deferred vertex:vertexDataFunc 
 		struct Input
 		{
@@ -68,8 +72,14 @@ Shader "AgeOfJoy/CRT_01"
 		uniform half _Distance_Scanline;
 		uniform half _Distance_Scanline_Power;
 		uniform sampler2D _CRTFX;
-		uniform half4 _CRTFX_ST;
 		uniform half4 _Dirt_RGBAmount_APower;
+
+		UNITY_INSTANCING_BUFFER_START(AgeOfJoyCRT_01)
+			UNITY_DEFINE_INSTANCED_PROP(half4, _CRTFX_ST)
+#define _CRTFX_ST_arr AgeOfJoyCRT_01
+			UNITY_DEFINE_INSTANCED_PROP(half, _MipBias)
+#define _MipBias_arr AgeOfJoyCRT_01
+		UNITY_INSTANCING_BUFFER_END(AgeOfJoyCRT_01)
 
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
@@ -86,7 +96,8 @@ Shader "AgeOfJoy/CRT_01"
 		{
 			o.Albedo = half3(0,0,0);
 			half lerpResult233 = lerp( 1.0 , i.vertexColor.r , _MaskVTXRedOnly);
-			half3 desaturateInitialColor185 = ( ( (tex2D( _MainTex, ( i.uv_texcoord * _CRTTiling ) )).rgb * _Damage_RGB_Offset ) * ( 1.0 - ( saturate( ( distance( i.uv_texcoord , half2( 0.5,0.5 ) ) - _Damage_VIgnette_Radius ) ) / ( 1.0 - _Damage_Vignette_Hardness ) ) ) );
+			half _MipBias_Instance = UNITY_ACCESS_INSTANCED_PROP(_MipBias_arr, _MipBias);
+			half3 desaturateInitialColor185 = ( ( (pow( tex2Dbias( _MainTex, float4( ( i.uv_texcoord * _CRTTiling ), 0, _MipBias_Instance) ) , 2.0 )).rgb * _Damage_RGB_Offset ) * ( 1.0 - ( saturate( ( distance( i.uv_texcoord , half2( 0.5,0.5 ) ) - _Damage_VIgnette_Radius ) ) / ( 1.0 - _Damage_Vignette_Hardness ) ) ) );
 			half desaturateDot185 = dot( desaturateInitialColor185, float3( 0.299, 0.587, 0.114 ));
 			half3 desaturateVar185 = lerp( desaturateInitialColor185, desaturateDot185.xxx, _Damage_Desaturation );
 			half3 temp_output_126_0 = ( desaturateVar185 + i.vertexToFrag250 );
@@ -100,10 +111,10 @@ Shader "AgeOfJoy/CRT_01"
 			float2 uv_TexCoord61 = i.uv_texcoord * appendResult236;
 			half3 lerpResult28 = lerp( temp_output_17_0 , temp_output_126_0 , saturate( pow( ( distance( ase_worldPos , _WorldSpaceCameraPos ) / _Distance_Scanline ) , _Distance_Scanline_Power ) ));
 			half4 lerpResult58 = lerp( ( half4( temp_output_17_0 , 0.0 ) * tex2D( _Dotmask_Scanlines, uv_TexCoord61 ) ) , half4( lerpResult28 , 0.0 ) , temp_output_263_0);
-			half3 gammaCorrectedColor = pow((lerpResult233 * lerpResult58).rgb, half3(2, 2, 2));
-			o.Emission = gammaCorrectedColor;
+			o.Emission = ( lerpResult233 * lerpResult58 ).rgb;
 			o.Metallic = 0.0;
-			float2 uv_CRTFX = i.uv_texcoord * _CRTFX_ST.xy + _CRTFX_ST.zw;
+			half4 _CRTFX_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_CRTFX_ST_arr, _CRTFX_ST);
+			float2 uv_CRTFX = i.uv_texcoord * _CRTFX_ST_Instance.xy + _CRTFX_ST_Instance.zw;
 			half4 tex2DNode237 = tex2D( _CRTFX, uv_CRTFX );
 			half3 appendResult242 = (half3(tex2DNode237.r , tex2DNode237.g , tex2DNode237.b));
 			half3 appendResult244 = (half3(_Dirt_RGBAmount_APower.x , _Dirt_RGBAmount_APower.y , _Dirt_RGBAmount_APower.z));
@@ -122,18 +133,20 @@ Version=19302
 Node;AmplifyShaderEditor.CommentaryNode;136;-5651.142,-81.46181;Inherit;False;1558;351;SphereMask;10;157;158;179;180;156;155;154;153;152;151;;0,0,0,1;0;0
 Node;AmplifyShaderEditor.TexCoordVertexDataNode;180;-5635.142,-17.46176;Inherit;False;0;2;0;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.Vector2Node;179;-5602.142,115.5385;Inherit;False;Constant;_SphereCenter;Sphere Center;0;0;Create;True;0;0;0;False;0;False;0.5,0.5;0,0;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
+Node;AmplifyShaderEditor.TextureCoordinatesNode;192;-6412.66,-867.2523;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.Vector2Node;249;-6311.903,-691.4919;Inherit;False;Property;_CRTTiling;CRTTiling;20;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
 Node;AmplifyShaderEditor.DistanceOpNode;151;-5379.142,-17.46176;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;158;-5379.142,94.53832;Inherit;False;Property;_Damage_VIgnette_Radius;Damage_VIgnette_Radius;2;0;Create;True;0;0;0;False;0;False;0;0.435;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.CommentaryNode;46;-2599.804,-1052.528;Inherit;False;1297.335;546.6675;Transition DotMask;8;55;54;53;52;51;50;48;263;;0,0.8417869,1,1;0;0
-Node;AmplifyShaderEditor.Vector2Node;249;-5423.237,-346.1585;Inherit;False;Property;_CRTTiling;CRTTiling;20;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
-Node;AmplifyShaderEditor.TextureCoordinatesNode;192;-5600.66,-779.2523;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.CommentaryNode;90;-5678.854,-704.6508;Inherit;False;363.3334;277;GameScreen;1;11;;1,0,0.9828625,1;0;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;248;-6091.572,-827.1584;Inherit;False;2;2;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode;280;-6019.468,-402.4124;Inherit;False;InstancedProperty;_MipBias;MipBias;22;0;Create;True;0;0;0;False;0;False;0;0;-1;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleSubtractOpNode;152;-5187.141,-17.46176;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;157;-5409.227,199.1412;Inherit;False;Property;_Damage_Vignette_Hardness;Damage_Vignette_Hardness;0;0;Create;True;0;0;0;False;0;False;1;0.596;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;200;-3784.776,126.5267;Inherit;False;Property;_CRTBrightnessFlickerTime;CRT Brightness Flicker Time;14;0;Create;True;0;0;0;False;0;False;0;35;0;50;0;1;FLOAT;0
 Node;AmplifyShaderEditor.WorldPosInputsNode;51;-2461.805,-1002.528;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.WorldSpaceCameraPos;52;-2549.805,-825.1956;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;248;-5154.237,-597.1586;Inherit;False;2;2;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.CommentaryNode;90;-4816.853,-692.6508;Inherit;False;363.3334;277;GameScreen;1;11;;1,0,0.9828625,1;0;0
+Node;AmplifyShaderEditor.SamplerNode;11;-5632.861,-639.4778;Inherit;True;Property;_MainTex;MainTex;3;0;Create;True;0;0;0;False;0;False;-1;8f939eab460ea6041bc9d72da92c13a6;e57652f0ab2605e4cb8bae96179146ab;True;0;False;black;Auto;False;Object;-1;MipBias;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.CommentaryNode;89;-2802.326,414.804;Inherit;False;2502;953.5816;Scanlines;11;98;100;99;16;2;18;102;130;251;255;265;;0.1536936,1,0,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode;103;-4110.326,569.8041;Inherit;False;260;210;Vertical Screen res / 8;1;235;;1,1,1,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode;189;-4301.94,-519.5765;Inherit;False;603.7002;397.2666;Damage RGB;2;187;188;;0,0,0,1;0;0
@@ -141,8 +154,8 @@ Node;AmplifyShaderEditor.SaturateNode;153;-5027.142,-17.46176;Inherit;False;1;0;
 Node;AmplifyShaderEditor.OneMinusNode;154;-5027.142,94.53832;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleTimeNode;203;-3503.516,138.4411;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.DistanceOpNode;53;-2215.807,-941.8624;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SamplerNode;11;-4770.861,-627.4778;Inherit;True;Property;_MainTex;MainTex;3;0;Create;True;0;0;0;False;0;False;-1;8f939eab460ea6041bc9d72da92c13a6;e57652f0ab2605e4cb8bae96179146ab;True;0;False;black;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;55;-2203.773,-763.5289;Inherit;False;Property;_Distance_DotMask;Distance_DotMask;7;0;Create;True;0;0;0;False;0;False;0.15;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.PowerNode;279;-4882.135,-639.0789;Inherit;False;False;2;0;COLOR;0,0,0,0;False;1;FLOAT;2;False;1;COLOR;0
 Node;AmplifyShaderEditor.Vector4Node;235;-4069.761,610.088;Inherit;False;Property;_CRTParameters;CRTParameters;17;0;Create;True;0;0;0;False;0;False;256,256,1,0.59158;320,256,1,0.59158;0;5;FLOAT4;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.CommentaryNode;130;-2774.302,670.5531;Inherit;False;471;230.3333;Scanlines technically appearing every other line;2;128;127;;1,1,1,1;0;0
 Node;AmplifyShaderEditor.SimpleDivideOpNode;155;-4835.143,-17.46176;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
@@ -235,22 +248,24 @@ Node;AmplifyShaderEditor.CommentaryNode;84;-194.3853,-1840.56;Inherit;False;514;
 Node;AmplifyShaderEditor.CommentaryNode;85;-216.3853,-2094.561;Inherit;False;514;215;Color Mismatch;0;;1,1,1,1;0;0
 WireConnection;151;0;180;0
 WireConnection;151;1;179;0
-WireConnection;152;0;151;0
-WireConnection;152;1;158;0
 WireConnection;248;0;192;0
 WireConnection;248;1;249;0
+WireConnection;152;0;151;0
+WireConnection;152;1;158;0
+WireConnection;11;1;248;0
+WireConnection;11;2;280;0
 WireConnection;153;0;152;0
 WireConnection;154;0;157;0
 WireConnection;203;0;200;0
 WireConnection;53;0;51;0
 WireConnection;53;1;52;0
-WireConnection;11;1;248;0
+WireConnection;279;0;11;0
 WireConnection;155;0;153;0
 WireConnection;155;1;154;0
 WireConnection;204;0;203;0
 WireConnection;54;0;53;0
 WireConnection;54;1;55;0
-WireConnection;264;0;11;0
+WireConnection;264;0;279;0
 WireConnection;127;0;235;2
 WireConnection;156;0;155;0
 WireConnection;188;0;264;0
@@ -342,4 +357,4 @@ WireConnection;256;2;218;0
 WireConnection;256;3;117;0
 WireConnection;256;4;240;0
 ASEEND*/
-//CHKSM=5695BD7213C76BF105B33880B3F3A89781890408
+//CHKSM=509D858E54381073022053F0214EEC1C21B35017
