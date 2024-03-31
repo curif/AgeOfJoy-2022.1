@@ -499,6 +499,7 @@ public static unsafe class LibretroMameCore
 
         // Boost the resolution of the eye texture during gameplay
         XRSettings.eyeTextureResolutionScale = 1.5f;
+        OVRPlugin.foveatedRenderingLevel = OVRPlugin.FoveatedRenderingLevel.High;
 
         return true;
     }
@@ -703,6 +704,7 @@ public static unsafe class LibretroMameCore
 
         // Restore eye resolution upon exiting game
         XRSettings.eyeTextureResolutionScale = 1.0f;
+        OVRPlugin.foveatedRenderingLevel = OVRPlugin.FoveatedRenderingLevel.Off;
 
 #if !UNITY_EDITOR
         StopRunThread();
