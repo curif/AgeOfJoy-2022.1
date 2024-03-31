@@ -14,7 +14,7 @@ Shader "AgeOfJoy/Neon_Houdini"
 		_MetalColor("Metal Color", Color) = (0.1736085,0.8282693,0.9685534,0)
 		_NonMetalColor("NonMetal Color", Color) = (0.1736085,0.8282693,0.9685534,0)
 		_FlickerSpeed("FlickerSpeed", Range( 1 , 50)) = 1
-		_FlickerMin("FlickerMin", Range( 0 , 0.7)) = 0
+		_FlickerMin("FlickerMin", Range( 0 , 2)) = 0
 		_FlickerMax("FlickerMax", Range( 0 , 10)) = 1
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
@@ -41,55 +41,55 @@ Shader "AgeOfJoy/Neon_Houdini"
 		{
 			float4 vertexColor : COLOR;
 			float3 worldPos;
-			float3 worldNormal;
+			half3 worldNormal;
 			INTERNAL_DATA
-			float vertexToFrag49;
+			half vertexToFrag49;
 		};
 
-		uniform float4 _NonMetalColor;
-		uniform float4 _MetalColor;
-		uniform float _FresnelScale;
-		uniform float _FlickerMin;
-		uniform float _FlickerMax;
-		uniform float _FlickerSpeed;
-		uniform float _Metallic;
-		uniform float _NonMetalSmoothness;
+		uniform half4 _NonMetalColor;
+		uniform half4 _MetalColor;
+		uniform half _FresnelScale;
+		uniform half _FlickerMin;
+		uniform half _FlickerMax;
+		uniform half _FlickerSpeed;
+		uniform half _Metallic;
+		uniform half _NonMetalSmoothness;
 
 		UNITY_INSTANCING_BUFFER_START(AgeOfJoyNeon_Houdini)
-			UNITY_DEFINE_INSTANCED_PROP(float4, _ColorA)
+			UNITY_DEFINE_INSTANCED_PROP(half4, _ColorA)
 #define _ColorA_arr AgeOfJoyNeon_Houdini
-			UNITY_DEFINE_INSTANCED_PROP(float4, _ColorCore)
+			UNITY_DEFINE_INSTANCED_PROP(half4, _ColorCore)
 #define _ColorCore_arr AgeOfJoyNeon_Houdini
 		UNITY_INSTANCING_BUFFER_END(AgeOfJoyNeon_Houdini)
 
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
 			UNITY_INITIALIZE_OUTPUT( Input, o );
-			float mulTime36 = _Time.y * _FlickerSpeed;
-			float lerpResult46 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime36 ) + 1.0 ) * 0.5 ));
+			half mulTime36 = _Time.y * _FlickerSpeed;
+			half lerpResult46 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime36 ) + 1.0 ) * 0.5 ));
 			o.vertexToFrag49 = lerpResult46;
 		}
 
 		void surf( Input i , inout SurfaceOutputStandard o )
 		{
-			float4 lerpResult14 = lerp( _NonMetalColor , _MetalColor , i.vertexColor.b);
+			half4 lerpResult14 = lerp( _NonMetalColor , _MetalColor , i.vertexColor.b);
 			o.Albedo = lerpResult14.rgb;
-			float4 _ColorA_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorA_arr, _ColorA);
-			float4 _ColorCore_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorCore_arr, _ColorCore);
+			half4 _ColorA_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorA_arr, _ColorA);
+			half4 _ColorCore_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorCore_arr, _ColorCore);
 			float3 ase_worldPos = i.worldPos;
-			float3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
-			float3 ase_worldNormal = i.worldNormal;
-			float3 ase_vertexNormal = mul( unity_WorldToObject, float4( ase_worldNormal, 0 ) );
+			half3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
+			half3 ase_worldNormal = i.worldNormal;
+			half3 ase_vertexNormal = mul( unity_WorldToObject, float4( ase_worldNormal, 0 ) );
 			ase_vertexNormal = normalize( ase_vertexNormal );
-			float fresnelNdotV3 = dot( ase_vertexNormal, ase_worldViewDir );
-			float fresnelNode3 = ( 0.0 + _FresnelScale * pow( 1.0 - fresnelNdotV3, 5.0 ) );
-			float clampResult17 = clamp( fresnelNode3 , 0.0 , 1.0 );
-			float4 lerpResult7 = lerp( _ColorA_Instance , _ColorCore_Instance , clampResult17);
-			float4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * i.vertexToFrag49 ) , i.vertexColor.r);
+			half fresnelNdotV3 = dot( ase_vertexNormal, ase_worldViewDir );
+			half fresnelNode3 = ( 0.0 + _FresnelScale * pow( 1.0 - fresnelNdotV3, 5.0 ) );
+			half clampResult17 = clamp( fresnelNode3 , 0.0 , 1.0 );
+			half4 lerpResult7 = lerp( _ColorA_Instance , _ColorCore_Instance , clampResult17);
+			half4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * i.vertexToFrag49 ) , i.vertexColor.r);
 			o.Emission = lerpResult16.rgb;
-			float lerpResult9 = lerp( _Metallic , 1.0 , i.vertexColor.b);
+			half lerpResult9 = lerp( _Metallic , 1.0 , i.vertexColor.b);
 			o.Metallic = lerpResult9;
-			float lerpResult13 = lerp( _NonMetalSmoothness , 0.8 , i.vertexColor.b);
+			half lerpResult13 = lerp( _NonMetalSmoothness , 0.8 , i.vertexColor.b);
 			o.Smoothness = lerpResult13;
 			o.Alpha = 1;
 		}
@@ -193,7 +193,7 @@ Node;AmplifyShaderEditor.SinOpNode;39;-1525.95,210.9894;Inherit;False;1;0;FLOAT;
 Node;AmplifyShaderEditor.FresnelNode;3;-516.5836,168;Inherit;False;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.FunctionNode;45;-1408.736,325.1689;Inherit;False;ConstantBiasScale;-1;;3;63208df05c83e8e49a48ffbdce2e43a0;0;3;3;FLOAT;0;False;1;FLOAT;1;False;2;FLOAT;0.5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;48;-1400.507,187.2398;Inherit;False;Property;_FlickerMax;FlickerMax;9;0;Create;True;0;0;0;False;0;False;1;1;0;10;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;47;-1386.507,81.23983;Inherit;False;Property;_FlickerMin;FlickerMin;8;0;Create;True;0;0;0;False;0;False;0;0.7;0;0.7;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;47;-1386.507,81.23983;Inherit;False;Property;_FlickerMin;FlickerMin;8;0;Create;True;0;0;0;False;0;False;0;0.7;0;2;0;1;FLOAT;0
 Node;AmplifyShaderEditor.ColorNode;4;-535.9166,-191.6669;Inherit;False;InstancedProperty;_ColorCore;Color Core;2;0;Create;True;0;0;0;False;0;False;0.7735849,0.6738459,0.6738459,0;1,1,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;8;-518.5832,-388.6668;Inherit;False;InstancedProperty;_ColorA;Color A;1;0;Create;True;0;0;0;False;0;False;0.0660376,0.636061,1,0;1,0.6396225,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ClampOpNode;17;-269.6666,207.4998;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;1;False;1;FLOAT;0
@@ -210,7 +210,7 @@ Node;AmplifyShaderEditor.LerpOp;16;-30.33325,112.1666;Inherit;False;3;0;COLOR;0,
 Node;AmplifyShaderEditor.LerpOp;9;371.0003,547.5;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;1;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;13;394.3334,257.5;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0.8;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;14;637.0928,-458.1978;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;969.738,-85.91838;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/Neon_Houdini;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;969.738,-85.91838;Half;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/Neon_Houdini;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;36;0;35;0
 WireConnection;39;0;36;0
 WireConnection;3;0;2;0
@@ -240,4 +240,4 @@ WireConnection;0;2;16;0
 WireConnection;0;3;9;0
 WireConnection;0;4;13;0
 ASEEND*/
-//CHKSM=F9C8D5A0CB44C1D819FA6895DD5EBF986ECC38A4
+//CHKSM=13398F16617B548EF623957C18D8CA8C9C9E439F
