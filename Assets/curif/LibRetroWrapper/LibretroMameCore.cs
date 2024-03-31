@@ -24,6 +24,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
+using UnityEngine.XR;
 
 
 /*
@@ -496,6 +497,9 @@ public static unsafe class LibretroMameCore
 
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
+        // Boost the resolution of the eye texture during gameplay
+        XRSettings.eyeTextureResolutionScale = 1.5f;
+
         return true;
     }
 
@@ -696,6 +700,9 @@ public static unsafe class LibretroMameCore
             return;
 
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
+
+        // Restore eye resolution upon exiting game
+        XRSettings.eyeTextureResolutionScale = 1.0f;
 
 #if !UNITY_EDITOR
         StopRunThread();
