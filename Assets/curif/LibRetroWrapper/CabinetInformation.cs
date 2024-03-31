@@ -51,7 +51,7 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
-    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+", "fbneo", "snes9x", "flycast", "swanstation" };
+    public static List<string> Cores = new List<string>() { "mame2010", "mame2003+", "fbneo", "snes9x", "flycast", "swanstation", "mednafen_saturn" };
 
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]

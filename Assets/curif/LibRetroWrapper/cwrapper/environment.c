@@ -75,6 +75,8 @@ int wrapper_dlopen() {
       _core = "libflycast_libretro_android.so";
   } else if (strcmp(core, "swanstation") == 0) {
       _core = "libswanstation_libretro_android.so";
+  } else if (strcmp(core, "mednafen_saturn") == 0) {
+      _core = "libmednafen_saturn_libretro_android.so";
   } else {
     wrapper_environment_log(RETRO_LOG_ERROR, "core: %s unknown\n", core);
     return false;
