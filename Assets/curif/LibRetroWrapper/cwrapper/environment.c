@@ -73,6 +73,8 @@ int wrapper_dlopen() {
       _core = "libsnes9x_libretro_android.so";
   } else if (strcmp(core, "flycast") == 0) {
       _core = "libflycast_libretro_android.so";
+  } else if (strcmp(core, "swanstation") == 0) {
+      _core = "libswanstation_libretro_android.so";
   } else {
     wrapper_environment_log(RETRO_LOG_ERROR, "core: %s unknown\n", core);
     return false;
