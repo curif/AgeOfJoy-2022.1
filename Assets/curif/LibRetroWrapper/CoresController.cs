@@ -7,6 +7,7 @@ You should have received a copy of the GNU General Public License along with thi
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Assets.curif.LibRetroWrapper
@@ -21,6 +22,7 @@ namespace Assets.curif.LibRetroWrapper
         private void Start()
         {
             AddEmbeddedCores();
+            SyncCores();
             ScanForUserCores();
         }
 
@@ -30,39 +32,65 @@ namespace Assets.curif.LibRetroWrapper
             Cores.Add("fbneo", "libfbneo_libretro_android.so");
             Cores.Add("mame2010", "libmame2010_libretro_android.so");
         }
+        private void SyncCores()
+        {
+            var sourceFiles = new DirectoryInfo(ConfigManager.CoresDir).GetFiles();
+            var targetFiles = new DirectoryInfo(ConfigManager.InternalCoresDir).GetFiles();
+            
+            var targetFilesDict = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
+            foreach (var file in targetFiles)
+            {
+                targetFilesDict[file.Name] = file;
+            }
+
+            // Copy or update files from source to target
+            foreach (var sourceFile in sourceFiles)
+            {
+                FileInfo targetFile;
+                if (targetFilesDict.TryGetValue(sourceFile.Name, out targetFile))
+                {
+                    // Check if the source file is different (date or size)
+                    if (sourceFile.LastWriteTimeUtc != targetFile.LastWriteTimeUtc || sourceFile.Length != targetFile.Length)
+                    {
+                        sourceFile.CopyTo(targetFile.FullName, true);
+                        ConfigManager.WriteConsole($"[CoresController] New version of {sourceFile.Name} copied to: {ConfigManager.InternalCoresDir}");
+                    }
+                }
+                else
+                {
+                    // File does not exist in target, so copy it
+                    sourceFile.CopyTo(Path.Combine(ConfigManager.InternalCoresDir, sourceFile.Name), false);
+                    ConfigManager.WriteConsole($"[CoresController] New file {sourceFile.Name} copied to: {ConfigManager.InternalCoresDir}");
+                }
+            }
+
+            // Delete files in target that don't exist in source
+            foreach (var targetFile in targetFiles)
+            {
+                if (!sourceFiles.Any(sf => sf.Name.Equals(targetFile.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    targetFile.Delete();
+                    ConfigManager.WriteConsole($"[CoresController] Unused file: {targetFile.Name} deleted");
+                }
+            }
+        }
 
         private void ScanForUserCores()
         {
-            PurgeExistingCores();
-
-            string[] cores = Directory.GetFiles(ConfigManager.CoresDir, "*" + CORE_FILE_EXTENSION);
+            string[] cores = Directory.GetFiles(ConfigManager.InternalCoresDir, "*" + CORE_FILE_EXTENSION);
             foreach (string core in cores)
             {
                 string coreName = ExtractCoreName(Path.GetFileName(core));
                 if (coreName != null)
                 {
-                    ConfigManager.WriteConsole($"[CoresController] Found core: {coreName}");
-                    string internalCore = Path.Combine(ConfigManager.InternalCoresDir, Path.GetFileName(core));
-                    File.Copy(core, internalCore);
-                    ConfigManager.WriteConsole($"[CoresController] Copied to: {internalCore}");
-                    Cores.Add(coreName, internalCore);
+                    ConfigManager.WriteConsole($"[CoresController] Using core: {coreName}");
+                    Cores.Add(coreName, core);
                 }
                 else
                 {
                     ConfigManager.WriteConsole($"[CoresController] Invalid core name: {core}");
                 }
             }
-        }
-
-        private void PurgeExistingCores()
-        {
-            ConfigManager.WriteConsole($"[CoresController] Purging existing cores in: {ConfigManager.InternalCoresDir}");
-            string[] files = Directory.GetFiles(ConfigManager.InternalCoresDir, "*" + CORE_FILE_EXTENSION);
-                foreach (string file in files)
-                {
-                    File.Delete(file);
-                ConfigManager.WriteConsole($"[CoresController] Existing internal core file has been deleted: {file}");
-                }
         }
 
         private string ExtractCoreName(string core)
