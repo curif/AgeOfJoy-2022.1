@@ -22,9 +22,74 @@ static struct retro_system_info system_info;
 static struct retro_system_av_info av_info;
 static struct retro_game_info game_info;
 
+static struct retro_hw_render_callback hw_render_callback;
+static struct retro_hw_render_context_negotiation_interface_vulkan hw_vulkan_interface;
+static struct retro_hw_render_interface_vulkan hw_render_interface;
+static struct retro_vulkan_context context;
+static VkInstance vkInstance;
+static PFN_vkGetInstanceProcAddr vk_get_instance_proc_addr;
+static PFN_vkCreateInstance vk_create_instance;
+static PFN_vkGetDeviceProcAddr vk_get_device_proc_addr;
+
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
 static enum retro_log_level minLogLevel;
+
+
+// VULCAN HANDLERS. THESE NEED TO BE IMPLEMENTED (SOMEHOW)
+
+static void vulkan_set_image(void* handle,
+    const struct retro_vulkan_image* image,
+    uint32_t num_semaphores,
+    const VkSemaphore* semaphores,
+    uint32_t src_queue_family)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_image\n");
+}
+
+uint32_t frameIndex= 0;
+static uint32_t vulkan_get_sync_index(void* handle)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_get_sync_index\n");
+    frameIndex++;
+    return frameIndex;
+}
+
+static uint32_t vulkan_get_sync_index_mask(void* handle)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_get_sync_index_mask\n");
+    return 1;   // no idea !
+}
+
+static void vulkan_wait_sync_index(void* handle)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_wait_sync_index\n");
+}
+
+static void vulkan_set_command_buffers(void* handle, uint32_t num_cmd, const VkCommandBuffer* cmd)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_command_buffers\n");
+}
+
+static void vulkan_lock_queue(void* handle)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_lock_queue\n");
+}
+
+static void vulkan_unlock_queue(void* handle)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_unlock_queue\n");
+}
+
+static void vulkan_set_signal_semaphore(void* handle, VkSemaphore semaphore)
+{
+    wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_signal_semaphore\n");
+}
+
+
+
+
+
 
 #define INIT_AND_COPY_STRING(dest, src)                                        \
   do {                                                                         \
@@ -349,6 +414,33 @@ void wrapper_environment_log_geometry() {
                           av_info.geometry.aspect_ratio, av_info.timing.fps);
 }
 
+void wrapper_environment_log_render_callback() {
+    char* fmt = "[wrapper_environment_log_render_callback] Render callback:\n"
+        "    version_major: %i\n"
+        "    version_minor: %i\n";
+    wrapper_environment_log(RETRO_LOG_INFO, fmt, 
+        hw_render_callback.version_major,
+        hw_render_callback.version_minor
+        );
+}
+
+void wrapper_environment_log_vulkan_interface() {
+    char* fmt = "[wrapper_environment_log_vulkan_interface] Vulkan interface:\n"
+        "    interface_type: %i\n"
+        "    interface_version: %i\n"
+        "    get_application_info: %016x\n"
+        "    create_device:        %016x\n"
+        "    destroy_device:       %016x\n"
+        ;
+    wrapper_environment_log(RETRO_LOG_INFO, fmt,
+        hw_vulkan_interface.interface_type,
+        hw_vulkan_interface.interface_version,
+        (long)hw_vulkan_interface.get_application_info,
+        (long)hw_vulkan_interface.create_device,
+        (long)hw_vulkan_interface.destroy_device
+        );
+}
+
 void wrapper_environment_get_av_info() {
   // wrapper_environment_log(RETRO_LOG_INFO,
   //                         "[wrapper_environment_get_av_info]\n");
@@ -403,186 +495,346 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
   switch (cmd) {
 
   case RETRO_ENVIRONMENT_GET_VARIABLE:
-    // 15
+      // 15
 
-    if (!data)
-      return false;
+      if (!data)
+          return false;
 
-    var = (struct retro_variable *)data;
-    if (!var->key)
-      return false;
+      var = (struct retro_variable*)data;
+      if (!var->key)
+          return false;
 
 #ifdef ENVIRONMENT_DEBUG
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[wrapper_environment_cb] get var: %s", var->key);
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[wrapper_environment_cb] get var: %s", var->key);
 #endif /* ifdef ENVIRONMENT_DEBUG */
 
-    if (strcmp(var->key, "mame2003-plus_skip_disclaimer") == 0) {
-      var->value = enabled;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_skip_warnings") == 0) {
-      var->value = enabled;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
-      var->value = xy_input_type;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_gamma") == 0 ||
-               strcmp(var->key, "mame_current_adj_gamma") == 0) {
-      var->value = gamma;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_brightness") == 0 ||
-               strcmp(var->key, "mame_current_adj_brightness") == 0) {
-      var->value = brightness;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_sample_rate") == 0) {
-      var->value = sample_rate;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_mame_remapping") == 0) {
-      var->value = enabled;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_vector_intensity") == 0) {
-      var->value = vector_intensity;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_use_samples") == 0) {
-      var->value = enabled;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "mame2003-plus_vector_vector_translusency") ==
-               0) {
-      var->value = disabled;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    } else if (strcmp(var->key, "fbneo-lightgun-crosshair-emulation") == 0) {
-      var->value = enabled;
-      wrapper_environment_log(RETRO_LOG_INFO,
-                              "[wrapper_environment_cb] get var: %s: %s",
-                              var->key, var->value);
-      return true;
-    }
+      if (strcmp(var->key, "mame2003-plus_skip_disclaimer") == 0) {
+          var->value = enabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_skip_warnings") == 0) {
+          var->value = enabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
+          var->value = xy_input_type;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_gamma") == 0 ||
+          strcmp(var->key, "mame_current_adj_gamma") == 0) {
+          var->value = gamma;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_brightness") == 0 ||
+          strcmp(var->key, "mame_current_adj_brightness") == 0) {
+          var->value = brightness;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_sample_rate") == 0) {
+          var->value = sample_rate;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_mame_remapping") == 0) {
+          var->value = enabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_vector_intensity") == 0) {
+          var->value = vector_intensity;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_use_samples") == 0) {
+          var->value = enabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "mame2003-plus_vector_vector_translusency") ==
+          0) {
+          var->value = disabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "fbneo-lightgun-crosshair-emulation") == 0) {
+          var->value = enabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
 
-    return false;
+      return false;
 
   case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
-    wrapper_environment_log(RETRO_LOG_INFO, "[GET_CORE_OPTIONS_VERSION} v2\n");
-    *(unsigned *)data = 0;
-    break;
+      wrapper_environment_log(RETRO_LOG_INFO, "[GET_CORE_OPTIONS_VERSION} v2\n");
+      *(unsigned*)data = 0;
+      break;
 
   case RETRO_ENVIRONMENT_GET_LOG_INTERFACE:
-    if (!data || !log)
-      return false;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_GET_LOG_INTERFACE]\n");
-    struct retro_log_callback *cb = (struct retro_log_callback *)data;
-    cb->log = &wrapper_environment_log;
-    return true;
+      if (!data || !log)
+          return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_LOG_INTERFACE]\n");
+      struct retro_log_callback* cb = (struct retro_log_callback*)data;
+      cb->log = &wrapper_environment_log;
+      return true;
 
   case RETRO_ENVIRONMENT_SET_PIXEL_FORMAT:
-    pixel_format = *(const enum retro_pixel_format *)data;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_SET_PIXEL_FORMAT] %i\n",
-                            pixel_format);
-    return true;
+      pixel_format = *(const enum retro_pixel_format*)data;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_PIXEL_FORMAT] %i\n",
+          pixel_format);
+      return true;
 
   case RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY:
-    // 9
-    if (!data)
-      return false;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY]: %s\n",
-                            system_directory);
-    *(char **)data = system_directory;
-    return true;
+      // 9
+      if (!data)
+          return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY]: %s\n",
+          system_directory);
+      *(char**)data = system_directory;
+      return true;
 
   case RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY:
-    // 31
-    if (!data)
-      return false;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY]%s\n",
-                            save_directory);
-    *(char **)data = save_directory;
-    return true;
+      // 31
+      if (!data)
+          return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY]%s\n",
+          save_directory);
+      *(char**)data = save_directory;
+      return true;
 
   case RETRO_ENVIRONMENT_SET_ROTATION:
-    if (!data)
-      return false;
-    // rotation should be specified in CDL
-    ptr = (unsigned int *)data;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_SET_ROTATION] %i\n", *ptr);
-    return true;
+      if (!data)
+          return false;
+      // rotation should be specified in CDL
+      ptr = (unsigned int*)data;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_ROTATION] %i\n", *ptr);
+      return true;
 
   case RETRO_ENVIRONMENT_SET_GEOMETRY:
-    if (!data)
-      return false;
+      if (!data)
+          return false;
 
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_SET_GEOMETRY]\n");
-    struct retro_game_geometry *geo = (struct retro_game_geometry *)data;
-    memcpy(&(av_info.geometry), geo, sizeof(av_info.geometry));
-    wrapper_environment_log_geometry();
-    return true;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_GEOMETRY]\n");
+      struct retro_game_geometry* geo = (struct retro_game_geometry*)data;
+      memcpy(&(av_info.geometry), geo, sizeof(av_info.geometry));
+      wrapper_environment_log_geometry();
+      return true;
 
   case RETRO_ENVIRONMENT_SET_CONTROLLER_INFO:
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_SET_CONTROLLER_INFO] last "
-                            "environment call from retro_load_game\n");
-    return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_CONTROLLER_INFO] last "
+          "environment call from retro_load_game\n");
+      return false;
 
   case RETRO_ENVIRONMENT_GET_CAN_DUPE:
-    if (!data)
-      return false;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_GET_CAN_DUPE]\n");
-    *(bool *)data = true;
-    return true;
+      if (!data)
+          return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_CAN_DUPE]\n");
+      *(bool*)data = true;
+      return true;
 
   case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
-    if (!data)
+      if (!data)
+          return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE]\n");
+      *(bool*)data = false;
       return false;
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE]\n");
-    *(bool *)data = false;
-    return false;
 
   case RETRO_ENVIRONMENT_SHUTDOWN:
-    wrapper_environment_log(RETRO_LOG_INFO,
-                            "[RETRO_ENVIRONMENT_SHUTDOWN] ???\n");
-    return false;
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SHUTDOWN] ???\n");
+      return false;
 
-    // case RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER:
-    //   wrapper_environment_log(RETRO_LOG_INFO,
-    //   "[RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER] VULKAN\n"); unsigned
-    //   *hw_context = (unsigned*)data; *hw_context = RETRO_HW_CONTEXT_VULKAN;
-    //   return true;
+  case RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER] VULKAN\n");
+      unsigned* hw_context = (unsigned*)data;
+      *hw_context = RETRO_HW_CONTEXT_VULKAN;
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_HW_RENDER:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_HW_RENDER]\n");
+      if (!data)
+          return false;
+      struct retro_hw_render_callback* callback = (struct retro_hw_render_callback*)data;
+      memcpy(&(hw_render_callback), callback, sizeof(hw_render_callback));
+      wrapper_environment_log_render_callback();
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE]\n");
+      if (!data)
+          return false;
+      struct retro_hw_render_context_negotiation_interface_vulkan *interface = (struct retro_hw_render_context_negotiation_interface_vulkan*)data;
+      memcpy(&(hw_vulkan_interface), interface, sizeof(hw_vulkan_interface));
+      wrapper_environment_log_vulkan_interface();
+
+
+      // 1- Have to negotiate thru retro_hw_render_context_negotiation_interface_vulkan
+        wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] create_device\n");
+
+      void* vulkan_library = dlopen("libvulkan.so", RTLD_NOW);
+      if (!vulkan_library) {
+          wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] Failed to load libvulkan.so\n");
+          return false;
+      }
+
+      vk_get_instance_proc_addr = (PFN_vkGetInstanceProcAddr)dlsym(vulkan_library, "vkGetInstanceProcAddr");
+      if (!vk_get_instance_proc_addr) {
+          wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] Failed to find vkGetInstanceProcAddr\n");
+          return false;
+      }
+
+      vk_create_instance = (PFN_vkCreateInstance)vk_get_instance_proc_addr(NULL, "vkCreateInstance");
+      if (!vk_create_instance) {
+          wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] Failed to find vkCreateInstance\n");
+          return false;
+      }
+
+      vk_get_device_proc_addr = (PFN_vkGetDeviceProcAddr)vk_get_instance_proc_addr(NULL, "vkGetDeviceProcAddr");
+      if (!vk_get_device_proc_addr) {
+          wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] Failed to find vkGetDeviceProcAddr\n");
+          //return false;
+      }
+
+      // Initialize the VkApplicationInfo structure
+      VkApplicationInfo appInfo = {};
+      appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+      appInfo.pApplicationName = "Hello Vulkan";
+      appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+      appInfo.pEngineName = "No Engine";
+      appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+      appInfo.apiVersion = VK_API_VERSION_1_0;
+
+      // Initialize the VkInstanceCreateInfo structure
+      VkInstanceCreateInfo createInfo = {};
+      createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+      createInfo.pApplicationInfo = &appInfo;
+
+      // Create the Vulkan instance
+      VkResult vkCreateInstanceResult = vk_create_instance(&createInfo, NULL, &vkInstance);
+      if (vkCreateInstanceResult != VK_SUCCESS) {
+          wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] Failed to create Vulkan instance\n");
+          return false;
+      }
+
+      char* required_device_extensions = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+      VkPhysicalDeviceFeatures required_features = { false };
+
+      bool result = interface->create_device(&context, 
+          vkInstance,                   // VkInstance instance
+          VK_NULL_HANDLE,               // VkPhysicalDevice gpu
+          VK_NULL_HANDLE,               // VkSurfaceKHR surface
+          vk_get_instance_proc_addr,    // PFN_vkGetInstanceProcAddr get_instance_proc_addr
+          &required_device_extensions,  // const char **required_device_extensions
+          0,                            // unsigned num_required_device_extensions
+          NULL,                         // const char **required_device_layers
+          0,                            // unsigned num_required_device_layers
+          &required_features            // const VkPhysicalDeviceFeatures *required_features
+          );
+      wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] create_device %d\n", result);
+
+      wrapper_environment_log(RETRO_LOG_INFO, 
+          "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] create_device result\n"
+          "	VkInstance instance: %016x\n"
+          "	VkPhysicalDevice gpu: %016x\n"
+          "	VkDevice device: %016x\n"
+          "	VkQueue queue: %016x\n"
+          "	unsigned queue_family_index: %i\n"
+          "	VkQueue presentation_queue: %016x\n"
+          "	unsigned presentation_queue_family_index: %i\n",
+          &context.gpu,
+          &context.device,
+          &context.queue,
+          context.queue_family_index,
+          &context.presentation_queue,
+          context.presentation_queue_family_index
+		  );
+
+      // 2- Now we have to call context_reset to finalize the initialization
+      hw_render_callback.get_proc_address = vk_get_instance_proc_addr;
+      hw_render_callback.context_reset();
+      wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_SET_HW_RENDER] Vulkan context_reset done\n");
+
+      return true;
+
+  case RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE]\n");
+      if (!data)
+          return false;
+      hw_render_interface.interface_type = RETRO_HW_RENDER_INTERFACE_VULKAN;
+      hw_render_interface.interface_version = RETRO_HW_RENDER_INTERFACE_VULKAN_VERSION;
+      hw_render_interface.instance = vkInstance;
+      hw_render_interface.gpu = context.gpu;
+      hw_render_interface.device = context.device;
+      hw_render_interface.queue = context.queue;
+      hw_render_interface.queue_index = context.queue_family_index;
+      hw_render_interface.get_instance_proc_addr = vk_get_instance_proc_addr;
+      hw_render_interface.get_device_proc_addr = vk_get_device_proc_addr;
+
+      hw_render_interface.set_image = vulkan_set_image;
+      hw_render_interface.get_sync_index = vulkan_get_sync_index;
+      hw_render_interface.get_sync_index_mask = vulkan_get_sync_index_mask;
+      hw_render_interface.wait_sync_index = vulkan_wait_sync_index;
+      hw_render_interface.set_command_buffers = vulkan_set_command_buffers;
+      hw_render_interface.lock_queue = vulkan_lock_queue;
+      hw_render_interface.unlock_queue = vulkan_unlock_queue;
+      hw_render_interface.set_signal_semaphore = vulkan_set_signal_semaphore;
+
+      *(void**)data = &hw_render_interface;
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY:
+      if (!data)
+          return false;
+      struct retro_core_option_display* display = (struct retro_core_option_display*)data;
+      //wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY] %s=%d",
+      //    display->key, display->visible
+      //);
+      return true;
+
+  default:
+	  wrapper_environment_log(RETRO_LOG_WARN,
+		  "[wrapper_environment_cb] Unsupported command: %i\n", (int)cmd);
+	  return false;
   }
 
   return false;

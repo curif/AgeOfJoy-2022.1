@@ -15,6 +15,7 @@ extern "C" {
 #include <string.h>
 
 #include "libretro.h"
+#include "libretro_vulkan.h"
 
 typedef void (RETRO_CALLCONV *wrapper_log_printf_t)(enum retro_log_level level, const char *value);
 
