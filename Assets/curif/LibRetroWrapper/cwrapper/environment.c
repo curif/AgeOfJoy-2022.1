@@ -35,6 +35,10 @@ static PFN_vkGetDeviceProcAddr vk_get_device_proc_addr;
 static char log_buffer[LOG_BUFFER_SIZE];
 static enum retro_log_level minLogLevel;
 
+static char* cap32_gfx_colors = "16bit";
+static char* cap32_scr_crop = "enabled";
+static char* cap32_model = "6128+ (experimental)";
+
 
 // VULCAN HANDLERS. THESE NEED TO BE IMPLEMENTED (SOMEHOW)
 
@@ -589,11 +593,42 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
               var->key, var->value);
           return true;
       }
+      else if (strcmp(var->key, "cap32_gfx_colors") == 0) {
+          var->value = cap32_gfx_colors;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+      else if (strcmp(var->key, "cap32_scr_crop") == 0) {
+          var->value = cap32_scr_crop;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+	  else if (strcmp(var->key, "cap32_model") == 0) {
+		  var->value = cap32_model;
+		  wrapper_environment_log(RETRO_LOG_INFO,
+			  "[wrapper_environment_cb] get var: %s: %s",
+			  var->key, var->value);
+		  return true;
+	  }
+      else if (strcmp(var->key, "cap32_autorun") == 0) {
+          var->value = enabled;
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] get var: %s: %s",
+              var->key, var->value);
+          return true;
+      }
+
+      wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_VARIABLE] Unhandled setting: %s\n", var->key);
+
 
       return false;
 
   case RETRO_ENVIRONMENT_GET_CORE_OPTIONS_VERSION:
-      wrapper_environment_log(RETRO_LOG_INFO, "[GET_CORE_OPTIONS_VERSION} v2\n");
+      wrapper_environment_log(RETRO_LOG_INFO, "[GET_CORE_OPTIONS_VERSION] v2\n");
       *(unsigned*)data = 0;
       break;
 
@@ -830,6 +865,30 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
       //    display->key, display->visible
       //);
       return true;
+
+  case RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK:
+      wrapper_environment_log(RETRO_LOG_INFO,
+		  "[RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK]\n");
+      // we receive struct retro_keyboard_callback *
+      return true;
+
+  case RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION:
+      wrapper_environment_log(RETRO_LOG_INFO,
+		  "[RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION]\n");
+      *(unsigned*)data = 1;
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE]\n");
+      // we receive struct retro_disk_control_callback *
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE:
+      wrapper_environment_log(RETRO_LOG_INFO,
+		  "[RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE]\n");
+	  // we receive struct retro_disk_control_ext_callback *
+	  return true;
 
   default:
 	  wrapper_environment_log(RETRO_LOG_WARN,
