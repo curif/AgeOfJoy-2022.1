@@ -39,6 +39,8 @@ static char* cap32_gfx_colors = "16bit";
 static char* cap32_scr_crop = "enabled";
 static char* cap32_model = "6128+ (experimental)";
 
+static Environment EnvironmentCB;
+
 
 // VULCAN HANDLERS. THESE NEED TO BE IMPLEMENTED (SOMEHOW)
 
@@ -157,14 +159,18 @@ void wrapper_dlclose() {
 
 int wrapper_environment_open(wrapper_log_printf_t _log,
                              enum retro_log_level _minLogLevel,
-                             char *_save_directory, char *_system_directory,
+                             char *_save_directory, 
+                             char *_system_directory,
                              char *_sample_rate,
-                             retro_input_state_t _input_state_cb, char *_core) {
+                             retro_input_state_t _input_state_cb, 
+                             char *_core,
+                             Environment _environment) {
   log = _log;
   minLogLevel = _minLogLevel;
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
   input_state_cb = _input_state_cb;
   INIT_AND_COPY_STRING(core, _core);
+  EnvironmentCB = _environment;
 
   // load core.
   if (!wrapper_dlopen())
@@ -484,6 +490,7 @@ double wrapper_environment_get_sample_rate() {
 bool wrapper_environment_cb(unsigned cmd, void *data) {
   struct retro_variable *var;
   unsigned int *ptr;
+  char* envValue;
 
   /*
   #ifdef ENVIRONMENT_DEBUG
@@ -499,14 +506,22 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
   switch (cmd) {
 
   case RETRO_ENVIRONMENT_GET_VARIABLE:
-      // 15
-
       if (!data)
           return false;
 
       var = (struct retro_variable*)data;
       if (!var->key)
           return false;
+
+      envValue = EnvironmentCB(var->key);
+      if (envValue) {
+          wrapper_environment_log(RETRO_LOG_INFO,
+              "[wrapper_environment_cb] Found in Environment: %s=%s", 
+              var->key, 
+              envValue);
+          var->value = envValue;
+		  return true;
+	  }
 
 #ifdef ENVIRONMENT_DEBUG
       wrapper_environment_log(RETRO_LOG_INFO,
@@ -587,34 +602,6 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
           return true;
       }
       else if (strcmp(var->key, "fbneo-lightgun-crosshair-emulation") == 0) {
-          var->value = enabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "cap32_gfx_colors") == 0) {
-          var->value = cap32_gfx_colors;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "cap32_scr_crop") == 0) {
-          var->value = cap32_scr_crop;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-	  else if (strcmp(var->key, "cap32_model") == 0) {
-		  var->value = cap32_model;
-		  wrapper_environment_log(RETRO_LOG_INFO,
-			  "[wrapper_environment_cb] get var: %s: %s",
-			  var->key, var->value);
-		  return true;
-	  }
-      else if (strcmp(var->key, "cap32_autorun") == 0) {
           var->value = enabled;
           wrapper_environment_log(RETRO_LOG_INFO,
               "[wrapper_environment_cb] get var: %s: %s",

@@ -17,7 +17,7 @@ namespace Assets.curif.LibRetroWrapper
         private static string CORE_FILE_EXTENSION = ".so";
         private static string ARCH = "android";
 
-        private static Dictionary<string, string> Cores = new Dictionary<string, string>();
+        private static Dictionary<string, Core> Cores = new Dictionary<string, Core>();
 
         private void Start()
         {
@@ -28,10 +28,36 @@ namespace Assets.curif.LibRetroWrapper
 
         private void AddEmbeddedCores()
         {
-            Cores.Add("mame2003+", "libmame2003_plus_libretro_android.so");
-            Cores.Add("fbneo", "libfbneo_libretro_android.so");
-            Cores.Add("mame2010", "libmame2010_libretro_android.so");
+            AddCore("mame2003+", "libmame2003_plus_libretro_android.so", Mame2003PlusConfig());
+            AddCore("mame2010", "libmame2010_libretro_android.so", Mame2010Config());
+            AddCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
         }
+
+        public static CoreConfig Mame2003PlusConfig()
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties.Add("skip_disclaimer", "enabled");
+            properties.Add("skip_warnings", "enabled");
+            CoreConfig config = new CoreConfig("mame2003-plus", properties);
+            return config;
+        }
+
+        public static CoreConfig Mame2010Config()
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties.Add("skip_disclaimer", "enabled");
+            properties.Add("skip_warnings", "enabled");
+            CoreConfig config = new CoreConfig("mame2010", properties);
+            return config;
+        }
+
+        public static CoreConfig FbNeoConfig()
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            CoreConfig config = new CoreConfig("fbneo", properties);
+            return config;
+        }
+
         private void SyncCores()
         {
             var sourceFiles = new DirectoryInfo(ConfigManager.CoresDir).GetFiles();
@@ -77,20 +103,30 @@ namespace Assets.curif.LibRetroWrapper
 
         private void ScanForUserCores()
         {
-            string[] cores = Directory.GetFiles(ConfigManager.InternalCoresDir, "*" + CORE_FILE_EXTENSION);
-            foreach (string core in cores)
+            string[] coreLibs = Directory.GetFiles(ConfigManager.InternalCoresDir, "*" + CORE_FILE_EXTENSION);
+            foreach (string coreLib in coreLibs)
             {
-                string coreName = ExtractCoreName(Path.GetFileName(core));
+                string coreName = ExtractCoreName(Path.GetFileName(coreLib));
                 if (coreName != null)
                 {
                     ConfigManager.WriteConsole($"[CoresController] Using core: {coreName}");
-                    Cores.Add(coreName, core);
+                    AddCore(coreName, coreLib);
                 }
                 else
                 {
-                    ConfigManager.WriteConsole($"[CoresController] Invalid core name: {core}");
+                    ConfigManager.WriteConsole($"[CoresController] Invalid core name: {coreLib}");
                 }
             }
+        }
+
+        private void AddCore(string coreName, string coreLib)
+        {
+            Cores.Add(coreName, new Core(coreName, coreLib));
+        }
+
+        private void AddCore(string coreName, string coreLib, CoreConfig coreConfig)
+        {
+            Cores.Add(coreName, new Core(coreName, coreLib, coreConfig));
         }
 
         private string ExtractCoreName(string core)
@@ -99,12 +135,12 @@ namespace Assets.curif.LibRetroWrapper
             return index > 0 ? core.Substring(0, index) : null;
         }
 
-        public static string GetCorePath(string coreName)
+        public static Core GetCore(string coreName)
         {
-            return Cores.ContainsKey(coreName) ? Cores[coreName] : null;
+            return CoreExists(coreName) ? Cores[coreName] : null;
         }
 
-        public static bool Contains(string core)
+        public static bool CoreExists(string core)
         {
             return Cores.ContainsKey(core);
         }

@@ -272,6 +272,9 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_system_info_need_full_path();
 
+    //environment
+    private delegate string EnvironmentHandler(string key);
+
     //image
     private delegate void CreateTextureHandler(uint width, uint height);
     private delegate void TextureLockHandler();
@@ -297,7 +300,8 @@ public static unsafe class LibretroMameCore
                                                         string _system_directory,
                                                         string _sample_rate,
                                                         inputStateHandler _input_state_handler_cb,
-                                                        string core);
+                                                        string _coreLibrary,
+                                                        EnvironmentHandler _environmentHandler);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_init();
 
@@ -433,17 +437,21 @@ public static unsafe class LibretroMameCore
         var audioConfig = AudioSettings.GetConfiguration();
         QuestAudioFrequency = audioConfig.sampleRate;
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
+        WriteConsole("[LibRetroMameCore.Start] Init environment and call retro_init()");
+        
+        Core core = CoresController.GetCore(Core);
+        ConfigManager.WriteConsoleError($"[LibRetroMameCore.Start] Using corelib {core.library}");
+        InitEnvironment(core.GetConfig());
 
-        WriteConsole("[LibRetroMameCore.Start] Init environmnet and call retro_init()");
-        string coreLib = CoresController.GetCorePath(Core);
-        WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{coreLib} for {Core}");
+        WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{core.library} for {Core}");
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
                                                 new inputStateHandler(inputStateCB),
-                                                coreLib
+                                                core.library,
+                                                new EnvironmentHandler(EnvironmentHandlerCB)
                                                 );
         if (result != 0)
         {
@@ -527,6 +535,26 @@ public static unsafe class LibretroMameCore
     public static bool isRunning(string screenName, string gameFileName)
     {
         return GameLoaded && GameFileName == gameFileName && screenName == ScreenName;
+    }
+
+
+    static Dictionary<string, string> environment = new Dictionary<string, string>();
+    static void InitEnvironment(CoreConfig coreConfig)
+    {
+        environment.Clear();
+        foreach (KeyValuePair<string, string> setting in coreConfig.environment.properties)
+        {
+            string key = coreConfig.environment.prefix + "_" + setting.Key;
+            string value = setting.Value;
+            ConfigManager.WriteConsole($"[LibRetroMameCore.Start] Using configuration data: {key} = {value}");
+            environment.Add(key, value);
+        }
+    }
+
+    [AOT.MonoPInvokeCallback(typeof(EnvironmentHandler))]
+    static string EnvironmentHandlerCB(string key)
+    {
+        return environment.ContainsKey(key) ? environment[key] : null;
     }
 
 
