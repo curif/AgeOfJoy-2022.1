@@ -46,24 +46,24 @@ Shader "AgeOfJoy/LitVtxGlow_Phone"
 			float2 uv_texcoord;
 			float4 vertexColor : COLOR;
 			float3 worldPos;
-			float3 worldNormal;
+			half3 worldNormal;
 			INTERNAL_DATA
 		};
 
 		uniform sampler2D _Normal;
-		uniform float4 _Normal_ST;
+		uniform half4 _Normal_ST;
 		uniform sampler2D _Diffuse;
-		uniform float4 _Diffuse_ST;
-		uniform float4 _AlbedoTint;
-		uniform float _GlowMin;
-		uniform float _GlowMax;
-		uniform float _PulseSpeed;
-		uniform float4 _EmissiveTint;
-		uniform float4 _EmissiveTintFresnel;
-		uniform float _FresnelBias;
-		uniform float _Metallic;
-		uniform float _Smoothness;
-		uniform float _Opacity;
+		uniform half4 _Diffuse_ST;
+		uniform half4 _AlbedoTint;
+		uniform half _GlowMin;
+		uniform half _GlowMax;
+		uniform half _PulseSpeed;
+		uniform half4 _EmissiveTint;
+		uniform half4 _EmissiveTintFresnel;
+		uniform half _FresnelBias;
+		uniform half _Metallic;
+		uniform half _Smoothness;
+		uniform half _Opacity;
 		uniform sampler2D _TextureSample0;
 		uniform float _Cutoff = 0.5;
 
@@ -72,29 +72,29 @@ Shader "AgeOfJoy/LitVtxGlow_Phone"
 			float2 uv_Normal = i.uv_texcoord * _Normal_ST.xy + _Normal_ST.zw;
 			o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
 			float2 uv_Diffuse = i.uv_texcoord * _Diffuse_ST.xy + _Diffuse_ST.zw;
-			float4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
+			half4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
 			o.Albedo = ( tex2DNode6 * _AlbedoTint ).rgb;
-			float lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
-			float4 temp_output_20_0 = ( ( tex2DNode6 * i.vertexColor.r ) * lerpResult36 );
+			half lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
+			half4 temp_output_20_0 = ( ( tex2DNode6 * i.vertexColor.r ) * lerpResult36 );
 			float3 ase_worldPos = i.worldPos;
-			float3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
-			float3 ase_worldNormal = WorldNormalVector( i, float3( 0, 0, 1 ) );
-			float fresnelNdotV47 = dot( ase_worldNormal, ase_worldViewDir );
-			float fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
-			float clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
-			float4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
+			half3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
+			half3 ase_worldNormal = WorldNormalVector( i, half3( 0, 0, 1 ) );
+			half fresnelNdotV47 = dot( ase_worldNormal, ase_worldViewDir );
+			half fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
+			half clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
+			half4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
 			#ifdef _USEEMISSIVETINT_ON
-				float4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
+				half4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
 			#else
-				float4 staticSwitch44 = temp_output_20_0;
+				half4 staticSwitch44 = temp_output_20_0;
 			#endif
 			o.Emission = staticSwitch44.rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Smoothness;
 			o.Alpha = 1;
-			float lerpResult56 = lerp( -1.0 , 1.0 , _Opacity);
+			half lerpResult56 = lerp( -1.0 , 1.0 , _Opacity);
 			float2 uv_TexCoord61 = i.uv_texcoord * float2( 4,4 );
-			float2 panner62 = ( 1.0 * _Time.y * float2( 0,0.2 ) + uv_TexCoord61);
+			half2 panner62 = ( 1.0 * _Time.y * float2( 0,0.2 ) + uv_TexCoord61);
 			clip( saturate( ( lerpResult56 + tex2D( _TextureSample0, panner62 ).g ) ) - _Cutoff );
 		}
 
@@ -224,7 +224,7 @@ Node;AmplifyShaderEditor.SimpleMultiplyOpNode;51;1315.207,-411.1347;Inherit;Fals
 Node;AmplifyShaderEditor.RangedFloatNode;39;1526.334,40.66599;Inherit;False;Property;_Metallic;Metallic;6;0;Create;True;0;0;0;False;0;False;0;0.614;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;40;1593.334,108.3327;Inherit;False;Property;_Smoothness;Smoothness;7;0;Create;True;0;0;0;False;0;False;0.5;0.471;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode;59;2763.432,260.968;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;54;2544.667,-454.3334;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/LitVtxGlow_Phone;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Custom;0.5;True;True;0;True;TransparentCutout;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;0;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;54;2544.667,-454.3334;Half;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/LitVtxGlow_Phone;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Custom;0.5;True;True;0;True;TransparentCutout;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;0;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;26;0;23;0
 WireConnection;26;1;27;0
 WireConnection;35;0;26;0
@@ -263,4 +263,4 @@ WireConnection;54;3;39;0
 WireConnection;54;4;40;0
 WireConnection;54;10;59;0
 ASEEND*/
-//CHKSM=B4A323BDA7DC81A5A467997D3956BEE570EE7E3B
+//CHKSM=576CD4C2B30CE7F3136FE7CF0F4108C4BD71E780

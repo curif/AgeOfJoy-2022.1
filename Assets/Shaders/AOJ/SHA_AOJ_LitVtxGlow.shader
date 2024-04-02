@@ -203,7 +203,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -263,18 +263,18 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
-			uniform float4 _AlbedoTint;
+			uniform half4 _Diffuse_ST;
+			uniform half4 _AlbedoTint;
 			uniform sampler2D _Normal;
-			uniform float4 _Normal_ST;
-			uniform float _GlowMin;
-			uniform float _GlowMax;
-			uniform float _PulseSpeed;
-			uniform float4 _EmissiveTint;
-			uniform float4 _EmissiveTintFresnel;
-			uniform float _FresnelBias;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half4 _Normal_ST;
+			uniform half _GlowMin;
+			uniform half _GlowMax;
+			uniform half _PulseSpeed;
+			uniform half4 _EmissiveTint;
+			uniform half4 _EmissiveTintFresnel;
+			uniform half _FresnelBias;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 
 
 			
@@ -285,8 +285,8 @@ Shader "AgeOfJoy/LitVtxGlow"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
-				float vertexToFrag53 = lerpResult36;
+				half lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
+				half vertexToFrag53 = lerpResult36;
 				o.ase_texcoord9.z = vertexToFrag53;
 				
 				o.ase_texcoord9.xy = v.ase_texcoord.xy;
@@ -367,7 +367,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -482,20 +482,20 @@ Shader "AgeOfJoy/LitVtxGlow"
 				#endif
 
 				float2 uv_Diffuse = IN.ase_texcoord9.xy * _Diffuse_ST.xy + _Diffuse_ST.zw;
-				float4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
+				half4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
 				
 				float2 uv_Normal = IN.ase_texcoord9.xy * _Normal_ST.xy + _Normal_ST.zw;
 				
-				float vertexToFrag53 = IN.ase_texcoord9.z;
-				float4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
-				float fresnelNdotV47 = dot( WorldNormal, worldViewDir );
-				float fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
-				float clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
-				float4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
+				half vertexToFrag53 = IN.ase_texcoord9.z;
+				half4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
+				half fresnelNdotV47 = dot( WorldNormal, worldViewDir );
+				half fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
+				half clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
+				half4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
 				#ifdef _USEEMISSIVETINT_ON
-				float4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
+				half4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
 				#else
-				float4 staticSwitch44 = temp_output_20_0;
+				half4 staticSwitch44 = temp_output_20_0;
 				#endif
 				
 				o.Albedo = ( tex2DNode6 * _AlbedoTint ).rgb;
@@ -699,7 +699,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			struct v2f {
@@ -752,18 +752,18 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
-			uniform float4 _AlbedoTint;
+			uniform half4 _Diffuse_ST;
+			uniform half4 _AlbedoTint;
 			uniform sampler2D _Normal;
-			uniform float4 _Normal_ST;
-			uniform float _GlowMin;
-			uniform float _GlowMax;
-			uniform float _PulseSpeed;
-			uniform float4 _EmissiveTint;
-			uniform float4 _EmissiveTintFresnel;
-			uniform float _FresnelBias;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half4 _Normal_ST;
+			uniform half _GlowMin;
+			uniform half _GlowMax;
+			uniform half _PulseSpeed;
+			uniform half4 _EmissiveTint;
+			uniform half4 _EmissiveTintFresnel;
+			uniform half _FresnelBias;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 
 
 			
@@ -774,8 +774,8 @@ Shader "AgeOfJoy/LitVtxGlow"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
-				float vertexToFrag53 = lerpResult36;
+				half lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
+				half vertexToFrag53 = lerpResult36;
 				o.ase_texcoord9.z = vertexToFrag53;
 				
 				o.ase_texcoord9.xy = v.ase_texcoord.xy;
@@ -836,7 +836,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -952,20 +952,20 @@ Shader "AgeOfJoy/LitVtxGlow"
 
 
 				float2 uv_Diffuse = IN.ase_texcoord9.xy * _Diffuse_ST.xy + _Diffuse_ST.zw;
-				float4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
+				half4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
 				
 				float2 uv_Normal = IN.ase_texcoord9.xy * _Normal_ST.xy + _Normal_ST.zw;
 				
-				float vertexToFrag53 = IN.ase_texcoord9.z;
-				float4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
-				float fresnelNdotV47 = dot( WorldNormal, worldViewDir );
-				float fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
-				float clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
-				float4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
+				half vertexToFrag53 = IN.ase_texcoord9.z;
+				half4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
+				half fresnelNdotV47 = dot( WorldNormal, worldViewDir );
+				half fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
+				half clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
+				half4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
 				#ifdef _USEEMISSIVETINT_ON
-				float4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
+				half4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
 				#else
-				float4 staticSwitch44 = temp_output_20_0;
+				half4 staticSwitch44 = temp_output_20_0;
 				#endif
 				
 				o.Albedo = ( tex2DNode6 * _AlbedoTint ).rgb;
@@ -1121,7 +1121,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -1163,18 +1163,18 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
-			uniform float4 _AlbedoTint;
+			uniform half4 _Diffuse_ST;
+			uniform half4 _AlbedoTint;
 			uniform sampler2D _Normal;
-			uniform float4 _Normal_ST;
-			uniform float _GlowMin;
-			uniform float _GlowMax;
-			uniform float _PulseSpeed;
-			uniform float4 _EmissiveTint;
-			uniform float4 _EmissiveTintFresnel;
-			uniform float _FresnelBias;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half4 _Normal_ST;
+			uniform half _GlowMin;
+			uniform half _GlowMax;
+			uniform half _PulseSpeed;
+			uniform half4 _EmissiveTint;
+			uniform half4 _EmissiveTintFresnel;
+			uniform half _FresnelBias;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 
 
 			
@@ -1185,8 +1185,8 @@ Shader "AgeOfJoy/LitVtxGlow"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
-				float vertexToFrag53 = lerpResult36;
+				half lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
+				half vertexToFrag53 = lerpResult36;
 				o.ase_texcoord8.z = vertexToFrag53;
 				
 				o.ase_texcoord8.xy = v.ase_texcoord.xy;
@@ -1249,7 +1249,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -1364,20 +1364,20 @@ Shader "AgeOfJoy/LitVtxGlow"
 				half atten = 1;
 
 				float2 uv_Diffuse = IN.ase_texcoord8.xy * _Diffuse_ST.xy + _Diffuse_ST.zw;
-				float4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
+				half4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
 				
 				float2 uv_Normal = IN.ase_texcoord8.xy * _Normal_ST.xy + _Normal_ST.zw;
 				
-				float vertexToFrag53 = IN.ase_texcoord8.z;
-				float4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
-				float fresnelNdotV47 = dot( WorldNormal, worldViewDir );
-				float fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
-				float clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
-				float4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
+				half vertexToFrag53 = IN.ase_texcoord8.z;
+				half4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
+				half fresnelNdotV47 = dot( WorldNormal, worldViewDir );
+				half fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
+				half clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
+				half4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
 				#ifdef _USEEMISSIVETINT_ON
-				float4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
+				half4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
 				#else
-				float4 staticSwitch44 = temp_output_20_0;
+				half4 staticSwitch44 = temp_output_20_0;
 				#endif
 				
 				o.Albedo = ( tex2DNode6 * _AlbedoTint ).rgb;
@@ -1530,7 +1530,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			struct v2f {
@@ -1560,14 +1560,14 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
-			uniform float4 _AlbedoTint;
-			uniform float _GlowMin;
-			uniform float _GlowMax;
-			uniform float _PulseSpeed;
-			uniform float4 _EmissiveTint;
-			uniform float4 _EmissiveTintFresnel;
-			uniform float _FresnelBias;
+			uniform half4 _Diffuse_ST;
+			uniform half4 _AlbedoTint;
+			uniform half _GlowMin;
+			uniform half _GlowMax;
+			uniform half _PulseSpeed;
+			uniform half4 _EmissiveTint;
+			uniform half4 _EmissiveTintFresnel;
+			uniform half _FresnelBias;
 
 
 			
@@ -1578,12 +1578,12 @@ Shader "AgeOfJoy/LitVtxGlow"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
-				float vertexToFrag53 = lerpResult36;
+				half lerpResult36 = lerp( _GlowMin , _GlowMax , ( ( sin( ( _Time.y * _PulseSpeed ) ) + 2.0 ) - 1.0 ));
+				half vertexToFrag53 = lerpResult36;
 				o.ase_texcoord3.z = vertexToFrag53;
 				float3 ase_worldPos = mul(unity_ObjectToWorld, float4( (v.vertex).xyz, 1 )).xyz;
 				o.ase_texcoord4.xyz = ase_worldPos;
-				float3 ase_worldNormal = UnityObjectToWorldNormal(v.normal);
+				half3 ase_worldNormal = UnityObjectToWorldNormal(v.normal);
 				o.ase_texcoord5.xyz = ase_worldNormal;
 				
 				o.ase_texcoord3.xy = v.ase_texcoord.xy;
@@ -1634,7 +1634,7 @@ Shader "AgeOfJoy/LitVtxGlow"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -1736,22 +1736,22 @@ Shader "AgeOfJoy/LitVtxGlow"
 				#endif
 
 				float2 uv_Diffuse = IN.ase_texcoord3.xy * _Diffuse_ST.xy + _Diffuse_ST.zw;
-				float4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
+				half4 tex2DNode6 = tex2D( _Diffuse, uv_Diffuse );
 				
-				float vertexToFrag53 = IN.ase_texcoord3.z;
-				float4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
+				half vertexToFrag53 = IN.ase_texcoord3.z;
+				half4 temp_output_20_0 = ( ( tex2DNode6 * IN.ase_color.r ) * vertexToFrag53 );
 				float3 ase_worldPos = IN.ase_texcoord4.xyz;
 				float3 ase_worldViewDir = UnityWorldSpaceViewDir(ase_worldPos);
 				ase_worldViewDir = normalize(ase_worldViewDir);
-				float3 ase_worldNormal = IN.ase_texcoord5.xyz;
-				float fresnelNdotV47 = dot( ase_worldNormal, ase_worldViewDir );
-				float fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
-				float clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
-				float4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
+				half3 ase_worldNormal = IN.ase_texcoord5.xyz;
+				half fresnelNdotV47 = dot( ase_worldNormal, ase_worldViewDir );
+				half fresnelNode47 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV47, _FresnelBias ) );
+				half clampResult50 = clamp( fresnelNode47 , 0.0 , 1.0 );
+				half4 lerpResult45 = lerp( _EmissiveTint , _EmissiveTintFresnel , clampResult50);
 				#ifdef _USEEMISSIVETINT_ON
-				float4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
+				half4 staticSwitch44 = ( temp_output_20_0 * lerpResult45 );
 				#else
-				float4 staticSwitch44 = temp_output_20_0;
+				half4 staticSwitch44 = temp_output_20_0;
 				#endif
 				
 				o.Albedo = ( tex2DNode6 * _AlbedoTint ).rgb;
@@ -2070,7 +2070,7 @@ Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;11;0,0;Float;False;False;-1
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;12;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Deferred;0;3;Deferred;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Deferred;True;2;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;13;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Meta;0;4;Meta;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;14;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ShadowCaster;0;5;ShadowCaster;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;10;1954.667,-381.3334;Float;False;True;-1;2;ASEMaterialInspector;0;4;AgeOfJoy/LitVtxGlow;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardBase;0;1;ForwardBase;18;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;40;Workflow,InvertActionOnDeselection;1;0;Surface;0;0;  Blend;0;0;  Refraction Model;0;0;  Dither Shadows;1;0;Two Sided;1;0;Deferred Pass;1;0;Transmission;0;0;  Transmission Shadow;0.5,False,;0;Translucency;0;0;  Translucency Strength;1,False,;0;  Normal Distortion;0.5,False,;0;  Scattering;2,False,;0;  Direct;0.9,False,;0;  Ambient;0.1,False,;0;  Shadow;0.5,False,;0;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;1;0;Built-in Fog;1;0;Ambient Light;1;0;Meta Pass;1;0;Add Pass;1;0;Override Baked GI;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Fwd Specular Highlights Toggle;0;0;Fwd Reflections Toggle;0;0;Disable Batching;0;0;Vertex Position,InvertActionOnDeselection;1;0;0;6;False;True;True;True;True;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;10;1954.667,-381.3334;Half;False;True;-1;2;ASEMaterialInspector;0;4;AgeOfJoy/LitVtxGlow;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardBase;0;1;ForwardBase;18;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;40;Workflow,InvertActionOnDeselection;1;0;Surface;0;0;  Blend;0;0;  Refraction Model;0;0;  Dither Shadows;1;0;Two Sided;1;0;Deferred Pass;1;0;Transmission;0;0;  Transmission Shadow;0.5,False,;0;Translucency;0;0;  Translucency Strength;1,False,;0;  Normal Distortion;0.5,False,;0;  Scattering;2,False,;0;  Direct;0.9,False,;0;  Ambient;0.1,False,;0;  Shadow;0.5,False,;0;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;1;0;Built-in Fog;1;0;Ambient Light;1;0;Meta Pass;1;0;Add Pass;1;0;Override Baked GI;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Fwd Specular Highlights Toggle;0;0;Fwd Reflections Toggle;0;0;Disable Batching;0;0;Vertex Position,InvertActionOnDeselection;1;0;0;6;False;True;True;True;True;True;False;;False;0
 WireConnection;15;0;6;0
 WireConnection;15;1;16;1
 WireConnection;20;0;15;0
@@ -2103,4 +2103,4 @@ WireConnection;10;2;44;0
 WireConnection;10;4;39;0
 WireConnection;10;5;40;0
 ASEEND*/
-//CHKSM=A1B74B0FC3C5992DB663CA20F839621AC8E95CAF
+//CHKSM=7AA31F2A6EFABDBF240EBC017884ACD2B167D4BD

@@ -26,18 +26,18 @@ Shader "AgeOfJoy/Flag"
 		};
 
 		uniform sampler2D _Texture0;
-		uniform float3 _SmallWaveWPO;
+		uniform half3 _SmallWaveWPO;
 		uniform sampler2D _TextureSample2;
-		uniform float4 _TextureSample2_ST;
+		uniform half4 _TextureSample2_ST;
 
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
 			UNITY_INITIALIZE_OUTPUT( Input, o );
-			float2 panner48 = ( 1.0 * _Time.y * float2( 0.3,0 ) + v.texcoord.xy);
-			float2 vertexToFrag83 = panner48;
-			float2 panner64 = ( 1.0 * _Time.y * float2( 0.25,0 ) + v.texcoord.xy);
-			float2 vertexToFrag84 = panner64;
-			v.vertex.xyz += ( ( ( tex2Dlod( _Texture0, float4( vertexToFrag83, 0, 0.0) ) * float4( float3(0,0,1) , 0.0 ) ) * ( v.texcoord.xy.x * ( 1.0 - v.texcoord.xy.x ) ) ) + ( ( tex2Dlod( _Texture0, float4( vertexToFrag84, 0, 0.0) ) * float4( _SmallWaveWPO , 0.0 ) ) * v.color.r ) ).rgb;
+			half2 panner48 = ( 1.0 * _Time.y * float2( 0.3,0 ) + v.texcoord.xy);
+			half2 vertexToFrag83 = panner48;
+			half2 panner64 = ( 1.0 * _Time.y * float2( 0.25,0 ) + v.texcoord.xy);
+			half2 vertexToFrag84 = panner64;
+			v.vertex.xyz += ( ( ( tex2Dlod( _Texture0, float4( vertexToFrag83, 0, 0.0) ) * half4( half3(0,0,1) , 0.0 ) ) * ( v.texcoord.xy.x * ( 1.0 - v.texcoord.xy.x ) ) ) + ( ( tex2Dlod( _Texture0, float4( vertexToFrag84, 0, 0.0) ) * half4( _SmallWaveWPO , 0.0 ) ) * v.color.r ) ).rgb;
 			v.vertex.w = 1;
 		}
 
@@ -89,7 +89,7 @@ Node;AmplifyShaderEditor.SimpleAddOpNode;58;2152.529,475.1622;Inherit;False;2;2;
 Node;AmplifyShaderEditor.RangedFloatNode;72;2020.253,175.5743;Inherit;False;Constant;_meta;meta;2;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;73;2001.586,269.5744;Inherit;False;Constant;_Smoov;Smoov;2;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleAddOpNode;79;2182.919,-103.0926;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;2487.276,-28.51797;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/Flag;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Off;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;2487.276,-28.51797;Half;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/Flag;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Off;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;48;0;54;0
 WireConnection;64;0;63;0
 WireConnection;83;0;48;0
@@ -123,4 +123,4 @@ WireConnection;0;3;72;0
 WireConnection;0;4;73;0
 WireConnection;0;11;58;0
 ASEEND*/
-//CHKSM=BD5F23CEBF894A83910DC9BFF1CC12B2721C062F
+//CHKSM=1EBCE152E7972F247E5B7276AE1D0CDD66274B74

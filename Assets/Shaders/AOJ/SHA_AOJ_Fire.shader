@@ -54,13 +54,13 @@ Shader "SHA_AOJ_Fire"
 
 		void surf( Input i , inout SurfaceOutput o )
 		{
-			float4 color11 = IsGammaSpace() ? float4(1,0.8888174,0,0) : float4(1,0.7654649,0,0);
-			float4 color18 = IsGammaSpace() ? float4(1,0.3508669,0,0) : float4(1,0.1009985,0,0);
-			float2 appendResult23 = (float2(i.uv_texcoord.x , ( i.uv_texcoord.y - -0.2 )));
-			float4 tex2DNode3 = tex2D( _TextureSample1, appendResult23 );
-			float4 lerpResult19 = lerp( color11 , color18 , tex2DNode3.r);
+			half4 color11 = IsGammaSpace() ? half4(1,0.8888174,0,0) : half4(1,0.765465,0,0);
+			half4 color18 = IsGammaSpace() ? half4(1,0.3508669,0,0) : half4(1,0.1009985,0,0);
+			half2 appendResult23 = (half2(i.uv_texcoord.x , ( i.uv_texcoord.y - -0.2 )));
+			half4 tex2DNode3 = tex2D( _TextureSample1, appendResult23 );
+			half4 lerpResult19 = lerp( color11 , color18 , tex2DNode3.r);
 			o.Emission = ( lerpResult19 * 1.0 ).rgb;
-			float2 panner14 = ( 1.0 * _Time.y * float2( 0.1,-1 ) + i.uv_texcoord);
+			half2 panner14 = ( 1.0 * _Time.y * float2( 0.1,-1 ) + i.uv_texcoord);
 			o.Alpha = ( ( tex2DNode3.r * 2.0 ) - tex2D( _Texture0, panner14 ).g );
 		}
 
@@ -164,7 +164,7 @@ Node;AmplifyShaderEditor.SimpleMultiplyOpNode;12;77,1.833435;Inherit;False;2;2;0
 Node;AmplifyShaderEditor.SimpleAddOpNode;8;-680,2.833309;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.SimpleSubtractOpNode;21;-75,448.8335;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;2;-656,98.83331;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;9;340,46;Float;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;SHA_AOJ_Fire;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;9;340,46;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;SHA_AOJ_Fire;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 Node;AmplifyShaderEditor.CommentaryNode;10;-208,-247.1666;Inherit;False;100;100;Comment;0;;1,1,1,1;0;0
 WireConnection;24;0;22;2
 WireConnection;23;0;22;1
@@ -188,4 +188,4 @@ WireConnection;9;2;12;0
 WireConnection;9;9;21;0
 WireConnection;9;11;8;0
 ASEEND*/
-//CHKSM=7E8E6505DE6DCAA2B7B2B8E21157D5753A0064C3
+//CHKSM=A714852305E0F4AC4B113DCFAF14DFAD20408587

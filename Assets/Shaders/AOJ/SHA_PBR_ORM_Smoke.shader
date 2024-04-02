@@ -256,19 +256,19 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
+			uniform half4 _Diffuse_ST;
 			uniform sampler2D _Normal;
-			uniform float4 _Normal_ST;
+			uniform half4 _Normal_ST;
 			uniform sampler2D _Texture1;
-			uniform float _Warpyamount;
-			uniform float _FlickerMin;
-			uniform float _FlickerMax;
-			uniform float _FlickerSpeed;
-			uniform float4 _SmokeColorA;
-			uniform float4 _SmokeColorB;
-			uniform float4 _Texture1_ST;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half _Warpyamount;
+			uniform half _FlickerMin;
+			uniform half _FlickerMax;
+			uniform half _FlickerSpeed;
+			uniform half4 _SmokeColorA;
+			uniform half4 _SmokeColorB;
+			uniform half4 _Texture1_ST;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 
 
 			
@@ -279,9 +279,9 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
-				float vertexToFrag40 = lerpResult25;
+				half mulTime13 = _Time.y * _FlickerSpeed;
+				half lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				half vertexToFrag40 = lerpResult25;
 				o.ase_texcoord9.z = vertexToFrag40;
 				
 				o.ase_texcoord9.xy = v.ase_texcoord.xy;
@@ -476,13 +476,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				
 				float2 uv_Normal = IN.ase_texcoord9.xy * _Normal_ST.xy + _Normal_ST.zw;
 				
-				float2 texCoord11 = IN.ase_texcoord9.xy * float2( 5,2.5 ) + float2( 0,0 );
-				float2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
-				float2 texCoord12 = IN.ase_texcoord9.xy * float2( 4,2 ) + float2( 0,0 );
-				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
-				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float vertexToFrag40 = IN.ase_texcoord9.z;
-				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
+				half2 texCoord11 = IN.ase_texcoord9.xy * float2( 5,2.5 ) + float2( 0,0 );
+				half2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
+				half2 texCoord12 = IN.ase_texcoord9.xy * float2( 4,2 ) + float2( 0,0 );
+				half2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
+				half4 tex2DNode34 = tex2D( _Texture1, panner16 );
+				half vertexToFrag40 = IN.ase_texcoord9.z;
+				half4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord9.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
@@ -733,19 +733,19 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
+			uniform half4 _Diffuse_ST;
 			uniform sampler2D _Normal;
-			uniform float4 _Normal_ST;
+			uniform half4 _Normal_ST;
 			uniform sampler2D _Texture1;
-			uniform float _Warpyamount;
-			uniform float _FlickerMin;
-			uniform float _FlickerMax;
-			uniform float _FlickerSpeed;
-			uniform float4 _SmokeColorA;
-			uniform float4 _SmokeColorB;
-			uniform float4 _Texture1_ST;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half _Warpyamount;
+			uniform half _FlickerMin;
+			uniform half _FlickerMax;
+			uniform half _FlickerSpeed;
+			uniform half4 _SmokeColorA;
+			uniform half4 _SmokeColorB;
+			uniform half4 _Texture1_ST;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 
 
 			
@@ -756,9 +756,9 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
-				float vertexToFrag40 = lerpResult25;
+				half mulTime13 = _Time.y * _FlickerSpeed;
+				half lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				half vertexToFrag40 = lerpResult25;
 				o.ase_texcoord9.z = vertexToFrag40;
 				
 				o.ase_texcoord9.xy = v.ase_texcoord.xy;
@@ -934,13 +934,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				
 				float2 uv_Normal = IN.ase_texcoord9.xy * _Normal_ST.xy + _Normal_ST.zw;
 				
-				float2 texCoord11 = IN.ase_texcoord9.xy * float2( 5,2.5 ) + float2( 0,0 );
-				float2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
-				float2 texCoord12 = IN.ase_texcoord9.xy * float2( 4,2 ) + float2( 0,0 );
-				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
-				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float vertexToFrag40 = IN.ase_texcoord9.z;
-				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
+				half2 texCoord11 = IN.ase_texcoord9.xy * float2( 5,2.5 ) + float2( 0,0 );
+				half2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
+				half2 texCoord12 = IN.ase_texcoord9.xy * float2( 4,2 ) + float2( 0,0 );
+				half2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
+				half4 tex2DNode34 = tex2D( _Texture1, panner16 );
+				half vertexToFrag40 = IN.ase_texcoord9.z;
+				half4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord9.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
@@ -1132,19 +1132,19 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
+			uniform half4 _Diffuse_ST;
 			uniform sampler2D _Normal;
-			uniform float4 _Normal_ST;
+			uniform half4 _Normal_ST;
 			uniform sampler2D _Texture1;
-			uniform float _Warpyamount;
-			uniform float _FlickerMin;
-			uniform float _FlickerMax;
-			uniform float _FlickerSpeed;
-			uniform float4 _SmokeColorA;
-			uniform float4 _SmokeColorB;
-			uniform float4 _Texture1_ST;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half _Warpyamount;
+			uniform half _FlickerMin;
+			uniform half _FlickerMax;
+			uniform half _FlickerSpeed;
+			uniform half4 _SmokeColorA;
+			uniform half4 _SmokeColorB;
+			uniform half4 _Texture1_ST;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 
 
 			
@@ -1155,9 +1155,9 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
-				float vertexToFrag40 = lerpResult25;
+				half mulTime13 = _Time.y * _FlickerSpeed;
+				half lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				half vertexToFrag40 = lerpResult25;
 				o.ase_texcoord8.z = vertexToFrag40;
 				
 				o.ase_texcoord8.xy = v.ase_texcoord.xy;
@@ -1334,13 +1334,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				
 				float2 uv_Normal = IN.ase_texcoord8.xy * _Normal_ST.xy + _Normal_ST.zw;
 				
-				float2 texCoord11 = IN.ase_texcoord8.xy * float2( 5,2.5 ) + float2( 0,0 );
-				float2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
-				float2 texCoord12 = IN.ase_texcoord8.xy * float2( 4,2 ) + float2( 0,0 );
-				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
-				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float vertexToFrag40 = IN.ase_texcoord8.z;
-				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
+				half2 texCoord11 = IN.ase_texcoord8.xy * float2( 5,2.5 ) + float2( 0,0 );
+				half2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
+				half2 texCoord12 = IN.ase_texcoord8.xy * float2( 4,2 ) + float2( 0,0 );
+				half2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
+				half4 tex2DNode34 = tex2D( _Texture1, panner16 );
+				half vertexToFrag40 = IN.ase_texcoord8.z;
+				half4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord8.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
@@ -1516,15 +1516,15 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				float _TessMaxDisp;
 			#endif
 			uniform sampler2D _Diffuse;
-			uniform float4 _Diffuse_ST;
+			uniform half4 _Diffuse_ST;
 			uniform sampler2D _Texture1;
-			uniform float _Warpyamount;
-			uniform float _FlickerMin;
-			uniform float _FlickerMax;
-			uniform float _FlickerSpeed;
-			uniform float4 _SmokeColorA;
-			uniform float4 _SmokeColorB;
-			uniform float4 _Texture1_ST;
+			uniform half _Warpyamount;
+			uniform half _FlickerMin;
+			uniform half _FlickerMax;
+			uniform half _FlickerSpeed;
+			uniform half4 _SmokeColorA;
+			uniform half4 _SmokeColorB;
+			uniform half4 _Texture1_ST;
 
 
 			
@@ -1535,9 +1535,9 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 				UNITY_TRANSFER_INSTANCE_ID(v,o);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float mulTime13 = _Time.y * _FlickerSpeed;
-				float lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
-				float vertexToFrag40 = lerpResult25;
+				half mulTime13 = _Time.y * _FlickerSpeed;
+				half lerpResult25 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime13 ) + 1.0 ) * 0.5 ));
+				half vertexToFrag40 = lerpResult25;
 				o.ase_texcoord3.z = vertexToFrag40;
 				
 				o.ase_texcoord3.xy = v.ase_texcoord.xy;
@@ -1685,13 +1685,13 @@ Shader "AgeOfJoy/PBR_ORM_Smoke"
 
 				float2 uv_Diffuse = IN.ase_texcoord3.xy * _Diffuse_ST.xy + _Diffuse_ST.zw;
 				
-				float2 texCoord11 = IN.ase_texcoord3.xy * float2( 5,2.5 ) + float2( 0,0 );
-				float2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
-				float2 texCoord12 = IN.ase_texcoord3.xy * float2( 4,2 ) + float2( 0,0 );
-				float2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
-				float4 tex2DNode34 = tex2D( _Texture1, panner16 );
-				float vertexToFrag40 = IN.ase_texcoord3.z;
-				float4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
+				half2 texCoord11 = IN.ase_texcoord3.xy * float2( 5,2.5 ) + float2( 0,0 );
+				half2 panner15 = ( 1.0 * _Time.y * float2( 0.05,0.1 ) + texCoord11);
+				half2 texCoord12 = IN.ase_texcoord3.xy * float2( 4,2 ) + float2( 0,0 );
+				half2 panner16 = ( 1.0 * _Time.y * float2( -0.05,-0.1 ) + texCoord12);
+				half4 tex2DNode34 = tex2D( _Texture1, panner16 );
+				half vertexToFrag40 = IN.ase_texcoord3.z;
+				half4 lerpResult39 = lerp( _SmokeColorA , _SmokeColorB , tex2DNode34.b);
 				float2 uv_Texture1 = IN.ase_texcoord3.xy * _Texture1_ST.xy + _Texture1_ST.zw;
 				
 				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
@@ -2011,7 +2011,7 @@ Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Deferred;0;3;Deferred;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Deferred;True;2;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;4;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Meta;0;4;Meta;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;5;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ShadowCaster;0;5;ShadowCaster;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;627.6832,-115.27;Float;False;True;-1;2;ASEMaterialInspector;0;4;AgeOfJoy/PBR_ORM_Smoke;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardBase;0;1;ForwardBase;18;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;40;Workflow,InvertActionOnDeselection;1;0;Surface;0;0;  Blend;0;0;  Refraction Model;0;0;  Dither Shadows;1;0;Two Sided;1;0;Deferred Pass;1;0;Transmission;0;0;  Transmission Shadow;0.5,False,;0;Translucency;0;0;  Translucency Strength;1,False,;0;  Normal Distortion;0.5,False,;0;  Scattering;2,False,;0;  Direct;0.9,False,;0;  Ambient;0.1,False,;0;  Shadow;0.5,False,;0;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;1;0;Built-in Fog;1;0;Ambient Light;1;0;Meta Pass;1;0;Add Pass;1;0;Override Baked GI;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Fwd Specular Highlights Toggle;0;0;Fwd Reflections Toggle;0;0;Disable Batching;0;0;Vertex Position,InvertActionOnDeselection;1;0;0;6;False;True;True;True;True;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;627.6832,-115.27;Half;False;True;-1;2;ASEMaterialInspector;0;4;AgeOfJoy/PBR_ORM_Smoke;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardBase;0;1;ForwardBase;18;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;40;Workflow,InvertActionOnDeselection;1;0;Surface;0;0;  Blend;0;0;  Refraction Model;0;0;  Dither Shadows;1;0;Two Sided;1;0;Deferred Pass;1;0;Transmission;0;0;  Transmission Shadow;0.5,False,;0;Translucency;0;0;  Translucency Strength;1,False,;0;  Normal Distortion;0.5,False,;0;  Scattering;2,False,;0;  Direct;0.9,False,;0;  Ambient;0.1,False,;0;  Shadow;0.5,False,;0;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;1;0;Built-in Fog;1;0;Ambient Light;1;0;Meta Pass;1;0;Add Pass;1;0;Override Baked GI;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Fwd Specular Highlights Toggle;0;0;Fwd Reflections Toggle;0;0;Disable Batching;0;0;Vertex Position,InvertActionOnDeselection;1;0;0;6;False;True;True;True;True;True;False;;False;0
 WireConnection;13;0;10;0
 WireConnection;17;0;13;0
 WireConnection;23;3;17;0
@@ -2045,4 +2045,4 @@ WireConnection;1;2;32;0
 WireConnection;1;4;29;0
 WireConnection;1;5;31;0
 ASEEND*/
-//CHKSM=2C88ECDE03E7F57745C03FA86E12A39622DB5CE9
+//CHKSM=1A1B5843E4155BB3B1897E90080E42BCA8F086B8
