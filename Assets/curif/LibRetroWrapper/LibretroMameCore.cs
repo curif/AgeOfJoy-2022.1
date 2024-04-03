@@ -238,6 +238,7 @@ public static unsafe class LibretroMameCore
     public static CoinSlotController CoinSlot;
     public static int SecondsToWaitToFinishLoad = 2;
     public static string Core;
+    public static CoreEnvironment CabEnvironment;
 
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
@@ -542,15 +543,27 @@ public static unsafe class LibretroMameCore
     static void InitEnvironment(CoreEnvironment coreEnvironment)
     {
         currentEnvironment.Clear();
-        foreach (KeyValuePair<string, string> setting in coreEnvironment.properties)
+        AddEnvironment(coreEnvironment);
+        AddEnvironment(CabEnvironment);
+    }
+
+    static void AddEnvironment(CoreEnvironment environment)
+    {
+        if (environment?.properties != null)
         {
-            if (coreEnvironment.prefix != null)
+            foreach (KeyValuePair<string, string> setting in environment.properties)
             {
-                AddEnvironmentKey(coreEnvironment.prefix + "_" + setting.Key, setting.Value);
-                AddEnvironmentKey(coreEnvironment.prefix + "-" + setting.Key, setting.Value);
-            } else
-            {
-                AddEnvironmentKey(setting.Key, setting.Value);
+                string key = setting.Key;
+                string value = setting.Value;
+                if (environment.prefix != null)
+                {
+                    AddEnvironmentKey(environment.prefix + "_" + key, value);
+                    AddEnvironmentKey(environment.prefix + "-" + key, value);
+                }
+                else
+                {
+                    AddEnvironmentKey(key, value);
+                }
             }
         }
     }

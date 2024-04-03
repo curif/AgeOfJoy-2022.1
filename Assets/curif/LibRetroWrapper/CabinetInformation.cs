@@ -52,6 +52,7 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
+    public CoreEnvironment environment;
 
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]

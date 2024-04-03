@@ -4,12 +4,10 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.IO;
-using System;
-using System.Linq;
-using System.Security.Cryptography;
+using UnityEngine;
 
 
 public static class CabinetTextureCache
@@ -833,7 +831,7 @@ public class Cabinet
     }
 
     //used instead of addCRT for cabinets without a CRT
-    public Cabinet addController(string pathBase, 
+    public Cabinet addController(string pathBase,
                                      ControlMapConfiguration cabinetControlMap = null,
                                      LightGunInformation lightGunInformation = null,
                                      CabinetAGEBasicInformation agebasic = null,
@@ -861,21 +859,35 @@ public class Cabinet
         return this;
     }
 
-    public Cabinet addCRT(string type, string orientation, string gameFile, string GameVideoFile, int timeToLoad, string pathBase,
-                             bool invertX = false, bool invertY = false,
-                             bool GameVideoFileInvertX = false, bool GameVideoFileInvertY = false,
-                             bool EnableSaveState = true, string StateFile = "state.nv",
-                             Vector3? rotation = null, float scalePercentage = 0,
-                             string gamma = "1.0", string brightness = "1.0",
-                             List<AgentScenePosition> agentPlayerPositions = null,
-                             string shaderName = "damage", Dictionary<string, string> shaderConfig = null,
-                             ControlMapConfiguration cabinetControlMap = null,
-                             LightGunInformation lightGunInformation = null,
-                             CabinetAGEBasicInformation agebasic = null,
-                             BackgroundSoundController backgroundSoundController = null,
-                             string core = "mame2003+"
-                          )
+    public Cabinet addCRT(CabinetInformation cbinfo, List<AgentScenePosition> _agentPlayerPositions, BackgroundSoundController _backgroundSoundController, Vector3 _rotation)
     {
+        string type = cbinfo.crt.type;
+        string orientation = cbinfo.crt.orientation;
+        string gameFile = cbinfo.rom;
+        string GameVideoFile = cbinfo.getPath(cbinfo.video.file);
+        int timeToLoad = cbinfo.timetoload;
+        string pathBase = cbinfo.pathBase;
+        bool invertX = cbinfo.crt.screen.invertx;
+        bool invertY = cbinfo.crt.screen.inverty;
+        bool GameVideoFileInvertX = cbinfo.video.invertx;
+        bool GameVideoFileInvertY = cbinfo.video.inverty;
+        bool EnableSaveState = cbinfo.enablesavestate;
+        string StateFile = cbinfo.statefile ?? "state.nv";
+        Vector3? rotation = _rotation;
+        float scalePercentage = cbinfo.crt.geometry.scalepercentage;
+        string gamma = cbinfo.crt.screen.gamma ?? "1.0";
+        string brightness = cbinfo.crt.screen.brightness ?? "1.0";
+        List<AgentScenePosition> agentPlayerPositions = _agentPlayerPositions;
+        string shaderName = cbinfo.crt.screen.shader ?? "damage";
+        Dictionary<string, string> shaderConfig = cbinfo.crt.screen.config();
+        ControlMapConfiguration cabinetControlMap = cbinfo.ControlMap;
+        LightGunInformation lightGunInformation = cbinfo.lightGunInformation;
+        CabinetAGEBasicInformation agebasic = cbinfo.agebasic;
+        BackgroundSoundController backgroundSoundController = _backgroundSoundController;
+        string core = cbinfo.core ?? "mame2003+";
+        CoreEnvironment coreEnvironment = cbinfo.environment;
+
+
         string CRTType = $"screen-mock-{orientation}";
         GameObject CRT = PartsOrNull(CRTType);
         if (CRT == null)
@@ -925,11 +937,12 @@ public class Cabinet
             ageb.backgroundSoundController = backgroundSoundController;
         }
         else
-        {   
+        {
             //adds a GameVideoPlayer, BoxCollider and a AudioSource to the screen
             LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
             libretroScreenController.GameFile = gameFile;
+            libretroScreenController.CabEnvironment = coreEnvironment;
             libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
             libretroScreenController.EnableSaveState = EnableSaveState;
             libretroScreenController.StateFile = StateFile;

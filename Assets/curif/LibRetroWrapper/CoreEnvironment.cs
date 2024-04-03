@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 public class CoreEnvironment
@@ -23,9 +24,12 @@ public class CoreEnvironment
 
     public void Merge(CoreEnvironment other)
     {
-        foreach (var pair in other.properties)
+        if (other?.properties != null)
         {
-            properties[pair.Key] = pair.Value;
+            foreach (var pair in other.properties)
+            {
+                properties[pair.Key] = pair.Value;
+            }
         }
     }
 }

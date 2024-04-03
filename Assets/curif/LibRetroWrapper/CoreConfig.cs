@@ -24,7 +24,6 @@ public class CoreConfig
 
     public void Merge(CoreConfig other)
     {
-        environment.Merge(other.environment);
+        environment.Merge(other?.environment);
     }
-
 }
