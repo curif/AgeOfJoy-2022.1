@@ -10,6 +10,7 @@ Shader "AgeOfJoy/FramedImage"
 		_Wrinkles("Wrinkles", 2D) = "white" {}
 		_EmissiveAmount("EmissiveAmount", Range( 0 , 1)) = 0
 		_NormalPower("NormalPower", Range( 0 , 1)) = 0
+		_FrameColor("FrameColor", Color) = (0.2515723,0.2515723,0.2515723,0)
 		_EmissiveTint("EmissiveTint", Color) = (1,1,1,0)
 		_Metallic("Metallic", Float) = 0
 		_Smoothness("Smoothness", Float) = 0
@@ -197,7 +198,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -256,20 +257,21 @@ Shader "AgeOfJoy/FramedImage"
 				float _TessEdgeLength;
 				float _TessMaxDisp;
 			#endif
+			uniform half4 _FrameColor;
 			uniform sampler2D _Albedo;
 			uniform sampler2D _Wrinkles;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 			UNITY_INSTANCING_BUFFER_START(AgeOfJoyFramedImage)
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Albedo_ST)
 #define _Albedo_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Wrinkles_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Wrinkles_ST)
 #define _Wrinkles_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _EmissiveTint)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _EmissiveTint)
 #define _EmissiveTint_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _NormalPower)
+				UNITY_DEFINE_INSTANCED_PROP(half, _NormalPower)
 #define _NormalPower_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _EmissiveAmount)
+				UNITY_DEFINE_INSTANCED_PROP(half, _EmissiveAmount)
 #define _EmissiveAmount_arr AgeOfJoyFramedImage
 			UNITY_INSTANCING_BUFFER_END(AgeOfJoyFramedImage)
 
@@ -360,7 +362,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -474,27 +476,26 @@ Shader "AgeOfJoy/FramedImage"
 				float4 ScreenPos = IN.screenPos;
 				#endif
 
-				float4 color15 = IsGammaSpace() ? float4(0.2515723,0.2515723,0.2515723,0) : float4(0.05150782,0.05150782,0.05150782,0);
-				float4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
+				half4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
 				float2 uv_Albedo = IN.ase_texcoord9.xy * _Albedo_ST_Instance.xy + _Albedo_ST_Instance.zw;
-				float4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
-				float4 lerpResult13 = lerp( color15 , tex2DNode6 , IN.ase_color.r);
+				half4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
+				half4 lerpResult13 = lerp( _FrameColor , tex2DNode6 , IN.ase_color.r);
 				
-				float3 _Vector0 = float3(0,0,1);
-				float4 _Wrinkles_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Wrinkles_ST_arr, _Wrinkles_ST);
+				half3 _Vector0 = half3(0,0,1);
+				half4 _Wrinkles_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Wrinkles_ST_arr, _Wrinkles_ST);
 				float2 uv_Wrinkles = IN.ase_texcoord9.xy * _Wrinkles_ST_Instance.xy + _Wrinkles_ST_Instance.zw;
-				float _NormalPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_NormalPower_arr, _NormalPower);
-				float4 lerpResult20 = lerp( float4( _Vector0 , 0.0 ) , tex2D( _Wrinkles, uv_Wrinkles ) , _NormalPower_Instance);
-				float4 lerpResult24 = lerp( lerpResult20 , float4( _Vector0 , 0.0 ) , IN.ase_color.r);
+				half _NormalPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_NormalPower_arr, _NormalPower);
+				half4 lerpResult20 = lerp( half4( _Vector0 , 0.0 ) , tex2D( _Wrinkles, uv_Wrinkles ) , _NormalPower_Instance);
+				half4 lerpResult24 = lerp( lerpResult20 , half4( _Vector0 , 0.0 ) , IN.ase_color.r);
 				
-				float _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
-				float4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
-				float4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
-				float4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
+				half _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
+				half4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
+				half4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
+				half4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
 				
-				float lerpResult17 = lerp( _Metallic , 0.0 , IN.ase_color.r);
+				half lerpResult17 = lerp( _Metallic , 0.0 , IN.ase_color.r);
 				
-				float lerpResult18 = lerp( _Smoothness , 0.0 , IN.ase_color.r);
+				half lerpResult18 = lerp( _Smoothness , 0.0 , IN.ase_color.r);
 				
 				o.Albedo = lerpResult13.rgb;
 				o.Normal = lerpResult24.rgb;
@@ -694,7 +695,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			struct v2f {
@@ -746,20 +747,21 @@ Shader "AgeOfJoy/FramedImage"
 				float _TessEdgeLength;
 				float _TessMaxDisp;
 			#endif
+			uniform half4 _FrameColor;
 			uniform sampler2D _Albedo;
 			uniform sampler2D _Wrinkles;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 			UNITY_INSTANCING_BUFFER_START(AgeOfJoyFramedImage)
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Albedo_ST)
 #define _Albedo_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Wrinkles_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Wrinkles_ST)
 #define _Wrinkles_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _EmissiveTint)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _EmissiveTint)
 #define _EmissiveTint_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _NormalPower)
+				UNITY_DEFINE_INSTANCED_PROP(half, _NormalPower)
 #define _NormalPower_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _EmissiveAmount)
+				UNITY_DEFINE_INSTANCED_PROP(half, _EmissiveAmount)
 #define _EmissiveAmount_arr AgeOfJoyFramedImage
 			UNITY_INSTANCING_BUFFER_END(AgeOfJoyFramedImage)
 
@@ -830,7 +832,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -945,27 +947,26 @@ Shader "AgeOfJoy/FramedImage"
 				#endif
 
 
-				float4 color15 = IsGammaSpace() ? float4(0.2515723,0.2515723,0.2515723,0) : float4(0.05150782,0.05150782,0.05150782,0);
-				float4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
+				half4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
 				float2 uv_Albedo = IN.ase_texcoord9.xy * _Albedo_ST_Instance.xy + _Albedo_ST_Instance.zw;
-				float4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
-				float4 lerpResult13 = lerp( color15 , tex2DNode6 , IN.ase_color.r);
+				half4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
+				half4 lerpResult13 = lerp( _FrameColor , tex2DNode6 , IN.ase_color.r);
 				
-				float3 _Vector0 = float3(0,0,1);
-				float4 _Wrinkles_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Wrinkles_ST_arr, _Wrinkles_ST);
+				half3 _Vector0 = half3(0,0,1);
+				half4 _Wrinkles_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Wrinkles_ST_arr, _Wrinkles_ST);
 				float2 uv_Wrinkles = IN.ase_texcoord9.xy * _Wrinkles_ST_Instance.xy + _Wrinkles_ST_Instance.zw;
-				float _NormalPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_NormalPower_arr, _NormalPower);
-				float4 lerpResult20 = lerp( float4( _Vector0 , 0.0 ) , tex2D( _Wrinkles, uv_Wrinkles ) , _NormalPower_Instance);
-				float4 lerpResult24 = lerp( lerpResult20 , float4( _Vector0 , 0.0 ) , IN.ase_color.r);
+				half _NormalPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_NormalPower_arr, _NormalPower);
+				half4 lerpResult20 = lerp( half4( _Vector0 , 0.0 ) , tex2D( _Wrinkles, uv_Wrinkles ) , _NormalPower_Instance);
+				half4 lerpResult24 = lerp( lerpResult20 , half4( _Vector0 , 0.0 ) , IN.ase_color.r);
 				
-				float _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
-				float4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
-				float4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
-				float4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
+				half _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
+				half4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
+				half4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
+				half4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
 				
-				float lerpResult17 = lerp( _Metallic , 0.0 , IN.ase_color.r);
+				half lerpResult17 = lerp( _Metallic , 0.0 , IN.ase_color.r);
 				
-				float lerpResult18 = lerp( _Smoothness , 0.0 , IN.ase_color.r);
+				half lerpResult18 = lerp( _Smoothness , 0.0 , IN.ase_color.r);
 				
 				o.Albedo = lerpResult13.rgb;
 				o.Normal = lerpResult24.rgb;
@@ -1117,7 +1118,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -1158,20 +1159,21 @@ Shader "AgeOfJoy/FramedImage"
 				float _TessEdgeLength;
 				float _TessMaxDisp;
 			#endif
+			uniform half4 _FrameColor;
 			uniform sampler2D _Albedo;
 			uniform sampler2D _Wrinkles;
-			uniform float _Metallic;
-			uniform float _Smoothness;
+			uniform half _Metallic;
+			uniform half _Smoothness;
 			UNITY_INSTANCING_BUFFER_START(AgeOfJoyFramedImage)
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Albedo_ST)
 #define _Albedo_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Wrinkles_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Wrinkles_ST)
 #define _Wrinkles_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _EmissiveTint)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _EmissiveTint)
 #define _EmissiveTint_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _NormalPower)
+				UNITY_DEFINE_INSTANCED_PROP(half, _NormalPower)
 #define _NormalPower_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _EmissiveAmount)
+				UNITY_DEFINE_INSTANCED_PROP(half, _EmissiveAmount)
 #define _EmissiveAmount_arr AgeOfJoyFramedImage
 			UNITY_INSTANCING_BUFFER_END(AgeOfJoyFramedImage)
 
@@ -1244,7 +1246,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -1358,27 +1360,26 @@ Shader "AgeOfJoy/FramedImage"
 				float3 worldViewDir = normalize(UnityWorldSpaceViewDir(worldPos));
 				half atten = 1;
 
-				float4 color15 = IsGammaSpace() ? float4(0.2515723,0.2515723,0.2515723,0) : float4(0.05150782,0.05150782,0.05150782,0);
-				float4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
+				half4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
 				float2 uv_Albedo = IN.ase_texcoord8.xy * _Albedo_ST_Instance.xy + _Albedo_ST_Instance.zw;
-				float4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
-				float4 lerpResult13 = lerp( color15 , tex2DNode6 , IN.ase_color.r);
+				half4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
+				half4 lerpResult13 = lerp( _FrameColor , tex2DNode6 , IN.ase_color.r);
 				
-				float3 _Vector0 = float3(0,0,1);
-				float4 _Wrinkles_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Wrinkles_ST_arr, _Wrinkles_ST);
+				half3 _Vector0 = half3(0,0,1);
+				half4 _Wrinkles_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Wrinkles_ST_arr, _Wrinkles_ST);
 				float2 uv_Wrinkles = IN.ase_texcoord8.xy * _Wrinkles_ST_Instance.xy + _Wrinkles_ST_Instance.zw;
-				float _NormalPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_NormalPower_arr, _NormalPower);
-				float4 lerpResult20 = lerp( float4( _Vector0 , 0.0 ) , tex2D( _Wrinkles, uv_Wrinkles ) , _NormalPower_Instance);
-				float4 lerpResult24 = lerp( lerpResult20 , float4( _Vector0 , 0.0 ) , IN.ase_color.r);
+				half _NormalPower_Instance = UNITY_ACCESS_INSTANCED_PROP(_NormalPower_arr, _NormalPower);
+				half4 lerpResult20 = lerp( half4( _Vector0 , 0.0 ) , tex2D( _Wrinkles, uv_Wrinkles ) , _NormalPower_Instance);
+				half4 lerpResult24 = lerp( lerpResult20 , half4( _Vector0 , 0.0 ) , IN.ase_color.r);
 				
-				float _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
-				float4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
-				float4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
-				float4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
+				half _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
+				half4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
+				half4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
+				half4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
 				
-				float lerpResult17 = lerp( _Metallic , 0.0 , IN.ase_color.r);
+				half lerpResult17 = lerp( _Metallic , 0.0 , IN.ase_color.r);
 				
-				float lerpResult18 = lerp( _Smoothness , 0.0 , IN.ase_color.r);
+				half lerpResult18 = lerp( _Smoothness , 0.0 , IN.ase_color.r);
 				
 				o.Albedo = lerpResult13.rgb;
 				o.Normal = lerpResult24.rgb;
@@ -1528,7 +1529,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			struct v2f {
@@ -1555,13 +1556,14 @@ Shader "AgeOfJoy/FramedImage"
 				float _TessEdgeLength;
 				float _TessMaxDisp;
 			#endif
+			uniform half4 _FrameColor;
 			uniform sampler2D _Albedo;
 			UNITY_INSTANCING_BUFFER_START(AgeOfJoyFramedImage)
-				UNITY_DEFINE_INSTANCED_PROP(float4, _Albedo_ST)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _Albedo_ST)
 #define _Albedo_ST_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float4, _EmissiveTint)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _EmissiveTint)
 #define _EmissiveTint_arr AgeOfJoyFramedImage
-				UNITY_DEFINE_INSTANCED_PROP(float, _EmissiveAmount)
+				UNITY_DEFINE_INSTANCED_PROP(half, _EmissiveAmount)
 #define _EmissiveAmount_arr AgeOfJoyFramedImage
 			UNITY_INSTANCING_BUFFER_END(AgeOfJoyFramedImage)
 
@@ -1620,7 +1622,7 @@ Shader "AgeOfJoy/FramedImage"
 				float4 texcoord1 : TEXCOORD1;
 				float4 texcoord2 : TEXCOORD2;
 				float4 ase_texcoord : TEXCOORD0;
-				float4 ase_color : COLOR;
+				half4 ase_color : COLOR;
 
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
@@ -1721,16 +1723,15 @@ Shader "AgeOfJoy/FramedImage"
 					SurfaceOutputStandard o = (SurfaceOutputStandard)0;
 				#endif
 
-				float4 color15 = IsGammaSpace() ? float4(0.2515723,0.2515723,0.2515723,0) : float4(0.05150782,0.05150782,0.05150782,0);
-				float4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
+				half4 _Albedo_ST_Instance = UNITY_ACCESS_INSTANCED_PROP(_Albedo_ST_arr, _Albedo_ST);
 				float2 uv_Albedo = IN.ase_texcoord3.xy * _Albedo_ST_Instance.xy + _Albedo_ST_Instance.zw;
-				float4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
-				float4 lerpResult13 = lerp( color15 , tex2DNode6 , IN.ase_color.r);
+				half4 tex2DNode6 = tex2D( _Albedo, uv_Albedo );
+				half4 lerpResult13 = lerp( _FrameColor , tex2DNode6 , IN.ase_color.r);
 				
-				float _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
-				float4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
-				float4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
-				float4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
+				half _EmissiveAmount_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveAmount_arr, _EmissiveAmount);
+				half4 lerpResult7 = lerp( float4( 0,0,0,0 ) , tex2DNode6 , _EmissiveAmount_Instance);
+				half4 _EmissiveTint_Instance = UNITY_ACCESS_INSTANCED_PROP(_EmissiveTint_arr, _EmissiveTint);
+				half4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * _EmissiveTint_Instance ) , IN.ase_color.r);
 				
 				o.Albedo = lerpResult13.rgb;
 				o.Normal = fixed3( 0, 0, 1 );
@@ -2016,15 +2017,14 @@ Shader "AgeOfJoy/FramedImage"
 }
 /*ASEBEGIN
 Version=19302
-Node;AmplifyShaderEditor.SamplerNode;6;-592,-32;Inherit;True;Property;_Albedo;Albedo;0;0;Create;True;0;0;0;False;0;False;-1;628c6084fd4af1465860940ad0cb5cec;23117c00cc4d9064d812f590596efae7;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.RangedFloatNode;8;-599.6666,397.1666;Inherit;False;InstancedProperty;_EmissiveAmount;EmissiveAmount;2;0;Create;True;0;0;0;False;0;False;0;0.91;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode;6;-592,-32;Inherit;True;Property;_Albedo;Albedo;0;0;Create;True;0;0;0;False;0;False;-1;628c6084fd4af1465860940ad0cb5cec;628c6084fd4af1465860940ad0cb5cec;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.RangedFloatNode;8;-599.6666,397.1666;Inherit;False;InstancedProperty;_EmissiveAmount;EmissiveAmount;2;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;7;-310.9999,249.1666;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.ColorNode;9;-230.3333,414.5001;Inherit;False;InstancedProperty;_EmissiveTint;EmissiveTint;4;0;Create;True;0;0;0;False;0;False;1,1,1,0;1,1,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;9;-230.3333,414.5001;Inherit;False;InstancedProperty;_EmissiveTint;EmissiveTint;5;0;Create;True;0;0;0;False;0;False;1,1,1,0;1,1,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;23;192.1214,636.9952;Inherit;False;InstancedProperty;_NormalPower;NormalPower;3;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.Vector3Node;22;582.9884,700.6944;Inherit;False;Constant;_Vector0;Vector 0;4;0;Create;True;0;0;0;False;0;False;0,0,1;0,0,0;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.SamplerNode;19;254.9549,387.828;Inherit;True;Property;_Wrinkles;Wrinkles;1;0;Create;True;0;0;0;False;0;False;-1;628c6084fd4af1465860940ad0cb5cec;b7eb02c9dfb28d140873af33f0bf5ffc;True;0;True;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SamplerNode;19;254.9549,387.828;Inherit;True;Property;_Wrinkles;Wrinkles;1;0;Create;True;0;0;0;False;0;False;-1;628c6084fd4af1465860940ad0cb5cec;628c6084fd4af1465860940ad0cb5cec;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;10;-40.33325,230.5;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
-Node;AmplifyShaderEditor.ColorNode;15;-46.99994,-485.5;Inherit;False;Constant;_FrameColor;FrameColor;3;0;Create;True;0;0;0;False;0;False;0.2515723,0.2515723,0.2515723,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.VertexColorNode;14;-142.1331,-241.8332;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.LerpOp;20;673.5552,389.5618;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.LerpOp;13;302.2003,-377.9668;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
@@ -2032,10 +2032,11 @@ Node;AmplifyShaderEditor.LerpOp;16;411.3889,226.1957;Inherit;False;3;0;COLOR;0,0
 Node;AmplifyShaderEditor.LerpOp;18;370.6552,-19.93827;Inherit;False;3;0;FLOAT;0.6;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;17;369.7888,-174.2049;Inherit;False;3;0;FLOAT;0.5;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;24;894.3384,311.3448;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.RangedFloatNode;32;31.01172,16.48297;Inherit;False;Property;_Metallic;Metallic;5;0;Create;True;0;0;0;False;0;False;0;1;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;33;47.01172,110.483;Inherit;False;Property;_Smoothness;Smoothness;6;0;Create;True;0;0;0;False;0;False;0;0.6;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;32;31.01172,16.48297;Inherit;False;Property;_Metallic;Metallic;6;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;33;47.01172,110.483;Inherit;False;Property;_Smoothness;Smoothness;7;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.ColorNode;15;-48.99994,-485.5;Inherit;False;Property;_FrameColor;FrameColor;4;0;Create;True;0;0;0;False;0;False;0.2515723,0.2515723,0.2515723,0;0.2515723,0.2515723,0.2515723,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;26;942.5999,-91.86661;Float;False;False;-1;2;ASEMaterialInspector;0;1;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ExtraPrePass;0;0;ExtraPrePass;6;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;27;942.5999,-91.86661;Float;False;True;-1;2;ASEMaterialInspector;0;4;AgeOfJoy/FramedImage;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardBase;0;1;ForwardBase;18;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;40;Workflow,InvertActionOnDeselection;1;0;Surface;0;0;  Blend;0;0;  Refraction Model;0;0;  Dither Shadows;1;0;Two Sided;1;0;Deferred Pass;1;0;Transmission;0;0;  Transmission Shadow;0.5,False,;0;Translucency;0;0;  Translucency Strength;1,False,;0;  Normal Distortion;0.5,False,;0;  Scattering;2,False,;0;  Direct;0.9,False,;0;  Ambient;0.1,False,;0;  Shadow;0.5,False,;0;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;1;0;Built-in Fog;1;0;Ambient Light;1;0;Meta Pass;1;0;Add Pass;1;0;Override Baked GI;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Fwd Specular Highlights Toggle;0;0;Fwd Reflections Toggle;0;0;Disable Batching;0;0;Vertex Position,InvertActionOnDeselection;1;0;0;6;False;True;True;True;True;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;27;942.5999,-91.86661;Half;False;True;-1;2;ASEMaterialInspector;0;4;AgeOfJoy/FramedImage;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardBase;0;1;ForwardBase;18;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;40;Workflow,InvertActionOnDeselection;1;0;Surface;0;0;  Blend;0;0;  Refraction Model;0;0;  Dither Shadows;1;0;Two Sided;1;0;Deferred Pass;1;0;Transmission;0;0;  Transmission Shadow;0.5,False,;0;Translucency;0;0;  Translucency Strength;1,False,;0;  Normal Distortion;0.5,False,;0;  Scattering;2,False,;0;  Direct;0.9,False,;0;  Ambient;0.1,False,;0;  Shadow;0.5,False,;0;Cast Shadows;1;0;  Use Shadow Threshold;0;0;Receive Shadows;1;0;GPU Instancing;1;0;LOD CrossFade;1;0;Built-in Fog;1;0;Ambient Light;1;0;Meta Pass;1;0;Add Pass;1;0;Override Baked GI;0;0;Extra Pre Pass;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Fwd Specular Highlights Toggle;0;0;Fwd Reflections Toggle;0;0;Disable Batching;0;0;Vertex Position,InvertActionOnDeselection;1;0;0;6;False;True;True;True;True;True;False;;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;28;942.5999,-91.86661;Float;False;False;-1;2;ASEMaterialInspector;0;1;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardAdd;0;2;ForwardAdd;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;4;1;False;;1;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;True;1;LightMode=ForwardAdd;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;29;942.5999,-91.86661;Float;False;False;-1;2;ASEMaterialInspector;0;1;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Deferred;0;3;Deferred;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Deferred;True;2;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;30;942.5999,-91.86661;Float;False;False;-1;2;ASEMaterialInspector;0;1;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Meta;0;4;Meta;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
@@ -2065,4 +2066,4 @@ WireConnection;27;2;16;0
 WireConnection;27;4;17;0
 WireConnection;27;5;18;0
 ASEEND*/
-//CHKSM=F10666A63530731997CB48E549BFBCE86F4D05F8
+//CHKSM=95495792C0865CC843651ABD0D5BF1757C783D1B

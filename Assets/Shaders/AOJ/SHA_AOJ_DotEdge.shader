@@ -53,7 +53,7 @@ Shader "SHA_AOJ_DotEdge"
 			{
 				float4 vertex : POSITION;
 				float4 color : COLOR;
-				float3 ase_normal : NORMAL;
+				half3 ase_normal : NORMAL;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			
@@ -69,9 +69,9 @@ Shader "SHA_AOJ_DotEdge"
 			};
 
 			UNITY_INSTANCING_BUFFER_START(SHA_AOJ_DotEdge)
-				UNITY_DEFINE_INSTANCED_PROP(float4, _DotColor)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _DotColor)
 #define _DotColor_arr SHA_AOJ_DotEdge
-				UNITY_DEFINE_INSTANCED_PROP(float3, _DotProduct)
+				UNITY_DEFINE_INSTANCED_PROP(half3, _DotProduct)
 #define _DotProduct_arr SHA_AOJ_DotEdge
 			UNITY_INSTANCING_BUFFER_END(SHA_AOJ_DotEdge)
 
@@ -110,9 +110,9 @@ Shader "SHA_AOJ_DotEdge"
 				#ifdef ASE_NEEDS_FRAG_WORLD_POSITION
 				float3 WorldPosition = i.worldPos;
 				#endif
-				float4 _DotColor_Instance = UNITY_ACCESS_INSTANCED_PROP(_DotColor_arr, _DotColor);
-				float3 _DotProduct_Instance = UNITY_ACCESS_INSTANCED_PROP(_DotProduct_arr, _DotProduct);
-				float dotResult2 = dot( i.ase_normal , _DotProduct_Instance );
+				half4 _DotColor_Instance = UNITY_ACCESS_INSTANCED_PROP(_DotColor_arr, _DotColor);
+				half3 _DotProduct_Instance = UNITY_ACCESS_INSTANCED_PROP(_DotProduct_arr, _DotProduct);
+				half dotResult2 = dot( i.ase_normal , _DotProduct_Instance );
 				
 				
 				finalColor = ( _DotColor_Instance * dotResult2 );
@@ -132,11 +132,11 @@ Node;AmplifyShaderEditor.Vector3Node;3;-527.0002,69.50006;Inherit;False;Instance
 Node;AmplifyShaderEditor.DotProductOpNode;2;-373.0002,-75.16666;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.ColorNode;5;-798.3336,-365.8333;Inherit;False;InstancedProperty;_DotColor;Dot Color;0;0;Create;True;0;0;0;False;0;False;0,0,1,0;0,0,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;6;-291.0002,-209.1667;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;True;-1;2;ASEMaterialInspector;100;5;SHA_AOJ_DotEdge;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Half;False;True;-1;2;ASEMaterialInspector;100;5;SHA_AOJ_DotEdge;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
 WireConnection;2;0;1;0
 WireConnection;2;1;3;0
 WireConnection;6;0;5;0
 WireConnection;6;1;2;0
 WireConnection;0;0;6;0
 ASEEND*/
-//CHKSM=83ED553FCF4C7A4F55F29D788D039E652DEB846B
+//CHKSM=747A894BEDA3BEF83FFAFEA122AB9A5F9D33E649

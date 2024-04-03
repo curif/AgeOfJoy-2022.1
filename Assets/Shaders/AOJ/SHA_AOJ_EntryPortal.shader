@@ -25,26 +25,26 @@ Shader "AgeOfJoy/EntryPortal"
 		#pragma target 3.0
 		struct Input
 		{
-			float2 vertexToFrag53;
+			half2 vertexToFrag53;
 			float2 uv_texcoord;
-			float2 vertexToFrag52;
+			half2 vertexToFrag52;
 			float3 worldPos;
 		};
 
-		uniform float4 _Color0;
-		uniform float4 _Color1;
+		uniform half4 _Color0;
+		uniform half4 _Color1;
 		uniform sampler2D _Texture0;
 		uniform sampler2D _TextureSample2;
-		uniform float _TransitionDistance;
-		uniform float _POwer;
+		uniform half _TransitionDistance;
+		uniform half _POwer;
 
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
 			UNITY_INITIALIZE_OUTPUT( Input, o );
 			float2 uv_TexCoord3 = v.texcoord.xy * float2( 0.5,1 );
-			float2 panner9 = ( 1.0 * _Time.y * float2( -0.19,-0.03 ) + uv_TexCoord3);
+			half2 panner9 = ( 1.0 * _Time.y * float2( -0.19,-0.03 ) + uv_TexCoord3);
 			o.vertexToFrag53 = panner9;
-			float2 panner2 = ( 1.0 * _Time.y * float2( 0.15,-0.02 ) + uv_TexCoord3);
+			half2 panner2 = ( 1.0 * _Time.y * float2( 0.15,-0.02 ) + uv_TexCoord3);
 			o.vertexToFrag52 = panner2;
 		}
 
@@ -56,14 +56,14 @@ Shader "AgeOfJoy/EntryPortal"
 		void surf( Input i , inout SurfaceOutput o )
 		{
 			float2 uv_TexCoord3 = i.uv_texcoord * float2( 0.5,1 );
-			float2 panner22 = ( 1.0 * _Time.y * float2( 0,-0.3 ) + uv_TexCoord3);
-			float3 temp_output_19_0 = ( UnpackNormal( tex2D( _TextureSample2, panner22 ) ) * float3( float2( 0.2,0.2 ) ,  0.0 ) );
-			float temp_output_10_0 = max( tex2D( _Texture0, ( float3( i.vertexToFrag53 ,  0.0 ) + temp_output_19_0 ).xy ).r , tex2D( _Texture0, ( float3( i.vertexToFrag52 ,  0.0 ) + temp_output_19_0 ).xy ).g );
-			float4 lerpResult11 = lerp( _Color0 , _Color1 , temp_output_10_0);
-			float clampResult46 = clamp( pow( i.uv_texcoord.y , 2.0 ) , 0.0 , 1.0 );
+			half2 panner22 = ( 1.0 * _Time.y * float2( 0,-0.3 ) + uv_TexCoord3);
+			half3 temp_output_19_0 = ( UnpackNormal( tex2D( _TextureSample2, panner22 ) ) * half3( half2( 0.2,0.2 ) ,  0.0 ) );
+			half temp_output_10_0 = max( tex2D( _Texture0, ( half3( i.vertexToFrag53 ,  0.0 ) + temp_output_19_0 ).xy ).r , tex2D( _Texture0, ( half3( i.vertexToFrag52 ,  0.0 ) + temp_output_19_0 ).xy ).g );
+			half4 lerpResult11 = lerp( _Color0 , _Color1 , temp_output_10_0);
+			half clampResult46 = clamp( pow( i.uv_texcoord.y , 2.0 ) , 0.0 , 1.0 );
 			o.Emission = ( lerpResult11 * clampResult46 ).rgb;
 			float3 ase_worldPos = i.worldPos;
-			float clampResult34 = clamp( pow( ( distance( ase_worldPos , _WorldSpaceCameraPos ) / _TransitionDistance ) , _POwer ) , 0.0 , 1.0 );
+			half clampResult34 = clamp( pow( ( distance( ase_worldPos , _WorldSpaceCameraPos ) / _TransitionDistance ) , _POwer ) , 0.0 , 1.0 );
 			o.Alpha = ( ( clampResult34 * 2.0 ) - temp_output_10_0 );
 		}
 
@@ -187,7 +187,7 @@ Node;AmplifyShaderEditor.LerpOp;11;92.27609,319.1498;Inherit;True;3;0;COLOR;0,0,
 Node;AmplifyShaderEditor.SimpleSubtractOpNode;40;1440.821,521.67;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;42;1132.124,273.7058;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.ColorNode;45;355.8164,58.73059;Inherit;False;Constant;_Color3;Color 3;1;0;Create;True;0;0;0;False;0;False;0.9137255,0.5827457,0,1;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;1764.667,187.3333;Float;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AgeOfJoy/EntryPortal;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;1764.667,187.3333;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AgeOfJoy/EntryPortal;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;22;0;3;0
 WireConnection;16;1;22;0
 WireConnection;2;0;3;0
@@ -227,4 +227,4 @@ WireConnection;42;1;46;0
 WireConnection;0;2;42;0
 WireConnection;0;9;40;0
 ASEEND*/
-//CHKSM=1310D466E9111E4984285F6D85EEEBFA5E25748E
+//CHKSM=DFB7B9D33B89B45A1CAD2E947F2206342C8CB189
