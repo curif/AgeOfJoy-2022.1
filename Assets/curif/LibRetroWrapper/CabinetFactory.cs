@@ -282,23 +282,7 @@ public static class CabinetFactory
                                                 cbinfo.crt.geometry.rotation.z);
             ConfigManager.WriteConsole($"[fromInformation]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
 
-            cabinet.addCRT(
-                    cbinfo.crt.type, cbinfo.crt.orientation, cbinfo.rom, cbinfo.getPath(cbinfo.video.file),
-                    cbinfo.timetoload, cbinfo.pathBase,
-                    invertX: cbinfo.crt.screen.invertx,
-                    invertY: cbinfo.crt.screen.inverty,
-                    GameVideoFileInvertX: cbinfo.video.invertx,
-                    GameVideoFileInvertY: cbinfo.video.inverty,
-                    EnableSaveState: cbinfo.enablesavestate,
-                    StateFile: cbinfo.statefile,
-                    rotation: CRTrotation, cbinfo.crt.geometry.scalepercentage,
-                    cbinfo.crt.screen.gamma, cbinfo.crt.screen.brightness,
-                    agentPlayerPositions,
-                    cbinfo.crt.screen.shader, cbinfo.crt.screen.config(),
-                    cbinfo.ControlMap,
-                    cbinfo.lightGunInformation,
-                    cbinfo.agebasic, backgroundSoundController,
-                    cbinfo.core);
+            cabinet.addCRT(cbinfo, agentPlayerPositions, backgroundSoundController, CRTrotation);
 
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
         }

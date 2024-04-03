@@ -15,8 +15,12 @@ extern "C" {
 #include <string.h>
 
 #include "libretro.h"
+#include "libretro_vulkan.h"
 
 typedef void (RETRO_CALLCONV *wrapper_log_printf_t)(enum retro_log_level level, const char *value);
+
+typedef char* (*Environment)(char* key);
+
 
 typedef struct handlers_struct {
   void *handle;
@@ -41,7 +45,8 @@ int wrapper_environment_open(wrapper_log_printf_t log,
                               enum retro_log_level _minLogLevel, char *_save_directory,
                               char *_system_directory, char *_sample_rate,
                               retro_input_state_t _retro_input_state_cb, 
-                              char *core);
+                              char *core,
+                              Environment environment);
 void wrapper_environment_init();                              
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, 
                                               int _xy_control_type);

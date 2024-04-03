@@ -4,11 +4,14 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define DEBUG_CONFIG
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+
 
 namespace Assets.curif.LibRetroWrapper
 {
@@ -17,21 +20,62 @@ namespace Assets.curif.LibRetroWrapper
         private static string CORE_FILE_EXTENSION = ".so";
         private static string ARCH = "android";
 
-        private static Dictionary<string, string> Cores = new Dictionary<string, string>();
+        private static Dictionary<string, Core> Cores = new Dictionary<string, Core>();
 
         private void Start()
         {
             AddEmbeddedCores();
             SyncCores();
             ScanForUserCores();
+
+#if DEBUG_CONFIG
+            foreach (var core in Cores)
+            {
+                CoreEnvironment coreEnvironment = core.Value.ReadCoreEnvironment();
+                ConfigManager.WriteConsole($"[CoresController] Core {core.Key} configuration: {coreEnvironment.prefix}");
+                foreach (var prop in coreEnvironment.properties)
+                {
+                    ConfigManager.WriteConsole($"[CoresController] {prop.Key}: {prop.Value}");
+                }
+            }
+#endif
         }
 
         private void AddEmbeddedCores()
         {
-            Cores.Add("mame2003+", "libmame2003_plus_libretro_android.so");
-            Cores.Add("fbneo", "libfbneo_libretro_android.so");
-            Cores.Add("mame2010", "libmame2010_libretro_android.so");
+            AddCore("mame2003+", "libmame2003_plus_libretro_android.so", Mame2003PlusConfig());
+            AddCore("mame2010", "libmame2010_libretro_android.so", Mame2010Config());
+            AddCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
         }
+
+        public static CoreEnvironment Mame2003PlusConfig()
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties.Add("skip_disclaimer", "enabled");
+            properties.Add("skip_warnings", "enabled");
+            properties.Add("mame_remapping", "enabled");
+            properties.Add("use_samples", "enabled");
+            properties.Add("vector_vector_translusency", "disabled");
+            properties.Add("vector_intensity", "2.0");
+            CoreEnvironment coreEnvironment = new CoreEnvironment("mame2003-plus", properties);
+            return coreEnvironment;
+        }
+
+        public static CoreEnvironment Mame2010Config()
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            CoreEnvironment coreEnvironment = new CoreEnvironment("mame2010", properties);
+            return coreEnvironment;
+        }
+
+        public static CoreEnvironment FbNeoConfig()
+        {
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties.Add("lightgun-crosshair-emulation", "enabled");
+            CoreEnvironment coreEnvironment = new CoreEnvironment("fbneo", properties);
+            return coreEnvironment;
+        }
+
         private void SyncCores()
         {
             var sourceFiles = new DirectoryInfo(ConfigManager.CoresDir).GetFiles();
@@ -77,20 +121,30 @@ namespace Assets.curif.LibRetroWrapper
 
         private void ScanForUserCores()
         {
-            string[] cores = Directory.GetFiles(ConfigManager.InternalCoresDir, "*" + CORE_FILE_EXTENSION);
-            foreach (string core in cores)
+            string[] coreLibs = Directory.GetFiles(ConfigManager.InternalCoresDir, "*" + CORE_FILE_EXTENSION);
+            foreach (string coreLib in coreLibs)
             {
-                string coreName = ExtractCoreName(Path.GetFileName(core));
+                string coreName = ExtractCoreName(Path.GetFileName(coreLib));
                 if (coreName != null)
                 {
                     ConfigManager.WriteConsole($"[CoresController] Using core: {coreName}");
-                    Cores.Add(coreName, core);
+                    AddCore(coreName, coreLib);
                 }
                 else
                 {
-                    ConfigManager.WriteConsole($"[CoresController] Invalid core name: {core}");
+                    ConfigManager.WriteConsole($"[CoresController] Invalid core name: {coreLib}");
                 }
             }
+        }
+
+        private void AddCore(string coreName, string coreLib)
+        {
+            Cores.Add(coreName, new Core(coreName, coreLib));
+        }
+
+        private void AddCore(string coreName, string coreLib, CoreEnvironment coreEnvironment)
+        {
+            Cores.Add(coreName, new Core(coreName, coreLib, coreEnvironment));
         }
 
         private string ExtractCoreName(string core)
@@ -99,12 +153,12 @@ namespace Assets.curif.LibRetroWrapper
             return index > 0 ? core.Substring(0, index) : null;
         }
 
-        public static string GetCorePath(string coreName)
+        public static Core GetCore(string coreName)
         {
-            return Cores.ContainsKey(coreName) ? Cores[coreName] : null;
+            return CoreExists(coreName) ? Cores[coreName] : null;
         }
 
-        public static bool Contains(string core)
+        public static bool CoreExists(string core)
         {
             return Cores.ContainsKey(core);
         }

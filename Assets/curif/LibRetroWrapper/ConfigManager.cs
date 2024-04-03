@@ -36,7 +36,8 @@ public static class ConfigManager
     public static string GameStatesDir = Path.Combine(BaseDir, "startstates");
     public static string ConfigDir = Path.Combine(BaseDir, "configuration");
     public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
-    public static string ConfigControllerSchemesDir = Path.Combine(ConfigDir, "controllers/schemes");
+    public static string ConfigCoresDir = Path.Combine(ConfigDir, "cores");
+    public static string ConfigControllerSchemesDir = Path.Combine(ConfigControllersDir, "schemes");
     public static string AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
     public static string DebugDir = Path.Combine(BaseDir, "debug");
     public static string SamplesDir = Path.Combine(SystemDir, "samples");
@@ -69,6 +70,7 @@ public static class ConfigManager
         CreateDirectory(ConfigManager.ConfigDir);
         CreateDirectory(ConfigManager.ConfigControllersDir);
         CreateDirectory(ConfigManager.ConfigControllerSchemesDir);
+        CreateDirectory(ConfigManager.ConfigCoresDir);
         CreateDirectory(ConfigManager.AGEBasicDir);
         CreateDirectory(ConfigManager.DebugDir);
         CreateDirectory(ConfigManager.MusicDir);
@@ -90,7 +92,10 @@ public static class ConfigManager
     public static void CreateDirectory(string path)
     {
         if (!Directory.Exists(path))
+        {
+            WriteConsole($"[ConfigManager.CreateDirectory]: Creating new directory: {path}");
             Directory.CreateDirectory(path);
+        }
     }
 
     /*

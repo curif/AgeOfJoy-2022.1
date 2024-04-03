@@ -93,6 +93,7 @@ public class LibretroScreenController : MonoBehaviour
 
     public LightGunInformation lightGunInformation;
     public Cabinet cabinet;
+    public CoreEnvironment CabEnvironment;
 
     public bool SimulateExitGame;
 
@@ -265,6 +266,7 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
                   LibretroMameCore.Core = Core;
+                  LibretroMameCore.CabEnvironment = CabEnvironment;
                   LibretroMameCore.Shader = shader;
 #if _serialize_
                   LibretroMameCore.EnableSaveState = EnableSaveState;
