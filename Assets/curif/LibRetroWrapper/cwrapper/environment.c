@@ -9,10 +9,7 @@ static char game_path[500];
 static char gamma[50];
 static char brightness[50];
 static char sample_rate[50];
-static char enabled[10];
-static char disabled[10];
 static char xy_input_type[15];
-static char vector_intensity[5];
 static char core[500];
 
 static handlers_t handlers;
@@ -34,10 +31,6 @@ static PFN_vkGetDeviceProcAddr vk_get_device_proc_addr;
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
 static enum retro_log_level minLogLevel;
-
-static char* cap32_gfx_colors = "16bit";
-static char* cap32_scr_crop = "enabled";
-static char* cap32_model = "6128+ (experimental)";
 
 static Environment EnvironmentCB;
 
@@ -393,9 +386,6 @@ void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness,
 
   INIT_AND_COPY_STRING(gamma, _gamma);
   INIT_AND_COPY_STRING(brightness, _brightness);
-  INIT_AND_COPY_STRING(enabled, "enabled");
-  INIT_AND_COPY_STRING(disabled, "disabled");
-  INIT_AND_COPY_STRING(vector_intensity, "2.0");
 
   if (_xy_control_type == 0) {
     INIT_AND_COPY_STRING(xy_input_type, "mouse");
@@ -528,21 +518,7 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
           "[wrapper_environment_cb] get var: %s", var->key);
 #endif /* ifdef ENVIRONMENT_DEBUG */
 
-      if (strcmp(var->key, "mame2003-plus_skip_disclaimer") == 0) {
-          var->value = enabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "mame2003-plus_skip_warnings") == 0) {
-          var->value = enabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
+     if (strcmp(var->key, "mame2003-plus_xy_device") == 0) {
           var->value = xy_input_type;
           wrapper_environment_log(RETRO_LOG_INFO,
               "[wrapper_environment_cb] get var: %s: %s",
@@ -572,45 +548,10 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
               var->key, var->value);
           return true;
       }
-      else if (strcmp(var->key, "mame2003-plus_mame_remapping") == 0) {
-          var->value = enabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "mame2003-plus_vector_intensity") == 0) {
-          var->value = vector_intensity;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "mame2003-plus_use_samples") == 0) {
-          var->value = enabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "mame2003-plus_vector_vector_translusency") ==
-          0) {
-          var->value = disabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
-      else if (strcmp(var->key, "fbneo-lightgun-crosshair-emulation") == 0) {
-          var->value = enabled;
-          wrapper_environment_log(RETRO_LOG_INFO,
-              "[wrapper_environment_cb] get var: %s: %s",
-              var->key, var->value);
-          return true;
-      }
 
-      wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_VARIABLE] Unhandled setting: %s\n", var->key);
-
+#ifdef ENVIRONMENT_DEBUG
+     wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_cb] Unspecified setting: %s\n", var->key);
+#endif
 
       return false;
 
@@ -877,10 +818,12 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
 	  // we receive struct retro_disk_control_ext_callback *
 	  return true;
 
+#ifdef ENVIRONMENT_DEBUG
   default:
 	  wrapper_environment_log(RETRO_LOG_WARN,
 		  "[wrapper_environment_cb] Unsupported command: %i\n", (int)cmd);
-	  return false;
+      return false;
+#endif
   }
 
   return false;

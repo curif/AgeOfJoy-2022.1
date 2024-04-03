@@ -4,11 +4,14 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define DEBUG_CONFIG
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+
 
 namespace Assets.curif.LibRetroWrapper
 {
@@ -24,6 +27,18 @@ namespace Assets.curif.LibRetroWrapper
             AddEmbeddedCores();
             SyncCores();
             ScanForUserCores();
+
+#if DEBUG_CONFIG
+            foreach (var core in Cores)
+            {
+                CoreConfig config = core.Value.GetConfig();
+                ConfigManager.WriteConsole($"[CoresController] Core {core.Key} configuration: {config.environment.prefix}");
+                foreach (var prop in config.environment.properties)
+                {
+                    ConfigManager.WriteConsole($"[CoresController] {prop.Key}: {prop.Value}");
+                }
+            }
+#endif
         }
 
         private void AddEmbeddedCores()
@@ -38,6 +53,10 @@ namespace Assets.curif.LibRetroWrapper
             Dictionary<string, string> properties = new Dictionary<string, string>();
             properties.Add("skip_disclaimer", "enabled");
             properties.Add("skip_warnings", "enabled");
+            properties.Add("mame_remapping", "enabled");
+            properties.Add("use_samples", "enabled");
+            properties.Add("vector_vector_translusency", "disabled");
+            properties.Add("vector_intensity", "2.0");
             CoreConfig config = new CoreConfig("mame2003-plus", properties);
             return config;
         }
@@ -45,8 +64,6 @@ namespace Assets.curif.LibRetroWrapper
         public static CoreConfig Mame2010Config()
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
-            properties.Add("skip_disclaimer", "enabled");
-            properties.Add("skip_warnings", "enabled");
             CoreConfig config = new CoreConfig("mame2010", properties);
             return config;
         }
@@ -54,6 +71,7 @@ namespace Assets.curif.LibRetroWrapper
         public static CoreConfig FbNeoConfig()
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties.Add("lightgun-crosshair-emulation", "enabled");
             CoreConfig config = new CoreConfig("fbneo", properties);
             return config;
         }

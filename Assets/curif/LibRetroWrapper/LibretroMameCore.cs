@@ -441,7 +441,7 @@ public static unsafe class LibretroMameCore
         
         Core core = CoresController.GetCore(Core);
         ConfigManager.WriteConsoleError($"[LibRetroMameCore.Start] Using corelib {core.library}");
-        InitEnvironment(core.GetConfig());
+        InitEnvironment(core.GetConfig().environment);
 
         WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{core.library} for {Core}");
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
@@ -538,23 +538,33 @@ public static unsafe class LibretroMameCore
     }
 
 
-    static Dictionary<string, string> environment = new Dictionary<string, string>();
-    static void InitEnvironment(CoreConfig coreConfig)
+    static Dictionary<string, string> currentEnvironment = new Dictionary<string, string>();
+    static void InitEnvironment(CoreEnvironment coreEnvironment)
     {
-        environment.Clear();
-        foreach (KeyValuePair<string, string> setting in coreConfig.environment.properties)
+        currentEnvironment.Clear();
+        foreach (KeyValuePair<string, string> setting in coreEnvironment.properties)
         {
-            string key = coreConfig.environment.prefix + "_" + setting.Key;
-            string value = setting.Value;
-            ConfigManager.WriteConsole($"[LibRetroMameCore.Start] Using configuration data: {key} = {value}");
-            environment.Add(key, value);
+            if (coreEnvironment.prefix != null)
+            {
+                AddEnvironmentKey(coreEnvironment.prefix + "_" + setting.Key, setting.Value);
+                AddEnvironmentKey(coreEnvironment.prefix + "-" + setting.Key, setting.Value);
+            } else
+            {
+                AddEnvironmentKey(setting.Key, setting.Value);
+            }
         }
+    }
+
+    static void AddEnvironmentKey(string key, string value)
+    {
+        ConfigManager.WriteConsole($"[LibRetroMameCore.Start] Using configuration data: {key} = {value}");
+        currentEnvironment.Add(key, value);
     }
 
     [AOT.MonoPInvokeCallback(typeof(EnvironmentHandler))]
     static string EnvironmentHandlerCB(string key)
     {
-        return environment.ContainsKey(key) ? environment[key] : null;
+        return currentEnvironment.ContainsKey(key) ? currentEnvironment[key] : null;
     }
 
 
