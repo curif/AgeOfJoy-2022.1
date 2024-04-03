@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Roomgate
-  m_Shader: {fileID: 4800000, guid: e8f09f80c5901344982dcaeeea91d198, type: 3}
+  m_Shader: {fileID: 4800000, guid: 286d5fd605b28cf49bb81b9a8de344d0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -19,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties: _DecalSmooth _GlassDistort _NormalsTiling
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -51,6 +51,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _NormalsDistance:
+        m_Texture: {fileID: 2800000, guid: 2e7df1fb15fc2af439af22ebf06d4591, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -71,6 +75,14 @@ Material:
         m_Texture: {fileID: 8900000, guid: 47459a021f09a7c4296bc9c1184047b4, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Texture_Diffuse:
+        m_Texture: {fileID: 2800000, guid: dde2996015b322c4899060b7213f12b1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture_ORM:
+        m_Texture: {fileID: 2800000, guid: 626d7d4c9b59e8b489ad563f10c216cd, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _texcoord:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -79,8 +91,10 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
+    - _DecalSmooth: 0.885
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _GlassDistort: 0.44
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -89,12 +103,13 @@ Material:
     - _OcclusionStrength: 1
     - _Offsetty: 0.15
     - _Parallax: 0.02
+    - _Slide: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - __dirty: 0
+    - __dirty: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ColorBottom: {r: 0, g: 0.5556111, b: 1, a: 0}
@@ -102,6 +117,9 @@ Material:
     - _Color_Bottom: {r: 0, g: 0.5556111, b: 1, a: 0}
     - _Color_Top: {r: 0, g: 0.5556111, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _NormalsTiling: {r: 2, g: 2, b: 0, a: 0}
+    - _OffsetG: {r: 0, g: 0, b: 0, a: 0}
+    - _OffsetR: {r: 1.32, g: 0, b: 0, a: 0}
     - _Vector1: {r: 1, g: 2, b: 0, a: 0}
     - _Vector2: {r: 1, g: 2, b: 0, a: 0}
   m_BuildTextureStacks: []
