@@ -441,17 +441,17 @@ public static unsafe class LibretroMameCore
         WriteConsole("[LibRetroMameCore.Start] Init environment and call retro_init()");
         
         Core core = CoresController.GetCore(Core);
-        ConfigManager.WriteConsoleError($"[LibRetroMameCore.Start] Using corelib {core.library}");
-        InitEnvironment(core.GetConfig().environment);
+        ConfigManager.WriteConsoleError($"[LibRetroMameCore.Start] Using corelib {core.Library}");
+        InitEnvironment(core);
 
-        WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{core.library} for {Core}");
+        WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{core.Library} for {Core}");
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
                                                 new inputStateHandler(inputStateCB),
-                                                core.library,
+                                                core.Library,
                                                 new EnvironmentHandler(EnvironmentHandlerCB)
                                                 );
         if (result != 0)
@@ -540,10 +540,11 @@ public static unsafe class LibretroMameCore
 
 
     static Dictionary<string, string> currentEnvironment = new Dictionary<string, string>();
-    static void InitEnvironment(CoreEnvironment coreEnvironment)
+    static void InitEnvironment(Core core)
     {
         currentEnvironment.Clear();
-        AddEnvironment(coreEnvironment);
+        AddEnvironment(core.GlobalEnvironment);
+        AddEnvironment(core.ReadCoreEnvironment());
         AddEnvironment(CabEnvironment);
     }
 

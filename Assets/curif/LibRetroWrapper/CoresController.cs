@@ -31,9 +31,9 @@ namespace Assets.curif.LibRetroWrapper
 #if DEBUG_CONFIG
             foreach (var core in Cores)
             {
-                CoreConfig config = core.Value.GetConfig();
-                ConfigManager.WriteConsole($"[CoresController] Core {core.Key} configuration: {config.environment.prefix}");
-                foreach (var prop in config.environment.properties)
+                CoreEnvironment coreEnvironment = core.Value.ReadCoreEnvironment();
+                ConfigManager.WriteConsole($"[CoresController] Core {core.Key} configuration: {coreEnvironment.prefix}");
+                foreach (var prop in coreEnvironment.properties)
                 {
                     ConfigManager.WriteConsole($"[CoresController] {prop.Key}: {prop.Value}");
                 }
@@ -48,7 +48,7 @@ namespace Assets.curif.LibRetroWrapper
             AddCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
         }
 
-        public static CoreConfig Mame2003PlusConfig()
+        public static CoreEnvironment Mame2003PlusConfig()
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
             properties.Add("skip_disclaimer", "enabled");
@@ -57,23 +57,23 @@ namespace Assets.curif.LibRetroWrapper
             properties.Add("use_samples", "enabled");
             properties.Add("vector_vector_translusency", "disabled");
             properties.Add("vector_intensity", "2.0");
-            CoreConfig config = new CoreConfig("mame2003-plus", properties);
-            return config;
+            CoreEnvironment coreEnvironment = new CoreEnvironment("mame2003-plus", properties);
+            return coreEnvironment;
         }
 
-        public static CoreConfig Mame2010Config()
+        public static CoreEnvironment Mame2010Config()
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
-            CoreConfig config = new CoreConfig("mame2010", properties);
-            return config;
+            CoreEnvironment coreEnvironment = new CoreEnvironment("mame2010", properties);
+            return coreEnvironment;
         }
 
-        public static CoreConfig FbNeoConfig()
+        public static CoreEnvironment FbNeoConfig()
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
             properties.Add("lightgun-crosshair-emulation", "enabled");
-            CoreConfig config = new CoreConfig("fbneo", properties);
-            return config;
+            CoreEnvironment coreEnvironment = new CoreEnvironment("fbneo", properties);
+            return coreEnvironment;
         }
 
         private void SyncCores()
@@ -142,9 +142,9 @@ namespace Assets.curif.LibRetroWrapper
             Cores.Add(coreName, new Core(coreName, coreLib));
         }
 
-        private void AddCore(string coreName, string coreLib, CoreConfig coreConfig)
+        private void AddCore(string coreName, string coreLib, CoreEnvironment coreEnvironment)
         {
-            Cores.Add(coreName, new Core(coreName, coreLib, coreConfig));
+            Cores.Add(coreName, new Core(coreName, coreLib, coreEnvironment));
         }
 
         private string ExtractCoreName(string core)
