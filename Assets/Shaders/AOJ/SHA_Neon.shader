@@ -54,7 +54,7 @@ Shader "AgeOfJoy/Neon"
 			{
 				float4 vertex : POSITION;
 				float4 color : COLOR;
-				float3 ase_normal : NORMAL;
+				half3 ase_normal : NORMAL;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 			
@@ -70,9 +70,9 @@ Shader "AgeOfJoy/Neon"
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
 
-			uniform float _FresnelScale;
+			uniform half _FresnelScale;
 			UNITY_INSTANCING_BUFFER_START(AgeOfJoyNeon)
-				UNITY_DEFINE_INSTANCED_PROP(float4, _ColorCore)
+				UNITY_DEFINE_INSTANCED_PROP(half4, _ColorCore)
 #define _ColorCore_arr AgeOfJoyNeon
 			UNITY_INSTANCING_BUFFER_END(AgeOfJoyNeon)
 
@@ -112,12 +112,12 @@ Shader "AgeOfJoy/Neon"
 				#ifdef ASE_NEEDS_FRAG_WORLD_POSITION
 				float3 WorldPosition = i.worldPos;
 				#endif
-				float4 _ColorCore_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorCore_arr, _ColorCore);
+				half4 _ColorCore_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorCore_arr, _ColorCore);
 				float3 ase_worldViewDir = UnityWorldSpaceViewDir(WorldPosition);
 				ase_worldViewDir = normalize(ase_worldViewDir);
-				float fresnelNdotV4 = dot( i.ase_normal, ase_worldViewDir );
-				float fresnelNode4 = ( 0.0 + _FresnelScale * pow( 1.0 - fresnelNdotV4, 5.0 ) );
-				float4 lerpResult5 = lerp( i.ase_color , _ColorCore_Instance , fresnelNode4);
+				half fresnelNdotV4 = dot( i.ase_normal, ase_worldViewDir );
+				half fresnelNode4 = ( 0.0 + _FresnelScale * pow( 1.0 - fresnelNdotV4, 5.0 ) );
+				half4 lerpResult5 = lerp( i.ase_color , _ColorCore_Instance , fresnelNode4);
 				
 				
 				finalColor = lerpResult5;
@@ -140,7 +140,7 @@ Node;AmplifyShaderEditor.VertexColorNode;1;-806.3334,-167.1667;Inherit;False;0;5
 Node;AmplifyShaderEditor.RangedFloatNode;6;-649.6669,240.8331;Inherit;False;Constant;_Float1;Float 1;0;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;5;-295.0002,138.8331;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.ColorNode;10;-590.9999,-206.5003;Inherit;False;InstancedProperty;_ColorA;Color A;1;0;Create;True;0;0;0;False;0;False;0.4716981,0,0,0;1,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;True;-1;2;ASEMaterialInspector;100;5;AgeOfJoy/Neon;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Half;False;True;-1;2;ASEMaterialInspector;100;5;AgeOfJoy/Neon;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
 WireConnection;4;0;12;0
 WireConnection;4;2;8;0
 WireConnection;5;0;1;0
@@ -148,4 +148,4 @@ WireConnection;5;1;11;0
 WireConnection;5;2;4;0
 WireConnection;0;0;5;0
 ASEEND*/
-//CHKSM=6BCB9BABC501A33FF497DC7B4BB858BF0D6F8608
+//CHKSM=89E1877C4C785ECD4380A841D4A731A343A018ED

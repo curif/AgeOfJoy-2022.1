@@ -27,7 +27,7 @@ Shader "Custom/SHA_AOJ_DiscoWall"
 		#endif
 		struct Input
 		{
-			float3 worldRefl;
+			half3 worldRefl;
 			INTERNAL_DATA
 			float3 worldPos;
 		};
@@ -58,10 +58,10 @@ Shader "Custom/SHA_AOJ_DiscoWall"
 		void surf( Input i , inout SurfaceOutputStandard o )
 		{
 			o.Normal = float3(0,0,1);
-			float3 temp_cast_0 = (0.0).xxx;
+			half3 temp_cast_0 = (0.0).xxx;
 			float3 ase_worldPos = i.worldPos;
-			float3 rotatedValue5 = RotateAroundAxis( temp_cast_0, ase_worldPos, float3(0,1,0), _Time.y );
-			float3 normalizeResult16 = normalize( ( rotatedValue5 + ase_worldPos ) );
+			half3 rotatedValue5 = RotateAroundAxis( temp_cast_0, ase_worldPos, half3(0,1,0), _Time.y );
+			half3 normalizeResult16 = normalize( ( rotatedValue5 + ase_worldPos ) );
 			o.Emission = texCUBE( _Cube, WorldReflectionVector( i , normalizeResult16 ) ).rgb;
 			o.Alpha = 1;
 		}
@@ -165,7 +165,7 @@ Node;AmplifyShaderEditor.SamplerNode;12;-835.3887,-82.18512;Inherit;True;Propert
 Node;AmplifyShaderEditor.FunctionNode;15;-1157.389,102.8149;Inherit;False;Waving Vertex;-1;;2;92011dd32a987944ab174f5e78047379;0;3;1;FLOAT3;0,0,0;False;12;FLOAT;0;False;13;FLOAT;0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.WorldSpaceViewDirHlpNode;7;-1428.389,181.8148;Inherit;False;1;0;FLOAT4;0,0,0,1;False;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.SamplerNode;1;-392,-318.1667;Inherit;True;Property;_Cube;Cube;0;0;Create;True;0;0;0;False;0;False;-1;4580ad477794e24449370c028469c12c;4580ad477794e24449370c028469c12c;True;0;False;white;Auto;False;Object;-1;Auto;Cube;8;0;SAMPLERCUBE;;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;3;FLOAT3;0,0,0;False;4;FLOAT3;0,0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;0,0;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;Custom/SHA_AOJ_DiscoWall;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;0,0;Half;False;True;-1;2;ASEMaterialInspector;0;0;Standard;Custom/SHA_AOJ_DiscoWall;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;5;0;8;0
 WireConnection;5;1;6;0
 WireConnection;5;2;19;0
@@ -177,4 +177,4 @@ WireConnection;20;0;16;0
 WireConnection;1;1;20;0
 WireConnection;0;2;1;0
 ASEEND*/
-//CHKSM=6103F43CD92B7BB38442514F15B32C8BED111234
+//CHKSM=C5EE6C95B226C37816C809F6E651C384376E0B2E

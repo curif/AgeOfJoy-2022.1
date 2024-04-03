@@ -24,11 +24,11 @@ Shader "AgeOfJoy/BlinkyLight"
 		};
 
 		uniform sampler2D _TextureSample0;
-		uniform float4 _TextureSample0_ST;
+		uniform half4 _TextureSample0_ST;
 
 		void surf( Input i , inout SurfaceOutputStandard o )
 		{
-			float4 color1 = IsGammaSpace() ? float4(1,0,0,1) : float4(1,0,0,1);
+			half4 color1 = IsGammaSpace() ? half4(1,0,0,1) : half4(1,0,0,1);
 			o.Emission = color1.rgb;
 			float2 uv_TextureSample0 = i.uv_texcoord * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
 			o.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).g * ( ( _SinTime.w * 2.0 ) - 1.0 ) );
@@ -121,7 +121,7 @@ Node;AmplifyShaderEditor.ColorNode;1;-305,-186.5;Inherit;False;Constant;_Color0;
 Node;AmplifyShaderEditor.Vector2Node;3;-356.3333,52.83331;Inherit;False;Constant;_Vector0;Vector 0;0;0;Create;True;0;0;0;False;0;False;0,0;0,0;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
 Node;AmplifyShaderEditor.FunctionNode;2;-100.3333,36.83337;Inherit;False;SphereMask;-1;;1;988803ee12caf5f4690caee3c8c4a5bb;0;3;15;FLOAT2;0,0;False;14;FLOAT;0.1;False;12;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;13;886.2853,25.47989;Inherit;True;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;12;1228,-121.3335;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/BlinkyLight;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;12;1228,-121.3335;Half;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/BlinkyLight;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;8;0;7;4
 WireConnection;9;0;8;0
 WireConnection;2;15;3;0
@@ -130,4 +130,4 @@ WireConnection;13;1;9;0
 WireConnection;12;2;1;0
 WireConnection;12;9;13;0
 ASEEND*/
-//CHKSM=DF6C716C35959030F587319B56F4FCF4EAAF12E2
+//CHKSM=8D92CBECB98A44EDA94399069BBE94670F221655
