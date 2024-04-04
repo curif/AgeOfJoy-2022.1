@@ -98,7 +98,8 @@ public class GateController : MonoBehaviour
                     // Force Unity to asynchronously regenerate the tetrahedral tesselation for all loaded Scenes
                     // https://docs.unity3d.com/Manual/light-probes-and-scene-loading.html  
                     LightProbes.TetrahedralizeAsync();
-                    yield return new WaitForSeconds(0.1f);
+                    //yield return new WaitForSeconds(0.1f);
+                    //LockGate(false); //to close the door ASAP.
                 }
                 if (ScenesToUnload.Length > 0)
                 {
@@ -111,6 +112,8 @@ public class GateController : MonoBehaviour
                             controledSceneToUnLoad.IsSafeToUse &&
                             SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
                         {
+                            //LockGate(true); //to close the door ASAP.
+
                             AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
                             while (!asyncLoad.isDone)
                                 yield return new WaitForSeconds(0.1f);
@@ -121,6 +124,7 @@ public class GateController : MonoBehaviour
                             yield return new WaitForSeconds(0.1f);
                         }
                     }
+
                     if (unloadUnusedAssets)
                     {
                         AsyncOperation resourceUnloadOp = Resources.UnloadUnusedAssets();
@@ -130,27 +134,48 @@ public class GateController : MonoBehaviour
                     }
                 }
             }
-            if (SceneBlockers.Length > 0)
-            {
-                int idx;
-                for (idx = 0; idx < SceneBlockers.Length; idx++)
-                {
-                    SceneReference controledSceneBlocker = SceneBlockers[idx].SceneRef;
-                    if (controledSceneBlocker != null)
-                        LockGate(SceneBlockers[idx],
-                                !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
-                }
-            }
 
-            yield return new WaitForSeconds(1f);
+            LockGate();
+
+            yield return new WaitForSeconds(0.5f);
         }
     }
-    void LockGate(SceneGate scn, bool block)
+
+    void UpdateBlockers(SceneGate scn, bool blocked)
     {
         foreach (GameObject blocker in scn.Blockers)
         {
             if (blocker != null)
-                blocker.SetActive(block);
+            {
+                SliderDoorController ctrl = blocker.GetComponent<SliderDoorController>();
+                if (ctrl != null)
+                {
+                    ctrl.SetDoorState(!blocked);
+                }
+                else
+                {
+                    blocker.SetActive(blocked);
+                }
+            }
+        }
+    }
+
+    void LockGate(bool? blocked = null)
+    {
+        if (SceneBlockers.Length > 0)
+        {
+            int idx;
+            for (idx = 0; idx < SceneBlockers.Length; idx++)
+            {
+                SceneReference controledSceneBlocker = SceneBlockers[idx].SceneRef;
+                if (controledSceneBlocker != null)
+                {
+                    if (blocked == null)
+                        UpdateBlockers(SceneBlockers[idx], !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
+                    else
+                        UpdateBlockers(SceneBlockers[idx], (bool)blocked);
+                }
+            }
         }
     }
 
