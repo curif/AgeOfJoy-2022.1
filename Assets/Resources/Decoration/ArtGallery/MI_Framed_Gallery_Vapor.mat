@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_MuseumFloor
-  m_Shader: {fileID: 4800000, guid: b73618ac0a55e984b828bb5902163ceb, type: 3}
-  m_Parent: {fileID: 0}
+  m_Name: MI_Framed_Gallery_Vapor
+  m_Shader: {fileID: 4800000, guid: 7a672dc051ec8a04caeb8c7ded5ae6c3, type: 3}
+  m_Parent: {fileID: 2100000, guid: f02d89c4cc76f43498e670ab8db4b646, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -23,14 +23,13 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - _RoomCubemap:
-        m_Texture: {fileID: 8900000, guid: c571d0d4d8c0f4a49aa8714aa29d7c27, type: 3}
+    - _Albedo:
+        m_Texture: {fileID: 2800000, guid: b7cca20bcccc1c44298b6d9acedbcc26, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Metallic: 0
-    - _Sm: 0.183
-    - __dirty: 0
-    m_Colors: []
+    - _EmissiveAmount: 0.606
+    m_Colors:
+    - _FrameColor: {r: 0, g: 0.56339693, b: 1, a: 0}
   m_BuildTextureStacks: []
