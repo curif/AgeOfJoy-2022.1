@@ -52,6 +52,7 @@ public class CabinetInformation
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
+    public CoreEnvironment environment;
 
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
@@ -508,7 +509,7 @@ public class CabinetInformation
             coinSlots.Contains(coinslot) ? null : new System.ArgumentException($"Unknown coin slot style: {coinslot}"));
         if (crt != null)
             exceptions.Add($"CRT", crt.validate(crtTypes));
-        exceptions.Add($"CORE", CoresController.Contains(core) ? null :
+        exceptions.Add($"CORE", CoresController.CoreExists(core) ? null :
                     new System.ArgumentException($"Unknown core: {core}"));
 
         if (lightGunInformation != null && lightGunInformation.active)
