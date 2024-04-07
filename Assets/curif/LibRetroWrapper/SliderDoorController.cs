@@ -1,101 +1,149 @@
 using UnityEngine;
 using System.Collections;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class SliderDoorController : MonoBehaviour
 {
-    public float openTime = 2f; // Time taken to open the door
-    public float closeTime = 0.5f; // Time taken to close the door
-    public float openPercentage = 0.5f; // Percentage at which the door is considered open
-    public AudioSource openAudioSource; // AudioSource for opening the door
-    public AudioSource closeAudioSource; // AudioSource for closing the door
+    public Transform doorA; // Reference to DoorA
+    public Transform doorB; // Reference to DoorB
 
-    private Material doorMaterial; // Material with the Slider property
-    private BoxCollider doorCollider; // Collider blocking the entrance
+    public float openTime = 2f; // Time taken to open the doors
+    public float closeTime = 0.5f; // Time taken to close the doors
+    public float doorSlideUnits = 0.64f; // Slide units of the doors
+
+    public AudioSource openAudioSource; // AudioSource for opening the doors
+    public AudioSource closeAudioSource; // AudioSource for closing the doors
+
+    public bool isDoorOpen = false; // Track the state of the doors
+    private Vector3 closedPositionA; // Position when DoorA is fully closed
+    private Vector3 closedPositionB; // Position when DoorB is fully closed
+    private Vector3 openPositionA; // Position when the doors are fully open
+    private Vector3 openPositionB; // Position when the doors are fully open
     private Coroutine currentCoroutine;
-    private bool isDoorOpen = false; // Track the state of the door
+
+    private BoxCollider doorCollider; // Collider blocking the entrance
 
     void Start()
     {
-        // Get the material from the mesh renderer attached to this GameObject
-        MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer != null)
-        {
-            doorMaterial = meshRenderer.material;
-        }
-        else
-        {
-            ConfigManager.WriteConsoleError("[SliderDoorController start] MeshRenderer component not found on GameObject.");
-        }
+        // Store the closed positions of the doors
+        closedPositionA = doorA.localPosition;
+        closedPositionB = doorB.localPosition;
+
+        // Calculate the open position based on the doors' closed positions and slide units
+        openPositionA = closedPositionA - Vector3.right * doorSlideUnits;
+        openPositionB = closedPositionB - Vector3.right * doorSlideUnits * 2;
 
         // Get the box collider attached to this GameObject
         doorCollider = GetComponent<BoxCollider>();
     }
 
-    // Method to open or close the door based on the boolean parameter
+    // Method to open or close the doors based on the boolean parameter
     public void SetDoorState(bool isOpen)
     {
-        if (isOpen && !isDoorOpen) // If door should open and it's not already open
-            OpenDoor();
-        else if (!isOpen && isDoorOpen) // If door should close and it's not already closed
-            CloseDoor();
+        if (isOpen && !isDoorOpen) // If doors should open and they are not already open
+            OpenDoors();
+        else if (!isOpen && isDoorOpen) // If doors should close and they are not already closed
+            CloseDoors();
     }
 
-    // Method to open the door
-    public void OpenDoor()
+    // Method to open the doors
+    public void OpenDoors()
     {
+        if (isDoorOpen) // If doors are already open, return
+            return;
+
         if (currentCoroutine != null)
             StopCoroutine(currentCoroutine);
 
-        isDoorOpen = true; // Update the door state immediately
-        doorCollider.enabled = false; // Disable the box collider
+        isDoorOpen = true; // Update the doors state immediately
         if (openAudioSource != null && !openAudioSource.isPlaying)
             openAudioSource.Play(); // Play the open audio if available
-        currentCoroutine = StartCoroutine(ChangeSliderValue(1f, openTime));
+
+        // Start the coroutine to open both doors
+        currentCoroutine = StartCoroutine(MoveDoors(openPositionA, openPositionB, openTime));
     }
 
-    // Method to close the door
-    public void CloseDoor()
+    // Method to close the doors
+    public void CloseDoors()
     {
+        if (!isDoorOpen) // If doors are already closed, return
+            return;
+
         if (currentCoroutine != null)
             StopCoroutine(currentCoroutine);
 
-        isDoorOpen = false; // Update the door state immediately
+        isDoorOpen = false; // Update the doors state immediately
         if (closeAudioSource != null && !closeAudioSource.isPlaying)
             closeAudioSource.Play(); // Play the close audio if available
-        currentCoroutine = StartCoroutine(ChangeSliderValue(0f, closeTime));
+
+        // Start the coroutine to close both doors
+        currentCoroutine = StartCoroutine(MoveDoors(closedPositionA, closedPositionB, closeTime));
+
     }
 
-    // Coroutine to change the value of the Slider property over time
-    private IEnumerator ChangeSliderValue(float targetValue, float duration)
+    // Coroutine to move the doors to a target position over time
+    private IEnumerator MoveDoors(Vector3 targetPositionA, Vector3 targetPositionB, float duration)
     {
-        float startTime = Time.time;
-        float startValue = doorMaterial.GetFloat("_Slide"); // Adjust property name
-        float speedFactor;
+        float startTimeB = Time.time;
+        Vector3 startDoorBPosition = doorB.localPosition;
+        Vector3 startDoorAPosition = doorA.localPosition;
 
-        while (Time.time < startTime + duration)
+        float progress = (Time.time - startTimeB) / duration;
+        while (Time.time < startTimeB + duration / 2)
         {
-            float elapsedTime = Time.time - startTime;
-            float progress = elapsedTime / duration;
-            float sliderValue = Mathf.Lerp(startValue, targetValue, progress);
+            doorB.localPosition = Vector3.Lerp(startDoorBPosition, targetPositionB, progress);
 
-            // Gradually reduce the speed as it approaches the target value
-            float distanceToTarget = Mathf.Abs(targetValue - sliderValue);
-            speedFactor = Mathf.Clamp01(1 - distanceToTarget);
-
-            doorMaterial.SetFloat("_Slide", sliderValue); // Adjust property name
             yield return null;
+            progress = (Time.time - startTimeB) / duration;
         }
 
-        doorMaterial.SetFloat("_Slide", targetValue); // Ensure we reach the target value precisely
-        if (targetValue < openPercentage) // If the door is not fully open
+        doorCollider.enabled = !isDoorOpen; // Disable the box collider
+
+        float startTimeA = Time.time;
+        float progressA = (Time.time - startTimeA) / duration;
+        while (Time.time < startTimeB + duration)
         {
-            doorCollider.enabled = true; // Enable the box collider
+            doorB.localPosition = Vector3.Lerp(startDoorBPosition, targetPositionB, progress);
+            doorA.localPosition = Vector3.Lerp(startDoorAPosition, targetPositionA, progressA);
+
+            yield return null;
+            progress = (Time.time - startTimeB) / duration;
+            progressA = (Time.time - startTimeA) / duration * 2;
         }
-        else
-        {
-            doorCollider.enabled = false; // Disable the box collider
-        }
-        isDoorOpen = (targetValue == 1f); // Update the door state
+
+        // Ensure both doors reach the target position precisely
+        doorB.localPosition = targetPositionB;
+        doorA.localPosition = targetPositionA;
+
         currentCoroutine = null;
     }
 }
+
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(SliderDoorController))]
+public class SliderDoorControllerEditor  : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        base.OnInspectorGUI();
+
+        // Cast the target to TwoPartSliderDoorController
+        SliderDoorController doorController = (SliderDoorController)target;
+
+        // Add a button to open the door
+        if (GUILayout.Button("Open Door"))
+        {
+            doorController.OpenDoors();
+        }
+
+        // Add a button to close the door
+        if (GUILayout.Button("Close Door"))
+        {
+            doorController.CloseDoors();
+        }
+    }
+}
+#endif
