@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License along with thi
 #endif
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 
@@ -22,33 +23,35 @@ public static class ConfigManager
 #if UNITY_EDITOR
     public static string BaseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cabs");
     public static string BaseAppDir = BaseDir + "/data";
+    public static string BasePublicDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "publiccabs");
 #else
     public static string Bundle = "com.curif.AgeOfJoy";
     public static string BaseAppDir = "/data/data/" + Bundle;
     public static string BaseDir = "/sdcard/Android/data/" + Bundle;
+    public static string BasePublicDir = "/storage/emulated/0/AgeOfJoy";
 #endif
 
-    public static string Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
-    public static string CabinetsDB = Path.Combine(BaseDir, "cabinetsdb"); //uncompressed cabinets
-    public static string SystemDir = Path.Combine(BaseDir, "system");
-    public static string RomsDir = Path.Combine(BaseDir, "downloads");
-    public static string GameSaveDir = Path.Combine(BaseDir, "save");
-    public static string GameStatesDir = Path.Combine(BaseDir, "startstates");
-    public static string ConfigDir = Path.Combine(BaseDir, "configuration");
-    public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
-    public static string ConfigCoresDir = Path.Combine(ConfigDir, "cores");
-    public static string ConfigControllerSchemesDir = Path.Combine(ConfigControllersDir, "schemes");
-    public static string AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
-    public static string DebugDir = Path.Combine(BaseDir, "debug");
-    public static string SamplesDir = Path.Combine(SystemDir, "samples");
-    public static string MameConfigDir = Path.Combine(GameSaveDir, "cfg");
-    public static string nvramDir = Path.Combine(GameSaveDir, "nvram");
-    public static string MusicDir = Path.Combine(BaseDir, "music");
-    public static string CoresDir = Path.Combine(BaseDir, "cores");
-
-    public static string InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
+    public static string Cabinets;
+    public static string CabinetsDB;
+    public static string SystemDir;
+    public static string RomsDir;
+    public static string GameSaveDir;
+    public static string GameStatesDir;
+    public static string ConfigDir;
+    public static string ConfigControllersDir;
+    public static string ConfigControllerSchemesDir;
+    public static string AGEBasicDir;
+    public static string DebugDir;
+    public static string SamplesDir;
+    public static string MameConfigDir;
+    public static string nvramDir;
+    public static string MusicDir;
+    public static string CoresDir;
+    public static string InternalCoresDir;
+    public static string ConfigCoresDir;
 
     public static ConfigInformation configuration;
+
     public static bool DebugActive
     {
         get
@@ -61,41 +64,69 @@ public static class ConfigManager
         }
     }
 
-    static ConfigManager()
+    private static void createFolders()
     {
-        Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
-
-        CreateDirectory(ConfigManager.Cabinets);
-        CreateDirectory(ConfigManager.CabinetsDB);
-        CreateDirectory(ConfigManager.ConfigDir);
-        CreateDirectory(ConfigManager.ConfigControllersDir);
-        CreateDirectory(ConfigManager.ConfigControllerSchemesDir);
-        CreateDirectory(ConfigManager.ConfigCoresDir);
-        CreateDirectory(ConfigManager.AGEBasicDir);
-        CreateDirectory(ConfigManager.DebugDir);
-        CreateDirectory(ConfigManager.MusicDir);
-        CreateDirectory(ConfigManager.CoresDir);
-        CreateDirectory(ConfigManager.InternalCoresDir);
-
-        CreateDirectory(ConfigManager.SystemDir);
-        CreateDirectory(ConfigManager.RomsDir);
-        CreateDirectory(ConfigManager.GameSaveDir);
-        CreateDirectory(ConfigManager.SamplesDir);
-        CreateDirectory(ConfigManager.MameConfigDir);
-        CreateDirectory(ConfigManager.nvramDir);
-
 #if UNITY_EDITOR
-        CreateDirectory(BaseAppDir);
+        CreateFolder(BaseDir);
 #endif
+        RomsDir = Path.Combine(BaseDir, "downloads");
+        if (!Directory.Exists(BasePublicDir) && !Directory.Exists(RomsDir))
+        {
+            BaseDir = BasePublicDir;
+            CreateFolder(BaseDir);
+        }
+        else if (Directory.Exists(BasePublicDir))
+        {
+            BaseDir = BasePublicDir;
+        }
+
+        RomsDir = Path.Combine(BaseDir, "downloads");
+        Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
+        CabinetsDB = Path.Combine(BaseDir, "cabinetsdb"); //uncompressed cabinets
+        SystemDir = Path.Combine(BaseDir, "system");
+        GameSaveDir = Path.Combine(BaseDir, "save");
+        GameStatesDir = Path.Combine(BaseDir, "startstates");
+        ConfigDir = Path.Combine(BaseDir, "configuration");
+        ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
+        ConfigControllerSchemesDir = Path.Combine(ConfigDir, "controllers/schemes");
+        AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
+        DebugDir = Path.Combine(BaseDir, "debug");
+        SamplesDir = Path.Combine(SystemDir, "samples");
+        MameConfigDir = Path.Combine(GameSaveDir, "cfg");
+        nvramDir = Path.Combine(GameSaveDir, "nvram");
+        MusicDir = Path.Combine(BaseDir, "music");
+        CoresDir = Path.Combine(BaseDir, "cores");
+        ConfigCoresDir = Path.Combine(ConfigDir, "cores");
+        InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
+
+        CreateFolder(ConfigManager.Cabinets);
+        CreateFolder(ConfigManager.CabinetsDB);
+        CreateFolder(ConfigManager.ConfigDir);
+        CreateFolder(ConfigManager.ConfigControllersDir);
+        CreateFolder(ConfigManager.ConfigControllerSchemesDir);
+        CreateFolder(ConfigManager.AGEBasicDir);
+        CreateFolder(ConfigManager.DebugDir);
+        CreateFolder(ConfigManager.MusicDir);
+        CreateFolder(ConfigManager.CoresDir);
+        CreateFolder(ConfigManager.InternalCoresDir);
+        CreateFolder(ConfigManager.SystemDir);
+        CreateFolder(ConfigManager.RomsDir);
+        CreateFolder(ConfigManager.GameSaveDir);
+        CreateFolder(ConfigManager.SamplesDir);
+        CreateFolder(ConfigManager.MameConfigDir);
+        CreateFolder(ConfigManager.nvramDir);
     }
 
-    public static void CreateDirectory(string path)
+    static ConfigManager()
+    {
+        createFolders();
+        WriteConsole($"[ConfigManager] BaseDir {BaseDir}");
+    }
+
+    public static void CreateFolder(string path)
     {
         if (!Directory.Exists(path))
-        {
-            WriteConsole($"[ConfigManager.CreateDirectory]: Creating new directory: {path}");
             Directory.CreateDirectory(path);
-        }
     }
 
     /*
