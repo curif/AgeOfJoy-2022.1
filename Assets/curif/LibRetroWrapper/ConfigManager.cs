@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License along with thi
 #endif
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 
@@ -28,7 +29,6 @@ public static class ConfigManager
     public static string BaseAppDir = "/data/data/" + Bundle;
     public static string BaseDir = "/sdcard/Android/data/" + Bundle;
     public static string BasePublicDir = "/storage/emulated/0/AgeOfJoy";
-
 #endif
 
     public static string Cabinets;
@@ -48,8 +48,10 @@ public static class ConfigManager
     public static string MusicDir;
     public static string CoresDir;
     public static string InternalCoresDir;
+    public static string ConfigCoresDir;
 
     public static ConfigInformation configuration;
+
     public static bool DebugActive
     {
         get
@@ -64,7 +66,9 @@ public static class ConfigManager
 
     private static void createFolders()
     {
-
+#if UNITY_EDITOR
+        CreateFolder(BaseDir);
+#endif
         RomsDir = Path.Combine(BaseDir, "downloads");
         if (!Directory.Exists(BasePublicDir) && !Directory.Exists(RomsDir))
         {
@@ -92,6 +96,8 @@ public static class ConfigManager
         nvramDir = Path.Combine(GameSaveDir, "nvram");
         MusicDir = Path.Combine(BaseDir, "music");
         CoresDir = Path.Combine(BaseDir, "cores");
+        ConfigCoresDir = Path.Combine(ConfigDir, "cores");
+        InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
 
         CreateFolder(ConfigManager.Cabinets);
         CreateFolder(ConfigManager.CabinetsDB);
@@ -103,7 +109,6 @@ public static class ConfigManager
         CreateFolder(ConfigManager.MusicDir);
         CreateFolder(ConfigManager.CoresDir);
         CreateFolder(ConfigManager.InternalCoresDir);
-
         CreateFolder(ConfigManager.SystemDir);
         CreateFolder(ConfigManager.RomsDir);
         CreateFolder(ConfigManager.GameSaveDir);
@@ -114,13 +119,8 @@ public static class ConfigManager
 
     static ConfigManager()
     {
-        Debug.Log($"[ConfigManager] BaseDir {BaseDir}");
-
         createFolders();
-
-#if UNITY_EDITOR
-        CreateDirectory(BaseAppDir);
-#endif
+        WriteConsole($"[ConfigManager] BaseDir {BaseDir}");
     }
 
     public static void CreateFolder(string path)
