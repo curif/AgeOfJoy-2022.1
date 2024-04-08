@@ -3,31 +3,38 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine.SceneManagement;
 
-class CommandFunctionCONTROLACTIVE : CommandFunctionSingleExpressionBase
+class CommandFunctionCONTROLACTIVE : CommandFunctionExpressionListBase
 {
     public CommandFunctionCONTROLACTIVE(ConfigurationCommands config) : base(config)
     {
         cmdToken = "CONTROLACTIVE";
     }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 1); //only the id is required
+    }
 
     public override BasicValue Execute(BasicVars vars)
     {
-        if (config?.ControlMap == null /* ||
-                !config.ConfigurationController.ControlEnabled()*/)
+        if (config?.ControlMap == null)
             throw new Exception("no control map assigned.");
         
-        BasicValue val = expr.Execute(vars);
-        FunctionHelper.ExpectedNonEmptyString(val, "- Control ID");
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], "- Control ID");
 
-        string mameControl = val.GetValueAsString();
+        string mameControl = vals[0].GetValueAsString();
+        int port = 0;
+        if (FunctionHelper.GetValsCount(vals) > 1)
+            port = vals[1].GetInt();
 
-        if (config.ControlMap.Active(mameControl) == 0)
+        ConfigManager.WriteConsole($"[ControlActive Execute] {mameControl} {port} params count:{vals.Length}");
+        if (config.ControlMap.Active(mameControl, port) == 0)
             return BasicValue.False;
+
         return BasicValue.True;
     }
 
 }
-
 
 class CommandFunctionCONTROLRUMBLE : CommandFunctionExpressionListBase
 {
