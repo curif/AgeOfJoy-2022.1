@@ -157,4 +157,18 @@ public static class FunctionHelper
         return normalizedPath;
     }
 
+
+    public static int GetValsCount(BasicValue[] vals)
+    {
+        int loadedCount = 0;
+        foreach (BasicValue val in vals)
+        {
+            if (val != null)
+                loadedCount++;
+            else
+                break; // Stop counting when encountering null
+        }
+        return loadedCount;
+    }
+
 }
