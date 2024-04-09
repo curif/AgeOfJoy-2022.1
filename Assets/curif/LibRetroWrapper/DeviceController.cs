@@ -4,19 +4,10 @@ using UnityEngine.XR;
 
 public class DeviceController : MonoBehaviour
 {
-    public enum DeviceType
-    {
-        OculusQuest2,
-        OculusQuest3,
-        Computer,
-        Unknown
-    }
-
-    public static DeviceType Device { get; private set; } = DeviceController.DeviceType.Unknown;
+    public static DeviceType Device { get; private set; } = DeviceType.Unknown;
 
     void Start()
     {
-
         ConfigManager.WriteConsole("[DeviceController] XRSettings.loadedDeviceName: " + XRSettings.loadedDeviceName);
         ConfigManager.WriteConsole("[DeviceController] SystemInfo.deviceModel: " + SystemInfo.deviceModel);
         ConfigManager.WriteConsole("[DeviceController] SystemInfo.deviceName: " + SystemInfo.deviceName);
@@ -51,10 +42,6 @@ public class DeviceController : MonoBehaviour
         }
 
         ConfigManager.WriteConsole("[DeviceController] Detected device: " + Device);
-    }
-
-    void Update()
-    {
-        
+        Device.ApplySettings(false);
     }
 }
