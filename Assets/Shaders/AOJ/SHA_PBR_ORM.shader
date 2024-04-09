@@ -9,6 +9,7 @@ Shader "AgeOfJoy/PBR_ORM"
 		_ORM("ORM", 2D) = "linearGrey" {}
 		_MetalAdjust("MetalAdjust", Range( -1 , 1)) = 0
 		_SmoothnessAdjust("SmoothnessAdjust", Range( -1 , 1)) = 0
+		_DiffuseColor("DiffuseColor", Color) = (1,1,1,0)
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 
 		//_TransmissionShadow( "Transmission Shadow", Range( 0, 1 ) ) = 0.5
@@ -251,6 +252,7 @@ Shader "AgeOfJoy/PBR_ORM"
 			#endif
 			uniform sampler2D _Diffuse;
 			uniform half4 _Diffuse_ST;
+			uniform half4 _DiffuseColor;
 			uniform sampler2D _Normal;
 			uniform half4 _Normal_ST;
 			uniform sampler2D _ORM;
@@ -462,7 +464,7 @@ Shader "AgeOfJoy/PBR_ORM"
 				float2 uv_ORM = IN.ase_texcoord9.xy * _ORM_ST.xy + _ORM_ST.zw;
 				half4 tex2DNode8 = tex2D( _ORM, uv_ORM );
 				
-				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
+				o.Albedo = ( tex2D( _Diffuse, uv_Diffuse ) * _DiffuseColor ).rgb;
 				o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
 				o.Emission = half3( 0, 0, 0 );
 				#if defined(_SPECULAR_SETUP)
@@ -711,6 +713,7 @@ Shader "AgeOfJoy/PBR_ORM"
 			#endif
 			uniform sampler2D _Diffuse;
 			uniform half4 _Diffuse_ST;
+			uniform half4 _DiffuseColor;
 			uniform sampler2D _Normal;
 			uniform half4 _Normal_ST;
 			uniform sampler2D _ORM;
@@ -903,7 +906,7 @@ Shader "AgeOfJoy/PBR_ORM"
 				float2 uv_ORM = IN.ase_texcoord9.xy * _ORM_ST.xy + _ORM_ST.zw;
 				half4 tex2DNode8 = tex2D( _ORM, uv_ORM );
 				
-				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
+				o.Albedo = ( tex2D( _Diffuse, uv_Diffuse ) * _DiffuseColor ).rgb;
 				o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
 				o.Emission = half3( 0, 0, 0 );
 				#if defined(_SPECULAR_SETUP)
@@ -1093,6 +1096,7 @@ Shader "AgeOfJoy/PBR_ORM"
 			#endif
 			uniform sampler2D _Diffuse;
 			uniform half4 _Diffuse_ST;
+			uniform half4 _DiffuseColor;
 			uniform sampler2D _Normal;
 			uniform half4 _Normal_ST;
 			uniform sampler2D _ORM;
@@ -1286,7 +1290,7 @@ Shader "AgeOfJoy/PBR_ORM"
 				float2 uv_ORM = IN.ase_texcoord8.xy * _ORM_ST.xy + _ORM_ST.zw;
 				half4 tex2DNode8 = tex2D( _ORM, uv_ORM );
 				
-				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
+				o.Albedo = ( tex2D( _Diffuse, uv_Diffuse ) * _DiffuseColor ).rgb;
 				o.Normal = UnpackNormal( tex2D( _Normal, uv_Normal ) );
 				o.Emission = half3( 0, 0, 0 );
 				#if defined(_SPECULAR_SETUP)
@@ -1460,6 +1464,7 @@ Shader "AgeOfJoy/PBR_ORM"
 			#endif
 			uniform sampler2D _Diffuse;
 			uniform half4 _Diffuse_ST;
+			uniform half4 _DiffuseColor;
 
 
 			
@@ -1615,7 +1620,7 @@ Shader "AgeOfJoy/PBR_ORM"
 
 				float2 uv_Diffuse = IN.ase_texcoord3.xy * _Diffuse_ST.xy + _Diffuse_ST.zw;
 				
-				o.Albedo = tex2D( _Diffuse, uv_Diffuse ).rgb;
+				o.Albedo = ( tex2D( _Diffuse, uv_Diffuse ) * _DiffuseColor ).rgb;
 				o.Normal = fixed3( 0, 0, 1 );
 				o.Emission = half3( 0, 0, 0 );
 				o.Alpha = 1;
@@ -1903,8 +1908,10 @@ Node;AmplifyShaderEditor.SamplerNode;8;-513.3334,405.8334;Inherit;True;Property;
 Node;AmplifyShaderEditor.OneMinusNode;9;-86.3334,517.5001;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleAddOpNode;10;84.56409,34.40558;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleAddOpNode;12;219.2308,341.739;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;11;-180.1025,183.0723;Inherit;False;Property;_MetalAdjust;MetalAdjust;3;0;Create;True;0;0;0;False;0;False;0;0;-1;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;13;-150.7692,335.739;Inherit;False;Property;_SmoothnessAdjust;SmoothnessAdjust;4;0;Create;True;0;0;0;False;0;False;0;0;-1;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;11;-180.1025,183.0723;Inherit;False;Property;_MetalAdjust;MetalAdjust;3;0;Create;True;0;0;0;False;0;False;0;-0.12;-1;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;13;-150.7692,335.739;Inherit;False;Property;_SmoothnessAdjust;SmoothnessAdjust;4;0;Create;True;0;0;0;False;0;False;0;-0.06;-1;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;14;-25.4364,-228.9277;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
+Node;AmplifyShaderEditor.ColorNode;15;-78.10303,-384.9277;Inherit;False;Property;_DiffuseColor;DiffuseColor;5;0;Create;True;0;0;0;False;0;False;1,1,1,0;1,1,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ExtraPrePass;0;0;ExtraPrePass;6;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;LightMode=ForwardBase;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;ForwardAdd;0;2;ForwardAdd;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;True;4;1;False;;1;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;True;1;LightMode=ForwardAdd;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;ASEMaterialInspector;0;4;New Amplify Shader;ed95fe726fd7b4644bb42f4d1ddd2bcd;True;Deferred;0;3;Deferred;0;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;False;True;3;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;DisableBatching=False=DisableBatching;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Deferred;True;2;False;0;;0;0;Standard;0;False;0
@@ -1916,9 +1923,11 @@ WireConnection;10;0;8;3
 WireConnection;10;1;11;0
 WireConnection;12;0;9;0
 WireConnection;12;1;13;0
-WireConnection;1;0;6;0
+WireConnection;14;0;6;0
+WireConnection;14;1;15;0
+WireConnection;1;0;14;0
 WireConnection;1;1;7;0
 WireConnection;1;4;10;0
 WireConnection;1;5;12;0
 ASEEND*/
-//CHKSM=996AD1723BF58FDFBFD9D8088D6EAC125E6AEDCE
+//CHKSM=0C3FCBE333DC113CC7CB2163C53D04D8419A0F7A
