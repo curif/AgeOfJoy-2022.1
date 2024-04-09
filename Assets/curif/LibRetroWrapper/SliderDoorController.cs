@@ -54,12 +54,14 @@ public class SliderDoorController : MonoBehaviour
         if (isDoorOpen) // If doors are already open, return
             return;
 
-        if (currentCoroutine != null)
-            StopCoroutine(currentCoroutine);
-
         isDoorOpen = true; // Update the doors state immediately
         if (openAudioSource != null && !openAudioSource.isPlaying)
             openAudioSource.Play(); // Play the open audio if available
+
+        if (currentCoroutine != null)
+            StopCoroutine(currentCoroutine);
+
+        ConfigManager.WriteConsole($"[OpenDoors] {GetInstanceID()} open?: {isDoorOpen}");
 
         // Start the coroutine to open both doors
         currentCoroutine = StartCoroutine(MoveDoors(openPositionA, openPositionB, openTime));
@@ -71,12 +73,13 @@ public class SliderDoorController : MonoBehaviour
         if (!isDoorOpen) // If doors are already closed, return
             return;
 
-        if (currentCoroutine != null)
-            StopCoroutine(currentCoroutine);
-
         isDoorOpen = false; // Update the doors state immediately
         if (closeAudioSource != null && !closeAudioSource.isPlaying)
             closeAudioSource.Play(); // Play the close audio if available
+        
+        if (currentCoroutine != null)
+            StopCoroutine(currentCoroutine);
+        ConfigManager.WriteConsole($"[CloseDoors] {GetInstanceID()}");
 
         // Start the coroutine to close both doors
         currentCoroutine = StartCoroutine(MoveDoors(closedPositionA, closedPositionB, closeTime));
@@ -90,25 +93,31 @@ public class SliderDoorController : MonoBehaviour
         Vector3 startDoorBPosition = doorB.localPosition;
         Vector3 startDoorAPosition = doorA.localPosition;
 
+        //first stage, DoorB
+
         float progress = (Time.time - startTimeB) / duration;
         while (Time.time < startTimeB + duration / 2)
         {
             doorB.localPosition = Vector3.Lerp(startDoorBPosition, targetPositionB, progress);
 
             yield return null;
+  
             progress = (Time.time - startTimeB) / duration;
         }
+
+        //2nd stage, DoorB and DoorA
 
         doorCollider.enabled = !isDoorOpen; // Disable the box collider
 
         float startTimeA = Time.time;
-        float progressA = (Time.time - startTimeA) / duration;
+        float progressA = 0;
         while (Time.time < startTimeB + duration)
         {
             doorB.localPosition = Vector3.Lerp(startDoorBPosition, targetPositionB, progress);
             doorA.localPosition = Vector3.Lerp(startDoorAPosition, targetPositionA, progressA);
 
             yield return null;
+
             progress = (Time.time - startTimeB) / duration;
             progressA = (Time.time - startTimeA) / duration * 2;
         }
@@ -116,6 +125,8 @@ public class SliderDoorController : MonoBehaviour
         // Ensure both doors reach the target position precisely
         doorB.localPosition = targetPositionB;
         doorA.localPosition = targetPositionA;
+
+        ConfigManager.WriteConsole($"[MoveDoors] {GetInstanceID()} open?: {isDoorOpen}");
 
         currentCoroutine = null;
     }
