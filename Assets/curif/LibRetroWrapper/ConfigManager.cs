@@ -115,6 +115,7 @@ public static class ConfigManager
         CreateFolder(ConfigManager.SamplesDir);
         CreateFolder(ConfigManager.MameConfigDir);
         CreateFolder(ConfigManager.nvramDir);
+        CreateFolder(ConfigManager.ConfigCoresDir);
     }
 
     static ConfigManager()
