@@ -22,11 +22,13 @@ public class SliderDoorController : MonoBehaviour
     private Vector3 openPositionA; // Position when the doors are fully open
     private Vector3 openPositionB; // Position when the doors are fully open
     private Coroutine currentCoroutine;
+    private bool initialized = false;
 
     private BoxCollider doorCollider; // Collider blocking the entrance
 
     void Start()
     {
+        /*
         // Store the closed positions of the doors
         closedPositionA = doorA.localPosition;
         closedPositionB = doorB.localPosition;
@@ -34,7 +36,7 @@ public class SliderDoorController : MonoBehaviour
         // Calculate the open position based on the doors' closed positions and slide units
         openPositionA = closedPositionA - Vector3.right * doorSlideUnits;
         openPositionB = closedPositionB - Vector3.right * doorSlideUnits * 2;
-
+        */
         // Get the box collider attached to this GameObject
         doorCollider = GetComponent<BoxCollider>();
     }
@@ -42,6 +44,19 @@ public class SliderDoorController : MonoBehaviour
     // Method to open or close the doors based on the boolean parameter
     public void SetDoorState(bool isOpen)
     {
+        if (!initialized)
+        {
+            ConfigManager.WriteConsole($"[SetDoorState] {GetInstanceID()} Initialize. open?: {isDoorOpen}");
+
+            // Store the closed positions of the doors
+            closedPositionA = doorA.localPosition;
+            closedPositionB = doorB.localPosition;
+
+            // Calculate the open position based on the doors' closed positions and slide units
+            openPositionA = closedPositionA - Vector3.right * doorSlideUnits;
+            openPositionB = closedPositionB - Vector3.right * doorSlideUnits * 2;
+            initialized = true;
+        }
         if (isOpen && !isDoorOpen) // If doors should open and they are not already open
             OpenDoors();
         else if (!isOpen && isDoorOpen) // If doors should close and they are not already closed
