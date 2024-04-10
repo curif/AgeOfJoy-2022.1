@@ -67,6 +67,10 @@ Material:
         m_Texture: {fileID: 8900000, guid: efc6a4975d1c4244aa0b9f34aa7d4b20, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RoomCubemap_Back:
+        m_Texture: {fileID: 8900000, guid: f50564e87214884479401e824128403e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Texture0:
         m_Texture: {fileID: 2800000, guid: 4809541d25f34dc499bbf5ff78b719f6, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -87,6 +91,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _texcoord2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
@@ -94,7 +102,7 @@ Material:
     - _DecalSmooth: 0.885
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _GlassDistort: 0.44
+    - _GlassDistort: 0
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
@@ -103,13 +111,16 @@ Material:
     - _OcclusionStrength: 1
     - _Offsetty: 0.15
     - _Parallax: 0.02
+    - _RotationAngle: 0.5
+    - _RotationAngleBack: 0.5
+    - _RotationAngleFront: 0.5
     - _Slide: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - __dirty: 1
+    - __dirty: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _ColorBottom: {r: 0, g: 0.5556111, b: 1, a: 0}
