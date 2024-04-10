@@ -14,11 +14,11 @@ public class ShaderCRT : ShaderScreenBase
 
     static ShaderCRT()
     {
-      Low = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTLow");
-      Medium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTMedium");
-      High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTHigh");
+        Low = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTLow");
+        Medium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTMedium");
+        High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTHigh");
     }
-    
+
     public ShaderCRT(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
     {
 
@@ -30,7 +30,7 @@ public class ShaderCRT : ShaderScreenBase
         else if (damage == "medium")
             material = MaterialPrefabDamageHigh;
 
-        return;
+        ApplyConfiguration();
     }
 
     public override string Name

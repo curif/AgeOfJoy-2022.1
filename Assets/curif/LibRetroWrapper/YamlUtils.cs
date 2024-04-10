@@ -1,4 +1,8 @@
+using System;
+using System.Globalization;
 using System.IO;
+using YamlDotNet.Core;
+using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -9,6 +13,10 @@ public class YamlUtils
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .IgnoreUnmatchedProperties()
             .Build();
+
+    private static readonly ISerializer serializer = new SerializerBuilder()
+                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                 .Build();
 
     private static string ReadFile(string filePath)
     {
@@ -33,4 +41,9 @@ public class YamlUtils
         return content == null ? default : deserializer.Deserialize<T>(content);
     }
 
+    public static void Save(string yamlPath, object obj)
+    {
+        string yaml = serializer.Serialize(obj);
+        File.WriteAllText(yamlPath, yaml);
+    }
 }
