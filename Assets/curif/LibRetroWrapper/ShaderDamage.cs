@@ -29,7 +29,7 @@ public class ShaderScreenDamage : ShaderScreenBase
         else if (damage == "medium")
             material = DamageMedium;
 
-        MaterialsUtils.ApplyConfiguration(material);
+        ApplyConfiguration();
     }
 
     public override string Name

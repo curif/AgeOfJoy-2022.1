@@ -618,6 +618,7 @@ public static unsafe class LibretroMameCore
             RecreateTexture = false;
             //some shaders needs to refresh the texture once recreated.
             Shader.Refresh(GameTexture);
+            Shader.ApplyConfiguration();
             return true;
         }
         return false;

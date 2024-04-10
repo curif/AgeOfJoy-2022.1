@@ -30,7 +30,7 @@ public class ShaderCRT : ShaderScreenBase
         else if (damage == "medium")
             material = MaterialPrefabDamageHigh;
 
-        MaterialsUtils.ApplyConfiguration(material);
+        ApplyConfiguration();
     }
 
     public override string Name

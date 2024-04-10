@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEditor;
 using static MaterialsConfiguration;
 using System.Collections.Generic;
 using System.IO;
@@ -28,68 +27,35 @@ public class MaterialsUtils
 
     private static object GetShaderValue(Material material, string propertyName)
     {
-        int index = GetPropertyIndex(material, propertyName);
-        if (index == -1)
+        if (!IsPropertySupported(material, propertyName))
         {
-            ConfigManager.WriteConsole($"[MaterialsUtils] SetShaderValue {material.name}: Unknown property: {propertyName}");
+            ConfigManager.WriteConsole($"[MaterialsUtils] GetShaderValue {material.name}: Unsupported property: {propertyName}");
             return null;
         }
-        Shader shader = material.shader;
-        ShaderUtil.ShaderPropertyType propertyType = ShaderUtil.GetPropertyType(shader, index);
-        object propertyValue = null;
-        if (propertyType == ShaderUtil.ShaderPropertyType.Range || propertyType == ShaderUtil.ShaderPropertyType.Float)
-        {
-            propertyValue = material.GetFloat(propertyName);
-        }
-        else if (propertyType == ShaderUtil.ShaderPropertyType.Color)
-        {
-            propertyValue = material.GetColor(propertyName);
-        }
-        else if (propertyType == ShaderUtil.ShaderPropertyType.Vector)
-        {
-            propertyValue = material.GetVector(propertyName);
-        }
-        else if (propertyType == ShaderUtil.ShaderPropertyType.TexEnv)
-        {
-            propertyValue = material.GetTexture(propertyName);
-        }
-        return propertyValue;
+        return material.GetFloat(propertyName);
     }
 
     private static void SetShaderValue(Material material, string propertyName, string propertyValue)
     {
-        int index = GetPropertyIndex(material, propertyName);
-        if (index == -1)
+        if (!IsPropertySupported(material, propertyName))
         {
-            ConfigManager.WriteConsole($"[MaterialsUtils] SetShaderValue {material.name}: Unknown property: {propertyName}");
-            return;
+            ConfigManager.WriteConsole($"[MaterialsUtils] SetShaderValue {material.name}: Unsupported property: {propertyName}");
         }
-        Shader shader = material.shader;
-        ShaderUtil.ShaderPropertyType propertyType = ShaderUtil.GetPropertyType(shader, index);
-        if (propertyType == ShaderUtil.ShaderPropertyType.Range || propertyType == ShaderUtil.ShaderPropertyType.Float)
+        else
         {
             ConfigManager.WriteConsole($"[MaterialsUtils] SetShaderValue {material.name} {propertyName}: {propertyValue}");
             material.SetFloat(propertyName, float.Parse(propertyValue, CultureInfo.InvariantCulture));
         }
-        else
-        {
-            ConfigManager.WriteConsole($"[MaterialsUtils] SetShaderValue {material.name} {propertyName}: Unsupported operation for property type {propertyType}");
-        }
     }
 
-    private static int GetPropertyIndex(Material material, string propertyName)
+    public static bool IsPropertySupported(Material material, string propertyName)
     {
-        Shader shader = material.shader;
-        int propertyCount = ShaderUtil.GetPropertyCount(shader);
-        for (int i = 0; i < propertyCount; i++)
-        {
-            string name = ShaderUtil.GetPropertyName(shader, i);
-            if (name == propertyName)
-            {
-                return i;
-            }
-        }
-        return -1;
+        return GetSupportedPropertyNames(material).Contains(propertyName);
+    }
+
+    public static List<string> GetSupportedPropertyNames(Material material)
+    {
+        return new List<string>(material.GetPropertyNames(MaterialPropertyType.Float));
     }
 
     private static MaterialsConfiguration LoadConfiguration()
@@ -100,15 +66,11 @@ public class MaterialsUtils
     // Used to dump all properties of a material to the console. For Dev purposes
     public static void ListShaderValues(Material material)
     {
-        Shader shader = material.shader;
-        int propertyCount = ShaderUtil.GetPropertyCount(shader);
-        for (int i = 0; i < propertyCount; i++)
+        GetSupportedPropertyNames(material).ForEach(propertyName =>
         {
-            string propertyName = ShaderUtil.GetPropertyName(shader, i);
-            ShaderUtil.ShaderPropertyType propertyType = ShaderUtil.GetPropertyType(shader, i);
             object propertyValue = GetShaderValue(material, propertyName);
-            ConfigManager.WriteConsole($"[MaterialsUtils] Shader {material.name} property {propertyType} {propertyName} = {propertyValue}");
-        }
+            ConfigManager.WriteConsole($"[MaterialsUtils] Shader {material.name} property {propertyName} = {propertyValue}");
+        });
     }
 
     // Used to generate a fresh, correct, new materials.yaml file for a given material. For Dev purposes
@@ -117,18 +79,12 @@ public class MaterialsUtils
         MaterialsConfiguration materialsConfiguration = new MaterialsConfiguration();
         MaterialConfiguration materialConfiguration = new MaterialConfiguration();
         materialConfiguration.name = material.name;
-        Shader shader = material.shader;
-        int propertyCount = ShaderUtil.GetPropertyCount(shader);
-        for (int i = 0; i < propertyCount; i++)
+
+        GetSupportedPropertyNames(material).ForEach(propertyName =>
         {
-            string propertyName = ShaderUtil.GetPropertyName(shader, i);
-            ShaderUtil.ShaderPropertyType propertyType = ShaderUtil.GetPropertyType(shader, i);
-            if (propertyType == ShaderUtil.ShaderPropertyType.Range || propertyType == ShaderUtil.ShaderPropertyType.Float)
-            {
-                object propertyValue = GetShaderValue(material, propertyName);
-                materialConfiguration.properties[propertyName] = propertyValue;
-            }
-        }
+            object propertyValue = GetShaderValue(material, propertyName);
+            materialConfiguration.properties[propertyName] = propertyValue;
+        });
         materialsConfiguration.materials.Add(materialConfiguration);
         YamlUtils.Save(Path.Combine(ConfigManager.ConfigDir, "materials.yaml"), materialsConfiguration);
     }

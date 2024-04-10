@@ -41,7 +41,7 @@ public class ShaderScreenClean : ShaderScreenBase
         // material = new Material(Resources.Load<Material>(materialPrefab));
         ConfigManager.WriteConsole($"[ShaderScreenClean] assigned material: {material} damage: {damage}");
 
-        MaterialsUtils.ApplyConfiguration(material);
+        ApplyConfiguration();
     }
 
     public override string Name

@@ -55,6 +55,11 @@ public abstract class ShaderScreenBase
 
     public abstract Texture Texture { get; set; }
     public abstract string TargetMaterialProperty { get; }
+
+    public void ApplyConfiguration()
+    {
+        MaterialsUtils.ApplyConfiguration(material);
+    }
 }
 //Factory
 public static class ShaderScreen
