@@ -102,7 +102,7 @@ void wrapper_image_video_refresh_cb(const void *data, unsigned width,
       width, height, pitch, data);
 #endif
 
-  if (!data)
+  if (!data || data == -1)
     return;
 
   if (!CreateTextureCB)
@@ -112,8 +112,12 @@ void wrapper_image_video_refresh_cb(const void *data, unsigned width,
     return;
 
   enum retro_pixel_format pixel_format = wrapper_environment_get_pixel_format();
-  if (pixel_format == RETRO_PIXEL_FORMAT_UNKNOWN)
-    return;
+  if (pixel_format == RETRO_PIXEL_FORMAT_UNKNOWN) {
+#ifdef IMAGE_DEBUG
+      wrapper_environment_log(RETRO_LOG_WARN, "[wrapper_image_video_refresh_cb] UNHANDLED PIXEL FORMAT: %u\n", pixel_format);
+#endif
+      return;
+  }
 
   if (!create_texture_called || image_width != width ||
       image_height != height) {
@@ -180,6 +184,9 @@ void wrapper_image_video_refresh_cb(const void *data, unsigned width,
   }
 
   case RETRO_PIXEL_FORMAT_UNKNOWN:
+#ifdef IMAGE_DEBUG
+      wrapper_environment_log(RETRO_LOG_WARN, "[wrapper_image_video_refresh_cb] UNHANDLED PIXEL FORMAT: %u\n", pixel_format);
+#endif
     return;
   }
 }
