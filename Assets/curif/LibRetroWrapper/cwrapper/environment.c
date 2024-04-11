@@ -19,6 +19,8 @@ static retro_input_state_t input_state_cb;
 static struct retro_system_info system_info;
 static struct retro_system_av_info av_info;
 static struct retro_game_info game_info;
+static struct retro_frame_time_callback frame_time_callback;
+static long frame_counter;
 
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
@@ -95,6 +97,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
                              char *_core,
                              Environment _environment) {
   log = _log;
+  frame_counter = 0;
   minLogLevel = _minLogLevel;
   pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
   input_state_cb = _input_state_cb;
@@ -262,6 +265,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 
   INIT_STRUCT(system_info);
   INIT_STRUCT(av_info);
+  INIT_STRUCT(frame_time_callback);
 
   INIT_AND_COPY_STRING(save_directory, _save_directory);
   INIT_AND_COPY_STRING(system_directory, _system_directory);
@@ -342,12 +346,15 @@ void wrapper_environment_log_geometry() {
               "    max_width: %i\n"
               "    max_height: %i\n"
               "    aspect_ratio: %f\n"
+              "    sample_rate: %f\n"
               "    fps: %f\n";
   wrapper_environment_log(RETRO_LOG_INFO, fmt, av_info.geometry.base_width,
                           av_info.geometry.base_height,
                           av_info.geometry.max_width,
                           av_info.geometry.max_height,
-                          av_info.geometry.aspect_ratio, av_info.timing.fps);
+                          av_info.geometry.aspect_ratio, 
+                          av_info.timing.sample_rate,
+                          av_info.timing.fps);
 }
 
 void wrapper_environment_get_av_info() {
@@ -614,6 +621,31 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
 	  // we receive struct retro_disk_control_ext_callback *
 	  return true;
 
+  case RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION:
+	  wrapper_environment_log(RETRO_LOG_INFO,
+		  "[RETRO_ENVIRONMENT_GET_MESSAGE_INTERFACE_VERSION]\n");
+      *(unsigned*)data = 1;
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_MESSAGE_EXT:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_MESSAGE_EXT]\n");
+      if (!data)
+          return false;
+      struct retro_message_ext* message = (struct retro_message_ext*)data;
+      wrapper_environment_log(RETRO_LOG_INFO,
+		  "[RETRO_ENVIRONMENT_SET_MESSAGE_EXT] Message from core: %s\n", message->msg);
+      return true;
+
+  case RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK:
+      wrapper_environment_log(RETRO_LOG_INFO,
+		  "[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK]\n");
+      struct retro_frame_time_callback* retro_frame_time_cb = (struct retro_frame_time_callback*)data;
+      memcpy(&(frame_time_callback), retro_frame_time_cb, sizeof(frame_time_callback));
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK] Reference:%llu\n", frame_time_callback.reference);
+	  return true;
+
 #ifdef ENVIRONMENT_DEBUG
   default:
 	  wrapper_environment_log(RETRO_LOG_WARN,
@@ -680,8 +712,10 @@ void wrapper_unload_game() {
 
 void wrapper_run() {
   // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_run] retro_run start\n");
-  if (handlers.handle)
-    handlers.retro_run();
-
+    if (frame_time_callback.callback)
+        frame_time_callback.callback(1000000 / av_info.timing.fps);
+    if (handlers.handle)
+        handlers.retro_run();
+    frame_counter++;
   // wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_run] retro_run end\n");
 }
