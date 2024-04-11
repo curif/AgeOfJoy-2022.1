@@ -30,19 +30,6 @@ public class DebugConsole : MonoBehaviour
         Application.logMessageReceived -= HandleLog;
     }
 
-    void HandleLog(string logString, string stackTrace, LogType type)
-    {
-        if (debugKeywords.Count == 0 || debugKeywords.Exists(keyword => logString.Contains(keyword)))
-        {
-            logMessages.Add(logString);
-            if (logMessages.Count > maxLogMessages)
-            {
-                logMessages.RemoveAt(0);
-            }
-            console.text = string.Join("\n", logMessages);
-        }
-    }
-
 #if UNITY_EDITOR
     void OnGUI()
     {
@@ -54,6 +41,31 @@ public class DebugConsole : MonoBehaviour
         }
     }
 #endif
+
+    private void HandleLog(string logString, string stackTrace, LogType type)
+    {
+        if (debugKeywords.Count == 0 || debugKeywords.Exists(keyword => logString.Contains(keyword)))
+        {
+            string[] lines = logString.Split('\n');
+            foreach (var line in lines)
+            {
+                AddLine(line);
+            }
+            console.text = string.Join("\n", logMessages);
+        }
+    }
+
+    private void AddLine(string line)
+    {
+        if (line.Trim().Length > 0)
+        {
+            logMessages.Add(line);
+            if (logMessages.Count > maxLogMessages)
+            {
+                logMessages.RemoveAt(0);
+            }
+        }
+    }
 
     public static bool IsDebugEnabled()
     {
