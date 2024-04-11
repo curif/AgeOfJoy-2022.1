@@ -38,9 +38,7 @@ public class CabinetsPosition
     public List<CabinetPosition> Registry = new();
     private System.Object registryLock = new object();
 
-    static string JsonFile = ConfigManager.CabinetsDB + "/registry.json";
-    static string YamlFile = ConfigManager.CabinetsDB + "/registry.yaml";
-
+    
     //modifications needs to be saved.
     bool dirty = false;
     public CabinetPosition Add(CabinetPosition g)
@@ -105,13 +103,18 @@ public class CabinetsPosition
         //json is deprecated
         // string serializedJson = JsonUtility.ToJson(this);
         // System.IO.File.WriteAllText(JsonFile, serializedJson);
-        return SaveAsYaml(YamlFile);
+        return SaveAsYaml(ConfigManager.CabinetsDB + "/registry.yaml");
     }
 
     public static CabinetsPosition ReadFromFile()
     {
+        
+        string YamlFile = ConfigManager.CabinetsDB + "/registry.yaml";
+
         if (File.Exists(YamlFile))
             return LoadFromYaml(YamlFile);
+        
+        string JsonFile = ConfigManager.CabinetsDB + "/registry.json";
 
         if (File.Exists(JsonFile))
         {

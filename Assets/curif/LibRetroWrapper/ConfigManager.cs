@@ -15,21 +15,25 @@ You should have received a copy of the GNU General Public License along with thi
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Android;
 
 public static class ConfigManager
 {
     //paths
 #if UNITY_EDITOR
-    public static string BaseDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cabs");
+    public static  string BasePrivateDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cabs");
+    public static  string BasePublicDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "publiccabs");
+
     public static string BaseAppDir = BaseDir + "/data";
-    public static string BasePublicDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "publiccabs");
 #else
     public static string Bundle = "com.curif.AgeOfJoy";
     public static string BaseAppDir = "/data/data/" + Bundle;
-    public static string BaseDir = "/sdcard/Android/data/" + Bundle;
-    public static string BasePublicDir = "/storage/emulated/0/AgeOfJoy";
+    public static  string BasePublicDir = "/sdcard/AgeOfJoy";
+    public static  string BasePrivateDir = "/sdcard/Android/data/" + Bundle;
 #endif
+    public static string BaseDir = BasePrivateDir;
 
     public static string Cabinets;
     public static string CabinetsDB;
@@ -64,20 +68,22 @@ public static class ConfigManager
         }
     }
 
+    public static bool PermissionStorage { get; set; }
+
+
     private static void createFolders()
     {
 #if UNITY_EDITOR
         CreateFolder(BaseDir);
 #endif
-        RomsDir = Path.Combine(BaseDir, "downloads");
-        if (!Directory.Exists(BasePublicDir) && !Directory.Exists(RomsDir))
+        if (ShouldUseInternalStorage())
         {
+            if (!haveStorageAccess())
+                if (!askForInternalStoragePermissions())
+                    throw new Exception("Access to internal storage not granted.");
+
             BaseDir = BasePublicDir;
             CreateFolder(BaseDir);
-        }
-        else if (Directory.Exists(BasePublicDir))
-        {
-            BaseDir = BasePublicDir;
         }
 
         RomsDir = Path.Combine(BaseDir, "downloads");
@@ -118,8 +124,46 @@ public static class ConfigManager
         CreateFolder(ConfigManager.ConfigCoresDir);
     }
 
-    static ConfigManager()
+    private static bool ShouldUseInternalStorage()
     {
+        return !Directory.Exists(Path.Combine(BasePrivateDir, "downloads"));
+    }
+
+    private static bool haveStorageAccess()
+    {
+        
+        WriteConsole($"[ConfigManager.haveStorageAccess] check if premission has granted");
+        /*return Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead) &&
+               Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite);
+        */
+        return Permission.HasUserAuthorizedPermission("android.permission.MANAGE_EXTERNAL_STORAGE");
+
+    }
+
+    private static bool askForInternalStoragePermissions()
+    {
+        if (!haveStorageAccess())
+        {
+            WriteConsole($"[ConfigManager] permission for storage don't granted, ask to the user");
+            // Request permissions
+            //Permission.RequestUserPermission(Permission.ExternalStorageRead);
+            //Permission.RequestUserPermission(Permission.ExternalStorageWrite);
+            Permission.RequestUserPermission("android.permission.MANAGE_EXTERNAL_STORAGE");
+        }
+        return haveStorageAccess();
+    }
+
+    //called from Init.cs
+    public static void InitFolders()
+    {
+        WriteConsole($"[ConfigManager] =================  Config Manager START ========================");
+        WriteConsole($"[ConfigManager] ShouldUseInternalStorage?: {ShouldUseInternalStorage()}");
+        
+        if (ShouldUseInternalStorage())
+        {
+            WriteConsole($"[ConfigManager] Should I use internal storage?: {BasePublicDir}");
+            WriteConsole($"[ConfigManager] Internal storage access allowed?: {haveStorageAccess()}");
+        }
         createFolders();
         WriteConsole($"[ConfigManager] BaseDir {BaseDir}");
     }
@@ -127,7 +171,17 @@ public static class ConfigManager
     public static void CreateFolder(string path)
     {
         if (!Directory.Exists(path))
-            Directory.CreateDirectory(path);
+        {
+            try
+            {
+                Directory.CreateDirectory(path);
+                WriteConsole($"[ConfigManager.CreateDirectory] created: {path}");
+            }
+            catch (Exception e)
+            {
+                WriteConsoleException($"[ConfigManager.CreateDirectory] {path}", e);
+            }
+        }
     }
 
     /*
