@@ -5,7 +5,7 @@ public class Core
 {
     public string Name { get; private set; }
     public string Library { get; private set; }
-    public CoreEnvironment GlobalEnvironment { get; private set; }
+    public CoreEnvironment GlobalEnvironment { get; set; }
 
     public Core(string _name, string _library, CoreEnvironment _coreEnvironment)
     {
