@@ -24,9 +24,9 @@ namespace Assets.curif.LibRetroWrapper
 
         private void Start()
         {
-            AddEmbeddedCores();
             SyncCores();
             ScanForUserCores();
+            AddEmbeddedCores();
 
 #if DEBUG_CONFIG
             foreach (var core in Cores)
@@ -43,9 +43,9 @@ namespace Assets.curif.LibRetroWrapper
 
         private void AddEmbeddedCores()
         {
-            AddCore("mame2003+", "libmame2003_plus_libretro_android.so", Mame2003PlusConfig());
-            AddCore("mame2010", "libmame2010_libretro_android.so", Mame2010Config());
-            AddCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
+            AddInternalCore("mame2003+", "libmame2003_plus_libretro_android.so", Mame2003PlusConfig());
+            AddInternalCore("mame2010", "libmame2010_libretro_android.so", Mame2010Config());
+            AddInternalCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
         }
 
         public static CoreEnvironment Mame2003PlusConfig()
@@ -127,8 +127,8 @@ namespace Assets.curif.LibRetroWrapper
                 string coreName = ExtractCoreName(Path.GetFileName(coreLib));
                 if (coreName != null)
                 {
-                    ConfigManager.WriteConsole($"[CoresController] Using core: {coreName}");
-                    AddCore(coreName, coreLib);
+                    ConfigManager.WriteConsole($"[CoresController] Adding user core: {coreName}");
+                    AddUserCore(coreName, coreLib);
                 }
                 else
                 {
@@ -137,14 +137,23 @@ namespace Assets.curif.LibRetroWrapper
             }
         }
 
-        private void AddCore(string coreName, string coreLib)
+        private void AddUserCore(string coreName, string coreLib)
         {
             Cores.Add(coreName, new Core(coreName, coreLib));
         }
 
-        private void AddCore(string coreName, string coreLib, CoreEnvironment coreEnvironment)
+        private void AddInternalCore(string coreName, string coreLib, CoreEnvironment coreEnvironment)
         {
-            Cores.Add(coreName, new Core(coreName, coreLib, coreEnvironment));
+            if (Cores.ContainsKey(coreName))
+            {
+                ConfigManager.WriteConsole($"[CoresController] Internal core {coreName} upgraded as a user core");
+                Cores[coreName].GlobalEnvironment = coreEnvironment;
+            }
+            else
+            {
+                ConfigManager.WriteConsole($"[CoresController] Adding internal core {coreName}");
+                Cores.Add(coreName, new Core(coreName, coreLib, coreEnvironment));
+            }
         }
 
         private string ExtractCoreName(string core)
