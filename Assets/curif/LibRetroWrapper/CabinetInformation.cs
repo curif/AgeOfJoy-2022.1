@@ -239,13 +239,22 @@ public class CabinetInformation
         public float y = 0;
         public float z = 0;
     }
+    public class Ratio
+    {
+        public float x = 1f;
+        public float y = 1f;
+        public float z = 1f;
+    }
+
     public class Geometry
     {
         public Rotation rotation = new Rotation();
+        public Ratio ratio = new Ratio();
         // 100% maintain the same scale
         // 50% half. 200% double.
         public float scalepercentage = 100;
     }
+
     public class Art
     {
         public string file;

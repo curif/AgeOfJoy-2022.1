@@ -198,7 +198,7 @@ public static class CabinetFactory
                 break;
         }
         // Part scale and rotation
-        cabinet.ScalePart(p.name, p.geometry.scalepercentage);
+        cabinet.ScalePart(p.name, p.geometry.scalepercentage, p.geometry.ratio.x, p.geometry.ratio.y, p.geometry.ratio.z);
         cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
 
         //enable / disable
