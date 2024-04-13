@@ -905,22 +905,10 @@ public class Cabinet
         // rotate and scale
         float scale = crtScalePercentage / 100f;
 
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED scale {scale}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED crtXratio {crtXratio}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED crtYratio {crtYratio}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED crtZratio {crtZratio}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED transform.localScale.x {newCRT.transform.localScale.x}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED transform.localScale.y {newCRT.transform.localScale.y}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED transform.localScale.z {newCRT.transform.localScale.z}");
-
         newCRT.transform.localScale =
             new Vector3(newCRT.transform.localScale.x * crtXratio * scale,
                         newCRT.transform.localScale.y * crtYratio * scale,
                         newCRT.transform.localScale.z * crtZratio * scale);
-
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED newCRT.transform.localScale.x {newCRT.transform.localScale.x}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED newCRT.transform.localScale.y {newCRT.transform.localScale.y}");
-        ConfigManager.WriteConsole($"[Cabinet]: EMASHZED newCRT.transform.localScale.z {newCRT.transform.localScale.z}");
 
         if (rotation != null)
             newCRT.transform.Rotate((Vector3)rotation);
