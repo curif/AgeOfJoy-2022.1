@@ -474,18 +474,11 @@ public class Cabinet
     {
         return gameObject.transform.childCount;
     }
-
-    public Cabinet ScalePart(string partName, float percentage)
+    public Cabinet ScalePart(string partName, float percentage, float xratio, float yratio, float zratio)
     {
-        Scale(Parts(partName), percentage);
+        Scale(Parts(partName), percentage, xratio, yratio, zratio);
         return this;
     }
-    public Cabinet ScalePart(int partNum, float percentage)
-    {
-        Scale(Parts(partNum), percentage);
-        return this;
-    }
-
     public Cabinet RotatePart(string partName, float angleX, float angleY, float angleZ)
     {
         Parts(partName).transform.Rotate(angleX, angleY, angleZ);
@@ -574,14 +567,20 @@ public class Cabinet
         return this;
     }
 
-
-
+    public static void Scale(GameObject go, float percentage, float xratio, float yratio, float zratio)
+    {
+        float scale = percentage / 100f;
+        Vector3 localScale = go.transform.localScale;
+        go.transform.localScale = new Vector3(localScale.x * xratio * scale,
+                                              localScale.y * yratio * scale,
+                                              localScale.z * zratio * scale);
+    }
 
     public static void Scale(GameObject go, float percentage)
     {
-        float scale = percentage / 100f;
-        go.transform.localScale *= scale;
+        Scale(go, percentage, 1, 1, 1);
     }
+
     public static void SetTextureFromFile(GameObject go, string textureFile,
                                             Material mat, bool invertX, bool invertY)
     {
@@ -874,7 +873,10 @@ public class Cabinet
         bool EnableSaveState = cbinfo.enablesavestate;
         string StateFile = cbinfo.statefile ?? "state.nv";
         Vector3? rotation = _rotation;
-        float scalePercentage = cbinfo.crt.geometry.scalepercentage;
+        float crtScalePercentage = cbinfo.crt.geometry?.scalepercentage ?? 100f;
+        float crtXratio = cbinfo.crt.geometry?.ratio?.x ?? 1f;
+        float crtYratio = cbinfo.crt.geometry?.ratio?.y ?? 1f;
+        float crtZratio = cbinfo.crt.geometry?.ratio?.z ?? 1f;
         string gamma = cbinfo.crt.screen.gamma ?? "1.0";
         string brightness = cbinfo.crt.screen.brightness ?? "1.0";
         List<AgentScenePosition> agentPlayerPositions = _agentPlayerPositions;
@@ -901,8 +903,13 @@ public class Cabinet
         newCRT.name = CRTName(Name, gameFile);
 
         // rotate and scale
-        float scale = scalePercentage / 100f;
-        newCRT.transform.localScale *= scale;
+        float scale = crtScalePercentage / 100f;
+
+        newCRT.transform.localScale =
+            new Vector3(newCRT.transform.localScale.x * crtXratio * scale,
+                        newCRT.transform.localScale.y * crtYratio * scale,
+                        newCRT.transform.localScale.z * crtZratio * scale);
+
         if (rotation != null)
             newCRT.transform.Rotate((Vector3)rotation);
 
