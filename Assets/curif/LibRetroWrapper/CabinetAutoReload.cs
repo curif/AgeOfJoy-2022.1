@@ -16,10 +16,9 @@ public class CabinetAutoReload : MonoBehaviour
     public List<AgentScenePosition> AgentPlayerPositions;
     public BackgroundSoundController backgroundSoundController;
 
-
-    static string testCabinetDir = ConfigManager.CabinetsDB + "/test";
-    static string testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
-    static string testFile = ConfigManager.Cabinets + "/test.zip";
+    static string testCabinetDir;
+    static string testDescriptionCabinetFile;
+    static string testFile;
 
     private Coroutine mainCoroutine;
     private bool initialized = false;
@@ -27,6 +26,10 @@ public class CabinetAutoReload : MonoBehaviour
     void Start()
     {
         ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
+        testCabinetDir = ConfigManager.CabinetsDB + "/test";
+        testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
+        testFile = ConfigManager.Cabinets + "/test.zip";
+
         mainCoroutine = StartCoroutine(reload());
         initialized = true;
     }

@@ -8,23 +8,110 @@ using System.Collections;
 using UnityEngine;
 using System.IO;
 using UnityEngine.Android;
+using System.Diagnostics;
 
-public class Init
+// check Project settings -> Script execution order.
+[DefaultExecutionOrder(-500)] // This will ensure that this script executes before others
+public class Init : MonoBehaviour
 {
 
-    // static string testedCabinetName = "TestedCabinet";
+//public class Init
+//{
+    public static bool PermissionGranted = false;
+
+    //    void Start()
 
     //https://docs.unity3d.com/ScriptReference/RuntimeInitializeOnLoadMethodAttribute-ctor.html
-    [RuntimeInitializeOnLoadMethod]
-    static void OnRuntimeMethodLoad()
-    {
-        
-        ConfigManager.InitFolders();
-                
-        ConfigManager.WriteConsole("[Init.OnRuntimeMethodLoad] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
-        ConfigManager.WriteConsole("[Init.OnRuntimeMethodLoad] Loading cabinets");
-        CabinetDBAdmin.loadCabinets();
-        Debug.Log("+++++++++++++++++++++ Initialized");
+    //[RuntimeInitializeOnLoadMethod]
+    //static void OnRuntimeMethodLoad()
 
+    void Awake()
+    {
+        ConfigManager.WriteConsole("[Init] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
+
+        if (ConfigManager.ShouldUseInternalStorage())
+        {
+            ConfigManager.WriteConsole("[Init] init folders names (private)");
+            PermissionGranted = true;
+            ConfigManager.InitFolders(false);
+            loadOperations();
+        }
+        else
+        {
+            ConfigManager.WriteConsole("[Init] ShouldUseInternalStorage");
+            if (havePublicStorageAccess())
+            {
+                ConfigManager.WriteConsole("[Init] Already authorized, init public folders.");
+                PermissionGranted = true;
+                ConfigManager.InitFolders(true);
+                loadOperations();
+            }
+            else
+            {
+                ConfigManager.WriteConsole("[Init] Async ask for permissions.");
+                askForPublicStoragePermissions();
+                //ConfigManager.InitFolders(havePublicStorageAccess());
+                //Init.loadOperations();
+                //while (! PermissionActionTaken) { }
+            }
+        }
+
+        ConfigManager.WriteConsole("+++++++++++++++++++++ initialization ends");
     }
+
+    static void loadOperations()
+    {
+        ConfigManager.WriteConsole("[Init] Loading cabinets");
+        CabinetDBAdmin.loadCabinets();
+    }
+    internal void onPermissionDenied(string permissionName)
+    {
+        ConfigManager.WriteConsole($"[Init.onPermissionDenied] DENIED");
+        ConfigManager.WriteConsole($"[Init.onPermissionDenied] Can't continue.");
+    }
+    internal void onPermissionGranted(string permissionName)
+    {
+        ConfigManager.WriteConsole($"[Init.onPermissionDenied] GRANTED");
+        Init.PermissionGranted = true;
+        ConfigManager.InitFolders(true);
+        Init.loadOperations();
+    }
+    internal void onPermissionGrantedDontAsk(string permissionName)
+    {
+        ConfigManager.WriteConsole($"[Init.onPermissionDenied] DENIED AND DON'T ASK ANYMORE");
+        ConfigManager.WriteConsole($"[Init.onPermissionDenied] Can't continue.");
+    }
+
+    public static bool havePublicStorageAccess()
+    {
+        bool writeExternal = Permission.HasUserAuthorizedPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+
+        ConfigManager.WriteConsole($"[Init.haveStorageAccess] premission has granted? {writeExternal}");
+        return writeExternal;
+    }
+
+    private void askForPublicStoragePermissions()
+    {
+        ConfigManager.WriteConsole($"[Init.askForInternalStoragePermissions] asking for permissions to the user");
+        //Permission.RequestUserPermission("android.permission.MANAGE_EXTERNAL_STORAGE");
+        //Permission.RequestUserPermission("android.permission.READ_EXTERNAL_STORAGE");
+
+        var callbacks = new PermissionCallbacks();
+        callbacks.PermissionDenied += onPermissionDenied;
+        callbacks.PermissionDeniedAndDontAskAgain += onPermissionGrantedDontAsk;
+        callbacks.PermissionGranted += onPermissionGranted;
+
+        Permission.RequestUserPermission("android.permission.WRITE_EXTERNAL_STORAGE", callbacks);
+
+        /*string[] permissions = {
+            //"android.permission.MANAGE_EXTERNAL_STORAGE",
+            "android.permission.READ_EXTERNAL_STORAGE",
+            "android.permission.WRITE_EXTERNAL_STORAGE"
+        };
+
+        //Permission.RequestUserPermissions(permissions, new PermissionHandler());
+        Permission.RequestUserPermissions(permissions).WaitForCompletion();
+        */
+    }
+
 }
