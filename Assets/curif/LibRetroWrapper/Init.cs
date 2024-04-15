@@ -25,9 +25,13 @@ public class Init : MonoBehaviour
     //[RuntimeInitializeOnLoadMethod]
     //static void OnRuntimeMethodLoad()
 
-    void Awake()
+    private CabinetDBAdmin cabinetDBAdmin;
+
+    void Start()
     {
         ConfigManager.WriteConsole("[Init] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
+
+        cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
 
         if (ConfigManager.ShouldUseInternalStorage())
         {
@@ -50,19 +54,16 @@ public class Init : MonoBehaviour
             {
                 ConfigManager.WriteConsole("[Init] Async ask for permissions.");
                 askForPublicStoragePermissions();
-                //ConfigManager.InitFolders(havePublicStorageAccess());
-                //Init.loadOperations();
-                //while (! PermissionActionTaken) { }
             }
         }
 
         ConfigManager.WriteConsole("+++++++++++++++++++++ initialization ends");
     }
 
-    static void loadOperations()
+    void loadOperations()
     {
         ConfigManager.WriteConsole("[Init] Loading cabinets");
-        CabinetDBAdmin.loadCabinets();
+        cabinetDBAdmin.loadCabinets();
     }
     internal void onPermissionDenied(string permissionName)
     {
@@ -74,7 +75,7 @@ public class Init : MonoBehaviour
         ConfigManager.WriteConsole($"[Init.onPermissionDenied] GRANTED");
         Init.PermissionGranted = true;
         ConfigManager.InitFolders(true);
-        Init.loadOperations();
+        loadOperations();
     }
     internal void onPermissionGrantedDontAsk(string permissionName)
     {

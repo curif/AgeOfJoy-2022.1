@@ -25,6 +25,8 @@ public class CabinetTestCreation : MonoBehaviour
 
     public Camera cam;
 
+    public CabinetDBAdmin cabinetDBAdmin;
+
     public int Width = 800, Height = 400;
     [SerializeField] TextMeshProUGUI txtMesh;
 

@@ -12,8 +12,10 @@ using System;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-public static class CabinetDBAdmin
+public class CabinetDBAdmin : MonoBehaviour
 {
+    private Coroutine loadCabsCoroutine = null;
+
     private static void emptyDir(string path)
     {
         if (!Directory.Exists(path))
@@ -35,6 +37,7 @@ public static class CabinetDBAdmin
         return;
     }
 
+    
     // create a new cabinet from an unnasigned rom and return its name (not used)
     public static string CreateGenericForUnnasignedRom(string rom, string path = "", string cabinetModel = "galaga",
         bool invertx = false, bool inverty = false, string orientation = "vertical")
@@ -88,6 +91,7 @@ public static class CabinetDBAdmin
 
         return cabName;
     }
+    
 
     private static void DecompressFile(string path, string destPath)
     {
@@ -105,19 +109,28 @@ public static class CabinetDBAdmin
     }
 
     //load the contents of the zip file and move them to the database cabinet directory. Deletes the original zip file.
-    public static string loadCabinetFromZip(string zipPath)
+    public string loadCabinetFromZip(string zipPath)
     {
-        string cabZipFileName = GetNameFromPath(zipPath);
-        string pathDest = Path.Combine(ConfigManager.CabinetsDB, cabZipFileName);
-        if (!Directory.Exists(pathDest))
-            Directory.CreateDirectory(pathDest);
-        else
-            emptyDir(pathDest);
+        string pathDest = "";
+        try
+        {
+            string cabZipFileName = GetNameFromPath(zipPath);
+            pathDest = Path.Combine(ConfigManager.CabinetsDB, cabZipFileName);
+            if (!Directory.Exists(pathDest))
+                Directory.CreateDirectory(pathDest);
+            else
+                emptyDir(pathDest);
 
-        // Object.ZipUtility.UncompressFromZip(path, null, $"{ConfigManager.CabinetsDB}/{cabZipFileName}");
-        DecompressFile(zipPath, pathDest);
-        File.Delete(zipPath);
+            // Object.ZipUtility.UncompressFromZip(path, null, $"{ConfigManager.CabinetsDB}/{cabZipFileName}");
+            DecompressFile(zipPath, pathDest);
+            File.Delete(zipPath);
 
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[loadCabinetFromZip] ERROR decompressing Cabinet {zipPath}", e);
+            return "";
+        }
         return pathDest;
     }
 
@@ -143,25 +156,45 @@ public static class CabinetDBAdmin
         if (cbInfo.MameFiles == null || cbInfo.MameFiles.Count == 0)
             return;
         
-        foreach (CabinetInformation.MameFile mf in cbInfo.MameFiles)
+        string destPath = "";
+
+        try
         {
+            foreach (CabinetInformation.MameFile mf in cbInfo.MameFiles)
+            {
             
-            if (!CabinetInformation.MameFileType.IsValid(mf.type))
-                throw new Exception($"invalid MAME file type '{mf.type}' for file ${mf.file}");
+                if (!CabinetInformation.MameFileType.IsValid(mf.type))
+                    throw new Exception($"invalid MAME file type '{mf.type}' for file ${mf.file}");
 
-            string destPath = CabinetInformation.MameFileType.GetAndCreatePath(mf.type, 
-                                                                                cbInfo.getPath(cbInfo.rom));
-            string destFilePath = Path.Combine(destPath, mf.file);
-            string sourceFile = cbInfo.getPath(mf.file);
+                destPath = CabinetInformation.MameFileType.GetAndCreatePath(mf.type, 
+                                                                                    cbInfo.getPath(cbInfo.rom));
+                string destFilePath = Path.Combine(destPath, mf.file);
+                string sourceFile = cbInfo.getPath(mf.file);
 
-            File.Copy(sourceFile, destFilePath, true); //overwrite
-            File.Delete(sourceFile);
+                File.Copy(sourceFile, destFilePath, true); //overwrite
+                File.Delete(sourceFile);
+            }
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MoveMameFiles] ERROR moving MAME files from {destPath}", e);
         }
     }
 
     // check for new zip files, decompress and storage them into the cabinet DB
-    public static void loadCabinets()
+    public void loadCabinets()
     {
+        ConfigManager.WriteConsole($"[loadCabinets] {ConfigManager.Cabinets}");
+
+        if (loadCabsCoroutine != null )
+        {
+            ConfigManager.WriteConsoleError($"[loadCabinets] coroutine already started.");
+            return;
+        }
+        loadCabsCoroutine = StartCoroutine(loadCabinetsCoroutine());
+
+        /*
+
         string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
 
         foreach (string zipFile in files)
@@ -194,7 +227,45 @@ public static class CabinetDBAdmin
                 }
             }
         }
-
+        */
         return;
+    }
+
+    IEnumerator loadCabinetsCoroutine()
+    {
+        ConfigManager.WriteConsole($"[loadCabinetsCoroutine] {ConfigManager.Cabinets}");
+
+        string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
+
+        ConfigManager.WriteConsole($"[loadCabinetsCoroutine] cabinets found: {files.Length}");
+
+        foreach (string zipFile in files)
+        {
+            string cabPath = "";
+            if (File.Exists(zipFile) && !zipFile.EndsWith("test.zip"))
+            {
+                bool containsZip = ZipFileContainsDescriptionYaml(zipFile);
+                if (!containsZip)
+                {
+                    ConfigManager.WriteConsoleError($"[loadCabinetsCoroutine] Cabinet {zipFile} doesn't have a desccription.yaml");
+                    continue;
+                }
+                yield return null;
+
+                ConfigManager.WriteConsole($"[loadCabinetsCoroutine] {zipFile}");
+                cabPath = loadCabinetFromZip(zipFile);
+                yield return new WaitForSeconds(0.1f);
+
+                if (!String.IsNullOrEmpty(cabPath))
+                {
+                    CabinetInformation cbInfo = CabinetInformation.fromYaml(cabPath);
+                    MoveMameFiles(cbInfo);
+                    yield return new WaitForSeconds(0.1f);
+                }
+            }
+        }
+
+        ConfigManager.WriteConsole($"[loadCabinetsCoroutine] END loading cabinets");
+
     }
 }

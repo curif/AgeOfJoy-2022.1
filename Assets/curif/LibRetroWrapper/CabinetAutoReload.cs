@@ -23,12 +23,16 @@ public class CabinetAutoReload : MonoBehaviour
     private Coroutine mainCoroutine;
     private bool initialized = false;
 
+    private CabinetDBAdmin cabinetDBAdmin; 
+
     void Start()
     {
         ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
         testCabinetDir = ConfigManager.CabinetsDB + "/test";
         testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
         testFile = ConfigManager.Cabinets + "/test.zip";
+
+        cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
 
         mainCoroutine = StartCoroutine(reload());
         initialized = true;
@@ -83,7 +87,7 @@ public class CabinetAutoReload : MonoBehaviour
                 ConfigManager.WriteConsole($"[CabinetAutoReload.reload] loading cabinet from {testFile}");
                 try
                 {
-                    CabinetDBAdmin.loadCabinetFromZip(testFile);
+                    cabinetDBAdmin.loadCabinetFromZip(testFile);
                 }
                 catch (System.Exception ex)
                 {
