@@ -200,6 +200,9 @@ public class CabinetsController : MonoBehaviour
     {
         Loaded = false;
 
+        if (string.IsNullOrEmpty(Room))
+            throw new Exception("[cabinetsController.load] room id not assigned.");
+
         ConfigManager.WriteConsole($"[CabinetsController.load] ==== {Room} ====");
 
         //persist registry with the new assignation if any.

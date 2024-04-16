@@ -117,7 +117,8 @@ public class ArcadeRoomBehavior : MonoBehaviour
             {
                 if (place.ScenePosition == null)
                     place.ScenePosition = place.Place.GetComponent<AgentScenePosition>();
-                place.MaxAllowedSpace = place.ScenePosition.MaxAllowedSpace;
+                if (place.ScenePosition != null)
+                    place.MaxAllowedSpace = place.ScenePosition.MaxAllowedSpace;
             }
 
             DefaultDestination.ScenePosition = DefaultDestination.Place.GetComponent<AgentScenePosition>();
