@@ -31,17 +31,23 @@ public class CabinetController : MonoBehaviour
     [Tooltip("Player/agent position assigned to the cabinet")]
     public AgentScenePosition AgentScenePosition;
 
+    [Tooltip("Loaded by script")]
     public GameObject outOfOrderCabinet;
 
     public BackgroundSoundController backgroundSoundController;
 
     private CabinetReplace cabinetReplaceComponent;
+    
+    [Tooltip("Loaded by script")]
+
     // videos
     public List<AgentScenePosition> AgentPlayerPositionComponents;
     //videos
+    [Tooltip("Loaded by script")]
     public List<AgentScenePosition> AgentPlayerPositionComponentsToUnload;
 
     //load cabinets
+    [Tooltip("Loaded by script")]
     public List<AgentScenePosition> AgentPlayerPositionComponentsToLoad;
 
     private bool coroutineIsRunning;

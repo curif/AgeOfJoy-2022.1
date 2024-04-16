@@ -19,9 +19,6 @@ public class FileMonitor : MonoBehaviour
     void Start()
     {
         // get the initial last write time of the file
-
-        filePath = ConfigManager.ConfigDir + "/" + ConfigFileName;
-        ConfigManager.WriteConsole($"[FileMonitor]: monitoring file {filePath} ");
         StartCoroutine(monitor());
     }
     public void fileLock()
@@ -37,6 +34,14 @@ public class FileMonitor : MonoBehaviour
     {
         DateTime currentLastWriteTime;
         FileInfo fileInfo;
+
+        while (!Init.PermissionGranted)
+        {
+            yield return new WaitForSeconds(1f);
+        }
+
+        filePath = ConfigManager.ConfigDir + "/" + ConfigFileName;
+        ConfigManager.WriteConsole($"[FileMonitor.monitor]: file {filePath} ");
 
         lock (lockFile)
         {
