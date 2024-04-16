@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.SceneManagement;
@@ -22,3 +23,4 @@ public class RunUtility : EditorWindow
         EditorApplication.isPlaying = true;
     }
 }
+#endif
