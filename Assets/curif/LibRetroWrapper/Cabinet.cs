@@ -888,7 +888,7 @@ public class Cabinet
         BackgroundSoundController backgroundSoundController = _backgroundSoundController;
         string core = cbinfo.core ?? "mame2003+";
         CoreEnvironment coreEnvironment = cbinfo.environment;
-        bool insertCoinOnStartup = cbinfo.insertCoinOnStartup;
+        bool? insertCoinOnStartup = cbinfo.insertCoinOnStartup;
 
 
         string CRTType = $"screen-mock-{orientation}";

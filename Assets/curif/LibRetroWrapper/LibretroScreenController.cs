@@ -94,7 +94,7 @@ public class LibretroScreenController : MonoBehaviour
     public LightGunInformation lightGunInformation;
     public Cabinet cabinet;
     public CoreEnvironment CabEnvironment;
-    public bool InsertCoinOnStartup = true;
+    public bool? InsertCoinOnStartup;
 
     public bool SimulateExitGame;
 
@@ -313,7 +313,7 @@ public class LibretroScreenController : MonoBehaviour
 
 #if !UNITY_EDITOR
                   // start libretro
-                  if (!InsertCoinOnStartup)
+                  if (!InsertCoinOnStartup.GetValueOrDefault(true))
                   {
                       CoinSlot.clean();
                   }
