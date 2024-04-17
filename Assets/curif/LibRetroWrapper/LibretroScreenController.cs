@@ -29,6 +29,7 @@ using UnityEditor;
 [RequireComponent(typeof(LibretroControlMap))]
 [RequireComponent(typeof(basicAGE))]
 [RequireComponent(typeof(CabinetAGEBasic))]
+[RequireComponent(typeof(ConfigurationController))]
 // [RequireComponent(typeof(BoxCollider))]
 public class LibretroScreenController : MonoBehaviour
 {
@@ -121,6 +122,7 @@ public class LibretroScreenController : MonoBehaviour
     public CabinetAGEBasicInformation ageBasicInformation;
     private CabinetAGEBasic cabinetAGEBasic;
     public BackgroundSoundController backgroundSoundController;
+    public GlobalConfiguration globalConfiguration = null;
 
     private Coroutine mainCoroutine;
     private bool initialized = false;
@@ -142,6 +144,11 @@ public class LibretroScreenController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        GameObject GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+        this.globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
+        if (globalConfiguration == null)
+            ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} globalConfiguration not found.");
+
         LibretroMameCore.WriteConsole($"[LibretroScreenController.Start] {gameObject.name}");
 
         display = GetComponent<Renderer>();
@@ -313,7 +320,9 @@ public class LibretroScreenController : MonoBehaviour
 
 #if !UNITY_EDITOR
                   // start libretro
-                  if (!InsertCoinOnStartup.GetValueOrDefault(true))
+                  bool insertCoinOnStartup = InsertCoinOnStartup.HasValue ? 
+                    InsertCoinOnStartup.Value : globalConfiguration.Configuration.cabinet.insertCoinOnStartup;
+                  if (!insertCoinOnStartup)
                   {
                       CoinSlot.clean();
                   }
