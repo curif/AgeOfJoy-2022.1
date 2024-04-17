@@ -72,6 +72,9 @@ public class CabinetInformation
     [YamlMember(Alias = "control-scheme", ApplyNamingConventions = false)]
     public string controlScheme;
 
+    [YamlMember(Alias = "insert-coin-on-startup", ApplyNamingConventions = false)]
+    public bool insertCoinOnStartup = true;
+
     [YamlIgnore]
     public string pathBase;
 
