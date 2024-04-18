@@ -117,7 +117,7 @@ public static unsafe class LibretroMameCore
         RETRO_LOG_WARN = 2,
         RETRO_LOG_ERROR = 3
     }
-    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_DEBUG;
+    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_INFO;
 
     // MarshalDirectiveException: Cannot marshal type 'System.Object[]'
     //public delegate void logHandler(retro_log_level level, string format, object[] args);
@@ -571,7 +571,10 @@ public static unsafe class LibretroMameCore
     static void AddEnvironmentKey(string key, string value)
     {
         ConfigManager.WriteConsole($"[LibRetroMameCore.Start] Using configuration data: {key} = {value}");
-        currentEnvironment.Add(key, value);
+        if (currentEnvironment.ContainsKey(key))
+            currentEnvironment[key] = value;
+        else
+            currentEnvironment.Add(key, value);
     }
 
     [AOT.MonoPInvokeCallback(typeof(EnvironmentHandler))]
