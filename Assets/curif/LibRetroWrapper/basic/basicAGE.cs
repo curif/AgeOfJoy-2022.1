@@ -162,7 +162,8 @@ public class basicAGE : MonoBehaviour
         configCommands.PlayerOrigin = PlayerOrigin;
 
         GameObject musicPlayer = GameObject.Find("JukeBox");
-        configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
+        if (musicPlayer != null)
+            configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
 
     }
 
