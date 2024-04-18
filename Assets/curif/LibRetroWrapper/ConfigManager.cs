@@ -12,6 +12,8 @@ You should have received a copy of the GNU General Public License along with thi
 #define DEBUG_ACTIVE
 #endif
 
+//#define EXTERNAL_STORAGE_ACTIVE
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -30,7 +32,7 @@ public static class ConfigManager
 #else
     public static string Bundle = "com.curif.AgeOfJoy";
     public static string BaseAppDir = "/data/data/" + Bundle;
-    public static  string BasePublicDir = "/sdcard/Documents/AgeOfJoy";
+    public static  string BasePublicDir = "/storage/emulated/0/Documents/AgeOfJoy";
     public static  string BasePrivateDir = "/sdcard/Android/data/" + Bundle;
 #endif
     public static string BaseDir = BasePrivateDir;
@@ -149,7 +151,11 @@ public static class ConfigManager
 
     public static bool ShouldUseInternalStorage()
     {
+#if EXTERNAL_STORAGE_ACTIVE
         return Directory.Exists(Path.Combine(BasePrivateDir, "downloads"));
+#else
+        return true;
+#endif
     }
 
     //called from Init.cs

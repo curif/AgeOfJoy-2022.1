@@ -234,34 +234,48 @@ public class CabinetDBAdmin : MonoBehaviour
     IEnumerator loadCabinetsCoroutine()
     {
         ConfigManager.WriteConsole($"[loadCabinetsCoroutine] {ConfigManager.Cabinets}");
+ 
+        string testfile = Path.Combine(ConfigManager.Cabinets, "ffight.zip");
+        ConfigManager.WriteConsole($"[loadCabinetsCoroutine] file: {File.Exists(testfile)}");
+        
+        //string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
 
-        string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
-
+        //ConfigManager.WriteConsole($"[loadCabinetsCoroutine] cabinets found: {files.Length}");
+        
+        DirectoryInfo di = new DirectoryInfo(ConfigManager.Cabinets);
+        FileInfo[] files = di.GetFiles();
         ConfigManager.WriteConsole($"[loadCabinetsCoroutine] cabinets found: {files.Length}");
 
-        foreach (string zipFile in files)
+        foreach (FileInfo zip in files)
         {
             string cabPath = "";
-            if (File.Exists(zipFile) && !zipFile.EndsWith("test.zip"))
+            string zipFile = zip.FullName;
+            ConfigManager.WriteConsole($"[loadCabinetsCoroutine] {zip.Name}");
+
+            if (zip.Name == "test.zip")
+                continue;
+
+            bool containsZip = ZipFileContainsDescriptionYaml(zipFile);
+            if (!containsZip)
             {
-                bool containsZip = ZipFileContainsDescriptionYaml(zipFile);
-                if (!containsZip)
-                {
-                    ConfigManager.WriteConsoleError($"[loadCabinetsCoroutine] Cabinet {zipFile} doesn't have a desccription.yaml");
-                    continue;
-                }
-                yield return null;
+                ConfigManager.WriteConsoleError($"[loadCabinetsCoroutine] Cabinet {zipFile} doesn't have a desccription.yaml");
+                continue;
+            }
+            yield return null;
 
-                ConfigManager.WriteConsole($"[loadCabinetsCoroutine] {zipFile}");
-                cabPath = loadCabinetFromZip(zipFile);
+            ConfigManager.WriteConsole($"[loadCabinetsCoroutine] loadCabinetFromZip {zipFile}");
+            cabPath = loadCabinetFromZip(zipFile);
+            yield return new WaitForSeconds(0.1f);
+
+            if (!String.IsNullOrEmpty(cabPath))
+            {
+                CabinetInformation cbInfo = CabinetInformation.fromYaml(cabPath);
+                MoveMameFiles(cbInfo);
                 yield return new WaitForSeconds(0.1f);
-
-                if (!String.IsNullOrEmpty(cabPath))
-                {
-                    CabinetInformation cbInfo = CabinetInformation.fromYaml(cabPath);
-                    MoveMameFiles(cbInfo);
-                    yield return new WaitForSeconds(0.1f);
-                }
+            }
+            else
+            {
+                ConfigManager.WriteConsoleError($"[loadCabinetsCoroutine] Cabinet {zip.Name} can't parse yaml file");
             }
         }
 
