@@ -86,9 +86,11 @@ public class Init : MonoBehaviour
     public static bool havePublicStorageAccess()
     {
         bool writeExternal = Permission.HasUserAuthorizedPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+        bool readExternal = Permission.HasUserAuthorizedPermission("android.permission.READ_EXTERNAL_STORAGE");
+        bool manageExternal = Permission.HasUserAuthorizedPermission("android.permission.MANAGE_EXTERNAL_STORAGE");
 
         ConfigManager.WriteConsole($"[Init.haveStorageAccess] premission has granted? {writeExternal}");
-        return writeExternal;
+        return writeExternal && readExternal && manageExternal;
     }
 
     private void askForPublicStoragePermissions()
@@ -102,17 +104,17 @@ public class Init : MonoBehaviour
         callbacks.PermissionDeniedAndDontAskAgain += onPermissionGrantedDontAsk;
         callbacks.PermissionGranted += onPermissionGranted;
 
-        Permission.RequestUserPermission("android.permission.WRITE_EXTERNAL_STORAGE", callbacks);
+        //Permission.RequestUserPermission("android.permission.WRITE_EXTERNAL_STORAGE", callbacks);
 
-        /*string[] permissions = {
-            //"android.permission.MANAGE_EXTERNAL_STORAGE",
+        string[] permissions = {
+            "android.permission.MANAGE_EXTERNAL_STORAGE",
             "android.permission.READ_EXTERNAL_STORAGE",
             "android.permission.WRITE_EXTERNAL_STORAGE"
         };
 
         //Permission.RequestUserPermissions(permissions, new PermissionHandler());
-        Permission.RequestUserPermissions(permissions).WaitForCompletion();
-        */
+        Permission.RequestUserPermissions(permissions, callbacks);
+        
     }
 
 }
