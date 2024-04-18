@@ -4,7 +4,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-#define DEBUG_CONFIG
+//#define DEBUG_CONFIG
 
 using System;
 using System.Collections.Generic;
@@ -27,9 +27,10 @@ namespace Assets.curif.LibRetroWrapper
             SyncCores();
             ScanForUserCores();
             AddEmbeddedCores();
+            CreateCoreDirs();
 
 #if DEBUG_CONFIG
-            foreach (var core in Cores)
+                foreach (var core in Cores)
             {
                 CoreEnvironment coreEnvironment = core.Value.ReadCoreEnvironment();
                 ConfigManager.WriteConsole($"[CoresController] Core {core.Key} configuration: {coreEnvironment.prefix}");
@@ -39,6 +40,14 @@ namespace Assets.curif.LibRetroWrapper
                 }
             }
 #endif
+        }
+
+        private void CreateCoreDirs()
+        {
+            foreach (var core in Cores.Values)
+            {
+                ConfigManager.CreateFolder(Path.Combine(ConfigManager.RomsDir, core.Name));
+            }
         }
 
         private void AddEmbeddedCores()

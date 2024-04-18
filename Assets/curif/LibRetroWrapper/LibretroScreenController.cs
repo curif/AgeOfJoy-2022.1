@@ -177,14 +177,16 @@ public class LibretroScreenController : MonoBehaviour
             ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} Coin Slot not found in cabinet !!!! no one can play this game.");
 
         //material and shader
-        shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
-        ConfigManager.WriteConsole($"[LibretroScreenController.Start]  {name} shader created: {shader}");
-
         // shader hack to replace the CRT for the LOD version in attraction videos (if the user select CRT)
         if (ShaderName == "crt")
             videoShader = ShaderScreen.Factory(display, 1, "crtlod", ShaderConfig);
         else
             videoShader = ShaderScreen.Factory(display, 1, "clean", ShaderConfig);
+
+        if (globalConfiguration.Configuration.cabinet.forcedShader != null)
+            ShaderName = globalConfiguration.Configuration.cabinet.forcedShader;
+        shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
+        ConfigManager.WriteConsole($"[LibretroScreenController.Start]  {name} shader created: {shader}");
 
         // age basic
         if (ageBasicInformation != null && ageBasicInformation.active)
