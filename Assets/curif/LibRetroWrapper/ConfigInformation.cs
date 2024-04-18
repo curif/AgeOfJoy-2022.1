@@ -191,6 +191,9 @@ public class ConfigInformation
     {
         [YamlMember(Alias = "insert-coin-on-startup", ApplyNamingConventions = false)]
         public bool insertCoinOnStartup = true;
+
+        [YamlMember(Alias = "forced-shader", ApplyNamingConventions = false)]
+        public string forcedShader;
     }
 
     // defaults ===================================================
@@ -219,6 +222,7 @@ public class ConfigInformation
     {
         CabinetConfiguration cabinetConfiguration = new CabinetConfiguration();
         cabinetConfiguration.insertCoinOnStartup = true;
+        cabinetConfiguration.forcedShader = null;
         return cabinetConfiguration;
     }
 
