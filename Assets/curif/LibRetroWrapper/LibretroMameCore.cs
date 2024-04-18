@@ -117,7 +117,7 @@ public static unsafe class LibretroMameCore
         RETRO_LOG_WARN = 2,
         RETRO_LOG_ERROR = 3
     }
-    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_INFO;
+    static retro_log_level MinLogLevel = retro_log_level.RETRO_LOG_DEBUG;
 
     // MarshalDirectiveException: Cannot marshal type 'System.Object[]'
     //public delegate void logHandler(retro_log_level level, string format, object[] args);
