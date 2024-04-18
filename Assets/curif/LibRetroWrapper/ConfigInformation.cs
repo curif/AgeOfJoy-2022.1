@@ -27,6 +27,7 @@ public class ConfigInformation
     public Audio audio;
     public LocomotionConfiguration locomotion;
     public Player player = new();
+    public CabinetConfiguration cabinet = CabinetDefault();
 
     public AGEBasicInformation agebasic = null;
 
@@ -186,6 +187,12 @@ public class ConfigInformation
         }
     }
 
+    public class CabinetConfiguration : ConfigInformationBase
+    {
+        [YamlMember(Alias = "insert-coin-on-startup", ApplyNamingConventions = false)]
+        public bool insertCoinOnStartup = true;
+    }
+
     // defaults ===================================================
     public static Background BackgroundInGameDefault()
     {
@@ -207,6 +214,12 @@ public class ConfigInformation
         player.height = 0f;
         player.scale = 0.9f;
         return player;
+    }
+    public static CabinetConfiguration CabinetDefault()
+    {
+        CabinetConfiguration cabinetConfiguration = new CabinetConfiguration();
+        cabinetConfiguration.insertCoinOnStartup = true;
+        return cabinetConfiguration;
     }
 
     public static ConfigInformation newDefault()

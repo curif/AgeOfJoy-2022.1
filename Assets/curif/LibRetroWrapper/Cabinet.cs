@@ -888,6 +888,7 @@ public class Cabinet
         BackgroundSoundController backgroundSoundController = _backgroundSoundController;
         string core = cbinfo.core ?? "mame2003+";
         CoreEnvironment coreEnvironment = cbinfo.environment;
+        bool? insertCoinOnStartup = cbinfo.insertCoinOnStartup;
 
 
         string CRTType = $"screen-mock-{orientation}";
@@ -954,6 +955,7 @@ public class Cabinet
             libretroScreenController.EnableSaveState = EnableSaveState;
             libretroScreenController.StateFile = StateFile;
             libretroScreenController.PathBase = pathBase;
+            libretroScreenController.InsertCoinOnStartup = insertCoinOnStartup;
 
             libretroScreenController.GameInvertX = invertX;
             libretroScreenController.GameInvertY = invertY;
