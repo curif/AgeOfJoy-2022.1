@@ -35,6 +35,9 @@ public class GateController : MonoBehaviour
       [SerializeField]
       public float MinimalDistance = 0.9f;
     */
+    [Tooltip("Delay between check if the player is present.")]
+    public float IdleTimeCheck = 0.5f;
+
     [Header("Scene Load settings")]
     [Tooltip("Names of the scenes to load.")]
     [SerializeField]
@@ -133,7 +136,7 @@ public class GateController : MonoBehaviour
 
             LockGate();
 
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(IdleTimeCheck);
         }
     }
 
