@@ -1,7 +1,7 @@
 #include "environment.h"
 #include "vulkan.h"
 
-// #define ENVIRONMENT_DEBUG
+#define ENVIRONMENT_DEBUG
 
 static enum retro_pixel_format pixel_format;
 static char system_directory[500];
@@ -645,6 +645,18 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
       wrapper_environment_log(RETRO_LOG_INFO,
           "[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK] Reference:%llu\n", frame_time_callback.reference);
 	  return true;
+
+  case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
+      wrapper_environment_log(RETRO_LOG_INFO,
+          "[RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE]\n");
+      if (!data)
+          return false;
+      //* Bit 0 (value 1) : Enable Video
+      //* Bit 1 (value 2) : Enable Audio
+      //* Bit 2 (value 4) : Use Fast Savestates.
+      //* Bit 3 (value 8) : Hard Disable Audio
+      *(int*)data = 15;
+      return true;
 
 #ifdef ENVIRONMENT_DEBUG
   default:
