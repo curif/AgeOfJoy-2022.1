@@ -571,7 +571,10 @@ public static unsafe class LibretroMameCore
     static void AddEnvironmentKey(string key, string value)
     {
         ConfigManager.WriteConsole($"[LibRetroMameCore.Start] Using configuration data: {key} = {value}");
-        currentEnvironment.Add(key, value);
+        if (currentEnvironment.ContainsKey(key))
+            currentEnvironment[key] = value;
+        else
+            currentEnvironment.Add(key, value);
     }
 
     [AOT.MonoPInvokeCallback(typeof(EnvironmentHandler))]
