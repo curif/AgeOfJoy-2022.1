@@ -655,7 +655,7 @@ bool wrapper_environment_cb(unsigned cmd, void *data) {
       //* Bit 1 (value 2) : Enable Audio
       //* Bit 2 (value 4) : Use Fast Savestates.
       //* Bit 3 (value 8) : Hard Disable Audio
-      *(int*)data = 15;
+      *(int*)data = 3;
       return true;
 
 #ifdef ENVIRONMENT_DEBUG
