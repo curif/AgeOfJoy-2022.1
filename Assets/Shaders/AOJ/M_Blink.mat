@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_SmokePlane
-  m_Shader: {fileID: 4800000, guid: 9474371468f928547ae1c76ed9f2bb34, type: 3}
+  m_Name: M_Blink
+  m_Shader: {fileID: 4800000, guid: 4205281bc5432b246ba634f53c24b9df, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -63,12 +63,8 @@ Material:
         m_Texture: {fileID: 2800000, guid: a11563a4124b96c4db654a9ea7217d2c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _TextureSample0:
-        m_Texture: {fileID: 2800000, guid: a11563a4124b96c4db654a9ea7217d2c, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _TextureSample1:
-        m_Texture: {fileID: 2800000, guid: 29457f7fa74e71c46a70bf45345e8884, type: 3}
+    - _TextureSample2:
+        m_Texture: {fileID: 2800000, guid: 2e7df1fb15fc2af439af22ebf06d4591, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -77,31 +73,32 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Blinkphase: 0
     - _BumpScale: 1
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
+    - _Divisor: 500
     - _DstBlend: 0
-    - _FlickerMax: 1
-    - _FlickerMin: 0.1
-    - _FlickerSpeed: 5
+    - _Float2: 1
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
+    - _POwer: 2
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
     - _TimeBoxSpeed: 2
+    - _TransitionDistance: 5
     - _UVSec: 0
     - _ZWrite: 1
     - __dirty: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color0: {r: 0, g: 0.112697996, b: 1, a: 0}
-    - _Color1: {r: 0, g: 0.74202245, b: 1, a: 0}
+    - _Color0: {r: 0.9921568, g: 0.74766624, b: 0, a: 1}
+    - _Color1: {r: 0, g: 0.42310232, b: 0.5568628, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SmokeTilings: {r: 1.5, g: 3, b: 1, a: 2.5}
   m_BuildTextureStacks: []
