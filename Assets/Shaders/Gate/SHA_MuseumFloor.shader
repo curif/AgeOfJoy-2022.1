@@ -31,14 +31,14 @@ Shader "AgeOfJoy/MuseumFloor"
 		#endif
 		struct Input
 		{
-			half3 worldRefl;
+			float3 worldRefl;
 			INTERNAL_DATA
 		};
 
-		uniform half3 _Vector1;
+		uniform float3 _Vector1;
 		uniform samplerCUBE _RoomCubemap;
-		uniform half _Metallic;
-		uniform half _Sm;
+		uniform float _Metallic;
+		uniform float _Sm;
 
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
@@ -49,8 +49,8 @@ Shader "AgeOfJoy/MuseumFloor"
 
 		void surf( Input i , inout SurfaceOutputStandard o )
 		{
-			half3 ase_worldReflection = i.worldRefl;
-			half3 normalizeResult134 = normalize( ( ase_worldReflection * float3( 1,1,1 ) ) );
+			float3 ase_worldReflection = i.worldRefl;
+			float3 normalizeResult134 = normalize( ( ase_worldReflection * float3( 1,1,1 ) ) );
 			o.Albedo = texCUBE( _RoomCubemap, normalizeResult134 ).rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Sm;
@@ -167,7 +167,7 @@ Node;AmplifyShaderEditor.SamplerNode;78;731.6167,780.6533;Inherit;True;Property;
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;159;1922.826,1451.262;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.TextureCoordinatesNode;163;1332.826,936.5952;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,4;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;154;6.825745,1454.595;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;6;2281.198,993.4168;Half;False;True;-1;2;ASEMaterialInspector;1;0;Standard;AgeOfJoy/MuseumFloor;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Off;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;1;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;6;2281.198,993.4168;Float;False;True;-1;2;ASEMaterialInspector;1;0;Standard;AgeOfJoy/MuseumFloor;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Off;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;1;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;153;0;141;2
 WireConnection;153;1;155;0
 WireConnection;156;0;153;0
@@ -188,4 +188,4 @@ WireConnection;6;3;74;0
 WireConnection;6;4;138;0
 WireConnection;6;11;159;0
 ASEEND*/
-//CHKSM=60ECE530DC9AAFE765DC29CD71F8D09DBFD2A5CD
+//CHKSM=1460F25BE27C68F1DEBDCB8FCEC49179C3B641EB

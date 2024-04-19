@@ -5,11 +5,11 @@ OcclusionCullingSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_OcclusionBakeSettings:
-    smallestOccluder: 5
+    smallestOccluder: 0.2
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: 1cc66a48f66c6854aa8a94e1c017bc44
-  m_OcclusionCullingData: {fileID: 36300000, guid: de2d2fa13878bc1478a2d96ced0c2d99, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: d21a547ce197f854e8b587feb5967a83, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -4895,6 +4895,7 @@ Transform:
   - {fileID: 1787479408}
   - {fileID: 1319942091}
   - {fileID: 1038460433}
+  - {fileID: 872800216}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &839832782
@@ -5116,6 +5117,49 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5974755784434538608, guid: 70a3a606deb64c44a9dc9ae583576956, type: 3}
   m_PrefabInstance: {fileID: 865919475}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &872800214
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 872800216}
+  - component: {fileID: 872800215}
+  m_Layer: 0
+  m_Name: Occlusion Area
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!192 &872800215
+OcclusionArea:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 872800214}
+  serializedVersion: 2
+  m_Size: {x: 11.107294, y: 4.9350996, z: 15.068665}
+  m_Center: {x: 0.26934946, y: -0.35105652, z: 3.7457078}
+  m_IsViewVolume: 1
+--- !u!4 &872800216
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 872800214}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.7249322, y: -1.450375, z: 4.0381184}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 822165243}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &892954281
 GameObject:
   m_ObjectHideFlags: 0

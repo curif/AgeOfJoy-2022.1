@@ -38,7 +38,7 @@ Shader "AgeOfJoy/Dungeon_Skeleton"
 			float dotResult2 = dot( ase_vertexNormal , float3(0.5,0,1) );
 			float4 color7 = IsGammaSpace() ? float4(0,0.9609122,1,0) : float4(0,0.9133747,1,0);
 			float mulTime12 = _Time.y * _FlickerSpeed;
-			float lerpResult17 = lerp( _FlickerMin , _FlickerMax , ( ( sin( mulTime12 ) + 1.0 ) * 0.5 ));
+			float lerpResult17 = lerp( _FlickerMin , _FlickerMax , ( ( sin( fmod( mulTime12 , 120.0 ) ) + 1.0 ) * 0.5 ));
 			o.Emission = ( saturate( ( dotResult2 * ( color7 * lerpResult17 ) ) ) * 2.0 ).rgb;
 			o.Metallic = 0.0;
 			o.Smoothness = 0.0;
@@ -120,11 +120,12 @@ Shader "AgeOfJoy/Dungeon_Skeleton"
 /*ASEBEGIN
 Version=19302
 Node;AmplifyShaderEditor.RangedFloatNode;11;-2056.432,923.646;Inherit;False;Property;_FlickerSpeed;FlickerSpeed;0;0;Create;True;0;0;0;False;0;False;1;5;1;50;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleTimeNode;12;-1637.732,901.246;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleTimeNode;12;-1755.065,922.5793;Inherit;False;1;0;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.FmodOpNode;21;-1574,921.3333;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;120;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SinOpNode;13;-1408.732,931.246;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;14;-1283.289,907.496;Inherit;False;Property;_FlickerMax;FlickerMax;2;0;Create;True;0;0;0;False;0;False;1;1;0;10;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;15;-1269.289,802.496;Inherit;False;Property;_FlickerMin;FlickerMin;1;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.FunctionNode;16;-1291.518,1045.426;Inherit;False;ConstantBiasScale;-1;;3;63208df05c83e8e49a48ffbdce2e43a0;0;3;3;FLOAT;0;False;1;FLOAT;1;False;2;FLOAT;0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;14;-1283.289,907.496;Inherit;False;Property;_FlickerMax;FlickerMax;2;0;Create;True;0;0;0;False;0;False;1;0.4;0;10;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;15;-1269.289,802.496;Inherit;False;Property;_FlickerMin;FlickerMin;1;0;Create;True;0;0;0;False;0;False;0;0.2;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.Vector3Node;3;-821,269.6667;Inherit;False;Constant;_Vector0;Vector 0;0;0;Create;True;0;0;0;False;0;False;0.5,0,1;0,0,0;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.NormalVertexDataNode;8;-946,24.66666;Inherit;False;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;7;-880.1589,571.0833;Inherit;False;Constant;_Color1;Color 1;0;0;Create;True;0;0;0;False;0;False;0,0.9609122,1,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
@@ -140,7 +141,8 @@ Node;AmplifyShaderEditor.RangedFloatNode;9;38,247.6667;Inherit;False;Constant;_F
 Node;AmplifyShaderEditor.RangedFloatNode;10;87,343.6667;Inherit;False;Constant;_Float1;Float 1;0;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;317.5529,23.4435;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;AgeOfJoy/Dungeon_Skeleton;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;12;0;11;0
-WireConnection;13;0;12;0
+WireConnection;21;0;12;0
+WireConnection;13;0;21;0
 WireConnection;16;3;13;0
 WireConnection;17;0;15;0
 WireConnection;17;1;14;0
@@ -159,4 +161,4 @@ WireConnection;0;2;19;0
 WireConnection;0;3;9;0
 WireConnection;0;4;10;0
 ASEEND*/
-//CHKSM=B47D2E6DD0B50CDDDB2EE6006C6B7A2E93A7C50A
+//CHKSM=90E386EE023FCA60791300D910C29DBAB119B1A4
