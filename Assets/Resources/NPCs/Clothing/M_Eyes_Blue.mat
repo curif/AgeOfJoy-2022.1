@@ -14,7 +14,7 @@ Material:
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
+  m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
@@ -43,6 +43,26 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _EyeMask:
+        m_Texture: {fileID: 2800000, guid: 4ca2511b92e00b145836971d182990ac, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeMaster:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EyeMaster1:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Eye_Master:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 0, y: 0}
+        m_Offset: {x: 0, y: 0}
+    - _Eye_Master_Tex:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 0, y: 0}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -59,8 +79,24 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Tex_EyeMaster:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Tex_Eyemaster_UV:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture0:
+        m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _TextureSample0:
         m_Texture: {fileID: 2800000, guid: 667625a6dbed8767d838b487350a110d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample1:
+        m_Texture: {fileID: 2800000, guid: 4ca2511b92e00b145836971d182990ac, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -73,13 +109,26 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
+    - _EyeHorizontal: 0.041
+    - _EyeVertical: 0.0079
+    - _Eye_Focus: 1
+    - _Eye_Focus_MaxBounds: 0.02
+    - _Eye_H: 0.5
+    - _Eye_H_MaxBounds: 0.102
+    - _Eye_V: 0.5
+    - _Eye_V_MaxBounds: 0.049
     - _GlossMapScale: 1
     - _Glossiness: 0.917
     - _GlossyReflections: 1
+    - _HueShift: 0.93
+    - _LeftHoriz: 0
+    - _LeftVert: -0.09
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _RightHoriz: 0
+    - _RightVert: -0.1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
@@ -89,4 +138,11 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _EyeTint: {r: 0, g: 0, b: 1, a: 0}
+    - _EyeWhite_Tint: {r: 1, g: 0.9292453, b: 0.9292453, a: 0}
+    - _Eye_Tint: {r: 0, g: 1, b: 0.95834416, a: 0}
+    - _Left: {r: 0.1, g: 0, b: 0, a: 0}
+    - _Right: {r: -0.07, g: 0, b: 0, a: 0}
+    - _Vector0: {r: -0.1, g: 0, b: 0, a: 0}
+    - _Vector1: {r: -0.1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
