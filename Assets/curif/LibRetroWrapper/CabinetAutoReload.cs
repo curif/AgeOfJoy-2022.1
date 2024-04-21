@@ -32,7 +32,7 @@ public class CabinetAutoReload : MonoBehaviour
         testDescriptionCabinetFile = testCabinetDir + "/description.yaml";
         testFile = ConfigManager.Cabinets + "/test.zip";
 
-        cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
+        cabinetDBAdmin = GameObject.Find("FixedObject").GetComponent<CabinetDBAdmin>();
 
         mainCoroutine = StartCoroutine(reload());
         initialized = true;
@@ -92,14 +92,12 @@ public class CabinetAutoReload : MonoBehaviour
                 catch (System.Exception ex)
                 {
                     ConfigManager.WriteConsoleException($"[CabinetAutoReload.reload] ERROR loading zip file {testFile}", ex);
-                    writeGenericException(testFile, "ERROR loading zip file", ex);
+                    writeGenericException(CabinetDBAdmin.GetNameFromPath(testFile), "ERROR loading zip file", ex);
+                    File.Delete(testFile); //delete faulty test cabinet
+                    continue;
                 }
-                finally
-                {
-                    loadedSuccesfully = LoadCabinet();
-                }
-
                 
+                loadedSuccesfully = LoadCabinet();
                 if (loadedSuccesfully)
                 {
                     ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} successfully loaded ");
