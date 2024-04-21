@@ -71,6 +71,10 @@ Material:
         m_Texture: {fileID: 8900000, guid: c571d0d4d8c0f4a49aa8714aa29d7c27, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RoomCubemap_Back:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Texture0:
         m_Texture: {fileID: 2800000, guid: a11563a4124b96c4db654a9ea7217d2c, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -99,6 +103,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _texcoord2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
@@ -118,6 +126,8 @@ Material:
     - _Mode: 0
     - _OcclusionStrength: 1
     - _Parallax: 0.02
+    - _RotationAngleBack: 0.5
+    - _RotationAngleFront: 0.5
     - _Slide: 0
     - _Smooth: 0.8807386
     - _SmoothDecal: 0.477
@@ -128,7 +138,7 @@ Material:
     - _SrcBlend: 1
     - _UVSec: 0
     - _ZWrite: 1
-    - __dirty: 1
+    - __dirty: 0
     - _spheremaskdistance: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
