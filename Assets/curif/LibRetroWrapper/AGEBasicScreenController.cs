@@ -311,7 +311,7 @@ public class AGEBasicScreenController : MonoBehaviour
               .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
               .Do("Run main program", () =>
               {
-                //   videoPlayer.Stop();
+                  //   videoPlayer.Stop();
                   videoPlayer.Pause();
 
                   cabinetAGEBasic.ActivateShader(shader);
@@ -324,6 +324,10 @@ public class AGEBasicScreenController : MonoBehaviour
               .Sequence("AGEBasic Running")
                 .RepeatUntilSuccess("Until player exit")
                     .Sequence()
+                        .Condition("Program terminated?", () =>
+                        {
+                            return !cabinetAGEBasic.AGEBasic.IsRunning();
+                        })
                         .Condition("user EXIT pressed?", () =>
                         {
                             if (libretroControlMap.Active("EXIT") == 1)
