@@ -5,6 +5,7 @@ Shader "Custom/SHA_BlobShadow"
 	Properties
 	{
 		_TextureSample0("Texture Sample 0", 2D) = "white" {}
+		_BlobShadowPower("BlobShadowPower", Range( 0 , 1)) = 0.62
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
@@ -24,6 +25,7 @@ Shader "Custom/SHA_BlobShadow"
 
 		uniform sampler2D _TextureSample0;
 		uniform half4 _TextureSample0_ST;
+		uniform half _BlobShadowPower;
 
 		inline half4 LightingUnlit( SurfaceOutput s, half3 lightDir, half atten )
 		{
@@ -35,7 +37,7 @@ Shader "Custom/SHA_BlobShadow"
 			half3 temp_cast_0 = (0.0).xxx;
 			o.Emission = temp_cast_0;
 			float2 uv_TextureSample0 = i.uv_texcoord * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-			o.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).r * 0.75 );
+			o.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).r * _BlobShadowPower );
 		}
 
 		ENDCG
@@ -117,12 +119,14 @@ Shader "Custom/SHA_BlobShadow"
 }
 /*ASEBEGIN
 Version=19302
-Node;AmplifyShaderEditor.SamplerNode;1;-689.3334,72.1666;Inherit;True;Property;_TextureSample0;Texture Sample 0;0;0;Create;True;0;0;0;False;0;False;-1;8e2b3180b6a8aca41a4e15d4e668d38c;3ee0f68030dd6c1448e25b82a8d02b9b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.SamplerNode;1;-689.3334,72.1666;Inherit;True;Property;_TextureSample0;Texture Sample 0;0;0;Create;True;0;0;0;False;0;False;-1;8e2b3180b6a8aca41a4e15d4e668d38c;8e2b3180b6a8aca41a4e15d4e668d38c;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.RangedFloatNode;4;-552.6663,337.5004;Inherit;False;Property;_BlobShadowPower;BlobShadowPower;1;0;Create;True;0;0;0;False;0;False;0.62;0.62;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;2;-370.0001,-185.1667;Inherit;False;Constant;_Float0;Float 0;1;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;3;-270.6663,151.5001;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0.75;False;1;FLOAT;0
 Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;0,0;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;Custom/SHA_BlobShadow;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;3;0;1;1
+WireConnection;3;1;4;0
 WireConnection;0;2;2;0
 WireConnection;0;9;3;0
 ASEEND*/
-//CHKSM=1F71299E175C1E5B50DD7DD6493F56E8AAFCEB48
+//CHKSM=AE85DE2C86BFD4DF90F3F5F87C4C8F432EA65533

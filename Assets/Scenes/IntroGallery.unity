@@ -4172,6 +4172,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
     sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
@@ -4558,6 +4559,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
     sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
@@ -4905,6 +4907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 031f00a80841cb5d88f0e31e56a93044, type: 3}
     sceneAssetGuidHex: 031f00a80841cb5d88f0e31e56a93044
@@ -6819,6 +6822,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 1cc66a48f66c6854aa8a94e1c017bc44, type: 3}
     sceneAssetGuidHex: 1cc66a48f66c6854aa8a94e1c017bc44
@@ -8851,6 +8855,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: fc564c28b98efdfa1b9d858d6b8e0b88, type: 3}
     sceneAssetGuidHex: fc564c28b98efdfa1b9d858d6b8e0b88
@@ -11254,6 +11259,27 @@ MonoBehaviour:
   BoxColliderHeight: 35
   boxCollider: {fileID: 0}
   playerStayDurationTimeSecs: 0
+--- !u!1 &1196165165 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1056455624699028784, guid: 96193edfc985f47459b753647f21471e, type: 3}
+  m_PrefabInstance: {fileID: 1916112255}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1196165168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196165165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8d38dd07e28edf4eba687424d132017, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  MinMoveTime: 0.1
+  MaxMoveTime: 0.25
+  MinHoldTime: 0.1
+  MaxHoldTime: 1
 --- !u!1001 &1201474453
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13529,6 +13555,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
     sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc
@@ -17895,6 +17922,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 96193edfc985f47459b753647f21471e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1592894669}
+    - targetCorrespondingSourceObject: {fileID: 1056455624699028784, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1196165168}
   m_SourcePrefab: {fileID: 100100000, guid: 96193edfc985f47459b753647f21471e, type: 3}
 --- !u!4 &1916112256 stripped
 Transform:
