@@ -135,6 +135,15 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
         int startIndex = (int)vals[1].GetValueAsNumber();
         int length = (int)vals[2].GetValueAsNumber();
 
+        if (length < 0)
+            length = 0;
+
+        // Adjust length if it extends beyond the end of the string
+        if (startIndex + length > input.Length)
+        {
+            length = input.Length - startIndex;
+        }
+
         string ret = input.Substring(startIndex, length);
 
         return new BasicValue(ret);
