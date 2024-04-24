@@ -624,6 +624,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: fd58fc1e606791255a4c9f5836ef84ac, type: 3}
     sceneAssetGuidHex: fd58fc1e606791255a4c9f5836ef84ac
@@ -4859,6 +4860,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 6f951ed3dea2d3fb68fcde79ca346941, type: 3}
     sceneAssetGuidHex: 6f951ed3dea2d3fb68fcde79ca346941
@@ -6166,6 +6168,7 @@ Transform:
   - {fileID: 694522551}
   - {fileID: 1708253575}
   - {fileID: 660417743}
+  - {fileID: 1932857159}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1289778838
@@ -6382,6 +6385,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 83a8cbaf822fb8b4a8ab3560de58c849, type: 3}
     sceneAssetGuidHex: 83a8cbaf822fb8b4a8ab3560de58c849
@@ -7921,7 +7925,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 1280276495}
     m_Modifications:
     - target: {fileID: 5974755784434538608, guid: 70a3a606deb64c44a9dc9ae583576956, type: 3}
       propertyPath: m_RootOrder
@@ -8000,6 +8004,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 70a3a606deb64c44a9dc9ae583576956, type: 3}
+--- !u!4 &1932857159 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5974755784434538608, guid: 70a3a606deb64c44a9dc9ae583576956, type: 3}
+  m_PrefabInstance: {fileID: 1932857158}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1959812108
 GameObject:
   m_ObjectHideFlags: 0
@@ -8196,6 +8205,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 20c6d912f757fb9eaab4bc33cc22b106, type: 3}
     sceneAssetGuidHex: 20c6d912f757fb9eaab4bc33cc22b106
@@ -8925,5 +8935,4 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
-  - {fileID: 1932857158}
   - {fileID: 1280276495}
