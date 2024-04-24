@@ -24,6 +24,10 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _RoomCubemap:
+        m_Texture: {fileID: 8900000, guid: 86077eb29464ccb40aa980f246f9e07e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RoomCubemap_Back:
         m_Texture: {fileID: 8900000, guid: b35bf75000b3cfe4598ba59a37cb9e28, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -33,6 +37,8 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _RotationAngleBack: 0
+    - _RotationAngleFront: 0.17
     - __dirty: 0
     m_Colors:
     - _ColorTop: {r: 1, g: 0.039973572, b: 0, a: 0}
