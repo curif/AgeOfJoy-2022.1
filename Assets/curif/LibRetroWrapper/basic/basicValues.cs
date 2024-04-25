@@ -251,9 +251,7 @@ public class BasicValue
 
     public static BasicValue operator *(BasicValue obj1, BasicValue obj2)
     {
-        if (obj1.type != obj2.type)
-            throw new Exception($"Invalid operator * (multiply) between {obj1.type} and {obj2.type}");
-
+       
         if (obj1.type == BasicValueType.String && obj2.type == BasicValueType.Number)
             return new BasicValue(string.Concat(Enumerable.Repeat(obj1.str, (int)obj2.number)));
 

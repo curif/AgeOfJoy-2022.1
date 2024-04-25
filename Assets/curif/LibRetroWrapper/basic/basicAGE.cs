@@ -91,6 +91,18 @@ public class basicAGE : MonoBehaviour
     public XROrigin PlayerOrigin;
     public GameObject PlayerControllerGameObject;
 
+    public enum ProgramStatus
+    {
+        None = 0,
+        WaitingForStart,
+        Running,
+        CancelledWithError,
+        CompilationError,
+        Finished
+    }
+
+    public ProgramStatus Status;
+
 #if UNITY_EDITOR
     public string nameToExecute;
     public string path;
@@ -217,6 +229,8 @@ public class basicAGE : MonoBehaviour
             if (configCommands.DebugMode)
                 SaveDebug(name, ce);
 
+            Status = ProgramStatus.CompilationError;
+
             throw ce;
         }
         programs[name] = prg;
@@ -246,7 +260,7 @@ public class basicAGE : MonoBehaviour
 
     public bool IsRunning()
     {
-        return running != null;
+        return running != null || Status == ProgramStatus.Running;
     }
     public bool IsRunning(string name)
     {
@@ -263,6 +277,7 @@ public class basicAGE : MonoBehaviour
         if (running == null)
             return;
         configCommands.stop = true;
+        Status = ProgramStatus.Finished;
     }
 
     public void ForceStop()
@@ -280,6 +295,8 @@ public class basicAGE : MonoBehaviour
 
         runningProgramCoroutine = null;
         running = null;
+        Status = ProgramStatus.Finished;
+
     }
 
     public void Run(string name, bool blocking = false, BasicVars pvars = null,
@@ -287,6 +304,8 @@ public class basicAGE : MonoBehaviour
     {
 
         ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
+
+        Status = ProgramStatus.WaitingForStart;
 
         if (!programs.ContainsKey(name))
             throw new Exception($"program {name} doesn't exists");
@@ -316,6 +335,7 @@ public class basicAGE : MonoBehaviour
             SaveDebug(running.Name, null, LastRuntimeException);
 
         running = null;
+        Status = ProgramStatus.Finished;
 
         ConfigManager.WriteConsole($"[BasicAGE.Run] {running.Name} ENDED. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
 
@@ -358,14 +378,21 @@ public class basicAGE : MonoBehaviour
 
         bool moreLines = true;
         LastRuntimeException = null;
+        Status = ProgramStatus.Running;
         while (moreLines)
         {
             moreLines = RunALine();
-            float sleepTime = configCommands.SleepTime;
-            if (sleepTime == 0)
-                sleepTime = 0.01f;
-            yield return new WaitForSeconds(sleepTime);
-            configCommands.SleepTime = 0;
+            YieldInstruction delay;
+            if (configCommands.SleepTime == 0)
+            {
+                delay = new WaitForEndOfFrame();
+            }
+            else
+            {
+                delay = new WaitForSeconds(configCommands.SleepTime);
+                configCommands.SleepTime = 0;
+            }
+            yield return delay;
         }
 
         if (configCommands.DebugMode)
@@ -373,6 +400,11 @@ public class basicAGE : MonoBehaviour
 
         ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
         running = null;
+        if (LastRuntimeException != null)
+            Status = ProgramStatus.CancelledWithError;
+        else
+            Status = ProgramStatus.Finished;
+
     }
 
     //run a line of an started program

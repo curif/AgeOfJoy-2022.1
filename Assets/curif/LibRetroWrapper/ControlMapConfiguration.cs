@@ -134,6 +134,7 @@ public class ControlMapConfiguration
             if (thisMap != null)
             {
                 thisMap.controlMaps = otherMap.controlMaps;
+                thisMap.behavior = otherMap.behavior;
             }
             // If a matching map is not found, add the map from the other ControlMapConfiguration to this ControlMapConfiguration
             else

@@ -12,9 +12,9 @@ using System.Text;
 public static class ControlMapInputAction
 {
 
-  public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig)
+  public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig, string name = null)
   {
-    InputActionMap inputActionMap = new();
+    InputActionMap inputActionMap = new(name);
     foreach (var map in mapConfig.mapList)
     {
       InputActionType t = InputActionType.Button;

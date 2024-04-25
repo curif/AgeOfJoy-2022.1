@@ -27,13 +27,12 @@ class CommandFunctionCONTROLACTIVE : CommandFunctionExpressionListBase
         if (FunctionHelper.GetValsCount(vals) > 1)
             port = vals[1].GetInt();
 
-        ConfigManager.WriteConsole($"[ControlActive Execute] {mameControl} {port} params count:{vals.Length}");
+        AGEBasicDebug.WriteConsole($"[ControlActive Execute] {mameControl} {port} params count:{vals.Length}");
         if (config.ControlMap.Active(mameControl, port) == 0)
             return BasicValue.False;
 
         return BasicValue.True;
     }
-
 }
 
 class CommandFunctionCONTROLRUMBLE : CommandFunctionExpressionListBase

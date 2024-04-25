@@ -132,7 +132,6 @@ public class AGEBasicScreenController : MonoBehaviour
         if (videoPlayer == null)
             ConfigManager.WriteConsoleError($"[AGEBasicScreenController.Start] {name} video player doesn't exists on screen.");
 
-        libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
 
         ScreenName = name;
@@ -267,7 +266,8 @@ public class AGEBasicScreenController : MonoBehaviour
         controlConf.AddMap("KEYB-LEFT", "keyboard-a");
         controlConf.AddMap("KEYB-RIGHT", "keyboard-d");
 #endif
-        libretroControlMap.CreateFromConfiguration(controlConf);
+        libretroControlMap.CreateFromConfiguration(controlConf, name);
+        libretroControlMap.Enable(true);
     }
 
     private BehaviorTree buildScreenBT()
@@ -285,11 +285,7 @@ public class AGEBasicScreenController : MonoBehaviour
                   //start mame
                   ConfigManager.WriteConsole($"[AGEBasicScreenController] in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
 
-                  //controllers (lazy load)
-                  setupActionMap();
-
-                  //change hands
-                  PreparePlayerToRunPrograms(true);
+                  StartPlayerActivities();
 
                   // Ligth guns configuration (lazy load)
                   if (lightGunTarget != null && lightGunInformation != null && !lightGunTarget.Initialized())
@@ -324,12 +320,19 @@ public class AGEBasicScreenController : MonoBehaviour
               .Sequence("AGEBasic Running")
                 .RepeatUntilSuccess("Until player exit")
                     .Sequence()
-                        .Condition("Program terminated?", () =>
+                        .Condition("user EXIT pressed or terminated?", () =>
                         {
-                            return !cabinetAGEBasic.AGEBasic.IsRunning();
-                        })
-                        .Condition("user EXIT pressed?", () =>
-                        {
+                            basicAGE.ProgramStatus status = cabinetAGEBasic.AGEBasic.Status;
+                            if (status == basicAGE.ProgramStatus.CancelledWithError ||
+                                status == basicAGE.ProgramStatus.CompilationError)
+                                return true;
+
+                            if (status == basicAGE.ProgramStatus.WaitingForStart && 
+                                !cabinetAGEBasic.AGEBasic.IsRunning())
+                                return false;
+                            
+                            // is running
+
                             if (libretroControlMap.Active("EXIT") == 1)
                                 return true;
 #if UNITY_EDITOR
@@ -408,6 +411,12 @@ public class AGEBasicScreenController : MonoBehaviour
         libretroControlMap.Clean();
     }
 
+    void StartPlayerActivities()
+    {
+        PreparePlayerToRunPrograms(true);
+        setupActionMap();
+    }
+
     void PreparePlayerToRunPrograms(bool isPlaying)
     {
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] disable hands: {isPlaying}");
@@ -419,7 +428,7 @@ public class AGEBasicScreenController : MonoBehaviour
 
         //enable-disable inputMap
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
-        libretroControlMap.Enable(isPlaying);
+
     }
 
 

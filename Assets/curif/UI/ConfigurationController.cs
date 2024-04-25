@@ -11,6 +11,8 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
+using Unity.VisualScripting;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -266,6 +268,23 @@ public class ConfigurationController : MonoBehaviour
         StartCoroutine(run());
     }
 
+    /*
+    //runs before Start()
+    private void OnEnable()
+    {
+        ConfigManager.WriteConsoleWarning("[ConfigurationController] enabled");
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        ConfigManager.WriteConsoleWarning($"[ConfigurationController] paused: {pauseStatus}");
+
+    }
+    private void OnDisable()
+    {
+        ConfigManager.WriteConsoleWarning($"[ConfigurationController] disabled");
+    }
+    */
     void UpdateInputValues()
     {
         inputDictionary["up"] = inputDictionary["up"] || ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP");
@@ -292,11 +311,19 @@ public class ConfigurationController : MonoBehaviour
         }
 
         ControlMapConfiguration conf = new DefaultControlMap();
+#if UNITY_EDITOR
         conf.AddMap("KEYB-UP", "keyboard-w");
         conf.AddMap("KEYB-DOWN", "keyboard-s");
         conf.AddMap("KEYB-LEFT", "keyboard-a");
         conf.AddMap("KEYB-RIGHT", "keyboard-d");
-        libretroControlMap.CreateFromConfiguration(conf);
+#endif
+        libretroControlMap.CreateFromConfiguration(conf, "inputMap_ConfigurationController_" + name);
+        libretroControlMap.Enable(true);
+    }
+
+    private void cleanActionMap()
+    {
+        libretroControlMap.Clean();
     }
 
     public void NPCScreenDraw()
@@ -402,14 +429,6 @@ public class ConfigurationController : MonoBehaviour
         config.audio.inGameBackground.muted = ((GenericBool)audioContainer.GetWidget("InGameBackgroundMuted")).value;
 
         configHelper.Save(isGlobal, config);
-    }
-
-    public void InsertCoin()
-    {
-        ControlEnable(true);
-        status = StatusOptions.onBoot;
-        scr.Clear();
-        bootScreen.Reset();
     }
 
     public void mainMenuDraw()
@@ -1148,7 +1167,6 @@ public class ConfigurationController : MonoBehaviour
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
         
-        setupActionMap();
         // Initialize the dictionary with default values (false for all keys)
         inputDictionary.Add("up", false);
         inputDictionary.Add("down", false);
@@ -1167,7 +1185,7 @@ public class ConfigurationController : MonoBehaviour
         scr.PrintCentered(1, "BIOS ROM firmware loaded", true);
         scr.PrintCentered(2, GetRoomDescription());
         scr.DrawScreen();
-        yield return null;
+        yield return new WaitForEndOfFrame();
 
         // first: wait for the room to load.
         configHelper = new(globalConfiguration, roomConfiguration);
@@ -1175,12 +1193,16 @@ public class ConfigurationController : MonoBehaviour
         {
             ScreenWaitingDraw();
             scr.DrawScreen();
+            yield return new WaitForEndOfFrame();
+
             while (!cabinetsController.Loaded)
             {
                 yield return new WaitForSeconds(1f / 2f);
                 // ConfigManager.WriteConsole("[ConfigurationController] waiting for cabinets load.");
                 ScreenWaitingDraw();
                 scr.DrawScreen();
+                yield return new WaitForEndOfFrame();
+
             }
         }
         else
@@ -1190,7 +1212,7 @@ public class ConfigurationController : MonoBehaviour
         }
 
         if (cabinetsController?.gameRegistry == null)
-            ConfigManager.WriteConsole("[ConfigurationController] gameregistry component not found, cant configure games controllers");
+            ConfigManager.WriteConsole("[ConfigurationController] gameregistry component not found, cant configure game controllers");
 
         //create widgets
         SetGlobalWidgets();
@@ -1210,7 +1232,7 @@ public class ConfigurationController : MonoBehaviour
             scr.PrintCentered(2, "program");
             scr.PrintCentered(3, ageBasicInformation.afterLoad, true);
             scr.DrawScreen();
-
+            
             bool compilationError = false;
             string program = Path.Combine(ConfigManager.AGEBasicDir, ageBasicInformation.afterLoad);
             ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] {program}");
@@ -1234,6 +1256,8 @@ public class ConfigurationController : MonoBehaviour
                 scr.PrintCentered(5, "compilation error:", true);
                 scr.Print(0, 6, ex.Message);
             }
+            yield return new WaitForEndOfFrame();
+
 
             if (!compilationError)
             {
@@ -1262,6 +1286,7 @@ public class ConfigurationController : MonoBehaviour
             ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] OK");
 
             scr.DrawScreen();
+            yield return new WaitForEndOfFrame();
 
             status = StatusOptions.waitingForCoin;
         }
@@ -1270,16 +1295,18 @@ public class ConfigurationController : MonoBehaviour
         tree = buildBT();
         while (true)
         {
-            UpdateInputValues();
             tree.Tick();
             ResetInputValues();
 
             if (status == StatusOptions.init || status == StatusOptions.waitingForCoin)
-                yield return new WaitForSeconds(1f);
+                yield return new WaitForSeconds(2f);
             else if (status == StatusOptions.onBoot)
                 yield return new WaitForSeconds(1f / 4f);
             else
+            {
                 yield return new WaitForSeconds(1f / 6f);
+                UpdateInputValues();
+            }
         }
     }
 
@@ -1292,7 +1319,6 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On init", () => status == StatusOptions.init)
               .Do("Process", () =>
                 {
-                    ControlEnable(false);
                     status = StatusOptions.waitingForCoin;
                     scr.Clear()
                        .PrintCentered(10, "Insert coin to start", true)
@@ -1308,7 +1334,12 @@ public class ConfigurationController : MonoBehaviour
                         ControlActive("INSERT")*/)
               .Do("coin inserted", () =>
                 {
-                    InsertCoin();
+                    scr.Clear();
+                    bootScreen.Reset();
+                    ControllersEnable(true);
+
+                    status = StatusOptions.onBoot;
+
                     return TaskStatus.Success;
                 })
             .End()
@@ -1323,7 +1354,9 @@ public class ConfigurationController : MonoBehaviour
               })
               .Do("Start main menu", () =>
                 {
+                    setupActionMap();
                     status = StatusOptions.onMainMenu;
+
                     return TaskStatus.Success;
                 })
             .End()
@@ -1340,9 +1373,9 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (inputDictionary["up"] || ControlActive("KEYB-UP"))
+                    if (inputDictionary["up"])
                         mainMenu.PreviousOption();
-                    else if (inputDictionary["down"] || ControlActive("KEYB-DOWN"))
+                    else if (inputDictionary["down"])
                         mainMenu.NextOption();
                     else if (inputDictionary["action"])
                         mainMenu.Select();
@@ -1352,6 +1385,7 @@ public class ConfigurationController : MonoBehaviour
                         scr.DrawScreen();
                         return TaskStatus.Continue;
                     }
+
                     ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
                     string selectedOption = mainMenu.GetSelectedOption();
                     switch (selectedOption)
@@ -1711,7 +1745,7 @@ public class ConfigurationController : MonoBehaviour
                                 toScene = sceneDatabase.FindByName("Room001");
                             }
                             ConfigManager.WriteConsole($"[ConfigurationController.tree] teleport to scene [{sceneDescription}]");
-                            ControlEnable(false); //free the player
+                            ControllersEnable(false); //free the player
                             teleportation.Teleport(toScene);
                             status = StatusOptions.init;
                             return TaskStatus.Success;
@@ -1849,6 +1883,11 @@ public class ConfigurationController : MonoBehaviour
               .Do("exit", () =>
               {
                   ConfigManager.WriteConsole($"[ConfigurationController] EXIT ");
+
+
+                  cleanActionMap();
+                  ControllersEnable(false);
+
                   status = StatusOptions.init;
                   return TaskStatus.Success;
               })
@@ -1858,16 +1897,26 @@ public class ConfigurationController : MonoBehaviour
           .Build();
     }
 
-    public void ControlEnable(bool enable)
+    public void ControllersEnable(bool enable)
     {
         changeControls.PlayerMode(enable);
-        libretroControlMap.Enable(enable);
+        //libretroControlMap.Enable(enable);
         return;
     }
 
     public bool ControlActive(string mameControl)
     {
-        return libretroControlMap.Active(mameControl) != 0;
+        try
+        {
+            return libretroControlMap.Active(mameControl) != 0;
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[ConfigurationController.ControlActive] {mameControl}", e);
+            libretroControlMap.Enable(true);
+            return false;
+        }
+        
     }
 
     private void changeContainerSelection(GenericWidgetContainer gwc)
@@ -1883,6 +1932,14 @@ public class ConfigurationController : MonoBehaviour
         return;
     }
 
+
+#if UNITY_EDITOR
+    public void EditorInsertCoin()
+    {
+        CoinSlot.insertCoin();
+    }
+#endif
+
 }
 
 #if UNITY_EDITOR
@@ -1896,7 +1953,7 @@ public class ConfigurationControllerEditor : Editor
         ConfigurationController myScript = (ConfigurationController)target;
         if(GUILayout.Button("InsertCoin"))
         {
-          myScript.InsertCoin();
+          myScript.EditorInsertCoin();
         }
     }
 }
