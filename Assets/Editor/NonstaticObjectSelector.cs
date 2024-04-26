@@ -6,28 +6,24 @@ public class NonStaticObjectSelector
     [MenuItem("Tools/Select Non-Static GameObjects")]
     private static void SelectNonStaticGameObjects()
     {
-        // Create a list to hold non-static GameObjects
-        var nonStaticObjects = new System.Collections.Generic.List<GameObject>();
+        // Fetch all GameObjects in the scene
+        GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
 
-        // Iterate over all GameObjects in the scene
-        foreach (GameObject obj in Resources.FindObjectsOfTypeAll(typeof(GameObject)) as GameObject[])
+        // Filter to get only non-static objects
+        var nonStaticObjects = new System.Collections.Generic.List<GameObject>();
+        foreach (var obj in allObjects)
         {
-            // Check if the GameObject is not static
-            if (!obj.isStatic)
+            if (!obj.isStatic && obj.hideFlags == HideFlags.None)  // Ensure object is not static and part of the scene
             {
-                // Make sure the object is part of the scene (not a prefab or unused asset)
-                if (obj.hideFlags == HideFlags.None)
-                {
-                    nonStaticObjects.Add(obj);
-                }
+                nonStaticObjects.Add(obj);
             }
         }
 
         // Select the non-static GameObjects in the editor
         Selection.objects = nonStaticObjects.ToArray();
 
-        // Optional: Log the names of selected objects
-        foreach (GameObject obj in nonStaticObjects)
+        // Optionally log the selected objects
+        foreach (var obj in nonStaticObjects)
         {
             Debug.Log("Selected Non-Static GameObject: " + obj.name);
         }
