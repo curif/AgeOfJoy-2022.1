@@ -117,6 +117,25 @@ class CommandFunctionTAN : CommandFunctionSingleExpressionBase
     }
 }
 
+
+class CommandFunctionINT : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionINT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "INT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        if (!val.IsNumber())
+            throw new Exception($"{CmdToken} require numbers to operate.");
+
+        return new BasicValue(val.GetInt());
+    }
+}
+
 class CommandFunctionCOS : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionCOS(ConfigurationCommands config) : base(config)
@@ -161,22 +180,6 @@ class CommandFunctionSIN : CommandFunctionSingleExpressionBase
     }
 }
 
-class CommandFunctionINT : CommandFunctionSingleExpressionBase
-{
-    public CommandFunctionINT(ConfigurationCommands config) : base(config)
-    {
-        cmdToken = "INT";
-    }
-
-    public override BasicValue Execute(BasicVars vars)
-    {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
-        BasicValue val = expr.Execute(vars);
-        int retInt = (int)val.GetValueAsNumber();
-
-        return new BasicValue((double)retInt);
-    }
-}
 class CommandFunctionNOT : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionNOT(ConfigurationCommands config) : base(config)
