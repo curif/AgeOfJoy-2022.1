@@ -19,23 +19,23 @@ Shader "Custom/AOJ_WorldAligned_Ceiling"
 
             struct Input
             {
-                float3 worldPos;
+                float3 worldPos; // Keep as float for accuracy in positioning
             };
 
             sampler2D _MainTex;
             sampler2D _BumpMap;
             float _Tile;
-            fixed4 _TintColor; // Tint color
-            float _Smoothness; // User-controlled smoothness
-            float _Metallic; // User-controlled metallic
+            half4 _TintColor; // Use half precision for color data
+            half _Smoothness; // Use half precision for smoothness
+            half _Metallic; // Use half precision for metallic
 
             void surf(Input IN, inout SurfaceOutputStandard o)
             {
                 // Adjusted to use X and Z for world aligned texture coordinates
-                float2 uv = IN.worldPos.xz * _Tile;
+                half2 uv = IN.worldPos.xz * _Tile;
 
                 // Apply textures and tint
-                fixed4 c = tex2D(_MainTex, uv) * _TintColor; // Multiply by tint color
+                half4 c = tex2D(_MainTex, uv) * _TintColor; // Multiply by tint color
                 o.Albedo = c.rgb;
                 o.Normal = UnpackNormal(tex2D(_BumpMap, uv));
 

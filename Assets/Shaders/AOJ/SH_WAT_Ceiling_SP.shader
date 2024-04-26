@@ -21,28 +21,28 @@ Shader "Custom/AOJ_WorldAligned_Ceiling_SP"
 
             struct Input
             {
-                float3 worldPos;
+                float3 worldPos; // Keep as float for positioning accuracy
             };
 
             sampler2D _MainTex;
             sampler2D _BumpMap;
             float _Tile;
-            fixed4 _TintColor; // Tint color
-            float _MetallicStrength; // Control for metallic effect strength
-            fixed4 _ColorA; // First color for lerp
-            fixed4 _ColorB; // Second color for lerp
-            float _Smoothness; // Smoothness control
+            half4 _TintColor; // Use half precision for color data
+            half _MetallicStrength; // Use half precision for metallic strength
+            half4 _ColorA; // Use half precision for Color A
+            half4 _ColorB; // Use half precision for Color B
+            half _Smoothness; // Use half precision for smoothness control
 
             void surf(Input IN, inout SurfaceOutputStandard o)
             {
                 // Adjusted to use X and Z for world aligned texture coordinates
-                float2 uv = IN.worldPos.xz * _Tile;
+                half2 uv = IN.worldPos.xz * _Tile;
 
                 // Apply packed texture
-                fixed4 packedTexture = tex2D(_MainTex, uv);
-                fixed4 lerpColor = lerp(_ColorA, _ColorB, packedTexture.r); // Lerp between two colors using R channel
+                half4 packedTexture = tex2D(_MainTex, uv);
+                half4 lerpColor = lerp(_ColorA, _ColorB, packedTexture.r); // Lerp between two colors using R channel
 
-                fixed4 c = packedTexture.g * _TintColor * lerpColor; // Use G channel for diffuse and multiply by lerp color
+                half4 c = packedTexture.g * _TintColor * lerpColor; // Use G channel for diffuse and multiply by lerp color
                 o.Albedo = c.rgb;
                 o.Normal = UnpackNormal(tex2D(_BumpMap, uv));
 

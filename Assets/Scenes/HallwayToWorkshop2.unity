@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 9f58165eda9f6b74aa81ce38efdf9169, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 4463af30051b6874c820d64fc1ab0234, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -944,7 +944,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 1.02e-43, y: 3.22e-43, z: 3.27e-42, w: 1.5425e-41}
+  m_BoundingSphereOverride: {x: 0, y: -0.0008937842, z: 0.0006437794, w: -8.0086906e+31}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -959,19 +959,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2653519364370191678, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 2.666666
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2653519364370191678, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: NaN
+      value: 1e-45
       objectReference: {fileID: 0}
     - target: {fileID: 2653519364370191678, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 0.021484375
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2653519364370191678, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 0.03125
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7208025759126664342, guid: 3f10cdb128d33072fb3064dd059adede, type: 3}
       propertyPath: m_RootOrder
@@ -1334,8 +1334,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.288426, y: 0.9434521, z: 1.6726003}
-  m_Center: {x: -0.9490006, y: 0.5107916, z: -0.5108316}
+  m_Size: {x: 3.288426, y: 0.9434521, z: 2.0641289}
+  m_Center: {x: -0.9490006, y: 0.5107916, z: -0.70659584}
 --- !u!114 &929731836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1348,6 +1348,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad: []
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: 4fcdde1b795ec6048b2e3d4b651e44d3, type: 3}
@@ -1556,6 +1557,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 1cc66a48f66c6854aa8a94e1c017bc44, type: 3}
     sceneAssetGuidHex: 1cc66a48f66c6854aa8a94e1c017bc44
@@ -2342,6 +2344,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1017209143}
     m_Modifications:
+    - target: {fileID: 1511297309289058435, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 83b52000509a2464f8b174677b37b030, type: 2}
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -2.9189324
@@ -2382,6 +2388,30 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3858631804289323170, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_ClearFlags
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3858631804289323170, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_BackGroundColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3858631804289323170, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_BackGroundColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3858631804289323170, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_BackGroundColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3858631804289323170, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_CustomBakedTexture
+      value: 
+      objectReference: {fileID: 8900000, guid: 03b1fd4010798c047999e8a7831d66ba, type: 3}
+    - target: {fileID: 3858631804289323170, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_RenderDynamicObjects
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Name
       value: Door_HallwayToWorkshopToWH
@@ -2390,6 +2420,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6604573175301663474, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 83b52000509a2464f8b174677b37b030, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2726,6 +2760,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 4fcdde1b795ec6048b2e3d4b651e44d3, type: 3}
     sceneAssetGuidHex: 4fcdde1b795ec6048b2e3d4b651e44d3

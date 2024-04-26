@@ -23,22 +23,22 @@ Shader "AgeOfJoy/WorldAligned_WallMaster"
 
             struct Input
             {
-                float2 uv_MainTex;
+                half2 uv_MainTex;
                 float3 worldNormal;
                 float3 worldPos;
             };
 
             sampler2D _MainTex;
-            float _Tiling;
-            float _OffsetX; // Declare offset X variable
-            float _OffsetY; // Declare offset Y variable
+            half _Tiling;
+            half _OffsetX; // Declare offset X variable
+            half _OffsetY; // Declare offset Y variable
             fixed4 _Color;
-            float _Metallic;
-            float _Smoothness;
+            half _Metallic;
+            half _Smoothness;
 
             void surf(Input IN, inout SurfaceOutputStandard o)
             {
-                // Scale the world position by the tiling factor
+                // Scale the world position by the tiling factor, remain in float for accuracy
                 float3 scaledWorldPos = IN.worldPos * _Tiling;
 
                 // Apply the X and Y offsets
@@ -46,7 +46,7 @@ Shader "AgeOfJoy/WorldAligned_WallMaster"
                 scaledWorldPos.y += _OffsetY;
 
                 // Determine UV coordinates based on world position and normal direction
-                float2 uv;
+                half2 uv;
                 if (abs(IN.worldNormal.x) > abs(IN.worldNormal.z))
                 {
                     uv = scaledWorldPos.zy; // Surface facing X axis
