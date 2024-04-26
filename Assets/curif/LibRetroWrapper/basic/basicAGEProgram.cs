@@ -13,15 +13,13 @@ public class AGEProgram
     BasicVars vars = new();
     public TokenConsumer tokens;
 
-    //statis
-    public int ContLinesExecuted;
-
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
     public BasicVars Vars { get { return vars; } }
 
     public string Name { get => name; }
 
     ConfigurationCommands config;
+    CodeExecutionTracker tracker;
 
     private KeyValuePair<int, ICommandBase> getNext()
     {
@@ -33,18 +31,20 @@ public class AGEProgram
     public AGEProgram(string name)
     {
         this.name = name;
+        tracker = new();
     }
 
     public void PrepareToRun(BasicVars pvars = null)
     {
         this.nextLineToExecute = -1;
         config.Gosub = new Stack<int>();
-        config.LineNumber = config.JumpNextTo = config.JumpTo = ContLinesExecuted = 0;
+        config.LineNumber = config.JumpNextTo = config.JumpTo = 0;
         config.stop = false;
         if (pvars == null)
             vars = new();
         else
             vars = pvars;
+        tracker.Reset();
     }
 
     public BasicValue GetVarValue(string varName)
@@ -58,17 +58,23 @@ public class AGEProgram
         get { return maxExecutionLinesAllowed; }
         set { maxExecutionLinesAllowed = value; }
     }
-    
+
+    public int ContLinesExecuted
+    {
+        get { return tracker.GetTotalLinesExecuted(); }
+    }
+
 
     public bool runNextLine()
     {
+
         if (config.stop)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop");
             return false;
         }
 
-        if (maxExecutionLinesAllowed > 0 && ContLinesExecuted > maxExecutionLinesAllowed)
+        if (maxExecutionLinesAllowed > 0 && tracker.GetTotalLinesExecuted() > maxExecutionLinesAllowed)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > {maxExecutionLinesAllowed}");
             throw new Exception("program has reached the maximum execution lines available.");
@@ -83,9 +89,13 @@ public class AGEProgram
 
         // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
 
+        if ( tracker == null)
+        {
+            tracker = new();
+        }
         config.LineNumber = cmd.Key;
         cmd.Value.Execute(vars);
-        ContLinesExecuted++;
+        tracker.ExecuteLine();
 
         if (config.stop)
         {
@@ -120,6 +130,7 @@ public class AGEProgram
         str += $"Last line parsed: #{lastLineNumberParsed}\n";
         str += $"Next line to execute: > #{nextLineToExecute}\n";
         str += $"Executed lines counter: {ContLinesExecuted}\n";
+        str += $"Lines per second: {tracker.GetAverageLinesPerSecond()}\n";
 
         str += $"VARS: ----------------\n";
         str += vars.ToString() + "\n";
@@ -214,4 +225,50 @@ public class AGEProgram
         // Sort a dictionary by line numbers
         this.lines = lines.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
     }
+
+    public class CodeExecutionTracker
+    {
+        private int totalLinesExecuted;
+        private readonly System.Diagnostics.Stopwatch stopwatch;
+        private float averageLinesPerSecond;
+
+        public CodeExecutionTracker()
+        {
+            totalLinesExecuted = 0;
+            stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
+        }
+
+        public void ExecuteLine()
+        {
+            // Increment the count of total lines executed
+            totalLinesExecuted++;
+
+            // Update the average lines per second
+            float elapsedTime = stopwatch.ElapsedMilliseconds / 1000.0f; // convert milliseconds to seconds
+            if (elapsedTime > 0)  // Ensure no division by zero
+            {
+                averageLinesPerSecond = totalLinesExecuted / elapsedTime;
+            }
+        }
+
+        public float GetAverageLinesPerSecond()
+        {
+            return averageLinesPerSecond;
+        }
+
+        public int GetTotalLinesExecuted()
+        {
+            return totalLinesExecuted;
+        }
+
+        public void Reset()
+        {
+            stopwatch.Reset();
+            stopwatch.Start();
+            totalLinesExecuted = 0;
+        }
+    }
+
+
 }

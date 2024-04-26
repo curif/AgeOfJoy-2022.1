@@ -164,6 +164,11 @@ public static class Commands
         functions["MUSICADDLIST"] = typeof(CommandFunctionMUSICADDLIST);
         functions["MUSICPREVIOUS"] = typeof(CommandFunctionMUSICPREVIOUS);
         functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
+
+        //screen
+        functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);
+        functions["SCREENHEIGHT"] = typeof(CommandFunctionSCREENHEIGHT);
+
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)
