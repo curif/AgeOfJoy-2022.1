@@ -45,6 +45,8 @@ public static class Commands
         functions["NOT"] = typeof(CommandFunctionNOT);
         functions["AND"] = typeof(CommandFunctionAND);
         functions["OR"] = typeof(CommandFunctionOR);
+        functions["IIF"] = typeof(CommandFunctionIIF);
+        
         // strings
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);
@@ -56,7 +58,11 @@ public static class Commands
         functions["STR"] = typeof(CommandFunctionSTR);
         functions["GETMEMBER"] = typeof(CommandFunctionGETMEMBER);
         functions["COUNTMEMBERS"] = typeof(CommandFunctionCOUNTMEMBERS);
-
+        functions["ISMEMBER"] = typeof(CommandFunctionISMEMBER);
+        functions["INDEXMEMBER"] = typeof(CommandFunctionINDEXMEMBER);
+        functions["REMOVEMEMBER"] = typeof(CommandFunctionREMOVEMEMBER);
+        functions["ADDMEMBER"] = typeof(CommandFunctionADDMEMBER);
+        
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);

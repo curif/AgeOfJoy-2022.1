@@ -60,6 +60,12 @@ public class BasicValue
         SetValue((double)number);
     }
 
+
+    public BasicValue(bool boolean)
+    {
+        SetValue(boolean? 1 : 0);
+    }
+
     public BasicValue(BasicValue val)
     {
         SetValue(val);

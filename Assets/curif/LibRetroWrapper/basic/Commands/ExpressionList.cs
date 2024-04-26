@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine.Purchasing;
 
 class CommandExpressionList : ICommandBase, ICommandList
 {
@@ -67,6 +68,7 @@ class CommandExpressionList : ICommandBase, ICommandList
             if (exprList != null)
             {
                 BasicValue[] nestedVals = exprList.ExecuteList(vars);
+                AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] execute nested valos expression idx: {idx}");
 
                 Array.Resize(ref vals, vals.Length + nestedVals.Length);
                 foreach(BasicValue val in nestedVals)
@@ -80,8 +82,15 @@ class CommandExpressionList : ICommandBase, ICommandList
                 vals[idx] = exprs[idx].Execute(vars);
                 idx++;
             }
+            
         }
         return vals;
     }
-
+    
+    public BasicValue ExecuteByPosition(int idx, BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] execute expression idx: {idx}");
+        return exprs[idx].Execute(vars);
+    }
+    
 }
