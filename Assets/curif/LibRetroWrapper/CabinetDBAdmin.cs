@@ -243,7 +243,7 @@ public class CabinetDBAdmin : MonoBehaviour
         //ConfigManager.WriteConsole($"[loadCabinetsCoroutine] cabinets found: {files.Length}");
         
         DirectoryInfo di = new DirectoryInfo(ConfigManager.Cabinets);
-        FileInfo[] files = di.GetFiles();
+        FileInfo[] files = di.GetFiles("*.zip");
         ConfigManager.WriteConsole($"[loadCabinetsCoroutine] cabinets found: {files.Length}");
 
         foreach (FileInfo zip in files)

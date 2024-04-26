@@ -863,13 +863,10 @@ public class Cabinet
         string type = cbinfo.crt.type;
         string orientation = cbinfo.crt.orientation;
         string gameFile = cbinfo.rom;
-        string GameVideoFile = cbinfo.getPath(cbinfo.video.file);
         int timeToLoad = cbinfo.timetoload;
         string pathBase = cbinfo.pathBase;
         bool invertX = cbinfo.crt.screen.invertx;
         bool invertY = cbinfo.crt.screen.inverty;
-        bool GameVideoFileInvertX = cbinfo.video.invertx;
-        bool GameVideoFileInvertY = cbinfo.video.inverty;
         bool EnableSaveState = cbinfo.enablesavestate;
         string StateFile = cbinfo.statefile ?? "state.nv";
         Vector3? rotation = _rotation;
@@ -890,6 +887,15 @@ public class Cabinet
         CoreEnvironment coreEnvironment = cbinfo.environment;
         bool? insertCoinOnStartup = cbinfo.insertCoinOnStartup;
 
+        string GameVideoFile = null;
+        bool GameVideoFileInvertX = false;
+        bool GameVideoFileInvertY = false;
+        if (cbinfo.video != null)
+        {
+            GameVideoFile = cbinfo.getPath(cbinfo.video.file);
+            GameVideoFileInvertX = cbinfo.video.invertx;
+            GameVideoFileInvertY = cbinfo.video.inverty;
+        }
 
         string CRTType = $"screen-mock-{orientation}";
         GameObject CRT = PartsOrNull(CRTType);
