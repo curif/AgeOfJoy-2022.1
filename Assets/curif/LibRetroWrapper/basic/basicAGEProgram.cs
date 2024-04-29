@@ -171,6 +171,9 @@ public class AGEProgram
     {
         Dictionary<int, ICommandBase> lines = new();
         this.config = config;
+        int lastLineNumberParsed = 0;
+        string currentCommand = null;
+        int currentLineNumber = 0;
 
         using (StreamReader reader = new StreamReader(filePath))
         {
@@ -178,52 +181,72 @@ public class AGEProgram
 
             while ((line = reader.ReadLine()) != null)
             {
+                line = line.Trim();
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                // List<string> parsed = ParseLine(line);
-                // ConfigManager.WriteConsole($">>>{string.Join('.', parsed)}");
-                // continue;
-
-                string[] parsedString = ParseLineOfCode(line);
-                tokens = new(parsedString);
-                ConfigManager.WriteConsole($"[basicAGEProgram.Parse] >>>>  {tokens.ToString()}");
-                //continue;
-
-                if (tokens.Remains() >= 1)
+                // Check if the line starts with a line number
+                int spaceIndex = line.IndexOf(' ');
+                if (spaceIndex != -1 && int.TryParse(line.Substring(0, spaceIndex), out int lineNumber))
                 {
-                    if (int.TryParse(tokens.Token, out int lineNumber))
+                    if (lineNumber <= 0)
+                        throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
+
+                    if (lineNumber <= lastLineNumberParsed)
+                        throw new Exception($"Line numbers not in sequence, in file: {filePath}");
+
+                    // Process the previous command if there is one
+                    if (currentCommand != null)
                     {
-                        if (lineNumber <= 0)
-                            throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
-                        if (lineNumber <= lastLineNumberParsed)
-                            throw new Exception($"Line numbers not in sequence, in file: {filePath}");
-                        // if (lines.ContainsKey(lineNumber))
-                        //     throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
-
-                        ICommandBase cmd = Commands.GetNew(tokens.Next(), config);
-
-                        if (cmd == null || cmd.Type != CommandType.Type.Command)
-                            throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");
-
-                        lastLineNumberParsed = lineNumber;
-                        cmd.Parse(++tokens);
-                        lines[lineNumber] = cmd;
+                        ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
                     }
-                    else
-                    {
-                        throw new Exception($"Invalid line number format: {tokens.Token} file: {filePath}");
-                    }
+
+                    // Start a new command
+                    currentLineNumber = lineNumber;
+                    currentCommand = line.Substring(spaceIndex + 1).Trim();
+                    lastLineNumberParsed = lineNumber;
                 }
                 else
                 {
-                    throw new Exception($"Invalid line format: {line} file: {filePath}");
+                    // This is a continuation of the current command
+                    if (currentCommand != null)
+                    {
+                        currentCommand += " " + line;
+                    }
+                    else
+                    {
+                        throw new Exception($"Invalid line format or misplaced continuation line: {line} file: {filePath}");
+                    }
                 }
+            }
+
+            // Process the last command in the file
+            if (currentCommand != null)
+            {
+                ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
             }
         }
 
-        // Sort a dictionary by line numbers
+        // Sort and store the lines
         this.lines = lines.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    private void ProcessCommand(int lineNumber, string command, Dictionary<int, ICommandBase> lines, ConfigurationCommands config, string filePath)
+    {
+        string[] parsedString = ParseLineOfCode(command);
+        tokens = new(parsedString);
+        ConfigManager.WriteConsole($"[basicAGEProgram.ProcessCommand] >>>>  {tokens.ToString()}");
+
+        if (tokens.Remains() < 1)
+            throw new Exception($"Invalid line format: {command} line: {lineNumber} file: {filePath}");
+
+        ICommandBase cmd = Commands.GetNew(tokens.Token, config);
+
+        if (cmd == null || cmd.Type != CommandType.Type.Command)
+            throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");
+
+        cmd.Parse(++tokens);
+        lines[lineNumber] = cmd;
     }
 
     public class CodeExecutionTracker

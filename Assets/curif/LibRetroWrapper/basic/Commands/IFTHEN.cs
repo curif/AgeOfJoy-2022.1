@@ -8,7 +8,6 @@ class CommandIFTHEN : ICommandBase
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
     CommandExpression expr;
-    CommandExpression exprElse;
 
     ICommandBase cmd;
     ICommandBase cmdElse;
