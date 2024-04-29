@@ -8,12 +8,16 @@ class CommandIFTHEN : ICommandBase
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
     CommandExpression expr;
+    CommandExpression exprElse;
+
     ICommandBase cmd;
+    ICommandBase cmdElse;
     ConfigurationCommands config;
     public CommandIFTHEN(ConfigurationCommands config)
     {
         this.config = config;
         expr = new(config);
+
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -29,7 +33,18 @@ class CommandIFTHEN : ICommandBase
         cmd = Commands.GetNew(tokens.Next(), config);
         if (cmd == null)
             throw new Exception($"Syntax error command not found in THEN clause: {tokens.ToString()}");
-        cmd.Parse(++tokens);
+        
+        tokens++;
+        cmd.Parse(tokens);
+
+        if (tokens.Token.ToUpper() == "ELSE")
+        {
+            cmdElse = Commands.GetNew(tokens.Next(), config);
+            if (cmd == null)
+                throw new Exception($"Syntax error command not found in ELSE clause: {tokens.ToString()}");
+            tokens++;
+            cmdElse.Parse(tokens);
+        }
 
         return true;
     }
@@ -41,6 +56,9 @@ class CommandIFTHEN : ICommandBase
         BasicValue condition = expr.Execute(vars);
         if (condition.IsTrue())
             return cmd.Execute(vars);
+
+        if (cmdElse != null)
+            return cmdElse.Execute(vars);
 
         return null;
     }
