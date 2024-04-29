@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: b072882af3739f929bc4252c490ccef1
-  m_OcclusionCullingData: {fileID: 36300000, guid: e65aaa0a0b729f941a3c63eb68dc4bd8, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 488330a6308b9694a898a84c47a51fdd, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: f4bd9d6590bcebd41b68385e359ea032, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 4539e19f3f2f0fe4bab9b15f3af8ea1f, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -3344,7 +3344,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 8c3a17c2d84ffba45994fd0ac19d6567, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -7.8
+      value: -8.032
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 8c3a17c2d84ffba45994fd0ac19d6567, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7622,6 +7622,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1104837137}
     m_Modifications:
+    - target: {fileID: 1511297309289058435, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: da1ac58a26d56094881084245de4e717, type: 2}
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_RootOrder
       value: -1
@@ -7670,6 +7674,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DoorToRoom004
       objectReference: {fileID: 0}
+    - target: {fileID: 6604573175301663474, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: da1ac58a26d56094881084245de4e717, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 3899841572188747219, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
@@ -8780,6 +8788,10 @@ PrefabInstance:
     - target: {fileID: 6954712944331812648, guid: 553de4abe7620eb378737204678971d5, type: 3}
       propertyPath: m_LocalPosition.z
       value: -0.439
+      objectReference: {fileID: 0}
+    - target: {fileID: 6954712944331812648, guid: 553de4abe7620eb378737204678971d5, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
