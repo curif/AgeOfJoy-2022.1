@@ -25,13 +25,13 @@ Shader "AgeOfJoy/FX_LightCone"
 		{
 			float2 uv_texcoord;
 			float3 worldPos;
-			half3 worldNormal;
+			float3 worldNormal;
 		};
 
-		uniform half4 _SmokeColor;
+		uniform float4 _SmokeColor;
 		uniform sampler2D _TextureSample0;
-		uniform half2 _PannerSpeed;
-		uniform half _OpacityMult;
+		uniform float2 _PannerSpeed;
+		uniform float _OpacityMult;
 
 		inline half4 LightingUnlit( SurfaceOutput s, half3 lightDir, half atten )
 		{
@@ -41,12 +41,12 @@ Shader "AgeOfJoy/FX_LightCone"
 		void surf( Input i , inout SurfaceOutput o )
 		{
 			o.Emission = _SmokeColor.rgb;
-			half2 panner6 = ( 1.0 * _Time.y * _PannerSpeed + i.uv_texcoord);
+			float2 panner6 = ( 1.0 * _Time.y * _PannerSpeed + i.uv_texcoord);
 			float3 ase_worldPos = i.worldPos;
-			half3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
-			half3 ase_worldNormal = i.worldNormal;
-			half fresnelNdotV11 = dot( ase_worldNormal, ase_worldViewDir );
-			half fresnelNode11 = ( 0.25 + 1.0 * pow( 1.0 - fresnelNdotV11, 1.0 ) );
+			float3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
+			float3 ase_worldNormal = i.worldNormal;
+			float fresnelNdotV11 = dot( ase_worldNormal, ase_worldViewDir );
+			float fresnelNode11 = ( 0.25 + 1.0 * pow( 1.0 - fresnelNdotV11, 1.0 ) );
 			o.Alpha = ( ( ( tex2D( _TextureSample0, panner6 ).g * i.uv_texcoord.y ) * _OpacityMult ) * ( 1.0 - fresnelNode11 ) );
 		}
 
@@ -288,7 +288,7 @@ Node;AmplifyShaderEditor.SimpleAddOpNode;155;-1394.812,3828.223;Inherit;True;2;2
 Node;AmplifyShaderEditor.DynamicAppendNode;156;-1586.812,3908.223;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.NoiseGeneratorNode;157;-1154.812,3828.223;Inherit;True;Simple;True;False;2;0;FLOAT2;0,0;False;1;FLOAT;50;False;1;FLOAT;0
 Node;AmplifyShaderEditor.FunctionNode;158;397.1877,3524.223;Inherit;False;Polar Coordinates;-1;;4;7dab8e02884cf104ebefaa2e788e4162;0;4;1;FLOAT2;0,0;False;2;FLOAT2;0.5,0.5;False;3;FLOAT;1;False;4;FLOAT;1;False;3;FLOAT2;0;FLOAT;55;FLOAT;56
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;507.6666,34.33334;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AgeOfJoy/FX_LightCone;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;507.6666,34.33334;Float;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AgeOfJoy/FX_LightCone;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Transparent;0.5;True;True;0;False;Transparent;;Transparent;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;2;5;False;;10;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;6;0;2;0
 WireConnection;6;2;8;0
 WireConnection;1;1;6;0
@@ -386,4 +386,4 @@ WireConnection;157;0;155;0
 WireConnection;0;2;5;0
 WireConnection;0;9;12;0
 ASEEND*/
-//CHKSM=22EA00C6736C30BFE66C81D606C276E6D69EAB74
+//CHKSM=DA693C621ECBE376337E4A468802D71CF3A5043C

@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: 64927f30440d7fd9bb4a06ce743658d6
-  m_OcclusionCullingData: {fileID: 36300000, guid: 55b813f6af293dd478103f846e07f44d, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 614ce3eb35a110d48bf58cd0aaa5d522, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: c34aca72bc6bb5e43b7dc08878b8115e, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: d6a7a269cc6c2f64f86b6e5a903087ab, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -1402,6 +1402,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: b9f33fb27c25da916b2fa46fffc6a3cc, type: 3}
     sceneAssetGuidHex: b9f33fb27c25da916b2fa46fffc6a3cc
@@ -2865,6 +2866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 38b1ce9f0c2f6df26a71ac454feb9cdc, type: 3}
     sceneAssetGuidHex: 38b1ce9f0c2f6df26a71ac454feb9cdc

@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: 6f951ed3dea2d3fb68fcde79ca346941
-  m_OcclusionCullingData: {fileID: 36300000, guid: d7df83946b1e4e1468b8b8d8c5c93d31, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 02ade04be579ed441b06eb5e96d5afe4, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: d6841fb87eb2d1447b4a25a1016a9905, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 17334d6a2e49e7a49bf7e520bfb059ef, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -2605,7 +2605,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3257520339749008480, guid: a00613f366f113e42abb9460b868d039, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 3.622e-41
+      value: -2.1057748e+18
       objectReference: {fileID: 0}
     - target: {fileID: 3257520339749008480, guid: a00613f366f113e42abb9460b868d039, type: 3}
       propertyPath: m_BoundingSphereOverride.x
@@ -2613,11 +2613,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3257520339749008480, guid: a00613f366f113e42abb9460b868d039, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 7.8e-44
+      value: 2.305639e+10
       objectReference: {fileID: 0}
     - target: {fileID: 3257520339749008480, guid: a00613f366f113e42abb9460b868d039, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 2.4e-44
+      value: -6.1727607e+22
       objectReference: {fileID: 0}
     - target: {fileID: 4004674771835167059, guid: a00613f366f113e42abb9460b868d039, type: 3}
       propertyPath: m_RootOrder
@@ -3434,7 +3434,7 @@ ReflectionProbe:
   m_FarClip: 1000
   m_ShadowDistance: 100
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -3442,10 +3442,10 @@ ReflectionProbe:
   m_BlendDistance: 1
   m_HDR: 0
   m_BoxProjection: 1
-  m_RenderDynamicObjects: 0
+  m_RenderDynamicObjects: 1
   m_UseOcclusionCulling: 1
   m_Importance: 1
-  m_CustomBakedTexture: {fileID: 0}
+  m_CustomBakedTexture: {fileID: 8900000, guid: c4a797ef9debcd240bd3792196e61aed, type: 3}
 --- !u!4 &1646701696
 Transform:
   m_ObjectHideFlags: 0
