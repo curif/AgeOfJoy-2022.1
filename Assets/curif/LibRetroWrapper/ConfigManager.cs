@@ -224,4 +224,12 @@ public static class ConfigManager
 #endif
     }
 
+    public static void AssertWriteConsole(bool mustBe, string st)
+    {
+#if DEBUG_ACTIVE
+        if (! mustBe)
+            UnityEngine.Debug.LogFormat(LogType.Error, LogOption.None, null, "[AGE ASSERTION ERROR] {0}", st);
+#endif
+    }
+
 }

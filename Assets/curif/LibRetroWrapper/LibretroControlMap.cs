@@ -39,16 +39,18 @@ public class LibretroControlMap : MonoBehaviour
     //in fact merge any other control map with the default. 
     public void CreateFromConfiguration(
         ControlMapConfiguration conf,
-        string fileNameToSaveOrEmpty = "")
+        string name = null,
+        string fileNameToSaveOrEmpty = null
+        )
     {
-        if (fileNameToSaveOrEmpty != "")
+        if (!string.IsNullOrEmpty(fileNameToSaveOrEmpty))
         {
             conf.SaveAsYaml(fileNameToSaveOrEmpty);
         }
 
         // Debug.Log(conf.AsMarkdown());
 
-        actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf);
+        actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf, name);
     }
 
     public bool SendHapticImpulse(string mameControl, float amplitude, float duration)
@@ -74,6 +76,8 @@ public class LibretroControlMap : MonoBehaviour
 
         string inputActionMapId = mameControl + "_" + port.ToString();
 
+        ConfigManager.AssertWriteConsole(actionMap.enabled, $"[LibretroControlMap.Active] {actionMap.name} is not enabled");
+
         InputAction action = actionMap.FindAction(inputActionMapId);
 
         if (action == null)
@@ -81,13 +85,28 @@ public class LibretroControlMap : MonoBehaviour
             //ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] [{inputActionMapId}] not found in controlMap");
             return 0;
         }
+        try
+        {
+            if (!action.enabled)
+            {
+                ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] {inputActionMapId} is not enabled in the actionMap: {actionMap.name}");
+                action.Enable();
+            }
 
-                //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[LibretroControlMap.Active] {inputActionMapId} {action.ToString()}", e);
+            return 0;
+        }
+
+        //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
         if (action.type == InputActionType.Button)
         {
             if (action.IsPressed())
             {
-                // ConfigManager.WriteConsole($"[LibretroControlMap.Active] {inputActionMapId} pressed");
+                ConfigManager.WriteConsole($"[LibretroControlMap.Active] pressed {actionMap.name}/{inputActionMapId} enabled: {action.enabled} - action: {action.ToString()}");
+
                 return 1;
             }
             return 0;
@@ -195,6 +214,7 @@ public class LibretroControlMap : MonoBehaviour
     //when its not longer neccesary
     public void Clean()
     {
+        actionMap.Dispose();
         actionMap = null;
     }
 

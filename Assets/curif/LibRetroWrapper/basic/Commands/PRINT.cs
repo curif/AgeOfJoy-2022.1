@@ -37,9 +37,9 @@ class CommandPRINT : ICommandBase
         int y = (int)vals[1].GetValueAsNumber();
 
         if (x < 0 || x >= config.ScreenGenerator.CharactersWidth)
-            throw new Exception("printing out of screen (width)");
+            throw new Exception($"printing out of screen (width): {x} : {config.ScreenGenerator.CharactersWidth}");
         if (y < 0 || y >= config.ScreenGenerator.CharactersHeight)
-            throw new Exception("printing out of screen (height)");
+            throw new Exception($"printing out of screen (height): {y} : {config.ScreenGenerator.CharactersHeight}");
 
         BasicValue str = new BasicValue(vals[2]);
         if (str.IsNumber())

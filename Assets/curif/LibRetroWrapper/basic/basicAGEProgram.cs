@@ -13,15 +13,13 @@ public class AGEProgram
     BasicVars vars = new();
     public TokenConsumer tokens;
 
-    //statis
-    public int ContLinesExecuted;
-
     public int LastLineNumberParsed { get { return lastLineNumberParsed; } }
     public BasicVars Vars { get { return vars; } }
 
     public string Name { get => name; }
 
     ConfigurationCommands config;
+    CodeExecutionTracker tracker;
 
     private KeyValuePair<int, ICommandBase> getNext()
     {
@@ -33,18 +31,20 @@ public class AGEProgram
     public AGEProgram(string name)
     {
         this.name = name;
+        tracker = new();
     }
 
     public void PrepareToRun(BasicVars pvars = null)
     {
         this.nextLineToExecute = -1;
         config.Gosub = new Stack<int>();
-        config.LineNumber = config.JumpNextTo = config.JumpTo = ContLinesExecuted = 0;
+        config.LineNumber = config.JumpNextTo = config.JumpTo = 0;
         config.stop = false;
         if (pvars == null)
             vars = new();
         else
             vars = pvars;
+        tracker.Reset();
     }
 
     public BasicValue GetVarValue(string varName)
@@ -58,17 +58,23 @@ public class AGEProgram
         get { return maxExecutionLinesAllowed; }
         set { maxExecutionLinesAllowed = value; }
     }
-    
+
+    public int ContLinesExecuted
+    {
+        get { return tracker.GetTotalLinesExecuted(); }
+    }
+
 
     public bool runNextLine()
     {
+
         if (config.stop)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop");
             return false;
         }
 
-        if (maxExecutionLinesAllowed > 0 && ContLinesExecuted > maxExecutionLinesAllowed)
+        if (maxExecutionLinesAllowed > 0 && tracker.GetTotalLinesExecuted() > maxExecutionLinesAllowed)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > {maxExecutionLinesAllowed}");
             throw new Exception("program has reached the maximum execution lines available.");
@@ -83,9 +89,13 @@ public class AGEProgram
 
         // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
 
+        if ( tracker == null)
+        {
+            tracker = new();
+        }
         config.LineNumber = cmd.Key;
         cmd.Value.Execute(vars);
-        ContLinesExecuted++;
+        tracker.ExecuteLine();
 
         if (config.stop)
         {
@@ -120,6 +130,7 @@ public class AGEProgram
         str += $"Last line parsed: #{lastLineNumberParsed}\n";
         str += $"Next line to execute: > #{nextLineToExecute}\n";
         str += $"Executed lines counter: {ContLinesExecuted}\n";
+        str += $"Lines per second: {tracker.GetAverageLinesPerSecond()}\n";
 
         str += $"VARS: ----------------\n";
         str += vars.ToString() + "\n";
@@ -160,6 +171,9 @@ public class AGEProgram
     {
         Dictionary<int, ICommandBase> lines = new();
         this.config = config;
+        int lastLineNumberParsed = 0;
+        string currentCommand = null;
+        int currentLineNumber = 0;
 
         using (StreamReader reader = new StreamReader(filePath))
         {
@@ -167,51 +181,117 @@ public class AGEProgram
 
             while ((line = reader.ReadLine()) != null)
             {
+                line = line.Trim();
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
 
-                // List<string> parsed = ParseLine(line);
-                // ConfigManager.WriteConsole($">>>{string.Join('.', parsed)}");
-                // continue;
-
-                string[] parsedString = ParseLineOfCode(line);
-                tokens = new(parsedString);
-                ConfigManager.WriteConsole($"[basicAGEProgram.Parse] >>>>  {tokens.ToString()}");
-                //continue;
-
-                if (tokens.Remains() >= 1)
+                // Check if the line starts with a line number
+                int spaceIndex = line.IndexOf(' ');
+                if (spaceIndex != -1 && int.TryParse(line.Substring(0, spaceIndex), out int lineNumber))
                 {
-                    if (int.TryParse(tokens.Token, out int lineNumber))
+                    if (lineNumber <= 0)
+                        throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
+
+                    if (lineNumber <= lastLineNumberParsed)
+                        throw new Exception($"Line numbers not in sequence, in file: {filePath}");
+
+                    // Process the previous command if there is one
+                    if (currentCommand != null)
                     {
-                        if (lineNumber <= 0)
-                            throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
-                        if (lineNumber <= lastLineNumberParsed)
-                            throw new Exception($"Line numbers not in sequence, in file: {filePath}");
-                        // if (lines.ContainsKey(lineNumber))
-                        //     throw new Exception($"Duplicated line number {lineNumber}, in file: {filePath}");
-
-                        ICommandBase cmd = Commands.GetNew(tokens.Next(), config);
-
-                        if (cmd == null || cmd.Type != CommandType.Type.Command)
-                            throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");
-
-                        lastLineNumberParsed = lineNumber;
-                        cmd.Parse(++tokens);
-                        lines[lineNumber] = cmd;
+                        ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
                     }
-                    else
-                    {
-                        throw new Exception($"Invalid line number format: {tokens.Token} file: {filePath}");
-                    }
+
+                    // Start a new command
+                    currentLineNumber = lineNumber;
+                    currentCommand = line.Substring(spaceIndex + 1).Trim();
+                    lastLineNumberParsed = lineNumber;
                 }
                 else
                 {
-                    throw new Exception($"Invalid line format: {line} file: {filePath}");
+                    // This is a continuation of the current command
+                    if (currentCommand != null)
+                    {
+                        currentCommand += " " + line;
+                    }
+                    else
+                    {
+                        throw new Exception($"Invalid line format or misplaced continuation line: {line} file: {filePath}");
+                    }
                 }
+            }
+
+            // Process the last command in the file
+            if (currentCommand != null)
+            {
+                ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
             }
         }
 
-        // Sort a dictionary by line numbers
+        // Sort and store the lines
         this.lines = lines.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
     }
+
+    private void ProcessCommand(int lineNumber, string command, Dictionary<int, ICommandBase> lines, ConfigurationCommands config, string filePath)
+    {
+        string[] parsedString = ParseLineOfCode(command);
+        tokens = new(parsedString);
+        ConfigManager.WriteConsole($"[basicAGEProgram.ProcessCommand] >>>>  {tokens.ToString()}");
+
+        if (tokens.Count() < 1)
+            throw new Exception($"Invalid line format: {command} line: {lineNumber} file: {filePath}");
+
+        ICommandBase cmd = Commands.GetNew(tokens.Token, config);
+
+        if (cmd == null || cmd.Type != CommandType.Type.Command)
+            throw new Exception($"Syntax error command not found: {tokens.Token} line: {lineNumber} file: {filePath}");
+
+        cmd.Parse(++tokens);
+        lines[lineNumber] = cmd;
+    }
+
+    public class CodeExecutionTracker
+    {
+        private int totalLinesExecuted;
+        private readonly System.Diagnostics.Stopwatch stopwatch;
+        private float averageLinesPerSecond;
+
+        public CodeExecutionTracker()
+        {
+            totalLinesExecuted = 0;
+            stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
+        }
+
+        public void ExecuteLine()
+        {
+            // Increment the count of total lines executed
+            totalLinesExecuted++;
+
+            // Update the average lines per second
+            float elapsedTime = stopwatch.ElapsedMilliseconds / 1000.0f; // convert milliseconds to seconds
+            if (elapsedTime > 0)  // Ensure no division by zero
+            {
+                averageLinesPerSecond = totalLinesExecuted / elapsedTime;
+            }
+        }
+
+        public float GetAverageLinesPerSecond()
+        {
+            return averageLinesPerSecond;
+        }
+
+        public int GetTotalLinesExecuted()
+        {
+            return totalLinesExecuted;
+        }
+
+        public void Reset()
+        {
+            stopwatch.Reset();
+            stopwatch.Start();
+            totalLinesExecuted = 0;
+        }
+    }
+
+
 }

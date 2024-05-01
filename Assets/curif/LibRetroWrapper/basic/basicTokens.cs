@@ -90,6 +90,11 @@ public class TokenConsumer
         return tokens.Length - pointer - 1;
     }
 
+    public int Count()
+    {
+        return tokens.Length;
+    }
+
     public static TokenConsumer operator ++(TokenConsumer tokens)
     {
         tokens.Next();

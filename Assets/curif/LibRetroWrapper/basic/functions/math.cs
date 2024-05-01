@@ -268,3 +268,27 @@ class CommandFunctionOR : CommandFunctionExpressionListBase
     }
 }
 
+class CommandFunctionIIF : CommandFunctionExpressionListBase
+{
+    public CommandFunctionIIF(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "IIF";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 3);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        BasicValue condition = exprs.ExecuteByPosition(0, vars);
+        if (condition.IsTrue())
+        {
+            return exprs.ExecuteByPosition(1, vars);
+        }
+        return exprs.ExecuteByPosition(2, vars);
+    }
+}

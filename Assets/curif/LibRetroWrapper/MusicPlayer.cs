@@ -42,6 +42,14 @@ public class MusicPlayer : MonoBehaviour
             musicQueue.Add(musicFilePath);
         }
     }
+    public void RemoveMusic(string musicFilePath)
+    {
+        if (musicQueue.Contains(musicFilePath))
+        {
+            ConfigManager.WriteConsole($"[MusicPlayer.RemoveMusic] {musicFilePath}");
+            musicQueue.Remove(musicFilePath);
+        }
+    }
 
     public void ClearQueue()
     {
@@ -55,6 +63,11 @@ public class MusicPlayer : MonoBehaviour
             isPlaying = true;
             PlayMusic();
         }
+    }
+
+    public bool IsInQueue(string musicFilePath)
+    {
+        return musicQueue.Contains(musicFilePath);
     }
 
     private void PlayMusic()
