@@ -103,10 +103,10 @@ public class LibretroControlMap : MonoBehaviour
         //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.5/api/UnityEngine.InputSystem.InputAction.html#UnityEngine_InputSystem_InputAction_WasPerformedThisFrame
         if (action.type == InputActionType.Button)
         {
-            //ConfigManager.WriteConsole($"[LibretroControlMap.Active] {actionMap.name}/{inputActionMapId} enabled: {action.enabled} pressed? {action.IsPressed()} action: {action.ToString()}");
-
             if (action.IsPressed())
             {
+                ConfigManager.WriteConsole($"[LibretroControlMap.Active] pressed {actionMap.name}/{inputActionMapId} enabled: {action.enabled} - action: {action.ToString()}");
+
                 return 1;
             }
             return 0;

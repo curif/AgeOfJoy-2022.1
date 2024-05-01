@@ -237,7 +237,7 @@ public class AGEProgram
         tokens = new(parsedString);
         ConfigManager.WriteConsole($"[basicAGEProgram.ProcessCommand] >>>>  {tokens.ToString()}");
 
-        if (tokens.Remains() < 1)
+        if (tokens.Count() < 1)
             throw new Exception($"Invalid line format: {command} line: {lineNumber} file: {filePath}");
 
         ICommandBase cmd = Commands.GetNew(tokens.Token, config);

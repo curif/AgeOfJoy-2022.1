@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using System.Text;
+using static OVRHaptics;
 
 class CommandFunctionMUSICPLAY : CommandFunctionNoExpressionBase
 {
@@ -36,16 +37,66 @@ class CommandFunctionMUSICADD : CommandFunctionSingleExpressionBase
         if (config.MusicPlayerQueue == null)
             throw new Exception("Music player doesn't exists");
 
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNonEmptyString(val, "file path");
+        string filePath = val.GetValueAsString();
+
+        config.MusicPlayerQueue.AddMusic(Path.Combine(ConfigManager.MusicDir, filePath));        
+
+        return new BasicValue(1);
+    }
+}
+
+
+class CommandFunctionMUSICREMOVE : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionMUSICREMOVE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICREMOVE";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNonEmptyString(val, "file path");
+        string filePath = Path.Combine(ConfigManager.MusicDir, val.GetValueAsString());
+        if (config.MusicPlayerQueue.IsInQueue(filePath))
+        {
+            config.MusicPlayerQueue.RemoveMusic(filePath);
+            return new BasicValue(1);
+        }
+
+        return new BasicValue(0);
+    }
+}
+
+class CommandFunctionMUSICEXIST : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionMUSICEXIST(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICEXIST";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
 
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNonEmptyString(val, "file path");
         string filePath = val.GetValueAsString();
 
-        config.MusicPlayerQueue.AddMusic(ConfigManager.MusicDir + "/" + filePath);        
-
-        return new BasicValue(1);
+        return new BasicValue(config.MusicPlayerQueue.IsInQueue(Path.Combine(ConfigManager.MusicDir, filePath)));
     }
 }
+
 
 class CommandFunctionMUSICCLEAR : CommandFunctionNoExpressionBase
 {
@@ -116,7 +167,9 @@ class CommandFunctionMUSICADDLIST : CommandFunctionExpressionListBase
         string paths = vals[0].GetValueAsString();
         string separator = vals[1].GetValueAsString();
 
-        foreach(string file in paths.Split(new[] { separator }, StringSplitOptions.None))
+        config.MusicPlayerQueue.ClearQueue();
+
+        foreach (string file in paths.Split(new[] { separator }, StringSplitOptions.None))
         {
             string filePath = FunctionHelper.FileTraversalFree(
                                                                 Path.Combine(ConfigManager.MusicDir, file),
