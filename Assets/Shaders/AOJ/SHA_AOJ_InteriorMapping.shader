@@ -33,21 +33,21 @@ Shader "AOJ/AOJ_InteriorMapping"
 		#endif
 		struct Input
 		{
-			half3 viewDir;
+			float3 viewDir;
 			INTERNAL_DATA
 			float2 uv_texcoord;
 			float4 vertexColor : COLOR;
-			half vertexToFrag36;
+			float vertexToFrag36;
 		};
 
 		uniform samplerCUBE _TextureSample0;
 		uniform sampler2D _TextureSample2;
-		uniform half4 _TextureSample2_ST;
-		uniform half _DistortionAmount;
-		uniform half _TimeBoxSpeedMin;
-		uniform half _TimeBoxSpeedMax;
+		uniform float4 _TextureSample2_ST;
+		uniform float _DistortionAmount;
+		uniform float _TimeBoxSpeedMin;
+		uniform float _TimeBoxSpeedMax;
 		uniform sampler2D _TextureSample1;
-		uniform half4 _TextureSample1_ST;
+		uniform float4 _TextureSample1_ST;
 
 
 		float3 HSVToRGB( float3 c )
@@ -71,7 +71,7 @@ Shader "AOJ/AOJ_InteriorMapping"
 		void vertexDataFunc( inout appdata_full v, out Input o )
 		{
 			UNITY_INITIALIZE_OUTPUT( Input, o );
-			half lerpResult47 = lerp( _TimeBoxSpeedMin , _TimeBoxSpeedMax , v.color.r);
+			float lerpResult47 = lerp( _TimeBoxSpeedMin , _TimeBoxSpeedMax , v.color.r);
 			o.vertexToFrag36 = ( ( sin( ( ( _Time.y * lerpResult47 ) + v.color.r ) ) + 0.0 ) / 2.0 );
 		}
 
@@ -83,22 +83,22 @@ Shader "AOJ/AOJ_InteriorMapping"
 		void surf( Input i , inout SurfaceOutput o )
 		{
 			o.Normal = float3(0,0,1);
-			half3 temp_output_28_0_g20 = ( i.viewDir * float3( -1,1,1 ) );
-			half3 temp_output_17_0_g20 = ( float3( 1,1,1 ) / temp_output_28_0_g20 );
-			half3 appendResult29_g20 = (half3(( ( frac( i.uv_texcoord ) * float2( 2,-2 ) ) - float2( 1,-1 ) ) , -1.0));
-			half3 break19_g20 = ( abs( temp_output_17_0_g20 ) - ( temp_output_17_0_g20 * appendResult29_g20 ) );
-			half3 temp_output_30_0_g20 = ( ( min( min( break19_g20.x , break19_g20.y ) , break19_g20.z ) * temp_output_28_0_g20 ) + appendResult29_g20 );
-			half3 break120_g20 = temp_output_30_0_g20;
-			half3 appendResult121_g20 = (half3(break120_g20.x , ( break120_g20.y * -1.0 ) , break120_g20.z));
+			float3 temp_output_28_0_g20 = ( i.viewDir * float3( -1,1,1 ) );
+			float3 temp_output_17_0_g20 = ( float3( 1,1,1 ) / temp_output_28_0_g20 );
+			float3 appendResult29_g20 = (float3(( ( frac( i.uv_texcoord ) * float2( 2,-2 ) ) - float2( 1,-1 ) ) , -1.0));
+			float3 break19_g20 = ( abs( temp_output_17_0_g20 ) - ( temp_output_17_0_g20 * appendResult29_g20 ) );
+			float3 temp_output_30_0_g20 = ( ( min( min( break19_g20.x , break19_g20.y ) , break19_g20.z ) * temp_output_28_0_g20 ) + appendResult29_g20 );
+			float3 break120_g20 = temp_output_30_0_g20;
+			float3 appendResult121_g20 = (float3(break120_g20.x , ( break120_g20.y * -1.0 ) , break120_g20.z));
 			float2 uv_TextureSample2 = i.uv_texcoord * _TextureSample2_ST.xy + _TextureSample2_ST.zw;
-			half3 tex2DNode27 = UnpackNormal( tex2D( _TextureSample2, uv_TextureSample2 ) );
-			half2 appendResult30 = (half2(tex2DNode27.r , tex2DNode27.g));
-			float3 hsvTorgb4_g21 = RGBToHSV( texCUBE( _TextureSample0, ( appendResult121_g20 + half3( ( appendResult30 * _DistortionAmount ) ,  0.0 ) ) ).rgb );
-			half lerpResult48 = lerp( 0.0 , -0.25 , i.vertexColor.r);
+			float3 tex2DNode27 = UnpackNormal( tex2D( _TextureSample2, uv_TextureSample2 ) );
+			float2 appendResult30 = (float2(tex2DNode27.r , tex2DNode27.g));
+			float3 hsvTorgb4_g21 = RGBToHSV( texCUBE( _TextureSample0, ( appendResult121_g20 + float3( ( appendResult30 * _DistortionAmount ) ,  0.0 ) ) ).rgb );
+			float lerpResult48 = lerp( 0.0 , -0.25 , i.vertexColor.r);
 			float3 hsvTorgb8_g21 = HSVToRGB( float3(( hsvTorgb4_g21.x + lerpResult48 ),( hsvTorgb4_g21.y + 0.0 ),( hsvTorgb4_g21.z + 0.0 )) );
-			half lerpResult49 = lerp( 0.75 , 1.0 , i.vertexToFrag36);
+			float lerpResult49 = lerp( 0.75 , 1.0 , i.vertexToFrag36);
 			float2 uv_TextureSample1 = i.uv_texcoord * _TextureSample1_ST.xy + _TextureSample1_ST.zw;
-			half3 lerpResult26 = lerp( ( saturate( hsvTorgb8_g21 ) * lerpResult49 ) , float3( 0,0,0 ) , tex2D( _TextureSample1, uv_TextureSample1 ).g);
+			float3 lerpResult26 = lerp( ( saturate( hsvTorgb8_g21 ) * lerpResult49 ) , float3( 0,0,0 ) , tex2D( _TextureSample1, uv_TextureSample1 ).g);
 			o.Emission = lerpResult26;
 			o.Alpha = 1;
 		}
@@ -222,7 +222,7 @@ Node;AmplifyShaderEditor.SimpleMultiplyOpNode;21;7.999268,91.83392;Inherit;False
 Node;AmplifyShaderEditor.SamplerNode;25;204.0336,355.7998;Inherit;True;Property;_TextureSample1;Texture Sample 1;8;0;Create;True;0;0;0;False;0;False;-1;None;4e3c6795ff74e4f439b54bdf81417d8f;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;50;-160.0025,440.6213;Inherit;False;2;2;0;FLOAT;1;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;26;369.6623,-13.17961;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;549.3333,-14;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AOJ/AOJ_InteriorMapping;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;549.3333,-14;Float;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AOJ/AOJ_InteriorMapping;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;47;0;40;0
 WireConnection;47;1;46;0
 WireConnection;47;2;42;1
@@ -253,4 +253,4 @@ WireConnection;26;0;21;0
 WireConnection;26;2;25;2
 WireConnection;0;2;26;0
 ASEEND*/
-//CHKSM=9A90CC2FBA8B4BC2F0C52C23657F3933BFD6F1B9
+//CHKSM=71278F7C32A6FB21A18359BC4AD273C8A4282A22
