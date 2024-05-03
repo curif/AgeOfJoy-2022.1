@@ -79,48 +79,45 @@ public class AGEProgram
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} executed lines {ContLinesExecuted} > {maxExecutionLinesAllowed}");
             throw new Exception("program has reached the maximum execution lines available.");
         }
-        
+
         KeyValuePair<int, ICommandBase> cmd = getNext();
-        if (cmd.Key == 0)
+        if (cmd.Value != null) // empty or REM line.
         {
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} by line # is zero (getNext())");
-            return false;
+            // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
+
+            if (tracker == null)
+                tracker = new();
+
+            config.LineNumber = cmd.Key;
+            cmd.Value.Execute(vars);
+
+            tracker.ExecuteLine();
+
+            if (config.stop)
+            {
+                ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
+                return false;
+            }
+
+            if (config.JumpTo != 0)
+            {
+                if (!lines.ContainsKey(config.JumpTo))
+                    throw new Exception($"Line number not found: {config.JumpTo}");
+
+                // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
+                nextLineToExecute = config.JumpTo;
+                config.JumpTo = 0;
+                return true;
+            }
+            else if (config.JumpNextTo != 0)
+            {
+                // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
+                nextLineToExecute = config.JumpNextTo + 1;
+                config.JumpNextTo = 0;
+                return true;
+            }
         }
-
-        // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
-
-        if ( tracker == null)
-        {
-            tracker = new();
-        }
-        config.LineNumber = cmd.Key;
-        cmd.Value.Execute(vars);
-        tracker.ExecuteLine();
-
-        if (config.stop)
-        {
-            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
-            return false;
-        }
-
-        if (config.JumpTo != 0)
-        {
-            if (!lines.ContainsKey(config.JumpTo))
-                throw new Exception($"Line number not found: {config.JumpTo}");
-
-            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
-            nextLineToExecute = config.JumpTo;
-            config.JumpTo = 0;
-        }
-        else if (config.JumpNextTo != 0)
-        {
-            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
-            nextLineToExecute = config.JumpNextTo + 1;
-            config.JumpNextTo = 0;
-        }
-        else
-            nextLineToExecute = cmd.Key + 1;
-
+        nextLineToExecute = cmd.Key + 1;
         return true;
     }
 
@@ -197,34 +194,26 @@ public class AGEProgram
 
                     // Process the previous command if there is one
                     if (currentCommand != null)
-                    {
                         ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
-                    }
 
                     // Start a new command
                     currentLineNumber = lineNumber;
-                    currentCommand = line.Substring(spaceIndex + 1).Trim();
-                    lastLineNumberParsed = lineNumber;
+                    //removes comments, line numbers and spaces
+                    currentCommand = line.Split('\'')[0].Substring(spaceIndex + 1).Trim();
                 }
                 else
                 {
                     // This is a continuation of the current command
                     if (currentCommand != null)
-                    {
                         currentCommand += " " + line;
-                    }
                     else
-                    {
                         throw new Exception($"Invalid line format or misplaced continuation line: {line} file: {filePath}");
-                    }
                 }
             }
 
             // Process the last command in the file
             if (currentCommand != null)
-            {
                 ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
-            }
         }
 
         // Sort and store the lines
@@ -233,12 +222,26 @@ public class AGEProgram
 
     private void ProcessCommand(int lineNumber, string command, Dictionary<int, ICommandBase> lines, ConfigurationCommands config, string filePath)
     {
+        lastLineNumberParsed = lineNumber;
+
+        if (string.IsNullOrEmpty(command))
+        {
+            lines[lineNumber] = null;
+            return;
+        }
+
         string[] parsedString = ParseLineOfCode(command);
         tokens = new(parsedString);
-        ConfigManager.WriteConsole($"[basicAGEProgram.ProcessCommand] >>>>  {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[basicAGEProgram.ProcessCommand] >>>> line: {lineNumber}  {tokens.ToString()}");
 
         if (tokens.Count() < 1)
             throw new Exception($"Invalid line format: {command} line: {lineNumber} file: {filePath}");
+
+        if (tokens.Token == "REM")
+        {
+            lines[lineNumber] = null;
+            return;
+        }
 
         ICommandBase cmd = Commands.GetNew(tokens.Token, config);
 
@@ -292,6 +295,4 @@ public class AGEProgram
             totalLinesExecuted = 0;
         }
     }
-
-
 }
