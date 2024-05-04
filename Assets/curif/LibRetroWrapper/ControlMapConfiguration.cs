@@ -71,7 +71,7 @@ public class ControlMapConfiguration
             return act;
         }
 
-        public string InputActionMapName()
+        public string InputActionName()
         {
             return $"{mameControl}_{port}";
         }

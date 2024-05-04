@@ -22,9 +22,11 @@ public static class ControlMapInputAction
             {
                 t = InputActionType.Value;
             }
-            InputAction action = inputActionMap.AddAction(map.InputActionMapName(), type: t);
+            string actionName = map.InputActionName();
+            InputAction action = inputActionMap.AddAction(actionName, type: t);
             foreach (var controlMap in map.controlMaps)
             {
+                //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.8/api/UnityEngine.InputSystem.InputControlPath.html
                 string path;
                 if (string.IsNullOrEmpty(controlMap.Path))
                     path = ControlMapPathDictionary.GetInputPath(controlMap.RealControl);
@@ -32,21 +34,11 @@ public static class ControlMapInputAction
                     path = controlMap.Path;
 
                 if (string.IsNullOrEmpty(path))
-                {
                     ConfigManager.WriteConsoleError($"[inputActionMapFromConfiguration] control {controlMap.RealControl} doesn't have a path and wasn't specified.");
-                }
                 else
-                {
-                    var bind = new InputBinding
-                    {
-                        path = path,
-                        action = map.mameControl + "_" + map.port.ToString()
-                    };
-                    action.AddBinding(bind);
-                }
+                    action.AddBinding(new InputBinding(path, actionName));
             }
         }
         return inputActionMap;
     }
-
 }
