@@ -108,7 +108,7 @@ public static class ControlMapPathDictionary
         }
         else
         {
-            ConfigManager.WriteConsoleError("[ControlMapPathDictionary] Control not found in control map: " + realControl);
+            ConfigManager.WriteConsoleWarning("[ControlMapPathDictionary] Control not found in control map: " + realControl);
             return "";
         }
     }
