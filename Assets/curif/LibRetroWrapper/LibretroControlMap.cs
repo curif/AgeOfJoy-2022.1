@@ -89,7 +89,7 @@ public class LibretroControlMap : MonoBehaviour
         {
             if (!action.enabled)
             {
-                ConfigManager.WriteConsoleError($"[LibretroControlMap.Active] {inputActionMapId} is not enabled in the actionMap: {actionMap.name}");
+                ConfigManager.WriteConsoleWarning($"[LibretroControlMap.Active] {inputActionMapId} is not enabled in the actionMap: {actionMap.name}");
                 action.Enable();
             }
 

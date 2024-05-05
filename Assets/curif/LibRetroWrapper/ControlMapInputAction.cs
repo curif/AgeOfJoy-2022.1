@@ -12,36 +12,33 @@ using System.Text;
 public static class ControlMapInputAction
 {
 
-  public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig, string name = null)
-  {
-    InputActionMap inputActionMap = new(name);
-    foreach (var map in mapConfig.mapList)
+    public static InputActionMap inputActionMapFromConfiguration(ControlMapConfiguration mapConfig, string name = null)
     {
-      InputActionType t = InputActionType.Button;
-      if (map.behavior == "axis")
-      {
-        t = InputActionType.Value;
-      }
-      InputAction action = inputActionMap.AddAction(map.InputActionMapName(), type: t);
-      foreach (var controlMap in map.controlMaps)
-      {
-        string path = ControlMapPathDictionary.GetInputPath(controlMap.RealControl);
-        if (string.IsNullOrEmpty(path))
+        InputActionMap inputActionMap = new(name);
+        foreach (var map in mapConfig.mapList)
         {
-          ConfigManager.WriteConsoleError($"[inputActionMapFromConfiguration] control {controlMap.RealControl} doesn't have a path. ");
-        }
-        else
-        {
-          var bind = new InputBinding
-          {
-            path = path, 
-            action = map.mameControl + "_" + map.port.ToString()
-          };
-          action.AddBinding(bind);
-        }
-      }
-    }
-    return inputActionMap;
-  }
+            InputActionType t = InputActionType.Button;
+            if (map.behavior == "axis")
+            {
+                t = InputActionType.Value;
+            }
+            string actionName = map.InputActionName();
+            InputAction action = inputActionMap.AddAction(actionName, type: t);
+            foreach (var controlMap in map.controlMaps)
+            {
+                //https://docs.unity3d.com/Packages/com.unity.inputsystem@1.8/api/UnityEngine.InputSystem.InputControlPath.html
+                string path;
+                if (string.IsNullOrEmpty(controlMap.Path))
+                    path = ControlMapPathDictionary.GetInputPath(controlMap.RealControl);
+                else
+                    path = controlMap.Path;
 
+                if (string.IsNullOrEmpty(path))
+                    ConfigManager.WriteConsoleError($"[inputActionMapFromConfiguration] control {controlMap.RealControl} doesn't have a path and wasn't specified.");
+                else
+                    action.AddBinding(new InputBinding(path, actionName));
+            }
+        }
+        return inputActionMap;
+    }
 }
