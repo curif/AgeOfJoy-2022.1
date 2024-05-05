@@ -205,7 +205,7 @@ public class AGEProgram
                 {
                     // This is a continuation of the current command
                     if (currentCommand != null)
-                        currentCommand += " " + line;
+                        currentCommand += " " + line.Split('\'')[0].Trim(); //removes comments, line numbers and spaces
                     else
                         throw new Exception($"Invalid line format or misplaced continuation line: {line} file: {filePath}");
                 }
