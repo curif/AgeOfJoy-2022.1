@@ -169,9 +169,11 @@ public static class Commands
         functions["MUSICEXIST"] = typeof(CommandFunctionMUSICEXIST);
         functions["MUSICCLEAR"] = typeof(CommandFunctionMUSICCLEAR);
         functions["MUSICLOOP"] = typeof(CommandFunctionMUSICLOOP);
+        functions["MUSICLOOPSTATUS"] = typeof(CommandFunctionMUSICLOOPSTATUS);
         functions["MUSICADDLIST"] = typeof(CommandFunctionMUSICADDLIST);
         functions["MUSICPREVIOUS"] = typeof(CommandFunctionMUSICPREVIOUS);
         functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
+        functions["MUSICRESET"] = typeof(CommandFunctionMUSICRESET);
         
         //screen
         functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);

@@ -40,6 +40,7 @@ public class MusicPlayer : MonoBehaviour
             
             ConfigManager.WriteConsole($"[MusicPlayer.AddMusic] {musicFilePath}");
             musicQueue.Add(musicFilePath);
+            Play();
         }
     }
     public void RemoveMusic(string musicFilePath)
@@ -54,6 +55,17 @@ public class MusicPlayer : MonoBehaviour
     public void ClearQueue()
     {
         musicQueue.Clear();
+        Stop();
+    }
+
+    public void ResetQueue()
+    {
+        if (musicQueue.Count > 0)
+        {
+            Stop();
+            currentIndex = 0;
+            Play();
+        }
     }
 
     public void Play()
