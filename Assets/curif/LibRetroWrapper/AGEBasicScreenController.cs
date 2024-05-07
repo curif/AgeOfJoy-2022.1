@@ -252,6 +252,12 @@ public class AGEBasicScreenController : MonoBehaviour
             ConfigManager.WriteConsole($"[AGEBasicScreenController.setupActionMap] loading user controller configuration, GameControlMap: {cabinetReplace.game.CabinetDBName}");
             controlConf = new GameControlMap(cabinetReplace.game.CabinetDBName);
         }
+        else if (!string.IsNullOrEmpty(cabinetReplace.cabinet?.ControlScheme) &&
+                             ControlSchemeControlMap.ExistsConfiguration(cabinetReplace.cabinet.ControlScheme))
+        {
+            ConfigManager.WriteConsole($"[AGEBasicScreenController] loading control scheme configuration, ControlSchemeControlMap: {cabinetReplace.cabinet.ControlScheme}");
+            controlConf = new ControlSchemeControlMap(cabinetReplace.cabinet.ControlScheme);
+        }
         else
         {
             ConfigManager.WriteConsole($"[AGEBasicScreenController.setupActionMap] no controller user configuration, no cabinet configuration, using GlobalControlMap");
