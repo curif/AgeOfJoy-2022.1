@@ -327,27 +327,17 @@ public class AGEBasicScreenController : MonoBehaviour
                                 status == basicAGE.ProgramStatus.CompilationError)
                                 return true;
 
-                            if (status == basicAGE.ProgramStatus.WaitingForStart && 
-                                !cabinetAGEBasic.AGEBasic.IsRunning())
+                            if (status == basicAGE.ProgramStatus.WaitingForStart)
                                 return false;
-                            
-                            // is running
 
-                            if (libretroControlMap.Active("EXIT") == 1)
+                            if (! cabinetAGEBasic.AGEBasic.IsRunning())
                                 return true;
+                            
 #if UNITY_EDITOR
                             if (SimulateExitGame)
                                 return true;
 #endif
                             timeToExit = DateTime.MinValue;
-                            return false;
-                        })
-                        .Condition("N secs pass with user EXIT pressed", () =>
-                        {
-                            if (timeToExit == DateTime.MinValue)
-                                timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
-                            else if (DateTime.Now > timeToExit)
-                                return true;
                             return false;
                         })
                     .End()

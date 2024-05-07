@@ -142,6 +142,25 @@ class CommandFunctionMUSICLOOP : CommandFunctionSingleExpressionBase
 }
 
 
+class CommandFunctionMUSICLOOPSTATUS : CommandFunctionNoExpressionBase
+{
+    public CommandFunctionMUSICLOOPSTATUS(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICLOOPSTATUS";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        return new BasicValue(config.MusicPlayerQueue.Loop);
+    }
+}
+
+
 class CommandFunctionMUSICADDLIST : CommandFunctionExpressionListBase
 {
     public CommandFunctionMUSICADDLIST(ConfigurationCommands config) : base(config)
@@ -218,6 +237,27 @@ class CommandFunctionMUSICPREVIOUS : CommandFunctionNoExpressionBase
             throw new Exception("Music player doesn't exists");
 
         config.MusicPlayerQueue.Previous();        
+
+        return new BasicValue(1);
+    }
+}
+
+
+class CommandFunctionMUSICRESET : CommandFunctionNoExpressionBase
+{
+    public CommandFunctionMUSICRESET(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICRESET";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        config.MusicPlayerQueue.ResetQueue();
 
         return new BasicValue(1);
     }
