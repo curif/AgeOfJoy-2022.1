@@ -193,52 +193,6 @@ public class ScreenGenerator : MonoBehaviour
     }
 
     // The method that prints a string of characters to the screen
-    public ScreenGenerator Printold(int x, int y, string text, bool inverted = false)
-    {
-        if (c64Screen == null)
-            return this;
-        // Check if the coordinates are valid
-        if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight)
-        {
-            ConfigManager.WriteConsoleError($"[ScreenGenerator.Print] Invalid parameters for Print method, x,y: ({x},{y})");
-            return this;
-        }
-
-        // Loop through all the characters in the text string
-        int charpos = x;
-        for (int i = 0; i < text.Length; i++)
-        {
-            // Get the current character from the text string
-            char c = text[i];
-
-            // Find the index of the character in the character list order string
-            int index = characterListOrder.IndexOf(c);
-            if (index == -1)
-                index = characterListOrderAlternate.IndexOf(c);
-            if (index == -1)
-                index = characterPositionForNotFound;
-            if (index > 128)
-                index = characterPositionForNotFound;
-
-            // Print the character to the screen using PrintChar method with inversion flag
-            index = inverted ? index + 128 : index;
-            PrintChar(charpos, y, index);
-
-            charpos++;
-            if (charpos >= CharactersWidth - 1)
-            {
-                charpos = 0;
-                y++;
-            }
-
-            //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
-        }
-
-        return this;
-    }
-
-
-    // The method that prints a string of characters to the screen
     public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
     {
         if (c64Screen == null)
