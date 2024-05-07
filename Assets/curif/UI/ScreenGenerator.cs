@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
+using System.Text;
+using System.Reflection;
 
 public class ScreenGenerator : MonoBehaviour
 {
@@ -66,7 +69,8 @@ public class ScreenGenerator : MonoBehaviour
             // Calculate the pixel coordinates for the source texture
             int srcX = (i % 32) * 8;
             int srcY = (7 - i / 32) * 8; // Subtract i / 32 from 7 to flip the origin
-                                         // Get the pixels for the current character and add them to the list
+            
+            // Get the pixels for the current character and add them to the list
             Color[] pixels = c64Font.GetPixels(srcX, srcY, 8, 8);
             charPixels.Add(pixels);
         }
@@ -160,12 +164,13 @@ public class ScreenGenerator : MonoBehaviour
     }
 
     // The method that prints a single character to the screen
-    public ScreenGenerator PrintChar(int x, int y, int charNum, bool inverted)
+    public ScreenGenerator PrintChar(int x, int y, int charNum)
     {
         if (c64Screen == null)
             return this;
+
         // Check if the coordinates and the character number are valid
-        if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight || charNum < 0 || charNum >= 128)
+        if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight || charNum < 0 || charNum >= 256)
         {
             ConfigManager.WriteConsoleError($"[ScreenGenerator.PrintChar] Invalid parameters x,y: ({x},{y}), charNum: {charNum}");
             return this;
@@ -177,8 +182,7 @@ public class ScreenGenerator : MonoBehaviour
         int destY = centerY + (CharactersHeight - (y + 1)) * 8; // Add centerY and adjust the y calculation to be relative to the top of the centered area
 
         // Get the pixels from the list for the given character number and inversion flag
-        int index = inverted ? charNum + 128 : charNum;
-        Color[] pixels = charPixels[index];
+        Color[] pixels = charPixels[charNum];
 
         // Copy the pixels from the list to the screen texture
         c64Screen.SetPixels(destX, destY, 8, 8, pixels);
@@ -189,7 +193,7 @@ public class ScreenGenerator : MonoBehaviour
     }
 
     // The method that prints a string of characters to the screen
-    public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
+    public ScreenGenerator Printold(int x, int y, string text, bool inverted = false)
     {
         if (c64Screen == null)
             return this;
@@ -215,9 +219,11 @@ public class ScreenGenerator : MonoBehaviour
                 index = characterPositionForNotFound;
             if (index > 128)
                 index = characterPositionForNotFound;
-            // Print the character to the screen using PrintChar method with inversion flag
 
-            PrintChar(charpos, y, index, inverted);
+            // Print the character to the screen using PrintChar method with inversion flag
+            index = inverted ? index + 128 : index;
+            PrintChar(charpos, y, index);
+
             charpos++;
             if (charpos >= CharactersWidth - 1)
             {
@@ -229,6 +235,87 @@ public class ScreenGenerator : MonoBehaviour
         }
 
         return this;
+    }
+
+
+    // The method that prints a string of characters to the screen
+    public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
+    {
+        if (c64Screen == null)
+            return this;
+
+        // Check if the coordinates are valid
+        if (x < 0 || x >= CharactersWidth || y < 0 || y >= CharactersHeight)
+        {
+            ConfigManager.WriteConsoleError($"[ScreenGenerator.Print] Invalid parameters for Print method, x,y: ({x},{y})");
+            return this;
+        }
+
+        // Loop through all the characters in the text string
+        int charpos = x;
+        int i = 0;
+        while (i < text.Length)
+        {
+            // Check for escape character and make sure it's not the last char
+            if (text[i] == '\\' && i <= text.Length - 1) 
+            {
+                i++;
+                if (text[i] == '\\') 
+                {
+                    PrintCharPosition(text[i], ref charpos, ref y);
+                    i++;
+                }
+                else
+                {
+                    StringBuilder strIndex = new StringBuilder();
+                    // Find the end of the number sequence
+                    while (i <= text.Length - 1 && char.IsDigit(text[i]) && strIndex.Length < 4)
+                    {
+                        strIndex.Append(text[i]);
+                        i++;
+                    }
+
+                    if (! int.TryParse(strIndex.ToString(), out int index))
+                        index = characterPositionForNotFound;
+                    else if (index >= 256)
+                        index = characterPositionForNotFound;
+                
+                   PrintCharPosition(index, ref charpos, ref y);
+
+                }
+            }
+            else
+            {
+                // Find the index of the character in the character list order string
+                int index = characterListOrder.IndexOf(text[i]);
+                if (index == -1)
+                    index = characterListOrderAlternate.IndexOf(text[i]);
+                if (index == -1)
+                    index = characterPositionForNotFound;
+                if (index > 128)
+                    index = characterPositionForNotFound;
+                // Print the character to the screen using PrintChar method with inversion flag
+                index = inverted ? index + 128 : index;
+                PrintCharPosition(index, ref charpos, ref y);
+                i++;
+            }
+
+            //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
+        }
+
+        return this;
+    }
+
+    private void PrintCharPosition(int charNum, ref int x, ref int y)
+    {
+        PrintChar(x, y, charNum);
+
+        x++;
+        if (x >= CharactersWidth)
+        {
+            x = 0;
+            y++;
+        }
     }
 
     // The method that clears the screen with a given color or cyan by default

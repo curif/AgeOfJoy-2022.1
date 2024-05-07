@@ -178,11 +178,8 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
     {
         return base.Parse(tokens, 3);
     }
-
     public override BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
-
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0]);
         FunctionHelper.ExpectedNumber(vals[1], " - index");
@@ -190,20 +187,30 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
 
         string input = vals[0].GetValueAsString();
         int memberIndex = (int)vals[1].GetValueAsNumber();
-        string separator = vals[2].GetValueAsString();
+        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
 
-        string[] parts = input.Split(new[] { separator }, StringSplitOptions.None);
+        int currentIndex = 0;
+        int start = 0;
 
-        if (memberIndex >= 0 && memberIndex < parts.Length)
+        for (int i = 0; i <= input.Length; i++)
         {
-            string ret = parts[memberIndex];
-            return new BasicValue(ret);
+            // Check if current character is the separator or if we've reached the end of the string
+            if (i == input.Length || input[i] == separator)
+            {
+                if (currentIndex == memberIndex)
+                {
+                    string ret = input.Substring(start, i - start);
+                    return new BasicValue(ret);
+                }
+
+                // Update start position after the separator for the next part
+                start = i + 1;
+                currentIndex++;
+            }
         }
-        else
-        {
-            // Handle index out of bounds or invalid member
-            return new BasicValue(""); // Return an empty string or handle the error accordingly
-        }
+
+        // If we exit the loop without having returned, the index was out of bounds
+        return new BasicValue(""); // Return an empty string or handle the error accordingly
     }
 }
 
@@ -226,7 +233,7 @@ class CommandFunctionCOUNTMEMBERS : CommandFunctionExpressionListBase
         FunctionHelper.ExpectedString(vals[1], " - separator");
 
         string input = vals[0].GetValueAsString();
-        string separator = vals[1].GetValueAsString();
+        char separator = vals[1].GetValueAsString()[0]; // Since it's one character, take the first char directly.
         int count = input.Split(new[] { separator }, StringSplitOptions.None).Length;
 
         return new BasicValue(count);
@@ -256,7 +263,7 @@ class CommandFunctionISMEMBER : CommandFunctionExpressionListBase
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        string separator = vals[2].GetValueAsString();
+        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
 
         string[] parts = separatedList.Split(new[] { separator }, StringSplitOptions.None);
         return new BasicValue(Array.IndexOf(parts, member) != -1);
@@ -281,11 +288,11 @@ class CommandFunctionINDEXMEMBER : CommandFunctionExpressionListBase
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0]);
         FunctionHelper.ExpectedString(vals[1], " - list");
-        FunctionHelper.ExpectedString(vals[2], " - string");
+        FunctionHelper.ExpectedString(vals[2], " - char");
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        string separator = vals[2].GetValueAsString();
+        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
 
         string[] parts = separatedList.Split(new[] { separator }, StringSplitOptions.None);
         return new BasicValue(Array.IndexOf(parts, member));
@@ -314,7 +321,8 @@ class CommandFunctionREMOVEMEMBER : CommandFunctionExpressionListBase
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        string separator = vals[2].GetValueAsString();
+        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+
 
         string[] parts = separatedList.Split(new[] { separator }, StringSplitOptions.None);
         string result = string.Join(separator, parts.Where(p => p != member)); 
@@ -345,7 +353,8 @@ class CommandFunctionADDMEMBER : CommandFunctionExpressionListBase
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        string separator = vals[2].GetValueAsString();
+        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+
 
         return new BasicValue(string.IsNullOrEmpty(separatedList) ? 
             member : 

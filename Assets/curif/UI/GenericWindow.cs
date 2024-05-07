@@ -67,32 +67,33 @@ class GenericWindow : GenericWidget
     {
         if (!enabled)
           return;
+
         // Draw the top border with the title
-        screen.PrintChar(x, y, LEFT_UPPER_CORNER, false);
+        screen.PrintChar(x, y, LEFT_UPPER_CORNER);
         
         for (int i = 1; i < width - 1; i++)
         {
-            screen.PrintChar(x + i, y, HORIZONTAL_BORDER, false);
+            screen.PrintChar(x + i, y, HORIZONTAL_BORDER);
         }
         
-        screen.PrintChar(x + width - 1, y, RIGHT_UPPER_CORNER, false);
+        screen.PrintChar(x + width - 1, y, RIGHT_UPPER_CORNER);
         screen.Print(x + 1, y, title, inverted);
 
         // Draw the side borders
         for (int i = 1; i < height - 1; i++)
         {
-            screen.PrintChar(x, y + i, VERTICAL_BORDER, false);
-            screen.PrintChar(x + width - 1, y + i, VERTICAL_BORDER, false);
+            screen.PrintChar(x, y + i, VERTICAL_BORDER);
+            screen.PrintChar(x + width - 1, y + i, VERTICAL_BORDER);
         }
 
         // Draw the bottom border
-        screen.PrintChar(x, y + height - 1, LOWER_LEFT_CORNER, false);
+        screen.PrintChar(x, y + height - 1, LOWER_LEFT_CORNER);
         
         for (int i = 1; i < width - 1; i++)
         {
-            screen.PrintChar(x + i, y + height - 1, HORIZONTAL_BORDER, false);
+            screen.PrintChar(x + i, y + height - 1, HORIZONTAL_BORDER);
         }
         
-        screen.PrintChar(x + width - 1, y + height - 1, LOWER_RIGHT_CORNER, false);
+        screen.PrintChar(x + width - 1, y + height - 1, LOWER_RIGHT_CORNER);
     }
 }
