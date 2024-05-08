@@ -247,9 +247,12 @@ MonoBehaviour:
   CharactersHeight: 25
   TextureWidth: 380
   TextureHeight: 216
-  BackgroundColor: {r: 0.35686275, g: 0.5294118, b: 1, a: 0}
-  CenteredAreaColor: {r: 0.050980393, g: 0.22745098, b: 0.85882354, a: 0}
-  ShaderName: damage
+  BackgroundColor:
+    serializedVersion: 2
+    rgba: 14580358
+  CenteredAreaColor:
+    serializedVersion: 2
+    rgba: 14367245
 --- !u!114 &4703797651494189707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -264,16 +267,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scr: {fileID: 3962870371555651789}
   CoinSlot: {fileID: 0}
-  actionMap:
-    m_Name: Action Map
-    m_Id: 6af1b3a7-3027-48d9-8c3a-d7ae3e5cda6f
-    m_Asset: {fileID: 0}
-    m_Actions: []
-    m_Bindings: []
+  libretroControlMap: {fileID: 0}
   changeControls: {fileID: 0}
   cabinetsController: {fileID: 0}
   roomConfiguration: {fileID: 0}
   globalConfiguration: {fileID: 0}
+  AGEBasic: {fileID: 0}
   canChangeAudio: 1
   canChangeNPC: 1
   canChangeControllers: 1
@@ -304,6 +303,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c272e5d2405d561449f9b7403b5af15e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  configurationController: {fileID: 0}
+  ConfigurationController: {fileID: 0}
+  libretroControlMap: {fileID: 0}
+  ScreenGenerator: {fileID: 0}
+  GameRegistry: {fileID: 0}
+  CabinetsController: {fileID: 0}
+  Teleportation: {fileID: 0}
+  SceneDatabase: {fileID: 0}
+  PostersController: {fileID: 0}
+  audioMixer: {fileID: 0}
+  Player: {fileID: 0}
+  PlayerOrigin: {fileID: 0}
+  PlayerControllerGameObject: {fileID: 0}
+  Status: 0
   nameToExecute: 
   path: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\config

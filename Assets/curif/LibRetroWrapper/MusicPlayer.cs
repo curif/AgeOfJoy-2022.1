@@ -52,6 +52,11 @@ public class MusicPlayer : MonoBehaviour
         }
     }
 
+    public int CountQueue()
+    {
+        return musicQueue.Count;
+    }
+
     public void ClearQueue()
     {
         musicQueue.Clear();

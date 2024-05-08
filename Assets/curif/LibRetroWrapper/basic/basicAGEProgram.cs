@@ -189,12 +189,12 @@ public class AGEProgram
                     if (lineNumber <= 0)
                         throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
 
-                    if (lineNumber <= lastLineNumberParsed)
-                        throw new Exception($"Line numbers not in sequence, in file: {filePath}");
-
                     // Process the previous command if there is one
                     if (currentCommand != null)
                         ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
+                    
+                    if (lineNumber <= lastLineNumberParsed)
+                        throw new Exception($"Line numbers not in sequence, in file: {filePath}");
 
                     // Start a new command
                     currentLineNumber = lineNumber;

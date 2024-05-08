@@ -174,6 +174,7 @@ public static class Commands
         functions["MUSICPREVIOUS"] = typeof(CommandFunctionMUSICPREVIOUS);
         functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
         functions["MUSICRESET"] = typeof(CommandFunctionMUSICRESET);
+        functions["MUSICCOUNT"] = typeof(CommandFunctionMUSICCOUNT);
         
         //screen
         functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);
