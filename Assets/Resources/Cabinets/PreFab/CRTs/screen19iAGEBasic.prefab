@@ -350,6 +350,7 @@ MonoBehaviour:
   Player: {fileID: 0}
   PlayerOrigin: {fileID: 0}
   PlayerControllerGameObject: {fileID: 0}
+  Status: 0
   nameToExecute: 
   path: 
 --- !u!114 &3707607308854403927
@@ -440,9 +441,12 @@ MonoBehaviour:
   CharactersHeight: 25
   TextureWidth: 380
   TextureHeight: 216
-  BackgroundColor: {r: 0.35686275, g: 0.5294118, b: 1, a: 0}
-  CenteredAreaColor: {r: 0.050980393, g: 0.22745098, b: 0.85882354, a: 0}
-  ShaderName: damage
+  BackgroundColor:
+    serializedVersion: 2
+    rgba: 14580358
+  CenteredAreaColor:
+    serializedVersion: 2
+    rgba: 14367245
 --- !u!114 &8954019803348906745
 MonoBehaviour:
   m_ObjectHideFlags: 0

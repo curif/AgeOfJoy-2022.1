@@ -13,15 +13,15 @@ public class ScreenGenerator : MonoBehaviour
     public int CharactersHeight = 25;
     public int TextureWidth;
     public int TextureHeight;
-    public Color BackgroundColor;
-    public Color CenteredAreaColor;
+    public Color32 BackgroundColor;
+    public Color32 CenteredAreaColor;
 
     //public string ShaderName = "crt";
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
     // The list that stores the pixels for each character
-    private List<Color[]> charPixels;
+    private List<Color32[]> charPixels;
 
     // The string that contains the list of characters in the same order as the font texture
     // the arroba means "no replace"
@@ -31,13 +31,13 @@ public class ScreenGenerator : MonoBehaviour
 
     // The texture that represents the screen, it has 40x25 characters of capacity
     private Texture2D c64Screen;
-    private Color[] colorsBackgroundMatrix;
-    private Color[] colorsCenteredAreaMatrix;
+    private Color32[] colorsBackgroundMatrix;
+    //private Color32[] colorsCenteredAreaMatrix;
 
     private int ScreenWidth; // Width of the target texture
     private int ScreenHeight; // Height of the target texture
-    private int centerX;
-    private int centerY;
+    private int centerStartX;
+    private int centerStartY;
 
     private bool needsDraw = false;
 
@@ -55,37 +55,7 @@ public class ScreenGenerator : MonoBehaviour
     // The method that runs at the start of the game
     private void Start()
     {
-        
-        ScreenWidth = CharactersWidth * 8;  // Width of the target texture
-        ScreenHeight = CharactersHeight * 8; // Height of the target texture
-
-        //characters
-        // Initialize the list
-        charPixels = new List<Color[]>();
-
-        // Loop through all the characters in the font texture
-        for (int i = 0; i < 256; i++)
-        {
-            // Calculate the pixel coordinates for the source texture
-            int srcX = (i % 32) * 8;
-            int srcY = (7 - i / 32) * 8; // Subtract i / 32 from 7 to flip the origin
-            
-            // Get the pixels for the current character and add them to the list
-            Color[] pixels = c64Font.GetPixels(srcX, srcY, 8, 8);
-            charPixels.Add(pixels);
-        }
-
-        //Colors
-        // Create an array of colors to fill the texture
-        colorsBackgroundMatrix = new Color[ScreenWidth * ScreenHeight];
-        // Set all pixels in the colors array to the BackgroundColor color
-        for (int i = 0; i < colorsBackgroundMatrix.Length; i++)
-        {
-            colorsBackgroundMatrix[i] = CenteredAreaColor;
-        }
-
         createTexture();
-
     }
 
     private Texture2D createTexture()
@@ -93,16 +63,52 @@ public class ScreenGenerator : MonoBehaviour
         if (c64Screen != null)
             return c64Screen;
 
+        ScreenWidth = CharactersWidth * 8;  // Width of the target texture
+        ScreenHeight = CharactersHeight * 8; // Height of the target texture
+
+        //characters
+        // Initialize the list
+        charPixels = new List<Color32[]>();
+
+        // Retrieve all pixels from the texture
+        Color32[] allPixels = c64Font.GetPixels32();
+
+        // Loop through all the characters in the font texture
+        for (int i = 0; i < 256; i++)
+        {
+            // Calculate the pixel coordinates for the source texture
+            int srcX = (i % 32) * 8;
+            int srcY = (7 - i / 32) * 8;
+
+            Color32[] charPixelsArray = new Color32[64]; // 8x8 characters
+
+            // Extract the pixels for the current character
+            for (int row = 0; row < 8; row++)
+            {
+                for (int col = 0; col < 8; col++)
+                {
+                    int pixelIndex = ((srcY + row) * c64Font.width + (srcX + col));
+                    charPixelsArray[row * 8 + col] = allPixels[pixelIndex];
+                }
+            }
+
+            charPixels.Add(charPixelsArray);
+        }
+
+        // Create an array of colors to fill the background texture
+        colorsBackgroundMatrix = new Color32[ScreenWidth * ScreenHeight];
+        Array.Fill(colorsBackgroundMatrix, CenteredAreaColor);
+
         // Calculate the width and height of the centered area
         int centeredWidth = CharactersWidth * 8;
         int centeredHeight = CharactersHeight * 8;
 
         // Calculate the position of the centered area based on the whole texture size
-        centerX = (TextureWidth - centeredWidth) / 2;
-        centerY = (TextureHeight - centeredHeight) / 2;
+        centerStartX = (TextureWidth - centeredWidth) / 2;
+        centerStartY = (TextureHeight - centeredHeight) / 2;
 
         // Create the target texture with the specified width and height, no mips
-        c64Screen = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGB565, false);
+        c64Screen = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
         c64Screen.name = "c64";
 
         //c64Screen.wrapMode = TextureWrapMode.Clamp;
@@ -135,16 +141,19 @@ public class ScreenGenerator : MonoBehaviour
         if (c64Screen != null)
         {
             // Create a new array of color data for the texture
-            Color[] pixels = c64Screen.GetPixels();
+            Color32[] pixels = c64Screen.GetPixels32();
+            Array.Fill(pixels, BackgroundColor);
 
+            /*
             // Set the color for each pixel in the texture
             for (int i = 0; i < TextureWidth * TextureHeight; i++)
             {
                 pixels[i] = BackgroundColor;
             }
+            */
 
             // Apply the modified colors back to the texture
-            c64Screen.SetPixels(pixels);
+            c64Screen.SetPixels32(pixels);
 
             needsDraw = true;
         }
@@ -154,7 +163,6 @@ public class ScreenGenerator : MonoBehaviour
     // copies the texture to the gpu if it was modified
     public ScreenGenerator DrawScreen()
     {
-
         if (needsDraw)
         {
             c64Screen.Apply();
@@ -177,15 +185,12 @@ public class ScreenGenerator : MonoBehaviour
         }
 
         // Calculate the pixel coordinates for the destination texture within the centered area
-        int destX = (x * 8) + centerX;
+        int destX = (x * 8) + centerStartX;
         //int destY = (TextureHeight - ((y + 1) * 8)) - centerY; // Subtract y from CharactersHeight and centerY to flip the origin
-        int destY = centerY + (CharactersHeight - (y + 1)) * 8; // Add centerY and adjust the y calculation to be relative to the top of the centered area
-
-        // Get the pixels from the list for the given character number and inversion flag
-        Color[] pixels = charPixels[charNum];
+        int destY = centerStartY + (CharactersHeight - (y + 1)) * 8; // Add centerY and adjust the y calculation to be relative to the top of the centered area
 
         // Copy the pixels from the list to the screen texture
-        c64Screen.SetPixels(destX, destY, 8, 8, pixels);
+        c64Screen.SetPixels32(destX, destY, 8, 8, charPixels[charNum]);
 
         needsDraw = true;
 
@@ -235,7 +240,6 @@ public class ScreenGenerator : MonoBehaviour
                         index = characterPositionForNotFound;
                 
                    PrintCharPosition(index, ref charpos, ref y);
-
                 }
             }
             else
@@ -279,7 +283,9 @@ public class ScreenGenerator : MonoBehaviour
         if (c64Screen == null)
             createTexture();
 
-        c64Screen.SetPixels(centerX, centerY, ScreenWidth, ScreenHeight, colorsBackgroundMatrix);
+        c64Screen.SetPixels32(centerStartX, centerStartY, 
+                                ScreenWidth, ScreenHeight, 
+                                colorsBackgroundMatrix);
         needsDraw = true;
         return this;
     }
@@ -289,6 +295,7 @@ public class ScreenGenerator : MonoBehaviour
     {
         if (c64Screen == null)
             return this;
+
         // Check if the y coordinate is valid
         if (y < 0 || y >= CharactersHeight)
         {

@@ -262,3 +262,21 @@ class CommandFunctionMUSICRESET : CommandFunctionNoExpressionBase
         return new BasicValue(1);
     }
 }
+
+class CommandFunctionMUSICCOUNT : CommandFunctionNoExpressionBase
+{
+    public CommandFunctionMUSICCOUNT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICCOUNT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        return new BasicValue(config.MusicPlayerQueue.CountQueue());
+    }
+}
