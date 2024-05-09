@@ -42,6 +42,7 @@ Shader "AgeOfJoy/Neon_Houdini"
 		{
 			float4 vertexColor : COLOR;
 			float3 worldPos;
+			float3 viewDir;
 			half3 worldNormal;
 			INTERNAL_DATA
 			half vertexToFrag49;
@@ -78,10 +79,8 @@ Shader "AgeOfJoy/Neon_Houdini"
 			o.Albedo = lerpResult14.rgb;
 			half4 _ColorA_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorA_arr, _ColorA);
 			half4 _ColorCore_Instance = UNITY_ACCESS_INSTANCED_PROP(_ColorCore_arr, _ColorCore);
-			float3 ase_worldPos = i.worldPos;
-			half3 ase_worldViewDir = normalize( UnityWorldSpaceViewDir( ase_worldPos ) );
 			half3 ase_worldNormal = i.worldNormal;
-			half fresnelNdotV3 = dot( ase_worldNormal, ase_worldViewDir );
+			half fresnelNdotV3 = dot( ase_worldNormal, i.viewDir );
 			half fresnelNode3 = ( 0.0 + _FresnelScale * pow( 1.0 - fresnelNdotV3, _FresnelPow ) );
 			half4 lerpResult7 = lerp( _ColorA_Instance , _ColorCore_Instance , saturate( fresnelNode3 ));
 			half4 lerpResult16 = lerp( float4( 0,0,0,0 ) , ( lerpResult7 * i.vertexToFrag49 ) , i.vertexColor.r);
@@ -162,6 +161,7 @@ Shader "AgeOfJoy/Neon_Houdini"
 				surfIN.vertexToFrag49 = IN.customPack1.x;
 				float3 worldPos = float3( IN.tSpace0.w, IN.tSpace1.w, IN.tSpace2.w );
 				half3 worldViewDir = normalize( UnityWorldSpaceViewDir( worldPos ) );
+				surfIN.viewDir = worldViewDir;
 				surfIN.worldPos = worldPos;
 				surfIN.worldNormal = float3( IN.tSpace0.z, IN.tSpace1.z, IN.tSpace2.z );
 				surfIN.internalSurfaceTtoW0 = IN.tSpace0.xyz;
@@ -189,8 +189,9 @@ Node;AmplifyShaderEditor.SimpleTimeNode;36;-1900.283,200.3228;Inherit;False;1;0;
 Node;AmplifyShaderEditor.FmodOpNode;50;-1659.607,204.1002;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;120;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SinOpNode;39;-1525.95,210.9894;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.WorldNormalVector;51;-1040.94,680.1003;Inherit;False;False;1;0;FLOAT3;0,0,1;False;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.RangedFloatNode;1;-813.9167,493.3333;Inherit;False;Property;_FresnelScale;FresnelScale;0;0;Create;True;0;0;0;False;0;False;2.32;5.69;0;20;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;54;-648.2733,656.767;Inherit;False;Property;_FresnelPow;FresnelPow;1;0;Create;True;0;0;0;False;0;False;2.32;1;0;5;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;1;-813.9167,493.3333;Inherit;False;Property;_FresnelScale;FresnelScale;0;0;Create;True;0;0;0;False;0;False;2.32;2.67;0;20;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;54;-648.2733,656.767;Inherit;False;Property;_FresnelPow;FresnelPow;1;0;Create;True;0;0;0;False;0;False;2.32;2.32;0;5;0;1;FLOAT;0
+Node;AmplifyShaderEditor.ViewDirInputsCoordNode;55;-748.2733,248.7671;Inherit;False;World;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.FresnelNode;3;-516.5836,168;Inherit;False;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.FunctionNode;45;-1408.736,325.1689;Inherit;False;ConstantBiasScale;-1;;3;63208df05c83e8e49a48ffbdce2e43a0;0;3;3;FLOAT;0;False;1;FLOAT;1;False;2;FLOAT;0.5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;48;-1400.507,187.2398;Inherit;False;Property;_FlickerMax;FlickerMax;10;0;Create;True;0;0;0;False;0;False;1;1;0;10;0;1;FLOAT;0
@@ -203,7 +204,7 @@ Node;AmplifyShaderEditor.LerpOp;7;-255.2501,-304.6668;Inherit;False;3;0;COLOR;0,
 Node;AmplifyShaderEditor.VertexToFragmentNode;49;-795.6022,66.04778;Inherit;False;False;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.VertexColorNode;10;-273,529.5;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;28;185.667,-294.8336;Inherit;False;Property;_MetalColor;Metal Color;6;0;Create;True;0;0;0;False;0;False;0.1736085,0.8282693,0.9685534,0;0,0.8226602,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;30;311.0002,-524.5004;Inherit;False;Property;_NonMetalColor;NonMetal Color;7;0;Create;True;0;0;0;False;0;False;0.1736085,0.8282693,0.9685534,0;0.05660369,0.05660369,0.05660369,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;30;311.0002,-524.5004;Inherit;False;Property;_NonMetalColor;NonMetal Color;7;0;Create;True;0;0;0;False;0;False;0.1736085,0.8282693,0.9685534,0;0.05660374,0.05660374,0.05660374,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;29;-24.33321,736.8329;Inherit;False;Property;_Metallic;Metallic;4;0;Create;True;0;0;0;False;0;False;0;0.633;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode;31;107.0002,445.4997;Inherit;False;Property;_NonMetalSmoothness;NonMetal Smoothness;5;0;Create;True;0;0;0;False;0;False;0;0.758;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;18;-55.66663,-149.5005;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
@@ -217,6 +218,7 @@ WireConnection;36;0;35;0
 WireConnection;50;0;36;0
 WireConnection;39;0;50;0
 WireConnection;3;0;51;0
+WireConnection;3;4;55;0
 WireConnection;3;2;1;0
 WireConnection;3;3;54;0
 WireConnection;45;3;39;0
@@ -244,4 +246,4 @@ WireConnection;0;2;16;0
 WireConnection;0;3;9;0
 WireConnection;0;4;13;0
 ASEEND*/
-//CHKSM=20C5CD6A0964A84C7F517968A8D2DCC1B5E56D46
+//CHKSM=7B66C6365C13A2C0B994FB1B4E588D4BB9AB5DAB
