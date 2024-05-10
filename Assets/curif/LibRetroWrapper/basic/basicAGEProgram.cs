@@ -216,6 +216,9 @@ public class AGEProgram
                 ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
         }
 
+        //force an END:
+        ProcessCommand(currentLineNumber+1, "END", lines, config, filePath);
+
         // Sort and store the lines
         this.lines = lines.OrderBy(kv => kv.Key).ToDictionary(kv => kv.Key, kv => kv.Value);
     }

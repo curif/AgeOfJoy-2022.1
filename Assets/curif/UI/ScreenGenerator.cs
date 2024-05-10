@@ -234,12 +234,20 @@ public class ScreenGenerator : MonoBehaviour
                         i++;
                     }
 
-                    if (! int.TryParse(strIndex.ToString(), out int index))
-                        index = characterPositionForNotFound;
-                    else if (index >= 256)
-                        index = characterPositionForNotFound;
-                
-                   PrintCharPosition(index, ref charpos, ref y);
+                    int index;
+                    if (strIndex.Length > 0)
+                    {
+                        if (!int.TryParse(strIndex.ToString(), out index))
+                            index = characterPositionForNotFound;
+                        else if (index >= 256)
+                            index = characterPositionForNotFound;
+                    }
+                    else
+                    {
+                        index = 77; // "\"
+                    }
+
+                    PrintCharPosition(index, ref charpos, ref y);
                 }
             }
             else

@@ -1,0 +1,42 @@
+---
+name: stupid_jukebox_screen
+material: black
+
+author: Curif
+version: 1.0
+comment: Insert coin to shuffle play. (c) https://archive.org/details/synthwave-dreams-vol.-1-16
+debug-mode: true
+
+#control-scheme: pckeyboard
+
+# CREDITS -----
+# Original model:
+#    "JukeBox" (https://skfb.ly/oCWzw) by Matthew_Games 
+#    is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+model:
+  file: jukebox_screen.glb
+
+agebasic:
+  active: true
+  debug: true
+  after-insert-coin: stupid_jukebox_screen_insert_coin.bas
+  after-load: stupid_jukebox_screen_cls.bas
+  after-leave: stupid_jukebox_screen_cls.bas
+
+coinslot: coin-slot-small
+coinslotgeometry:
+  rotation:
+    x: -90
+    
+crt:
+  type: 19i-agebasic
+  orientation: horizontal
+  screen:
+    shader: crt
+    damage: medium
+    invertx: false
+    inverty: false
+  geometry:
+    rotation: 
+      x: -90
