@@ -338,7 +338,10 @@ public class AGEBasicScreenController : MonoBehaviour
 
                             if (! cabinetAGEBasic.AGEBasic.IsRunning())
                                 return true;
-                            
+
+                            if (libretroControlMap.Active("EXIT") == 1)
+                                return true;
+
 #if UNITY_EDITOR
                             if (SimulateExitGame)
                                 return true;
@@ -346,21 +349,29 @@ public class AGEBasicScreenController : MonoBehaviour
                             timeToExit = DateTime.MinValue;
                             return false;
                         })
+                        .Condition("N secs pass with user EXIT pressed", () =>
+                        {
+                            if (timeToExit == DateTime.MinValue)
+                                timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
+                            else if (DateTime.Now > timeToExit)
+                                return true;
+                            return false;
+                        })
                     .End()
-                .End()
-              .End()
-              .Do("END Program", () =>
-              {
-                  // age basic leave
-                  cabinetAGEBasic.StopInsertCoinBas(); //force
-                  cabinetAGEBasic.ExecAfterLeaveBas();
+                  .End()
+                  .Do("END Program", () =>
+                  {
+                      // age basic leave
+                      cabinetAGEBasic.StopInsertCoinBas(); //force
+                      cabinetAGEBasic.ExecAfterLeaveBas();
 
-                  EndPlayerActivities();
-#if UNITY_EDITOR
-                  SimulateExitGame = false;
-#endif
-                  return TaskStatus.Success;
-              })
+                      EndPlayerActivities();
+    #if UNITY_EDITOR
+                      SimulateExitGame = false;
+    #endif
+                      return TaskStatus.Success;
+                  })
+                .End()
             .End()
 
             .Sequence("Video Player control")
