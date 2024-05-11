@@ -132,30 +132,66 @@ public class CabinetsController : MonoBehaviour
             if (pos != null)
                 pos.MaxAllowedSpace = cabInfo.CabinetController.Space.MaxAllowedSpace;
 
-            //assign the cabinet number to the teleport area
+            // Assign the cabinet number to the teleport area
             MeshRenderer renderer = cabInfo.CabinetController.AgentPlayerTeleportAnchor?.GetComponent<MeshRenderer>();
-            if (renderer != null)
+            MeshFilter meshFilter = cabInfo.CabinetController.AgentPlayerTeleportAnchor?.GetComponent<MeshFilter>();
+
+            if (renderer != null && meshFilter != null)
             {
-                string textureName = $"Cabinets/AgentPlayerPositionsNumbers/AgentPlayerPosition_{idx.ToString()}";
-                Texture2D numberTexture = Resources.Load<Texture2D>(textureName);
-                if (numberTexture != null)
+                // Construct the mesh file path based on the index (idx), starting at 0
+                string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
+
+                // Load the dynamically chosen mesh
+                Mesh numberMesh = Resources.Load<Mesh>(meshPath);
+                // Load the material
+                Material playerNumberMaterial = Resources.Load<Material>("Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/M_Playernumber");
+
+                if (numberMesh != null && playerNumberMaterial != null)
                 {
-                    Material cabinetNumberMaterial = new Material(shader);
+                    // Assign the new mesh to the MeshFilter
+                    meshFilter.mesh = numberMesh;
 
-                    // Assign the texture to the material
-                    cabinetNumberMaterial.mainTexture = numberTexture;
-                    //invert the texture number:
-                    cabinetNumberMaterial.mainTextureScale = newTiling;
-                    // Assign the material to the GameObject
-                    renderer.material = cabinetNumberMaterial;
+                    // Assign the loaded material to the renderer
+                    renderer.material = playerNumberMaterial;
 
+                    // Set the scale of the anchor to 1,1,1
+                    cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.localScale = new Vector3(1, 1, 1);
+
+                    // Subtract 90 degrees from the y-axis rotation
+                    Vector3 currentRotation = cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.eulerAngles;
+                    cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y - 180, currentRotation.z);
+
+                    // Set Cast Shadows to OFF; a bunch of stuff under here is to force these guys to batch
+                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+                    // Set Light Probes to OFF
+                    renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+
+                    // Set Reflection Probes to OFF
+                    renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+
+                    // Set Receive Shadows to OFF
+                    renderer.receiveShadows = false;
+
+                    // Optionally, enable the renderer if needed
                     renderer.enabled = true;
                 }
                 else
-                    ConfigManager.WriteConsoleError($"[CabinetsController] initalizeCabinets Agent Player Position number texture not found: {textureName} idx: {idx}");
-
+                {
+                    if (numberMesh == null)
+                        ConfigManager.WriteConsoleError($"[CabinetsController] initializeCabinets Agent Player Position mesh not found: {meshPath}");
+                    if (playerNumberMaterial == null)
+                        ConfigManager.WriteConsoleError("[CabinetsController] initializeCabinets Material not found: Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/M_Playernumber");
+                }
             }
-            idx++;
+            else
+            {
+                ConfigManager.WriteConsoleError("[CabinetsController] initializeCabinets MeshRenderer or MeshFilter component missing on Agent Player Teleport Anchor.");
+            }
+
+            idx++;  // Ensure idx is being incremented elsewhere in your code if this block is within a loop
+
+
         }
     }
 
