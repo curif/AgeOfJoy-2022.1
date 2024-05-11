@@ -138,8 +138,8 @@ public class CabinetsController : MonoBehaviour
 
             if (renderer != null && meshFilter != null)
             {
-                // Construct the mesh file path based on the index (idx), assuming meshes are named starting at 1
-                string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx + 1}";
+                // Construct the mesh file path based on the index (idx), starting at 0
+                string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
 
                 // Load the dynamically chosen mesh
                 Mesh numberMesh = Resources.Load<Mesh>(meshPath);
@@ -161,7 +161,7 @@ public class CabinetsController : MonoBehaviour
                     Vector3 currentRotation = cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.eulerAngles;
                     cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y - 180, currentRotation.z);
 
-                    // Set Cast Shadows to OFF
+                    // Set Cast Shadows to OFF; a bunch of stuff under here is to force these guys to batch
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
                     // Set Light Probes to OFF
@@ -169,6 +169,9 @@ public class CabinetsController : MonoBehaviour
 
                     // Set Reflection Probes to OFF
                     renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+
+                    // Set Receive Shadows to OFF
+                    renderer.receiveShadows = false;
 
                     // Optionally, enable the renderer if needed
                     renderer.enabled = true;
