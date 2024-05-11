@@ -5,6 +5,8 @@ Shader "AgeOfJoy/PlayerNumber"
 	Properties
 	{
 		_TextureSample0("Texture Sample 0", 2D) = "bump" {}
+		_NumberColorA("NumberColorA", Color) = (1,0.8077339,0,0)
+		_NumberColorB("NumberColorB", Color) = (1,0,0,0)
 		_BGColorB("BGColorB", Color) = (0.2238637,0.8911631,0.9245283,0)
 		_BGColorA("BGColorA", Color) = (0,0.5944536,1,0)
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
@@ -24,6 +26,8 @@ Shader "AgeOfJoy/PlayerNumber"
 			float4 vertexColor : COLOR;
 		};
 
+		uniform half4 _NumberColorA;
+		uniform half4 _NumberColorB;
 		uniform half4 _BGColorB;
 		uniform half4 _BGColorA;
 		uniform sampler2D _TextureSample0;
@@ -36,9 +40,7 @@ Shader "AgeOfJoy/PlayerNumber"
 
 		void surf( Input i , inout SurfaceOutput o )
 		{
-			half4 color3 = IsGammaSpace() ? half4(1,0.8077339,0,0) : half4(1,0.6170191,0,0);
-			half4 color4 = IsGammaSpace() ? half4(1,0,0,0) : half4(1,0,0,0);
-			half4 lerpResult5 = lerp( color3 , color4 , i.uv_texcoord.y);
+			half4 lerpResult5 = lerp( _NumberColorA , _NumberColorB , i.uv_texcoord.y);
 			half4 lerpResult9 = lerp( _BGColorB , _BGColorA , i.uv_texcoord.x);
 			half4 lerpResult31 = lerp( lerpResult5 , lerpResult9 , i.vertexColor.r);
 			float2 uv_TextureSample0 = i.uv_texcoord * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
@@ -54,11 +56,11 @@ Shader "AgeOfJoy/PlayerNumber"
 /*ASEBEGIN
 Version=19302
 Node;AmplifyShaderEditor.TextureCoordinatesNode;2;-1013,-135.1668;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;8;-1005.333,239.8333;Inherit;False;Property;_BGColorA;BGColorA;2;0;Create;True;0;0;0;False;0;False;0,0.5944536,1,0;0.4575472,0.8461723,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;7;-1010,426.5;Inherit;False;Property;_BGColorB;BGColorB;1;0;Create;True;0;0;0;False;0;False;0.2238637,0.8911631,0.9245283,0;1,1,1,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;4;-347.0001,635.4999;Inherit;False;Constant;_NumberColorB;NumberColorB;0;0;Create;True;0;0;0;False;0;False;1,0,0,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;3;-341.0001,444.1666;Inherit;False;Constant;_NumberColorA;NumberColorA;0;0;Create;True;0;0;0;False;0;False;1,0.8077339,0,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;8;-1005.333,239.8333;Inherit;False;Property;_BGColorA;BGColorA;4;0;Create;True;0;0;0;False;0;False;0,0.5944536,1,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;7;-1010,426.5;Inherit;False;Property;_BGColorB;BGColorB;3;0;Create;True;0;0;0;False;0;False;0.2238637,0.8911631,0.9245283,0;0.1415094,0.1415094,0.1415094,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.SamplerNode;22;574.0004,417.5;Inherit;True;Property;_TextureSample0;Texture Sample 0;0;0;Create;True;0;0;0;False;0;False;-1;None;b221b7a0e2221a447aa6b5981ad54d54;True;0;True;bump;Auto;True;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;3;-341.0001,444.1666;Inherit;False;Property;_NumberColorA;NumberColorA;1;0;Create;True;0;0;0;False;0;False;1,0.8077339,0,0;0.2169811,0.2169811,0.2169811,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;4;-347.0001,635.4999;Inherit;False;Property;_NumberColorB;NumberColorB;2;0;Create;True;0;0;0;False;0;False;1,0,0,0;0.3773585,0.3773585,0.3773585,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.LerpOp;9;-654.3335,332.1667;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.LerpOp;5;-28.33331,564.8333;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.VertexColorNode;1;-157.6668,25.49991;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
@@ -105,4 +107,4 @@ WireConnection;32;0;31;0
 WireConnection;32;1;27;0
 WireConnection;0;2;32;0
 ASEEND*/
-//CHKSM=DFC91831034EE10B2FB1EC5258A5292F9818EDAD
+//CHKSM=CCBE3709FFB3ACC80AF43489B2B307C5965CC412
