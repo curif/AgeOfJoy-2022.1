@@ -12,6 +12,8 @@ static char brightness[50];
 static char sample_rate[50];
 static char xy_input_type[15];
 static char core[500];
+static size_t savestate_size;
+static char savestate_file[1000];
 
 static handlers_t handlers;
 static wrapper_log_printf_t log;
@@ -88,11 +90,66 @@ void wrapper_dlclose() {
 	}
 }
 
+void wrapper_load_savestate() {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_load_savestate] savestate_file: %s\n", savestate_file);
+
+	if (savestate_size <= 0) {
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[wrapper_load_savestate] No savestate to process, skipping\n");
+		return;
+	}
+
+	FILE* file = fopen(savestate_file, "rb");
+	if (!file) {
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[wrapper_load_savestate] No existing savestate\n");
+	}
+	else {
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[wrapper_load_savestate] Loading existing savestate\n");
+		void* data = malloc(savestate_size);
+		if (data) {
+			fread(data, 1, savestate_size, file);
+			bool success = handlers.retro_unserialize(data, savestate_size);
+			wrapper_environment_log(RETRO_LOG_INFO,
+				"[wrapper_load_savestate] retro_unserialize %d\n", success);
+			free(data);
+		}
+		fclose(file);
+	}
+}
+
+void wrapper_save_savestate() {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_save_savestate] savestate_file: %s\n", savestate_file);
+
+	if (savestate_size <= 0) {
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[wrapper_save_savestate] No savestate to process, skipping\n");
+		return;
+	}
+
+	void* data = malloc(savestate_size);
+	if (data) {
+		bool success = handlers.retro_serialize(data, savestate_size);
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[wrapper_save_savestate] retro_serialize %d\n", success);
+		FILE* file = fopen(savestate_file, "wb");
+		if (file) {
+			fwrite(data, 1, savestate_size, file);
+			fclose(file);
+		}
+		free(data);
+	}
+}
+
 int wrapper_environment_open(wrapper_log_printf_t _log,
 	enum retro_log_level _minLogLevel,
 	char* _save_directory,
 	char* _system_directory,
 	char* _sample_rate,
+	char* _savestate_file,
 	retro_input_state_t _input_state_cb,
 	char* _core,
 	Environment _environment) {
@@ -103,10 +160,11 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	input_state_cb = _input_state_cb;
 	INIT_AND_COPY_STRING(core, _core);
 	EnvironmentCB = _environment;
+	savestate_size = 0;
 
 	// load core.
-	if (!wrapper_dlopen())
-		return -1;
+		if (!wrapper_dlopen())
+			return -1;
 
 	if (load_symbol((void**)&handlers.retro_set_environment, "retro_set_environment") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_get_system_av_info, "retro_get_system_av_info") < 0) return -1;
@@ -122,6 +180,9 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	if (load_symbol((void**)&handlers.retro_set_audio_sample_batch, "retro_set_audio_sample_batch") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_set_input_poll, "retro_set_input_poll") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_set_input_state, "retro_set_input_state") < 0) return -1;
+	if (load_symbol((void**)&handlers.retro_serialize_size, "retro_serialize_size") < 0) return -1;
+	if (load_symbol((void**)&handlers.retro_serialize, "retro_serialize") < 0) return -1;
+	if (load_symbol((void**)&handlers.retro_unserialize, "retro_unserialize") < 0) return -1;
 
 	INIT_STRUCT(system_info);
 	INIT_STRUCT(av_info);
@@ -130,6 +191,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	INIT_AND_COPY_STRING(save_directory, _save_directory);
 	INIT_AND_COPY_STRING(system_directory, _system_directory);
 	INIT_AND_COPY_STRING(sample_rate, _sample_rate);
+	INIT_AND_COPY_STRING(savestate_file, _savestate_file);
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_open] sample_rate: %s\n "
@@ -575,6 +637,13 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 		game_info.path);
 	bool ret = handlers.retro_load_game(&game_info);
 
+	savestate_size = handlers.retro_serialize_size();
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_load_game] savestate_size %i\n", savestate_size);
+
+	// Let's disable the feature... for now !
+	// wrapper_load_savestate();
+
 	if (_xy_control_type != 0) {
 		//there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
 		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
@@ -592,6 +661,7 @@ void wrapper_unload_game() {
 	if (!handlers.handle)
 		return;
 	handlers.retro_unload_game();
+	wrapper_save_savestate();
 	wrapper_audio_free();
 }
 

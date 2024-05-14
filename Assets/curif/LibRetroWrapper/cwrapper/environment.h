@@ -38,12 +38,18 @@ typedef struct handlers_struct {
   void (*retro_set_audio_sample_batch)(retro_audio_sample_batch_t);
   void (*retro_set_input_poll)(retro_input_poll_t);
   void (*retro_set_input_state)(retro_input_state_t);
+  size_t (*retro_serialize_size)();
+  bool (*retro_serialize)(void* data, size_t size);
+  bool (*retro_unserialize)(void* data, size_t size);
 } handlers_t;
 
 handlers_t *wrapper_environment_get_handlers();
 int wrapper_environment_open(wrapper_log_printf_t log, 
-                              enum retro_log_level _minLogLevel, char *_save_directory,
-                              char *_system_directory, char *_sample_rate,
+                              enum retro_log_level _minLogLevel, 
+                              char *_save_directory,
+                              char *_system_directory, 
+                              char *_sample_rate,
+                              char *_savestate_file,
                               retro_input_state_t _retro_input_state_cb, 
                               char *core,
                               Environment environment);
