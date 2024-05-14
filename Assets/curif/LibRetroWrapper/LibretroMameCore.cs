@@ -239,6 +239,7 @@ public static unsafe class LibretroMameCore
     public static int SecondsToWaitToFinishLoad = 2;
     public static string Core;
     public static CoreEnvironment CabEnvironment;
+    public static bool? Persistent;
 
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
@@ -300,6 +301,7 @@ public static unsafe class LibretroMameCore
                                                         string _save_directory,
                                                         string _system_directory,
                                                         string _sample_rate,
+                                                        string _persistent_savestate_file,
                                                         inputStateHandler _input_state_handler_cb,
                                                         string _coreLibrary,
                                                         EnvironmentHandler _environmentHandler);
@@ -445,11 +447,21 @@ public static unsafe class LibretroMameCore
         InitEnvironment(core);
 
         WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{core.Library} for {Core}");
+
+        string persistentSaveState = null;
+        if (Persistent.HasValue && Persistent.Value)
+        {
+            persistentSaveState = $"{ConfigManager.GameSaveDir}/{gameFileName}.state";
+        }
+
+        WriteConsole($"[LibRetroMameCore.Start] Persistent:{Persistent}/{persistentSaveState}");
+
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
+                                                persistentSaveState,
                                                 new inputStateHandler(inputStateCB),
                                                 core.Library,
                                                 new EnvironmentHandler(EnvironmentHandlerCB)

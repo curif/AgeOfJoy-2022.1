@@ -17,6 +17,8 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using System.Linq;
+using UnityEngine.Events;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -82,6 +84,9 @@ public class LibretroScreenController : MonoBehaviour
 
     [SerializeField]
     public string ShaderName = "crt";
+
+    [SerializeField]
+    public bool? Persistent;
 
     [SerializeField]
     [Tooltip("Path that holds cabinet information, save states there.")]
@@ -275,6 +280,7 @@ public class LibretroScreenController : MonoBehaviour
                   LibretroMameCore.Brightness = Brightness;
                   LibretroMameCore.Gamma = Gamma;
                   LibretroMameCore.CoinSlot = CoinSlot;
+                  LibretroMameCore.Persistent = Persistent;
                   LibretroMameCore.Core = Core;
                   LibretroMameCore.CabEnvironment = CabEnvironment;
                   LibretroMameCore.Shader = shader;

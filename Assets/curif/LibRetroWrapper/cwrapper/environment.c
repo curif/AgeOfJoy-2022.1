@@ -13,7 +13,8 @@ static char sample_rate[50];
 static char xy_input_type[15];
 static char core[500];
 static size_t savestate_size;
-static char savestate_file[1000];
+static char persistent_savestate_file[1000];
+static bool persistent_enabled;
 
 static handlers_t handlers;
 static wrapper_log_printf_t log;
@@ -90,9 +91,9 @@ void wrapper_dlclose() {
 	}
 }
 
-void wrapper_load_savestate() {
+void wrapper_load_savestate(char* savestateFile) {
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_load_savestate] savestate_file: %s\n", savestate_file);
+		"[wrapper_load_savestate] savestate_file: %s\n", savestateFile);
 
 	if (savestate_size <= 0) {
 		wrapper_environment_log(RETRO_LOG_INFO,
@@ -100,7 +101,7 @@ void wrapper_load_savestate() {
 		return;
 	}
 
-	FILE* file = fopen(savestate_file, "rb");
+	FILE* file = fopen(savestateFile, "rb");
 	if (!file) {
 		wrapper_environment_log(RETRO_LOG_INFO,
 			"[wrapper_load_savestate] No existing savestate\n");
@@ -120,9 +121,9 @@ void wrapper_load_savestate() {
 	}
 }
 
-void wrapper_save_savestate() {
+void wrapper_save_savestate(char* savestateFile) {
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_save_savestate] savestate_file: %s\n", savestate_file);
+		"[wrapper_save_savestate] savestate_file: %s\n", savestateFile);
 
 	if (savestate_size <= 0) {
 		wrapper_environment_log(RETRO_LOG_INFO,
@@ -135,7 +136,7 @@ void wrapper_save_savestate() {
 		bool success = handlers.retro_serialize(data, savestate_size);
 		wrapper_environment_log(RETRO_LOG_INFO,
 			"[wrapper_save_savestate] retro_serialize %d\n", success);
-		FILE* file = fopen(savestate_file, "wb");
+		FILE* file = fopen(savestateFile, "wb");
 		if (file) {
 			fwrite(data, 1, savestate_size, file);
 			fclose(file);
@@ -149,7 +150,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	char* _save_directory,
 	char* _system_directory,
 	char* _sample_rate,
-	char* _savestate_file,
+	char* _persistent_savestate_file,
 	retro_input_state_t _input_state_cb,
 	char* _core,
 	Environment _environment) {
@@ -163,8 +164,8 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	savestate_size = 0;
 
 	// load core.
-		if (!wrapper_dlopen())
-			return -1;
+	if (!wrapper_dlopen())
+		return -1;
 
 	if (load_symbol((void**)&handlers.retro_set_environment, "retro_set_environment") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_get_system_av_info, "retro_get_system_av_info") < 0) return -1;
@@ -191,7 +192,19 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	INIT_AND_COPY_STRING(save_directory, _save_directory);
 	INIT_AND_COPY_STRING(system_directory, _system_directory);
 	INIT_AND_COPY_STRING(sample_rate, _sample_rate);
-	INIT_AND_COPY_STRING(savestate_file, _savestate_file);
+
+	if (_persistent_savestate_file != NULL) {
+		persistent_enabled = true;
+		INIT_AND_COPY_STRING(persistent_savestate_file, _persistent_savestate_file);
+	}
+	else {
+		persistent_enabled = false;
+	}
+
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_environment_open] persistent_enabled: %d\n "
+		"  persistent_savestate_file: %s\n",
+		persistent_enabled, persistent_savestate_file);
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_open] sample_rate: %s\n "
@@ -637,12 +650,12 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 		game_info.path);
 	bool ret = handlers.retro_load_game(&game_info);
 
-	savestate_size = handlers.retro_serialize_size();
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_load_game] savestate_size %i\n", savestate_size);
-
-	// Let's disable the feature... for now !
-	// wrapper_load_savestate();
+	if (persistent_enabled) {
+		savestate_size = handlers.retro_serialize_size();
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[wrapper_load_game] savestate_size %i\n", savestate_size);
+		wrapper_load_savestate(persistent_savestate_file);
+	}
 
 	if (_xy_control_type != 0) {
 		//there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
@@ -660,8 +673,10 @@ void wrapper_unload_game() {
 		"[wrapper_unload_game] retro_unload_game\n");
 	if (!handlers.handle)
 		return;
+	if (persistent_enabled) {
+		wrapper_save_savestate(persistent_savestate_file);
+	}
 	handlers.retro_unload_game();
-	wrapper_save_savestate();
 	wrapper_audio_free();
 }
 

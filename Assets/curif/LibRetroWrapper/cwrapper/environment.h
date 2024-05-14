@@ -49,7 +49,7 @@ int wrapper_environment_open(wrapper_log_printf_t log,
                               char *_save_directory,
                               char *_system_directory, 
                               char *_sample_rate,
-                              char *_savestate_file,
+                              char *_persistent_savestate_file,
                               retro_input_state_t _retro_input_state_cb, 
                               char *core,
                               Environment environment);
