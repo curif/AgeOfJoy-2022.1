@@ -17,7 +17,7 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using System.Linq;
-using UnityEngine.Events;
+using AOJ.Managers; // Geometrrizer: Allows access to EventManager for player FX
 
 
 #if UNITY_EDITOR
@@ -367,36 +367,43 @@ public class LibretroScreenController : MonoBehaviour
               })
             .End()
 
-            .Sequence("Game Started")
-              .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
-              .RepeatUntilSuccess("Run until player exit")
-                .Sequence()
-                  //.Condition("Player looking screen", () => isPlayerLookingAtScreen3())
-                  //.Condition("Is visible", () => display.isVisible)
-                  .Condition("user EXIT pressed?", () =>
-                  {
-                      if (PlayerWantsToExit())
-                          return true;
-
-                      timeToExit = DateTime.MinValue;
-                      return false;
-                  })
-                  .Condition("N secs pass with user EXIT pressed", () =>
-                  {
-                      if (timeToExit == DateTime.MinValue)
-                          timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
-                      else if (DateTime.Now > timeToExit)
-                          return true;
-                      return false;
-                  })
-                .End()
-              .End()
-              .Do("Exit game", () =>
-              {
-                  ExitPlayerFromGame();
-                  return TaskStatus.Success;
-              })
-            .End()
+.Sequence("Game Started")
+  .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
+  .RepeatUntilSuccess("Run until player exit")
+    .Sequence()
+      .Condition("user EXIT pressed?", () =>
+      {
+          if (PlayerWantsToExit())
+          {
+              if (!EventManager.Instance.IsPlayingExitSound)
+                  EventManager.Instance.PlayExitGameSound();
+              return true;
+          }
+          else
+          {
+              if (EventManager.Instance.IsPlayingExitSound)
+                  EventManager.Instance.StopExitGameSound();
+              timeToExit = DateTime.MinValue;
+              return false;
+          }
+      })
+      .Condition("N secs pass with user EXIT pressed", () =>
+      {
+          if (timeToExit == DateTime.MinValue)
+              timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
+          else if (DateTime.Now > timeToExit)
+              return true;
+          return false;
+      })
+    .End()
+  .End()
+  .Do("Exit game", () =>
+  {
+      EventManager.Instance.StopExitGameSound();
+      ExitPlayerFromGame();
+      return TaskStatus.Success;
+  })
+.End()
 
             .Sequence("Video Player control")
               //.Condition("Have video player", () => videoPlayer != null)
