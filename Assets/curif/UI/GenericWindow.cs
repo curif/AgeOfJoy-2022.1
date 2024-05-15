@@ -5,12 +5,12 @@ using System;
 class GenericWindow : GenericWidget
 {
     // Constants for the border characters
-    private const int LEFT_UPPER_CORNER = 85;
-    private const int RIGHT_UPPER_CORNER = 73;
+    private const int LEFT_UPPER_CORNER = 112;
+    private const int RIGHT_UPPER_CORNER = 110;
     private const int HORIZONTAL_BORDER = 64;
-    private const int LOWER_LEFT_CORNER = 74;
-    private const int LOWER_RIGHT_CORNER = 75;
-    private const int VERTICAL_BORDER = 66;
+    private const int LOWER_LEFT_CORNER = 109;
+    private const int LOWER_RIGHT_CORNER = 125;
+    private const int VERTICAL_BORDER = 93;
 
     // Constants for the default title
     private const string DEFAULT_TITLE = "Window";
