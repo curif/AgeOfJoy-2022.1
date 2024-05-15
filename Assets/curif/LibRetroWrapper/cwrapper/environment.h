@@ -41,6 +41,8 @@ typedef struct handlers_struct {
   size_t (*retro_serialize_size)();
   bool (*retro_serialize)(void* data, size_t size);
   bool (*retro_unserialize)(void* data, size_t size);
+  size_t (*retro_get_memory_size)(unsigned id);
+  void* (*retro_get_memory_data)(unsigned id);
 } handlers_t;
 
 handlers_t *wrapper_environment_get_handlers();
@@ -65,8 +67,11 @@ void wrapper_environment_get_av_info();
 double wrapper_environment_get_fps();
 double wrapper_environment_get_sample_rate();
 int wrapper_system_info_need_full_path();
-int wrapper_load_game(char *path,  char *_gamma, 
-                            char *_brightness, int _xy_control_type);
+int wrapper_load_game(char *path,  char *_gamma, char *_brightness, int _xy_control_type);
+void wrapper_load_savestate(char* savestateFile);
+void wrapper_save_savestate(char* savestateFile);
+size_t wrapper_get_memory_size(unsigned id);
+void* wrapper_get_memory_data(unsigned id);
 
 #ifdef __cplusplus
 }

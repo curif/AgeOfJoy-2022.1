@@ -121,6 +121,21 @@ void wrapper_load_savestate(char* savestateFile) {
 	}
 }
 
+size_t wrapper_get_memory_size(unsigned id) {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_get_memory_size] id: %d\n", id);
+	size_t size = handlers.retro_get_memory_size(id);
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_get_memory_size] suze: %d\n", size);
+	return size;
+}
+
+void* wrapper_get_memory_data(unsigned id) {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[retro_get_memory_data] id: %d\n", id);
+	return handlers.retro_get_memory_data(id);
+}
+
 void wrapper_save_savestate(char* savestateFile) {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_save_savestate] savestate_file: %s\n", savestateFile);
@@ -184,6 +199,8 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	if (load_symbol((void**)&handlers.retro_serialize_size, "retro_serialize_size") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_serialize, "retro_serialize") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_unserialize, "retro_unserialize") < 0) return -1;
+	if (load_symbol((void**)&handlers.retro_get_memory_size, "retro_get_memory_size") < 0) return -1;
+	if (load_symbol((void**)&handlers.retro_get_memory_data, "retro_get_memory_data") < 0) return -1;
 
 	INIT_STRUCT(system_info);
 	INIT_STRUCT(av_info);
