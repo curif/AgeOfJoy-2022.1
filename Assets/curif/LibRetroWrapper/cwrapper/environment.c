@@ -12,9 +12,6 @@ static char brightness[50];
 static char sample_rate[50];
 static char xy_input_type[15];
 static char core[500];
-static size_t savestate_size;
-static char persistent_savestate_file[1000];
-static bool persistent_enabled;
 
 static handlers_t handlers;
 static wrapper_log_printf_t log;
@@ -91,34 +88,31 @@ void wrapper_dlclose() {
 	}
 }
 
-void wrapper_load_savestate(char* savestateFile) {
+size_t wrapper_get_savestate_size() {
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_load_savestate] savestate_file: %s\n", savestateFile);
+		"[wrapper_get_savestate_size]\n");
+	size_t result = handlers.retro_serialize_size();
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_get_savestate_size] size: %d\n", result);
+	return result;
+}
 
-	if (savestate_size <= 0) {
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[wrapper_load_savestate] No savestate to process, skipping\n");
-		return;
-	}
+bool wrapper_set_savestate_data(void* data, size_t size) {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_set_savestate_data] size: %d\n", size);
+	bool result = handlers.retro_unserialize(data, size);
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_set_savestate_data] result: %d\n", result);
+	return result;
+}
 
-	FILE* file = fopen(savestateFile, "rb");
-	if (!file) {
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[wrapper_load_savestate] No existing savestate\n");
-	}
-	else {
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[wrapper_load_savestate] Loading existing savestate\n");
-		void* data = malloc(savestate_size);
-		if (data) {
-			fread(data, 1, savestate_size, file);
-			bool success = handlers.retro_unserialize(data, savestate_size);
-			wrapper_environment_log(RETRO_LOG_INFO,
-				"[wrapper_load_savestate] retro_unserialize %d\n", success);
-			free(data);
-		}
-		fclose(file);
-	}
+bool wrapper_get_savestate_data(void* data, size_t size) {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_get_savestate_data] size: %d\n", size);
+	bool result = handlers.retro_serialize(data, size);
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_get_savestate_data] result: %d\n", result);
+	return result;
 }
 
 size_t wrapper_get_memory_size(unsigned id) {
@@ -136,36 +130,11 @@ void* wrapper_get_memory_data(unsigned id) {
 	return handlers.retro_get_memory_data(id);
 }
 
-void wrapper_save_savestate(char* savestateFile) {
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_save_savestate] savestate_file: %s\n", savestateFile);
-
-	if (savestate_size <= 0) {
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[wrapper_save_savestate] No savestate to process, skipping\n");
-		return;
-	}
-
-	void* data = malloc(savestate_size);
-	if (data) {
-		bool success = handlers.retro_serialize(data, savestate_size);
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[wrapper_save_savestate] retro_serialize %d\n", success);
-		FILE* file = fopen(savestateFile, "wb");
-		if (file) {
-			fwrite(data, 1, savestate_size, file);
-			fclose(file);
-		}
-		free(data);
-	}
-}
-
 int wrapper_environment_open(wrapper_log_printf_t _log,
 	enum retro_log_level _minLogLevel,
 	char* _save_directory,
 	char* _system_directory,
 	char* _sample_rate,
-	char* _persistent_savestate_file,
 	retro_input_state_t _input_state_cb,
 	char* _core,
 	Environment _environment) {
@@ -176,7 +145,6 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	input_state_cb = _input_state_cb;
 	INIT_AND_COPY_STRING(core, _core);
 	EnvironmentCB = _environment;
-	savestate_size = 0;
 
 	// load core.
 	if (!wrapper_dlopen())
@@ -209,19 +177,6 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	INIT_AND_COPY_STRING(save_directory, _save_directory);
 	INIT_AND_COPY_STRING(system_directory, _system_directory);
 	INIT_AND_COPY_STRING(sample_rate, _sample_rate);
-
-	if (_persistent_savestate_file != NULL) {
-		persistent_enabled = true;
-		INIT_AND_COPY_STRING(persistent_savestate_file, _persistent_savestate_file);
-	}
-	else {
-		persistent_enabled = false;
-	}
-
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_environment_open] persistent_enabled: %d\n "
-		"  persistent_savestate_file: %s\n",
-		persistent_enabled, persistent_savestate_file);
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_open] sample_rate: %s\n "
@@ -667,13 +622,6 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 		game_info.path);
 	bool ret = handlers.retro_load_game(&game_info);
 
-	if (persistent_enabled) {
-		savestate_size = handlers.retro_serialize_size();
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[wrapper_load_game] savestate_size %i\n", savestate_size);
-		wrapper_load_savestate(persistent_savestate_file);
-	}
-
 	if (_xy_control_type != 0) {
 		//there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
 		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
@@ -690,9 +638,6 @@ void wrapper_unload_game() {
 		"[wrapper_unload_game] retro_unload_game\n");
 	if (!handlers.handle)
 		return;
-	if (persistent_enabled) {
-		wrapper_save_savestate(persistent_savestate_file);
-	}
 	handlers.retro_unload_game();
 	wrapper_audio_free();
 }

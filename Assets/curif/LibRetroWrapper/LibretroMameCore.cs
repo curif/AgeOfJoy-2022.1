@@ -285,6 +285,12 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern char* wrapper_get_memory_data(uint id);
 
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint wrapper_get_savestate_size();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool wrapper_set_savestate_data(void* data, uint size);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool wrapper_get_savestate_data(void* data, uint size);
 
     //environment
     private delegate string EnvironmentHandler(string key);
@@ -313,7 +319,6 @@ public static unsafe class LibretroMameCore
                                                         string _save_directory,
                                                         string _system_directory,
                                                         string _sample_rate,
-                                                        string _persistent_savestate_file,
                                                         inputStateHandler _input_state_handler_cb,
                                                         string _coreLibrary,
                                                         EnvironmentHandler _environmentHandler);
@@ -473,7 +478,6 @@ public static unsafe class LibretroMameCore
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
-                                                persistentSaveState,
                                                 new inputStateHandler(inputStateCB),
                                                 core.Library,
                                                 new EnvironmentHandler(EnvironmentHandlerCB)
@@ -521,7 +525,7 @@ public static unsafe class LibretroMameCore
         }
 
 #if !UNITY_EDITOR
-        loadSram(GameFileName);
+        loadState(GameFileName);
 #endif
 
         /* It's impossible to change the Sample Rate, fixed in 48000
@@ -538,6 +542,18 @@ public static unsafe class LibretroMameCore
         DeviceController.Device.ApplySettings(true);
 
         return true;
+    }
+
+    public static void loadState(string gameFileName)
+    {
+        loadSram(gameFileName);
+        loadPersistentState(gameFileName);
+    }
+
+    public static void saveState(string gameFileName)
+    {
+        saveSram(gameFileName);
+        savePersistentState(gameFileName);
     }
 
     public static void loadSram(string gameFileName)
@@ -574,6 +590,71 @@ public static unsafe class LibretroMameCore
     public static string getSramFileName(string gameFileName)
     {
         return $"{ConfigManager.GameSaveDir}/{gameFileName}.srm";
+    }
+
+    public static void loadPersistentState(string gameFileName)
+    {
+        if (isPersistentEnabled())
+        {
+            loadGameState(getPersistentFileName(gameFileName));
+        }
+    }
+
+    public static void savePersistentState(string gameFileName)
+    {
+        if (isPersistentEnabled())
+        {
+            saveGameState(getPersistentFileName(gameFileName));
+        }
+    }
+
+    public static void loadGameState(string statefilename)
+    {
+        if (File.Exists(statefilename))
+        {
+            uint persistentSize = wrapper_get_savestate_size();
+            if (persistentSize > 0)
+            {
+                byte[] persistentData = File.ReadAllBytes(statefilename);
+                if (persistentData.Length == persistentSize)
+                {
+                    fixed (byte* persistentBuffer = persistentData)
+                    {
+                        wrapper_set_savestate_data(persistentBuffer, persistentSize);
+                        WriteConsole($"[LibRetroMameCore.loadPersistentState] Persistent data loaded: {statefilename}: {persistentSize} bytes");
+                    }
+                }
+                else
+                {
+                    WriteConsole($"[LibRetroMameCore.loadPersistentState] ERROR Persistent data size mismatch: {statefilename}: {persistentData.Length} != {persistentSize}");
+                }
+            }
+        }
+    }
+
+    public static void saveGameState(string statefilename)
+    {
+        uint persistentSize = wrapper_get_savestate_size();
+        if (persistentSize > 0)
+        {
+            byte[] persistentData = new byte[persistentSize];
+            fixed (byte* persistentBuffer = persistentData)
+            {
+                wrapper_get_savestate_data(persistentBuffer, persistentSize);
+                File.WriteAllBytes(statefilename, persistentData);
+                WriteConsole($"[LibRetroMameCore.savePersistentState] Persistent data saved: {statefilename}: {persistentSize} bytes");
+            }
+        }
+    }
+
+    public static bool isPersistentEnabled()
+    {
+        return Persistent.HasValue && Persistent.Value;
+    }
+
+    public static string getPersistentFileName(string gameFileName)
+    {
+        return $"{ConfigManager.GameSaveDir}/{gameFileName}.state";
     }
 
 #if UNITY_EDITOR
@@ -828,7 +909,7 @@ public static unsafe class LibretroMameCore
         StopRunThread();
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
         if (GameLoaded) {
-            saveSram(gameFileName);
+            saveState(gameFileName);
             wrapper_unload_game();
         }
 

@@ -51,7 +51,6 @@ int wrapper_environment_open(wrapper_log_printf_t log,
                               char *_save_directory,
                               char *_system_directory, 
                               char *_sample_rate,
-                              char *_persistent_savestate_file,
                               retro_input_state_t _retro_input_state_cb, 
                               char *core,
                               Environment environment);
@@ -68,8 +67,9 @@ double wrapper_environment_get_fps();
 double wrapper_environment_get_sample_rate();
 int wrapper_system_info_need_full_path();
 int wrapper_load_game(char *path,  char *_gamma, char *_brightness, int _xy_control_type);
-void wrapper_load_savestate(char* savestateFile);
-void wrapper_save_savestate(char* savestateFile);
+size_t wrapper_get_savestate_size();
+bool wrapper_set_savestate_data(void* data, size_t size);
+bool wrapper_get_savestate_data(void* data, size_t size);
 size_t wrapper_get_memory_size(unsigned id);
 void* wrapper_get_memory_data(unsigned id);
 
