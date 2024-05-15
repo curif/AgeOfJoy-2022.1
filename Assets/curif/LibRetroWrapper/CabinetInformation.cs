@@ -47,6 +47,7 @@ public class CabinetInformation
     public Geometry coinslotgeometry = new Geometry();
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
+    public bool? persistent;
     public string statefile = "state.nv";
     public Video video;// = new Video();
     public string md5sum;

@@ -95,6 +95,11 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT = 11;
     public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT = 12;
 
+    public const uint RETRO_MEMORY_SAVE_RAM = 0;
+    public const uint RETRO_MEMORY_RTC = 1;
+    public const uint RETRO_MEMORY_SYSTEM_RAM = 2;
+    public const uint RETRO_MEMORY_VIDEO_RAM = 3;
+
     private static mameControls deviceIdsJoypad = null;
     private static mameControls deviceIdsMouse = null;
     private static mameControls deviceIdsAnalog = null;
@@ -239,6 +244,7 @@ public static unsafe class LibretroMameCore
     public static int SecondsToWaitToFinishLoad = 2;
     public static string Core;
     public static CoreEnvironment CabEnvironment;
+    public static bool? Persistent;
 
     static Task retroRunTask;
     static CancellationTokenSource retroRunTaskCancellationToken;
@@ -272,6 +278,19 @@ public static unsafe class LibretroMameCore
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_system_info_need_full_path();
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint wrapper_get_memory_size(uint id);
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern char* wrapper_get_memory_data(uint id);
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint wrapper_get_savestate_size();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool wrapper_set_savestate_data(void* data, uint size);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool wrapper_get_savestate_data(void* data, uint size);
 
     //environment
     private delegate string EnvironmentHandler(string key);
@@ -445,6 +464,15 @@ public static unsafe class LibretroMameCore
         InitEnvironment(core);
 
         WriteConsole($"[LibRetroMameCore.Start] Using coreLib:{core.Library} for {Core}");
+
+        string persistentSaveState = null;
+        if (Persistent.HasValue && Persistent.Value)
+        {
+            persistentSaveState = $"{ConfigManager.GameSaveDir}/{gameFileName}.state";
+        }
+
+        WriteConsole($"[LibRetroMameCore.Start] Persistent:{Persistent}/{persistentSaveState}");
+
         int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
@@ -492,9 +520,13 @@ public static unsafe class LibretroMameCore
         if (!GameLoaded)
         {
             ClearAll();
-            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} libretro can't start the game, please check if it is the correct version and is supported in MAME2003+ in https://buildbot.libretro.com/compatibility_lists/cores/mame2003-plus/mame2003-plus.html.");
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} libretro can't start the game, please check if it is the correct version and is supported by {core}");
             return false;
         }
+
+#if !UNITY_EDITOR
+        loadState(GameFileName);
+#endif
 
         /* It's impossible to change the Sample Rate, fixed in 48000
         audioConfig.sampleRate = sampleRate;
@@ -510,6 +542,119 @@ public static unsafe class LibretroMameCore
         DeviceController.Device.ApplySettings(true);
 
         return true;
+    }
+
+    public static void loadState(string gameFileName)
+    {
+        loadSram(gameFileName);
+        loadPersistentState(gameFileName);
+    }
+
+    public static void saveState(string gameFileName)
+    {
+        saveSram(gameFileName);
+        savePersistentState(gameFileName);
+    }
+
+    public static void loadSram(string gameFileName)
+    {
+        string sramFileName = getSramFileName(gameFileName);
+        if (File.Exists(sramFileName))
+        {
+            uint sramSize = wrapper_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+            if (sramSize > 0)
+            {
+                char* sramBuffer = wrapper_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+                byte[] sramData = File.ReadAllBytes(sramFileName);
+                int bytesToCopy = Math.Min(sramData.Length, (int)sramSize);
+                Marshal.Copy(sramData, 0, (IntPtr)sramBuffer, bytesToCopy);
+                WriteConsole($"[LibRetroMameCore.loadSram] SRAM data loaded: {sramFileName}: {bytesToCopy} bytes");
+            }
+        }
+    }
+
+    public static void saveSram(string gameFileName)
+    {
+        string sramFileName = getSramFileName(gameFileName);
+        uint sramSize = wrapper_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+        if (sramSize > 0)
+        {
+            char* sramBuffer = wrapper_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+            byte[] sramData = new byte[sramSize];
+            Marshal.Copy((IntPtr)sramBuffer, sramData, 0, (int)sramSize);
+            File.WriteAllBytes(sramFileName, sramData);
+            WriteConsole($"[LibRetroMameCore.saveSram] SRAM data saved: {sramFileName}: {sramSize} bytes");
+        }
+    }
+
+    public static string getSramFileName(string gameFileName)
+    {
+        return $"{ConfigManager.GameSaveDir}/{gameFileName}.srm";
+    }
+
+    public static void loadPersistentState(string gameFileName)
+    {
+        if (isPersistentEnabled())
+        {
+            loadGameState(getPersistentFileName(gameFileName));
+        }
+    }
+
+    public static void savePersistentState(string gameFileName)
+    {
+        if (isPersistentEnabled())
+        {
+            saveGameState(getPersistentFileName(gameFileName));
+        }
+    }
+
+    public static void loadGameState(string statefilename)
+    {
+        if (File.Exists(statefilename))
+        {
+            uint persistentSize = wrapper_get_savestate_size();
+            if (persistentSize > 0)
+            {
+                byte[] persistentData = File.ReadAllBytes(statefilename);
+                if (persistentData.Length == persistentSize)
+                {
+                    fixed (byte* persistentBuffer = persistentData)
+                    {
+                        wrapper_set_savestate_data(persistentBuffer, persistentSize);
+                        WriteConsole($"[LibRetroMameCore.loadPersistentState] Persistent data loaded: {statefilename}: {persistentSize} bytes");
+                    }
+                }
+                else
+                {
+                    WriteConsole($"[LibRetroMameCore.loadPersistentState] ERROR Persistent data size mismatch: {statefilename}: {persistentData.Length} != {persistentSize}");
+                }
+            }
+        }
+    }
+
+    public static void saveGameState(string statefilename)
+    {
+        uint persistentSize = wrapper_get_savestate_size();
+        if (persistentSize > 0)
+        {
+            byte[] persistentData = new byte[persistentSize];
+            fixed (byte* persistentBuffer = persistentData)
+            {
+                wrapper_get_savestate_data(persistentBuffer, persistentSize);
+                File.WriteAllBytes(statefilename, persistentData);
+                WriteConsole($"[LibRetroMameCore.savePersistentState] Persistent data saved: {statefilename}: {persistentSize} bytes");
+            }
+        }
+    }
+
+    public static bool isPersistentEnabled()
+    {
+        return Persistent.HasValue && Persistent.Value;
+    }
+
+    public static string getPersistentFileName(string gameFileName)
+    {
+        return $"{ConfigManager.GameSaveDir}/{gameFileName}.state";
     }
 
 #if UNITY_EDITOR
@@ -763,8 +908,10 @@ public static unsafe class LibretroMameCore
 #if !UNITY_EDITOR
         StopRunThread();
         //https://github.com/libretro/mame2000-libretro/blob/6d0b1e1fe287d6d8536b53a4840e7d152f86b34b/src/libretro/libretro.c#L1054
-        if (GameLoaded)
+        if (GameLoaded) {
+            saveState(gameFileName);
             wrapper_unload_game();
+        }
 
         wrapper_retro_deinit();
 #endif

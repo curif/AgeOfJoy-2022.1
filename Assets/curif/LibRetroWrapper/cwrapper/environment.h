@@ -38,12 +38,19 @@ typedef struct handlers_struct {
   void (*retro_set_audio_sample_batch)(retro_audio_sample_batch_t);
   void (*retro_set_input_poll)(retro_input_poll_t);
   void (*retro_set_input_state)(retro_input_state_t);
+  size_t (*retro_serialize_size)();
+  bool (*retro_serialize)(void* data, size_t size);
+  bool (*retro_unserialize)(void* data, size_t size);
+  size_t (*retro_get_memory_size)(unsigned id);
+  void* (*retro_get_memory_data)(unsigned id);
 } handlers_t;
 
 handlers_t *wrapper_environment_get_handlers();
 int wrapper_environment_open(wrapper_log_printf_t log, 
-                              enum retro_log_level _minLogLevel, char *_save_directory,
-                              char *_system_directory, char *_sample_rate,
+                              enum retro_log_level _minLogLevel, 
+                              char *_save_directory,
+                              char *_system_directory, 
+                              char *_sample_rate,
                               retro_input_state_t _retro_input_state_cb, 
                               char *core,
                               Environment environment);
@@ -59,8 +66,12 @@ void wrapper_environment_get_av_info();
 double wrapper_environment_get_fps();
 double wrapper_environment_get_sample_rate();
 int wrapper_system_info_need_full_path();
-int wrapper_load_game(char *path,  char *_gamma, 
-                            char *_brightness, int _xy_control_type);
+int wrapper_load_game(char *path,  char *_gamma, char *_brightness, int _xy_control_type);
+size_t wrapper_get_savestate_size();
+bool wrapper_set_savestate_data(void* data, size_t size);
+bool wrapper_get_savestate_data(void* data, size_t size);
+size_t wrapper_get_memory_size(unsigned id);
+void* wrapper_get_memory_data(unsigned id);
 
 #ifdef __cplusplus
 }
