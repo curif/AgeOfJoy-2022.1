@@ -9,6 +9,8 @@ You should have received a copy of the GNU General Public License along with thi
 #define _debug_
 //#define _serialize_
 
+//#define INPUT_DEBUG
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -1054,6 +1056,10 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback(typeof(inputStateHandler))]
     static Int16 inputStateCB(uint port, uint device, uint index, uint id)
     {
+#if INPUT_DEBUG
+        WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id: {id}");
+#endif
+
         if (id == RETRO_DEVICE_ID_JOYPAD_MASK && device == RETRO_DEVICE_JOYPAD)
         {
             int bitmask =
@@ -1078,13 +1084,20 @@ public static unsafe class LibretroMameCore
 
         Int16 ret = 0;
 
-        if (!InteractionAvailable)
+        if (!InteractionAvailable) {
+#if INPUT_DEBUG
+            WriteConsole($"[inputStateCB] !InteractionAvailable");
+#endif
             return 0;
+        }
 
         if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
+        {
+#if INPUT_DEBUG
+            WriteConsole($"[inputStateCB] WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished()");
+#endif
             return 0;
-
-        // WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id: {id}");
+        }
 
 #if _debug_fps_
       Profiling.input.Start();
@@ -1179,6 +1192,10 @@ public static unsafe class LibretroMameCore
         }
 #if _debug_fps_
       Profiling.input.Stop();
+#endif
+
+#if INPUT_DEBUG
+        WriteConsole($"[inputStateCB] RESULT: {ret}");
 #endif
 
         return ret;
