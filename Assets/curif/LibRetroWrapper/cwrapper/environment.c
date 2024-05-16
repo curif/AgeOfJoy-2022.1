@@ -578,6 +578,14 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 		*(int*)data = 3;
 		return true;
 
+	case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[RETRO_ENVIRONMENT_GET_INPUT_BITMASKS]\n");
+		if (!data)
+			return false;
+		*(bool*)data = true;
+		return true;
+
 #ifdef ENVIRONMENT_DEBUG
 	default:
 		wrapper_environment_log(RETRO_LOG_WARN,

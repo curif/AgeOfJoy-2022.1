@@ -1054,6 +1054,28 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback(typeof(inputStateHandler))]
     static Int16 inputStateCB(uint port, uint device, uint index, uint id)
     {
+        if (id == RETRO_DEVICE_ID_JOYPAD_MASK && device == RETRO_DEVICE_JOYPAD)
+        {
+            int bitmask =
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_B) << 0) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_Y) << 1) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_SELECT) << 2) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_START) << 3) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_UP) << 4) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_DOWN) << 5) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_LEFT) << 6) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_RIGHT) << 7) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_A) << 8) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_X) << 9) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_L) << 10) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_R) << 11) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_L2) << 12) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_R2) << 13) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_L3) << 14) |
+                (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_R3) << 15);
+            return (Int16)bitmask;
+        }
+
         Int16 ret = 0;
 
         if (!InteractionAvailable)
