@@ -276,7 +276,7 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap("MOUSE_BUTTON_5", new string[] { "quest-right-thumbstick-press", "gamepad-right-thumbstick-press" });
 
         AddMap("LIGHTGUN_AUX_A", new string[] { "quest-a", "gamepad-a" });
-        AddMap("LIGHTGUN_AUX_B", new string[] { "quest-b", "gamepad-b", "quest-right-trigger", "keyboard-enter" });
+        AddMap("LIGHTGUN_AUX_B", new string[] { "quest-b", "gamepad-b", "quest-right-grip", "keyboard-enter" });
         AddMap("LIGHTGUN_AUX_C", new string[] { "gamepad-x", "quest-x" });
         AddMap("LIGHTGUN_DPAD_UP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
         AddMap("LIGHTGUN_DPAD_DOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
