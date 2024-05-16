@@ -578,6 +578,14 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 		*(int*)data = 3;
 		return true;
 
+	case RETRO_ENVIRONMENT_GET_INPUT_BITMASKS:
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[RETRO_ENVIRONMENT_GET_INPUT_BITMASKS]\n");
+		// core sometimes don't bother to actually pass the pointer to the data
+		if (data)
+			*(bool*)data = true;
+		return true;
+
 #ifdef ENVIRONMENT_DEBUG
 	default:
 		wrapper_environment_log(RETRO_LOG_WARN,
@@ -625,6 +633,9 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 	if (_xy_control_type != 0) {
 		//there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
 		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
+	}
+	else {
+		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
 	}
 
 	wrapper_environment_log(RETRO_LOG_INFO,

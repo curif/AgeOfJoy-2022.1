@@ -105,8 +105,7 @@ public class LibretroControlMap : MonoBehaviour
         {
             if (action.IsPressed())
             {
-                ConfigManager.WriteConsole($"[LibretroControlMap.Active] pressed {actionMap.name}/{inputActionMapId} enabled: {action.enabled} - action: {action.ToString()}");
-
+                //ConfigManager.WriteConsole($"[LibretroControlMap.Active] pressed {actionMap.name}/{inputActionMapId} enabled: {action.enabled} - action: {action.ToString()}");
                 return 1;
             }
             return 0;
