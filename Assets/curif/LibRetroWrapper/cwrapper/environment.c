@@ -632,7 +632,8 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 
 	if (_xy_control_type != 0) {
 		//there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
-		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_LIGHTGUN);
+		handlers.retro_set_controller_port_device(0, _xy_control_type);
+		handlers.retro_set_controller_port_device(1, RETRO_DEVICE_JOYPAD);	// TODO: this actually won't be handled by us in the callback
 	}
 	else {
 		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);

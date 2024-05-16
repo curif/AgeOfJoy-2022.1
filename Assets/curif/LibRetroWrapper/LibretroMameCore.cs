@@ -274,7 +274,7 @@ public static unsafe class LibretroMameCore
     private static extern void wrapper_retro_deinit();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_load_game(string path, string _gamma,
-                                                        string _brightness, int xy_device);
+                                                        string _brightness, uint xy_device);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_unload_game();
 
@@ -514,8 +514,8 @@ public static unsafe class LibretroMameCore
         assignControls();
 
         //ligthgun
-        int xy_device = (lightGunTarget?.lightGunInformation != null &&
-                            lightGunTarget.lightGunInformation.active) ? 1 : 0;
+        uint xy_device = (lightGunTarget?.lightGunInformation != null &&
+                            lightGunTarget.lightGunInformation.active) ? lightGunTarget.lightGunInformation.device : 0;
 
         WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
         GameLoaded = wrapper_load_game(path, Gamma, Brightness, xy_device) == 1;
