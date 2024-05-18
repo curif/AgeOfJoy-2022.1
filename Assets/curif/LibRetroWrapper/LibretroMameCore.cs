@@ -108,6 +108,9 @@ public static unsafe class LibretroMameCore
     private static mameControls deviceIdsLightGun = null;
     public static List<string> deviceIdsCombined = null;
 
+    // 0 = Player 1, 1 = Player 2, etc.
+    public static uint activePlayerSlot = 0;
+
     private delegate void inputPollHander();
     private delegate Int16 inputStateHandler(uint port, uint device, uint index, uint id);
     static Waiter coinSlotWaiter = new(2);
@@ -1109,7 +1112,7 @@ public static unsafe class LibretroMameCore
             switch (id)
             {
                 case RETRO_DEVICE_ID_JOYPAD_SELECT:
-                    if (port == 0)
+                    if (port == activePlayerSlot)
                     {
                         // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
                         ret = checkForCoins();
@@ -1124,7 +1127,10 @@ public static unsafe class LibretroMameCore
                     break;
 
                 default:
-                    ret = (Int16)deviceIdsJoypad.Active(id, (int)port);
+                    if (port == activePlayerSlot)
+                    {
+                        ret = (Int16)deviceIdsJoypad.Active(id, 0);
+                    }
                     // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
                     break;
             }
