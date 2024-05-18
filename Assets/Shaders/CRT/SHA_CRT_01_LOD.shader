@@ -20,6 +20,7 @@ Shader "AgeOfJoy/CRT_01_LOD"
 		_CRTParameters("CRTParameters", Vector) = (256,256,1,0.59158)
 		_CRTTiling("CRTTiling", Vector) = (1,1,0,0)
 		_Dotmask_Scanlines("Dotmask_Scanlines", 2D) = "white" {}
+		[Toggle(_ISPROJECTIONSCREEN_ON)] _isProjectionScreen("isProjectionScreen", Float) = 0
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
@@ -31,6 +32,7 @@ Shader "AgeOfJoy/CRT_01_LOD"
 		CGPROGRAM
 		#include "UnityShaderVariables.cginc"
 		#pragma target 3.0
+		#pragma shader_feature_local _ISPROJECTIONSCREEN_ON
 		#pragma surface surf Unlit keepalpha noshadow vertex:vertexDataFunc 
 		struct Input
 		{
@@ -39,6 +41,9 @@ Shader "AgeOfJoy/CRT_01_LOD"
 			half vertexToFrag250;
 			half2 vertexToFrag251;
 			float3 worldPos;
+			half3 viewDir;
+			INTERNAL_DATA
+			half3 worldNormal;
 		};
 
 		uniform half _MaskVTXRedOnly;
@@ -76,6 +81,7 @@ Shader "AgeOfJoy/CRT_01_LOD"
 
 		void surf( Input i , inout SurfaceOutput o )
 		{
+			o.Normal = float3(0,0,1);
 			half lerpResult233 = lerp( 1.0 , i.vertexColor.r , _MaskVTXRedOnly);
 			half3 desaturateInitialColor185 = ( ( (tex2D( _MainTex, ( i.uv_texcoord * _CRTTiling ) )).rgb * _Damage_RGB_Offset ) * ( 1.0 - ( saturate( ( distance( i.uv_texcoord , half2( 0.5,0.5 ) ) - _Damage_VIgnette_Radius ) ) / ( 1.0 - _Damage_Vignette_Hardness ) ) ) );
 			half desaturateDot185 = dot( desaturateInitialColor185, float3( 0.299, 0.587, 0.114 ));
@@ -84,7 +90,17 @@ Shader "AgeOfJoy/CRT_01_LOD"
 			half lerpResult18 = lerp( 1.0 , tex2D( _Dotmask_Scanlines, i.vertexToFrag251 ).a , _Scanline_Amount);
 			float3 ase_worldPos = i.worldPos;
 			half3 lerpResult28 = lerp( ( ( temp_output_126_0 * _Scanline_GameScreenBrightness ) * saturate( lerpResult18 ) ) , temp_output_126_0 , saturate( pow( ( distance( ase_worldPos , _WorldSpaceCameraPos ) / _Distance_Scanline ) , _Distance_Scanline_Power ) ));
-			o.Emission = ( lerpResult233 * lerpResult28 );
+			half4 color286 = IsGammaSpace() ? half4(0.0754717,0.0754717,0.0754717,0) : half4(0.006628775,0.006628775,0.006628775,0);
+			half3 ase_worldNormal = WorldNormalVector( i, half3( 0, 0, 1 ) );
+			half fresnelNdotV284 = dot( normalize( ase_worldNormal ), i.viewDir );
+			half fresnelNode284 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV284, 1.0 ) );
+			half4 lerpResult287 = lerp( half4( lerpResult28 , 0.0 ) , color286 , saturate( fresnelNode284 ));
+			#ifdef _ISPROJECTIONSCREEN_ON
+				half4 staticSwitch288 = lerpResult287;
+			#else
+				half4 staticSwitch288 = half4( lerpResult28 , 0.0 );
+			#endif
+			o.Emission = ( lerpResult233 * staticSwitch288 ).rgb;
 			o.Alpha = 1;
 		}
 
@@ -155,17 +171,25 @@ Node;AmplifyShaderEditor.WireNode;91;-842.5527,-362.1745;Inherit;False;1;0;FLOAT
 Node;AmplifyShaderEditor.SaturateNode;259;-1409.786,-14.58065;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode;98;-481.5969,618.691;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;34;-468.5659,141.7539;Inherit;False;2;2;0;FLOAT3;1,0,0;False;1;FLOAT;0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.ViewDirInputsCoordNode;281;981.6045,112.5526;Inherit;False;Tangent;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.RangedFloatNode;283;1039.137,272.0859;Inherit;False;Constant;_ProjScreenFresnelView;ProjScreenFresnelView;25;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.WorldNormalVector;282;990.2708,-109.4474;Inherit;False;False;1;0;FLOAT3;0,0,1;False;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.CommentaryNode;29;250.8946,-222.7503;Inherit;False;415;219;A = Frame and Scanlines, B = Raw Frame;1;28;;1,1,1,1;0;0
-Node;AmplifyShaderEditor.VertexColorNode;217;1072.291,-1036.747;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.RangedFloatNode;231;1004.691,-810.7473;Inherit;False;Property;_MaskVTXRedOnly;MaskVTXRedOnly;12;0;Create;True;0;0;0;False;0;False;0;1;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;234;1105.042,-1154.964;Inherit;False;Constant;_Float1;Float 1;34;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.WireNode;280;26.04624,-180.8238;Inherit;False;1;0;FLOAT3;0,0,0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.WireNode;33;-1124.618,-64.38861;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;279;-184.4283,73.44623;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.LerpOp;233;1431.291,-720.9138;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.FresnelNode;284;1291.604,-19.44739;Inherit;False;Standard;WorldNormal;ViewDir;True;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;28;300.8942,-172.7503;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;218;1677.291,-592.7473;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;256;1863.973,-636.5386;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AgeOfJoy/CRT_01_LOD;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;False;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;False;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.SaturateNode;285;1529.604,5.219299;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.ColorNode;286;1318.938,207.2192;Inherit;False;Constant;_ProjScreenAngleColor_Emissive;ProjScreenAngleColor_Emissive;23;0;Create;True;0;0;0;False;0;False;0.0754717,0.0754717,0.0754717,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.VertexColorNode;217;1072.291,-1036.747;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.RangedFloatNode;231;1004.691,-810.7473;Inherit;False;Property;_MaskVTXRedOnly;MaskVTXRedOnly;12;0;Create;True;0;0;0;False;0;False;0;1;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;234;1105.042,-1154.964;Inherit;False;Constant;_Float1;Float 1;34;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.LerpOp;287;1674.936,-87.44748;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;1,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
+Node;AmplifyShaderEditor.LerpOp;233;1431.291,-720.9138;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.StaticSwitch;288;1297.442,-434.752;Inherit;False;Property;_isProjectionScreen;isProjectionScreen;16;0;Create;True;0;0;0;False;0;False;0;0;0;True;;Toggle;2;Key0;Key1;Create;True;True;All;9;1;COLOR;0,0,0,0;False;0;COLOR;0,0,0,0;False;2;COLOR;0,0,0,0;False;3;COLOR;0,0,0,0;False;4;COLOR;0,0,0,0;False;5;COLOR;0,0,0,0;False;6;COLOR;0,0,0,0;False;7;COLOR;0,0,0,0;False;8;COLOR;0,0,0,0;False;1;COLOR;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;218;1722.624,-560.0807;Inherit;False;2;2;0;FLOAT;0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;256;2066.64,-685.2053;Half;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;AgeOfJoy/CRT_01_LOD;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;False;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;False;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;151;0;180;0
 WireConnection;151;1;179;0
 WireConnection;248;0;192;0
@@ -219,14 +243,23 @@ WireConnection;280;0;91;0
 WireConnection;33;0;259;0
 WireConnection;279;0;34;0
 WireConnection;279;1;98;0
-WireConnection;233;0;234;0
-WireConnection;233;1;217;1
-WireConnection;233;2;231;0
+WireConnection;284;0;282;0
+WireConnection;284;4;281;0
+WireConnection;284;3;283;0
 WireConnection;28;0;279;0
 WireConnection;28;1;280;0
 WireConnection;28;2;33;0
+WireConnection;285;0;284;0
+WireConnection;287;0;28;0
+WireConnection;287;1;286;0
+WireConnection;287;2;285;0
+WireConnection;233;0;234;0
+WireConnection;233;1;217;1
+WireConnection;233;2;231;0
+WireConnection;288;1;28;0
+WireConnection;288;0;287;0
 WireConnection;218;0;233;0
-WireConnection;218;1;28;0
+WireConnection;218;1;288;0
 WireConnection;256;2;218;0
 ASEEND*/
-//CHKSM=940D4DCCC266C1B8930DDC2C6ACDD96416E8944D
+//CHKSM=6EA941FD8BE5C746EF84E25159CF276E8497D669
