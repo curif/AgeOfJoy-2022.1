@@ -7,13 +7,14 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_NPC_Skin_STeele
-  m_Shader: {fileID: 4800000, guid: 79aa02aa1b9511a46b8ce1d76ddb41ab, type: 3}
+  m_Name: M_PolyCab_Cover_LOD
+  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
+  m_ValidKeywords:
+  - _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
   m_InvalidKeywords: []
-  m_LightmapFlags: 0
+  m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -39,20 +40,28 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Diffuse:
+        m_Texture: {fileID: 2800000, guid: a9caf1da54c1b934ea730d9153ce53cb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissionMap:
         m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Scale: {x: 4, y: 4}
+        m_Offset: {x: 0, y: 2}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 8d77265469b19103ab103e5cafadcc0d, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Texture: {fileID: 2800000, guid: 09ff5171bca925544bbb40ad0301b068, type: 3}
+        m_Scale: {x: 4, y: 4}
+        m_Offset: {x: 0, y: 2}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Normal:
-        m_Texture: {fileID: 2800000, guid: 84f2fc02bdbdf3b488edcb12f9375a42, type: 3}
+        m_Texture: {fileID: 2800000, guid: f03684241413be44bb435d52fa70326b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ORM:
+        m_Texture: {fileID: 2800000, guid: 1bea1ee7217bddb4a8bd700d9430d094, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
@@ -63,8 +72,16 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Tex:
+        m_Texture: {fileID: 2800000, guid: 261018ec0bd064844967da6b95569519, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _TextureSample0:
-        m_Texture: {fileID: 2800000, guid: 0cfd95370d98a55f3851d3645245e34f, type: 3}
+        m_Texture: {fileID: 2800000, guid: 09ff5171bca925544bbb40ad0301b068, type: 3}
+        m_Scale: {x: 8, y: 8}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample1:
+        m_Texture: {fileID: 2800000, guid: 3043c7560a917504c8a8d9065a661ea8, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -77,24 +94,33 @@ Material:
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
-    - _FresnelBias: 0
-    - _FresnelPower: 4.58
     - _GlossMapScale: 1
-    - _Glossiness: 0.070710674
+    - _Glossiness: 0.757
     - _GlossyReflections: 1
-    - _Metallic: 0
+    - _MetalAdjust: 0
+    - _Metallic: 0.642
+    - _Metllic: 0.175
     - _Mode: 0
+    - _MoveClamp: 0.123
+    - _MoveScale: 1
     - _OcclusionStrength: 1
+    - _Opacity: 0.146
     - _Parallax: 0.02
-    - _Smoothness: 0.232
-    - _SmoothnessTextureChannel: 0
+    - _Ruff: 0.357
+    - _Smoothness: 0.837
+    - _SmoothnessAdjust: 0
+    - _SmoothnessTextureChannel: 1
     - _SpecularHighlights: 1
     - _SrcBlend: 1
+    - _TimeBoxSpeed: 2
     - _UVSec: 0
     - _ZWrite: 1
     - __dirty: 0
     m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.4339623, g: 0.4339623, b: 0.4339623, a: 0.07058824}
+    - _Color0: {r: 1, g: 1, b: 1, a: 0}
+    - _CoverColor: {r: 1, g: 1, b: 1, a: 0.05490196}
+    - _DiffuseColor: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _SSSColor: {r: 0, g: 1, b: 0.5804844, a: 0}
+    - _Movement: {r: 0.01, g: 0, b: 0.01, a: 0}
   m_BuildTextureStacks: []
