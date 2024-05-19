@@ -96,7 +96,8 @@ public class ConfigInformation
 
         public float height = 0f;
         public float scale = 0.9f;
-
+        public string skinColor = "light";
+        public static List<string> SkinColors = new List<string> { "light", "dark" };
         public static bool IsValidHeight(float height)
         {
             return height == 0 || (height <= maxHeight && height >= minHeight);
@@ -216,6 +217,7 @@ public class ConfigInformation
         Player player = new();
         player.height = 0f;
         player.scale = 0.9f;
+        player.skinColor = "light";
         return player;
     }
     public static CabinetConfiguration CabinetDefault()
