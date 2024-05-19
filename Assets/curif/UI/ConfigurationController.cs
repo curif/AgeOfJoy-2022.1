@@ -219,6 +219,9 @@ public class ConfigurationController : MonoBehaviour
     private GenericOptions playerScale;
     private GenericOptions playerSkinColor;
     private GenericWidgetContainer playerContainer;
+    private HandMeshMaterialSwitcher leftHandMaterialSwitcher;
+    private HandMeshMaterialSwitcher rightHandMaterialSwitcher;
+
 
     private ConfigurationHelper configHelper;
 
@@ -227,6 +230,31 @@ public class ConfigurationController : MonoBehaviour
 
     private ShaderScreenBase shader;
     private Renderer display;
+
+    private void FindHandMeshObjects()
+    {
+        GameObject leftHand = GameObject.Find("AGEOfJoyHandLeftPrefab");
+        GameObject rightHand = GameObject.Find("AGEOfJoyHandRightPrefab");
+
+        if (leftHand != null)
+        {
+            leftHandMaterialSwitcher = leftHand.GetComponent<HandMeshMaterialSwitcher>();
+            if (leftHandMaterialSwitcher == null)
+            {
+                Debug.LogError("No HandMeshMaterialSwitcher component found on AGEOfJoyHandLeftPrefab.");
+            }
+        }
+
+        if (rightHand != null)
+        {
+            rightHandMaterialSwitcher = rightHand.GetComponent<HandMeshMaterialSwitcher>();
+            if (rightHandMaterialSwitcher == null)
+            {
+                Debug.LogError("No HandMeshMaterialSwitcher component found on AGEOfJoyHandRightPrefab.");
+            }
+        }
+    }
+
 
     // Start is called before the first frame update
     void Start()
@@ -267,6 +295,11 @@ public class ConfigurationController : MonoBehaviour
         display = GetComponent<Renderer>();
 
         StartCoroutine(run());
+        
+        {
+            // Find the hand mesh objects at runtime
+            FindHandMeshObjects();
+        }
     }
 
     /*
@@ -1174,8 +1207,27 @@ public class ConfigurationController : MonoBehaviour
             config.player.height = height;
         config.player.skinColor = skinColor;
 
+        // Switch the hand mesh material based on the skin color
+        if (leftHandMaterialSwitcher != null && rightHandMaterialSwitcher != null)
+        {
+            if (skinColor == "light")
+            {
+                leftHandMaterialSwitcher.SetLightMaterial();
+                rightHandMaterialSwitcher.SetLightMaterial();
+                Debug.LogError("Switching materials to light.");
+            }
+            else if (skinColor == "dark")
+            {
+                leftHandMaterialSwitcher.SetDarkMaterial();
+                rightHandMaterialSwitcher.SetDarkMaterial();
+                Debug.LogError("Switching materials to dark.");
+            }
+        }
         configHelper.Save(true, config);
+
     }
+
+
 
 
     IEnumerator run()

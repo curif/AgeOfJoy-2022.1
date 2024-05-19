@@ -1966,6 +1966,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3832737625134463503}
   - component: {fileID: 4556060671066912375}
+  - component: {fileID: 6416545592426007479}
   m_Layer: 0
   m_Name: AGEOfJoyHandLeftPrefab
   m_TagString: Untagged
@@ -1981,14 +1982,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6951649943164279997}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071067}
+  m_LocalRotation: {x: 0.00023022317, y: 0.0026151682, z: 0.7064969, w: 0.7077113}
   m_LocalPosition: {x: 0, y: -0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3378883639067949092}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
+  m_LocalEulerAnglesHint: {x: -0.193, y: 0.231, z: 89.901}
 --- !u!54 &4556060671066912375
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2016,6 +2017,21 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &6416545592426007479
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6951649943164279997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3896b69b65afa1148b36011027c8e6ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lightMaterial: {fileID: 2100000, guid: 2a4e7c46e1406141bbc88455a0b0fb9b, type: 2}
+  darkMaterial: {fileID: 2100000, guid: eaf60ee14dbf74f49a69ec22514864cd, type: 2}
+  handRenderer: {fileID: 5420076474256706298}
 --- !u!1 &6963077026937618460
 GameObject:
   m_ObjectHideFlags: 0
