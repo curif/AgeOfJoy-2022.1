@@ -11,22 +11,16 @@ You should have received a copy of the GNU General Public License along with thi
 
 //#define INPUT_DEBUG
 
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.InteropServices;
 using System;
 using System.IO;
-using Unity.Jobs;
-using Unity.Collections;
 using System.Diagnostics;
 using System.Linq;
-using System.ComponentModel;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
-using UnityEngine.XR;
 
 
 /*
@@ -40,14 +34,6 @@ public static unsafe class LibretroMameCore
     //NotSupportedException: To marshal a managed method, please add an attribute named 'MonoPInvokeCallback' to the method definition. 
 
     #region INPUT
-    public const int RETRO_DEVICE_TYPE_SHIFT = 8;
-    public const int RETRO_DEVICE_MASK = (1 << RETRO_DEVICE_TYPE_SHIFT) - 1;
-    public const uint RETRO_DEVICE_NONE = 0;
-    public const uint RETRO_DEVICE_JOYPAD = 1;
-    public const uint RETRO_DEVICE_MOUSE = 2;
-    public const uint RETRO_DEVICE_LIGHTGUN = 4;
-    public const uint RETRO_DEVICE_ANALOG = 5;
-
     public const uint RETRO_DEVICE_ID_JOYPAD_B = 0;
     public const uint RETRO_DEVICE_ID_JOYPAD_Y = 1;
     public const uint RETRO_DEVICE_ID_JOYPAD_SELECT = 2;
@@ -263,6 +249,7 @@ public static unsafe class LibretroMameCore
     static bool InteractionAvailable = false;
 
     public static LightGunTarget lightGunTarget;
+    public static List<LibretroInputDevice> libretroInputDevices;
 
 #if _debug_fps_
     //Profiling
@@ -296,6 +283,8 @@ public static unsafe class LibretroMameCore
     private static extern bool wrapper_set_savestate_data(void* data, uint size);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern bool wrapper_get_savestate_data(void* data, uint size);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_set_controller_port_device(uint port, uint device);
 
     //environment
     private delegate string EnvironmentHandler(string key);
@@ -425,15 +414,16 @@ public static unsafe class LibretroMameCore
         deviceIdsMouse.controlMap = ControlMap;
         ConfigManager.WriteConsole($"[initializeControls] JOYPAD: naming MAME controls (mapping libretro ids to control name)");
         deviceIdsJoypad.controlMap = ControlMap;
-        ConfigManager.WriteConsole($"[initializeControls] LIGTHGUN: naming MAME controls (mapping libretro ids to control name)");
+        ConfigManager.WriteConsole($"[initializeControls] LIGHTGUN: naming MAME controls (mapping libretro ids to control name)");
         deviceIdsLightGun.controlMap = ControlMap;
     }
 
     public static bool Start(string screenName, string gameFileName)
     {
-        string path = ConfigManager.RomsDir + "/" +  Core + "/" + gameFileName;
+        string path = ConfigManager.RomsDir + "/" + Core + "/" + gameFileName;
 
-        if (!File.Exists(path)) {
+        if (!File.Exists(path))
+        {
             path = ConfigManager.RomsDir + "/" + gameFileName;
         }
 
@@ -463,7 +453,7 @@ public static unsafe class LibretroMameCore
         QuestAudioFrequency = audioConfig.sampleRate;
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
         WriteConsole("[LibRetroMameCore.Start] Init environment and call retro_init()");
-        
+
         Core core = CoresController.GetCore(Core);
         ConfigManager.WriteConsoleError($"[LibRetroMameCore.Start] Using corelib {core.Library}");
         InitEnvironment(core);
@@ -516,17 +506,24 @@ public static unsafe class LibretroMameCore
         //controls
         assignControls();
 
-        //ligthgun
-        uint xy_device = (lightGunTarget?.lightGunInformation != null &&
-                            lightGunTarget.lightGunInformation.active) ? lightGunTarget.lightGunInformation.device : 0;
+        //lightgun
+        int xy_device = (lightGunTarget?.lightGunInformation != null && lightGunTarget.lightGunInformation.active) ? 1 : 0;
 
         WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
-        GameLoaded = wrapper_load_game(path, Gamma, Brightness, xy_device) == 1;
+        GameLoaded = wrapper_load_game(path, Gamma, Brightness, (uint)xy_device) == 1;
         if (!GameLoaded)
         {
             ClearAll();
             WriteConsole($"[LibRetroMameCore.Start] ERROR {path} libretro can't start the game, please check if it is the correct version and is supported by {core}");
             return false;
+        }
+
+        // set up input ports
+        uint port = 0;
+        foreach (var device in libretroInputDevices)
+        {
+            WriteConsole($"[LibRetroMameCore.Start] Setting controller port device {port} to {device.Name}:{device.Id}");
+            wrapper_set_controller_port_device(port++, device.Id);
         }
 
 #if !UNITY_EDITOR
@@ -964,7 +961,7 @@ public static unsafe class LibretroMameCore
 
     static public void InputControlDebug(UInt32 device)
     {
-        if (device == RETRO_DEVICE_JOYPAD)
+        if (device == LibretroInputDevice.Gamepad.Id)
         {
             foreach (uint id in new uint[] {
                         RETRO_DEVICE_ID_JOYPAD_B,
@@ -990,7 +987,7 @@ public static unsafe class LibretroMameCore
                     ConfigManager.WriteConsole($"[InputControlDebug] id:{id} name:{deviceIdsJoypad.Id(id)} ret:{ret}");
             }
         }
-        else if (device == RETRO_DEVICE_MOUSE)
+        else if (device == LibretroInputDevice.Mouse.Id)
         {
             foreach (uint id in new uint[] {
                           RETRO_DEVICE_ID_MOUSE_X,
@@ -1063,7 +1060,7 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id: {id}");
 #endif
 
-        if (id == RETRO_DEVICE_ID_JOYPAD_MASK && device == RETRO_DEVICE_JOYPAD)
+        if (id == RETRO_DEVICE_ID_JOYPAD_MASK && device == LibretroInputDevice.Gamepad.Id)
         {
             int bitmask =
                 (inputStateCB(port, device, index, RETRO_DEVICE_ID_JOYPAD_B) << 0) |
@@ -1087,7 +1084,8 @@ public static unsafe class LibretroMameCore
 
         Int16 ret = 0;
 
-        if (!InteractionAvailable) {
+        if (!InteractionAvailable)
+        {
 #if INPUT_DEBUG
             WriteConsole($"[inputStateCB] !InteractionAvailable");
 #endif
@@ -1106,7 +1104,7 @@ public static unsafe class LibretroMameCore
       Profiling.input.Start();
 #endif
 
-        if (device == RETRO_DEVICE_JOYPAD)
+        if (device == LibretroInputDevice.Gamepad.Id)
         {
             //InputControlDebug(RETRO_DEVICE_JOYPAD);
             switch (id)
@@ -1138,14 +1136,14 @@ public static unsafe class LibretroMameCore
             // ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
         }
 
-        else if (device == RETRO_DEVICE_MOUSE)
+        else if (device == LibretroInputDevice.Mouse.Id)
         {
             //InputControlDebug(RETRO_DEVICE_MOUSE);
             ret = (Int16)deviceIdsMouse.Active(id, (int)port);
             // WriteConsole($"[inputStateCB] RETRO_DEVICE_MOUSE_???: id: {id} active: {ret} - port: {port}");
         }
 
-        else if (device == RETRO_DEVICE_LIGHTGUN &&
+        else if (device == LibretroInputDevice.Lightgun.Id &&
                     lightGunTarget?.lightGunInformation != null &&
                     lightGunTarget.lightGunInformation.active)
         {

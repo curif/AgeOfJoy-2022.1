@@ -54,7 +54,7 @@ public class CabinetInformation
     public string space = "1x1x2";
     public string core = "mame2003+";
     public CoreEnvironment environment;
-
+    public List<CabinetInputDevice> devices;
 
     [YamlMember(Alias = "mame-files", ApplyNamingConventions = false)]
     public List<MameFile> MameFiles { get; set; }
@@ -84,6 +84,8 @@ public class CabinetInformation
                 .IgnoreUnmatchedProperties()
                 .Build();
 
+    private List<LibretroInputDevice> libretroInputDevices;
+
     public CabinetInformation() { }
 
     public void Validate()
@@ -109,6 +111,38 @@ public class CabinetInformation
                 CheckResourcePath(mf?.file);
             }
         }
+    }
+
+    public List<LibretroInputDevice> GetLibretroInputDevices()
+    {
+        ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: START");
+        if (libretroInputDevices == null)
+        {
+            ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: libretroInputDevices not computed yet");
+            libretroInputDevices = new List<LibretroInputDevice>();
+            if (devices != null && devices.Count > 0)
+            {
+                ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: some devices have been specified");
+                foreach (CabinetInputDevice device in devices)
+                {
+                    ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: adding device type {device.type} for slot {device.slot}");
+                    LibretroInputDevice dev = LibretroInputDevice.GetInputDeviceType(device.type);
+                    ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: found device {dev.Name} of id {dev.Id}");
+                    libretroInputDevices.Add(dev);
+                }
+            } else
+            {
+                ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: no devices have been specified");
+                if (lightGunInformation != null && lightGunInformation.active)
+                {
+                    ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: adding lightgun");
+                    libretroInputDevices.Add(LibretroInputDevice.Lightgun);
+                }
+                ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: adding gamepad");
+                libretroInputDevices.Add(LibretroInputDevice.Gamepad);
+            }
+        }
+        return libretroInputDevices;
     }
 
     public static void CheckResourcePath(string path)
@@ -301,6 +335,12 @@ public class CabinetInformation
         public string type = Types[0];
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
+    }
+
+    public class CabinetInputDevice
+    {
+        public uint slot;
+        public string type;
     }
 
     public class CRT

@@ -101,6 +101,7 @@ public class LibretroScreenController : MonoBehaviour
     public Cabinet cabinet;
     public CoreEnvironment CabEnvironment;
     public bool? InsertCoinOnStartup;
+    public List<LibretroInputDevice> LibretroInputDevices;
 
     public bool SimulateExitGame;
 
@@ -325,6 +326,8 @@ public class LibretroScreenController : MonoBehaviour
                       lightGunTarget.Init(lightGunInformation, PathBase);
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
+
+                  LibretroMameCore.libretroInputDevices = LibretroInputDevices;
 
 #if !UNITY_EDITOR
                   // start libretro
