@@ -84,7 +84,7 @@ public class CabinetInformation
                 .IgnoreUnmatchedProperties()
                 .Build();
 
-    private List<LibretroInputDevice> libretroInputDevices;
+    private Dictionary<uint, LibretroInputDevice> libretroInputDevices;
 
     public CabinetInformation() { }
 
@@ -113,33 +113,35 @@ public class CabinetInformation
         }
     }
 
-    public List<LibretroInputDevice> GetLibretroInputDevices()
+    public Dictionary<uint, LibretroInputDevice> GetLibretroInputDevices()
     {
         ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: START");
         if (libretroInputDevices == null)
         {
             ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: libretroInputDevices not computed yet");
-            libretroInputDevices = new List<LibretroInputDevice>();
+            libretroInputDevices = new Dictionary<uint, LibretroInputDevice>();
             if (devices != null && devices.Count > 0)
             {
                 ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: some devices have been specified");
                 foreach (CabinetInputDevice device in devices)
                 {
                     ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: adding device type {device.type} for slot {device.slot}");
-                    LibretroInputDevice dev = LibretroInputDevice.GetInputDeviceType(device.type);
-                    ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: found device {dev.Name} of id {dev.Id}");
-                    libretroInputDevices.Add(dev);
+                    LibretroInputDevice libretroDevice = LibretroInputDevice.GetInputDeviceType(device.type);
+                    ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: found device {libretroDevice.Name} of id {libretroDevice.Id}");
+                    libretroInputDevices.Add(device.slot, libretroDevice);
                 }
-            } else
+            }
+            else
             {
+                uint idx = 0;
                 ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: no devices have been specified");
                 if (lightGunInformation != null && lightGunInformation.active)
                 {
                     ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: adding lightgun");
-                    libretroInputDevices.Add(LibretroInputDevice.Lightgun);
+                    libretroInputDevices.Add(idx++, LibretroInputDevice.Lightgun);
                 }
                 ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: adding gamepad");
-                libretroInputDevices.Add(LibretroInputDevice.Gamepad);
+                libretroInputDevices.Add(idx++, LibretroInputDevice.Gamepad);
             }
         }
         return libretroInputDevices;

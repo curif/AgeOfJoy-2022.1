@@ -101,7 +101,7 @@ public class LibretroScreenController : MonoBehaviour
     public Cabinet cabinet;
     public CoreEnvironment CabEnvironment;
     public bool? InsertCoinOnStartup;
-    public List<LibretroInputDevice> LibretroInputDevices;
+    public Dictionary<uint, LibretroInputDevice> LibretroInputDevices;
 
     public bool SimulateExitGame;
 

@@ -887,7 +887,7 @@ public class Cabinet
         CoreEnvironment coreEnvironment = cbinfo.environment;
         bool? insertCoinOnStartup = cbinfo.insertCoinOnStartup;
         bool? persistent = cbinfo.persistent;
-        List<LibretroInputDevice> libretroInputDevices = cbinfo.GetLibretroInputDevices();
+        Dictionary<uint, LibretroInputDevice> libretroInputDevices = cbinfo.GetLibretroInputDevices();
 
         string GameVideoFile = null;
         bool GameVideoFileInvertX = false;

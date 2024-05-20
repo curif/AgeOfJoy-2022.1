@@ -249,7 +249,7 @@ public static unsafe class LibretroMameCore
     static bool InteractionAvailable = false;
 
     public static LightGunTarget lightGunTarget;
-    public static List<LibretroInputDevice> libretroInputDevices;
+    public static Dictionary<uint, LibretroInputDevice> libretroInputDevices;
 
 #if _debug_fps_
     //Profiling
@@ -519,11 +519,13 @@ public static unsafe class LibretroMameCore
         }
 
         // set up input ports
-        uint port = 0;
         foreach (var device in libretroInputDevices)
         {
-            WriteConsole($"[LibRetroMameCore.Start] Setting controller port device {port} to {device.Name}:{device.Id}");
-            wrapper_set_controller_port_device(port++, device.Id);
+            uint port = device.Key;
+            uint deviceId= device.Value.Id;
+            string deviceName = device.Value.Name;
+            WriteConsole($"[LibRetroMameCore.Start] Setting controller port device {port} to {deviceName}:{deviceId}");
+            wrapper_set_controller_port_device(port, deviceId);
         }
 
 #if !UNITY_EDITOR
