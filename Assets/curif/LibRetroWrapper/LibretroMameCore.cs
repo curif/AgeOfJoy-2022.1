@@ -1297,7 +1297,7 @@ public static unsafe class LibretroMameCore
                 {
                     return 0;   // No multitouch support
                 }
-                return inputStateCB_LightGun(port, LibretroInputDevice.Lightgun.Id, index, RETRO_DEVICE_ID_LIGHTGUN_AUX_A);
+                return inputStateCB_LightGun(0, LibretroInputDevice.Lightgun.Id, index, RETRO_DEVICE_ID_LIGHTGUN_AUX_A);
             default:
                 return 0;
         }
