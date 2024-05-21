@@ -83,6 +83,12 @@ public static unsafe class LibretroMameCore
     public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT = 11;
     public const uint RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT = 12;
 
+    /* Id values for POINTER. */
+    public const uint RETRO_DEVICE_ID_POINTER_X = 0;
+    public const uint RETRO_DEVICE_ID_POINTER_Y = 1;
+    public const uint RETRO_DEVICE_ID_POINTER_PRESSED = 2;
+    public const uint RETRO_DEVICE_ID_POINTER_COUNT = 3;
+
     public const uint RETRO_MEMORY_SAVE_RAM = 0;
     public const uint RETRO_MEMORY_RTC = 1;
     public const uint RETRO_MEMORY_SYSTEM_RAM = 2;
@@ -540,13 +546,13 @@ public static unsafe class LibretroMameCore
         loadState(GameFileName);
 #endif
 
-            /* It's impossible to change the Sample Rate, fixed in 48000
-            audioConfig.sampleRate = sampleRate;
-            AudioSettings.Reset(audioConfig);
-            audioConfig = AudioSettings.GetConfiguration();
-            WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
-            */
-            Speaker.Play();
+        /* It's impossible to change the Sample Rate, fixed in 48000
+        audioConfig.sampleRate = sampleRate;
+        AudioSettings.Reset(audioConfig);
+        audioConfig = AudioSettings.GetConfiguration();
+        WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
+        */
+        Speaker.Play();
 
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
@@ -1140,6 +1146,10 @@ public static unsafe class LibretroMameCore
         {
             ret = inputStateCB_LightGun(port, device, index, id);
         }
+        else if (device == LibretroInputDevice.Pointer.Id)
+        {
+            ret = inputStateCB_Pointer(port, device, index, id);
+        }
 
 #if _debug_fps_
       Profiling.input.Stop();
@@ -1271,6 +1281,26 @@ public static unsafe class LibretroMameCore
         }
 
         return 0;
+    }
+
+    private static Int16 inputStateCB_Pointer(uint port, uint device, uint index, uint id)
+    {
+        switch (id)
+        {
+            case RETRO_DEVICE_ID_POINTER_X:
+                return (Int16)lightGunTarget.AbsoluteHitX;
+            case RETRO_DEVICE_ID_POINTER_Y:
+                return (Int16)lightGunTarget.AbsoluteHitY;
+            case RETRO_DEVICE_ID_POINTER_PRESSED:
+            case RETRO_DEVICE_ID_POINTER_COUNT:
+                if (index > 0)
+                {
+                    return 0;   // No multitouch support
+                }
+                return inputStateCB_LightGun(port, LibretroInputDevice.Lightgun.Id, index, RETRO_DEVICE_ID_LIGHTGUN_AUX_A);
+            default:
+                return 0;
+        }
     }
 
     [AOT.MonoPInvokeCallback(typeof(AudioLockHandler))]
