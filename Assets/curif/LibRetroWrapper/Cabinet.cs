@@ -887,6 +887,7 @@ public class Cabinet
         CoreEnvironment coreEnvironment = cbinfo.environment;
         bool? insertCoinOnStartup = cbinfo.insertCoinOnStartup;
         bool? persistent = cbinfo.persistent;
+        Dictionary<uint, LibretroInputDevice> libretroInputDevices = cbinfo.GetLibretroInputDevices();
 
         string GameVideoFile = null;
         bool GameVideoFileInvertX = false;
@@ -971,6 +972,7 @@ public class Cabinet
             libretroScreenController.cabinet = this;
             libretroScreenController.Core = core;
             libretroScreenController.Persistent = persistent;
+            libretroScreenController.LibretroInputDevices = libretroInputDevices;
 
             libretroScreenController.ShaderName = shaderName;
             libretroScreenController.ShaderConfig = shaderConfig;

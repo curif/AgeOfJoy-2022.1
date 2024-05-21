@@ -624,24 +624,22 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 
 	wrapper_image_prev_load_game();
 	wrapper_environment_set_game_parameters(
-		_gamma, _brightness, _xy_control_type); // 0 mouse, 1 ligthgun
+		_gamma, _brightness, _xy_control_type); // 0 mouse, 1 lightgun
 
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s)--\n",
 		game_info.path);
 	bool ret = handlers.retro_load_game(&game_info);
-
-	if (_xy_control_type != 0) {
-		//there isn't a way to say "mouse" yet in others than mame2003. So it's lightgun o joypad. 
-		handlers.retro_set_controller_port_device(0, _xy_control_type);
-		handlers.retro_set_controller_port_device(1, RETRO_DEVICE_JOYPAD);	// TODO: this actually won't be handled by us in the callback
-	}
-	else {
-		handlers.retro_set_controller_port_device(0, RETRO_DEVICE_JOYPAD);
-	}
-
+	
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_load_game] END (ret:%i) --------- \n", ret);
 	return (int)ret;
+}
+
+void wrapper_set_controller_port_device(unsigned port, unsigned device) {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_set_controller_port_device] port: %i device: %i\n", port,
+		device);
+	handlers.retro_set_controller_port_device(port, device);
 }
 
 void wrapper_unload_game() {

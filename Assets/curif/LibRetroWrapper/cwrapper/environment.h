@@ -72,6 +72,7 @@ bool wrapper_set_savestate_data(void* data, size_t size);
 bool wrapper_get_savestate_data(void* data, size_t size);
 size_t wrapper_get_memory_size(unsigned id);
 void* wrapper_get_memory_data(unsigned id);
+void wrapper_set_controller_port_device(unsigned port, unsigned device);
 
 #ifdef __cplusplus
 }

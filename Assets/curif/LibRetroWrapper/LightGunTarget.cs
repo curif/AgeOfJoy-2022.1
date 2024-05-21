@@ -8,14 +8,10 @@ using System.IO;
 
 public class LightGunInformation
 {
-    public static uint RETRO_DEVICE_LIGHTGUN = 4;
-
     public bool active = false;
     public Gun gun = new();
     public CRT crt = new();
     public Debug debug = new();
-    public uint device = RETRO_DEVICE_LIGHTGUN;
-
 
     public class Debug
     {
