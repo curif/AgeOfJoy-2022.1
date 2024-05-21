@@ -76,6 +76,7 @@ public class CabinetsPosition
         string yaml;
         lock (registryLock)
         {
+            Registry.Sort((x, y) => string.Compare(x.Room, y.Room, StringComparison.OrdinalIgnoreCase) * 1000 + x.Position - y.Position);
             yaml = serializer.Serialize(this);
         }
         File.WriteAllText(fileName, yaml);
