@@ -39,7 +39,8 @@ public class LibretroInputDevice
 
     public static LibretroInputDevice Empty = new LibretroInputDevice("empty", RETRO_DEVICE_NONE);
     public static LibretroInputDevice Gamepad = new LibretroInputDevice("gamepad", RETRO_DEVICE_JOYPAD);
-    public static LibretroInputDevice Mouse = new LibretroInputDevice("mouse", RETRO_DEVICE_MOUSE);
+    public static LibretroInputDevice Mouse = new LibretroInputDevice("mouse", RETRO_DEVICE_MOUSE, "stick");
+    public static LibretroInputDevice MousePointer = new LibretroInputDevice("mouse_pointer", RETRO_DEVICE_MOUSE, "aim");
     public static LibretroInputDevice Keyboard = new LibretroInputDevice("keyboard", RETRO_DEVICE_KEYBOARD);
     public static LibretroInputDevice Lightgun = new LibretroInputDevice("lightgun", RETRO_DEVICE_LIGHTGUN);
     public static LibretroInputDevice Analog = new LibretroInputDevice("analog", RETRO_DEVICE_ANALOG);
@@ -68,6 +69,7 @@ public class LibretroInputDevice
         { Empty.Name, Empty },
         { Gamepad.Name, Gamepad },
         { Mouse.Name, Mouse },
+        { MousePointer.Name, MousePointer },
         { Keyboard.Name, Keyboard },
         { Lightgun.Name, Lightgun },
         { Analog.Name, Analog },
@@ -102,9 +104,16 @@ public class LibretroInputDevice
     public string Name { get; }
     public uint Id { get; }
 
-    private LibretroInputDevice(string name, uint id)
+    public string Type { get; }
+
+    private LibretroInputDevice(string name, uint id, string type)
     {
         this.Name = name;
         this.Id = id;
+        this.Type = type;
+    }
+
+    private LibretroInputDevice(string name, uint id) : this(name, id, default(string))
+    {
     }
 }

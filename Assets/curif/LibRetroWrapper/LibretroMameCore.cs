@@ -251,6 +251,13 @@ public static unsafe class LibretroMameCore
     public static LightGunTarget lightGunTarget;
     public static Dictionary<uint, LibretroInputDevice> libretroInputDevices;
 
+    // Aimed mouse state
+    private static int lastCoordX;
+    private static int lastCoordY;
+    private static int lastMouseCoordX;
+    private static int lastMouseCoordY;
+    private static bool isMouseAim;
+
 #if _debug_fps_
     //Profiling
     static StopWatches Profiling;
@@ -522,23 +529,24 @@ public static unsafe class LibretroMameCore
         foreach (var device in libretroInputDevices)
         {
             uint port = device.Key;
-            uint deviceId= device.Value.Id;
+            uint deviceId = device.Value.Id;
             string deviceName = device.Value.Name;
             WriteConsole($"[LibRetroMameCore.Start] Setting controller port device {port} to {deviceName}:{deviceId}");
             wrapper_set_controller_port_device(port, deviceId);
         }
+        resetMouseAim();
 
 #if !UNITY_EDITOR
         loadState(GameFileName);
 #endif
 
-        /* It's impossible to change the Sample Rate, fixed in 48000
-        audioConfig.sampleRate = sampleRate;
-        AudioSettings.Reset(audioConfig);
-        audioConfig = AudioSettings.GetConfiguration();
-        WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
-        */
-        Speaker.Play();
+            /* It's impossible to change the Sample Rate, fixed in 48000
+            audioConfig.sampleRate = sampleRate;
+            AudioSettings.Reset(audioConfig);
+            audioConfig = AudioSettings.GetConfiguration();
+            WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
+            */
+            Speaker.Play();
 
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
@@ -1053,6 +1061,21 @@ public static unsafe class LibretroMameCore
         }
     }
 
+    // Normalize lightgun coords (-0x7fff to 0x7fff) to screen coords (0 to res)
+    public static Int16 toScreenCoord(int coord, uint res)
+    {
+        return (Int16)(((coord + 0x8000) * res) / 0x10000);
+    }
+
+    public static void resetMouseAim()
+    {
+        isMouseAim = libretroInputDevices.Values.ToList().Exists(device => device.Name.Equals(LibretroInputDevice.MousePointer.Name));
+        lastCoordX = -0x7fff;   // Assume lightgun starting at top left
+        lastCoordY = -0x7fff;
+        lastMouseCoordX = 0;    // Assume mouse starting at top left
+        lastMouseCoordY = 0;
+    }
+
     // https://github.com/RetroPie/RetroPie-Docs/blob/219c93ca6a81309eed937bb5b7a79b8c71add41b/docs/RetroArch-Configuration.md
     // https://docs.libretro.com/library/mame2003_plus/#default-retropad-layouts
     [AOT.MonoPInvokeCallback(typeof(inputStateHandler))]
@@ -1060,6 +1083,26 @@ public static unsafe class LibretroMameCore
     {
 #if INPUT_DEBUG
         WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id: {id}");
+#endif
+
+        if (!InteractionAvailable)
+        {
+#if INPUT_DEBUG
+            WriteConsole($"[inputStateCB] !InteractionAvailable");
+#endif
+            return 0;
+        }
+
+        if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
+        {
+#if INPUT_DEBUG
+            WriteConsole($"[inputStateCB] WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished()");
+#endif
+            return 0;
+        }
+
+#if _debug_fps_
+      Profiling.input.Start();
 #endif
 
         if (id == RETRO_DEVICE_ID_JOYPAD_MASK && device == LibretroInputDevice.Gamepad.Id)
@@ -1085,117 +1128,19 @@ public static unsafe class LibretroMameCore
         }
 
         Int16 ret = 0;
-
-        if (!InteractionAvailable)
-        {
-#if INPUT_DEBUG
-            WriteConsole($"[inputStateCB] !InteractionAvailable");
-#endif
-            return 0;
-        }
-
-        if (WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished())
-        {
-#if INPUT_DEBUG
-            WriteConsole($"[inputStateCB] WaitToFinishedGameLoad != null && !WaitToFinishedGameLoad.Finished()");
-#endif
-            return 0;
-        }
-
-#if _debug_fps_
-      Profiling.input.Start();
-#endif
-
         if (device == LibretroInputDevice.Gamepad.Id)
         {
-            //InputControlDebug(RETRO_DEVICE_JOYPAD);
-            switch (id)
-            {
-                case RETRO_DEVICE_ID_JOYPAD_SELECT:
-                    if (port == activePlayerSlot)
-                    {
-                        // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                        ret = checkForCoins();
-                    }
-                    break;
-
-                case RETRO_DEVICE_ID_JOYPAD_L3:
-                    //mame menu: joystick right button press and right grip
-                    ret = (ControlMap.Active("JOYPAD_R3") != 0 &&
-                            ControlMap.Active("JOYPAD_R") != 0) ?
-                            (Int16)1 : (Int16)0;
-                    break;
-
-                default:
-                    if (port == activePlayerSlot)
-                    {
-                        ret = (Int16)deviceIdsJoypad.Active(id, 0);
-                    }
-                    // WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
-                    break;
-            }
-            // if (ret != 0)
-            // ConfigManager.WriteConsole($"[inputStateCB] JOYPAD id: {id} name: {deviceIdsJoypad.Id(id)} ret: {ret}");
+            ret = inputStateCB_GamePad(port, device, index, id);
         }
-
         else if (device == LibretroInputDevice.Mouse.Id)
         {
-            //InputControlDebug(RETRO_DEVICE_MOUSE);
-            ret = (Int16)deviceIdsMouse.Active(id, (int)port);
-            // WriteConsole($"[inputStateCB] RETRO_DEVICE_MOUSE_???: id: {id} active: {ret} - port: {port}");
+            ret = inputStateCB_Mouse(port, device, index, id);
         }
-
-        else if (device == LibretroInputDevice.Lightgun.Id &&
-                    lightGunTarget?.lightGunInformation != null &&
-                    lightGunTarget.lightGunInformation.active)
+        else if (device == LibretroInputDevice.Lightgun.Id)
         {
-            WriteConsole($"[inputStateCB] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
-
-            switch (id)
-            {
-                case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
-                    if (port == 0)
-                    {
-                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
-                        ret = checkForCoins();
-                    }
-                    break;
-                case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
-                    if (port != 0)
-                    {
-                        ret = 1;
-                    }
-                    else
-                    {
-                        lock (LightGunLock)
-                        {
-                            WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                            ret = lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
-                        }
-                    }
-                    break;
-                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
-                    lock (LightGunLock)
-                    {
-                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
-                        ret = (Int16)lightGunTarget.HitX;
-                    }
-                    break;
-                case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
-                    lock (LightGunLock)
-                    {
-                        WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
-                        ret = (Int16)lightGunTarget.HitY;
-                    }
-                    break;
-
-                default:
-                    WriteConsole($"[inputStateCB] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} - port: {port}");
-                    ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
-                    WriteConsole($"[inputStateCB] active: {ret}");
-                    break;
-            }
+            ret = inputStateCB_LightGun(port, device, index, id);
         }
+
 #if _debug_fps_
       Profiling.input.Stop();
 #endif
@@ -1205,6 +1150,129 @@ public static unsafe class LibretroMameCore
 #endif
 
         return ret;
+    }
+
+    private static Int16 inputStateCB_GamePad(uint port, uint device, uint index, uint id)
+    {
+        //InputControlDebug(RETRO_DEVICE_JOYPAD);
+        switch (id)
+        {
+            case RETRO_DEVICE_ID_JOYPAD_SELECT:
+                if (port == activePlayerSlot)
+                {
+                    // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                    return checkForCoins();
+                }
+                break;
+
+            case RETRO_DEVICE_ID_JOYPAD_L3:
+                //mame menu: joystick right button press and right grip
+                return (ControlMap.Active("JOYPAD_R3") != 0 &&
+                        ControlMap.Active("JOYPAD_R") != 0) ?
+                        (Int16)1 : (Int16)0;
+
+            default:
+                if (port == activePlayerSlot)
+                {
+                    return (Int16)deviceIdsJoypad.Active(id, 0);
+                }
+                // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
+                break;
+        }
+        return 0;
+    }
+
+    private static Int16 inputStateCB_Mouse(uint port, uint device, uint index, uint id)
+    {
+        //InputControlDebug(RETRO_DEVICE_MOUSE);
+        if (!isMouseAim)
+        {
+            // Regular analog stick driven mouse emulation
+            return (Int16)deviceIdsMouse.Active(id, (int)port);
+        }
+        else
+        {
+            // Aim driven mouse emulation (uses lightgun data)
+            WriteConsole($"[inputStateCB_Mouse] Lightgun at {lightGunTarget.HitX}x{lightGunTarget.HitY}");
+            switch (id)
+            {
+                case RETRO_DEVICE_ID_MOUSE_X:
+                    if (lightGunTarget.OnScreen())
+                    {
+                        Int16 coordX = toScreenCoord(lightGunTarget.HitX, TextureWidth);
+                        Int16 resultX = (Int16)(coordX - lastMouseCoordX);
+                        lastMouseCoordX = coordX;
+                        return resultX;
+                    }
+                    //WriteConsole($"[inputStateCB_Mouse] RETRO_DEVICE_ID_MOUSE_X {ret}");
+                    return 0;
+                case RETRO_DEVICE_ID_MOUSE_Y:
+                    if (lightGunTarget.OnScreen())
+                    {
+                        Int16 coordY = toScreenCoord(lightGunTarget.HitY, TextureHeight);
+                        Int16 resultY = (Int16)(coordY - lastMouseCoordY);
+                        lastMouseCoordY = coordY;
+                        return resultY;
+                    }
+                    //WriteConsole($"[inputStateCB_Mouse] RETRO_DEVICE_ID_MOUSE_Y {ret}");
+                    return 0;
+                default:
+                    return (Int16)deviceIdsMouse.Active(id, (int)port);
+            }
+        }
+    }
+
+    private static Int16 inputStateCB_LightGun(uint port, uint device, uint index, uint id)
+    {
+        WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
+
+        if (lightGunTarget?.lightGunInformation == null || !lightGunTarget.lightGunInformation.active)
+        {
+            return 0;
+        }
+
+        switch (id)
+        {
+            case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
+                if (port == 0)
+                {
+                    WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SELECT: {CoinSlot.ToString()}");
+                    return checkForCoins();
+                }
+                break;
+            case RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN:
+                if (port != 0)      // Lightgun only works on port 0 ???
+                {
+                    return 1;
+                }
+                else
+                {
+                    lock (LightGunLock)
+                    {
+                        WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
+                        return lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
+                    }
+                }
+            case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
+                lock (LightGunLock)
+                {
+                    WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
+                    return (Int16)lightGunTarget.HitX;
+                }
+            case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
+                lock (LightGunLock)
+                {
+                    WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
+                    return (Int16)lightGunTarget.HitY;
+                }
+            default:
+                WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} - port: {port}");
+                Int16 ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
+                WriteConsole($"[inputStateCB_LightGun] active: {ret}");
+                return ret;
+        }
+
+        return 0;
     }
 
     [AOT.MonoPInvokeCallback(typeof(AudioLockHandler))]
