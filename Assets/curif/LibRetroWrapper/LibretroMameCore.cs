@@ -1182,6 +1182,20 @@ public static unsafe class LibretroMameCore
         return 0;
     }
 
+    private static Int16 updateMouseX(Int16 coordX)
+    {
+        Int16 resultX = (Int16)(coordX - lastMouseCoordX);
+        lastMouseCoordX = coordX;
+        return resultX;
+    }
+
+    private static Int16 updateMouseY(Int16 coordY)
+    {
+        Int16 resultY = (Int16)(coordY - lastMouseCoordY);
+        lastMouseCoordY = coordY;
+        return resultY;
+    }
+
     private static Int16 inputStateCB_Mouse(uint port, uint device, uint index, uint id)
     {
         //InputControlDebug(RETRO_DEVICE_MOUSE);
@@ -1197,25 +1211,9 @@ public static unsafe class LibretroMameCore
             switch (id)
             {
                 case RETRO_DEVICE_ID_MOUSE_X:
-                    if (lightGunTarget.OnScreen())
-                    {
-                        Int16 coordX = toScreenCoord(lightGunTarget.HitX, TextureWidth);
-                        Int16 resultX = (Int16)(coordX - lastMouseCoordX);
-                        lastMouseCoordX = coordX;
-                        return resultX;
-                    }
-                    //WriteConsole($"[inputStateCB_Mouse] RETRO_DEVICE_ID_MOUSE_X {ret}");
-                    return 0;
+                    return updateMouseX(toScreenCoord(lightGunTarget.AbsoluteHitX, TextureWidth));
                 case RETRO_DEVICE_ID_MOUSE_Y:
-                    if (lightGunTarget.OnScreen())
-                    {
-                        Int16 coordY = toScreenCoord(lightGunTarget.HitY, TextureHeight);
-                        Int16 resultY = (Int16)(coordY - lastMouseCoordY);
-                        lastMouseCoordY = coordY;
-                        return resultY;
-                    }
-                    //WriteConsole($"[inputStateCB_Mouse] RETRO_DEVICE_ID_MOUSE_Y {ret}");
-                    return 0;
+                    return updateMouseY(toScreenCoord(lightGunTarget.AbsoluteHitY, TextureHeight));
                 default:
                     return (Int16)deviceIdsMouse.Active(id, (int)port);
             }

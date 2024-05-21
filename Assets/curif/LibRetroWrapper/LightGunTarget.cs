@@ -95,6 +95,19 @@ public class LightGunTarget : MonoBehaviour
     [Tooltip("libretro shoot position Y (calculated).")]
     public int HitY;
 
+    [Tooltip("Is aiming above the screen ?")]
+    public bool OutOfScreenTop;
+    [Tooltip("Is aiming under the screen ?")]
+    public bool OutOfScreenBottom;
+    [Tooltip("Is aiming left of the screen ?")]
+    public bool OutOfScreenLeft;
+    [Tooltip("Is aiming right of the screen ?")]
+    public bool OutOfScreenRight;
+    [Tooltip("libretro shoot position X (calculated), even if out of screen")]
+    public int AbsoluteHitX;
+    [Tooltip("libretro shoot position Y (calculated), even if out of screen")]
+    public int AbsoluteHitY;
+
     // Layer mask to filter the raycast hits
     private LayerMask layerMask;
 
@@ -258,6 +271,14 @@ public class LightGunTarget : MonoBehaviour
 
                 HitX = Mathf.RoundToInt(Mathf.Clamp(translatedHitX, -virtualScreenWidth, virtualScreenWidth));
                 HitY = Mathf.RoundToInt(Mathf.Clamp(translatedHitY, -virtualScreenHeight, virtualScreenHeight));
+
+                OutOfScreenLeft = HitX == -virtualScreenWidth;
+                OutOfScreenRight = HitX == virtualScreenWidth;
+                OutOfScreenTop = HitY == -virtualScreenHeight;
+                OutOfScreenBottom = HitY == virtualScreenHeight;
+                AbsoluteHitX = InvertX ? -HitX : HitX;
+                AbsoluteHitY = InvertY ? -HitY : HitY;
+
                 if (Math.Abs(HitX) == virtualScreenWidth || Math.Abs(HitY) == virtualScreenHeight)
                 {
                     declareOutOfScreen();
