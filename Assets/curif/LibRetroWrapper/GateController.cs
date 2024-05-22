@@ -36,7 +36,7 @@ public class GateController : MonoBehaviour
       public float MinimalDistance = 0.9f;
     */
     [Tooltip("Delay between check if the player is present.")]
-    public float IdleTimeCheck = 0.5f;
+    public float IdleTimeCheck = 0.2f;
 
     [Header("Scene Load settings")]
     [Tooltip("Names of the scenes to load.")]
