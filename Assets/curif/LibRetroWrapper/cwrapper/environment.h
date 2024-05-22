@@ -66,7 +66,7 @@ void wrapper_environment_get_av_info();
 double wrapper_environment_get_fps();
 double wrapper_environment_get_sample_rate();
 int wrapper_system_info_need_full_path();
-int wrapper_load_game(char *path,  char *_gamma, char *_brightness, int _xy_control_type);
+int wrapper_load_game(char* path, long size, char* data, char* _gamma, char* _brightness, int _xy_control_type);
 size_t wrapper_get_savestate_size();
 bool wrapper_set_savestate_data(void* data, size_t size);
 bool wrapper_get_savestate_data(void* data, size_t size);
