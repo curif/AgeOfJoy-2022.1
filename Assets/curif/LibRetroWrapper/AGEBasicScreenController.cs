@@ -17,6 +17,9 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using System.Linq;
+using LC = LibretroControlMapDictionnary;
+using CM = ControlMapPathDictionary;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -267,10 +270,10 @@ public class AGEBasicScreenController : MonoBehaviour
         //   ConfigManager.WriteConsole($"[AGEBasicScreenController] controller configuration as markdown in the next line:");
         //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
 #if UNITY_EDITOR
-        controlConf.AddMap("KEYB-UP", "keyboard-w");
-        controlConf.AddMap("KEYB-DOWN", "keyboard-s");
-        controlConf.AddMap("KEYB-LEFT", "keyboard-a");
-        controlConf.AddMap("KEYB-RIGHT", "keyboard-d");
+        controlConf.AddMap(LC.KEYB_UP, CM.KEYBOARD_W);
+        controlConf.AddMap(LC.KEYB_DOWN, CM.KEYBOARD_S);
+        controlConf.AddMap(LC.KEYB_LEFT, CM.KEYBOARD_A);
+        controlConf.AddMap(LC.KEYB_RIGHT, CM.KEYBOARD_D);
 #endif
         libretroControlMap.CreateFromConfiguration(controlConf, name);
         libretroControlMap.Enable(true);
@@ -339,7 +342,7 @@ public class AGEBasicScreenController : MonoBehaviour
                             if (! cabinetAGEBasic.AGEBasic.IsRunning())
                                 return true;
 
-                            if (libretroControlMap.Active("EXIT") == 1)
+                            if (libretroControlMap.Active(LC.EXIT) == 1)
                                 return true;
 
 #if UNITY_EDITOR

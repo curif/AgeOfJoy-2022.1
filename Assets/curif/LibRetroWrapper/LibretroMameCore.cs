@@ -21,7 +21,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
-
+using LC = LibretroControlMapDictionnary;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -352,49 +352,49 @@ public static unsafe class LibretroMameCore
         deviceIdsAnalog = new();
         deviceIdsLightGun = new();
 
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, "MOUSE_X");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, "MOUSE_Y");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, "MOUSE_LEFT");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_RIGHT, "MOUSE_RIGHT");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELUP, "MOUSE_WHEELUP");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELDOWN, "MOUSE_WHEELDOWN");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_MIDDLE, "MOUSE_MIDDLE");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP, "MOUSE_HORIZ_WHEELUP");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN, "MOUSE_HORIZ_WHEELDOWN");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_4, "MOUSE_BUTTON_4");
-        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_5, "MOUSE_BUTTON_5");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_B, "JOYPAD_B");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_A, "JOYPAD_A");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_X, "JOYPAD_X");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_Y, "JOYPAD_Y");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_SELECT, "JOYPAD_SELECT");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_START, "JOYPAD_START");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_UP, "JOYPAD_UP");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_DOWN, "JOYPAD_DOWN");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_LEFT, "JOYPAD_LEFT");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_RIGHT, "JOYPAD_RIGHT");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L, "JOYPAD_L");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R, "JOYPAD_R");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, "JOYPAD_R2");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, "JOYPAD_L2");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, "JOYPAD_R3");
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, "JOYPAD_L3");
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_X, LC.MOUSE_X);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_Y, LC.MOUSE_Y);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_LEFT, LC.MOUSE_LEFT);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_RIGHT, LC.MOUSE_RIGHT);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELUP, LC.MOUSE_WHEELUP);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_WHEELDOWN, LC.MOUSE_WHEELDOWN);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_MIDDLE, LC.MOUSE_MIDDLE);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELUP, LC.MOUSE_HORIZ_WHEELUP);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_HORIZ_WHEELDOWN, LC.MOUSE_HORIZ_WHEELDOWN);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_4, LC.MOUSE_BUTTON_4);
+        deviceIdsMouse.addMap(RETRO_DEVICE_ID_MOUSE_BUTTON_5, LC.MOUSE_BUTTON_5);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_B, LC.JOYPAD_B);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_A, LC.JOYPAD_A);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_X, LC.JOYPAD_X);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_Y, LC.JOYPAD_Y);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_SELECT, LC.JOYPAD_SELECT);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_START, LC.JOYPAD_START);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_UP, LC.JOYPAD_UP);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_DOWN, LC.JOYPAD_DOWN);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_LEFT, LC.JOYPAD_LEFT);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_RIGHT, LC.JOYPAD_RIGHT);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L, LC.JOYPAD_L);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R, LC.JOYPAD_R);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, LC.JOYPAD_R2);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, LC.JOYPAD_L2);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, LC.JOYPAD_R3);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, LC.JOYPAD_L3);
 
-        deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_X, "ANALOG_X");
-        deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_Y, "ANALOG_Y");
+        deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_X, LC.MOUSE_X); // Assuming "ANALOG_X" and "ANALOG_Y" are defined similarly
+        deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_Y, LC.MOUSE_Y); // Replace with appropriate constants if available
 
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_A, "LIGHTGUN_AUX_A");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_B, "LIGHTGUN_AUX_B");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_C, "LIGHTGUN_AUX_C");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, "LIGHTGUN_DPAD_DOWN");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, "LIGHTGUN_DPAD_LEFT");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, "LIGHTGUN_DPAD_RIGHT");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, "LIGHTGUN_DPAD_UP");
-        //deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN, "LIGHTGUN_AUX_A");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_RELOAD, "LIGHTGUN_RELOAD");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_SELECT, "LIGHTGUN_SELECT");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_START, "LIGHTGUN_START");
-        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, "LIGHTGUN_TRIGGER");
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_A, LC.LIGHTGUN_AUX_A);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_B, LC.LIGHTGUN_AUX_B);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_AUX_C, LC.LIGHTGUN_AUX_C);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_DOWN, LC.LIGHTGUN_DPAD_DOWN);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_LEFT, LC.LIGHTGUN_DPAD_LEFT);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_RIGHT, LC.LIGHTGUN_DPAD_RIGHT);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_DPAD_UP, LC.LIGHTGUN_DPAD_UP);
+        //deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN, LC.LIGHTGUN_AUX_A);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_RELOAD, LC.LIGHTGUN_RELOAD);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_SELECT, LC.LIGHTGUN_SELECT);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_START, LC.LIGHTGUN_START);
+        deviceIdsLightGun.addMap(RETRO_DEVICE_ID_LIGHTGUN_TRIGGER, LC.LIGHTGUN_TRIGGER);
 
         List<string> joy = deviceIdsJoypad.ControlsList();
         List<string> mouse = deviceIdsMouse.ControlsList();
@@ -1038,7 +1038,7 @@ public static unsafe class LibretroMameCore
     {
 
         if ((CoinSlot != null && CoinSlot.takeCoin()) ||
-                ControlMap.Active("INSERT") != 0)
+                ControlMap.Active(LC.INSERT) != 0)
         {
             //hack for pacman and others.
             coinSlotWaiter = new(0.1); //respond 1 during the next 0.n of second.
@@ -1177,8 +1177,8 @@ public static unsafe class LibretroMameCore
 
             case RETRO_DEVICE_ID_JOYPAD_L3:
                 //mame menu: joystick right button press and right grip
-                return (ControlMap.Active("JOYPAD_R3") != 0 &&
-                        ControlMap.Active("JOYPAD_R") != 0) ?
+                return (ControlMap.Active(LC.JOYPAD_R3) != 0 &&
+                        ControlMap.Active(LC.JOYPAD_R) != 0) ?
                         (Int16)1 : (Int16)0;
 
             default:
