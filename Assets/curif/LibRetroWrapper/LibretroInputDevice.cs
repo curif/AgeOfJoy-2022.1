@@ -37,6 +37,12 @@ public class LibretroInputDevice
     private static uint RETRO_DEVICE_MENACER = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 1);
     private static uint RETRO_DEVICE_JUSTIFIERS = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_LIGHTGUN, 2);
 
+    // FCEUmm devices
+    private static uint RETRO_DEVICE_ZAPPER = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE, 0);
+    private static uint RETRO_DEVICE_ARKANOID = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE, 1);
+    private static uint RETRO_DEVICE_POWERPADA = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 0);
+    private static uint RETRO_DEVICE_POWERPADB = RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_KEYBOARD, 1);
+
     public static LibretroInputDevice Empty = new LibretroInputDevice("empty", RETRO_DEVICE_NONE);
     public static LibretroInputDevice Gamepad = new LibretroInputDevice("gamepad", RETRO_DEVICE_JOYPAD);
     public static LibretroInputDevice Mouse = new LibretroInputDevice("mouse", RETRO_DEVICE_MOUSE, "stick");
@@ -63,6 +69,10 @@ public class LibretroInputDevice
     public static LibretroInputDevice GenesisMenacer = new LibretroInputDevice("sega_menacer", RETRO_DEVICE_MENACER);
     public static LibretroInputDevice GenesisJustifiers = new LibretroInputDevice("sega_justifiers", RETRO_DEVICE_JUSTIFIERS);
 
+    public static LibretroInputDevice NesZapper = new LibretroInputDevice("nes_zapper", RETRO_DEVICE_ZAPPER);
+    public static LibretroInputDevice NesArkanoid = new LibretroInputDevice("nes_arkanoid", RETRO_DEVICE_ARKANOID);
+    public static LibretroInputDevice NesPowerPadA = new LibretroInputDevice("nes_powerpad_a", RETRO_DEVICE_POWERPADA);
+    public static LibretroInputDevice NesPowerPadB = new LibretroInputDevice("nes_powerpad_b", RETRO_DEVICE_POWERPADB);
 
     public static Dictionary<string, LibretroInputDevice> keyValuePairs = new Dictionary<string, LibretroInputDevice>
     {
@@ -87,7 +97,11 @@ public class LibretroInputDevice
         { SnesMacsRifle.Name, SnesMacsRifle },
         { GenesisPhaser.Name, GenesisPhaser },
         { GenesisMenacer.Name, GenesisMenacer },
-        { GenesisJustifiers.Name, GenesisJustifiers }
+        { GenesisJustifiers.Name, GenesisJustifiers },
+        { NesZapper.Name, NesZapper },
+        { NesArkanoid.Name, NesArkanoid },
+        { NesPowerPadA.Name, NesPowerPadA },
+        { NesPowerPadB.Name, NesPowerPadB }
     };
 
     public static LibretroInputDevice GetInputDeviceType(string name)

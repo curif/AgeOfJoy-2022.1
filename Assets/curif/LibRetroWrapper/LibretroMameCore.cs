@@ -276,8 +276,7 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_retro_deinit();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int wrapper_load_game(string path, string _gamma,
-                                                        string _brightness, uint xy_device);
+    private static extern int wrapper_load_game(string path, long size, byte[] data, string gamma, string brightness, uint xy_device);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_unload_game();
 
@@ -505,13 +504,7 @@ public static unsafe class LibretroMameCore
                             new AudioUnlockHandler(AudioUnlockCB));
         wrapper_environment_init();
 
-        //if (wrapper_system_info_need_full_path() == 0)
-        //{
-        //    ClearAll();
-        //    WriteConsole("[LibRetroMameCore.Start] ERROR only implemented MAME full path");
-        //    return false;
-        //}
-
+        int needFullPath = wrapper_system_info_need_full_path();
         WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
         GameFileName = gameFileName;
         ScreenName = screenName;
@@ -523,7 +516,14 @@ public static unsafe class LibretroMameCore
         int xy_device = (lightGunTarget?.lightGunInformation != null && lightGunTarget.lightGunInformation.active) ? 1 : 0;
 
         WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
-        GameLoaded = wrapper_load_game(path, Gamma, Brightness, (uint)xy_device) == 1;
+
+        byte[] data = null;
+        long fileSizeInBytes = 0;
+        if (needFullPath == 0) { 
+            data = File.ReadAllBytes(path);
+            fileSizeInBytes = data.Length;
+        }
+        GameLoaded = wrapper_load_game(path, fileSizeInBytes, data, Gamma, Brightness, (uint)xy_device) == 1;
         if (!GameLoaded)
         {
             ClearAll();
@@ -1297,7 +1297,7 @@ public static unsafe class LibretroMameCore
                 {
                     return 0;   // No multitouch support
                 }
-                return inputStateCB_LightGun(port, LibretroInputDevice.Lightgun.Id, index, RETRO_DEVICE_ID_LIGHTGUN_AUX_A);
+                return inputStateCB_LightGun(0, LibretroInputDevice.Lightgun.Id, index, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER);
             default:
                 return 0;
         }

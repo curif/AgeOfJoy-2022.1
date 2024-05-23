@@ -611,8 +611,7 @@ void wrapper_retro_deinit() {
 	wrapper_dlclose();
 }
 
-int wrapper_load_game(char* path, char* _gamma, char* _brightness,
-	int _xy_control_type) {
+int wrapper_load_game(char* path, long size, char* data, char* _gamma, char* _brightness, int _xy_control_type) {
 
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game]\n");
 	if (!handlers.handle)
@@ -621,13 +620,15 @@ int wrapper_load_game(char* path, char* _gamma, char* _brightness,
 	INIT_STRUCT(game_info);
 	INIT_AND_COPY_STRING(game_path, path);
 	game_info.path = game_path;
+	game_info.data = data;
+	game_info.size = size;
 
 	wrapper_image_prev_load_game();
 	wrapper_environment_set_game_parameters(
 		_gamma, _brightness, _xy_control_type); // 0 mouse, 1 lightgun
 
-	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s)--\n",
-		game_info.path);
+	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s) [%d bytes]--\n",
+		game_info.path, game_info.size);
 	bool ret = handlers.retro_load_game(&game_info);
 	
 	wrapper_environment_log(RETRO_LOG_INFO,
