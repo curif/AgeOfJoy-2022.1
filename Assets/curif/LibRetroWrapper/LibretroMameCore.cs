@@ -375,10 +375,10 @@ public static unsafe class LibretroMameCore
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_RIGHT, LC.JOYPAD_RIGHT);
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L, LC.JOYPAD_L);
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R, LC.JOYPAD_R);
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, LC.JOYPAD_R2);
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L2, LC.JOYPAD_L2);
-        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, LC.JOYPAD_R3);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R2, LC.JOYPAD_R2);
         deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_L3, LC.JOYPAD_L3);
+        deviceIdsJoypad.addMap(RETRO_DEVICE_ID_JOYPAD_R3, LC.JOYPAD_R3);
 
         deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_X, LC.MOUSE_X); // Assuming "ANALOG_X" and "ANALOG_Y" are defined similarly
         deviceIdsAnalog.addMap(RETRO_DEVICE_ID_ANALOG_Y, LC.MOUSE_Y); // Replace with appropriate constants if available
@@ -519,7 +519,8 @@ public static unsafe class LibretroMameCore
 
         byte[] data = null;
         long fileSizeInBytes = 0;
-        if (needFullPath == 0) { 
+        if (needFullPath == 0)
+        {
             data = File.ReadAllBytes(path);
             fileSizeInBytes = data.Length;
         }
@@ -994,8 +995,8 @@ public static unsafe class LibretroMameCore
                         RETRO_DEVICE_ID_JOYPAD_R,
                         RETRO_DEVICE_ID_JOYPAD_R2,
                         RETRO_DEVICE_ID_JOYPAD_L2,
-                        RETRO_DEVICE_ID_JOYPAD_R3
-                        //RETRO_DEVICE_ID_JOYPAD_L3 not used in controlMap, mapped in inputcall
+                        RETRO_DEVICE_ID_JOYPAD_R3,
+                        RETRO_DEVICE_ID_JOYPAD_L3
                       })
             {
                 int ret = deviceIdsJoypad.Active(id);
@@ -1165,29 +1166,28 @@ public static unsafe class LibretroMameCore
     private static Int16 inputStateCB_GamePad(uint port, uint device, uint index, uint id)
     {
         //InputControlDebug(RETRO_DEVICE_JOYPAD);
-        switch (id)
+        if (id == RETRO_DEVICE_ID_JOYPAD_SELECT)
         {
-            case RETRO_DEVICE_ID_JOYPAD_SELECT:
-                if (port == activePlayerSlot)
-                {
-                    // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
-                    return checkForCoins();
-                }
-                break;
-
-            case RETRO_DEVICE_ID_JOYPAD_L3:
-                //mame menu: joystick right button press and right grip
-                return (ControlMap.Active(LC.JOYPAD_R3) != 0 &&
-                        ControlMap.Active(LC.JOYPAD_R) != 0) ?
-                        (Int16)1 : (Int16)0;
-
-            default:
-                if (port == activePlayerSlot)
-                {
-                    return (Int16)deviceIdsJoypad.Active(id, 0);
-                }
-                // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
-                break;
+            if (port == activePlayerSlot)
+            {
+                // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_SELECT: {CoinSlot.ToString()}");
+                return checkForCoins();
+            }
+        }
+        else if (Core.StartsWith("mame") && id == RETRO_DEVICE_ID_JOYPAD_L3)
+        {
+            //mame menu: joystick right button press and right grip
+            return (ControlMap.Active(LC.JOYPAD_R3) != 0 &&
+                    ControlMap.Active(LC.JOYPAD_R) != 0) ?
+                    (Int16)1 : (Int16)0;
+        }
+        else
+        {
+            if (port == activePlayerSlot)
+            {
+                return (Int16)deviceIdsJoypad.Active(id, 0);
+            }
+            // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
         }
         return 0;
     }

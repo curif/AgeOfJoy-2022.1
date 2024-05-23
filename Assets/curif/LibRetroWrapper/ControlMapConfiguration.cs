@@ -257,8 +257,7 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap(LC.JOYPAD_L2, new string[] { CM.VR_CONTROLLER_LEFT_GRIP, CM.GAMEPAD_LEFT_BUMPER });
         AddMap(LC.JOYPAD_R2, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_RIGHT_BUMPER });
 
-        // mapped for mame menu in LibretroMameCore
-        //AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3,  new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, CM.GAMEPAD_LEFT_THUMBSTICK_PRESS });
+        AddMap(LC.JOYPAD_L3, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, CM.GAMEPAD_LEFT_THUMBSTICK_PRESS });
         AddMap(LC.JOYPAD_R3, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS, CM.GAMEPAD_RIGHT_THUMBSTICK_PRESS });
 
         AddMap(LC.EXIT, new string[] { CM.VR_CONTROLLER_LEFT_GRIP, CM.GAMEPAD_LEFT_BUMPER, CM.KEYBOARD_ESC });
