@@ -7,6 +7,48 @@ public static class ControlMapPathDictionary
 {
     static Dictionary<string, string> map;
 
+    public const string VR_CONTROLLER_X = "quest-x";
+    public const string VR_CONTROLLER_Y = "quest-y";
+    public const string VR_CONTROLLER_START = "quest-start";
+    public const string VR_CONTROLLER_LEFT_GRIP = "quest-left-grip";
+    public const string VR_CONTROLLER_LEFT_TRIGGER = "quest-left-trigger";
+    public const string VR_CONTROLLER_LEFT_THUMBSTICK = "quest-left-thumbstick";
+    public const string VR_CONTROLLER_LEFT_THUMBSTICK_PRESS = "quest-left-thumbstick-press";
+    public const string VR_CONTROLLER_LEFT_HAPTIC_DEVICE = "quest-left-haptic-device";
+    public const string VR_CONTROLLER_A = "quest-a";
+    public const string VR_CONTROLLER_B = "quest-b";
+    public const string VR_CONTROLLER_SELECT = "quest-select";
+    public const string VR_CONTROLLER_RIGHT_GRIP = "quest-right-grip";
+    public const string VR_CONTROLLER_RIGHT_TRIGGER = "quest-right-trigger";
+    public const string VR_CONTROLLER_RIGHT_THUMBSTICK = "quest-right-thumbstick";
+    public const string VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS = "quest-right-thumbstick-press";
+    public const string VR_CONTROLLER_RIGHT_HAPTIC_DEVICE = "quest-right-haptic-device";
+    public const string GAMEPAD_A = "gamepad-a";
+    public const string GAMEPAD_B = "gamepad-b";
+    public const string GAMEPAD_X = "gamepad-x";
+    public const string GAMEPAD_Y = "gamepad-y";
+    public const string GAMEPAD_SELECT = "gamepad-select";
+    public const string GAMEPAD_START = "gamepad-start";
+    public const string GAMEPAD_LEFT_BUMPER = "gamepad-left-bumper";
+    public const string GAMEPAD_RIGHT_BUMPER = "gamepad-right-bumper";
+    public const string GAMEPAD_LEFT_TRIGGER = "gamepad-left-trigger";
+    public const string GAMEPAD_RIGHT_TRIGGER = "gamepad-right-trigger";
+    public const string GAMEPAD_LEFT_THUMBSTICK = "gamepad-left-thumbstick";
+    public const string GAMEPAD_RIGHT_THUMBSTICK = "gamepad-right-thumbstick";
+    public const string GAMEPAD_LEFT_THUMBSTICK_PRESS = "gamepad-left-thumbstick-press";
+    public const string GAMEPAD_RIGHT_THUMBSTICK_PRESS = "gamepad-right-thumbstick-press";
+    public const string GAMEPAD_DPAD_UP = "gamepad-dpad-up";
+    public const string GAMEPAD_DPAD_DOWN = "gamepad-dpad-down";
+    public const string GAMEPAD_DPAD_LEFT = "gamepad-dpad-left";
+    public const string GAMEPAD_DPAD_RIGHT = "gamepad-dpad-right";
+    public const string KEYBOARD_A = "keyboard-a";
+    public const string KEYBOARD_W = "keyboard-w";
+    public const string KEYBOARD_S = "keyboard-s";
+    public const string KEYBOARD_D = "keyboard-d";
+    public const string KEYBOARD_SPACE = "keyboard-space";
+    public const string KEYBOARD_ESC = "keyboard-esc";
+    public const string KEYBOARD_ENTER = "keyboard-enter";
+
     static ControlMapPathDictionary()
     {
         /*
@@ -19,83 +61,60 @@ public static class ControlMapPathDictionary
            primaryButton [RightHand XR Controller] = A button
        */
         map = new Dictionary<string, string>
-    {
-        
-        //previous maps to 2022.3, ovr oculus controllers
-        // Left VR controller mappings
-        { "quest-x", "<XRController>{LeftHand}/primaryButton" }, //primaryButton
-        { "quest-y", "<XRController>{LeftHand}/secondaryButton" },
-        { "quest-start", "<OculusTouchController>/start" },
-        { "quest-left-grip", "<XRController>{LeftHand}/gripButton" },
-        { "quest-left-trigger", "<XRController>{LeftHand}/trigger" },
-        //{ "quest-left-trigger", "<OculusTouchController>{LeftHand}/triggerPressed" },
-        { "quest-left-thumbstick", "<XRController>{LeftHand}/Primary2DAxis" },
-        { "quest-left-thumbstick-press", "<XRController>{LeftHand}/thumbstickClicked" },
-        { "quest-left-haptic-device", "<XRController>{LeftHand}/*" },
-        
-        // Right VR controller mappings
-        { "quest-a", "<XRController>{RightHand}/primaryButton" },
-        { "quest-b", "<XRController>{RightHand}/secondaryButton" },
-        { "quest-select", "<XRController>{RightHand}/menuButton" },
-        { "quest-right-grip", "<XRController>{RightHand}/gripButton" },
-        { "quest-right-trigger", "<XRController>{RightHand}/trigger" },
-        //{ "quest-right-trigger", "<OculusTouchController>{RightHand}/triggerPressed" },
-        { "quest-right-thumbstick", "<XRController>{RightHand}/Primary2DAxis" },
-        { "quest-right-thumbstick-press", "<XRController>{RightHand}/thumbstickClicked" },
-        { "quest-right-haptic-device", "<XRController>{RightHand}/*" },
+        {
+            // Left VR controller mappings
+            { VR_CONTROLLER_X, "<XRController>{LeftHand}/primaryButton" },
+            { VR_CONTROLLER_Y, "<XRController>{LeftHand}/secondaryButton" },
+            { VR_CONTROLLER_START, "<OculusTouchController>/start" },
+            { VR_CONTROLLER_LEFT_GRIP, "<XRController>{LeftHand}/gripButton" },
+            { VR_CONTROLLER_LEFT_TRIGGER, "<XRController>{LeftHand}/trigger" },
+            { VR_CONTROLLER_LEFT_THUMBSTICK, "<XRController>{LeftHand}/Primary2DAxis" },
+            { VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, "<XRController>{LeftHand}/thumbstickClicked" },
+            { VR_CONTROLLER_LEFT_HAPTIC_DEVICE, "<XRController>{LeftHand}/*" },
 
-/*
-        // Left VR controller mappings
-        { "quest-x", "<OculusTouchController>{LeftHand}/primaryButton" }, //primaryButton
-        { "quest-y", "<OculusTouchController>{LeftHand}/secondaryButton" },
-        { "quest-start", "<OculusTouchController>/start" },
-        { "quest-left-grip", "<OculusTouchController>{LeftHand}/gripPressed" },
-        { "quest-left-trigger", "<OculusTouchController>{LeftHand}/triggerPressed" },
-        { "quest-left-thumbstick", "<OculusTouchController>{LeftHand}/thumbstick" },
-        { "quest-left-thumbstick-press", "<OculusTouchController>{LeftHand}/thumbstickClicked" },
-        
-        // Right VR controller mappings
-        { "quest-a", "<OculusTouchController>{RightHand}/primaryButton" },
-        { "quest-b", "<OculusTouchController>{RightHand}/secondaryButton" },
-        { "quest-select", "<OculusTouchController>{RightHand}/start" },
-        { "quest-right-grip", "<OculusTouchController>{RightHand}/gripPressed" },
-        { "quest-right-trigger", "<OculusTouchController>{RightHand}/triggerPressed" },
-        { "quest-right-thumbstick", "<OculusTouchController>{RightHand}/thumbstick" },
-        { "quest-right-thumbstick-press", "<OculusTouchController>{RightHand}/thumbstickClicked" },
-*/
-        //Gamepad mappings
-        { "gamepad-a", "<Gamepad>/buttonSouth" },
-        { "gamepad-b", "<Gamepad>/buttonEast" },
-        { "gamepad-x", "<Gamepad>/buttonWest" },
-        { "gamepad-y", "<Gamepad>/buttonNorth" },
-        { "gamepad-select", "<Gamepad>/select" },
-        { "gamepad-start", "<Gamepad>/start" },
-        { "gamepad-left-bumper", "<Gamepad>/leftShoulder" },
-        { "gamepad-right-bumper", "<Gamepad>/rightShoulder" },
-        { "gamepad-left-trigger", "<Gamepad>/leftTrigger" },
-        { "gamepad-right-trigger", "<Gamepad>/rightTrigger" },
-        { "gamepad-left-thumbstick", "<Gamepad>/leftStick" },
-        { "gamepad-right-thumbstick", "<Gamepad>/rightStick" },
-        { "gamepad-left-thumbstick-press", "<Gamepad>/leftStickPress" },
-        { "gamepad-right-thumbstick-press", "<Gamepad>/rightStickPress" },
-        { "gamepad-dpad-up", "<Gamepad>/dpad/up" },
-        { "gamepad-dpad-down", "<Gamepad>/dpad/down" },
-        { "gamepad-dpad-left", "<Gamepad>/dpad/left" },
-        { "gamepad-dpad-right", "<Gamepad>/dpad/right" },
+            // Right VR controller mappings
+            { VR_CONTROLLER_A, "<XRController>{RightHand}/primaryButton" },
+            { VR_CONTROLLER_B, "<XRController>{RightHand}/secondaryButton" },
+            { VR_CONTROLLER_SELECT, "<XRController>{RightHand}/menuButton" },
+            { VR_CONTROLLER_RIGHT_GRIP, "<XRController>{RightHand}/gripButton" },
+            { VR_CONTROLLER_RIGHT_TRIGGER, "<XRController>{RightHand}/trigger" },
+            { VR_CONTROLLER_RIGHT_THUMBSTICK, "<XRController>{RightHand}/Primary2DAxis" },
+            { VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS, "<XRController>{RightHand}/thumbstickClicked" },
+            { VR_CONTROLLER_RIGHT_HAPTIC_DEVICE, "<XRController>{RightHand}/*" },
 
-        //keyboard
-        { "keyboard-a", "<keyboard>/a"},
-        { "keyboard-w", "<keyboard>/w"},
-        { "keyboard-s", "<keyboard>/s"},
-        { "keyboard-d", "<keyboard>/d"},
-        { "keyboard-space", "<keyboard>/space"},
-        { "keyboard-esc", "<keyboard>/escape"},
-        { "keyboard-enter", "<keyboard>/enter"}
-      };
+            // Gamepad mappings
+            { GAMEPAD_A, "<Gamepad>/buttonSouth" },
+            { GAMEPAD_B, "<Gamepad>/buttonEast" },
+            { GAMEPAD_X, "<Gamepad>/buttonWest" },
+            { GAMEPAD_Y, "<Gamepad>/buttonNorth" },
+            { GAMEPAD_SELECT, "<Gamepad>/select" },
+            { GAMEPAD_START, "<Gamepad>/start" },
+            { GAMEPAD_LEFT_BUMPER, "<Gamepad>/leftShoulder" },
+            { GAMEPAD_RIGHT_BUMPER, "<Gamepad>/rightShoulder" },
+            { GAMEPAD_LEFT_TRIGGER, "<Gamepad>/leftTrigger" },
+            { GAMEPAD_RIGHT_TRIGGER, "<Gamepad>/rightTrigger" },
+            { GAMEPAD_LEFT_THUMBSTICK, "<Gamepad>/leftStick" },
+            { GAMEPAD_RIGHT_THUMBSTICK, "<Gamepad>/rightStick" },
+            { GAMEPAD_LEFT_THUMBSTICK_PRESS, "<Gamepad>/leftStickPress" },
+            { GAMEPAD_RIGHT_THUMBSTICK_PRESS, "<Gamepad>/rightStickPress" },
+            { GAMEPAD_DPAD_UP, "<Gamepad>/dpad/up" },
+            { GAMEPAD_DPAD_DOWN, "<Gamepad>/dpad/down" },
+            { GAMEPAD_DPAD_LEFT, "<Gamepad>/dpad/left" },
+            { GAMEPAD_DPAD_RIGHT, "<Gamepad>/dpad/right" },
+
+            // Keyboard mappings
+            { KEYBOARD_A, "<keyboard>/a" },
+            { KEYBOARD_W, "<keyboard>/w" },
+            { KEYBOARD_S, "<keyboard>/s" },
+            { KEYBOARD_D, "<keyboard>/d" },
+            { KEYBOARD_SPACE, "<keyboard>/space" },
+            { KEYBOARD_ESC, "<keyboard>/escape" },
+            { KEYBOARD_ENTER, "<keyboard>/enter" }
+        };
     }
     public static string GetBehavior(string realControl)
     {
-        if (realControl == "quest-right-thumbstick" || realControl == "quest-left-thumbstick")
+        if (realControl == VR_CONTROLLER_RIGHT_THUMBSTICK || realControl == VR_CONTROLLER_LEFT_THUMBSTICK)
             return "axis";
 
         return "button";

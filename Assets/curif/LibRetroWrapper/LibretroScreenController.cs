@@ -11,13 +11,12 @@ You should have received a copy of the GNU General Public License along with thi
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Runtime.InteropServices;
 using System;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using System.Linq;
 using AOJ.Managers; // Geometrrizer: Allows access to EventManager for player FX
+using LC = LibretroControlMapDictionnary;
 
 
 #if UNITY_EDITOR
@@ -446,7 +445,7 @@ public class LibretroScreenController : MonoBehaviour
 
     bool PlayerWantsToExit()
     {
-        if (libretroControlMap.Active("EXIT") == 1)
+        if (libretroControlMap.Active(LC.EXIT) == 1)
             return true;
 #if UNITY_EDITOR
         if (SimulateExitGame)

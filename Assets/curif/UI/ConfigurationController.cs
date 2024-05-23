@@ -5,14 +5,10 @@ using System.Linq;
 using System.IO;
 
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
-using UnityEngine.XR;
-using UnityEngine.XR.Interaction.Toolkit;
-using UnityEngine.InputSystem;
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
-using Unity.VisualScripting;
-
+using LC = LibretroControlMapDictionnary;
+using CM = ControlMapPathDictionary;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -321,11 +317,11 @@ public class ConfigurationController : MonoBehaviour
     */
     void UpdateInputValues()
     {
-        inputDictionary["up"] = inputDictionary["up"] || ControlActive("JOYPAD_UP") || ControlActive("KEYB-UP");
-        inputDictionary["down"] = inputDictionary["down"] || ControlActive("JOYPAD_DOWN") || ControlActive("KEYB-DOWN");
-        inputDictionary["left"] = inputDictionary["left"] || ControlActive("JOYPAD_LEFT") || ControlActive("KEYB-LEFT");
-        inputDictionary["right"] = inputDictionary["right"] || ControlActive("JOYPAD_RIGHT") || ControlActive("KEYB-RIGHT");
-        inputDictionary["action"] = inputDictionary["action"] || ControlActive("JOYPAD_B");
+        inputDictionary["up"] = inputDictionary["up"] || ControlActive(LC.JOYPAD_UP) || ControlActive(LC.KEYB_UP);
+        inputDictionary["down"] = inputDictionary["down"] || ControlActive(LC.JOYPAD_DOWN) || ControlActive(LC.KEYB_DOWN);
+        inputDictionary["left"] = inputDictionary["left"] || ControlActive(LC.JOYPAD_LEFT) || ControlActive(LC.KEYB_LEFT);
+        inputDictionary["right"] = inputDictionary["right"] || ControlActive(LC.JOYPAD_RIGHT) || ControlActive(LC.KEYB_RIGHT);
+        inputDictionary["action"] = inputDictionary["action"] || ControlActive(LC.JOYPAD_B);
     }
 
     void ResetInputValues()
@@ -346,10 +342,10 @@ public class ConfigurationController : MonoBehaviour
 
         ControlMapConfiguration conf = new DefaultControlMap();
 #if UNITY_EDITOR
-        conf.AddMap("KEYB-UP", "keyboard-w");
-        conf.AddMap("KEYB-DOWN", "keyboard-s");
-        conf.AddMap("KEYB-LEFT", "keyboard-a");
-        conf.AddMap("KEYB-RIGHT", "keyboard-d");
+        conf.AddMap(LC.KEYB_UP, CM.KEYBOARD_W);
+        conf.AddMap(LC.KEYB_DOWN, CM.KEYBOARD_S);
+        conf.AddMap(LC.KEYB_LEFT, CM.KEYBOARD_A);
+        conf.AddMap(LC.KEYB_RIGHT, CM.KEYBOARD_D);
 #endif
         libretroControlMap.CreateFromConfiguration(conf, "inputMap_ConfigurationController_" + name);
         libretroControlMap.Enable(true);
@@ -1681,17 +1677,17 @@ public class ConfigurationController : MonoBehaviour
                 })
               .Do("Process", () =>
                 {
-                    if (inputDictionary["up"] || ControlActive("KEYB-UP"))
+                    if (inputDictionary["up"] || ControlActive(LC.KEYB_UP))
                         controllerContainer.PreviousOption();
-                    else if (inputDictionary["down"] || ControlActive("KEYB-DOWN"))
+                    else if (inputDictionary["down"] || ControlActive(LC.KEYB_DOWN))
                         controllerContainer.NextOption();
 
                     GenericWidget w = controllerContainer.GetSelectedWidget();
 
                     if (w != null)
                     {
-                        bool right = inputDictionary["left"] || ControlActive("KEYB-LEFT");
-                        bool left = inputDictionary["right"] || ControlActive("KEYB-RIGHT");
+                        bool right = inputDictionary["left"] || ControlActive(LC.KEYB_LEFT);
+                        bool left = inputDictionary["right"] || ControlActive(LC.KEYB_RIGHT);
 
                         if (inputDictionary["action"])
                         {
