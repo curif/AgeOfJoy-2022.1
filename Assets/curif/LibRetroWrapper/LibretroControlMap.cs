@@ -63,6 +63,11 @@ public class LibretroControlMap : MonoBehaviour
         return false;
     }
 
+    public bool isActive(string mameControl, int port = 0)
+    {
+        return Active(mameControl, port) !=0;
+    }
+
     public int Active(string mameControl, int port = 0)
     {
         int ret = 0;

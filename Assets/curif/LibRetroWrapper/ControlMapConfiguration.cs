@@ -222,7 +222,7 @@ public class DefaultControlMap : ControlMapConfiguration
     {
         mapList = new();
 
-        mapList = new();
+        AddMap(LC.MODIFIER, new string[] { CM.VR_CONTROLLER_LEFT_GRIP });
 
         //fire with b-button and trigger.
         AddMap(LC.JOYPAD_B, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.KEYBOARD_ENTER });
