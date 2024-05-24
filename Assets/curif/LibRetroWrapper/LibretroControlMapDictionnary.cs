@@ -43,6 +43,8 @@ public class LibretroControlMapDictionnary
     public static string LIGHTGUN_TRIGGER = "LIGHTGUN_TRIGGER";
     public static string LIGHTGUN_RELOAD = "LIGHTGUN_RELOAD";
 
+    public static string MODIFIER = "MODIFIER";
+
     public static string KEYB_UP = "KEYB-UP";
     public static string KEYB_DOWN = "KEYB-DOWN";
     public static string KEYB_LEFT = "KEYB-LEFT";

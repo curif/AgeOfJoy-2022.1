@@ -169,6 +169,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	if (load_symbol((void**)&handlers.retro_unserialize, "retro_unserialize") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_get_memory_size, "retro_get_memory_size") < 0) return -1;
 	if (load_symbol((void**)&handlers.retro_get_memory_data, "retro_get_memory_data") < 0) return -1;
+	if (load_symbol((void**)&handlers.retro_reset, "retro_reset") < 0) return -1;
 
 	INIT_STRUCT(system_info);
 	INIT_STRUCT(av_info);
@@ -224,6 +225,13 @@ void wrapper_environment_init() {
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_init] end ----------\n");
+}
+
+void wrapper_reset() {
+	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_retro_reset]\n");
+	if (!handlers.handle)
+		return;
+	handlers.retro_reset();
 }
 
 void wrapper_environment_get_system_info() {

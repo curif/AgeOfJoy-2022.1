@@ -222,7 +222,7 @@ public class DefaultControlMap : ControlMapConfiguration
     {
         mapList = new();
 
-        mapList = new();
+        AddMap(LC.MODIFIER, new string[] { CM.VR_CONTROLLER_LEFT_GRIP });
 
         //fire with b-button and trigger.
         AddMap(LC.JOYPAD_B, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.KEYBOARD_ENTER });
@@ -260,7 +260,7 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap(LC.JOYPAD_L3, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, CM.GAMEPAD_LEFT_THUMBSTICK_PRESS });
         AddMap(LC.JOYPAD_R3, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS, CM.GAMEPAD_RIGHT_THUMBSTICK_PRESS });
 
-        AddMap(LC.EXIT, new string[] { CM.VR_CONTROLLER_LEFT_GRIP, CM.GAMEPAD_LEFT_BUMPER, CM.KEYBOARD_ESC });
+        AddMap(LC.EXIT, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_LEFT_BUMPER, CM.KEYBOARD_ESC });
         AddMap(LC.INSERT, CM.GAMEPAD_SELECT);
 
         AddMap(LC.MOUSE_X, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis");

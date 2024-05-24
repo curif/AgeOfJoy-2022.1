@@ -43,6 +43,7 @@ typedef struct handlers_struct {
   bool (*retro_unserialize)(void* data, size_t size);
   size_t (*retro_get_memory_size)(unsigned id);
   void* (*retro_get_memory_data)(unsigned id);
+  void* (*retro_reset)();
 } handlers_t;
 
 handlers_t *wrapper_environment_get_handlers();
@@ -57,7 +58,6 @@ int wrapper_environment_open(wrapper_log_printf_t log,
 void wrapper_environment_init();                              
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, 
                                               int _xy_control_type);
-void wrapper_retro_init();
 bool wrapper_environment_cb(unsigned cmd, void *data);
 enum retro_pixel_format wrapper_environment_get_pixel_format();
 void wrapper_environment_log(enum retro_log_level level, const char *format, ...);
@@ -73,6 +73,7 @@ bool wrapper_get_savestate_data(void* data, size_t size);
 size_t wrapper_get_memory_size(unsigned id);
 void* wrapper_get_memory_data(unsigned id);
 void wrapper_set_controller_port_device(unsigned port, unsigned device);
+void wrapper_reset();
 
 #ifdef __cplusplus
 }

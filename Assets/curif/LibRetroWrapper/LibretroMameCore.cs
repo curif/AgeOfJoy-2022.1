@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
 using LC = LibretroControlMapDictionnary;
+using UnityEngine.InputSystem;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -279,6 +280,8 @@ public static unsafe class LibretroMameCore
     private static extern int wrapper_load_game(string path, long size, byte[] data, string gamma, string brightness, uint xy_device);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_unload_game();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_reset();
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_system_info_need_full_path();
@@ -542,6 +545,7 @@ public static unsafe class LibretroMameCore
             wrapper_set_controller_port_device(port, deviceId);
         }
         resetMouseAim();
+        activePlayerSlot = 0;  // Default back to Player 1 on cab startup
 
 #if !UNITY_EDITOR
         loadState(GameFileName);
@@ -850,10 +854,42 @@ public static unsafe class LibretroMameCore
                     // ConfigManager.WriteConsole($"[StartRunThread.retroRunTask] wrapper_run -------------------------");
                     wrapper_run();
                     // ConfigManager.WriteConsole($"[retroRunTask] wrapper_run end IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status} -------------------------");
+                    handleSpecialInputs();
                 }
             }
         }
         );
+    }
+
+    // Handle inputs for UI actions while game is running (e.g. non-libretro)
+    public static void handleSpecialInputs()
+    {
+        if (ControlMap.isActive(LC.MODIFIER))
+        {
+            // Reset game
+            if (ControlMap.isActive(LC.JOYPAD_R3))
+            {
+                wrapper_reset();
+            }
+
+            // Change active player slot
+            if (ControlMap.isActive(LC.JOYPAD_A))
+            {
+                activePlayerSlot = 0;
+            }
+            if (ControlMap.isActive(LC.JOYPAD_B))
+            {
+                activePlayerSlot = 1;
+            }
+            if (ControlMap.isActive(LC.JOYPAD_X))
+            {
+                activePlayerSlot = 2;
+            }
+            if (ControlMap.isActive(LC.JOYPAD_Y))
+            {
+                activePlayerSlot = 3;
+            }
+        }
     }
 
     public static void StartInteractions()
@@ -1038,8 +1074,7 @@ public static unsafe class LibretroMameCore
     static Int16 checkForCoins()
     {
 
-        if ((CoinSlot != null && CoinSlot.takeCoin()) ||
-                ControlMap.Active(LC.INSERT) != 0)
+        if ((CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT))
         {
             //hack for pacman and others.
             coinSlotWaiter = new(0.1); //respond 1 during the next 0.n of second.
@@ -1088,6 +1123,12 @@ public static unsafe class LibretroMameCore
     [AOT.MonoPInvokeCallback(typeof(inputStateHandler))]
     static Int16 inputStateCB(uint port, uint device, uint index, uint id)
     {
+        // We are using the modifier key to allow for special actions, ignore all other inputs
+        if (ControlMap.isActive(LC.MODIFIER))
+        {
+            return 0;
+        }
+
 #if INPUT_DEBUG
         WriteConsole($"[inputStateCB] dev {device} port {port} index:{index} id: {id}");
 #endif
@@ -1177,8 +1218,7 @@ public static unsafe class LibretroMameCore
         else if (Core.StartsWith("mame") && id == RETRO_DEVICE_ID_JOYPAD_L3)
         {
             //mame menu: joystick right button press and right grip
-            return (ControlMap.Active(LC.JOYPAD_R3) != 0 &&
-                    ControlMap.Active(LC.JOYPAD_R) != 0) ?
+            return (ControlMap.isActive(LC.JOYPAD_R3) && ControlMap.isActive(LC.JOYPAD_R)) ?
                     (Int16)1 : (Int16)0;
         }
         else
@@ -1528,6 +1568,11 @@ public static unsafe class LibretroMameCore
                 return 0;
             }
             return (Int16)controlMap.Active(gameId, port);
+        }
+
+        public bool isActive(uint mameId, int port = 0)
+        {
+            return Active(mameId, port) != 0;
         }
 
         public List<string> ControlsList()
