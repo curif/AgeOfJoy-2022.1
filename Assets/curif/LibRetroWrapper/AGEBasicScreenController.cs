@@ -342,7 +342,7 @@ public class AGEBasicScreenController : MonoBehaviour
                             if (! cabinetAGEBasic.AGEBasic.IsRunning())
                                 return true;
 
-                            if (libretroControlMap.Active(LC.EXIT) == 1)
+                            if (libretroControlMap.isActive(LC.EXIT))
                                 return true;
 
 #if UNITY_EDITOR

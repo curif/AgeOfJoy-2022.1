@@ -251,7 +251,7 @@ public class AGEBasicCabinetController : MonoBehaviour
                     .Sequence()
                         .Condition("user EXIT pressed?", () =>
                         {
-                            if (libretroControlMap.Active(LC.EXIT) == 1)
+                            if (libretroControlMap.isActive(LC.EXIT))
                                 return true;
 #if UNITY_EDITOR
                             if (SimulateExitGame)

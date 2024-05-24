@@ -445,7 +445,7 @@ public class LibretroScreenController : MonoBehaviour
 
     bool PlayerWantsToExit()
     {
-        if (libretroControlMap.Active(LC.EXIT) == 1)
+        if (libretroControlMap.isActive(LC.MODIFIER) && libretroControlMap.isActive(LC.EXIT))
             return true;
 #if UNITY_EDITOR
         if (SimulateExitGame)
