@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System;
+using Oculus.Interaction;
+using UnityEngine.Networking;
 
 public class MusicPlayer : MonoBehaviour
 {
@@ -105,34 +107,83 @@ public class MusicPlayer : MonoBehaviour
 
     private IEnumerator PlayMusicCoroutine(string musicFilePath)
     {
-        string filePath = "file://" + musicFilePath;
-        using (WWW www = new WWW(filePath))
+        string filePath;
+        if (musicFilePath.EndsWith(".strm"))
+            filePath = ReadUrlFromStrmFile(musicFilePath);
+        else
+            filePath = "file://" + musicFilePath;
+        
+        if (!string.IsNullOrEmpty(filePath))
         {
-            // Wait until the audio file is loaded
-            yield return www;
-
-            // Check if there was an error loading the audio file
-            if (string.IsNullOrEmpty(www.error))
+            if (filePath.StartsWith("file:"))
             {
-                AudioClip clip = www.GetAudioClip(false, false);
-
-                if (clip != null)
+                using (WWW www = new WWW(filePath))
                 {
-                    audioSource.clip = clip;
-                    audioSource.Play();
+                    // Wait until the audio file is loaded
+                    yield return www;
 
-                    yield return new WaitForSeconds(clip.length);
-                }
-                else
-                {
-                   ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio clip: " + musicFilePath);
+                    // Check if there was an error loading the audio file
+                    if (string.IsNullOrEmpty(www.error))
+                    {
+                        AudioClip clip = www.GetAudioClip(false, false);
+
+                        if (clip != null)
+                        {
+                            audioSource.clip = clip;
+                            audioSource.Play();
+
+                            yield return new WaitForSeconds(clip.length);
+                        }
+                        else
+                        {
+                            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio clip: " + musicFilePath);
+                        }
+                    }
+                    else
+                    {
+                        ConfigManager.WriteConsoleWarning($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio file: " + musicFilePath + ", Error: " + www.error);
+                    }
                 }
             }
             else
             {
-                ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] FFailed to load audio file: " + musicFilePath + ", Error: " + www.error);
+                // https://github.com/mikepierce/internet-radio-streams
+                // is a stream
+                ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Stream: {filePath}");
+
+                using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(filePath, AudioType.UNKNOWN))
+                {
+                    DownloadHandlerAudioClip dHA = new DownloadHandlerAudioClip(string.Empty, AudioType.UNKNOWN);
+                    dHA.streamAudio = true;
+                    www.downloadHandler = dHA;
+                    www.SendWebRequest();
+                    while (www.downloadProgress < 1)
+                    {
+                        ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load a stream file: {filePath} progress: {www.downloadProgress}");
+                        yield return new WaitForSeconds(.5f);
+                    }
+
+                    if (www.result == UnityWebRequest.Result.ConnectionError || 
+                        www.result == UnityWebRequest.Result.ProtocolError)
+                    {
+                        ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load a stream url: " + musicFilePath);
+                        RemoveMusic(musicFilePath);
+                    }
+                    else
+                    {
+                        AudioClip audioClip = DownloadHandlerAudioClip.GetContent(www);
+                        audioSource.clip = audioClip;
+                        audioSource.Play();
+                        audioSource.loop = true; // Ensure continuous playback
+                    }
+                }
             }
         }
+        else
+        {
+            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio empty audio file: " + musicFilePath);
+        }
+
         currentIndex++;
 
         if (currentIndex >= musicQueue.Count)
@@ -150,7 +201,20 @@ public class MusicPlayer : MonoBehaviour
 
         PlayMusic();
     }
-    
+    string ReadUrlFromStrmFile(string filePath)
+    {
+        try
+        {
+            return System.IO.File.ReadAllText(filePath).Trim();
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"Error reading .strm file: {filePath}", e);
+            return null;
+        }
+    }
+
+
     public void Next()
     {
         if (musicQueue.Count > 0)
