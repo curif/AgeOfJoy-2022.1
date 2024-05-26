@@ -5,7 +5,8 @@ using System.Text;
 using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
-
+using CM = ControlMapPathDictionary;
+using LC = LibretroControlMapDictionnary;
 public class ControlMapConfiguration
 {
     [YamlMember(Alias = "maps", ApplyNamingConventions = false)]
@@ -221,76 +222,74 @@ public class DefaultControlMap : ControlMapConfiguration
     {
         mapList = new();
 
+        AddMap(LC.MODIFIER, new string[] { CM.VR_CONTROLLER_LEFT_GRIP });
+
         //fire with b-button and trigger.
-        AddMap("JOYPAD_B", new string[] { "quest-b", "gamepad-b", "quest-right-trigger", "keyboard-enter" });
+        AddMap(LC.JOYPAD_B, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.KEYBOARD_ENTER });
+        AddMap(LC.JOYPAD_A, new string[] { CM.GAMEPAD_A, CM.VR_CONTROLLER_A });
+        AddMap(LC.JOYPAD_X, new string[] { CM.GAMEPAD_X, CM.VR_CONTROLLER_X });
+        AddMap(LC.JOYPAD_Y, new string[] { CM.GAMEPAD_Y, CM.VR_CONTROLLER_Y });
+        AddMap(LC.JOYPAD_START, new string[] { CM.GAMEPAD_START, CM.VR_CONTROLLER_START });
+        AddMap(LC.JOYPAD_SELECT, new string[] { CM.GAMEPAD_SELECT, CM.VR_CONTROLLER_SELECT });
 
-        AddMap("JOYPAD_A", new string[] { "gamepad-a", "quest-a" });
-        AddMap("JOYPAD_X", new string[] { "gamepad-x", "quest-x" });
-        AddMap("JOYPAD_Y", new string[] { "gamepad-y", "quest-y" });
-        // can'sed.
-        AddMap("JOYPAD_START", new string[] { "gamepad-start", "quest-start" });
-        AddMap("JOYPAD_SELECT", new string[] { "gamepad-select", "quest-select" });
+        AddMap(LC.JOYPAD_UP, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.JOYPAD_DOWN, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.JOYPAD_RIGHT, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.JOYPAD_LEFT, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
 
-        AddMap("JOYPAD_UP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("JOYPAD_DOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("JOYPAD_RIGHT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("JOYPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-
-        AddMap("JOYPAD_UP", new string[] { "gamepad-dpad-up" });
-        AddMap("JOYPAD_DOWN", new string[] { "gamepad-dpad-down" });
-        AddMap("JOYPAD_RIGHT", new string[] { "gamepad-dpad-right" });
-        AddMap("JOYPAD_LEFT", new string[] { "gamepad-dpad-left" });
+        AddMap(LC.JOYPAD_UP, new string[] { CM.GAMEPAD_DPAD_UP });
+        AddMap(LC.JOYPAD_DOWN, new string[] { CM.GAMEPAD_DPAD_DOWN });
+        AddMap(LC.JOYPAD_RIGHT, new string[] { CM.GAMEPAD_DPAD_RIGHT });
+        AddMap(LC.JOYPAD_LEFT, new string[] { CM.GAMEPAD_DPAD_LEFT });
 
         //also map port 1 to the right one (roboton issue #204)
-        AddMap("JOYPAD_UP", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("JOYPAD_DOWN", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("JOYPAD_RIGHT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("JOYPAD_LEFT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-       
-        AddMap("JOYPAD_LEFT_RUMBLE", new string[] { "quest-left-haptic-device"});
-        AddMap("JOYPAD_RIGHT_RUMBLE", new string[] { "quest-right-haptic-device"});
+        AddMap(LC.JOYPAD_UP, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.JOYPAD_DOWN, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.JOYPAD_RIGHT, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.JOYPAD_LEFT, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
 
-        AddMap("JOYPAD_L", new string[] { "quest-left-trigger", "gamepad-left-trigger" });
-        AddMap("JOYPAD_R", new string[] { "quest-right-trigger", "gamepad-right-trigger" });
+        AddMap(LC.JOYPAD_LEFT_RUMBLE, new string[] { CM.VR_CONTROLLER_LEFT_HAPTIC_DEVICE });
+        AddMap(LC.JOYPAD_RIGHT_RUMBLE, new string[] { CM.VR_CONTROLLER_RIGHT_HAPTIC_DEVICE });
 
-        AddMap("JOYPAD_L2", new string[] { "quest-left-grip", "gamepad-left-bumper" });
-        AddMap("JOYPAD_R2", new string[] { "quest-right-grip", "gamepad-right-bumper" });
+        AddMap(LC.JOYPAD_L, new string[] { CM.VR_CONTROLLER_LEFT_TRIGGER, CM.GAMEPAD_LEFT_TRIGGER });
+        AddMap(LC.JOYPAD_R, new string[] { CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.GAMEPAD_RIGHT_TRIGGER });
 
-        // mapped por mame menu in LibretroMameCore
-        //AddMap(LibretroMameCore.RETRO_DEVICE_ID_JOYPAD_L3,  new string[] {"quest-left-thumbstick-press", "gamepad-left-thumbstick-press"});
-        AddMap("JOYPAD_R3", new string[] { "quest-right-thumbstick-press", "gamepad-right-thumbstick-press" });
+        AddMap(LC.JOYPAD_L2, new string[] { CM.VR_CONTROLLER_LEFT_GRIP, CM.GAMEPAD_LEFT_BUMPER });
+        AddMap(LC.JOYPAD_R2, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_RIGHT_BUMPER });
 
-        AddMap("EXIT", new string[] { "quest-left-grip", "gamepad-left-bumper", "keyboard-esc" });
-        AddMap("INSERT", "gamepad-select");
+        AddMap(LC.JOYPAD_L3, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, CM.GAMEPAD_LEFT_THUMBSTICK_PRESS });
+        AddMap(LC.JOYPAD_R3, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS, CM.GAMEPAD_RIGHT_THUMBSTICK_PRESS });
 
-        AddMap("MOUSE_X", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis");
-        AddMap("MOUSE_Y", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis");
-        AddMap("MOUSE_LEFT", new string[] { "quest-b", "gamepad-b" });
-        AddMap("MOUSE_RIGHT", new string[] { "quest-a", "gamepad-a" });
-        AddMap("MOUSE_MIDDLE", new string[] { "quest-x", "gamepad-x" });
-        AddMap("MOUSE_WHEELUP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("MOUSE_WHEELDOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("MOUSE_HORIZ_WHEELUP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("MOUSE_HORIZ_WHEELDOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("MOUSE_BUTTON_4", new string[] { "quest-left-thumbstick-press", "gamepad-left-thumbstick-press" });
-        AddMap("MOUSE_BUTTON_5", new string[] { "quest-right-thumbstick-press", "gamepad-right-thumbstick-press" });
+        AddMap(LC.EXIT, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_LEFT_BUMPER, CM.KEYBOARD_ESC });
+        AddMap(LC.INSERT, CM.GAMEPAD_SELECT);
 
-        AddMap("LIGHTGUN_AUX_A", new string[] { "quest-a", "gamepad-a" });
-        AddMap("LIGHTGUN_AUX_B", new string[] { "quest-b", "gamepad-b", "quest-right-grip", "keyboard-enter" });
-        AddMap("LIGHTGUN_AUX_C", new string[] { "gamepad-x", "quest-x" });
-        AddMap("LIGHTGUN_DPAD_UP", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("LIGHTGUN_DPAD_DOWN", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("LIGHTGUN_DPAD_LEFT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("LIGHTGUN_DPAD_RIGHT", new string[] { "quest-left-thumbstick", "gamepad-left-thumbstick" }, "axis");
-        AddMap("LIGHTGUN_DPAD_UP", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("LIGHTGUN_DPAD_DOWN", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("LIGHTGUN_DPAD_LEFT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("LIGHTGUN_DPAD_RIGHT", new string[] { "quest-right-thumbstick", "gamepad-right-thumbstick" }, "axis", 1);
-        AddMap("LIGHTGUN_START", new string[] { "gamepad-start", "quest-start" });
-        AddMap("LIGHTGUN_SELECT", new string[] { "gamepad-select", "quest-select" });
-        AddMap("LIGHTGUN_TRIGGER", new string[] { "quest-right-trigger", "gamepad-right-trigger"});
-        AddMap("LIGHTGUN_RELOAD", new string[] { "gamepad-start", "quest-start" });
+        AddMap(LC.MOUSE_X, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis");
+        AddMap(LC.MOUSE_Y, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis");
+        AddMap(LC.MOUSE_LEFT, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B });
+        AddMap(LC.MOUSE_RIGHT, new string[] { CM.VR_CONTROLLER_A, CM.GAMEPAD_A });
+        AddMap(LC.MOUSE_MIDDLE, new string[] { CM.VR_CONTROLLER_X, CM.GAMEPAD_X });
+        AddMap(LC.MOUSE_WHEELUP, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.MOUSE_WHEELDOWN, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.MOUSE_HORIZ_WHEELUP, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.MOUSE_HORIZ_WHEELDOWN, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.MOUSE_BUTTON_4, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, CM.GAMEPAD_LEFT_THUMBSTICK_PRESS });
+        AddMap(LC.MOUSE_BUTTON_5, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS, CM.GAMEPAD_RIGHT_THUMBSTICK_PRESS });
 
+        AddMap(LC.LIGHTGUN_AUX_A, new string[] { CM.VR_CONTROLLER_A, CM.GAMEPAD_A });
+        AddMap(LC.LIGHTGUN_AUX_B, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.VR_CONTROLLER_RIGHT_GRIP, CM.KEYBOARD_ENTER });
+        AddMap(LC.LIGHTGUN_AUX_C, new string[] { CM.GAMEPAD_X, CM.VR_CONTROLLER_X });
+        AddMap(LC.LIGHTGUN_DPAD_UP, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.LIGHTGUN_DPAD_DOWN, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.LIGHTGUN_DPAD_LEFT, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.LIGHTGUN_DPAD_RIGHT, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
+        AddMap(LC.LIGHTGUN_DPAD_UP, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.LIGHTGUN_DPAD_DOWN, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.LIGHTGUN_DPAD_LEFT, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.LIGHTGUN_DPAD_RIGHT, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
+        AddMap(LC.LIGHTGUN_START, new string[] { CM.GAMEPAD_START, CM.VR_CONTROLLER_START });
+        AddMap(LC.LIGHTGUN_SELECT, new string[] { CM.GAMEPAD_SELECT, CM.VR_CONTROLLER_SELECT });
+        AddMap(LC.LIGHTGUN_TRIGGER, new string[] { CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.GAMEPAD_RIGHT_TRIGGER });
+        AddMap(LC.LIGHTGUN_RELOAD, new string[] { CM.GAMEPAD_START, CM.VR_CONTROLLER_START });
     }
 
     public static DefaultControlMap Instance

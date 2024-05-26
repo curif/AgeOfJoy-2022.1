@@ -1,13 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit.Inputs;
-using UnityEngine.XR;
-using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.XR;
-using System.Diagnostics;
 
 public class LibretroControlMap : MonoBehaviour
 {
@@ -68,6 +61,11 @@ public class LibretroControlMap : MonoBehaviour
         }
 
         return false;
+    }
+
+    public bool isActive(string mameControl, int port = 0)
+    {
+        return Active(mameControl, port) !=0;
     }
 
     public int Active(string mameControl, int port = 0)

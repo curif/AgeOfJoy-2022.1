@@ -132,20 +132,22 @@ Shader "AgeOfJoy/Neon"
 }
 /*ASEBEGIN
 Version=19302
-Node;AmplifyShaderEditor.RangedFloatNode;8;-958.3334,419.4998;Inherit;False;Property;_FresnelScale;FresnelScale;0;0;Create;True;0;0;0;False;0;False;2.32;1;0;5;0;1;FLOAT;0
 Node;AmplifyShaderEditor.NormalVertexDataNode;12;-953.6666,196.4996;Inherit;False;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.RangedFloatNode;8;-1028.333,499.4998;Inherit;False;Property;_FresnelScale;FresnelScale;0;0;Create;True;0;0;0;False;0;False;2.32;1;0;5;0;1;FLOAT;0
+Node;AmplifyShaderEditor.ViewDirInputsCoordNode;13;-1059.333,344.1662;Inherit;False;World;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.FresnelNode;4;-589.0003,350.1665;Inherit;False;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.ColorNode;11;-608.3333,-9.500397;Inherit;False;InstancedProperty;_ColorCore;Color Core;2;0;Create;True;0;0;0;False;0;False;0.7735849,0.6738459,0.6738459,0;0.7735849,0.6738459,0.6738459,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.VertexColorNode;1;-806.3334,-167.1667;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.ColorNode;11;-791.6667,35.83295;Inherit;False;InstancedProperty;_ColorCore;Color Core;2;0;Create;True;0;0;0;False;0;False;0.7735849,0.6738459,0.6738459,0;0.7735849,0.6738459,0.6738459,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.RangedFloatNode;6;-649.6669,240.8331;Inherit;False;Constant;_Float1;Float 1;0;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp;5;-295.0002,138.8331;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.ColorNode;10;-590.9999,-206.5003;Inherit;False;InstancedProperty;_ColorA;Color A;1;0;Create;True;0;0;0;False;0;False;0.4716981,0,0,0;1,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Half;False;True;-1;2;ASEMaterialInspector;100;5;AgeOfJoy/Neon;0770190933193b94aaa3065e307002fa;True;Unlit;0;0;Unlit;2;False;True;0;1;False;;0;False;;0;1;False;;0;False;;True;0;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;False;;False;True;0;False;;False;True;True;True;True;True;0;False;;False;False;False;False;False;False;False;True;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;True;1;False;;True;3;False;;True;True;0;False;;0;False;;True;1;RenderType=Opaque=RenderType;True;2;False;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;0;;0;0;Standard;1;Vertex Position,InvertActionOnDeselection;1;0;0;1;True;False;;False;0
 WireConnection;4;0;12;0
+WireConnection;4;4;13;0
 WireConnection;4;2;8;0
 WireConnection;5;0;1;0
 WireConnection;5;1;11;0
 WireConnection;5;2;4;0
 WireConnection;0;0;5;0
 ASEEND*/
-//CHKSM=89E1877C4C785ECD4380A841D4A731A343A018ED
+//CHKSM=52A21946FCEB6B705D8B633E159B5626508E934C
