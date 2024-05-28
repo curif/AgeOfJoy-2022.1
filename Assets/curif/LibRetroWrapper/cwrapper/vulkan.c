@@ -9,14 +9,33 @@ static PFN_vkGetInstanceProcAddr vk_get_instance_proc_addr;
 static PFN_vkCreateInstance vk_create_instance;
 static PFN_vkGetDeviceProcAddr vk_get_device_proc_addr;
 
-
 void wrapper_environment_log_render_callback() {
-	char* fmt = "[wrapper_environment_log_render_callback] Render callback:\n"
+	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_log_render_callback] Render callback:\n"
+		"    context_type: %d\n"
+		"    context_reset: %016x\n"
+		"    get_current_framebuffer: %016x\n"
+		"    get_proc_address: %016x\n"
+		"    depth: %d\n"
+		"    stencil: %d\n"
+		"    bottom_left_origin: %d\n"
 		"    version_major: %i\n"
-		"    version_minor: %i\n";
-	wrapper_environment_log(RETRO_LOG_INFO, fmt,
+		"    version_minor: %i\n"
+		"    cache_context: %d\n"
+		"    retro_hw_context_reset_t: %016x\n"
+		"    debug_context: %d\n"
+		,
+		hw_render_callback.context_type,
+		(long)hw_render_callback.context_reset,
+		(long)hw_render_callback.get_current_framebuffer,
+		(long)hw_render_callback.get_proc_address,
+		(long)hw_render_callback.depth,
+		(long)hw_render_callback.stencil,
+		(long)hw_render_callback.bottom_left_origin,
 		hw_render_callback.version_major,
-		hw_render_callback.version_minor
+		hw_render_callback.version_minor,
+		hw_render_callback.cache_context,
+		(long)hw_render_callback.context_reset,
+		hw_render_callback.debug_context
 	);
 }
 
@@ -40,71 +59,118 @@ void wrapper_environment_log_vulkan_interface() {
 
 // VULCAN HANDLERS. THESE NEED TO BE IMPLEMENTED (SOMEHOW)
 
-static void vulkan_set_image(void* handle,
-	const struct retro_vulkan_image* image,
-	uint32_t num_semaphores,
-	const VkSemaphore* semaphores,
-	uint32_t src_queue_family)
+static uint32_t num_semaphores;
+static const VkSemaphore* semaphores;
+static uint32_t src_queue_family;
+static VkImageView image_view;
+static VkImageLayout image_layout;
+static VkImageViewCreateInfo create_info;
+
+static void vulkan_set_image(void* _handle,
+	const struct retro_vulkan_image* _image,
+	uint32_t _num_semaphores,
+	const VkSemaphore* _semaphores,
+	uint32_t _src_queue_family)
 {
+	num_semaphores = _num_semaphores;
+	semaphores = _semaphores;
+	src_queue_family = _src_queue_family;
+	image_view = _image->image_view;
+	image_layout = _image->image_layout;
+	create_info = _image->create_info;
+
 	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_image\n"
-		//"  image %016x\n"
-		//"  num_semaphores %i\n"
-		//"  semaphores %016x\n"
-		//"  src_queue_family %i\n",
-		//image,
-		//num_semaphores,
-		//semaphores,
-		//src_queue_family
+		"  image_view %016x\n"
+		"  image_layout %d\n"
+		"  create_info %016x\n"
+		"  num_semaphores %i\n"
+		"  semaphores %016x\n"
+		"  src_queue_family %i\n",
+		image_view,
+		image_layout,
+		create_info,
+		num_semaphores,
+		semaphores,
+		src_queue_family
+	);
+
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] image_view\n"
+	//	"  image_view->image %016x\n"
+	//	"  image_view->viewType %i\n"
+	//	"  image_view->format %i\n"
+	//	"  image_view->components %016x\n"
+	//	"  image_view->subresourceRange %016x\n",
+	//	image_view->image,
+	//	image_view->viewType,
+	//	image_view->format,
+	//	image_view->components,
+	//	image_view->subresourceRange
+	//);
+
+	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] create_info\n"
+		"  create_info->sType %i\n"
+		"  create_info->pNext %016x\n"
+		"  create_info->flags %i\n"
+		"  create_info->image %016x\n"
+		"  create_info->viewType %i\n"
+		"  create_info->format %i\n"
+		"  create_info->components %016x\n"
+		"  create_info->subresourceRange %016x\n",
+		create_info.sType,
+		create_info.pNext,
+		create_info.flags,
+		create_info.image,
+		create_info.viewType,
+		create_info.format,
+		create_info.components,
+		create_info.subresourceRange
 	);
 }
 
 static uint32_t frameIndex = 0;
 static uint32_t vulkan_get_sync_index(void* handle)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_get_sync_index\n"
-		//"  frameIndex %i\n", frameIndex
-	);
-	frameIndex++;
-	return frameIndex;
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_get_sync_index\n");
+	return 0;   // no idea !
 }
 
 static uint32_t vulkan_get_sync_index_mask(void* handle)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_get_sync_index_mask\n");
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_get_sync_index_mask\n");
 	return 1;   // no idea !
 }
 
 static void vulkan_wait_sync_index(void* handle)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_wait_sync_index\n");
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_wait_sync_index\n");
 }
 
 static void vulkan_set_command_buffers(void* handle, uint32_t num_cmd, const VkCommandBuffer* cmd)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_command_buffers\n"
-		//"  num_cmd %i\n"
-		//"  cmd %016x\n",
-		//num_cmd,
-		//cmd
-	);
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_command_buffers\n"
+	//	"  num_cmd %i\n"
+	//	"  cmd %016x\n",
+	//	num_cmd,
+	//	cmd
+	//);
 }
 
 static void vulkan_lock_queue(void* handle)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_lock_queue\n");
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_lock_queue\n");
 }
 
 static void vulkan_unlock_queue(void* handle)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_unlock_queue\n");
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_unlock_queue\n");
 }
 
 static void vulkan_set_signal_semaphore(void* handle, VkSemaphore semaphore)
 {
-	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_signal_semaphore\n"
-		"  semaphore %016x\n",
-		&semaphore
-	);
+	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_signal_semaphore\n"
+	//	"  semaphore %016x\n",
+	//	&semaphore
+	//);
 }
 
 
@@ -210,6 +276,8 @@ bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_r
 
 struct retro_hw_render_interface_vulkan* get_vulkan_interface() {
 
+	memset(&hw_render_interface, 0, sizeof(hw_render_interface));
+
 	hw_render_interface.interface_type = RETRO_HW_RENDER_INTERFACE_VULKAN;
 	hw_render_interface.interface_version = RETRO_HW_RENDER_INTERFACE_VULKAN_VERSION;
 	hw_render_interface.instance = vkInstance;
@@ -231,3 +299,4 @@ struct retro_hw_render_interface_vulkan* get_vulkan_interface() {
 
 	return &hw_render_interface;
 }
+
