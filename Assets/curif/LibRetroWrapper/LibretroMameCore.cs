@@ -171,7 +171,7 @@ public static unsafe class LibretroMameCore
     // audio ===============
     private delegate void AudioLockHandler();
     private delegate void AudioUnlockHandler();
-    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+        [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_audio_init(AudioLockHandler AudioLock,
                                                     AudioUnlockHandler AudioUnlock
                                                     );
@@ -300,6 +300,9 @@ public static unsafe class LibretroMameCore
     private static extern bool wrapper_get_savestate_data(void* data, uint size);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_set_controller_port_device(uint port, uint device);
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_input_init();
 
     //environment
     private delegate string EnvironmentHandler(string key);
@@ -499,12 +502,8 @@ public static unsafe class LibretroMameCore
         }
 
         WriteConsole("[LibRetroMameCore.Start] image callbacks");
-        wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
-                            new TextureLockHandler(TextureLockCB),
-                            new TextureUnlockHandler(TextureUnlockCB),
-                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
-        wrapper_audio_init(new AudioLockHandler(AudioLockCB),
-                            new AudioUnlockHandler(AudioUnlockCB));
+
+        // Calling wrapper_environment_init and therefore retro_init as soon as possible to benefit from logs
         wrapper_environment_init();
 
         int needFullPath = wrapper_system_info_need_full_path();
@@ -546,6 +545,15 @@ public static unsafe class LibretroMameCore
         }
         resetMouseAim();
         activePlayerSlot = 0;  // Default back to Player 1 on cab startup
+
+        // Do all at the latest possible moment. The core may have had a change of heart and decide to change settings
+        wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
+                            new TextureLockHandler(TextureLockCB),
+                            new TextureUnlockHandler(TextureUnlockCB),
+                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
+        wrapper_audio_init(new AudioLockHandler(AudioLockCB),
+                            new AudioUnlockHandler(AudioUnlockCB));
+        wrapper_input_init();
 
 #if !UNITY_EDITOR
         loadState(GameFileName);

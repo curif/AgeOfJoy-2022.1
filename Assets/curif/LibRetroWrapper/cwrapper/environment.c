@@ -120,7 +120,7 @@ size_t wrapper_get_memory_size(unsigned id) {
 		"[wrapper_get_memory_size] id: %d\n", id);
 	size_t size = handlers.retro_get_memory_size(id);
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_get_memory_size] suze: %d\n", size);
+		"[wrapper_get_memory_size] size: %d\n", size);
 	return size;
 }
 
@@ -208,23 +208,31 @@ int16_t wrapper_input_state_cb(unsigned port, unsigned device, unsigned index,
 }
 
 void wrapper_environment_init() {
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_environment_init] call retro init\n");
 
+	// retro_set_environment MUST to be called before retro_init
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_environment_init] call retro_set_environment\n");
 	handlers.retro_set_environment(&wrapper_environment_cb);
-	handlers.retro_set_input_poll(&wrapper_input_poll_cb);
-	handlers.retro_set_input_state(&wrapper_input_state_cb);
-
-	// do almost nothing
-	// https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
+	
+	// Basic core initialisation. Initialises the log system, which is of use to us.
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_environment_init] retro_init\n");
+		"[wrapper_environment_init] call retro_init\n");
 	handlers.retro_init();
 
 	wrapper_environment_get_system_info();
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_init] end ----------\n");
+}
+
+void wrapper_input_init() {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_input_init] call retro_set_input_poll\n");
+	handlers.retro_set_input_poll(&wrapper_input_poll_cb);
+
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_input_init] call retro_set_input_state\n");
+	handlers.retro_set_input_state(&wrapper_input_state_cb);
 }
 
 void wrapper_reset() {
@@ -236,6 +244,8 @@ void wrapper_reset() {
 
 void wrapper_environment_get_system_info() {
 	INIT_STRUCT(system_info);
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_environment_init] call retro_get_system_info\n");
 	handlers.retro_get_system_info(&system_info);
 	wrapper_environment_log(
 		RETRO_LOG_INFO,
