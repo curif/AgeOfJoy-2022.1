@@ -5,19 +5,19 @@ using UnityEngine;
 public class UnityVulkan : MonoBehaviour
 {
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetVkPipelineCache();
+    private static extern IntPtr GetVkPipelineCache();
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetVkInstance();
+    private static extern IntPtr GetVkInstance();
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetVkPhysicalDevice();
+    private static extern IntPtr GetVkPhysicalDevice();
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetVkDevice();
+    private static extern IntPtr GetVkDevice();
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetVkQueue();
+    private static extern IntPtr GetVkQueue();
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetPFNvkGetInstanceProcAddr();
+    private static extern IntPtr GetPFNvkGetInstanceProcAddr();
     [DllImport("libVulkanPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int GetQueueFamilyIndex();
+    private static extern uint GetQueueFamilyIndex();
 
     public IntPtr vkPipelineCache { get; private set; }
     public IntPtr vkInstance { get; private set; }
@@ -25,29 +25,31 @@ public class UnityVulkan : MonoBehaviour
     public IntPtr vkDevice { get; private set; }
     public IntPtr vkQueue { get; private set; }
     public IntPtr pfnvkGetInstanceProcAddr { get; private set; }
-    public int queueFamilyIndex { get; private set; }
+    public uint queueFamilyIndex { get; private set; }
 
     void Start()
     {
-        vkPipelineCache = (IntPtr)GetVkPipelineCache();
-        ConfigManager.WriteConsole($"[UnityVulkan] vkPipelineCache {vkPipelineCache}");
+        vkPipelineCache = GetVkPipelineCache();
+        ConfigManager.WriteConsole($"[UnityVulkan] vkPipelineCache {vkPipelineCache.ToString("x16")}");
         
-        vkInstance = (IntPtr)GetVkInstance();
-        ConfigManager.WriteConsole($"[UnityVulkan] vkInstance {vkInstance}");
+        vkInstance = GetVkInstance();
+        ConfigManager.WriteConsole($"[UnityVulkan] vkInstance {vkInstance.ToString("x16")}");
         
-        vkPhysicalDevice = (IntPtr)GetVkPhysicalDevice();
-        ConfigManager.WriteConsole($"[UnityVulkan] vkPhysicalDevice {vkPhysicalDevice}");
+        vkPhysicalDevice = GetVkPhysicalDevice();
+        ConfigManager.WriteConsole($"[UnityVulkan] vkPhysicalDevice {vkPhysicalDevice.ToString("x16")}");
         
-        vkDevice = (IntPtr)GetVkDevice();
-        ConfigManager.WriteConsole($"[UnityVulkan] vkPhysicalDevice {vkPhysicalDevice}");
+        vkDevice = GetVkDevice();
+        ConfigManager.WriteConsole($"[UnityVulkan] vkDevice {vkDevice.ToString("x16")}");
         
-        vkQueue = (IntPtr)GetVkQueue();
-        ConfigManager.WriteConsole($"[UnityVulkan] vkQueue {vkQueue}");
+        vkQueue = GetVkQueue();
+        ConfigManager.WriteConsole($"[UnityVulkan] vkQueue {vkQueue.ToString("x16")}");
         
-        pfnvkGetInstanceProcAddr = (IntPtr)GetPFNvkGetInstanceProcAddr();
-        ConfigManager.WriteConsole($"[UnityVulkan] pfnvkGetInstanceProcAddr {pfnvkGetInstanceProcAddr}");
+        pfnvkGetInstanceProcAddr = GetPFNvkGetInstanceProcAddr();
+        ConfigManager.WriteConsole($"[UnityVulkan] pfnvkGetInstanceProcAddr {pfnvkGetInstanceProcAddr.ToString("x16")}");
         
         queueFamilyIndex = GetQueueFamilyIndex();
         ConfigManager.WriteConsole($"[UnityVulkan] queueFamilyIndex {queueFamilyIndex}");
+
+        LibretroVulkan.Init(vkInstance, vkPhysicalDevice, vkDevice, pfnvkGetInstanceProcAddr);
     }
 }

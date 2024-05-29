@@ -25,7 +25,8 @@ extern "C" {
 	bool init_retro_hw_render_callback(struct retro_hw_render_callback* callback);
 	bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_render_context_negotiation_interface_vulkan* interface);
 	struct retro_hw_render_interface_vulkan* get_vulkan_interface();
-	void wrapper_set_vulkan_image_cb(VulcanImageCB vulcanImageCB);
+
+	void wrapper_init_vulkan(VkInstance _vkInstance, VkPhysicalDevice _vkPhysicalDevice, VkDevice _vkDevice, PFN_vkGetInstanceProcAddr _vkGetInstanceProcAddr, VulcanImageCB _vulcanImageCB);
 
 #ifdef __cplusplus
 }

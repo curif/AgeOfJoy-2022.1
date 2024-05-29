@@ -507,6 +507,9 @@ public static unsafe class LibretroMameCore
         // Calling wrapper_environment_init and therefore retro_init as soon as possible to benefit from logs
         wrapper_environment_init();
 
+        // Let's do this as soon as possible, but after the environment is initialized we have logging
+        LibretroVulkan.WrapperInit();
+
         int needFullPath = wrapper_system_info_need_full_path();
         WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
         GameFileName = gameFileName;
@@ -555,8 +558,6 @@ public static unsafe class LibretroMameCore
         wrapper_audio_init(new AudioLockHandler(AudioLockCB),
                             new AudioUnlockHandler(AudioUnlockCB));
         wrapper_input_init();
-
-        LibretroVulkan.Init();
 
 #if !UNITY_EDITOR
         loadState(GameFileName);

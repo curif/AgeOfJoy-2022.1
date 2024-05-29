@@ -5,7 +5,10 @@ static struct retro_hw_render_context_negotiation_interface_vulkan hw_vulkan_int
 static struct retro_hw_render_interface_vulkan hw_render_interface;
 static struct retro_vulkan_context context;
 static VkInstance vkInstance;
+static VkPhysicalDevice vkPhysicalDevice;
+static VkDevice vkDevice;
 static VkCommandBuffer* vkCommandBuffer;
+static VulcanImageCB vulcanImageCB;
 
 typedef struct VkFunctions {
 	PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
@@ -14,21 +17,20 @@ typedef struct VkFunctions {
 };
 
 static struct VkFunctions vkFunctions;
-static VulcanImageCB vulcanImageCB;
 
 void wrapper_environment_log_render_callback() {
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_log_render_callback] Render callback:\n"
 		"    context_type: %d\n"
-		"    context_reset: %016x\n"
-		"    get_current_framebuffer: %016x\n"
-		"    get_proc_address: %016x\n"
+		"    context_reset: %016lx\n"
+		"    get_current_framebuffer: %016lx\n"
+		"    get_proc_address: %016lx\n"
 		"    depth: %d\n"
 		"    stencil: %d\n"
 		"    bottom_left_origin: %d\n"
 		"    version_major: %i\n"
 		"    version_minor: %i\n"
 		"    cache_context: %d\n"
-		"    retro_hw_context_reset_t: %016x\n"
+		"    retro_hw_context_reset_t: %016lx\n"
 		"    debug_context: %d\n"
 		,
 		hw_render_callback.context_type,
@@ -50,9 +52,9 @@ void wrapper_environment_log_vulkan_interface() {
 	char* fmt = "[wrapper_environment_log_vulkan_interface] Vulkan interface:\n"
 		"    interface_type: %i\n"
 		"    interface_version: %i\n"
-		"    get_application_info: %016x\n"
-		"    create_device:        %016x\n"
-		"    destroy_device:       %016x\n"
+		"    get_application_info: %016lx\n"
+		"    create_device:        %016lx\n"
+		"    destroy_device:       %016lx\n"
 		;
 	wrapper_environment_log(RETRO_LOG_INFO, fmt,
 		hw_vulkan_interface.interface_type,
@@ -87,11 +89,11 @@ static void vulkan_set_image(void* _handle,
 	create_info = _image->create_info;
 
 	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_image\n"
-		"  image_view %016x\n"
+		"  image_view %016lx\n"
 		"  image_layout %d\n"
-		"  create_info %016x\n"
+		"  create_info %016lx\n"
 		"  num_semaphores %i\n"
-		"  semaphores %016x\n"
+		"  semaphores %016lx\n"
 		"  src_queue_family %i\n",
 		image_view,
 		image_layout,
@@ -103,13 +105,13 @@ static void vulkan_set_image(void* _handle,
 
 	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] create_info\n"
 		"  create_info->sType %i\n"
-		"  create_info->pNext %016x\n"
+		"  create_info->pNext %016lx\n"
 		"  create_info->flags %i\n"
-		"  create_info->image %016x\n"
+		"  create_info->image %016lx\n"
 		"  create_info->viewType %i\n"
 		"  create_info->format %i\n"
-		"  create_info->components %016x\n"
-		"  create_info->subresourceRange %016x\n",
+		"  create_info->components %016lx\n"
+		"  create_info->subresourceRange %016lx\n",
 		create_info.sType,
 		create_info.pNext,
 		create_info.flags,
@@ -145,7 +147,7 @@ static void vulkan_set_command_buffers(void* handle, uint32_t num_cmd, VkCommand
 {
 	wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_command_buffers\n"
 		"  num_cmd %i\n"
-		"  cmd %016x\n",
+		"  cmd %016lx\n",
 		num_cmd,
 		cmd
 	);
@@ -165,7 +167,7 @@ static void vulkan_unlock_queue(void* handle)
 static void vulkan_set_signal_semaphore(void* handle, VkSemaphore semaphore)
 {
 	//wrapper_environment_log(RETRO_LOG_INFO, "[VULCAN_HANDLERS] vulkan_set_signal_semaphore\n"
-	//	"  semaphore %016x\n",
+	//	"  semaphore %016lx\n",
 	//	&semaphore
 	//);
 }
@@ -220,13 +222,12 @@ bool create_vk_instance() {
 }
 
 bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_render_context_negotiation_interface_vulkan* interface) {
+	wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_context_negotiation_interface_vulkan]\n");
+
 	memcpy(&(hw_vulkan_interface), interface, sizeof(hw_vulkan_interface));
 	wrapper_environment_log_vulkan_interface();
 
-	memset(&vkFunctions, 0, sizeof(vkFunctions));
-
-	// 1- Have to negotiate thru retro_hw_render_context_negotiation_interface_vulkan
-	wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_context_negotiation_interface_vulkan]\n");
+	// 0- Load Vulkan library and get references
 
 	void* vulkan_library = dlopen("libvulkan.so", RTLD_NOW);
 	if (!vulkan_library) {
@@ -234,22 +235,40 @@ bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_r
 		return false;
 	}
 
+	memset(&vkFunctions, 0, sizeof(vkFunctions));
+
 	if (!load_vulkan_symbol(vulkan_library, (void**)&vkFunctions.vkCreateInstance, "vkCreateInstance")) return false;
 
-	if (!create_vk_instance()) return false;
+	//if (!create_vk_instance()) return false;
 
 	if (!load_vulkan_symbol(vulkan_library, (void**)&vkFunctions.vkGetInstanceProcAddr, "vkGetInstanceProcAddr")) return false;
 	if (!load_vulkan_symbol(vulkan_library, (void**)&vkFunctions.vkGetDeviceProcAddr, "vkGetDeviceProcAddr")) return false;
 
+	// 1- Have to negotiate thru retro_hw_render_context_negotiation_interface_vulkan
+
 	char* required_device_extensions = VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 	VkPhysicalDeviceFeatures required_features = { false };
+
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[init_retro_hw_render_context_negotiation_interface_vulkan]\n"
+		"   vkInstance: %016lx\n"
+		"   vkPhysicalDevice: %016lx\n"
+		"   vkGetInstanceProcAddr: %016lx\n"
+		"   required_device_extensions: %s\n"
+		"   required_features: %016lx\n",
+		vkInstance,
+		vkPhysicalDevice,
+		vkFunctions.vkGetInstanceProcAddr,
+		required_device_extensions,
+		&required_features
+	);
 
 	bool result = hw_vulkan_interface.create_device(
 		&context,							 // struct retro_vulkan_context *context
 		vkInstance,							 // VkInstance instance
-		VK_NULL_HANDLE,						 // VkPhysicalDevice gpu
+		vkPhysicalDevice,					 // VkPhysicalDevice gpu
 		VK_NULL_HANDLE,						 // VkSurfaceKHR surface
-		vkFunctions.vkGetInstanceProcAddr,   // PFN_vkGetInstanceProcAddr get_instance_proc_addr
+		vkFunctions.vkGetInstanceProcAddr,	 // PFN_vkGetInstanceProcAddr get_instance_proc_addr
 		&required_device_extensions,		 // const char **required_device_extensions
 		0,									 // unsigned num_required_device_extensions
 		NULL,								 // const char **required_device_layers
@@ -260,12 +279,11 @@ bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_r
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[init_retro_hw_render_context_negotiation_interface_vulkan] create_device result:\n"
-		"	VkInstance instance: %016x\n"
-		"	VkPhysicalDevice gpu: %016x\n"
-		"	VkDevice device: %016x\n"
-		"	VkQueue queue: %016x\n"
+		"	VkPhysicalDevice gpu: %016lx\n"
+		"	VkDevice device: %016lx\n"
+		"	VkQueue queue: %016lx\n"
 		"	unsigned queue_family_index: %i\n"
-		"	VkQueue presentation_queue: %016x\n"
+		"	VkQueue presentation_queue: %016lx\n"
 		"	unsigned presentation_queue_family_index: %i\n",
 		&context.gpu,
 		&context.device,
@@ -309,6 +327,22 @@ struct retro_hw_render_interface_vulkan* get_vulkan_interface() {
 	return &hw_render_interface;
 }
 
-void wrapper_set_vulkan_image_cb(VulcanImageCB _vulcanImageCB) {
+void wrapper_init_vulkan(VkInstance _vkInstance, VkPhysicalDevice _vkPhysicalDevice, VkDevice _vkDevice, PFN_vkGetInstanceProcAddr _vkGetInstanceProcAddr, VulcanImageCB _vulcanImageCB) {
+	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_init_vulkan]\n"
+		"  vkInstance %016lx\n"
+		"  vkPhysicalDevice %016lx\n"
+		"  vkDevice %016lx\n"
+		"  vkGetInstanceProcAddr %016lx\n"
+		"  vulcanImageCB %016lx\n",
+		_vkInstance,
+		_vkPhysicalDevice,
+		_vkDevice,
+		_vkGetInstanceProcAddr,
+		_vulcanImageCB
+	);
+	vkInstance = _vkInstance;
+	vkPhysicalDevice = _vkPhysicalDevice;
+	vkDevice = _vkDevice;
+	vkFunctions.vkGetInstanceProcAddr = _vkGetInstanceProcAddr;
 	vulcanImageCB = _vulcanImageCB;
 }
