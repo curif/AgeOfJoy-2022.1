@@ -14,6 +14,7 @@ typedef struct VkFunctions {
 };
 
 static struct VkFunctions vkFunctions;
+static VulcanImageCB vulcanImageCB;
 
 void wrapper_environment_log_render_callback() {
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_log_render_callback] Render callback:\n"
@@ -118,6 +119,8 @@ static void vulkan_set_image(void* _handle,
 		create_info.components,
 		create_info.subresourceRange
 	);
+
+	vulcanImageCB(create_info.image);
 }
 
 static uint32_t frameIndex = 0;
@@ -306,3 +309,6 @@ struct retro_hw_render_interface_vulkan* get_vulkan_interface() {
 	return &hw_render_interface;
 }
 
+void wrapper_set_vulkan_image_cb(VulcanImageCB _vulcanImageCB) {
+	vulcanImageCB = _vulcanImageCB;
+}

@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
 using LC = LibretroControlMapDictionnary;
 using UnityEngine.InputSystem;
+using YamlDotNet.Core.Tokens;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -303,10 +304,7 @@ public static unsafe class LibretroMameCore
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_input_init();
-
-    //environment
-    private delegate string EnvironmentHandler(string key);
-
+            
     //image
     private delegate void CreateTextureHandler(uint width, uint height);
     private delegate void TextureLockHandler();
@@ -324,7 +322,10 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_image_get_buffer_size();
 
-    //environment.
+    //environment
+
+    private delegate string EnvironmentHandler(string key);
+
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_open(wrapperLogHandler lg,
                                                         retro_log_level _minLogLevel,
@@ -554,6 +555,8 @@ public static unsafe class LibretroMameCore
         wrapper_audio_init(new AudioLockHandler(AudioLockCB),
                             new AudioUnlockHandler(AudioUnlockCB));
         wrapper_input_init();
+
+        LibretroVulkan.Init();
 
 #if !UNITY_EDITOR
         loadState(GameFileName);
