@@ -67,33 +67,51 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 
 	AudioBufferLockCB(); // Lock the AudioBatch for synchronization
 
-	double ratio = (double)wrapper_environment_get_sample_rate() / QUEST_AUDIO_FREQUENCY;
-	size_t outSample = 0;
+	double inputSampleRate = wrapper_environment_get_sample_rate();
+	if (inputSampleRate == QUEST_AUDIO_FREQUENCY) {
+		// If sample rates match, directly copy the data to the output buffer
+		for (size_t i = 0; i < frames; i++) {
+			AudioBatch[AudioBatchOccupancy] = inBufferL[i];
+			AudioBatchOccupancy++;
+			AudioBatch[AudioBatchOccupancy] = inBufferR[i];
+			AudioBatchOccupancy++;
+			consumedFrames += 2;
 
-	while (1) {
-		double inBufferIndex = outSample * ratio;
-		int index = (int)inBufferIndex;
-		double frac = inBufferIndex - index; // fractional part
-		outSample++;
-
-		if (index + 1 >= frames) {
-			break;
+			if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE) { // Check for buffer overflow
+				break;
+			}
 		}
+	}
+	else {
+		// Perform interpolation if sample rates do not match
+		double ratio = inputSampleRate / QUEST_AUDIO_FREQUENCY;
+		size_t outSample = 0;
 
-		// Linear interpolation for left channel
-		float leftSample = (1 - frac) * inBufferL[index] + frac * inBufferL[index + 1];
-		// Linear interpolation for right channel
-		float rightSample = (1 - frac) * inBufferR[index] + frac * inBufferR[index + 1];
+		while (1) {
+			double inBufferIndex = outSample * ratio;
+			int index = (int)inBufferIndex;
+			double frac = inBufferIndex - index; // fractional part
+			outSample++;
 
-		// Store the interpolated samples in the combined output buffer
-		AudioBatch[AudioBatchOccupancy] = leftSample;
-		AudioBatchOccupancy++;
-		AudioBatch[AudioBatchOccupancy] = rightSample;
-		AudioBatchOccupancy++;
-		consumedFrames += 2; // increment by 2 for stereo
+			if (index + 1 >= frames) {
+				break;
+			}
 
-		if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE) { // Check for buffer overflow
-			break;
+			// Linear interpolation for left channel
+			float leftSample = (1 - frac) * inBufferL[index] + frac * inBufferL[index + 1];
+			// Linear interpolation for right channel
+			float rightSample = (1 - frac) * inBufferR[index] + frac * inBufferR[index + 1];
+
+			// Store the interpolated samples in the combined output buffer
+			AudioBatch[AudioBatchOccupancy] = leftSample;
+			AudioBatchOccupancy++;
+			AudioBatch[AudioBatchOccupancy] = rightSample;
+			AudioBatchOccupancy++;
+			consumedFrames += 2; // increment by 2 for stereo
+
+			if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE) { // Check for buffer overflow
+				break;
+			}
 		}
 	}
 
