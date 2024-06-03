@@ -4,6 +4,8 @@ using UnityEngine;
 
 public static unsafe class LibretroVulkan
 {
+    static IntPtr vkImage;
+    static bool vkImageReady;
 
     static IntPtr vkInstance;
     static IntPtr vkPhysicalDevice;
@@ -12,7 +14,7 @@ public static unsafe class LibretroVulkan
     static VulcanImageCBHandler vulcanImageCBHandler;
 
     // vulkan
-    private delegate void VulcanImageCBHandler(void* vkImage);
+    private delegate void VulcanImageCBHandler(IntPtr vkImage);
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_init_vulkan(IntPtr vkInstance, IntPtr vkPhysicalDevice, IntPtr vkDevice, IntPtr vkGetInstanceProcAddr, VulcanImageCBHandler vulcanImageCBHandler);
@@ -29,6 +31,8 @@ public static unsafe class LibretroVulkan
         vkDevice = _vkDevice;
         pfnvkGetInstanceProcAddr = _pfnvkGetInstanceProcAddr;
         vulcanImageCBHandler = new VulcanImageCBHandler(VulcanImageCB);
+        vkImage = IntPtr.Zero;
+        vkImageReady = false;
     }
 
     public static void WrapperInit()
@@ -40,13 +44,23 @@ public static unsafe class LibretroVulkan
             $" pfnvkGetInstanceProcAddr:{pfnvkGetInstanceProcAddr.ToString("x16")}");
         wrapper_init_vulkan(vkInstance, vkPhysicalDevice, vkDevice, pfnvkGetInstanceProcAddr, vulcanImageCBHandler);
     }
+    public static bool isVkImageReady()
+    {
+        return vkImageReady;
+    }
+
+    public static IntPtr GetVkImage()
+    {
+        ConfigManager.WriteConsole($"[LibretroVulkan.GetVkImage] {vkImage.ToString("x16")}");
+        vkImageReady = false;
+        return vkImage;
+    }
 
     [AOT.MonoPInvokeCallback(typeof(VulcanImageCBHandler))]
-    static void VulcanImageCB(void* vkImage)
+    static void VulcanImageCB(IntPtr _vkImage)
     {
-        ConfigManager.WriteConsole($"[LibRetroMameCore.VulcanImageCB start]");
-        //GameTexture.UpdateExternalTexture((IntPtr)vkImage);
-        //Texture2D vulkanTexture = Texture2D.CreateExternalTexture(640, 480, TextureFormat.RGB565, false, true, (IntPtr)vkImage);
-        ConfigManager.WriteConsole($"[LibRetroMameCore.VulcanImageCB ok]");
+        ConfigManager.WriteConsole($"[LibretroVulkan.VulcanImageCB] received {_vkImage.ToString("x16")}");
+        vkImage = _vkImage;
+        vkImageReady = true;
     }
 }

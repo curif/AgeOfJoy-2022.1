@@ -21,6 +21,7 @@ static struct retro_system_av_info av_info;
 static struct retro_game_info game_info;
 static struct retro_frame_time_callback frame_time_callback;
 static long frame_counter;
+static bool hardware_rendering;
 
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
@@ -140,6 +141,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	Environment _environment) {
 	log = _log;
 	frame_counter = 0;
+	hardware_rendering = false;
 	minLogLevel = _minLogLevel;
 	pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
 	input_state_cb = _input_state_cb;
@@ -188,6 +190,8 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	return 0;
 }
 
+bool wrapper_is_hardware_rendering() { return hardware_rendering; }
+
 int load_symbol(void** handler, const char* symbol_name) {
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_open] dlsym %s", symbol_name);
 	*handler = dlsym(handlers.handle, symbol_name);
@@ -213,7 +217,7 @@ void wrapper_environment_init() {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_init] call retro_set_environment\n");
 	handlers.retro_set_environment(&wrapper_environment_cb);
-	
+
 	// Basic core initialisation. Initialises the log system, which is of use to us.
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_init] call retro_init\n");
@@ -509,6 +513,7 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 			"[RETRO_ENVIRONMENT_SET_HW_RENDER]\n");
 		if (!data)
 			return false;
+		hardware_rendering = true;
 		return init_retro_hw_render_callback((struct retro_hw_render_callback*)data);
 
 	case RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE:
@@ -648,7 +653,7 @@ int wrapper_load_game(char* path, long size, char* data, char* _gamma, char* _br
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s) [%d bytes]--\n",
 		game_info.path, game_info.size);
 	bool ret = handlers.retro_load_game(&game_info);
-	
+
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_load_game] END (ret:%i) --------- \n", ret);
 	return (int)ret;

@@ -172,10 +172,10 @@ public static unsafe class LibretroMameCore
     // audio ===============
     private delegate void AudioLockHandler();
     private delegate void AudioUnlockHandler();
-        [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_audio_init(AudioLockHandler AudioLock,
-                                                    AudioUnlockHandler AudioUnlock
-                                                    );
+                                                AudioUnlockHandler AudioUnlock
+                                                );
 
     // Declare the C functions using P/Invoke
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -304,7 +304,10 @@ public static unsafe class LibretroMameCore
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_input_init();
-            
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool wrapper_is_hardware_rendering();
+
     //image
     private delegate void CreateTextureHandler(uint width, uint height);
     private delegate void TextureLockHandler();
@@ -806,6 +809,41 @@ public static unsafe class LibretroMameCore
         }
         return false;
     }
+
+    public static void UpdateTexture()
+    {
+        if (wrapper_is_hardware_rendering())
+        {
+            LoadVulkanTextureData();
+        } else
+        {
+            LoadTextureData();
+        }
+    }
+
+    //static int frame = 0;
+    public static void LoadVulkanTextureData()
+    {
+        WriteConsole($"[LoadVulkanTextureData]");
+        if (LibretroVulkan.isVkImageReady())
+        {
+            IntPtr vkImage = LibretroVulkan.GetVkImage();
+            WriteConsole($"[LoadVulkanTextureData] vulkan frame available {vkImage.ToString("x16")}");
+            //Texture2D tex = Texture2D.CreateExternalTexture(640, 480, TextureFormat.RGBA32, false, false, vkImage);
+            //WriteConsole($"[LoadVulkanTextureData] texture created");
+            //byte[] png = tex.EncodeToPNG();
+            //WriteConsole($"[LoadVulkanTextureData] png created");
+            //string pngName = Path.Combine(ConfigManager.DebugDir, "test" + (frame++) + ".png");
+            //File.WriteAllBytes(pngName, png);
+            //WriteConsole($"[LoadVulkanTextureData] png saved {pngName}");
+        }
+        else
+        {
+            WriteConsole($"[LoadVulkanTextureData] no vulkan frame available");
+        }
+        WriteConsole($"[LoadVulkanTextureData] END");
+    }
+
     public static void LoadTextureData()
     {
         lock (GameTextureLock)
@@ -832,7 +870,7 @@ public static unsafe class LibretroMameCore
                 GameTextureBufferSem.Reset();
             }
         }
-        // WriteConsole($"[LoadTextureData] END");
+        //WriteConsole($"[LoadTextureData] END");
     }
 
     public static void StartRunThread()

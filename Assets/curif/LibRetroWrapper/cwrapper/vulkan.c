@@ -18,51 +18,8 @@ typedef struct VkFunctions {
 
 static struct VkFunctions vkFunctions;
 
-void wrapper_environment_log_render_callback() {
-	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_log_render_callback] Render callback:\n"
-		"    context_type: %d\n"
-		"    context_reset: %016lx\n"
-		"    get_current_framebuffer: %016lx\n"
-		"    get_proc_address: %016lx\n"
-		"    depth: %d\n"
-		"    stencil: %d\n"
-		"    bottom_left_origin: %d\n"
-		"    version_major: %i\n"
-		"    version_minor: %i\n"
-		"    cache_context: %d\n"
-		"    retro_hw_context_reset_t: %016lx\n"
-		"    debug_context: %d\n"
-		,
-		hw_render_callback.context_type,
-		(long)hw_render_callback.context_reset,
-		(long)hw_render_callback.get_current_framebuffer,
-		(long)hw_render_callback.get_proc_address,
-		(long)hw_render_callback.depth,
-		(long)hw_render_callback.stencil,
-		(long)hw_render_callback.bottom_left_origin,
-		hw_render_callback.version_major,
-		hw_render_callback.version_minor,
-		hw_render_callback.cache_context,
-		(long)hw_render_callback.context_reset,
-		hw_render_callback.debug_context
-	);
-}
-
 void wrapper_environment_log_vulkan_interface() {
-	char* fmt = "[wrapper_environment_log_vulkan_interface] Vulkan interface:\n"
-		"    interface_type: %i\n"
-		"    interface_version: %i\n"
-		"    get_application_info: %016lx\n"
-		"    create_device:        %016lx\n"
-		"    destroy_device:       %016lx\n"
-		;
-	wrapper_environment_log(RETRO_LOG_INFO, fmt,
-		hw_vulkan_interface.interface_type,
-		hw_vulkan_interface.interface_version,
-		(long)hw_vulkan_interface.get_application_info,
-		(long)hw_vulkan_interface.create_device,
-		(long)hw_vulkan_interface.destroy_device
-	);
+
 }
 
 
@@ -176,7 +133,33 @@ static void vulkan_set_signal_semaphore(void* handle, VkSemaphore semaphore)
 bool init_retro_hw_render_callback(struct retro_hw_render_callback* callback)
 {
 	memcpy(&(hw_render_callback), callback, sizeof(hw_render_callback));
-	wrapper_environment_log_render_callback();
+	wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_callback] Render callback:\n"
+		"    context_type: %d\n"
+		"    context_reset: %016lx\n"
+		"    get_current_framebuffer: %016lx\n"
+		"    get_proc_address: %016lx\n"
+		"    depth: %d\n"
+		"    stencil: %d\n"
+		"    bottom_left_origin: %d\n"
+		"    version_major: %i\n"
+		"    version_minor: %i\n"
+		"    cache_context: %d\n"
+		"    retro_hw_context_reset_t: %016lx\n"
+		"    debug_context: %d\n"
+		,
+		hw_render_callback.context_type,
+		(long)hw_render_callback.context_reset,
+		(long)hw_render_callback.get_current_framebuffer,
+		(long)hw_render_callback.get_proc_address,
+		(long)hw_render_callback.depth,
+		(long)hw_render_callback.stencil,
+		(long)hw_render_callback.bottom_left_origin,
+		hw_render_callback.version_major,
+		hw_render_callback.version_minor,
+		hw_render_callback.cache_context,
+		(long)hw_render_callback.context_reset,
+		hw_render_callback.debug_context
+	);
 	return true;
 }
 
@@ -225,13 +208,25 @@ bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_r
 	wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_context_negotiation_interface_vulkan]\n");
 
 	memcpy(&(hw_vulkan_interface), interface, sizeof(hw_vulkan_interface));
-	wrapper_environment_log_vulkan_interface();
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[init_retro_hw_render_context_negotiation_interface_vulkan] Vulkan interface:\n"
+		"    interface_type: %i\n"
+		"    interface_version: %i\n"
+		"    get_application_info: %016lx\n"
+		"    create_device:        %016lx\n"
+		"    destroy_device:       %016lx\n",
+		hw_vulkan_interface.interface_type,
+		hw_vulkan_interface.interface_version,
+		(long)hw_vulkan_interface.get_application_info,
+		(long)hw_vulkan_interface.create_device,
+		(long)hw_vulkan_interface.destroy_device
+	);
 
 	// 0- Load Vulkan library and get references
 
 	void* vulkan_library = dlopen("libvulkan.so", RTLD_NOW);
 	if (!vulkan_library) {
-		wrapper_environment_log(RETRO_LOG_INFO, "[RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE] Failed to load libvulkan.so\n");
+		wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_context_negotiation_interface_vulkan] Failed to load libvulkan.so\n");
 		return false;
 	}
 
@@ -250,19 +245,22 @@ bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_r
 	VkPhysicalDeviceFeatures required_features = { false };
 
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[init_retro_hw_render_context_negotiation_interface_vulkan]\n"
+		"[init_retro_hw_render_context_negotiation_interface_vulkan] Invoking create_device with:\n"
 		"   vkInstance: %016lx\n"
 		"   vkPhysicalDevice: %016lx\n"
+		"   vkDevice: %016lx\n"
 		"   vkGetInstanceProcAddr: %016lx\n"
 		"   required_device_extensions: %s\n"
 		"   required_features: %016lx\n",
 		vkInstance,
 		vkPhysicalDevice,
+		vkDevice,
 		vkFunctions.vkGetInstanceProcAddr,
 		required_device_extensions,
 		&required_features
 	);
 
+	memset(&context, 0, sizeof(context));
 	bool result = hw_vulkan_interface.create_device(
 		&context,							 // struct retro_vulkan_context *context
 		vkInstance,							 // VkInstance instance
@@ -275,26 +273,26 @@ bool init_retro_hw_render_context_negotiation_interface_vulkan(struct retro_hw_r
 		0,									 // unsigned num_required_device_layers
 		&required_features					 // const VkPhysicalDeviceFeatures *required_features
 	);
-	wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_context_negotiation_interface_vulkan] create_device: %d\n", result);
 
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[init_retro_hw_render_context_negotiation_interface_vulkan] create_device result:\n"
+		"[init_retro_hw_render_context_negotiation_interface_vulkan] create_device result %d:\n"
 		"	VkPhysicalDevice gpu: %016lx\n"
 		"	VkDevice device: %016lx\n"
 		"	VkQueue queue: %016lx\n"
 		"	unsigned queue_family_index: %i\n"
 		"	VkQueue presentation_queue: %016lx\n"
 		"	unsigned presentation_queue_family_index: %i\n",
-		&context.gpu,
-		&context.device,
-		&context.queue,
+		result,
+		context.gpu,
+		context.device,
+		context.queue,
 		context.queue_family_index,
-		&context.presentation_queue,
+		context.presentation_queue,
 		context.presentation_queue_family_index
 	);
 
 	// 2- Now we have to call context_reset to finalize the initialization
-	hw_render_callback.get_proc_address = vkFunctions.vkGetInstanceProcAddr;
+	hw_render_callback.get_proc_address = vkFunctions.vkGetInstanceProcAddr;	// This seems wrong. Why have I done that ?
 	hw_render_callback.context_reset();
 	wrapper_environment_log(RETRO_LOG_INFO, "[init_retro_hw_render_context_negotiation_interface_vulkan] Vulkan context_reset done\n");
 
