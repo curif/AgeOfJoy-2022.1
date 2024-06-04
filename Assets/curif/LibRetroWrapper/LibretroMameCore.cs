@@ -815,7 +815,8 @@ public static unsafe class LibretroMameCore
         if (wrapper_is_hardware_rendering())
         {
             LoadVulkanTextureData();
-        } else
+        }
+        else
         {
             LoadTextureData();
         }
@@ -873,6 +874,25 @@ public static unsafe class LibretroMameCore
         //WriteConsole($"[LoadTextureData] END");
     }
 
+    public static double GetFps()
+    {
+        /*
+         * DirkSimple is claiming to be running at 23.976024 fps, but it's actually running at 30fps.
+         * It's actually informing us of the 30 fps framerate on RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK but we don't handle this yet.
+         * So we add this dirty hack for now
+         * 
+         * BE SURE TO STILL CALL wrapper_environment_get_fps() OR BAD SIDE EFFECTS HAPPEN !
+         */
+
+        double fps = wrapper_environment_get_fps();
+        if (Core.Equals("dirksimple"))
+        {
+            WriteConsole($"[GetFps] Ajusting framerate for lying DirkSimple core -> 30");
+            fps = 30;
+        }
+        return fps;
+    }
+
     public static void StartRunThread()
     {
 #if _serialize_
@@ -891,7 +911,9 @@ public static unsafe class LibretroMameCore
 #endif
 
         ConfigManager.WriteConsole($"[StartRunThread] -------------------------");
-        FPSControlNoUnity = new((float)wrapper_environment_get_fps());
+
+        FPSControlNoUnity = new((float)GetFps());
+
         retroRunTaskCancellationToken = new();
         retroRunTask = Task.Run(() =>
         {

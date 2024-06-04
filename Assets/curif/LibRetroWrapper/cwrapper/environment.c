@@ -585,8 +585,14 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 			"[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK]\n");
 		struct retro_frame_time_callback* retro_frame_time_cb = (struct retro_frame_time_callback*)data;
 		memcpy(&(frame_time_callback), retro_frame_time_cb, sizeof(frame_time_callback));
+
+		int64_t reference = 1000000;
+		int64_t frame_reference = frame_time_callback.reference;
+		double reference_fps = (double)reference / (double)frame_reference;
+		double rounded_reference_fps = round(reference_fps * 1000) / 1000;	// Keep only 3 decimals to make up for rounding errors => 30.00033 becomes 30.000
+
 		wrapper_environment_log(RETRO_LOG_INFO,
-			"[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK] Reference:%llu\n", frame_time_callback.reference);
+			"[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK] frame_time_callback.reference:%llu -> reference_fps:%f\n", frame_time_callback.reference, rounded_reference_fps);
 		return true;
 
 	case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
