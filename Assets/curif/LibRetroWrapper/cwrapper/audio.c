@@ -9,9 +9,9 @@ static handlers_t* handlers;
 
 #define QUEST_AUDIO_FREQUENCY 48000
 #define MAX_AUDIO_BATCH_SIZE (1024 * 8)
-static float AudioBatch[MAX_AUDIO_BATCH_SIZE]; // Downsampled audio buffer
-static float inBufferL[MAX_AUDIO_BATCH_SIZE / 2];   // internal transaction buffer for Left channel
-static float inBufferR[MAX_AUDIO_BATCH_SIZE / 2];   // internal transaction buffer for Right channel
+static float AudioBatch[MAX_AUDIO_BATCH_SIZE];		// Downsampled audio buffer
+static float inBufferL[MAX_AUDIO_BATCH_SIZE / 2];   // internal buffer for Left channel
+static float inBufferR[MAX_AUDIO_BATCH_SIZE / 2];   // internal buffer for Right channel
 static size_t AudioBatchOccupancy = 0;
 
 static AudioBufferLock AudioBufferLockCB;
@@ -21,15 +21,13 @@ void wrapper_audio_sample_cb(int16_t left, int16_t right) { return; }
 
 static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 	size_t frames) {
-	size_t consumedFrames = 0;
 
 #ifdef AUDIO_FRAME_DEBUG
 	wrapper_environment_log(
 		RETRO_LOG_INFO, "[wrapper_audio_sample_batch_cb] frames: %i\n", frames);
 #endif
 
-
-	if (data == NULL || frames < 2) {
+	if (data == NULL || frames < 1) {
 #ifdef AUDIO_FRAME_DEBUG
 		wrapper_environment_log(RETRO_LOG_ERROR,
 			"[wrapper_audio_sample_batch_cb] no data received\n");
@@ -37,29 +35,21 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 		return 0;
 	}
 
-	if (frames % 2 != 0) {
-		// Handle the case where frames is not even (e.g., by skipping the last odd
-		// sample)
-		frames--;
-	}
-	size_t totalFrames = frames * 2;
-
 #ifdef AUDIO_CANCEL
 	return frames;
 #endif
 
-	if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE ||
-		totalFrames > MAX_AUDIO_BATCH_SIZE) {
+	if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE || (frames * 2) > MAX_AUDIO_BATCH_SIZE) {
 #ifdef AUDIO_FRAME_DEBUG
 		wrapper_environment_log(RETRO_LOG_ERROR,
 			"[wrapper_audio_sample_batch_cb] buffer exceeded - "
 			"frames:%i AudioBatchOccupancy:%i\n",
-			totalFrames, AudioBatchOccupancy);
+			frames, AudioBatchOccupancy);
 #endif
 		return 0;
 	}
 
-	// Copy data into the input buffers
+	// Copy data into the Left/Right channel input buffers, while performing normalisation (-1.0f to 1.0f)
 	for (size_t i = 0; i < frames; i++) {
 		inBufferL[i] = (float)data[2 * i] / 32768.0f;
 		inBufferR[i] = (float)data[2 * i + 1] / 32768.0f;
@@ -68,16 +58,22 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 	AudioBufferLockCB(); // Lock the AudioBatch for synchronization
 
 	double inputSampleRate = wrapper_environment_get_sample_rate();
+	size_t consumedFrames = 0;
+
 	if (inputSampleRate == QUEST_AUDIO_FREQUENCY) {
 		// If sample rates match, directly copy the data to the output buffer
 		for (size_t i = 0; i < frames; i++) {
 			AudioBatch[AudioBatchOccupancy] = inBufferL[i];
-			AudioBatchOccupancy++;
-			AudioBatch[AudioBatchOccupancy] = inBufferR[i];
-			AudioBatchOccupancy++;
-			consumedFrames += 2;
+			AudioBatch[AudioBatchOccupancy + 1] = inBufferR[i];
+			AudioBatchOccupancy += 2;
+			consumedFrames++;
 
 			if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE) { // Check for buffer overflow
+#ifdef AUDIO_FRAME_DEBUG
+				wrapper_environment_log(RETRO_LOG_ERROR,
+					"[wrapper_audio_sample_batch_cb] AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE i:%d AudioBatchOccupancy:%d\n",
+					i, AudioBatchOccupancy);
+#endif
 				break;
 			}
 		}
@@ -90,32 +86,41 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 		while (1) {
 			double inBufferIndex = outSample * ratio;
 			int index = (int)inBufferIndex;
-			double frac = inBufferIndex - index; // fractional part
-			outSample++;
 
-			if (index + 1 >= frames) {
+			if (index >= frames) { // We have reached the end of the input buffer
 				break;
 			}
 
-			// Linear interpolation for left channel
-			float leftSample = (1 - frac) * inBufferL[index] + frac * inBufferL[index + 1];
-			// Linear interpolation for right channel
-			float rightSample = (1 - frac) * inBufferR[index] + frac * inBufferR[index + 1];
+			// Perform linear interpolation
+			double frac = inBufferIndex - index; // Fractional part
+			int upperIndex = index == frames - 1 ? index : index + 1;	// Special case, interpolation for the last sample
+			float leftSample = (1 - frac) * inBufferL[index] + frac * inBufferL[upperIndex];
+			float rightSample = (1 - frac) * inBufferR[index] + frac * inBufferR[upperIndex];
 
 			// Store the interpolated samples in the combined output buffer
 			AudioBatch[AudioBatchOccupancy] = leftSample;
-			AudioBatchOccupancy++;
-			AudioBatch[AudioBatchOccupancy] = rightSample;
-			AudioBatchOccupancy++;
-			consumedFrames += 2; // increment by 2 for stereo
+			AudioBatch[AudioBatchOccupancy + 1] = rightSample;
+			AudioBatchOccupancy += 2;
+			outSample++;
+			consumedFrames = index + 1;
 
 			if (AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE) { // Check for buffer overflow
+#ifdef AUDIO_FRAME_DEBUG
+				wrapper_environment_log(RETRO_LOG_ERROR,
+					"[wrapper_audio_sample_batch_cb] AudioBatchOccupancy >= MAX_AUDIO_BATCH_SIZE index:%d AudioBatchOccupancy:%d MAX_AUDIO_BATCH_SIZE:%d\n",
+					index, AudioBatchOccupancy, MAX_AUDIO_BATCH_SIZE);
+#endif
 				break;
 			}
 		}
 	}
 
 	AudioBufferUnLockCB(); // Unlock the AudioBatch
+
+#ifdef AUDIO_FRAME_DEBUG
+	wrapper_environment_log(
+		RETRO_LOG_INFO, "[wrapper_audio_sample_batch_cb] consumedFrames: %i\n", consumedFrames);
+#endif
 
 	return consumedFrames;
 }
