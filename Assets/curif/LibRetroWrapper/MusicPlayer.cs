@@ -13,6 +13,7 @@ public class MusicPlayer : MonoBehaviour
     public bool Loop = false;
     private int currentIndex = 0;
     private AudioSource audioSource;
+    private Coroutine coroutine;
 
     public bool IsCyclic
     {
@@ -25,12 +26,9 @@ public class MusicPlayer : MonoBehaviour
         audioSource = gameObject.GetComponent<AudioSource>();
         audioSource.loop = false;
         audioSource.playOnAwake = false;
-/*
-        AddMusic(ConfigManager.MusicDir + "/Talkshow_Boy_-_01_-_Three_Cheers_For_That_Fucking_Dickhead_Adrian.mp3");
-        AddMusic(ConfigManager.MusicDir + "/better-day-186374.mp3");
-        AddMusic(ConfigManager.MusicDir + "/Death_Grips_-_04_-_Lord_of_the_Game_ft_Mexican_Girl.mp3");
+
+        currentIndex = -1;
         Play();
-*/
     }
 
     public void AddMusic(string musicFilePath)
@@ -45,6 +43,7 @@ public class MusicPlayer : MonoBehaviour
             Play();
         }
     }
+
     public void RemoveMusic(string musicFilePath)
     {
         if (musicQueue.Contains(musicFilePath))
@@ -61,8 +60,8 @@ public class MusicPlayer : MonoBehaviour
 
     public void ClearQueue()
     {
-        musicQueue.Clear();
         Stop();
+        musicQueue.Clear();
     }
 
     public void ResetQueue()
@@ -77,130 +76,128 @@ public class MusicPlayer : MonoBehaviour
 
     public void Play()
     {
-        if (musicQueue.Count > 0 && !isPlaying)
-        {
-            isPlaying = true;
-            PlayMusic();
-        }
+        if (currentIndex == -1 && musicQueue.Count > 0)
+            currentIndex = 0;
+
+        if (coroutine == null)
+            coroutine = StartCoroutine(PlayMusicCoroutine());
     }
 
     public bool IsInQueue(string musicFilePath)
     {
         return musicQueue.Contains(musicFilePath);
     }
-
-    private void PlayMusic()
-    {
-        if (currentIndex < musicQueue.Count)
-        {
-            string musicFilePath = musicQueue[currentIndex];
-            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusic] {musicFilePath}");
-
-            StartCoroutine(PlayMusicCoroutine(musicFilePath));
-        }
-    }
-
     public void SetVolume(float amount)
     {
         audioSource.volume = Mathf.Clamp01(audioSource.volume + amount);
     }
 
-    private IEnumerator PlayMusicCoroutine(string musicFilePath)
+    private IEnumerator PlayMusicCoroutine()
     {
-        string filePath;
-        if (musicFilePath.EndsWith(".strm"))
-            filePath = ReadUrlFromStrmFile(musicFilePath);
-        else
-            filePath = "file://" + musicFilePath;
-        
-        if (!string.IsNullOrEmpty(filePath))
+        string musicFilePath;
+
+        while (true)
         {
-            if (filePath.StartsWith("file:"))
+            if (currentIndex == -1 || musicQueue.Count == 0)
+            { 
+                yield return new WaitForSeconds(1f);
+                continue;
+            }
+
+            musicFilePath = musicQueue[currentIndex];
+            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusic] {musicFilePath}");
+            
+            string filePath;
+            if (musicFilePath.EndsWith(".strm"))
+                filePath = ReadUrlFromStrmFile(musicFilePath);
+            else
+                filePath = "file://" + musicFilePath;
+
+            if (!string.IsNullOrEmpty(filePath))
             {
-                using (WWW www = new WWW(filePath))
+                if (filePath.StartsWith("file:"))
                 {
-                    // Wait until the audio file is loaded
-                    yield return www;
-
-                    // Check if there was an error loading the audio file
-                    if (string.IsNullOrEmpty(www.error))
+                    using (WWW www = new WWW(filePath))
                     {
-                        AudioClip clip = www.GetAudioClip(false, false);
+                        // Wait until the audio file is loaded
+                        yield return www;
 
-                        if (clip != null)
+                        // Check if there was an error loading the audio file
+                        if (string.IsNullOrEmpty(www.error))
                         {
-                            audioSource.clip = clip;
-                            audioSource.Play();
+                            AudioClip clip = www.GetAudioClip(false, false);
 
-                            yield return new WaitForSeconds(clip.length);
+                            if (clip != null)
+                            {
+                                audioSource.clip = clip;
+                                audioSource.Play();
+
+                                yield return new WaitForSeconds(clip.length);
+                            }
+                            else
+                            {
+                                ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio clip: " + musicFilePath);
+                            }
                         }
                         else
                         {
-                            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio clip: " + musicFilePath);
+                            ConfigManager.WriteConsoleWarning($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio file: " + musicFilePath + ", Error: " + www.error);
                         }
                     }
-                    else
-                    {
-                        ConfigManager.WriteConsoleWarning($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio file: " + musicFilePath + ", Error: " + www.error);
-                    }
                 }
-            }
-            else
-            {
-                // https://github.com/mikepierce/internet-radio-streams
-                // is a stream
-                ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Stream: {filePath}");
-
-                using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(filePath, AudioType.UNKNOWN))
+                else
                 {
-                    DownloadHandlerAudioClip dHA = new DownloadHandlerAudioClip(string.Empty, AudioType.UNKNOWN);
-                    dHA.streamAudio = true;
-                    www.downloadHandler = dHA;
-                    www.SendWebRequest();
-                    while (www.downloadProgress < 1)
-                    {
-                        ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load a stream file: {filePath} progress: {www.downloadProgress}");
-                        yield return new WaitForSeconds(.5f);
-                    }
+                    // curated list https://github.com/mikepierce/internet-radio-streams
+                    // is a stream
+                    ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Stream: {filePath}");
 
-                    if (www.result == UnityWebRequest.Result.ConnectionError || 
-                        www.result == UnityWebRequest.Result.ProtocolError)
+                    using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip(filePath, AudioType.UNKNOWN))
                     {
-                        ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load a stream url: " + musicFilePath);
-                        RemoveMusic(musicFilePath);
-                    }
-                    else
-                    {
-                        AudioClip audioClip = DownloadHandlerAudioClip.GetContent(www);
-                        audioSource.clip = audioClip;
-                        audioSource.Play();
-                        audioSource.loop = true; // Ensure continuous playback
+                        DownloadHandlerAudioClip dHA = new DownloadHandlerAudioClip(string.Empty, AudioType.UNKNOWN);
+                        dHA.streamAudio = true;
+                        www.downloadHandler = dHA;
+                        try
+                        {
+                            www.SendWebRequest();
+                        }
+                        catch (Exception e)
+                        {
+                            ConfigManager.WriteConsoleException($"[MusicPlayer.PlayMusicCoroutine] Downloading stream file: {filePath} progress: {www.downloadProgress}", e);
+                            next();
+                            continue;
+                        }
+                        /*
+                        while (www.downloadProgress < 1)
+                        {
+                            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Downloading stream file: {filePath} progress: {www.downloadProgress}");
+                            yield return new WaitForSeconds(.5f);
+                        }*/
+
+                        if (www.result == UnityWebRequest.Result.ConnectionError ||
+                            www.result == UnityWebRequest.Result.ProtocolError)
+                        {
+                            ConfigManager.WriteConsoleError($"[MusicPlayer.PlayMusicCoroutine] Failed to load a stream url: " + musicFilePath);
+                            RemoveMusic(musicFilePath);
+                        }
+                        else
+                        {
+                            AudioClip audioClip = DownloadHandlerAudioClip.GetContent(www);
+                            audioSource.clip = audioClip;
+                            audioSource.Play();
+                            audioSource.loop = true; // Ensure continuous playback
+                        }
                     }
                 }
             }
-        }
-        else
-        {
-            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio empty audio file: " + musicFilePath);
-        }
-
-        currentIndex++;
-
-        if (currentIndex >= musicQueue.Count)
-        {
-            if (Loop)
-            {
-                currentIndex = 0;
-            }
             else
             {
-                isPlaying = false;
-                yield break;
+                ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Failed to load audio empty audio file: " + musicFilePath);
             }
-        }
 
-        PlayMusic();
+            next();
+        }
     }
+
     string ReadUrlFromStrmFile(string filePath)
     {
         try
@@ -214,28 +211,28 @@ public class MusicPlayer : MonoBehaviour
         }
     }
 
+    private void next()
+    {
+        if (musicQueue.Count == 0)
+        {
+            currentIndex = -1;
+            return;
+        }
 
+        currentIndex++;
+        if (currentIndex >= musicQueue.Count)
+            currentIndex = Loop ? 0 : -1;
+    }
+
+    //force to play the next one
     public void Next()
     {
-        if (musicQueue.Count > 0)
-        {
-            currentIndex++;
-            if (currentIndex >= musicQueue.Count)
-            {
-                if (Loop)
-                {
-                    currentIndex = 0;
-                }
-                else
-                {
-                    currentIndex = musicQueue.Count - 1;
-                    Stop();
-                    return;
-                }
-            }
-            Stop();
-            Play();
-        }
+        if (musicQueue.Count == 0)
+            return;
+
+        Stop();
+        next();
+        Play();
     }
 
     public void Previous()
@@ -263,9 +260,10 @@ public class MusicPlayer : MonoBehaviour
 
     private void Stop()
     {
-        isPlaying = false;
         audioSource.Stop();
         audioSource.clip = null;
         currentIndex = Mathf.Clamp(currentIndex, 0, musicQueue.Count - 1);
+        StopCoroutine(coroutine);
+        coroutine = null;
     }
 }
