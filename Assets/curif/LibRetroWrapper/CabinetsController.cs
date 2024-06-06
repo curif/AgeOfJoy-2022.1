@@ -12,6 +12,7 @@ using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Reflection;
 using System.IO;
+using UnityEngine.XR.Interaction.Toolkit;
 
 //distribute cabinets games in the room for respawn.
 
@@ -120,6 +121,7 @@ public class CabinetsController : MonoBehaviour
         int idx = 0;
         Shader shader = Shader.Find("Standard");
         Vector2 newTiling = new Vector2(-1, -1);
+        GameObject PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
 
         foreach (CabinetControllerInformation cabInfo in Cabinets)
         {
@@ -132,10 +134,16 @@ public class CabinetsController : MonoBehaviour
             if (pos != null)
                 pos.MaxAllowedSpace = cabInfo.CabinetController.Space.MaxAllowedSpace;
 
-            // Assign the cabinet number to the teleport area
-            MeshRenderer renderer = cabInfo.CabinetController.AgentPlayerTeleportAnchor?.GetComponent<MeshRenderer>();
-            MeshFilter meshFilter = cabInfo.CabinetController.AgentPlayerTeleportAnchor?.GetComponent<MeshFilter>();
+            GameObject agentPlayerTeleportAnchor = cabInfo.CabinetController.AgentPlayerTeleportAnchor;
+            if (agentPlayerTeleportAnchor == null)
+                continue;
 
+            // Assign the cabinet number to the teleport area
+            MeshRenderer renderer = agentPlayerTeleportAnchor.GetComponent<MeshRenderer>();
+            MeshFilter meshFilter = agentPlayerTeleportAnchor.GetComponent<MeshFilter>();
+
+
+            
             if (renderer != null && meshFilter != null)
             {
                 // Construct the mesh file path based on the index (idx), starting at 0
@@ -158,8 +166,8 @@ public class CabinetsController : MonoBehaviour
                     cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.localScale = new Vector3(1, 1, 1);
 
                     // Subtract 90 degrees from the y-axis rotation
-                    Vector3 currentRotation = cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.eulerAngles;
-                    cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y - 180, currentRotation.z);
+                    Vector3 currentRotation = agentPlayerTeleportAnchor.transform.eulerAngles;
+                    agentPlayerTeleportAnchor.transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y - 180, currentRotation.z);
 
                     // Set Cast Shadows to OFF; a bunch of stuff under here is to force these guys to batch
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
@@ -175,6 +183,30 @@ public class CabinetsController : MonoBehaviour
 
                     // Optionally, enable the renderer if needed
                     renderer.enabled = true;
+
+                    // Remove the original meshcollider if any.
+                    MeshCollider meshCollider = agentPlayerTeleportAnchor.GetComponent<MeshCollider>();
+                    if (meshCollider != null)
+                        Destroy(meshCollider);
+
+                    // assign a new collider to the anchor bcz the mesh has changed.
+                    BoxCollider boxCollider = agentPlayerTeleportAnchor.AddComponent<BoxCollider>();
+                    Vector3 t = boxCollider.size;
+                    boxCollider.size = new Vector3(t.x, 0.01f, t.z);
+
+                    //remove the anchor (will be replaced by a TeleportationArea)
+                    TeleportationAnchor anchor = agentPlayerTeleportAnchor.GetComponent<TeleportationAnchor>();
+                    if (anchor != null)
+                        Destroy(anchor);
+                    
+                    TeleportationArea area = agentPlayerTeleportAnchor.AddComponent<TeleportationArea>();
+                    //area.colliders[0] = boxCollider;
+                    //area.matchOrientation = MatchOrientation.TargetUp;
+
+                    //this component rotates the player when teleports.
+                    CustomTeleportOrientation cstTeleport = agentPlayerTeleportAnchor.AddComponent<CustomTeleportOrientation>();
+                    cstTeleport.player = PlayerControllerGameObject.transform;
+                    cstTeleport.area = area;
                 }
                 else
                 {
