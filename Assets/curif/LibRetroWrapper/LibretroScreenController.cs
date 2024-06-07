@@ -503,8 +503,7 @@ public class LibretroScreenController : MonoBehaviour
 
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
-            LibretroMameCore.LoadTextureData();
-
+            LibretroMameCore.UpdateTexture();
             LibretroMameCore.CalculateLightGunPosition();
         }
 

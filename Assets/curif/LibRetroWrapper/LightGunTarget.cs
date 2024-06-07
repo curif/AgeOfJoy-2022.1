@@ -183,9 +183,17 @@ public class LightGunTarget : MonoBehaviour
         {
             if (hitPosition == null)
             {
+                float size = 0.005f;
                 hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                hitPosition.transform.localScale = new Vector3(0.02f, 0.02f, 0.02f); // Adjust the size of the sphere as needed
-                hitPosition.GetComponent<Renderer>().material.color = Color.red;
+                hitPosition.transform.localScale = new Vector3(size, size, size); // Adjust the size of the sphere as needed
+                
+                Material emissiveMaterial = new Material(Shader.Find("Standard"));
+                Color color = Color.blue;
+                emissiveMaterial.color = color;
+                emissiveMaterial.EnableKeyword("_EMISSION");
+                emissiveMaterial.SetColor("_EmissionColor", color);
+                hitPosition.GetComponent<Renderer>().material = emissiveMaterial;
+
                 hitPosition.transform.SetParent(transform);
             }
             hitPosition.SetActive(true);

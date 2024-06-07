@@ -55,7 +55,9 @@ int wrapper_environment_open(wrapper_log_printf_t log,
                               retro_input_state_t _retro_input_state_cb, 
                               char *core,
                               Environment environment);
-void wrapper_environment_init();                              
+void wrapper_environment_init();     
+bool wrapper_is_hardware_rendering();
+void wrapper_input_init();
 void wrapper_environment_set_game_parameters(char *_gamma, char *_brightness, 
                                               int _xy_control_type);
 bool wrapper_environment_cb(unsigned cmd, void *data);
