@@ -1183,6 +1183,7 @@ public class ConfigurationController : MonoBehaviour
         shader = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
 
         scr.ActivateShader(shader)
+            .SetColorSpace("ibmpc")
             .ClearBackground()
             .Clear()
             .PrintCentered(1, "BIOS ROM firmware loaded", true)
