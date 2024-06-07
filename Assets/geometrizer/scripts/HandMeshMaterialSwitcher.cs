@@ -40,7 +40,11 @@ public class HandMeshMaterialSwitcher : MonoBehaviour
 
     void SetMaterial()
     {
-        handRenderer.material = globalConfiguration.Configuration.player.skinColor == "light" ? lightMaterial : darkMaterial;
+        if (globalConfiguration != null)
+        {
+            handRenderer.material = globalConfiguration.Configuration.player.skinColor == "light" ? lightMaterial : darkMaterial;
+
+        }
     }
 
 }
