@@ -4,18 +4,21 @@ using System.IO;
 using UnityEngine;
 using static OVRHaptics;
 
-class CommandBGCOLOR : ICommandBase
+class ChangeColorsBase : ICommandBase
 {
-    public string CmdToken { get; } = "BGCOLOR";
+    public string CmdToken { get { return cmdToken; } }
+    string cmdToken;
+
     public CommandType.Type Type { get; } = CommandType.Type.Command;
     protected ConfigurationCommands config;
     protected CommandExpressionList exprs;
 
-    public CommandBGCOLOR(ConfigurationCommands config)
+    public ChangeColorsBase(ConfigurationCommands config,
+                                            string token)
     {
+        cmdToken = token;
         this.config = config;
         exprs = new(config);
-
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -27,12 +30,12 @@ class CommandBGCOLOR : ICommandBase
     public Color32 GetColorFromVals(BasicValue[] vals)
     {
 
-        if (vals == null || vals.Length == 0)
+        if (vals == null || vals[0] == null)
         {
             throw new Exception($"{CmdToken} parameteres missing.");
         }
         Color32 color;
-        if (vals.Length > 1)
+        if (vals[1] != null)
         {
             FunctionHelper.ExpectedNumber(vals[0], "- R");
             FunctionHelper.ExpectedNumber(vals[1], "- G");
@@ -64,35 +67,25 @@ class CommandBGCOLOR : ICommandBase
 
         vals = exprs.ExecuteList(vars);
         Color32 color = GetColorFromVals(vals);
-        config.ScreenGenerator.ForegroundColor = color;
+        if (CmdToken == "BGCOLOR")
+            config.ScreenGenerator.BackgroundColor = color;
+        else
+            config.ScreenGenerator.ForegroundColor = color;
 
         return null;
     }
 }
 
-class CommandFGCOLOR : CommandBGCOLOR
+
+class CommandBGCOLOR : ChangeColorsBase
 {
-    public string CmdToken { get; } = "FGCOLOR";
+    public CommandBGCOLOR(ConfigurationCommands config) : base(config, "BGCOLOR") { } 
+}
 
-    public CommandFGCOLOR(ConfigurationCommands config) : base(config)
-    {
-    }
+class CommandFGCOLOR : ChangeColorsBase
+{
+    public CommandFGCOLOR(ConfigurationCommands config) : base(config, "FGCOLOR") { }
 
-    public BasicValue Execute(BasicVars vars)
-    {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
-        if (config?.ScreenGenerator == null)
-        {
-            return null;
-        }
-        BasicValue[] vals;
-
-        vals = exprs.ExecuteList(vars);
-        Color32 color = GetColorFromVals(vals);
-        config.ScreenGenerator.BackgroundColor = color;
-
-        return null;
-    }
 }
 
 class CommandRESETCOLOR : ICommandBase
@@ -123,6 +116,32 @@ class CommandRESETCOLOR : ICommandBase
     }
 }
 
+class CommandINVERTCOLOR : ICommandBase
+{
+    public string CmdToken { get; } = "INVERTCOLOR";
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    protected ConfigurationCommands config;
+
+    public bool Parse(TokenConsumer tokens)
+    {
+        return true;
+    }
+
+    public CommandINVERTCOLOR(ConfigurationCommands config)
+    {
+        this.config = config;
+    }
+
+    public BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.ScreenGenerator == null)
+            return null;
+
+        config.ScreenGenerator.InvertColors();
+        return null;
+    }
+}
 
 class CommandSETCOLORSPACE : ICommandBase
 {
@@ -134,6 +153,8 @@ class CommandSETCOLORSPACE : ICommandBase
     public CommandSETCOLORSPACE(ConfigurationCommands config)
     {
         this.config = config;
+        expr = new(config);
+
     }
 
     public bool Parse(TokenConsumer tokens)

@@ -43,7 +43,6 @@ public class ScreenGenerator : MonoBehaviour
     // The texture that represents the screen, it has 40x25 characters of capacity
     private Texture2D c64Screen;
     private Color32[] colorsBackgroundMatrix;
-    //private Color32[] colorsCenteredAreaMatrix;
 
     private int ScreenWidth; // Width of the target texture
     private int ScreenHeight; // Height of the target texture
@@ -53,7 +52,7 @@ public class ScreenGenerator : MonoBehaviour
     private bool needsDraw = false;
 
     //Color space
-    private ColorSpaceBase colorSpace = ColorSpaceManager.GetColorSpace("zx");
+    private ColorSpaceBase colorSpace = ColorSpaceManager.GetColorSpace("c64");
 
     //Renderer
     private ShaderScreenBase shader;
@@ -108,6 +107,13 @@ public class ScreenGenerator : MonoBehaviour
     public ScreenGenerator ResetForegroundColor()
     {
         charForegroundColor = colorSpace.ForegroundDefault();
+        return this;
+    }
+    public ScreenGenerator InvertColors()
+    {
+        Color32 temp = charBackgroundColor;
+        charBackgroundColor = charForegroundColor;
+        charForegroundColor = temp;
         return this;
     }
 

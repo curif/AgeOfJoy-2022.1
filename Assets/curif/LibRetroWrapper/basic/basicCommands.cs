@@ -29,6 +29,11 @@ public static class Commands
         commands["CLS"] = typeof(CommandCLS);
         commands["PRINT"] = typeof(CommandPRINT);
         commands["SHOW"] = typeof(CommandSHOW);
+        commands["FGCOLOR"] = typeof(CommandFGCOLOR);
+        commands["BGCOLOR"] = typeof(CommandBGCOLOR);
+        commands["RESETCOLOR"] = typeof(CommandRESETCOLOR);
+        commands["SETCOLORSPACE"] = typeof(CommandSETCOLORSPACE);
+        commands["INVERTCOLOR"] = typeof(CommandINVERTCOLOR);
 
         //functions ------
 
