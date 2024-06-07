@@ -38,7 +38,9 @@ public class GenericMenu
     public void DrawMenu()
     {
         // Print the title in the center of the first row
+        screen.BackgroundColorString = "green";
         screen.PrintCentered(0, title, false);
+        screen.ResetColors();
 
         // Print a horizontal line below the title
         screen.PrintLine(1, false, '-');
@@ -69,7 +71,9 @@ public class GenericMenu
         // Print the help text if it is available
         if (selectedIndex >= 0 && selectedIndex < helpTexts.Count && !string.IsNullOrEmpty(helpTexts[selectedIndex]))
         {
+            screen.BackgroundColorString = "blue";
             screen.PrintCentered(row, helpTexts[selectedIndex], false);
+            screen.ResetColors();
         }
     }
 

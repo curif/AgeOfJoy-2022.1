@@ -2,8 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using System.Text;
-using System.Reflection;
-using System.Runtime.ConstrainedExecution;
 
 public class ScreenGenerator : MonoBehaviour
 {
@@ -18,8 +16,10 @@ public class ScreenGenerator : MonoBehaviour
     public int CharactersHeight = 25;
     public int TextureWidth;
     public int TextureHeight;
-    public Color32 BackgroundColor;
-    public Color32 CenteredAreaColor;
+    public Color32 ScreenBackgroundColor = new Color32(134, 122, 222, 255);
+
+    private Color32 charBackgroundColor = BG_COLOR;
+    private Color32 charForegroundColor = FG_COLOR;
 
     //public string ShaderName = "crt";
     [SerializeField]
@@ -43,7 +43,6 @@ public class ScreenGenerator : MonoBehaviour
     // The texture that represents the screen, it has 40x25 characters of capacity
     private Texture2D c64Screen;
     private Color32[] colorsBackgroundMatrix;
-    //private Color32[] colorsCenteredAreaMatrix;
 
     private int ScreenWidth; // Width of the target texture
     private int ScreenHeight; // Height of the target texture
@@ -51,6 +50,9 @@ public class ScreenGenerator : MonoBehaviour
     private int centerStartY;
 
     private bool needsDraw = false;
+
+    //Color space
+    private ColorSpaceBase colorSpace = ColorSpaceManager.GetColorSpace("c64");
 
     //Renderer
     private ShaderScreenBase shader;
@@ -66,7 +68,75 @@ public class ScreenGenerator : MonoBehaviour
     // The method that runs at the start of the game
     private void Start()
     {
-        createTexture();
+        ResetColors();
+        //createTexture();
+        //ClearBackground();
+        //Clear();
+        //DrawScreen();
+    }
+
+    public Color32 ForegroundColor
+    {
+        get { return charForegroundColor; }
+        set { charForegroundColor = value; }
+    }
+
+    public Color32 BackgroundColor
+    {
+        get { return charBackgroundColor; }
+        set { charBackgroundColor = value; }
+    }
+
+    public String ForegroundColorString
+    {
+        get { return colorSpace.GetNameByColor(charForegroundColor); }
+        set { charForegroundColor = colorSpace.GetColorByName(value); }
+    }
+
+    public String BackgroundColorString
+    {
+        get { return colorSpace.GetNameByColor(charBackgroundColor); }
+        set { charBackgroundColor = colorSpace.GetColorByName(value); }
+    }
+
+    public ScreenGenerator ResetBackgroundColor()
+    {
+        charBackgroundColor = colorSpace.BackgroundDefault();
+        return this;
+    }
+    public ScreenGenerator ResetForegroundColor()
+    {
+        charForegroundColor = colorSpace.ForegroundDefault();
+        return this;
+    }
+    public ScreenGenerator InvertColors()
+    {
+        Color32 temp = charBackgroundColor;
+        charBackgroundColor = charForegroundColor;
+        charForegroundColor = temp;
+        return this;
+    }
+
+    public ScreenGenerator ResetColors()
+    {
+        ResetBackgroundColor();
+        ResetForegroundColor();
+        
+        //for Clear()
+        Array.Fill(colorsBackgroundMatrix, charBackgroundColor);
+
+        return this;
+    }
+
+    public ScreenGenerator SetColorSpace(string colorSpaceName)
+    {
+        colorSpace = ColorSpaceManager.GetColorSpace(colorSpaceName);
+        ResetColors();
+        return this;
+    }
+    public ColorSpaceBase GetColorSpace()
+    {
+        return colorSpace;
     }
 
     private Texture2D createTexture()
@@ -107,9 +177,9 @@ public class ScreenGenerator : MonoBehaviour
             characters[i] = charPixelsArray;
         }
 
-        // Create an array of colors to fill the background texture
+        // Create an array of colors to fill the centered background in the middle of the texture
+        // used to CLEAR faster. Loaded on ResetColors()
         colorsBackgroundMatrix = new Color32[ScreenWidth * ScreenHeight];
-        Array.Fill(colorsBackgroundMatrix, CenteredAreaColor);
 
         // Calculate the width and height of the centered area
         int centeredWidth = CharactersWidth * 8;
@@ -127,49 +197,23 @@ public class ScreenGenerator : MonoBehaviour
         c64Screen.filterMode = FilterMode.Bilinear;
         c64Screen.anisoLevel = 0;
         
-        setBackgroundColor();
-        Clear();
-
         return c64Screen;
     }
 
-    public void ActivateShader(ShaderScreenBase changeShader)
+    public ScreenGenerator ActivateShader(ShaderScreenBase changeShader)
     {
         if (c64Screen == null)
             createTexture();
 
         shader = changeShader;
         shader.Activate(c64Screen);
+        return this;
     }
     
     public void Update()
     {
         shader?.Update();
         return;
-    }
-
-    private ScreenGenerator setBackgroundColor()
-    {
-        if (c64Screen != null)
-        {
-            // Create a new array of color data for the texture
-            Color32[] pixels = c64Screen.GetPixels32();
-            Array.Fill(pixels, BackgroundColor);
-
-            /*
-            // Set the color for each pixel in the texture
-            for (int i = 0; i < TextureWidth * TextureHeight; i++)
-            {
-                pixels[i] = BackgroundColor;
-            }
-            */
-
-            // Apply the modified colors back to the texture
-            c64Screen.SetPixels32(pixels);
-
-            needsDraw = true;
-        }
-        return this;
     }
 
     // copies the texture to the gpu if it was modified
@@ -185,7 +229,7 @@ public class ScreenGenerator : MonoBehaviour
 
     public ScreenGenerator PrintChar(int x, int y, int charNum)
     {
-        return PrintChar(x, y, charNum, FG_COLOR, BG_COLOR);
+        return PrintChar(x, y, charNum, charForegroundColor, charBackgroundColor);
     }
 
     // The method that prints a single character to the screen
@@ -226,8 +270,8 @@ public class ScreenGenerator : MonoBehaviour
     // The method that prints a string of characters to the screen
     public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
     {
-        Color32 fgColor = inverted ? BG_COLOR : FG_COLOR;
-        Color32 bgColor = inverted ? FG_COLOR : BG_COLOR;
+        Color32 fgColor = inverted ? charBackgroundColor : charForegroundColor;
+        Color32 bgColor = inverted ? charForegroundColor : charBackgroundColor;
 
         if (c64Screen == null)
             return this;
@@ -307,12 +351,32 @@ public class ScreenGenerator : MonoBehaviour
         }
     }
 
+    public ScreenGenerator ClearBackground()
+    {
+
+        if (c64Screen != null)
+        {
+            // Create a new array of color data for the texture
+            Color32[] pixels = c64Screen.GetPixels32();
+            Array.Fill(pixels, ScreenBackgroundColor);
+
+            // Apply the modified colors back to the texture
+            c64Screen.SetPixels32(pixels);
+
+            needsDraw = true;
+        }
+        return this;
+    }
+
     // The method that clears the screen with a given color or cyan by default
     public ScreenGenerator Clear()
     {
         // Fill the screen texture with the given color
         if (c64Screen == null)
+        {
             createTexture();
+            ClearBackground();
+        }
 
         c64Screen.SetPixels32(centerStartX, centerStartY, 
                                 ScreenWidth, ScreenHeight, 
@@ -342,7 +406,6 @@ public class ScreenGenerator : MonoBehaviour
 
         return this;
     }
-
 
     // The method that prints the same character in a line
     public ScreenGenerator PrintLine(int y, bool inverted, char c = '-')
