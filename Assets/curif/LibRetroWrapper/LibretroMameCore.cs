@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
 using LC = LibretroControlMapDictionnary;
 using UnityEngine.InputSystem;
+using YamlDotNet.Core.Tokens;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -173,8 +174,8 @@ public static unsafe class LibretroMameCore
     private delegate void AudioUnlockHandler();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_audio_init(AudioLockHandler AudioLock,
-                                                    AudioUnlockHandler AudioUnlock
-                                                    );
+                                                AudioUnlockHandler AudioUnlock
+                                                );
 
     // Declare the C functions using P/Invoke
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -301,8 +302,11 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_set_controller_port_device(uint port, uint device);
 
-    //environment
-    private delegate string EnvironmentHandler(string key);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_input_init();
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool wrapper_is_hardware_rendering();
 
     //image
     private delegate void CreateTextureHandler(uint width, uint height);
@@ -321,7 +325,10 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_image_get_buffer_size();
 
-    //environment.
+    //environment
+
+    private delegate string EnvironmentHandler(string key);
+
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_environment_open(wrapperLogHandler lg,
                                                         retro_log_level _minLogLevel,
@@ -499,13 +506,12 @@ public static unsafe class LibretroMameCore
         }
 
         WriteConsole("[LibRetroMameCore.Start] image callbacks");
-        wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
-                            new TextureLockHandler(TextureLockCB),
-                            new TextureUnlockHandler(TextureUnlockCB),
-                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
-        wrapper_audio_init(new AudioLockHandler(AudioLockCB),
-                            new AudioUnlockHandler(AudioUnlockCB));
+
+        // Calling wrapper_environment_init and therefore retro_init as soon as possible to benefit from logs
         wrapper_environment_init();
+
+        // Let's do this as soon as possible, but after the environment is initialized we have logging
+        LibretroVulkan.WrapperInit();
 
         int needFullPath = wrapper_system_info_need_full_path();
         WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
@@ -546,6 +552,15 @@ public static unsafe class LibretroMameCore
         }
         resetMouseAim();
         activePlayerSlot = 0;  // Default back to Player 1 on cab startup
+
+        // Do all at the latest possible moment. The core may have had a change of heart and decide to change settings
+        wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
+                            new TextureLockHandler(TextureLockCB),
+                            new TextureUnlockHandler(TextureUnlockCB),
+                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
+        wrapper_audio_init(new AudioLockHandler(AudioLockCB),
+                            new AudioUnlockHandler(AudioUnlockCB));
+        wrapper_input_init();
 
 #if !UNITY_EDITOR
         loadState(GameFileName);
@@ -794,6 +809,42 @@ public static unsafe class LibretroMameCore
         }
         return false;
     }
+
+    public static void UpdateTexture()
+    {
+        if (wrapper_is_hardware_rendering())
+        {
+            LoadVulkanTextureData();
+        }
+        else
+        {
+            LoadTextureData();
+        }
+    }
+
+    //static int frame = 0;
+    public static void LoadVulkanTextureData()
+    {
+        WriteConsole($"[LoadVulkanTextureData]");
+        if (LibretroVulkan.isVkImageReady())
+        {
+            IntPtr vkImage = LibretroVulkan.GetVkImage();
+            WriteConsole($"[LoadVulkanTextureData] vulkan frame available {vkImage.ToString("x16")}");
+            //Texture2D tex = Texture2D.CreateExternalTexture(640, 480, TextureFormat.RGBA32, false, false, vkImage);
+            //WriteConsole($"[LoadVulkanTextureData] texture created");
+            //byte[] png = tex.EncodeToPNG();
+            //WriteConsole($"[LoadVulkanTextureData] png created");
+            //string pngName = Path.Combine(ConfigManager.DebugDir, "test" + (frame++) + ".png");
+            //File.WriteAllBytes(pngName, png);
+            //WriteConsole($"[LoadVulkanTextureData] png saved {pngName}");
+        }
+        else
+        {
+            WriteConsole($"[LoadVulkanTextureData] no vulkan frame available");
+        }
+        WriteConsole($"[LoadVulkanTextureData] END");
+    }
+
     public static void LoadTextureData()
     {
         lock (GameTextureLock)
@@ -820,7 +871,26 @@ public static unsafe class LibretroMameCore
                 GameTextureBufferSem.Reset();
             }
         }
-        // WriteConsole($"[LoadTextureData] END");
+        //WriteConsole($"[LoadTextureData] END");
+    }
+
+    public static double GetFps()
+    {
+        /*
+         * DirkSimple is claiming to be running at 23.976024 fps, but it's actually running at 30fps.
+         * It's actually informing us of the 30 fps framerate on RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK but we don't handle this yet.
+         * So we add this dirty hack for now
+         * 
+         * BE SURE TO STILL CALL wrapper_environment_get_fps() OR BAD SIDE EFFECTS HAPPEN !
+         */
+
+        double fps = wrapper_environment_get_fps();
+        if (Core.Equals("dirksimple"))
+        {
+            WriteConsole($"[GetFps] Ajusting framerate for lying DirkSimple core -> 30");
+            fps = 30;
+        }
+        return fps;
     }
 
     public static void StartRunThread()
@@ -841,7 +911,9 @@ public static unsafe class LibretroMameCore
 #endif
 
         ConfigManager.WriteConsole($"[StartRunThread] -------------------------");
-        FPSControlNoUnity = new((float)wrapper_environment_get_fps());
+
+        FPSControlNoUnity = new((float)GetFps());
+
         retroRunTaskCancellationToken = new();
         retroRunTask = Task.Run(() =>
         {

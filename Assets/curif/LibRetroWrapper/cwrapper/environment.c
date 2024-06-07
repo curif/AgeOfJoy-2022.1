@@ -21,6 +21,7 @@ static struct retro_system_av_info av_info;
 static struct retro_game_info game_info;
 static struct retro_frame_time_callback frame_time_callback;
 static long frame_counter;
+static bool hardware_rendering;
 
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
@@ -120,7 +121,7 @@ size_t wrapper_get_memory_size(unsigned id) {
 		"[wrapper_get_memory_size] id: %d\n", id);
 	size_t size = handlers.retro_get_memory_size(id);
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_get_memory_size] suze: %d\n", size);
+		"[wrapper_get_memory_size] size: %d\n", size);
 	return size;
 }
 
@@ -140,6 +141,7 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	Environment _environment) {
 	log = _log;
 	frame_counter = 0;
+	hardware_rendering = false;
 	minLogLevel = _minLogLevel;
 	pixel_format = RETRO_PIXEL_FORMAT_UNKNOWN;
 	input_state_cb = _input_state_cb;
@@ -188,6 +190,8 @@ int wrapper_environment_open(wrapper_log_printf_t _log,
 	return 0;
 }
 
+bool wrapper_is_hardware_rendering() { return hardware_rendering; }
+
 int load_symbol(void** handler, const char* symbol_name) {
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_environment_open] dlsym %s", symbol_name);
 	*handler = dlsym(handlers.handle, symbol_name);
@@ -208,23 +212,31 @@ int16_t wrapper_input_state_cb(unsigned port, unsigned device, unsigned index,
 }
 
 void wrapper_environment_init() {
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_environment_init] call retro init\n");
 
+	// retro_set_environment MUST to be called before retro_init
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_environment_init] call retro_set_environment\n");
 	handlers.retro_set_environment(&wrapper_environment_cb);
-	handlers.retro_set_input_poll(&wrapper_input_poll_cb);
-	handlers.retro_set_input_state(&wrapper_input_state_cb);
 
-	// do almost nothing
-	// https://github.com/libretro/mame2003-plus-libretro/blob/f34453af7f71c31a48d26db9d78aa04a5575ef9a/src/mame2003/mame2003.c#L182
+	// Basic core initialisation. Initialises the log system, which is of use to us.
 	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_environment_init] retro_init\n");
+		"[wrapper_environment_init] call retro_init\n");
 	handlers.retro_init();
 
 	wrapper_environment_get_system_info();
 
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_environment_init] end ----------\n");
+}
+
+void wrapper_input_init() {
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_input_init] call retro_set_input_poll\n");
+	handlers.retro_set_input_poll(&wrapper_input_poll_cb);
+
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_input_init] call retro_set_input_state\n");
+	handlers.retro_set_input_state(&wrapper_input_state_cb);
 }
 
 void wrapper_reset() {
@@ -236,6 +248,8 @@ void wrapper_reset() {
 
 void wrapper_environment_get_system_info() {
 	INIT_STRUCT(system_info);
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_environment_init] call retro_get_system_info\n");
 	handlers.retro_get_system_info(&system_info);
 	wrapper_environment_log(
 		RETRO_LOG_INFO,
@@ -499,6 +513,7 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 			"[RETRO_ENVIRONMENT_SET_HW_RENDER]\n");
 		if (!data)
 			return false;
+		hardware_rendering = true;
 		return init_retro_hw_render_callback((struct retro_hw_render_callback*)data);
 
 	case RETRO_ENVIRONMENT_SET_HW_RENDER_CONTEXT_NEGOTIATION_INTERFACE:
@@ -570,8 +585,14 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 			"[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK]\n");
 		struct retro_frame_time_callback* retro_frame_time_cb = (struct retro_frame_time_callback*)data;
 		memcpy(&(frame_time_callback), retro_frame_time_cb, sizeof(frame_time_callback));
+
+		int64_t reference = 1000000;
+		int64_t frame_reference = frame_time_callback.reference;
+		double reference_fps = (double)reference / (double)frame_reference;
+		double rounded_reference_fps = round(reference_fps * 1000) / 1000;	// Keep only 3 decimals to make up for rounding errors => 30.00033 becomes 30.000
+
 		wrapper_environment_log(RETRO_LOG_INFO,
-			"[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK] Reference:%llu\n", frame_time_callback.reference);
+			"[RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK] frame_time_callback.reference:%llu -> reference_fps:%f\n", frame_time_callback.reference, rounded_reference_fps);
 		return true;
 
 	case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
@@ -638,7 +659,7 @@ int wrapper_load_game(char* path, long size, char* data, char* _gamma, char* _br
 	wrapper_environment_log(RETRO_LOG_INFO, "[wrapper_load_game] (%s) [%d bytes]--\n",
 		game_info.path, game_info.size);
 	bool ret = handlers.retro_load_game(&game_info);
-	
+
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_load_game] END (ret:%i) --------- \n", ret);
 	return (int)ret;

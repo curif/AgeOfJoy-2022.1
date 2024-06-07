@@ -149,9 +149,9 @@ public class CabinetInformation
 
     public static void CheckResourcePath(string path)
     {
-        if (path != null && (path.Contains("/") || path.Contains("\\")))
+        if (path != null && (path.Contains("..")))
         {
-            throw new Exception("Resource path " + path + " cannot contain '/' or '\\' characters");
+            throw new Exception("Resource path " + path + " cannot contain '..'");
         }
     }
 
