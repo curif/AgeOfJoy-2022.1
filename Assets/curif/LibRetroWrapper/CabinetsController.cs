@@ -13,6 +13,7 @@ using System.Security.Cryptography;
 using System.Reflection;
 using System.IO;
 using UnityEngine.XR.Interaction.Toolkit;
+using static ConfigInformation;
 
 //distribute cabinets games in the room for respawn.
 
@@ -30,6 +31,8 @@ public class CabinetsController : MonoBehaviour
     public List<CabinetControllerInformation> Cabinets;
 
     public bool CoroutineIsRunning;
+
+    GameObject PlayerControllerGameObject;
 
     [SerializeField]
     private int cabinetsCount;
@@ -91,6 +94,7 @@ public class CabinetsController : MonoBehaviour
     void Start()
     {
         gameRegistry = GameObject.Find("FixedObject").GetComponent<GameRegistry>();
+        PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
 
         loadCabinetList();
         initalizeCabinets();
@@ -121,12 +125,12 @@ public class CabinetsController : MonoBehaviour
         int idx = 0;
         Shader shader = Shader.Find("Standard");
         Vector2 newTiling = new Vector2(-1, -1);
-        GameObject PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
 
         foreach (CabinetControllerInformation cabInfo in Cabinets)
         {
             cabInfo.CabinetController.game = new();
             cabInfo.CabinetController.game.Position = idx;
+
             cabInfo.CabinetController.backgroundSoundController = backgroundSoundController;
 
             //MaxAllowedSpace to identify NPC animation
@@ -141,8 +145,6 @@ public class CabinetsController : MonoBehaviour
             // Assign the cabinet number to the teleport area
             MeshRenderer renderer = agentPlayerTeleportAnchor.GetComponent<MeshRenderer>();
             MeshFilter meshFilter = agentPlayerTeleportAnchor.GetComponent<MeshFilter>();
-
-
             
             if (renderer != null && meshFilter != null)
             {
@@ -200,13 +202,17 @@ public class CabinetsController : MonoBehaviour
                         Destroy(anchor);
                     
                     TeleportationArea area = agentPlayerTeleportAnchor.AddComponent<TeleportationArea>();
-                    //area.colliders[0] = boxCollider;
-                    //area.matchOrientation = MatchOrientation.TargetUp;
+                    area.colliders[0] = boxCollider;
+                    if (area.colliders.Count > 1)
+                        area.colliders.Remove(area.colliders[1]);
+                    area.matchOrientation = MatchOrientation.None;
+                    area.teleporting.AddListener(OnTeleportingMatchOrientation);
 
-                    //this component rotates the player when teleports.
+                    /*//this component rotates the player when teleports.
                     CustomTeleportOrientation cstTeleport = agentPlayerTeleportAnchor.AddComponent<CustomTeleportOrientation>();
                     cstTeleport.player = PlayerControllerGameObject.transform;
                     cstTeleport.area = area;
+                    */
                 }
                 else
                 {
@@ -222,12 +228,19 @@ public class CabinetsController : MonoBehaviour
             }
 
             idx++;  // Ensure idx is being incremented elsewhere in your code if this block is within a loop
-
-
         }
     }
 
+    void OnTeleportingMatchOrientation(TeleportingEventArgs args)
+    {
+        // Calculate the inverted forward direction
+        Quaternion targetRotation = args.teleportRequest.destinationRotation;
+        Quaternion invertedForwardRotation = Quaternion.Euler(0f, 180f, 0f);
+        Quaternion finalRotation = targetRotation * invertedForwardRotation;
 
+        // Apply the new rotation to the player
+        PlayerControllerGameObject.transform.rotation = finalRotation;
+    }
 
     public CabinetController GetCabinetControllerByPosition(int position)
     {
