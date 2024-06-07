@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     public XROrigin xrorigin;
     public CharacterController characterController;
     public Transform cameraOffset;
+    public ChangeControls changeControls;
 
     [SerializeField]
     float cameraYOffset;
@@ -70,10 +71,13 @@ public class PlayerController : MonoBehaviour
             else
                 ConfigManager.WriteConsoleError("[PlayerController] Camera Offset gameobject transform not found.");
         }
+
+        if (changeControls == null)
+            changeControls = GetComponent<ChangeControls>();
+        
         OnEnable();
         change();
     }
-
     public void AdjustCameraYOffset()
     {
         xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Device;
@@ -147,6 +151,26 @@ public class PlayerController : MonoBehaviour
             ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height {player.height}");
             ConfigManager.WriteConsole($"[changeWithPlayerData] {player.ShowHeightPlayers()}");
         }
+
+        /*
+         * replaced by HandMeshMaterialSwitcher connected to the change configuration event.
+        // Switch the hand mesh material based on the skin color
+        HandMeshMaterialSwitcher leftHandMaterialSwitcher = changeControls.leftHandPrefab.GetComponent<HandMeshMaterialSwitcher>();
+        HandMeshMaterialSwitcher rightHandMaterialSwitcher = changeControls.leftHandPrefab.GetComponent<HandMeshMaterialSwitcher>();
+
+        if (player.skinColor == "light")
+        {
+            leftHandMaterialSwitcher.SetLightMaterial();
+            rightHandMaterialSwitcher.SetLightMaterial();
+            ConfigManager.WriteConsole($"[changeWithPlayerData] Switching materials to light.");
+        }
+        else if (player.skinColor == "dark")
+        {
+            leftHandMaterialSwitcher.SetDarkMaterial();
+            rightHandMaterialSwitcher.SetDarkMaterial();
+            ConfigManager.WriteConsole($"[changeWithPlayerData] Switching materials to dark.");
+        }
+        */
 
         return;
     }

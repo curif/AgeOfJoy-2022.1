@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 32968376c638dad4bb1c843f90d03854, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0037555445, g: 0.0038911812, b: 0.005889219, a: 1}
+  m_IndirectSpecularColor: {r: 0.0037149177, g: 0.003848325, b: 0.005816616, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -558,7 +558,7 @@ GameObject:
   - component: {fileID: 111584157}
   - component: {fileID: 111584156}
   m_Layer: 0
-  m_Name: GlobalConfiguration
+  m_Name: FixedGlobalConfiguration
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3933,7 +3933,7 @@ GameObject:
   - component: {fileID: 1359380282}
   - component: {fileID: 1359380281}
   m_Layer: 0
-  m_Name: GlobalFileMonitor
+  m_Name: FixedGlobalFileMonitor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10396,6 +10396,7 @@ MonoBehaviour:
   xrorigin: {fileID: 1836024372}
   characterController: {fileID: 1836024374}
   cameraOffset: {fileID: 149079754}
+  changeControls: {fileID: 0}
   cameraYOffset: 0
   playerScale: 0
 --- !u!114 &1836024378

@@ -215,9 +215,6 @@ public class ConfigurationController : MonoBehaviour
     private GenericOptions playerScale;
     private GenericOptions playerSkinColor;
     private GenericWidgetContainer playerContainer;
-    private HandMeshMaterialSwitcher leftHandMaterialSwitcher;
-    private HandMeshMaterialSwitcher rightHandMaterialSwitcher;
-
 
     private ConfigurationHelper configHelper;
 
@@ -226,30 +223,6 @@ public class ConfigurationController : MonoBehaviour
 
     private ShaderScreenBase shader;
     private Renderer display;
-
-    private void FindHandMeshObjects()
-    {
-        GameObject leftHand = GameObject.Find("AGEOfJoyHandLeftPrefab");
-        GameObject rightHand = GameObject.Find("AGEOfJoyHandRightPrefab");
-
-        if (leftHand != null)
-        {
-            leftHandMaterialSwitcher = leftHand.GetComponent<HandMeshMaterialSwitcher>();
-            if (leftHandMaterialSwitcher == null)
-            {
-                Debug.LogError("No HandMeshMaterialSwitcher component found on AGEOfJoyHandLeftPrefab.");
-            }
-        }
-
-        if (rightHand != null)
-        {
-            rightHandMaterialSwitcher = rightHand.GetComponent<HandMeshMaterialSwitcher>();
-            if (rightHandMaterialSwitcher == null)
-            {
-                Debug.LogError("No HandMeshMaterialSwitcher component found on AGEOfJoyHandRightPrefab.");
-            }
-        }
-    }
 
 
     // Start is called before the first frame update
@@ -291,11 +264,6 @@ public class ConfigurationController : MonoBehaviour
         display = GetComponent<Renderer>();
 
         StartCoroutine(run());
-        
-        {
-            // Find the hand mesh objects at runtime
-            FindHandMeshObjects();
-        }
     }
 
     /*
@@ -1151,18 +1119,17 @@ public class ConfigurationController : MonoBehaviour
                                             new List<string>(ConfigInformation.Player.HeightPlayers.Keys),
                                             4, 7, maxLength: 26);
 
-        playerScale = new GenericOptions(scr, "playerScale", "Age: ",
+        /*playerScale = new GenericOptions(scr, "playerScale", "Age: ",
                                             new List<string>(ConfigInformation.Player.Scales.Keys),
                                             4, 8, maxLength: 26);
-
+        */
         playerSkinColor = new GenericOptions(scr, "playerSkinColor", "Skin Color: ",
                                          ConfigInformation.Player.SkinColors,
                                          4, 9, maxLength: 26);
-
         playerContainer = new(scr, "playerContainer");
         playerContainer.Add(new GenericWindow(scr, 2, 4, "playerContainerWin", 37, 12, " Player "))
                         .Add(playerHeight, 4, 6)
-                        .Add(playerScale, 4, playerContainer.lastYAdded + 1)
+          //              .Add(playerScale, 4, playerContainer.lastYAdded + 1)
                         .Add(playerSkinColor, 4, playerContainer.lastYAdded + 1)  // add the skin color option
                         .Add(new GenericButton(scr, "save", "save", 4, playerContainer.lastYAdded + 2, true))
                         .Add(new GenericButton(scr, "exit", "exit", 4, playerContainer.lastYAdded + 1, true));
@@ -1172,18 +1139,19 @@ public class ConfigurationController : MonoBehaviour
     {
         // Only for global configuration
         ConfigInformation.Player p;
-        string height, scale, skinColor;  // Declare the skinColor variable
+        string height, skinColor; //, scale  // Declare the skinColor variable
         ConfigInformation config = configHelper.getConfigInformation(true);
         p = config.player ?? ConfigInformation.PlayerDefault();
         height = ConfigInformation.Player.FindNearestKey(p.height);
-        scale = ConfigInformation.Player.FindNearestKeyScale(p.scale);
+        //scale = ConfigInformation.Player.FindNearestKeyScale(p.scale);
         skinColor = p.skinColor ?? "light";  // default to light if not set
 
         playerHeight.SetCurrent(height);
-        playerScale.SetCurrent(scale);
+        //playerScale.SetCurrent(scale);
         playerSkinColor.SetCurrent(skinColor);  // set current skin color value
 
-        ConfigManager.WriteConsole($"[ConfigurationController.PlayerSetWidgetValues] height:{height} scale:{scale} skinColor:{skinColor}.");
+        //ConfigManager.WriteConsole($"[ConfigurationController.PlayerSetWidgetValues] height:{height} scale:{scale} skinColor:{skinColor}.");
+        ConfigManager.WriteConsole($"[ConfigurationController.PlayerSetWidgetValues] height:{height}  skinColor:{skinColor}");
     }
 
     private void PlayerUpdateConfigurationFromWidgets()
@@ -1193,32 +1161,16 @@ public class ConfigurationController : MonoBehaviour
 
         ConfigInformation config = configHelper.getConfigInformation(true);
         config.player = ConfigInformation.PlayerDefault();
-        float scale = ConfigInformation.Player.GetScale(playerScale.GetSelectedOption());
+        //float scale = ConfigInformation.Player.GetScale(playerScale.GetSelectedOption());
         float height = ConfigInformation.Player.GetHeight(playerHeight.GetSelectedOption());
         string skinColor = playerSkinColor.GetSelectedOption();
 
-        if (scale != -1)
-            config.player.scale = scale;
+        //if (scale != -1)
+        //    config.player.scale = scale;
         if (height != -1)
             config.player.height = height;
         config.player.skinColor = skinColor;
 
-        // Switch the hand mesh material based on the skin color
-        if (leftHandMaterialSwitcher != null && rightHandMaterialSwitcher != null)
-        {
-            if (skinColor == "light")
-            {
-                leftHandMaterialSwitcher.SetLightMaterial();
-                rightHandMaterialSwitcher.SetLightMaterial();
-                Debug.LogError("Switching materials to light.");
-            }
-            else if (skinColor == "dark")
-            {
-                leftHandMaterialSwitcher.SetDarkMaterial();
-                rightHandMaterialSwitcher.SetDarkMaterial();
-                Debug.LogError("Switching materials to dark.");
-            }
-        }
         configHelper.Save(true, config);
 
     }

@@ -4,33 +4,43 @@ public class HandMeshMaterialSwitcher : MonoBehaviour
 {
     public Material lightMaterial;
     public Material darkMaterial;
+    public GlobalConfiguration globalConfiguration;
 
     [SerializeField, Tooltip("Drag the child object with the Renderer component here.")]
     private Renderer handRenderer;
 
-    public void SetLightMaterial()
+    private void Start()
     {
-        if (handRenderer != null)
+        GameObject configuration = GameObject.Find("FixedGlobalConfiguration");
+        if (configuration != null)
         {
-            Debug.Log("Setting light material");
-            handRenderer.material = lightMaterial;
+            globalConfiguration = configuration.GetComponent<GlobalConfiguration>();
         }
-        else
-        {
-            Debug.LogError("Hand renderer not assigned.");
-        }
+        OnEnable();
     }
 
-    public void SetDarkMaterial()
+    void OnEnable()
     {
-        if (handRenderer != null)
-        {
-            Debug.Log("Setting dark material");
-            handRenderer.material = darkMaterial;
-        }
-        else
-        {
-            Debug.LogError("Hand renderer not assigned.");
-        }
+        // Listen for the config reload message
+        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        SetMaterial();
+
     }
+
+    void OnDisable()
+    {
+        // Stop listening for the config reload message
+        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+    }
+
+    void OnGlobalConfigChanged()
+    {        
+        SetMaterial();
+    }
+
+    void SetMaterial()
+    {
+        handRenderer.material = globalConfiguration.Configuration.player.skinColor == "light" ? lightMaterial : darkMaterial;
+    }
+
 }
