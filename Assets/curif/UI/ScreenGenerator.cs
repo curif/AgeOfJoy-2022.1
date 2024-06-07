@@ -18,8 +18,11 @@ public class ScreenGenerator : MonoBehaviour
     public int CharactersHeight = 25;
     public int TextureWidth;
     public int TextureHeight;
-    public Color32 BackgroundColor;
-    public Color32 CenteredAreaColor;
+    public Color32 ScreenBackgroundColor = new Color32(134, 122, 222, 255);
+    public Color32 ScreenCenteredAreaColor = BG_COLOR;
+
+    private Color32 charBackgroundColor = BG_COLOR;
+    private Color32 charForegroundColor = FG_COLOR;
 
     //public string ShaderName = "crt";
     [SerializeField]
@@ -66,7 +69,53 @@ public class ScreenGenerator : MonoBehaviour
     // The method that runs at the start of the game
     private void Start()
     {
-        createTexture();
+        ResetColors();
+        //createTexture();
+        //ClearBackground();
+        //Clear();
+        //DrawScreen();
+    }
+
+    public Color32 ForegroundColor
+    {
+        get { return charForegroundColor; }
+        set { charForegroundColor = value; }
+    }
+
+    public Color32 BackgroundColor
+    {
+        get { return charBackgroundColor; }
+        set { charBackgroundColor = value; }
+    }
+
+
+    public String ForegroundColorString
+    {
+        get { return C64ColorsDictionary.GetNameByColor(charForegroundColor); }
+        set { charForegroundColor = C64ColorsDictionary.GetColorByName(value); }
+    }
+
+    public String BackgroundColorString
+    {
+        get { return C64ColorsDictionary.GetNameByColor(charBackgroundColor); }
+        set { charBackgroundColor = C64ColorsDictionary.GetColorByName(value); }
+    }
+
+    public ScreenGenerator ResetBackgroundColor()
+    {
+        charBackgroundColor = BG_COLOR;
+        return this;
+    }
+    public ScreenGenerator ResetForegroundColor()
+    {
+        charForegroundColor = FG_COLOR;
+        return this;
+    }
+
+    public void ResetColors()
+    {
+        ResetBackgroundColor();
+        ResetForegroundColor();
     }
 
     private Texture2D createTexture()
@@ -107,9 +156,10 @@ public class ScreenGenerator : MonoBehaviour
             characters[i] = charPixelsArray;
         }
 
-        // Create an array of colors to fill the background texture
+        // Create an array of colors to fill the centered background in the middle of the texture
+        // used to CLEAR faster.
         colorsBackgroundMatrix = new Color32[ScreenWidth * ScreenHeight];
-        Array.Fill(colorsBackgroundMatrix, CenteredAreaColor);
+        Array.Fill(colorsBackgroundMatrix, ScreenCenteredAreaColor);
 
         // Calculate the width and height of the centered area
         int centeredWidth = CharactersWidth * 8;
@@ -127,19 +177,17 @@ public class ScreenGenerator : MonoBehaviour
         c64Screen.filterMode = FilterMode.Bilinear;
         c64Screen.anisoLevel = 0;
         
-        setBackgroundColor();
-        Clear();
-
         return c64Screen;
     }
 
-    public void ActivateShader(ShaderScreenBase changeShader)
+    public ScreenGenerator ActivateShader(ShaderScreenBase changeShader)
     {
         if (c64Screen == null)
             createTexture();
 
         shader = changeShader;
         shader.Activate(c64Screen);
+        return this;
     }
     
     public void Update()
@@ -148,29 +196,6 @@ public class ScreenGenerator : MonoBehaviour
         return;
     }
 
-    private ScreenGenerator setBackgroundColor()
-    {
-        if (c64Screen != null)
-        {
-            // Create a new array of color data for the texture
-            Color32[] pixels = c64Screen.GetPixels32();
-            Array.Fill(pixels, BackgroundColor);
-
-            /*
-            // Set the color for each pixel in the texture
-            for (int i = 0; i < TextureWidth * TextureHeight; i++)
-            {
-                pixels[i] = BackgroundColor;
-            }
-            */
-
-            // Apply the modified colors back to the texture
-            c64Screen.SetPixels32(pixels);
-
-            needsDraw = true;
-        }
-        return this;
-    }
 
     // copies the texture to the gpu if it was modified
     public ScreenGenerator DrawScreen()
@@ -185,7 +210,7 @@ public class ScreenGenerator : MonoBehaviour
 
     public ScreenGenerator PrintChar(int x, int y, int charNum)
     {
-        return PrintChar(x, y, charNum, FG_COLOR, BG_COLOR);
+        return PrintChar(x, y, charNum, charForegroundColor, charBackgroundColor);
     }
 
     // The method that prints a single character to the screen
@@ -223,11 +248,13 @@ public class ScreenGenerator : MonoBehaviour
         return this;
     }
 
+
+
     // The method that prints a string of characters to the screen
     public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
     {
-        Color32 fgColor = inverted ? BG_COLOR : FG_COLOR;
-        Color32 bgColor = inverted ? FG_COLOR : BG_COLOR;
+        Color32 fgColor = inverted ? charBackgroundColor : charForegroundColor;
+        Color32 bgColor = inverted ? charForegroundColor : charBackgroundColor;
 
         if (c64Screen == null)
             return this;
@@ -307,12 +334,32 @@ public class ScreenGenerator : MonoBehaviour
         }
     }
 
+    public ScreenGenerator ClearBackground()
+    {
+
+        if (c64Screen != null)
+        {
+            // Create a new array of color data for the texture
+            Color32[] pixels = c64Screen.GetPixels32();
+            Array.Fill(pixels, ScreenBackgroundColor);
+
+            // Apply the modified colors back to the texture
+            c64Screen.SetPixels32(pixels);
+
+            needsDraw = true;
+        }
+        return this;
+    }
+
     // The method that clears the screen with a given color or cyan by default
     public ScreenGenerator Clear()
     {
         // Fill the screen texture with the given color
         if (c64Screen == null)
+        {
             createTexture();
+            ClearBackground();
+        }
 
         c64Screen.SetPixels32(centerStartX, centerStartY, 
                                 ScreenWidth, ScreenHeight, 
@@ -364,4 +411,52 @@ public class ScreenGenerator : MonoBehaviour
         return this;
     }
 
+}
+
+public static class C64ColorsDictionary
+{
+    private static readonly Dictionary<string, Color32> C64Colors = new Dictionary<string, Color32>
+    {
+        { "black", new Color32(0, 0, 0, 255) },
+        { "white", new Color32(255, 255, 255, 255) },
+        { "red", new Color32(136, 0, 0, 255) },
+        { "cyan", new Color32(170, 255, 238, 255) },
+        { "purple", new Color32(204, 68, 204, 255) },
+        { "green", new Color32(0, 204, 85, 255) },
+        { "blue", new Color32(0, 0, 170, 255) },
+        { "yellow", new Color32(238, 238, 119, 255) },
+        { "orange", new Color32(221, 136, 85, 255) },
+        { "brown", new Color32(102, 68, 0, 255) },
+        { "light_red", new Color32(255, 119, 119, 255) },
+        { "dark_gray", new Color32(51, 51, 51, 255) },
+        { "gray", new Color32(119, 119, 119, 255) },
+        { "light_green", new Color32(170, 255, 102, 255) },
+        { "light_blue", new Color32(0, 136, 255, 255) },
+        { "light_gray", new Color32(187, 187, 187, 255) },
+        { "standard_background", new Color32(13, 58, 219, 255) }
+    };
+
+    public static Color32 GetColorByName(string colorName)
+    {
+        if (C64Colors.ContainsKey(colorName.ToLower()))
+        {
+            return C64Colors[colorName.ToLower()];
+        }
+        else
+        {
+            return C64Colors["white"];
+        }
+    }
+
+    public static string GetNameByColor(Color32 color)
+    {
+        foreach (KeyValuePair<string, Color32> pair in C64Colors)
+        {
+            if (pair.Value.Equals(color))
+            {
+                return pair.Key;
+            }
+        }
+        return "white"; // If no matching color found, return white by default
+    }
 }

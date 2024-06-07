@@ -261,7 +261,6 @@ public class ConfigurationController : MonoBehaviour
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
 
-        display = GetComponent<Renderer>();
 
         StartCoroutine(run());
     }
@@ -1175,8 +1174,21 @@ public class ConfigurationController : MonoBehaviour
 
     }
 
+    void initScreen()
+    {
+        display = GetComponent<Renderer>();
 
+        Dictionary<string, string> shaderConfig = new Dictionary<string, string>();
+        shaderConfig["damage"] = "none";
+        shader = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
 
+        scr.ActivateShader(shader)
+            .ClearBackground()
+            .Clear()
+            .PrintCentered(1, "BIOS ROM firmware loaded", true)
+            .PrintCentered(2, GetRoomDescription())
+            .DrawScreen();
+    }
 
     IEnumerator run()
     {
@@ -1190,16 +1202,7 @@ public class ConfigurationController : MonoBehaviour
         inputDictionary.Add("action", false);
         inputKeys = inputDictionary.Keys.ToList();
 
-        Dictionary<string, string> shaderConfig = new Dictionary<string, string>();
-        shaderConfig["damage"] = "none";
-        shader = ShaderScreen.Factory(display, 1, "clean", shaderConfig);
-        scr.ActivateShader(shader);
-        yield return new WaitForEndOfFrame();
-
-        scr.Clear();
-        scr.PrintCentered(1, "BIOS ROM firmware loaded", true);
-        scr.PrintCentered(2, GetRoomDescription());
-        scr.DrawScreen();
+        initScreen();
         yield return new WaitForEndOfFrame();
 
         // first: wait for the room to load.
@@ -1217,7 +1220,6 @@ public class ConfigurationController : MonoBehaviour
                 ScreenWaitingDraw();
                 scr.DrawScreen();
                 yield return new WaitForEndOfFrame();
-
             }
         }
         else
