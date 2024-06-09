@@ -33,10 +33,10 @@ public class ScreenGeneratorFont
     public int CharactersWidth { get { return 8; } }
     public int CharactersHeight { get { return 8; } }
 
-    public ScreenGeneratorFont(Texture2D fontTexture, ScreenGenerator screenGenerator)
+    public ScreenGeneratorFont(ScreenGenerator screenGenerator)
     {
-        this.fontTexture = fontTexture;
         this.screenGenerator = screenGenerator;
+        fontTexture = Resources.Load<Texture2D>("UICabinet/Screen/c64Font");
         Init();
     }
 

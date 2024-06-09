@@ -6,9 +6,6 @@ using System.Reflection;
 
 public class ScreenGenerator : MonoBehaviour
 {
-    // The texture that represents a matrix of characters, each character is 8x8 pixels
-    public Texture2D c64Font;
-
     public int CharactersXCount = 40;
     public int CharactersYCount = 25;
 
@@ -129,7 +126,7 @@ public class ScreenGenerator : MonoBehaviour
         if (screenTexture != null)
             return screenTexture;
 
-        font = new ScreenGeneratorFont(c64Font, this);
+        font = new ScreenGeneratorFont(this);
 
         ScreenWidth = CharactersXCount * font.CharactersWidth;  // Width of the target texture
         ScreenHeight = CharactersYCount * font.CharactersHeight; // Height of the target texture
