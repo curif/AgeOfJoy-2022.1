@@ -30,7 +30,7 @@ abstract class GenericWidget
             throw new ArgumentException("The x and y coordinates of the widget must not be negative");
         }
 
-        if (x >= screen.CharactersWidth || y >= screen.CharactersHeight)
+        if (x >= screen.CharactersXCount || y >= screen.CharactersYCount)
         {
             throw new ArgumentException("The widget must fit within the screen size");
         }

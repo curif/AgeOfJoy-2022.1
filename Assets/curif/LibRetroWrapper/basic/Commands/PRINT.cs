@@ -36,10 +36,10 @@ class CommandPRINT : ICommandBase
         int x = (int)vals[0].GetValueAsNumber();
         int y = (int)vals[1].GetValueAsNumber();
 
-        if (x < 0 || x >= config.ScreenGenerator.CharactersWidth)
-            throw new Exception($"printing out of screen (width): {x} : {config.ScreenGenerator.CharactersWidth}");
-        if (y < 0 || y >= config.ScreenGenerator.CharactersHeight)
-            throw new Exception($"printing out of screen (height): {y} : {config.ScreenGenerator.CharactersHeight}");
+        if (x < 0 || x >= config.ScreenGenerator.CharactersXCount)
+            throw new Exception($"printing out of screen (width): {x} : {config.ScreenGenerator.CharactersXCount}");
+        if (y < 0 || y >= config.ScreenGenerator.CharactersYCount)
+            throw new Exception($"printing out of screen (height): {y} : {config.ScreenGenerator.CharactersYCount}");
 
         BasicValue str = new BasicValue(vals[2]);
         if (str.IsNumber())

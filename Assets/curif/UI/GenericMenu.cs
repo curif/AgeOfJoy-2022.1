@@ -46,7 +46,7 @@ public class GenericMenu
         screen.PrintLine(1, false, '-');
 
         // Calculate the vertical center of the screen
-        int centerY = screen.CharactersHeight / 2;
+        int centerY = screen.CharactersYCount / 2;
 
         // Calculate the top row of the menu
         int topRow = centerY - options.Count / 2;
