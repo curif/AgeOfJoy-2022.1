@@ -10,7 +10,7 @@ public abstract class ColorSpaceBase
     protected Color32 defaultForeground;
     protected Color32 defaultBackground;
 
-    protected void InitializeColors(Dictionary<string, Color32> colorDict, 
+    protected void InitializeColors(Dictionary<string, Color32> colorDict,
                                     Color32 defaultFg, Color32 defaultBg)
     {
         colors = colorDict;
@@ -67,33 +67,33 @@ public class CPCColorSpace : ColorSpaceBase
         InitializeColors(new Dictionary<string, Color32>
         {
           { "black", new Color32(0, 0, 0, 255) },
-            { "blue", new Color32(0, 0, 128, 255) },
+            { "blue", new Color32(0, 0, 102, 255) },
             { "bright_blue", new Color32(0, 0, 255, 255) },
-            { "red", new Color32(128, 0, 0, 255) },
-            { "magenta", new Color32(128, 0, 128, 255) },
-            { "mauve", new Color32(128, 0, 255, 255) },
+            { "red", new Color32(102, 0, 0, 255) },
+            { "magenta", new Color32(102, 0, 102, 255) },
+            { "mauve", new Color32(102, 0, 255, 255) },
             { "bright_red", new Color32(255, 0, 0, 255) },
-            { "purple", new Color32(255, 0, 128, 255) },
+            { "purple", new Color32(255, 0, 102, 255) },
             { "bright_magenta", new Color32(255, 0, 255, 255) },
-            { "green", new Color32(0, 128, 0, 255) },
-            { "cyan", new Color32(0, 128, 128, 255) },
-            { "sky_blue", new Color32(0, 128, 255, 255) },
-            { "yellow", new Color32(128, 128, 0, 255) },
-            { "white", new Color32(128, 128, 128, 255) },
-            { "pastel_blue", new Color32(128, 128, 255, 255) },
-            { "orange", new Color32(255, 128, 0, 255) },
-            { "pink", new Color32(255, 128, 128, 255) },
-            { "pastel_magenta", new Color32(255, 128, 255, 255) },
+            { "green", new Color32(0, 102, 0, 255) },
+            { "cyan", new Color32(0, 102, 102, 255) },
+            { "sky_blue", new Color32(0, 102, 255, 255) },
+            { "yellow", new Color32(102, 102, 0, 255) },
+            { "white", new Color32(102, 102, 128, 255) },
+            { "pastel_blue", new Color32(102, 102, 255, 255) },
+            { "orange", new Color32(255, 102, 0, 255) },
+            { "pink", new Color32(255, 102, 102, 255) },
+            { "pastel_magenta", new Color32(255, 102, 255, 255) },
             { "bright_green", new Color32(0, 255, 0, 255) },
-            { "sea_green", new Color32(0, 255, 128, 255) },
+            { "sea_green", new Color32(0, 255, 102, 255) },
             { "bright_cyan", new Color32(0, 255, 255, 255) },
-            { "lime", new Color32(128, 255, 0, 255) },
-            { "pastel_green", new Color32(128, 255, 128, 255) },
-            { "pastel_cyan", new Color32(128, 255, 255, 255) },
+            { "lime", new Color32(102, 255, 0, 255) },
+            { "pastel_green", new Color32(102, 255, 102, 255) },
+            { "pastel_cyan", new Color32(102, 255, 255, 255) },
             { "bright_yellow", new Color32(255, 255, 0, 255) },
-            { "pastel_yellow", new Color32(255, 255, 128, 255) },
+            { "pastel_yellow", new Color32(255, 255, 102, 255) },
             { "bright_white", new Color32(255, 255, 255, 255) }
-        }, new Color32(255, 255, 255, 255), new Color32(0, 0, 0, 255));
+        }, new Color32(255, 255, 0, 255), new Color32(0, 0, 102, 255));
     }
 }
 
@@ -140,12 +140,12 @@ public class C64ColorSpace : ColorSpaceBase
             { "yellow", new Color32(238, 238, 119, 255) },
             { "orange", new Color32(221, 136, 85, 255) },
             { "brown", new Color32(102, 68, 0, 255) },
-            { "lightred", new Color32(255, 119, 119, 255) },
+            { "light_red", new Color32(255, 119, 119, 255) },
             { "darkgrey", new Color32(51, 51, 51, 255) },
             { "grey", new Color32(119, 119, 119, 255) },
-            { "lightgreen", new Color32(170, 255, 102, 255) },
-            { "lightblue", new Color32(0, 136, 255, 255) },
-            { "lightgrey", new Color32(187, 187, 187, 255) }
+            { "light_green", new Color32(170, 255, 102, 255) },
+            { "light_blue", new Color32(0, 136, 255, 255) },
+            { "light_grey", new Color32(187, 187, 187, 255) }
         }, new Color32(255, 255, 255, 255), new Color32(13, 58, 219, 255));
     }
 }
@@ -157,7 +157,7 @@ public class ZXColorSpace : ColorSpaceBase
     {
         InitializeColors(new Dictionary<string, Color32>
         {
-             { "black", new Color32(0, 0, 0, 255) },
+            { "black", new Color32(0, 0, 0, 255) },
             { "blue", new Color32(0, 0, 215, 255) },
             { "red", new Color32(215, 0, 0, 255) },
             { "magenta", new Color32(215, 0, 215, 255) },

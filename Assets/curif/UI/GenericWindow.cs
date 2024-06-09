@@ -4,14 +4,6 @@ using System;
 // A class to draw character windows in the screen
 class GenericWindow : GenericWidget
 {
-    // Constants for the border characters
-    private const int LEFT_UPPER_CORNER = 112;
-    private const int RIGHT_UPPER_CORNER = 110;
-    private const int HORIZONTAL_BORDER = 64;
-    private const int LOWER_LEFT_CORNER = 109;
-    private const int LOWER_RIGHT_CORNER = 125;
-    private const int VERTICAL_BORDER = 93;
-
     // Constants for the default title
     private const string DEFAULT_TITLE = "Window";
     private const bool DEFAULT_INVERTED = true;
@@ -24,7 +16,7 @@ class GenericWindow : GenericWidget
 
 
     // A constructor that takes the screen generator, the x and y coordinates, the width and height of the window and an optional title and inverted flag
-    public GenericWindow(ScreenGenerator screen, int x, int y, string name,int width, int height,  string title = DEFAULT_TITLE, bool inverted = DEFAULT_INVERTED) :
+    public GenericWindow(ScreenGenerator screen, int x, int y, string name, int width, int height, string title = DEFAULT_TITLE, bool inverted = DEFAULT_INVERTED) :
       base(screen, x, y, name, false)
     {
         // Check if the screen generator is valid
@@ -39,7 +31,7 @@ class GenericWindow : GenericWidget
             throw new ArgumentException("The x and y coordinates of the window must not be negative");
         }
 
-        if (x + width > screen.CharactersWidth || y + height > screen.CharactersHeight)
+        if (x + width > screen.CharactersXCount || y + height > screen.CharactersYCount)
         {
             throw new ArgumentException("The window must fit within the screen size");
         }
@@ -66,34 +58,34 @@ class GenericWindow : GenericWidget
     public override void Draw()
     {
         if (!enabled)
-          return;
+            return;
 
         // Draw the top border with the title
-        screen.PrintChar(x, y, LEFT_UPPER_CORNER);
-        
+        screen.PrintChar(x, y, ScreenGeneratorFont.LEFT_UPPER_CORNER);
+
         for (int i = 1; i < width - 1; i++)
         {
-            screen.PrintChar(x + i, y, HORIZONTAL_BORDER);
+            screen.PrintChar(x + i, y, ScreenGeneratorFont.HORIZONTAL_BORDER);
         }
-        
-        screen.PrintChar(x + width - 1, y, RIGHT_UPPER_CORNER);
+
+        screen.PrintChar(x + width - 1, y, ScreenGeneratorFont.RIGHT_UPPER_CORNER);
         screen.Print(x + 1, y, title, inverted);
 
         // Draw the side borders
         for (int i = 1; i < height - 1; i++)
         {
-            screen.PrintChar(x, y + i, VERTICAL_BORDER);
-            screen.PrintChar(x + width - 1, y + i, VERTICAL_BORDER);
+            screen.PrintChar(x, y + i, ScreenGeneratorFont.VERTICAL_BORDER);
+            screen.PrintChar(x + width - 1, y + i, ScreenGeneratorFont.VERTICAL_BORDER);
         }
 
         // Draw the bottom border
-        screen.PrintChar(x, y + height - 1, LOWER_LEFT_CORNER);
-        
+        screen.PrintChar(x, y + height - 1, ScreenGeneratorFont.LOWER_LEFT_CORNER);
+
         for (int i = 1; i < width - 1; i++)
         {
-            screen.PrintChar(x + i, y + height - 1, HORIZONTAL_BORDER);
+            screen.PrintChar(x + i, y + height - 1, ScreenGeneratorFont.HORIZONTAL_BORDER);
         }
-        
-        screen.PrintChar(x + width - 1, y + height - 1, LOWER_RIGHT_CORNER);
+
+        screen.PrintChar(x + width - 1, y + height - 1, ScreenGeneratorFont.LOWER_RIGHT_CORNER);
     }
 }

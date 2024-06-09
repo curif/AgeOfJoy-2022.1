@@ -16,7 +16,7 @@ class CommandFunctionSCREENWIDTH : CommandFunctionNoExpressionBase
         if (config?.ScreenGenerator == null)
             throw new Exception("This AGEBasic program doesn't have a screen.");
 
-        return new BasicValue(config.ScreenGenerator.CharactersWidth);
+        return new BasicValue(config.ScreenGenerator.CharactersXCount);
     }
 }
 
@@ -32,7 +32,7 @@ class CommandFunctionSCREENHEIGHT : CommandFunctionNoExpressionBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.ScreenGenerator == null)
             throw new Exception("This AGEBasic program doesn't have a screen.");
-        BasicValue ret = new BasicValue(config.ScreenGenerator.CharactersHeight);
+        BasicValue ret = new BasicValue(config.ScreenGenerator.CharactersYCount);
         return ret;
     }
 }

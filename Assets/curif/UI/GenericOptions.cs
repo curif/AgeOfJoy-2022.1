@@ -33,9 +33,9 @@ class GenericOptions : GenericWidget // derived class (child)
             }
         }
         maxLength += label.Length + 4; // add the length of label and brackets
-        if (maxLength + x > screen.CharactersWidth) // if exceeds screen width
+        if (maxLength + x > screen.CharactersXCount) // if exceeds screen width
         {
-            maxLength = screen.CharactersWidth - x; // adjust to fit screen width
+            maxLength = screen.CharactersXCount - x; // adjust to fit screen width
         }
         if (this.MaxLength < maxLength) // if zero, calculate based on options, label, brackets and x position
             this.MaxLength = maxLength;
