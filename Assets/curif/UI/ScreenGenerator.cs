@@ -126,7 +126,8 @@ public class ScreenGenerator : MonoBehaviour
         if (screenTexture != null)
             return screenTexture;
 
-        font = new ScreenGeneratorFont(this);
+        //font = new CPCScreenGeneratorFont(this);
+        font = new C64ScreenGeneratorFont(this);
 
         ScreenWidth = CharactersXCount * font.CharactersWidth;  // Width of the target texture
         ScreenHeight = CharactersYCount * font.CharactersHeight; // Height of the target texture

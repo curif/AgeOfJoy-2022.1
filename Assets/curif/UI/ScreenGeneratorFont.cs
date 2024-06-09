@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ScreenGeneratorFont
+public abstract class ScreenGeneratorFont
 {
     // Special characters
     public const char LEFT_UPPER_CORNER = (char)0;
@@ -15,14 +15,7 @@ public class ScreenGeneratorFont
 
     // The string that contains the list of characters in the same order as the font texture
     // the arroba means "no replace"
-    private string characterListOrder =
-              "@abcdefghijklmnopqrstuvwxyz[£]§§"
-            + " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ+§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§";
+    private string characterListOrder;
 
     // The texture that represents a matrix of characters, each character is 8x8 pixels
     private Texture2D fontTexture;
@@ -30,13 +23,16 @@ public class ScreenGeneratorFont
     private int offsetX;
     private int offsetY;
 
-    public int CharactersWidth { get { return 8; } }
-    public int CharactersHeight { get { return 8; } }
+    public int CharactersWidth;
+    public int CharactersHeight;
 
-    public ScreenGeneratorFont(ScreenGenerator screenGenerator)
+    public ScreenGeneratorFont(string fontFile, string characterListOrder, int characterWidth, int characterHeight, ScreenGenerator screenGenerator)
     {
         this.screenGenerator = screenGenerator;
-        fontTexture = Resources.Load<Texture2D>("UICabinet/Screen/c64Font");
+        this.fontTexture = Resources.Load<Texture2D>(fontFile);
+        this.characterListOrder = characterListOrder;
+        this.CharactersWidth = characterWidth;
+        this.CharactersHeight = characterHeight;
         Init();
     }
 
@@ -97,30 +93,91 @@ public class ScreenGeneratorFont
         }
     }
 
-    private int TranslateCharacter(char charNum)
+    protected virtual int TranslateCharacter(char charNum)
+    {
+        if (charNum < 0 || charNum > 255)
+            return ' ';
+        int index = characterListOrder.IndexOf(charNum);
+        if (index == -1 || index > 128)
+            return ' ';
+
+        return index;
+    }
+}
+
+public class C64ScreenGeneratorFont : ScreenGeneratorFont
+{
+    public C64ScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
+            "UICabinet/Screen/c64Font",
+
+            "@abcdefghijklmnopqrstuvwxyz[£]§§"
+            + " !\"#$%&'()*+,-./0123456789:;<=>?"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ+§§§§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§",
+
+            8, 8, screenGenerator)
+    { }
+
+    protected override int TranslateCharacter(char charNum)
     {
         switch (charNum)
         {
             case LEFT_UPPER_CORNER:
-                return 112; // Specific to the C64 font, to be adjusted for other fonts
+                return 112;
             case RIGHT_UPPER_CORNER:
-                return 110; // Specific to the C64 font, to be adjusted for other fonts
+                return 110;
             case HORIZONTAL_BORDER:
-                return 64; // Specific to the C64 font, to be adjusted for other fonts
+                return 64;
             case LOWER_LEFT_CORNER:
-                return 109; // Specific to the C64 font, to be adjusted for other fonts
+                return 109;
             case LOWER_RIGHT_CORNER:
-                return 125; // Specific to the C64 font, to be adjusted for other fonts
+                return 125;
             case VERTICAL_BORDER:
-                return 93; // Specific to the C64 font, to be adjusted for other fonts
+                return 93;
             default:
-                if (charNum < 0 || charNum > 255)
-                    return ' ';
-                int index = characterListOrder.IndexOf(charNum);
-                if (index == -1 || index > 128)
-                    return ' ';
+                return base.TranslateCharacter(charNum);
+        }
+    }
+}
 
-                return index;
+public class CPCScreenGeneratorFont : ScreenGeneratorFont
+{
+    public CPCScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
+            "UICabinet/Screen/cpcFont",
+
+              "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + " !\"#$%&'()*+,-./0123456789:;<=>?"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "`abcdefghijklmnopqrstuvwxyz{|}~§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§",
+
+            8, 8, screenGenerator)
+    {
+    }
+
+    protected override int TranslateCharacter(char charNum)
+    {
+        switch (charNum)
+        {
+            case LEFT_UPPER_CORNER:
+                return 150;
+            case RIGHT_UPPER_CORNER:
+                return 156;
+            case HORIZONTAL_BORDER:
+                return 154;
+            case LOWER_LEFT_CORNER:
+                return 147;
+            case LOWER_RIGHT_CORNER:
+                return 153;
+            case VERTICAL_BORDER:
+                return 149;
+            default:
+                return base.TranslateCharacter(charNum);
         }
     }
 }
