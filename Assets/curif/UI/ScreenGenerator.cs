@@ -185,7 +185,7 @@ public class ScreenGenerator : MonoBehaviour
     }
 
     // The method that prints a single character to the screen
-    public ScreenGenerator PrintChar(int x, int y, char charNum, Color32 fgColor, Color32 bgColor)
+    public ScreenGenerator PrintChar(int x, int y, char charNum, Color32 fgColor, Color32 bgColor, bool translate = true)
     {
         if (screenTexture == null)
             return this;
@@ -197,7 +197,7 @@ public class ScreenGenerator : MonoBehaviour
             return this;
         }
 
-        Skin.Font.PrintChar(screenTexture, x, y, charNum, fgColor, bgColor);
+        Skin.Font.PrintChar(screenTexture, x, y, charNum, fgColor, bgColor, translate);
         needsDraw = true;
         return this;
     }
