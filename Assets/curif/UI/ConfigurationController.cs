@@ -261,7 +261,7 @@ public class ConfigurationController : MonoBehaviour
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError("[ConfigurationController] coin slot wasn't assigned.");
 
-
+        // first: wait for the room to load.
         StartCoroutine(run());
     }
 
@@ -1182,7 +1182,9 @@ public class ConfigurationController : MonoBehaviour
         shaderConfig["damage"] = "none";
         shader = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
 
-        scr.Init(ScreenGeneratorSkin.C64)
+        ConfigInformation config = configHelper.getConfigInformation(true);
+        
+        scr.Init(config.system_skin)
             .ActivateShader(shader)
             .ClearBackground()
             .Clear()
@@ -1203,11 +1205,12 @@ public class ConfigurationController : MonoBehaviour
         inputDictionary.Add("action", false);
         inputKeys = inputDictionary.Keys.ToList();
 
+        configHelper = new(globalConfiguration, roomConfiguration);
+        yield return new WaitForEndOfFrame(); //needed to wait the config load
+
         initScreen();
         yield return new WaitForEndOfFrame();
 
-        // first: wait for the room to load.
-        configHelper = new(globalConfiguration, roomConfiguration);
         if (configHelper.CanConfigureRoom() && cabinetsController != null)
         {
             ScreenWaitingDraw();

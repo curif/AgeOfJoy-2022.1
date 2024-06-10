@@ -31,6 +31,9 @@ public class ConfigInformation
 
     public AGEBasicInformation agebasic = null;
 
+    [YamlMember(Alias = "system-skin", ApplyNamingConventions = false)]
+    public string system_skin = "c64";
+
     /** don't. create an empty object. Merge didn't works if both are loaded.
     public ConfigInformation() {
       audio = new Audio();
