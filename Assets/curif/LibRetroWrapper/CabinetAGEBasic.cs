@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 using UnityEditor;
+using static OVRHaptics;
 
 [Serializable]
 public class CabinetAGEBasicInformation
@@ -22,6 +23,8 @@ public class CabinetAGEBasicInformation
     public string afterLeave;
     [YamlMember(Alias = "after-start", ApplyNamingConventions = false)]
     public string afterStart;
+    [YamlMember(Alias = "system-skin", ApplyNamingConventions = false)]
+    public string system_skin = "c64";
 
     // Serialize this field to show it in the editor
     [SerializeField]
@@ -111,7 +114,8 @@ public class CabinetAGEBasic : MonoBehaviour
 
     public void ActivateShader(ShaderScreenBase shader)
     {
-        AGEBasic.ScreenGenerator.ActivateShader(shader);
+        AGEBasic.ScreenGenerator.Init(AGEInfo.system_skin).
+                                    ActivateShader(shader);
     }
 
     public void ExecInsertCoinBas()
