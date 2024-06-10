@@ -66,7 +66,7 @@ public class CPCColorSpace : ColorSpaceBase
     {
         InitializeColors(new Dictionary<string, Color32>
         {
-          { "black", new Color32(0, 0, 0, 255) },
+            { "black", new Color32(0, 0, 0, 255) },
             { "blue", new Color32(0, 0, 102, 255) },
             { "bright_blue", new Color32(0, 0, 255, 255) },
             { "red", new Color32(102, 0, 0, 255) },

@@ -188,7 +188,7 @@ public class ConfigurationController : MonoBehaviour
         exit
     }
     private StatusOptions status;
-    private C64BootScreen bootScreen;
+    private BootScreen bootScreen;
     // private LibretroMameCore.Waiter onBootDelayWaiter;
 
     private string NPCStatus;
@@ -1128,7 +1128,7 @@ public class ConfigurationController : MonoBehaviour
         playerContainer = new(scr, "playerContainer");
         playerContainer.Add(new GenericWindow(scr, 2, 4, "playerContainerWin", 37, 12, " Player "))
                         .Add(playerHeight, 4, 6)
-          //              .Add(playerScale, 4, playerContainer.lastYAdded + 1)
+                        //              .Add(playerScale, 4, playerContainer.lastYAdded + 1)
                         .Add(playerSkinColor, 4, playerContainer.lastYAdded + 1)  // add the skin color option
                         .Add(new GenericButton(scr, "save", "save", 4, playerContainer.lastYAdded + 2, true))
                         .Add(new GenericButton(scr, "exit", "exit", 4, playerContainer.lastYAdded + 1, true));
@@ -1182,8 +1182,8 @@ public class ConfigurationController : MonoBehaviour
         shaderConfig["damage"] = "none";
         shader = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
 
-        scr.ActivateShader(shader)
-            .SetColorSpace("c64")
+        scr.Init(ScreenGeneratorSkin.C64)
+            .ActivateShader(shader)
             .ClearBackground()
             .Clear()
             .PrintCentered(1, "BIOS ROM firmware loaded", true)
@@ -1194,7 +1194,7 @@ public class ConfigurationController : MonoBehaviour
     IEnumerator run()
     {
         ConfigManager.WriteConsole("[ConfigurationController.run] coroutine started.");
-        
+
         // Initialize the dictionary with default values (false for all keys)
         inputDictionary.Add("up", false);
         inputDictionary.Add("down", false);
@@ -1250,7 +1250,7 @@ public class ConfigurationController : MonoBehaviour
             scr.PrintCentered(2, "program");
             scr.PrintCentered(3, ageBasicInformation.afterLoad, true);
             scr.DrawScreen();
-            
+
             bool compilationError = false;
             string program = Path.Combine(ConfigManager.AGEBasicDir, ageBasicInformation.afterLoad);
             ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] {program}");
@@ -1934,7 +1934,7 @@ public class ConfigurationController : MonoBehaviour
             libretroControlMap.Enable(true);
             return false;
         }
-        
+
     }
 
     private void changeContainerSelection(GenericWidgetContainer gwc)
@@ -1969,9 +1969,9 @@ public class ConfigurationControllerEditor : Editor
         DrawDefaultInspector();
 
         ConfigurationController myScript = (ConfigurationController)target;
-        if(GUILayout.Button("InsertCoin"))
+        if (GUILayout.Button("InsertCoin"))
         {
-          myScript.EditorInsertCoin();
+            myScript.EditorInsertCoin();
         }
     }
 }

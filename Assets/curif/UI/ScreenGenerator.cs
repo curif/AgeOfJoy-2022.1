@@ -11,10 +11,9 @@ public class ScreenGenerator : MonoBehaviour
 
     public int TextureWidth;
     public int TextureHeight;
-    public Color32 ScreenBackgroundColor = new Color32(134, 122, 222, 255);
 
-    private Color32 charBackgroundColor = new Color32(0, 0, 0, 255);
-    private Color32 charForegroundColor = new Color32(255, 255, 255, 255);
+    private Color32 charBackgroundColor;
+    private Color32 charForegroundColor;
 
     //public string ShaderName = "crt";
     [SerializeField]
@@ -31,13 +30,10 @@ public class ScreenGenerator : MonoBehaviour
 
     private bool needsDraw = false;
 
-    //Color space
-    private ColorSpaceBase colorSpace = ColorSpaceManager.GetColorSpace("c64");
-
     //Renderer
     private ShaderScreenBase shader;
 
-    private ScreenGeneratorFont font;
+    public ScreenGeneratorSkin Skin;
 
     public Texture2D Screen
     {
@@ -47,14 +43,12 @@ public class ScreenGenerator : MonoBehaviour
         }
     }
 
-    // The method that runs at the start of the game
-    private void Start()
+    public ScreenGenerator Init(string skinName)
     {
+        SetSkin(skinName);
+        createTexture();
         ResetColors();
-        //createTexture();
-        //ClearBackground();
-        //Clear();
-        //DrawScreen();
+        return this;
     }
 
     public Color32 ForegroundColor
@@ -71,24 +65,24 @@ public class ScreenGenerator : MonoBehaviour
 
     public String ForegroundColorString
     {
-        get { return colorSpace.GetNameByColor(charForegroundColor); }
-        set { charForegroundColor = colorSpace.GetColorByName(value); }
+        get { return Skin.ColorSpace.GetNameByColor(charForegroundColor); }
+        set { charForegroundColor = Skin.ColorSpace.GetColorByName(value); }
     }
 
     public String BackgroundColorString
     {
-        get { return colorSpace.GetNameByColor(charBackgroundColor); }
-        set { charBackgroundColor = colorSpace.GetColorByName(value); }
+        get { return Skin.ColorSpace.GetNameByColor(charBackgroundColor); }
+        set { charBackgroundColor = Skin.ColorSpace.GetColorByName(value); }
     }
 
     public ScreenGenerator ResetBackgroundColor()
     {
-        charBackgroundColor = colorSpace.BackgroundDefault();
+        charBackgroundColor = Skin.ColorSpace.BackgroundDefault();
         return this;
     }
     public ScreenGenerator ResetForegroundColor()
     {
-        charForegroundColor = colorSpace.ForegroundDefault();
+        charForegroundColor = Skin.ColorSpace.ForegroundDefault();
         return this;
     }
     public ScreenGenerator InvertColors()
@@ -112,13 +106,23 @@ public class ScreenGenerator : MonoBehaviour
 
     public ScreenGenerator SetColorSpace(string colorSpaceName)
     {
-        colorSpace = ColorSpaceManager.GetColorSpace(colorSpaceName);
+        Skin.ColorSpace = ColorSpaceManager.GetColorSpace(colorSpaceName);
         ResetColors();
         return this;
     }
+ 
+    public ScreenGenerator SetSkin(string newSkin)
+    {
+        if (Skin == null || Skin.Name != newSkin)
+        {
+            Skin = ScreenGeneratorSkin.GetSkin(newSkin, this);
+        }
+        return this;
+    }
+
     public ColorSpaceBase GetColorSpace()
     {
-        return colorSpace;
+        return Skin.ColorSpace;
     }
 
     private Texture2D createTexture()
@@ -126,11 +130,8 @@ public class ScreenGenerator : MonoBehaviour
         if (screenTexture != null)
             return screenTexture;
 
-        //font = new CPCScreenGeneratorFont(this);
-        font = new C64ScreenGeneratorFont(this);
-
-        ScreenWidth = CharactersXCount * font.CharactersWidth;  // Width of the target texture
-        ScreenHeight = CharactersYCount * font.CharactersHeight; // Height of the target texture
+        ScreenWidth = CharactersXCount * Skin.Font.CharactersWidth;  // Width of the target texture
+        ScreenHeight = CharactersYCount * Skin.Font.CharactersHeight; // Height of the target texture
 
         // Create an array of colors to fill the centered background in the middle of the texture
         // used to CLEAR faster. Loaded on ResetColors()
@@ -148,16 +149,14 @@ public class ScreenGenerator : MonoBehaviour
         screenTexture.filterMode = FilterMode.Bilinear;
         screenTexture.anisoLevel = 0;
 
-        font.setOffsets(centerStartX, centerStartY);
+        Skin.Font.setOffsets(centerStartX, centerStartY);
 
         return screenTexture;
     }
 
     public ScreenGenerator ActivateShader(ShaderScreenBase changeShader)
     {
-        if (screenTexture == null)
-            createTexture();
-
+        createTexture();
         shader = changeShader;
         shader.Activate(screenTexture);
         return this;
@@ -198,7 +197,7 @@ public class ScreenGenerator : MonoBehaviour
             return this;
         }
 
-        font.PrintChar(screenTexture, x, y, charNum, fgColor, bgColor);
+        Skin.Font.PrintChar(screenTexture, x, y, charNum, fgColor, bgColor);
         needsDraw = true;
         return this;
     }
@@ -282,12 +281,11 @@ public class ScreenGenerator : MonoBehaviour
 
     public ScreenGenerator ClearBackground()
     {
-
         if (screenTexture != null)
         {
             // Create a new array of color data for the texture
             Color32[] pixels = screenTexture.GetPixels32();
-            Array.Fill(pixels, ScreenBackgroundColor);
+            Array.Fill(pixels, Skin.BorderColor);
 
             // Apply the modified colors back to the texture
             screenTexture.SetPixels32(pixels);

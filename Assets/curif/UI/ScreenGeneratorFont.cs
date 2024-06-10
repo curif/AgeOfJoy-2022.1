@@ -112,7 +112,7 @@ public class C64ScreenGeneratorFont : ScreenGeneratorFont
 
             "@abcdefghijklmnopqrstuvwxyz[£]§§"
             + " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ+§§§§",
+            + "©ABCDEFGHIJKLMNOPQRSTUVWXYZ+§§§§",
 
             8, 8, screenGenerator)
     { }
@@ -147,7 +147,9 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
               "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
             + " !\"#$%&'()*+,-./0123456789:;<=>?"
             + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
-            + "`abcdefghijklmnopqrstuvwxyz{|}~§",
+            + "`abcdefghijklmnopqrstuvwxyz{|}~§"
+            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
+            + "^§§£©§§§§§§§§§§§§§§§§§§§§§§§§§§§",
 
             8, 8, screenGenerator)
     {
@@ -183,7 +185,7 @@ public class ZXScreenGeneratorFont : ScreenGeneratorFont
 
               " !\"#$%&'()*+,-./0123456789:;<=>?"
             + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
-            + "£abcdefghijklmnopqrstuvwxyz{|}~§",
+            + "£abcdefghijklmnopqrstuvwxyz{|}~©",
 
             8, 8, screenGenerator)
     {
