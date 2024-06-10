@@ -98,7 +98,7 @@ public abstract class ScreenGeneratorFont
         if (charNum < 0 || charNum > 255)
             return ' ';
         int index = characterListOrder.IndexOf(charNum);
-        if (index == -1 || index > 128)
+        if (index < 0 || index > 255)
             return ' ';
 
         return index;
