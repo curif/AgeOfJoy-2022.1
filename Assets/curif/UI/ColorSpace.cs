@@ -97,6 +97,60 @@ public class CPCColorSpace : ColorSpaceBase
     }
 }
 
+// MSX
+public class MSXColorSpace : ColorSpaceBase
+{
+    public MSXColorSpace()
+    {
+        InitializeColors(new Dictionary<string, Color32>
+        {
+           { "transparent", new Color32(0, 0, 0, 255) },
+           { "black", new Color32(1, 1, 1, 255) },
+           { "green", new Color32(62, 184, 73, 255) },
+           { "light green", new Color32(116, 208, 125, 255) },
+           { "blue", new Color32(89, 85, 224, 255) },
+           { "light blue", new Color32(128, 118, 241, 255) },
+           { "dark red", new Color32(185, 94, 81, 255) },
+           { "cyan", new Color32(101, 219, 239, 255) },
+           { "red", new Color32(219, 101, 89, 255) },
+           { "light red", new Color32(255, 137, 125, 255) },
+           { "yellow", new Color32(204, 195, 94, 255) },
+           { "light yellow", new Color32(222, 208, 135, 255) },
+           { "dark green", new Color32(58, 162, 65, 255) },
+           { "magenta", new Color32(183, 102, 181, 255) },
+           { "gray", new Color32(204, 204, 204, 255) },
+           { "white", new Color32(255, 255, 255, 255) },
+        }, new Color32(255, 255, 255, 255), new Color32(89, 85, 224, 255));
+    }
+}
+
+// MSX
+public class MSXMonoColorSpace : ColorSpaceBase
+{
+    public MSXMonoColorSpace()
+    {
+        InitializeColors(new Dictionary<string, Color32>
+        {
+           { "transparent", new Color32(0, 60, 0, 255) },
+           { "black", new Color32(5, 68, 5, 255) },
+           { "green", new Color32(10, 75, 10, 255) },
+           { "light green", new Color32(16, 84, 16, 255) },
+           { "blue", new Color32(21, 92, 21, 255) },
+           { "light blue", new Color32(26, 99, 26, 255) },
+           { "dark red", new Color32(30, 105, 30, 255) },
+           { "cyan", new Color32(35, 113, 35, 255) },
+           { "red", new Color32(40, 120, 40, 255) },
+           { "light red", new Color32(48, 132, 48, 255) },
+           { "yellow", new Color32(53, 140, 53, 255) },
+           { "light yellow", new Color32(58, 147, 58, 255) },
+           { "dark green", new Color32(64, 156, 64, 255) },
+           { "magenta", new Color32(69, 164, 69, 255) },
+           { "gray", new Color32(74, 171, 74, 255) },
+           { "white", new Color32(78, 177, 78, 255) },
+        }, new Color32(78, 177, 78, 255), new Color32(0, 60, 0, 255));
+    }
+}
+
 // IBM PC CGA graphics mode
 public class IMBPCColorSpace : ColorSpaceBase
 {
