@@ -215,6 +215,26 @@ public class Atari2600ColorSpace : ColorSpaceBase
         }, new Color32(195, 195, 195, 255), new Color32(0, 0, 0, 255));
     }
 }
+
+// TO7 color space
+public class TO7ColorSpace : ColorSpaceBase
+{
+    public TO7ColorSpace()
+    {
+        InitializeColors(new Dictionary<string, Color32>
+        {
+            { "black", new Color32(0, 0, 0, 255) },
+            { "red", new Color32(255, 42, 42, 255) },
+            { "green", new Color32(0, 255, 0, 255) },
+            { "yellow", new Color32(255, 255, 0, 255) },
+            { "blue", new Color32(42, 42, 255, 255) },
+            { "pink", new Color32(255, 255, 0, 255) },
+            { "cyan", new Color32(0, 255, 255, 255) },
+            { "white", new Color32(255, 255, 255, 255) }
+        }, new Color32(42, 42, 255, 255), new Color32(0, 255, 255, 255));
+    }
+}
+
 public static class ColorSpaceManager
 {
     private static Dictionary<string, ColorSpaceBase> colorSpaces = new Dictionary<string, ColorSpaceBase>()

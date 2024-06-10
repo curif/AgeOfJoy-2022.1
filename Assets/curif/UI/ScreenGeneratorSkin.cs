@@ -8,6 +8,7 @@ public class ScreenGeneratorSkin
     // Supported skins
     public const string C64 = "c64";
     public const string CPC = "cpc";
+    public const string TO7 = "to7";
     public const string ZX = "zx";
 
     public string Name;
@@ -34,7 +35,7 @@ public class ScreenGeneratorSkin
                         + " 64K RAM SYSTEM 38911 BASIC BYTES FREE\n"
                         + "\n"
                         + "READY.",
-                        "LOAD '*.*', 8, 1"
+                        "LOAD\"*.*\",8,1"
                     }
                 };
             case "cpc":
@@ -48,7 +49,7 @@ public class ScreenGeneratorSkin
                           "\n"
                         + " Amstrad 128K Microcomputer  (f3)\n"
                         + "\n"
-                        + " ©1985 Amstrad Consumer Electronics plc\n"
+                        + " ï¿½1985 Amstrad Consumer Electronics plc\n"
                         + "           and Locomotive Software Ltd.\n"
                         + " BASIC 1.1\n"
                         + "\n"
@@ -65,7 +66,22 @@ public class ScreenGeneratorSkin
                     BorderColor = new Color32(215, 215, 215, 255),
                     BootMessages = new string[]{
                           "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-                        + "© 1982 Sinclair Research Ltd",
+                        + "ï¿½ 1982 Sinclair Research Ltd",
+                        "RUN\""
+                    }
+                };
+            case "to7":
+                return new ScreenGeneratorSkin
+                {
+                    Name = name,
+                    Font = new TO7ScreenGeneratorFont(screenGenerator),
+                    ColorSpace = new TO7ColorSpace(),
+                    BorderColor = new Color32(0, 255, 255, 255),
+                    BootMessages = new string[]{
+                          "BASIC Version 1.0\n"
+                        + "(c) Microsoft 1982\n"
+                        + "\n"
+                        + "OK",
                         "RUN\""
                     }
                 };

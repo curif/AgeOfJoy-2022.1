@@ -104,7 +104,6 @@ public abstract class ScreenGeneratorFont
         return index;
     }
 }
-
 public class C64ScreenGeneratorFont : ScreenGeneratorFont
 {
     public C64ScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
@@ -138,7 +137,6 @@ public class C64ScreenGeneratorFont : ScreenGeneratorFont
         }
     }
 }
-
 public class CPCScreenGeneratorFont : ScreenGeneratorFont
 {
     public CPCScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
@@ -177,6 +175,40 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
     }
 }
 
+public class TO7ScreenGeneratorFont : ScreenGeneratorFont
+{
+    public TO7ScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
+            "UICabinet/Screen/to7Font",
+
+              " !\"#$%&'()*+,-./0123456789:;<=>?"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "£abcdefghijklmnopqrstuvwxyz{|}~©",
+
+            8, 8, screenGenerator)
+    {
+    }
+
+    protected override int TranslateCharacter(char charNum)
+    {
+        switch (charNum)
+        {
+            case LEFT_UPPER_CORNER:
+                return 96;
+            case RIGHT_UPPER_CORNER:
+                return 97;
+            case HORIZONTAL_BORDER:
+                return 98;
+            case LOWER_LEFT_CORNER:
+                return 99;
+            case LOWER_RIGHT_CORNER:
+                return 100;
+            case VERTICAL_BORDER:
+                return 101;
+            default:
+                return base.TranslateCharacter(charNum);
+        }
+    }
+}
 
 public class ZXScreenGeneratorFont : ScreenGeneratorFont
 {
