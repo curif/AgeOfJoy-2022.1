@@ -10,6 +10,7 @@ public class ScreenGeneratorSkin
     public const string C64 = "c64";
     public const string CPC = "cpc";
     public const string MSX = "msx";
+    public const string MSX_MONO = "msx_mono";
     public const string TO7 = "to7";
     public const string ZX = "zx";
 
@@ -86,6 +87,23 @@ public class ScreenGeneratorSkin
                     Font = new MSXScreenGeneratorFont(screenGenerator),
                     ColorSpace = new MSXColorSpace(),
                     BorderColor = new Color32(89, 85, 224, 255),
+                    BootMessages = new string[]{
+                          "MSX BASIC version 1.0\n"
+                        + "Copyright 1983 by Microsoft\n"
+                        + "28815 Bytes free\n"
+                        + "Ok\n"
+                        + ScreenGeneratorFont.STR_GLYPH_SQUARE + "\n"
+                        + "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+                        + "color  auto   goto   list   run"
+                    }
+                };
+            case MSX_MONO:
+                return new ScreenGeneratorSkin
+                {
+                    Name = name,
+                    Font = new MSXScreenGeneratorFont(screenGenerator),
+                    ColorSpace = new MSXMonoColorSpace(),
+                    BorderColor = new Color32(0, 60, 0, 255),
                     BootMessages = new string[]{
                           "MSX BASIC version 1.0\n"
                         + "Copyright 1983 by Microsoft\n"
