@@ -7,6 +7,7 @@ class BootScreen
     private ScreenGenerator screen;
     private string[] messages = { };
     private int currentLine = 0;
+    private int yPosition = 0;
 
     public BootScreen(ScreenGenerator screen)
     {
@@ -19,10 +20,7 @@ class BootScreen
         {
             return true;
         }
-
-        screen.Print(0, currentLine, messages[currentLine], false);
-        currentLine++;
-
+        yPosition += screen.Print(0, yPosition, messages[currentLine++]);
         return false;
     }
 
@@ -30,5 +28,6 @@ class BootScreen
     {
         messages = screen.Skin.BootMessages;
         currentLine = 0;
+        yPosition = 0;
     }
 }

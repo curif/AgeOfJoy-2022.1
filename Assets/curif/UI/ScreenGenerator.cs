@@ -110,7 +110,7 @@ public class ScreenGenerator : MonoBehaviour
         ResetColors();
         return this;
     }
- 
+
     public ScreenGenerator SetSkin(string newSkin)
     {
         if (Skin == null || Skin.Name != newSkin)
@@ -203,20 +203,25 @@ public class ScreenGenerator : MonoBehaviour
     }
 
     // The method that prints a string of characters to the screen
-    public ScreenGenerator Print(int x, int y, string text, bool inverted = false)
+    // Returns the number of vertical lines printed
+    public int Print(int x, int y, string text, bool inverted = false)
     {
+        //ConfigManager.WriteConsoleError($"[ScreenGenerator.Print] {text} {x}x{y}");
+
         Color32 fgColor = inverted ? charBackgroundColor : charForegroundColor;
         Color32 bgColor = inverted ? charForegroundColor : charBackgroundColor;
 
         if (screenTexture == null)
-            return this;
+            return 0;
 
         // Check if the coordinates are valid
         if (x < 0 || x >= CharactersXCount || y < 0 || y >= CharactersYCount)
         {
             ConfigManager.WriteConsoleError($"[ScreenGenerator.Print] Invalid parameters for Print method, x,y: ({x},{y})");
-            return this;
+            return 0;
         }
+
+        int startY = y;
 
         // Loop through all the characters in the text string
         int charpos = x;
@@ -225,7 +230,11 @@ public class ScreenGenerator : MonoBehaviour
         {
             // Check for escape character and make sure it's not the last char
             char c = text[i++];
-            if (c == '\\')
+            if (c == '\n')
+            {
+                NextLine(ref charpos, ref y);
+            }
+            else if (c == '\\')
             {
                 if (i < text.Length)
                 {
@@ -264,7 +273,7 @@ public class ScreenGenerator : MonoBehaviour
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
 
-        return this;
+        return (y - startY) + 1;
     }
 
     private void PrintCharPosition(char charNum, ref int x, ref int y, Color32 fgColor, Color32 bgColor)
@@ -274,9 +283,14 @@ public class ScreenGenerator : MonoBehaviour
         x++;
         if (x >= CharactersXCount)
         {
-            x = 0;
-            y++;
+            NextLine(ref x, ref y);
         }
+    }
+
+    private void NextLine(ref int x, ref int y)
+    {
+        x = 0;
+        y++;
     }
 
     public ScreenGenerator ClearBackground()

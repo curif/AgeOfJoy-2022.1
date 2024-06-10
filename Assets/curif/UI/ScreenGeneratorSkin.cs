@@ -7,7 +7,7 @@ public class ScreenGeneratorSkin
 
     // Supported skins
     public const string C64 = "c64";
-    public const string CPC ="cpc";
+    public const string CPC = "cpc";
     public const string ZX = "zx";
 
     public string Name;
@@ -28,12 +28,12 @@ public class ScreenGeneratorSkin
                     ColorSpace = new C64ColorSpace(),
                     BorderColor = new Color32(134, 122, 222, 255),
                     BootMessages = new string[]{
-                        "",
-                        "    **** COMMODORE 64 BASIC V2 ****",
-                        "",
-                        " 64K RAM SYSTEM 38911 BASIC BYTES FREE",
-                        "",
-                        "READY.",
+                          "\n"
+                        + "    **** COMMODORE 64 BASIC V2 ****\n"
+                        + "\n"
+                        + " 64K RAM SYSTEM 38911 BASIC BYTES FREE\n"
+                        + "\n"
+                        + "READY.",
                         "LOAD '*.*', 8, 1"
                     }
                 };
@@ -45,14 +45,14 @@ public class ScreenGeneratorSkin
                     ColorSpace = new CPCColorSpace(),
                     BorderColor = new Color32(0, 0, 102, 255),
                     BootMessages = new string[]{
-                        "",
-                        " Amstrad 128K Microcomputer  (f3)",
-                        "",
-                        " ©1985 Amstrad Consumer Electronics plc",
-                        "           and Locomotive Software Ltd.",
-                        " BASIC 1.1",
-                        "",
-                        "Ready",
+                          "\n"
+                        + " Amstrad 128K Microcomputer  (f3)\n"
+                        + "\n"
+                        + " ©1985 Amstrad Consumer Electronics plc\n"
+                        + "           and Locomotive Software Ltd.\n"
+                        + " BASIC 1.1\n"
+                        + "\n"
+                        + "Ready",
                         "RUN\"DISC"
                     }
                 };
@@ -64,11 +64,8 @@ public class ScreenGeneratorSkin
                     ColorSpace = new ZXColorSpace(),
                     BorderColor = new Color32(215, 215, 215, 255),
                     BootMessages = new string[]{
-                        "",
-                        "",
-                        "",
-                        "",
-                        "© 1982 Sinclair Research Ltd",
+                          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+                        + "© 1982 Sinclair Research Ltd",
                         "RUN\""
                     }
                 };
