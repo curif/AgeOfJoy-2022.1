@@ -49,7 +49,7 @@ public class ScreenGeneratorSkin
                           "\n"
                         + " Amstrad 128K Microcomputer  (f3)\n"
                         + "\n"
-                        + " �1985 Amstrad Consumer Electronics plc\n"
+                        + " \u00A91985 Amstrad Consumer Electronics plc\n"
                         + "           and Locomotive Software Ltd.\n"
                         + " BASIC 1.1\n"
                         + "\n"
@@ -66,7 +66,7 @@ public class ScreenGeneratorSkin
                     BorderColor = new Color32(215, 215, 215, 255),
                     BootMessages = new string[]{
                           "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-                        + "� 1982 Sinclair Research Ltd",
+                        + "\u00A9 1982 Sinclair Research Ltd",
                         "RUN\""
                     }
                 };
