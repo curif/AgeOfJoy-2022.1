@@ -257,7 +257,7 @@ public class ScreenGenerator : MonoBehaviour
                     {
                         index = '\\';
                     }
-                    PrintCharPosition((char)index, ref charpos, ref y, fgColor, bgColor);
+                    PrintCharPosition((char)index, ref charpos, ref y, fgColor, bgColor, false);
 
                 }
                 else
@@ -276,9 +276,9 @@ public class ScreenGenerator : MonoBehaviour
         return (y - startY) + 1;
     }
 
-    private void PrintCharPosition(char charNum, ref int x, ref int y, Color32 fgColor, Color32 bgColor)
+    private void PrintCharPosition(char charNum, ref int x, ref int y, Color32 fgColor, Color32 bgColor, bool translate = true)
     {
-        PrintChar(x, y, charNum, fgColor, bgColor);
+        PrintChar(x, y, charNum, fgColor, bgColor, translate);
 
         x++;
         if (x >= CharactersXCount)

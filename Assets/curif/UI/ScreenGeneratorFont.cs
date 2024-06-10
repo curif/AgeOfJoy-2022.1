@@ -74,13 +74,13 @@ public abstract class ScreenGeneratorFont
         }
     }
 
-    public void PrintChar(Texture2D screenTexture, int x, int y, char charNum, Color32 fgColor, Color32 bgColor)
+    public void PrintChar(Texture2D screenTexture, int x, int y, char charNum, Color32 fgColor, Color32 bgColor, bool translate = true)
     {
         int destX = offsetX + (x * CharactersWidth);
         int destY = offsetY + ((screenGenerator.CharactersYCount - (y + 1)) * CharactersHeight);
 
         // Copy the pixels from the list to the screen texture
-        int charIndex = TranslateCharacter(charNum);
+        int charIndex = translate ? TranslateCharacter(charNum) : charNum;
         bool[] pixelData = characters[charIndex];
 
         // Draw to texture. This could be improved by writing directly to the texture data
