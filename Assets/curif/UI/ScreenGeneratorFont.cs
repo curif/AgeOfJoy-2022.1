@@ -169,6 +169,20 @@ public abstract class ScreenGeneratorFont
     }
 }
 
+public class AppleIIScreenGeneratorFont : ScreenGeneratorFont
+{
+    public AppleIIScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
+            "UICabinet/Screen/apple2Font",
+
+              " !\"#$%&'()*+,-./0123456789:;<=>?"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "£abcdefghijklmnopqrstuvwxyz{|}~©",
+
+            8, 8, screenGenerator)
+    {
+    }
+}
+
 public class C64ScreenGeneratorFont : ScreenGeneratorFont
 {
     public C64ScreenGeneratorFont(ScreenGenerator screenGenerator) : base(

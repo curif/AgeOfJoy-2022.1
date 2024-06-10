@@ -186,14 +186,22 @@ public class AppleIIColorSpace : ColorSpaceBase
         InitializeColors(new Dictionary<string, Color32>
         {
             { "black", new Color32(0, 0, 0, 255) },
-            { "green", new Color32(0, 255, 0, 255) },
-            { "purple", new Color32(255, 0, 255, 255) },
-            { "white", new Color32(255, 255, 255, 255) },
-            { "orange", new Color32(255, 128, 0, 255) },
-            { "blue", new Color32(0, 0, 255, 255) },
-            { "yellow", new Color32(255, 255, 0, 255) },
-            { "cyan", new Color32(0, 255, 255, 255) }
-        }, new Color32(255, 255, 255, 255), new Color32(0, 0, 0, 255));
+            { "red", new Color32(153, 3, 95, 255) },
+            { "blue", new Color32(55, 4, 225, 255) },
+            { "purple", new Color32(0, 0, 0, 255) },
+            { "green", new Color32(0, 116, 16, 255) },
+            { "gray", new Color32(127, 127, 127, 255) },
+            { "medium_blue", new Color32(36, 151, 255, 255) },
+            { "light_blue", new Color32(170, 162, 255, 255) },
+            { "brown", new Color32(79, 81, 1, 255) },
+            { "orange", new Color32(240, 92, 0, 255) },
+            { "light_gray", new Color32(190, 190, 190, 255) },
+            { "pink", new Color32(255, 133, 225, 255) },
+            { "light_green", new Color32(18, 202, 7, 255) },
+            { "yellow", new Color32(206, 212, 19, 255) },
+            { "aqua", new Color32(81, 245, 149, 255) },
+            { "white", new Color32(255, 255, 254, 255) },
+        }, new Color32(81, 245, 149, 255), new Color32(0, 0, 0, 255));
     }
 }
 

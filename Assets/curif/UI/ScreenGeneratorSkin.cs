@@ -6,6 +6,7 @@ public class ScreenGeneratorSkin
     private const string DEFAULT_SKIN = "c64";
 
     // Supported skins
+    public const string APPLE2 = "apple2";
     public const string C64 = "c64";
     public const string CPC = "cpc";
     public const string TO7 = "to7";
@@ -21,7 +22,27 @@ public class ScreenGeneratorSkin
     {
         switch (name)
         {
-            case "c64":
+            case APPLE2:
+                return new ScreenGeneratorSkin
+                {
+                    Name = name,
+                    Font = new AppleIIScreenGeneratorFont(screenGenerator),
+                    ColorSpace = new AppleIIColorSpace(),
+                    BorderColor = new Color32(0, 0, 0, 255),
+                    BootMessages = new string[]{
+                          "\n"
+                        + "\n"
+                        + "               APPLE II\n"
+                        + "    DOS VERSION 3.3  SYSTEM MASTER\n"
+                        + "\n"
+                        + "            JANUARY 1, 1933\n"
+                        + "\n"
+                        + "COPYRIGHT APPLE COMPUTER,INC. 1980,1982"
+                        + "\n",
+                        "]"
+                    }
+                };
+            case C64:
                 return new ScreenGeneratorSkin
                 {
                     Name = name,
@@ -38,7 +59,7 @@ public class ScreenGeneratorSkin
                         "LOAD\"*.*\",8,1"
                     }
                 };
-            case "cpc":
+            case CPC:
                 return new ScreenGeneratorSkin
                 {
                     Name = name,
@@ -57,20 +78,7 @@ public class ScreenGeneratorSkin
                         "RUN\"DISC"
                     }
                 };
-            case "zx":
-                return new ScreenGeneratorSkin
-                {
-                    Name = name,
-                    Font = new ZXScreenGeneratorFont(screenGenerator),
-                    ColorSpace = new ZXColorSpace(),
-                    BorderColor = new Color32(215, 215, 215, 255),
-                    BootMessages = new string[]{
-                          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-                        + "\u00A9 1982 Sinclair Research Ltd",
-                        "RUN\""
-                    }
-                };
-            case "to7":
+            case TO7:
                 return new ScreenGeneratorSkin
                 {
                     Name = name,
@@ -82,6 +90,19 @@ public class ScreenGeneratorSkin
                         + "(c) Microsoft 1982\n"
                         + "\n"
                         + "OK",
+                        "RUN\""
+                    }
+                };
+            case ZX:
+                return new ScreenGeneratorSkin
+                {
+                    Name = name,
+                    Font = new ZXScreenGeneratorFont(screenGenerator),
+                    ColorSpace = new ZXColorSpace(),
+                    BorderColor = new Color32(215, 215, 215, 255),
+                    BootMessages = new string[]{
+                          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+                        + "\u00A9 1982 Sinclair Research Ltd",
                         "RUN\""
                     }
                 };
