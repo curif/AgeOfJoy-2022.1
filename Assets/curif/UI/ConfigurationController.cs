@@ -27,7 +27,7 @@ public class ConfigurationHelper
 
         if (globalConfiguration == null)
         {
-            GameObject GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+            GameObject GlobalConfigurationGameObject = GameObject.Find("FixedGlobalConfiguration");
             this.globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
         }
         if (this.globalConfiguration == null)
