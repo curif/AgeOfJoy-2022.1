@@ -61,31 +61,31 @@ class GenericWindow : GenericWidget
             return;
 
         // Draw the top border with the title
-        screen.PrintChar(x, y, ScreenGeneratorFont.LEFT_UPPER_CORNER);
+        screen.PrintChar(x, y, ScreenGeneratorFont.GLYPH_LEFT_UPPER_CORNER);
 
         for (int i = 1; i < width - 1; i++)
         {
-            screen.PrintChar(x + i, y, ScreenGeneratorFont.HORIZONTAL_BORDER);
+            screen.PrintChar(x + i, y, ScreenGeneratorFont.GLYPH_HORIZONTAL_BORDER);
         }
 
-        screen.PrintChar(x + width - 1, y, ScreenGeneratorFont.RIGHT_UPPER_CORNER);
+        screen.PrintChar(x + width - 1, y, ScreenGeneratorFont.GLYPH_RIGHT_UPPER_CORNER);
         screen.Print(x + 1, y, title, inverted);
 
         // Draw the side borders
         for (int i = 1; i < height - 1; i++)
         {
-            screen.PrintChar(x, y + i, ScreenGeneratorFont.VERTICAL_BORDER);
-            screen.PrintChar(x + width - 1, y + i, ScreenGeneratorFont.VERTICAL_BORDER);
+            screen.PrintChar(x, y + i, ScreenGeneratorFont.GLYPH_VERTICAL_BORDER);
+            screen.PrintChar(x + width - 1, y + i, ScreenGeneratorFont.GLYPH_VERTICAL_BORDER);
         }
 
         // Draw the bottom border
-        screen.PrintChar(x, y + height - 1, ScreenGeneratorFont.LOWER_LEFT_CORNER);
+        screen.PrintChar(x, y + height - 1, ScreenGeneratorFont.GLYPH_LOWER_LEFT_CORNER);
 
         for (int i = 1; i < width - 1; i++)
         {
-            screen.PrintChar(x + i, y + height - 1, ScreenGeneratorFont.HORIZONTAL_BORDER);
+            screen.PrintChar(x + i, y + height - 1, ScreenGeneratorFont.GLYPH_HORIZONTAL_BORDER);
         }
 
-        screen.PrintChar(x + width - 1, y + height - 1, ScreenGeneratorFont.LOWER_RIGHT_CORNER);
+        screen.PrintChar(x + width - 1, y + height - 1, ScreenGeneratorFont.GLYPH_LOWER_RIGHT_CORNER);
     }
 }
