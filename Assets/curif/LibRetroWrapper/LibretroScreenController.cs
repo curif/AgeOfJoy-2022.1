@@ -149,7 +149,7 @@ public class LibretroScreenController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        GameObject GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+        GameObject GlobalConfigurationGameObject = GameObject.Find("FixedGlobalConfiguration");
         this.globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
         if (globalConfiguration == null)
             ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} globalConfiguration not found.");

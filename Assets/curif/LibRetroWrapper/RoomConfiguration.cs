@@ -32,7 +32,7 @@ public class RoomConfiguration : MonoBehaviour
     void Start()
     {
         if (GlobalConfigurationGameObject == null)
-            GlobalConfigurationGameObject = GameObject.Find("GlobalConfiguration");
+            GlobalConfigurationGameObject = GameObject.Find("FixedGlobalConfiguration");
         if (GlobalConfigurationGameObject == null)
         {
             ConfigManager.WriteConsoleError($"[RoomConfiguration.Start] Global Configuration isn't assigned, (check if IntroGallery is loaded) can't continue");
