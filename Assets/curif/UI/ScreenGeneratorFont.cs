@@ -112,11 +112,7 @@ public class C64ScreenGeneratorFont : ScreenGeneratorFont
 
             "@abcdefghijklmnopqrstuvwxyz[£]§§"
             + " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ+§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§",
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ+§§§§",
 
             8, 8, screenGenerator)
     { }
@@ -151,10 +147,7 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
               "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
             + " !\"#$%&'()*+,-./0123456789:;<=>?"
             + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
-            + "`abcdefghijklmnopqrstuvwxyz{|}~§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§",
+            + "`abcdefghijklmnopqrstuvwxyz{|}~§",
 
             8, 8, screenGenerator)
     {
@@ -176,6 +169,42 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
                 return 153;
             case VERTICAL_BORDER:
                 return 149;
+            default:
+                return base.TranslateCharacter(charNum);
+        }
+    }
+}
+
+
+public class ZXScreenGeneratorFont : ScreenGeneratorFont
+{
+    public ZXScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
+            "UICabinet/Screen/zxFont",
+
+              " !\"#$%&'()*+,-./0123456789:;<=>?"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "£abcdefghijklmnopqrstuvwxyz{|}~§",
+
+            8, 8, screenGenerator)
+    {
+    }
+
+    protected override int TranslateCharacter(char charNum)
+    {
+        switch (charNum)
+        {
+            case LEFT_UPPER_CORNER:
+                return 96;
+            case RIGHT_UPPER_CORNER:
+                return 97;
+            case HORIZONTAL_BORDER:
+                return 98;
+            case LOWER_LEFT_CORNER:
+                return 99;
+            case LOWER_RIGHT_CORNER:
+                return 100;
+            case VERTICAL_BORDER:
+                return 101;
             default:
                 return base.TranslateCharacter(charNum);
         }
