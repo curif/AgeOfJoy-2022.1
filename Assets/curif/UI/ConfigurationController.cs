@@ -111,6 +111,23 @@ public class ConfigurationHelper
 [RequireComponent(typeof(Teleportation))]
 public class ConfigurationController : MonoBehaviour
 {
+    //public static readonly string UP = ScreenGeneratorFont.STR_GLYPH_UP;
+    //public static readonly string DOWN = ScreenGeneratorFont.STR_GLYPH_DOWN;
+    //public static readonly string LEFT = ScreenGeneratorFont.STR_GLYPH_LEFT;
+    //public static readonly string RIGHT = ScreenGeneratorFont.STR_GLYPH_RIGHT;
+
+    public static readonly string UP = ScreenGeneratorFont.STR_GLYPH_DPAD_UP;
+    public static readonly string DOWN = ScreenGeneratorFont.STR_GLYPH_DPAD_DOWN;
+    public static readonly string LEFT = ScreenGeneratorFont.STR_GLYPH_DPAD_LEFT;
+    public static readonly string RIGHT = ScreenGeneratorFont.STR_GLYPH_DPAD_RIGHT;
+
+    public static readonly string OK = ScreenGeneratorFont.STR_GLYPH_BUTTON_B;
+
+    public readonly string UDLR_TO_CHANGE = UP + "/" + DOWN + "/" + LEFT + "/" + RIGHT + " to change";
+    public readonly string UD_TO_CHANGE = UP + "/" + DOWN + " to change";
+    public readonly string LR_TO_CHANGE = LEFT + "/" + RIGHT + " to change";
+    public readonly string B_TO_SELECT = OK + " to select";
+
     public ScreenGenerator scr;
     public CoinSlotController CoinSlot;
 
@@ -329,8 +346,8 @@ public class ConfigurationController : MonoBehaviour
         npcContainer.Draw();
 
         //some help
-        scr.Print(2, 16, "left/right/up/down to change");
-        scr.Print(2, 17, "b to select");
+        scr.Print(2, 16, UDLR_TO_CHANGE);
+        scr.Print(2, 17, B_TO_SELECT);
 
     }
 
@@ -373,8 +390,8 @@ public class ConfigurationController : MonoBehaviour
             scr.Print(2, 4, "except controllers information");
             scr.Print(2, 5, "and cabinets positions.");
         }
-        scr.Print(2, 16, "up/down to change");
-        scr.Print(2, 17, "b to select and exit");
+        scr.Print(2, 16, UD_TO_CHANGE);
+        scr.Print(2, 17, B_TO_SELECT + " and exit");
     }
 
     public void resetSave()
@@ -460,7 +477,7 @@ public class ConfigurationController : MonoBehaviour
             scr.Print(2, 1, "select the configuration mode:");
             scr.Print(2, 2, "- global for all rooms");
             scr.Print(2, 3, "- or for this room only.");
-            scr.Print(2, 4, "up/down to change");
+            scr.Print(2, 4, UD_TO_CHANGE);
         }
         else
         {
@@ -469,7 +486,7 @@ public class ConfigurationController : MonoBehaviour
             scr.Print(2, 3, "for one room configuration go to");
             scr.Print(2, 4, "a gallery room");
         }
-        scr.Print(2, 19, "b to select");
+        scr.Print(2, 19, B_TO_SELECT);
 
         changeModeContainer.Draw();
     }
@@ -488,8 +505,8 @@ public class ConfigurationController : MonoBehaviour
         scr.Clear();
         scr.PrintCentered(1, "- Controller configuration -");
         controllerContainer.Draw();
-        scr.Print(2, 23, "up/down/left/right to change");
-        scr.Print(2, 24, "b to select");
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
     }
 
     private void controlMapUpdateWidgets()
@@ -636,8 +653,8 @@ public class ConfigurationController : MonoBehaviour
                       .Add(new GenericOptionsInteger(scr, "InGameBackgroundVolume", "volume:", 0, 100, 6, 14))
                       .Add(new GenericButton(scr, "save", "save & exit", 4, 16, true))
                       .Add(new GenericButton(scr, "exit", "exit", 18, 16, true))
-                      .Add(new GenericLabel(scr, "l1", "left/right/b to change", 2, 20))
-                      .Add(new GenericLabel(scr, "l2", "up/down to move", 2, 21));
+                      .Add(new GenericLabel(scr, "l1", LEFT + "/" + RIGHT + "/" + OK + " to change", 2, 20))
+                      .Add(new GenericLabel(scr, "l2", UP + "/" + DOWN + " to move", 2, 21));
     }
     private void SetGlobalWidgets()
     {
@@ -889,8 +906,8 @@ public class ConfigurationController : MonoBehaviour
 
         scr.Clear();
         cabinetsToChangeContainer.Draw();
-        scr.Print(2, 23, "up/down/left/right to change");
-        scr.Print(2, 24, "b to select");
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
     }
 
 
@@ -922,8 +939,8 @@ public class ConfigurationController : MonoBehaviour
 
         scr.Clear();
         teleportContainer.Draw();
-        scr.Print(2, 23, "up/down/left/right to change");
-        scr.Print(2, 24, "b to select");
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
     }
 
     private void SetAGEBasicWidgets()
@@ -1030,8 +1047,8 @@ public class ConfigurationController : MonoBehaviour
         AGEBasicContainer.SetOption(0);
         AGEBasicContainer.Draw();
 
-        scr.Print(2, 23, "up/down/left/right to change");
-        scr.Print(2, 24, "b to select");
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
     }
 
     private void SetLocomotionWidgets()
@@ -1067,8 +1084,8 @@ public class ConfigurationController : MonoBehaviour
         scr.Clear();
         locomotionContainer.Draw();
 
-        scr.Print(2, 23, "up/down/left/right to change");
-        scr.Print(2, 24, "b to select");
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
     }
 
     private void LocomotionSetWidgetsValues()
@@ -1105,8 +1122,8 @@ public class ConfigurationController : MonoBehaviour
 
         scr.Clear();
         playerContainer.Draw();
-        scr.Print(2, 23, "up/down/left/right to change");
-        scr.Print(2, 24, "b to select");
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
     }
 
     private void SetPlayerWidgets()
@@ -1183,7 +1200,7 @@ public class ConfigurationController : MonoBehaviour
         shader = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
 
         ConfigInformation config = configHelper.getConfigInformation(true);
-        
+
         scr.Init(config.system_skin)
             .ActivateShader(shader)
             .ClearBackground()

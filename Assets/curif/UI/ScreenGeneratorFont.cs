@@ -3,12 +3,74 @@ using UnityEngine;
 public abstract class ScreenGeneratorFont
 {
     // Special characters
-    public const char LEFT_UPPER_CORNER = (char)0;
-    public const char RIGHT_UPPER_CORNER = (char)1;
-    public const char HORIZONTAL_BORDER = (char)2;
-    public const char LOWER_LEFT_CORNER = (char)3;
-    public const char LOWER_RIGHT_CORNER = (char)4;
-    public const char VERTICAL_BORDER = (char)5;
+
+
+    public const char GLYPH_SAVE = (char)224;
+    public const char GLYPH_BUTTON_A = (char)225;
+    public const char GLYPH_BUTTON_B = (char)226;
+    public const char GLYPH_BUTTON_X = (char)227;
+    public const char GLYPH_BUTTON_Y = (char)228;
+    public const char GLYPH_BUTTON_L = (char)229;
+    public const char GLYPH_BUTTON_R = (char)230;
+    public const char GLYPH_BUTTON_LT = (char)231;
+    public const char GLYPH_BUTTON_RT = (char)232;
+    public const char GLYPH_DPAD_UP = (char)233;
+    public const char GLYPH_DPAD_DOWN = (char)234;
+    public const char GLYPH_DPAD_LEFT = (char)235;
+    public const char GLYPH_DPAD_RIGHT = (char)236;
+    public const char GLYPH_UP = (char)237;
+    public const char GLYPH_DOWN = (char)238;
+    public const char GLYPH_LEFT = (char)239;
+    public const char GLYPH_RIGHT = (char)240;
+    public const char GLYPH_START_1 = (char)241;
+    public const char GLYPH_START_2 = (char)242;
+    public const char GLYPH_START_3 = (char)243;
+    public const char GLYPH_SELECT_1 = (char)244;
+    public const char GLYPH_SELECT_2 = (char)245;
+    public const char GLYPH_SELECT_3 = (char)246;
+    public const char GLYPH_LEFT_UPPER_CORNER = (char)247;
+    public const char GLYPH_RIGHT_UPPER_CORNER = (char)248;
+    public const char GLYPH_HORIZONTAL_BORDER = (char)249;
+    public const char GLYPH_LOWER_LEFT_CORNER = (char)250;
+    public const char GLYPH_LOWER_RIGHT_CORNER = (char)251;
+    public const char GLYPH_VERTICAL_BORDER = (char)252;
+    public const char GLYPH_SQUARE = (char)253;
+    public const char GLYPH_GRID = (char)254;
+    public const char GLYPH_LINES = (char)255;
+
+    public const char GLYPH_BEGINNING = GLYPH_SAVE;
+    public const char GLYPH_END = GLYPH_LINES;
+
+    public static readonly string STR_GLYPH_SAVE = GLYPH_SAVE.ToString();
+    public static readonly string STR_GLYPH_BUTTON_A = GLYPH_BUTTON_A.ToString();
+    public static readonly string STR_GLYPH_BUTTON_B = GLYPH_BUTTON_B.ToString();
+    public static readonly string STR_GLYPH_BUTTON_X = GLYPH_BUTTON_X.ToString();
+    public static readonly string STR_GLYPH_BUTTON_Y = GLYPH_BUTTON_Y.ToString();
+    public static readonly string STR_GLYPH_BUTTON_L = GLYPH_BUTTON_L.ToString();
+    public static readonly string STR_GLYPH_BUTTON_R = GLYPH_BUTTON_R.ToString();
+    public static readonly string STR_GLYPH_BUTTON_LT = GLYPH_BUTTON_LT.ToString();
+    public static readonly string STR_GLYPH_BUTTON_RT = GLYPH_BUTTON_RT.ToString();
+    public static readonly string STR_GLYPH_DPAD_UP = GLYPH_DPAD_UP.ToString();
+    public static readonly string STR_GLYPH_DPAD_DOWN = GLYPH_DPAD_DOWN.ToString();
+    public static readonly string STR_GLYPH_DPAD_LEFT = GLYPH_DPAD_LEFT.ToString();
+    public static readonly string STR_GLYPH_DPAD_RIGHT = GLYPH_DPAD_RIGHT.ToString();
+    public static readonly string STR_GLYPH_UP = GLYPH_UP.ToString();
+    public static readonly string STR_GLYPH_DOWN = GLYPH_DOWN.ToString();
+    public static readonly string STR_GLYPH_LEFT = GLYPH_LEFT.ToString();
+    public static readonly string STR_GLYPH_RIGHT = GLYPH_RIGHT.ToString();
+    public static readonly string STR_GLYPH_START = GLYPH_START_1.ToString() + GLYPH_START_2.ToString() + GLYPH_START_3.ToString();
+    public static readonly string STR_GLYPH_SELECT_1 = GLYPH_SELECT_1.ToString() + GLYPH_SELECT_2.ToString() + GLYPH_SELECT_3.ToString();
+    public static readonly string STR_GLYPH_LEFT_UPPER_CORNER = GLYPH_LEFT_UPPER_CORNER.ToString();
+    public static readonly string STR_GLYPH_RIGHT_UPPER_CORNER = GLYPH_RIGHT_UPPER_CORNER.ToString();
+    public static readonly string STR_GLYPH_HORIZONTAL_BORDER = GLYPH_HORIZONTAL_BORDER.ToString();
+    public static readonly string STR_GLYPH_LOWER_LEFT_CORNER = GLYPH_LOWER_LEFT_CORNER.ToString();
+    public static readonly string STR_GLYPH_LOWER_RIGHT_CORNER = GLYPH_LOWER_RIGHT_CORNER.ToString();
+    public static readonly string STR_GLYPH_VERTICAL_BORDER = GLYPH_VERTICAL_BORDER.ToString();
+    public static readonly string STR_GLYPH_SQUARE = GLYPH_SQUARE.ToString();
+    public static readonly string STR_GLYPH_GRID = GLYPH_GRID.ToString();
+    public static readonly string STR_GLYPH_LINES = GLYPH_LINES.ToString();
+
+
 
     // The list that stores the pixels for each character
     private bool[][] characters;
@@ -95,6 +157,8 @@ public abstract class ScreenGeneratorFont
 
     protected virtual int TranslateCharacter(char charNum)
     {
+        if (charNum >= GLYPH_BEGINNING && charNum <= GLYPH_END)
+            return charNum;
         if (charNum < 0 || charNum > 255)
             return ' ';
         int index = characterListOrder.IndexOf(charNum);
@@ -104,6 +168,7 @@ public abstract class ScreenGeneratorFont
         return index;
     }
 }
+
 public class C64ScreenGeneratorFont : ScreenGeneratorFont
 {
     public C64ScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
@@ -115,35 +180,14 @@ public class C64ScreenGeneratorFont : ScreenGeneratorFont
 
             8, 8, screenGenerator)
     { }
-
-    protected override int TranslateCharacter(char charNum)
-    {
-        switch (charNum)
-        {
-            case LEFT_UPPER_CORNER:
-                return 112;
-            case RIGHT_UPPER_CORNER:
-                return 110;
-            case HORIZONTAL_BORDER:
-                return 64;
-            case LOWER_LEFT_CORNER:
-                return 109;
-            case LOWER_RIGHT_CORNER:
-                return 125;
-            case VERTICAL_BORDER:
-                return 93;
-            default:
-                return base.TranslateCharacter(charNum);
-        }
-    }
 }
+
 public class CPCScreenGeneratorFont : ScreenGeneratorFont
 {
     public CPCScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
             "UICabinet/Screen/cpcFont",
 
-              "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
-            + " !\"#$%&'()*+,-./0123456789:;<=>?"
+              " !\"#$%&'()*+,-./0123456789:;<=>?"
             + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
             + "`abcdefghijklmnopqrstuvwxyz{|}~§"
             + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
@@ -151,27 +195,6 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
 
             8, 8, screenGenerator)
     {
-    }
-
-    protected override int TranslateCharacter(char charNum)
-    {
-        switch (charNum)
-        {
-            case LEFT_UPPER_CORNER:
-                return 150;
-            case RIGHT_UPPER_CORNER:
-                return 156;
-            case HORIZONTAL_BORDER:
-                return 154;
-            case LOWER_LEFT_CORNER:
-                return 147;
-            case LOWER_RIGHT_CORNER:
-                return 153;
-            case VERTICAL_BORDER:
-                return 149;
-            default:
-                return base.TranslateCharacter(charNum);
-        }
     }
 }
 
@@ -187,27 +210,6 @@ public class TO7ScreenGeneratorFont : ScreenGeneratorFont
             8, 8, screenGenerator)
     {
     }
-
-    protected override int TranslateCharacter(char charNum)
-    {
-        switch (charNum)
-        {
-            case LEFT_UPPER_CORNER:
-                return 96;
-            case RIGHT_UPPER_CORNER:
-                return 97;
-            case HORIZONTAL_BORDER:
-                return 98;
-            case LOWER_LEFT_CORNER:
-                return 99;
-            case LOWER_RIGHT_CORNER:
-                return 100;
-            case VERTICAL_BORDER:
-                return 101;
-            default:
-                return base.TranslateCharacter(charNum);
-        }
-    }
 }
 
 public class ZXScreenGeneratorFont : ScreenGeneratorFont
@@ -221,26 +223,5 @@ public class ZXScreenGeneratorFont : ScreenGeneratorFont
 
             8, 8, screenGenerator)
     {
-    }
-
-    protected override int TranslateCharacter(char charNum)
-    {
-        switch (charNum)
-        {
-            case LEFT_UPPER_CORNER:
-                return 96;
-            case RIGHT_UPPER_CORNER:
-                return 97;
-            case HORIZONTAL_BORDER:
-                return 98;
-            case LOWER_LEFT_CORNER:
-                return 99;
-            case LOWER_RIGHT_CORNER:
-                return 100;
-            case VERTICAL_BORDER:
-                return 101;
-            default:
-                return base.TranslateCharacter(charNum);
-        }
     }
 }
