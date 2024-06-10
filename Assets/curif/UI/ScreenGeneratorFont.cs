@@ -211,6 +211,19 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
     {
     }
 }
+public class MSXScreenGeneratorFont : ScreenGeneratorFont
+{
+    public MSXScreenGeneratorFont(ScreenGenerator screenGenerator) : base(
+            "UICabinet/Screen/msxFont",
+
+              " !\"#$%&'()*+,-./0123456789:;<=>?"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "£abcdefghijklmnopqrstuvwxyz{|}~©",
+
+            8, 8, screenGenerator)
+    {
+    }
+}
 
 public class TO7ScreenGeneratorFont : ScreenGeneratorFont
 {
