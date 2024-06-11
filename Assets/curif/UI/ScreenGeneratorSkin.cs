@@ -9,6 +9,7 @@ public class ScreenGeneratorSkin
     public const string APPLE2 = "apple2";
     public const string C64 = "c64";
     public const string CPC = "cpc";
+    public const string CPC_MONO = "cpc_mono";
     public const string MSX = "msx";
     public const string MSX_MONO = "msx_mono";
     public const string TO7 = "to7";
@@ -70,11 +71,30 @@ public class ScreenGeneratorSkin
                     BorderColor = new Color32(0, 0, 102, 255),
                     BootMessages = new string[]{
                           "\n"
-                        + " Amstrad 128K Microcomputer  (f3)\n"
+                        + " Amstrad 128K Microcomputer  (v3)\n"
                         + "\n"
                         + " \u00A91985 Amstrad Consumer Electronics plc\n"
                         + "           and Locomotive Software Ltd.\n"
                         + " BASIC 1.1\n"
+                        + "\n"
+                        + "Ready",
+                        "RUN\"DISC"
+                    }
+                };
+            case CPC_MONO:
+                return new ScreenGeneratorSkin
+                {
+                    Name = name,
+                    Font = new CPCScreenGeneratorFont(screenGenerator),
+                    ColorSpace = new CPCMonoColorSpace(),
+                    BorderColor = new Color32(0, 60, 0, 255),
+                    BootMessages = new string[]{
+                          "\n"
+                        + " Amstrad 64K Microcomputer  (v1)\n"
+                        + "\n"
+                        + " \u00A91984 Amstrad Consumer Electronics plc\n"
+                        + "           and Locomotive Software Ltd.\n"
+                        + " BASIC 1.0\n"
                         + "\n"
                         + "Ready",
                         "RUN\"DISC"
