@@ -60,6 +60,7 @@ public abstract class ColorSpaceBase
     }
 }
 
+// CPC (color)
 public class CPCColorSpace : ColorSpaceBase
 {
     public CPCColorSpace()
@@ -97,6 +98,44 @@ public class CPCColorSpace : ColorSpaceBase
     }
 }
 
+// CPC (green monochrome)
+public class CPCMonoColorSpace : ColorSpaceBase
+{
+    public CPCMonoColorSpace()
+    {
+        InitializeColors(new Dictionary<string, Color32>
+        {
+            { "black", new Color32(0, 60, 0, 255) },
+            { "blue", new Color32(5, 68, 5, 255) },
+            { "bright_blue", new Color32(10, 75, 10, 255) },
+            { "red", new Color32(16, 84, 16, 255) },
+            { "magenta", new Color32(21, 92, 21, 255) },
+            { "mauve", new Color32(26, 99, 26, 255) },
+            { "bright_red", new Color32(30, 105, 30, 255) },
+            { "purple", new Color32(35, 113, 35, 255) },
+            { "bright_magenta", new Color32(40, 120, 40, 255) },
+            { "green", new Color32(48, 132, 48, 255) },
+            { "cyan", new Color32(53, 140, 53, 255) },
+            { "sky_blue", new Color32(58, 147, 58, 255) },
+            { "yellow", new Color32(64, 156, 64, 255) },
+            { "white", new Color32(69, 164, 69, 255) },
+            { "pastel_blue", new Color32(74, 171, 74, 255) },
+            { "orange", new Color32(78, 177, 78, 255) },
+            { "pink", new Color32(83, 185, 83, 255) },
+            { "pastel_magenta", new Color32(88, 192, 88, 255) },
+            { "bright_green", new Color32(90, 195, 90, 255) },
+            { "sea_green", new Color32(95, 203, 95, 255) },
+            { "bright_cyan", new Color32(100, 210, 100, 255) },
+            { "lime", new Color32(106, 219, 106, 255) },
+            { "pastel_green", new Color32(97, 206, 97, 255) },
+            { "pastel_cyan", new Color32(116, 234, 116, 255) },
+            { "bright_yellow", new Color32(120, 240, 120, 255) },
+            { "pastel_yellow", new Color32(125, 248, 125, 255) },
+            { "bright_white", new Color32(130, 255, 130, 255) }
+        }, new Color32(120, 240, 120, 255), new Color32(0, 60, 0, 255));
+    }
+}
+
 // MSX
 public class MSXColorSpace : ColorSpaceBase
 {
@@ -124,7 +163,7 @@ public class MSXColorSpace : ColorSpaceBase
     }
 }
 
-// MSX
+// MSX (green monochrome)
 public class MSXMonoColorSpace : ColorSpaceBase
 {
     public MSXMonoColorSpace()

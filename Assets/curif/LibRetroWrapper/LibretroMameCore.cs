@@ -1298,6 +1298,9 @@ public static unsafe class LibretroMameCore
             if (port == activePlayerSlot)
             {
                 return (Int16)deviceIdsJoypad.Active(id, 0);
+            } else 
+            {
+                return (Int16)deviceIdsJoypad.Active(id, (int)port);
             }
             // WriteConsole($"[inputStateCB_GamePad] RETRO_DEVICE_ID_JOYPAD_???: id: {id} active: {ret} - port: {port}");
         }
