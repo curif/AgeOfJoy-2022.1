@@ -175,7 +175,7 @@ public class AppleIIScreenGeneratorFont : ScreenGeneratorFont
             "UICabinet/Screen/apple2Font",
 
               " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§_"
             + "£abcdefghijklmnopqrstuvwxyz{|}~©",
 
             8, 8, screenGenerator)
@@ -202,7 +202,7 @@ public class CPCScreenGeneratorFont : ScreenGeneratorFont
             "UICabinet/Screen/cpcFont",
 
               " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§_"
             + "`abcdefghijklmnopqrstuvwxyz{|}~§"
             + "§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§"
             + "^§§£©§§§§§§§§§§§§§§§§§§§§§§§§§§§",
@@ -217,7 +217,7 @@ public class MSXScreenGeneratorFont : ScreenGeneratorFont
             "UICabinet/Screen/msxFont",
 
               " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§_"
             + "£abcdefghijklmnopqrstuvwxyz{|}~©",
 
             8, 8, screenGenerator)
@@ -231,7 +231,7 @@ public class TO7ScreenGeneratorFont : ScreenGeneratorFont
             "UICabinet/Screen/to7Font",
 
               " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§_"
             + "£abcdefghijklmnopqrstuvwxyz{|}~©",
 
             8, 8, screenGenerator)
@@ -245,7 +245,7 @@ public class ZXScreenGeneratorFont : ScreenGeneratorFont
             "UICabinet/Screen/zxFont",
 
               " !\"#$%&'()*+,-./0123456789:;<=>?"
-            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§§"
+            + "§ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]§_"
             + "£abcdefghijklmnopqrstuvwxyz{|}~©",
 
             8, 8, screenGenerator)
