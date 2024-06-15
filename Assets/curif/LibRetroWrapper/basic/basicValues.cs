@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -74,8 +75,6 @@ public class BasicValue
     //strings could be surrounded by "
     public BasicValue(string str, BasicValueType forceType = BasicValueType.empty)
     {
-        double valueDouble;
-
         bool startsAndEndsWithQuote = str.StartsWith("\"") && str.EndsWith("\"");
         if (startsAndEndsWithQuote)
         {
@@ -89,7 +88,7 @@ public class BasicValue
             return;
         }
 
-        if (double.TryParse(str, out valueDouble))
+        if (double.TryParse(str, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double valueDouble))
         {
             SetValue(valueDouble);
             return;
