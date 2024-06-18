@@ -8,7 +8,6 @@ using UnityEngine.Networking;
 public class MusicPlayer : MonoBehaviour
 {
     private List<string> musicQueue = new List<string>();
-    public bool isPlaying = false;
     public bool Loop = false;
     private int currentIndex = 0;
     private AudioSource audioSource;
@@ -144,6 +143,7 @@ public class MusicPlayer : MonoBehaviour
                         }
                     }
                 }
+                /*
                 else
                 {
                     // curated list https://github.com/mikepierce/internet-radio-streams
@@ -165,13 +165,7 @@ public class MusicPlayer : MonoBehaviour
                             next();
                             continue;
                         }
-                        /*
-                        while (www.downloadProgress < 1)
-                        {
-                            ConfigManager.WriteConsole($"[MusicPlayer.PlayMusicCoroutine] Downloading stream file: {filePath} progress: {www.downloadProgress}");
-                            yield return new WaitForSeconds(.5f);
-                        }*/
-
+                  
                         if (www.result == UnityWebRequest.Result.ConnectionError ||
                             www.result == UnityWebRequest.Result.ProtocolError)
                         {
@@ -186,7 +180,8 @@ public class MusicPlayer : MonoBehaviour
                             audioSource.loop = true; // Ensure continuous playback
                         }
                     }
-                }
+                
+                }*/
             }
             else
             {
@@ -262,7 +257,11 @@ public class MusicPlayer : MonoBehaviour
         audioSource.Stop();
         audioSource.clip = null;
         currentIndex = Mathf.Clamp(currentIndex, 0, musicQueue.Count - 1);
-        StopCoroutine(coroutine);
-        coroutine = null;
+        if (coroutine != null)
+        {
+            StopCoroutine(coroutine);
+            coroutine = null;
+        }
+        
     }
 }
