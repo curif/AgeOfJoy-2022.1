@@ -9,6 +9,8 @@ using UnityEngine;
 
 public static class PlaceOnFloorFromBoxCollider
 {
+    static LayerMask floorLayer = LayerMask.GetMask("floor");
+
     public static bool PlaceOnFloor(Transform transform, BoxCollider boxCollider)
     {
         if (transform == null || boxCollider == null)
@@ -34,17 +36,18 @@ public static class PlaceOnFloorFromBoxCollider
         }
         return true;
     }
-    /*public static void CreateSphere(Vector3 position, string name)
+    public static void CreateSphere(Vector3 position, GameObject go)
     {
         // Create a new sphere GameObject
         GameObject sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        sphere.name = name + "_boxlowpart";
+        sphere.name = go.name + "_boxlowpart";
         // Set the position of the sphere to the specified position
         sphere.transform.position = position;
+        sphere.transform.parent = go.transform;
 
         // Set the scale of the sphere to 0.1 in all dimensions
         sphere.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-    }*/
+    }
     private static bool AlignLowerPartToFloor(Transform transform, BoxCollider boxCollider)
     {
 
@@ -54,21 +57,19 @@ public static class PlaceOnFloorFromBoxCollider
                                                 transform.position.z);
         Ray ray = new Ray(lowBoxCollider, Vector3.down);
 
-        // CreateSphere(lowBoxCollider, transform.gameObject.name);
+        //CreateSphere(lowBoxCollider, transform.gameObject);
 
         // Perform a raycast to check for the floor
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit))
+        if (Physics.Raycast(ray, out hit, 1f, floorLayer))
         {
             float yOffset = lowBoxCollider.y - hit.point.y;
-            ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] lowBoxCollider.y: {lowBoxCollider.y} hit.point.y: {hit.point.y} {transform.gameObject.name}");
-            ConfigManager.WriteConsole($"[PutOnFloor.AlignLowerPartToFloor] yOffset: {yOffset} {transform.gameObject.name}");
-
+            
             // Adjust the position of the GameObject
             transform.position -= new Vector3(0f, yOffset, 0f);
             return true;
         }
-        ConfigManager.WriteConsoleError($"[PlaceOnFloorFromBoxCollider.AlignLowerPartToFloor] floor not found for {transform.gameObject.name}");
+        ConfigManager.WriteConsoleWarning($"[PutOnFloor.AlignLowerPartToFloor] floor not found for {transform.gameObject.name}");
         return false;
     }
 
