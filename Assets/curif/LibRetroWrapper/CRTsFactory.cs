@@ -15,7 +15,9 @@ public static class CRTsFactory
     {
         //CRTs
         // Assets/Resources/Cabinets/PreFab/CRTs/screen19i.prefab
+        // Assets/Resources/Cabinets/PreFab/CRTs/screen50i.prefab
         objects.Add("19i", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i"));
+        objects.Add("50i", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen50i"));
         objects.Add("19i-agebasic", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19iAGEBasic"));
         objects.Add("no-crt", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/noScreen"));
     }
