@@ -65,7 +65,7 @@ public abstract class ShaderScreenBase
 public static class ShaderScreen
 {
     private static Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>> dic = new();
-    private static string[] ShaderNames = new[] { "damage", "clean", "crt", "crtlod" };
+    private static string[] ShaderNames = new[] { "damage", "clean", "crt", "crtlod", "projector",                                                      "projectorLOD" };
 
     static ShaderScreen()
     {
@@ -73,6 +73,8 @@ public static class ShaderScreen
         dic["clean"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderScreenClean(display, position, config);
         dic["crt"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRT(display, position, config);
         dic["crtlod"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRTLOD(display, position, config);
+        dic["projector"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderProjector(display, position, config);
+        dic["projectorlod"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderProjectorLOD(display, position, config);
     }
 
     public static ShaderScreenBase Factory(Renderer display, int position, string shaderName, Dictionary<string, string> config)
