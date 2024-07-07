@@ -18,6 +18,7 @@ using Siccity.GLTFUtility;
 public static class CabinetFactory
 {
     public static Dictionary<string, GameObject> CabinetStyles = new Dictionary<string, GameObject>();
+    public static ResourceCache<string, GameObject> CabinetCache = new ResourceCache<string, GameObject>();
 
     static CabinetFactory()
     {
@@ -54,10 +55,15 @@ public static class CabinetFactory
             string cacheKey = BuildKey(modelFilePath);
             ConfigManager.WriteConsole($"[CabinetFactory] cache key:{cacheKey}");
 
-            if (cacheGlbModels && cacheKey != null && CabinetStyles.ContainsKey(cacheKey))
+            if (cacheKey != null && CabinetStyles.ContainsKey(cacheKey))
+            {
+                ConfigManager.WriteConsole($"[CabinetFactory] load default model {modelFilePath}");
+                model = CabinetStyles[cacheKey];
+            }
+            else if (cacheGlbModels && cacheKey != null && CabinetCache.ContainsKey(cacheKey))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
-                model = CabinetStyles[cacheKey];
+                model = CabinetCache.Get(cacheKey);
             }
             else
             {
@@ -81,7 +87,7 @@ public static class CabinetFactory
                     if (cacheGlbModels && cacheKey != null)
                     {
                         ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
-                        CabinetStyles.Add(cacheKey, model);
+                        CabinetCache.Add(cacheKey, model);
                     }
                 }
             }
@@ -274,11 +280,11 @@ public static class CabinetFactory
         }
 
         if (cbinfo.crt != null &&
-            (cabinet.PartsExist("screen-mock-vertical") || 
+            (cabinet.PartsExist("screen-mock-vertical") ||
                 cabinet.PartsExist("screen-mock-horizontal")))
         {
-            Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x, 
-                                                cbinfo.crt.geometry.rotation.y, 
+            Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x,
+                                                cbinfo.crt.geometry.rotation.y,
                                                 cbinfo.crt.geometry.rotation.z);
             ConfigManager.WriteConsole($"[fromInformation]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
 
