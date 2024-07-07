@@ -18,7 +18,7 @@ using Siccity.GLTFUtility;
 public static class CabinetFactory
 {
     public static Dictionary<string, GameObject> CabinetStyles = new Dictionary<string, GameObject>();
-    public static ResourceCache<string, GameObject> CabinetCache = new ResourceCache<string, GameObject>();
+    public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>();
 
     static CabinetFactory()
     {

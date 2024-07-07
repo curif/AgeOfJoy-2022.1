@@ -1,8 +1,40 @@
 using System.Collections.Generic;
 
-public class ResourceCache<K, V>
+public interface IResourceCache
+{
+    void FreeResources();
+}
+
+public class ResourceCacheManager
+{
+    public static List<IResourceCache> caches = new List<IResourceCache>();
+    public static ResourceCache<K, V> Create<K, V>()
+    {
+        ResourceCache<K, V> cache = new ResourceCache<K, V>();
+        caches.Add(cache);
+        return cache;
+    }
+
+    public static void FreeResources()
+    {
+        foreach (IResourceCache cache in caches)
+        {
+            cache.FreeResources();
+        }
+    }
+}
+
+public class ResourceCache<K, V> : IResourceCache
 {
     private Dictionary<K, V> cache = new Dictionary<K, V>();
+    
+    internal ResourceCache() { }
+
+    public void FreeResources()
+    {
+        // Super aggressive ! TODO fine tune this
+        cache.Clear();
+    }
 
     public V Get(K key)
     {

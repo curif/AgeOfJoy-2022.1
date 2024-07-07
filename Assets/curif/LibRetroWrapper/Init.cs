@@ -9,6 +9,7 @@ using UnityEngine;
 using System.IO;
 using UnityEngine.Android;
 using System.Diagnostics;
+using System;
 
 // check Project settings -> Script execution order.
 [DefaultExecutionOrder(-500)] // This will ensure that this script executes before others
@@ -30,6 +31,8 @@ public class Init : MonoBehaviour
     void Start()
     {
         ConfigManager.WriteConsole("[Init] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
+
+        Application.lowMemory += OnLowMemory;
 
         cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
 
@@ -58,6 +61,12 @@ public class Init : MonoBehaviour
         }
 
         ConfigManager.WriteConsole("+++++++++++++++++++++ initialization ends");
+    }
+
+    private void OnLowMemory()
+    {
+        ConfigManager.WriteConsole("+++++++++++++++++++++ OnLowMemory");
+        ResourceCacheManager.FreeResources();
     }
 
     void loadOperations()
