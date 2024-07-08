@@ -609,10 +609,11 @@ public class Cabinet
             {
                 colors[i] = color;
             }
+
+            // Set the colors array to the mesh
+            mesh.colors = colors;
         }
 
-        // Set the colors array to the mesh
-        mesh.colors = colors;
 
         // Handle submeshes (if applicable)
         int submeshCount = mesh.subMeshCount;
