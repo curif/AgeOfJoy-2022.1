@@ -1,5 +1,10 @@
+//#define FORCE_565
+//#define GAMMA_FIX
+//#define TEXTURE_DEBUG
+
 using System;
 using System.IO;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public static class CabinetTextureCache
@@ -33,6 +38,7 @@ public static class CabinetTextureCache
                 tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
                 tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
                 tex.LoadRawTextureData(fileData);
+                tex.Apply(true, true);
             }
             else
             {
@@ -41,13 +47,41 @@ public static class CabinetTextureCache
                 tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
                 tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
                 tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
-            }
-            tex.Apply();
+                tex.Apply(true, true);
 
+#if FORCE_565
+                if (tex.format != TextureFormat.RGB565 && !path.ContainsInsensitive("bezel")) // quick fix for bezel textures
+                {
+                    ConfigManager.WriteConsole($"Convert texture to RGB565: {path} -> format:{tex.format}");
+                    // Convert the texture to RGB565
+                    Texture2D rgb565Tex = new Texture2D(tex.width, tex.height, TextureFormat.RGB565, true);
+                    Color32[] pixels = tex.GetPixels32();
+#if GAMMA_FIX
+                    ConfigManager.WriteConsole($"Correct GAMMA: {path}");
+                    for (int i = 0; i < pixels.Length; i++)
+                    {
+                        Color32 pixel = pixels[i];
+                        // Apply gamma correction (factor 2)
+                        pixel.r = (byte)Mathf.Clamp(Mathf.Pow(pixel.r / 255.0f, 2.0f) * 255.0f, 0.0f, 255.0f);
+                        pixel.g = (byte)Mathf.Clamp(Mathf.Pow(pixel.g / 255.0f, 2.0f) * 255.0f, 0.0f, 255.0f);
+                        pixel.b = (byte)Mathf.Clamp(Mathf.Pow(pixel.b / 255.0f, 2.0f) * 255.0f, 0.0f, 255.0f);
+                        pixels[i] = pixel;
+                    }
+#endif
+                    rgb565Tex.SetPixels32(pixels);
+                    rgb565Tex.Apply(true);
+                    UnityEngine.Object.Destroy(tex);
+                    tex = rgb565Tex;
+                }
+#endif
+            }
+
+#if TEXTURE_DEBUG
+            ConfigManager.WriteConsole($"TEXTURESPECS: {path} -> format:{tex.format}  rawTextureDataLength:{tex.GetRawTextureData().Length}  w/h:{tex.width}x{tex.height}");
+#endif
 
             // Cache the loaded texture
             cachedTextures.Add(path, tex);
-
             return tex;
         }
 
