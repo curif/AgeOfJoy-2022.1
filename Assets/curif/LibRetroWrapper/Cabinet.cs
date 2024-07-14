@@ -596,6 +596,7 @@ public class Cabinet
         SetMaterialFromMaterial(go, CabinetMaterials.VertexColor);
 
         Mesh mesh = go.GetComponent<MeshFilter>().mesh;
+        mesh.MarkDynamic();
 
         int vertices = mesh.vertices.Length;
 
@@ -613,7 +614,6 @@ public class Cabinet
             // Set the colors array to the mesh
             mesh.colors = colors;
         }
-
 
         // Handle submeshes (if applicable)
         int submeshCount = mesh.subMeshCount;
