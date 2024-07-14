@@ -12,6 +12,7 @@ using System.Linq;
 
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
+using CleverCrow.Fluid.BTs.Tasks.Actions;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
@@ -87,6 +88,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private Coroutine mainCoroutine;
 
     private bool initialized = false;
+    private bool playerIsPlaying = false;
 
 
     void Start()
@@ -216,6 +218,9 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     void OnEnable()
     {
+        LibretroMameCore.OnPlayerStartPlaying?.AddListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.AddListener(OnPlayerStopPlaying);
+
         if (!initialized)
             return;
 
@@ -224,6 +229,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
         ConfigManager.WriteConsole($"[ArcadeRoomBehavior.OnEnabled] {gameObject.name} is enabled");
     }
+
     private void OnApplicationPause()
     {
         if (mainCoroutine != null)
@@ -231,7 +237,10 @@ public class ArcadeRoomBehavior : MonoBehaviour
             StopCoroutine(mainCoroutine);
             mainCoroutine = null;
         }
+        LibretroMameCore.OnPlayerStartPlaying.RemoveListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying.RemoveListener(OnPlayerStopPlaying);
     }
+
     private void OnDisable()
     {
         if (!initialized)
@@ -458,6 +467,19 @@ public class ArcadeRoomBehavior : MonoBehaviour
             collisionWithPlayer = false;
         }
     }
+
+
+    private void OnPlayerStartPlaying()
+    {
+        playerIsPlaying = true;
+    }
+    private void OnPlayerStopPlaying()
+    {
+        playerIsPlaying = false;
+    }
+
+
+
     /*
       private void walkLeftOrRightOfPlayer()
       {

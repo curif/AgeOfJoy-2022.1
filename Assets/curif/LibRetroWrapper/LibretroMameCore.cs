@@ -24,6 +24,7 @@ using Assets.curif.LibRetroWrapper;
 using LC = LibretroControlMapDictionnary;
 using UnityEngine.InputSystem;
 using YamlDotNet.Core.Tokens;
+using UnityEngine.Events;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -265,6 +266,10 @@ public static unsafe class LibretroMameCore
     private static int lastMouseCoordX;
     private static int lastMouseCoordY;
     private static bool isMouseAim;
+
+    //events
+    public static UnityEvent OnPlayerStartPlaying = new();
+    public static UnityEvent OnPlayerStopPlaying = new();
 
 #if _debug_fps_
     //Profiling
@@ -578,6 +583,8 @@ public static unsafe class LibretroMameCore
 
         // Boost the resolution of the eye texture during gameplay
         DeviceController.Device.ApplySettings(true);
+
+        OnPlayerStartPlaying.Invoke();
 
         return true;
     }
@@ -1028,6 +1035,8 @@ public static unsafe class LibretroMameCore
             return;
 
         WriteConsole($"[LibRetroMameCore.End] Unload game: {GameFileName}");
+
+        OnPlayerStopPlaying.Invoke();
 
         // Restore eye resolution upon exiting game
         DeviceController.Device.ApplySettings(false);
