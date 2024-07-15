@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static CabinetInformation;
 
 public class Cabinet
 {
@@ -405,15 +406,28 @@ public class Cabinet
         return this;
     }
 
-    //assign the Base material if doesn't have any.
+    //assign the Base material
     public Cabinet PartNeedsAMaterialBase(int partNum)
     {
         GameObject go = Parts(partNum);
         if (go == null)
            return this;
 
-        SetMaterialFromMaterial(go, CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: true);
+        SetMaterialFromMaterial(go, CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: false);
         
+        return this;
+    }
+
+
+    //assign the Base material if doesn't have any.
+    public Cabinet PartNeedsAMaterial(int partNum)
+    {
+        GameObject go = Parts(partNum);
+        if (go == null)
+            return this;
+
+        SetMaterialFromMaterial(go, CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: true);
+
         return this;
     }
 
@@ -595,50 +609,22 @@ public class Cabinet
     {
         SetMaterialFromMaterial(go, CabinetMaterials.VertexColor);
 
-        Mesh mesh = go.GetComponent<MeshFilter>().mesh;
-        mesh.MarkDynamic();
-
-        int vertices = mesh.vertices.Length;
-
-        if (vertices > 0)
+        // Retrieve all MeshFilter components in the GameObject and its children
+        MeshFilter[] meshFilters = go.GetComponentsInChildren<MeshFilter>();
+        if (meshFilters.Length > 0)
         {
-            // Create an array of colors, one for each vertex
-            Color[] colors = new Color[vertices];
-
-            // Assign the target color to each vertex
-            for (int i = 0; i < vertices; i++)
+            foreach (MeshFilter meshFilter in meshFilters)
             {
-                colors[i] = color;
-            }
-
-            // Set the colors array to the mesh
-            mesh.colors = colors;
-        }
-
-        // Handle submeshes (if applicable)
-        int submeshCount = mesh.subMeshCount;
-        if (submeshCount > 0)
-        {
-            for (int submeshIndex = 0; submeshIndex < submeshCount; submeshIndex++)
-            {
-                // Define triangles for each submesh (you'll need to customize this part)
-                int[] triangles = mesh.GetTriangles(submeshIndex);
-                if (triangles.Length > 0)
+                if (meshFilter != null && meshFilter.mesh != null)
                 {
-                    // Set triangles for the submesh
-                    mesh.SetTriangles(triangles, submeshIndex);
+                    Mesh mesh = meshFilter.mesh;
+                    mesh.MarkDynamic();
 
-                    // Define colors for the submesh (customize as needed)
-                    Color[] submeshColors = new Color[triangles.Length];
-                    for (int j = 0; j < triangles.Length; j++)
-                    {
-                        // Set submesh vertex color (e.g., blue)
-                        submeshColors[j] = Color.blue;
-                    }
-
-                    // Assign colors to the submesh
-                    mesh.colors = submeshColors;
+                    Color[] colors = new Color[mesh.vertexCount];
+                    System.Array.Fill(colors, color);
+                    mesh.colors = colors; // Apply the colors to the mesh
                 }
+                
             }
         }
     }
