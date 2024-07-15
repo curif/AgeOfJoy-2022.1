@@ -237,14 +237,19 @@ public class ArcadeRoomBehavior : MonoBehaviour
             StopCoroutine(mainCoroutine);
             mainCoroutine = null;
         }
-        LibretroMameCore.OnPlayerStartPlaying.RemoveListener(OnPlayerStartPlaying);
-        LibretroMameCore.OnPlayerStopPlaying.RemoveListener(OnPlayerStopPlaying);
+        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
     }
 
     private void OnDisable()
     {
+
+        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
+    
         if (!initialized)
             return;
+        
         if (mainCoroutine != null)
         {
             StopCoroutine(mainCoroutine);
@@ -272,7 +277,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
             {
                 int index = random.Next(totalDestinationsList.Count);
                 selectedDestination = totalDestinationsList[index];
-                if (destination != null && UnityEngine.Object.ReferenceEquals(selectedDestination.Place, destination.Place))
+                if (destination != null && ReferenceEquals(selectedDestination.Place, destination.Place))
                 {
                     // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
                     return TaskStatus.Failure;
@@ -285,12 +290,12 @@ public class ArcadeRoomBehavior : MonoBehaviour
               .Sequence()
                 .Condition("NPC should go to default destination?", () =>
                     DefaultDestination != null
-                    && (IsStatic ||
+                    && (IsStatic || playerIsPlaying ||
                         selectedDestination.IsTaken ||
                         selectedDestination.MaxAllowedSpace != "1x1x2" ||  //only cabinets size 1x1x2 (no animation for others yet)
                         othersNPC.FirstOrDefault(npc =>
                                                   npc?.Destination != null &&
-                                                  UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null))
+                                                  ReferenceEquals(npc.Destination.Place,                                                                     selectedDestination.Place)) != null))
                 .Do("Use the default destination", () =>
                 {
                     selectedDestination = DefaultDestination;

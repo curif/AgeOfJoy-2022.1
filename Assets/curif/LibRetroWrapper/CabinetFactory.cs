@@ -190,12 +190,12 @@ public static class CabinetFactory
 
                         if (p.transparency != 0)
                         {
-                            cabinet.PartNeedsAMaterialBase(pos).SetTransparencyPart(pos, p.transparency);
+                            cabinet.PartNeedsAMaterial(pos).SetTransparencyPart(pos, p.transparency);
                         }
 
                         if (p.emission != null)
                         {
-                            cabinet.PartNeedsAMaterialBase(pos).
+                            cabinet.PartNeedsAMaterial(pos).
                                     SetEmissionEnabledPart(pos, p.emission.emissive);
                             if (p.emission.color != null)
                                 cabinet.SetEmissionColorPart(pos, p.emission.color.getColor());
