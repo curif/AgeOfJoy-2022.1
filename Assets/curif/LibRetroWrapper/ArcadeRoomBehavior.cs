@@ -12,6 +12,7 @@ using System.Linq;
 
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
+using CleverCrow.Fluid.BTs.Tasks.Actions;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
@@ -87,6 +88,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private Coroutine mainCoroutine;
 
     private bool initialized = false;
+    private bool playerIsPlaying = false;
 
 
     void Start()
@@ -216,6 +218,9 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     void OnEnable()
     {
+        LibretroMameCore.OnPlayerStartPlaying?.AddListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.AddListener(OnPlayerStopPlaying);
+
         if (!initialized)
             return;
 
@@ -224,6 +229,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
         ConfigManager.WriteConsole($"[ArcadeRoomBehavior.OnEnabled] {gameObject.name} is enabled");
     }
+
     private void OnApplicationPause()
     {
         if (mainCoroutine != null)
@@ -231,11 +237,19 @@ public class ArcadeRoomBehavior : MonoBehaviour
             StopCoroutine(mainCoroutine);
             mainCoroutine = null;
         }
+        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
     }
+
     private void OnDisable()
     {
+
+        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
+    
         if (!initialized)
             return;
+        
         if (mainCoroutine != null)
         {
             StopCoroutine(mainCoroutine);
@@ -263,7 +277,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
             {
                 int index = random.Next(totalDestinationsList.Count);
                 selectedDestination = totalDestinationsList[index];
-                if (destination != null && UnityEngine.Object.ReferenceEquals(selectedDestination.Place, destination.Place))
+                if (destination != null && ReferenceEquals(selectedDestination.Place, destination.Place))
                 {
                     // ConfigManager.WriteConsole($"[ArcadeRoomBehavior.BehaviorTreeBuilder] {gameObject.name} selected destination is the actual destination, repeat");
                     return TaskStatus.Failure;
@@ -276,12 +290,12 @@ public class ArcadeRoomBehavior : MonoBehaviour
               .Sequence()
                 .Condition("NPC should go to default destination?", () =>
                     DefaultDestination != null
-                    && (IsStatic ||
+                    && (IsStatic || playerIsPlaying ||
                         selectedDestination.IsTaken ||
                         selectedDestination.MaxAllowedSpace != "1x1x2" ||  //only cabinets size 1x1x2 (no animation for others yet)
                         othersNPC.FirstOrDefault(npc =>
                                                   npc?.Destination != null &&
-                                                  UnityEngine.Object.ReferenceEquals(npc.Destination.Place, selectedDestination.Place)) != null))
+                                                  ReferenceEquals(npc.Destination.Place,                                                                     selectedDestination.Place)) != null))
                 .Do("Use the default destination", () =>
                 {
                     selectedDestination = DefaultDestination;
@@ -458,6 +472,19 @@ public class ArcadeRoomBehavior : MonoBehaviour
             collisionWithPlayer = false;
         }
     }
+
+
+    private void OnPlayerStartPlaying()
+    {
+        playerIsPlaying = true;
+    }
+    private void OnPlayerStopPlaying()
+    {
+        playerIsPlaying = false;
+    }
+
+
+
     /*
       private void walkLeftOrRightOfPlayer()
       {

@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static CabinetInformation;
 
 public class Cabinet
 {
@@ -304,7 +305,7 @@ public class Cabinet
         // if (!IsValid)
         //     throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
 
-        SetMaterial(CabinetMaterials.Black);
+        //SetMaterial(CabinetMaterials.Black);
         if (PartsExist("bezel"))
             SetMaterial("bezel", CabinetMaterials.FrontGlassWithBezel);
 
@@ -404,9 +405,40 @@ public class Cabinet
         SetColor(Parts(partName), color);
         return this;
     }
+
+    //assign the Base material
+    public Cabinet PartNeedsAMaterialBase(int partNum)
+    {
+        GameObject go = Parts(partNum);
+        if (go == null)
+           return this;
+
+        SetMaterialFromMaterial(go, CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: false);
+        
+        return this;
+    }
+
+
+    //assign the Base material if doesn't have any.
+    public Cabinet PartNeedsAMaterial(int partNum)
+    {
+        GameObject go = Parts(partNum);
+        if (go == null)
+            return this;
+
+        SetMaterialFromMaterial(go, CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: true);
+
+        return this;
+    }
+
     public Cabinet SetColorPart(int partNum, Color color)
     {
         SetColor(Parts(partNum), color);
+        return this;
+    }
+    public Cabinet SetColorVertexPart(int partNum, Color color)
+    {
+        SetColorVertex(Parts(partNum), color);
         return this;
     }
     public int GetTransparencyPart(string cabinetPart)
@@ -567,10 +599,34 @@ public class Cabinet
             return;
 
         Material mat = r.material;
-        if (mat == null)
-            return;
+        if (mat != null)
+            mat.color = color;
+        return;
+    }
 
-        mat.color = color;
+    // @Gometrizer technique to colorize without a material.
+    public static void SetColorVertex(GameObject go, Color color)
+    {
+        SetMaterialFromMaterial(go, CabinetMaterials.VertexColor);
+
+        // Retrieve all MeshFilter components in the GameObject and its children
+        MeshFilter[] meshFilters = go.GetComponentsInChildren<MeshFilter>();
+        if (meshFilters.Length > 0)
+        {
+            foreach (MeshFilter meshFilter in meshFilters)
+            {
+                if (meshFilter != null && meshFilter.mesh != null)
+                {
+                    Mesh mesh = meshFilter.mesh;
+                    mesh.MarkDynamic();
+
+                    Color[] colors = new Color[mesh.vertexCount];
+                    System.Array.Fill(colors, color);
+                    mesh.colors = colors; // Apply the colors to the mesh
+                }
+                
+            }
+        }
     }
 
     public static void SetEmissionColor(GameObject go, Color emissionColor)
@@ -654,10 +710,13 @@ public class Cabinet
         mat.color = currentColor;
     }
 
-    public static void SetMaterialFromMaterial(GameObject go, Material mat)
+    public static void SetMaterialFromMaterial(GameObject go, Material mat, bool                                                                        OnlyAssignIfDoesntHaveOne = false)
     {
         Renderer r = go.GetComponent<Renderer>();
         if (r == null)
+            return;
+
+        if (r.material != null && OnlyAssignIfDoesntHaveOne)
             return;
 
         Material m = new Material(mat);

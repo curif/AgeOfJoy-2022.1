@@ -18,6 +18,7 @@ public static class CabinetMaterials {
     public static Material CleanGlass;
     public static Material DirtyGlass;
     public static Material TVBorder;
+    public static Material VertexColor;
     public static Material FrontGlassWithBezel;
     public static Material MarqueeNoLamps;
     public static Material MarqueeOneLamp;
@@ -43,6 +44,7 @@ public static class CabinetMaterials {
         CleanGlass = Resources.Load<Material>("Cabinets/Materials/GlassClean");
         DirtyGlass = Resources.Load<Material>("Cabinets/Materials/GlassDirt");
         LayerGlass = Resources.Load<Material>("Cabinets/Materials/GlassTranspLayer");
+        VertexColor = Resources.Load<Material>("Cabinets/Materials/Base_VertexColor");
 
         materialList.Add("black", Black);
         materialList.Add("base", Base);
@@ -52,6 +54,7 @@ public static class CabinetMaterials {
         materialList.Add("dirty glass", DirtyGlass);
         materialList.Add("layer glass", LayerGlass);
         materialList.Add("clean glass", CleanGlass);
+        materialList.Add("Vertex Color", VertexColor);
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
 

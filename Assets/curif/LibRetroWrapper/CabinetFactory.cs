@@ -13,6 +13,8 @@ using System.Linq;
 
 //using UnityEngine.Networking;
 using Siccity.GLTFUtility;
+using System.Drawing;
+using Unity.VisualScripting;
 
 //store Cabinets resources
 public static class CabinetFactory
@@ -170,25 +172,31 @@ public static class CabinetFactory
                         cabinet.SetMaterialFrom(p.name, CabinetMaterials.Black);
                     else
                     {
+
                         int pos = cabinet.PartsPosition(p.name); //performance
                         ConfigManager.WriteConsole($"[CabinetFactory.skinCabinetPart] #{pos} {p.name}: type: {p.type} material: {p.material} color: {p.color} transp:{p.transparency} emission: {p.emission}");
+
                         if (p.material != null)
                             cabinet.SetMaterialFrom(pos, CabinetMaterials.fromName(p.material));
-                        else
-                            cabinet.SetMaterialFrom(pos, CabinetMaterials.Base);
 
                         if (p.art != null)
-                            cabinet.SetTextureTo(pos, cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
+                        {
+                            cabinet.PartNeedsAMaterialBase(pos)
+                                   .SetTextureTo(pos, cbinfo.getPath(p.art.file), null, invertX:                                p.art.invertx, invertY: p.art.inverty);
+                        }
 
                         if (p.color != null)
                             cabinet.SetColorPart(pos, p.color.getColor());
 
                         if (p.transparency != 0)
-                            cabinet.SetTransparencyPart(pos, p.transparency);
+                        {
+                            cabinet.PartNeedsAMaterial(pos).SetTransparencyPart(pos, p.transparency);
+                        }
 
                         if (p.emission != null)
                         {
-                            cabinet.SetEmissionEnabledPart(pos, p.emission.emissive);
+                            cabinet.PartNeedsAMaterial(pos).
+                                    SetEmissionEnabledPart(pos, p.emission.emissive);
                             if (p.emission.color != null)
                                 cabinet.SetEmissionColorPart(pos, p.emission.color.getColor());
                             if (p.emission.art != null)
@@ -199,12 +207,22 @@ public static class CabinetFactory
                                                                 invertY: p.emission.art.inverty);
                             }
                         }
+
+                        //vertex color optimization
+                        if (p.material == null &&
+                            p.art == null &&
+                            p.color != null &&
+                            p.emission == null &&
+                            p.transparency == 0)
+                        {
+                            cabinet.SetColorVertexPart(pos, p.color.getColor());
+                        }
                     }
                 }
                 break;
         }
         // Part scale and rotation
-        cabinet.ScalePart(p.name, p.geometry.scalepercentage, p.geometry.ratio.x, p.geometry.ratio.y, p.geometry.ratio.z);
+        cabinet.ScalePart(p.name, p.geometry.scalepercentage, p.geometry.ratio.x, p.geometry.ratio.y,                       p.geometry.ratio.z);
         cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
 
         //enable / disable
