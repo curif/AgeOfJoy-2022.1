@@ -287,7 +287,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
                 return TaskStatus.Success;
             })
             .ReturnSuccess()
-              .Sequence()
+              .Sequence("Back to the default?")
                 .Condition("NPC should go to default destination?", () =>
                     DefaultDestination != null
                     && (IsStatic || playerIsPlaying ||
@@ -317,12 +317,12 @@ public class ArcadeRoomBehavior : MonoBehaviour
                 return TaskStatus.Success;
             })
 
-            .RepeatUntilSuccess()
+            .RepeatUntilSuccess("Wait for agent path")
               .Condition("Agent path is ready?", () => !agent.pathPending)
             .End()
 
             .RepeatUntilSuccess()
-              .Selector()
+              .Selector("Walking...")
                 .Condition("Timeout", () => DateTime.Now > timeout)
                 .Condition("Arrived", () => destination.ScenePosition.NPCIsPresent(name))
                 .Condition("Player found or blocked", () => collisionWithPlayer /*|| detectPlayer()*/)
@@ -363,7 +363,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
             })
 
             .RepeatUntilSuccess()
-                .Selector()
+                .Selector("Spending time...")
                   .Condition("Wait some time there (or hit player)", () => DateTime.Now > timeToSpentInPlace)
                   .Condition("hit player", () => collisionWithPlayer)
                 //.Condition("Other NPC got the position", () => !destination.ScenePosition.ItsMe(name))
