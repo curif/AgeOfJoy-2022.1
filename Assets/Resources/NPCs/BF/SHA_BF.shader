@@ -4,6 +4,7 @@ Shader "SHA_BF"
 {
 	Properties
 	{
+		_Vector0("Vector 0", Vector) = (0.1,0,0.25,0)
 		[HideInInspector] __dirty( "", Int ) = 1
 	}
 
@@ -20,6 +21,8 @@ Shader "SHA_BF"
 			float3 worldNormal;
 		};
 
+		uniform float3 _Vector0;
+
 		inline half4 LightingUnlit( SurfaceOutput s, half3 lightDir, half atten )
 		{
 			return half4 ( 0, 0, 0, s.Alpha );
@@ -27,11 +30,11 @@ Shader "SHA_BF"
 
 		void surf( Input i , inout SurfaceOutput o )
 		{
-			float4 color5 = IsGammaSpace() ? float4(0,0.2108147,0.5031446,0) : float4(0,0.03657494,0.2169633,0);
+			float4 color5 = IsGammaSpace() ? float4(0.08577798,0.5019608,0,0) : float4(0.007955681,0.2158605,0,0);
 			float3 ase_worldNormal = i.worldNormal;
 			float3 ase_vertexNormal = mul( unity_WorldToObject, float4( ase_worldNormal, 0 ) );
 			ase_vertexNormal = normalize( ase_vertexNormal );
-			float dotResult2 = dot( ase_vertexNormal , float3(0.1,0,0.25) );
+			float dotResult2 = dot( ase_vertexNormal , _Vector0 );
 			o.Emission = ( color5 * dotResult2 ).rgb;
 			o.Alpha = 1;
 		}
@@ -111,8 +114,8 @@ Shader "SHA_BF"
 /*ASEBEGIN
 Version=19302
 Node;AmplifyShaderEditor.NormalVertexDataNode;1;-837.3333,-167.5;Inherit;False;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.Vector3Node;3;-627.9999,120.5001;Inherit;False;Constant;_Vector0;Vector 0;0;0;Create;True;0;0;0;False;0;False;0.1,0,0.25;0,0,0;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.ColorNode;5;-308.6665,-225.5;Inherit;False;Constant;_Color0;Color 0;0;0;Create;True;0;0;0;False;0;False;0,0.2108147,0.5031446,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.Vector3Node;3;-627.9999,120.5001;Inherit;False;Property;_Vector0;Vector 0;0;0;Create;True;0;0;0;False;0;False;0.1,0,0.25;0.1,0,0.25;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.ColorNode;5;-308.6665,-225.5;Inherit;False;Constant;_Color0;Color 0;0;0;Create;True;0;0;0;False;0;False;0.08577798,0.5019608,0,0;0,0,0,0;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.DotProductOpNode;2;-336,43.1667;Inherit;False;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;4;-76.66663,27.83334;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;146.6666,-40;Float;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;SHA_BF;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
@@ -122,4 +125,4 @@ WireConnection;4;0;5;0
 WireConnection;4;1;2;0
 WireConnection;0;2;4;0
 ASEEND*/
-//CHKSM=6CB3FAE5BF5D1C31F153237AE6C23AA367A3941F
+//CHKSM=8E197D3E90B36AAECAE684699863A2997D407029
