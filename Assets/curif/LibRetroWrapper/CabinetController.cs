@@ -96,6 +96,19 @@ public class CabinetController : MonoBehaviour
 
     }
 
+    public bool LoadIsAllowed()
+    {
+
+        //don't load a new cabinet if the player isn't static.
+        if (!staticCheck.isStatic)
+            return false;
+        if (string.IsNullOrEmpty(game?.CabinetDBName))
+            return false;
+        if (!playerIsInSomePosition())
+            return false;
+        return true;
+    }
+
     public bool playerIsNotInAnyUnloadPosition()
     {
         return !AgentPlayerPositionComponentsToUnload.Any(asp => asp.IsPlayerPresent);

@@ -30,8 +30,6 @@ using UnityEditor;
 [RequireComponent(typeof(LibretroControlMap))]
 [RequireComponent(typeof(basicAGE))]
 [RequireComponent(typeof(CabinetAGEBasic))]
-[RequireComponent(typeof(ConfigurationController))]
-// [RequireComponent(typeof(BoxCollider))]
 public class LibretroScreenController : MonoBehaviour
 {
     [SerializeField]

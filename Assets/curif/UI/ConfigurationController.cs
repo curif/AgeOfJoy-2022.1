@@ -255,6 +255,7 @@ public class ConfigurationController : MonoBehaviour
 
         if (AGEBasic == null)
             AGEBasic = GetComponent<basicAGE>();
+        AGEBasic.ConfigurationController = this;
 
         if (canTeleport)
         {
@@ -1201,13 +1202,13 @@ public class ConfigurationController : MonoBehaviour
 
         ConfigInformation config = configHelper.getConfigInformation(true);
 
-        scr.Init(config.system_skin)
-            .ActivateShader(shader)
-            .ClearBackground()
-            .Clear()
-            .PrintCentered(1, "BIOS ROM firmware loaded", true)
-            .PrintCentered(2, GetRoomDescription())
-            .DrawScreen();
+        scr.Init(config.system_skin);
+        scr.ActivateShader(shader);
+        scr.ClearBackground();
+        scr.Clear();
+        scr.PrintCentered(1, "BIOS ROM firmware loaded", true);
+        scr.PrintCentered(2, GetRoomDescription());
+        scr.DrawScreen();
     }
 
     IEnumerator run()

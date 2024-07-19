@@ -67,9 +67,9 @@ public class CabinetReplace : MonoBehaviour
             ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] Deploy replacement cabinet {cbInfo.name}");
             //note: factory will add this CabinetReplace component (this component) to the new cabinet.
 
-            Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
+            //Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
             Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
-                                                         adjustedPosition, transform.rotation,
+                                                         transform.position, transform.rotation,
                                                          transform.parent, 
                                                          AgentPlayerPositionComponentsToLoad,
                                                          backgroundSoundController
