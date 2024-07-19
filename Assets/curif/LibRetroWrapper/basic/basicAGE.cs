@@ -5,6 +5,8 @@ using System.IO;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.EventSystems;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -91,6 +93,8 @@ public class basicAGE : MonoBehaviour
     public XROrigin PlayerOrigin;
     public GameObject PlayerControllerGameObject;
 
+    bool initialized = false;
+
     public enum ProgramStatus
     {
         None = 0,
@@ -124,8 +128,11 @@ public class basicAGE : MonoBehaviour
         }
     }
 
-    public void Start()
+    void initComponents()
     {
+        if (initialized)
+            return;
+
         GameObject roomInit = GameObject.Find("FixedObject");
         if (roomInit != null)
         {
@@ -135,8 +142,8 @@ public class basicAGE : MonoBehaviour
                 GameRegistry = roomInit.GetComponent<GameRegistry>();
         }
 
-        if (ConfigurationController == null)
-            ConfigurationController = GetComponent<ConfigurationController>();
+        //if (ConfigurationController == null)
+        //    ConfigurationController = GetComponent<ConfigurationController>();
         if (libretroControlMap == null)
             libretroControlMap = GetComponent<LibretroControlMap>();
         if (ScreenGenerator == null)
@@ -156,8 +163,6 @@ public class basicAGE : MonoBehaviour
                     PlayerOrigin = PlayerControllerGameObject.GetComponent<XROrigin>();
             }
         }
-        // if (Audio == null)
-        //     Audio = GetComponent<AudioSource>();
 
         configCommands.ConfigurationController = ConfigurationController;
         configCommands.ControlMap = libretroControlMap;
@@ -177,6 +182,7 @@ public class basicAGE : MonoBehaviour
         if (musicPlayer != null)
             configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
 
+        initialized = true;
     }
 
     public void ParseFiles(string folderPath)
@@ -209,6 +215,8 @@ public class basicAGE : MonoBehaviour
     }
     public AGEProgram ParseFile(string filePath)
     {
+        initComponents();
+
         string name = Path.GetFileName(filePath);
 
         ConfigManager.WriteConsole($"[basicAGE.ParseFile] [{name}] {filePath} ");
@@ -302,6 +310,7 @@ public class basicAGE : MonoBehaviour
     public void Run(string name, bool blocking = false, BasicVars pvars = null,
                         int maxExecutionLinesAllowed = 10000)
     {
+        initComponents();
 
         ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
 
@@ -374,6 +383,8 @@ public class basicAGE : MonoBehaviour
 
     IEnumerator runProgram()
     {
+        initComponents();
+
         ConfigManager.WriteConsole($"[BasicAGE.runProgram] START {running.Name}");
 
         bool moreLines = true;

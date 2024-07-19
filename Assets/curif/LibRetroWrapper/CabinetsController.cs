@@ -32,7 +32,10 @@ public class CabinetsController : MonoBehaviour
 
     public bool CoroutineIsRunning;
 
+    public float TimeToWaitBetweenChecks = 0.5f;
+
     GameObject PlayerControllerGameObject;
+
 
     [SerializeField]
     private int cabinetsCount;
@@ -442,16 +445,12 @@ public class CabinetsController : MonoBehaviour
         if (!cci.IsOutOfOrderActive)
             return;
 
+        //check conditions to load the cabinet.
         CabinetController cc = cci.CabinetController;
-        if (string.IsNullOrEmpty(cc?.game?.CabinetDBName))
+        if (!cc.LoadIsAllowed())
             return;
 
-        //load the new cabinet. 
-        // the load process repeats forever, because the new cabinet created can be unloaded an re-activate
-        // this object when that occurs.
-        if (!cc.playerIsInSomePosition())
-            return;
-
+        //just activate if it was loaded previously
         if (cci.GameObjectReplacement != null)
         {
             //replacement exists. Only activate it.
@@ -460,10 +459,7 @@ public class CabinetsController : MonoBehaviour
             return;
         }
 
-        //don't load a new cabinet if the player isn't static.
-        if (!cc.staticCheck.isStatic)
-            return;
-
+        //never loaded. Load from disk/cache
         if (cc.game.CabInfo == null)
         {
             cc.game.CabInfo = CabinetInformation.fromName(cc.game.CabinetDBName);
@@ -574,7 +570,7 @@ public class CabinetsController : MonoBehaviour
                 checkAndUnloadCabinet(cabInfo);
                 yield return new WaitForSeconds(0.01f);
             }
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(TimeToWaitBetweenChecks);
         }
     }
 }

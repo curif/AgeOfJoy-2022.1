@@ -53,7 +53,7 @@ public static class PlaceOnFloorFromBoxCollider
 
         // Cast a ray downwards from the center of the BoxCollider
         Vector3 lowBoxCollider = new Vector3(transform.position.x,
-                                                CalculateLowerPointY(transform, boxCollider),
+                                                CalculateLowerPointY(transform, boxCollider) + 0.5f,
                                                 transform.position.z);
         Ray ray = new Ray(lowBoxCollider, Vector3.down);
 
@@ -63,7 +63,7 @@ public static class PlaceOnFloorFromBoxCollider
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 1f, floorLayer))
         {
-            float yOffset = lowBoxCollider.y - hit.point.y;
+            float yOffset = lowBoxCollider.y - hit.point.y - 0.5f;
             
             // Adjust the position of the GameObject
             transform.position -= new Vector3(0f, yOffset, 0f);
