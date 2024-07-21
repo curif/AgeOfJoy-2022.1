@@ -96,9 +96,9 @@ public class CabinetController : MonoBehaviour
 
     }
 
+    //check if the cabinet should load for first time
     public bool LoadIsAllowed()
     {
-
         //don't load a new cabinet if the player isn't static.
         if (!staticCheck.isStatic)
             return false;
@@ -107,6 +107,12 @@ public class CabinetController : MonoBehaviour
         if (!playerIsInSomePosition())
             return false;
         return true;
+    }
+
+    // check if the cabinet should load after it was loaded for first tiem
+    public bool ReloadIsAllowed()
+    {
+        return playerIsInSomePosition();
     }
 
     public bool playerIsNotInAnyUnloadPosition()
