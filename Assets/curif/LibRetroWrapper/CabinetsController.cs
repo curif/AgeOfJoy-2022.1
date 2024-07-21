@@ -447,17 +447,20 @@ public class CabinetsController : MonoBehaviour
 
         //check conditions to load the cabinet.
         CabinetController cc = cci.CabinetController;
-        if (!cc.LoadIsAllowed())
-            return;
 
-        //just activate if it was loaded previously
         if (cci.GameObjectReplacement != null)
         {
+            if (!cc.ReloadIsAllowed())
+                return;
+
             //replacement exists. Only activate it.
             // don't wait player static.
             cci.ActivateReplacement();
             return;
         }
+
+        if (!cc.LoadIsAllowed())
+            return;
 
         //never loaded. Load from disk/cache
         if (cc.game.CabInfo == null)
