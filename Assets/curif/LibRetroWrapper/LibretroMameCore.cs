@@ -801,12 +801,13 @@ public static unsafe class LibretroMameCore
         GameTextureBufferSem.Set();
     }
 
-
     public static bool InitializeTexture()
     {
         if (TextureWidth != 0 && RecreateTexture)
         {
             GameTexture.Reinitialize((int)TextureWidth, (int)TextureHeight);
+            ResetTextureData();
+            //GameTexture.wrapMode = TextureWrapMode.Clamp;
             WriteConsole($"[InitializeTexture] {GameTexture.width}, {GameTexture.height}- {GameTexture.format}");
             RecreateTexture = false;
             //some shaders needs to refresh the texture once recreated.
@@ -879,6 +880,25 @@ public static unsafe class LibretroMameCore
             }
         }
         //WriteConsole($"[LoadTextureData] END");
+    }
+
+    public static void ResetTextureData()
+    {
+        WriteConsole($"[ResetTextureData]");
+        if (GameTexture != null)
+        {
+            lock (GameTextureLock)
+            {
+                Color32 blackPixel = new Color32(0, 0, 0, 255);
+                Color32[] pixels = GameTexture.GetPixels32();
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    pixels[i] = blackPixel;
+                }
+                GameTexture.SetPixels32(pixels);
+                GameTexture.Apply(false, false);
+            }
+        }
     }
 
     public static double GetFps()
@@ -1066,6 +1086,7 @@ public static unsafe class LibretroMameCore
 
         LightGunLock = new();
 
+        ResetTextureData();
 
         GameTextureLock = new();
         GameTextureBufferSem = new ManualResetEventSlim(false);
@@ -1307,7 +1328,8 @@ public static unsafe class LibretroMameCore
             if (port == activePlayerSlot)
             {
                 return (Int16)deviceIdsJoypad.Active(id, 0);
-            } else 
+            }
+            else
             {
                 return (Int16)deviceIdsJoypad.Active(id, (int)port);
             }
