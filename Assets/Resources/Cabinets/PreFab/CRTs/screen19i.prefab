@@ -36,13 +36,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4579439272377624362}
+  serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 21.5, y: 16.5, z: 2.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &245838673134088757
 MeshFilter:
@@ -104,7 +104,7 @@ AudioSource:
   m_GameObject: {fileID: 4579439272377624362}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: -7497472737411550252, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
+  OutputAudioMixerGroup: {fileID: -8800989906587590481, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
@@ -289,8 +289,10 @@ MonoBehaviour:
     afterInsertCoin: 
     afterLeave: 
     afterStart: 
+    system_skin: c64
     variables: []
   backgroundSoundController: {fileID: 0}
+  globalConfiguration: {fileID: 0}
 --- !u!328 &3607137671920533558
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -383,6 +385,12 @@ MonoBehaviour:
   invertForward: 0
   HitX: 0
   HitY: 0
+  OutOfScreenTop: 0
+  OutOfScreenBottom: 0
+  OutOfScreenLeft: 0
+  OutOfScreenRight: 0
+  AbsoluteHitX: 0
+  AbsoluteHitY: 0
   showHitPosition: 0
   InvertX: 1
   InvertY: 1
@@ -520,6 +528,7 @@ MonoBehaviour:
   Player: {fileID: 0}
   PlayerOrigin: {fileID: 0}
   PlayerControllerGameObject: {fileID: 0}
+  Status: 0
   nameToExecute: 
   path: 
 --- !u!114 &3707607308854403927
@@ -543,6 +552,7 @@ MonoBehaviour:
     afterInsertCoin: 
     afterLeave: 
     afterStart: 
+    system_skin: c64
     variables: []
 --- !u!114 &2930086701241014134
 MonoBehaviour:
