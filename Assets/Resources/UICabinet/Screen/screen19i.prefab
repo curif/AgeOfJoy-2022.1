@@ -30,13 +30,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4579439272377624362}
+  serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: 0, z: -0, w: 0.7071068}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 21.5, y: 16.5, z: 2.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &245838673134088757
 MeshFilter:
@@ -98,7 +98,7 @@ AudioSource:
   m_GameObject: {fileID: 4579439272377624362}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -8800989906587590481, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
@@ -242,17 +242,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a2731fefec8e827e9f6363295839b2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  c64Font: {fileID: 2800000, guid: 27b74844601859509959e3914b4b6f01, type: 3}
-  CharactersWidth: 40
-  CharactersHeight: 25
+  CharactersXCount: 40
+  CharactersYCount: 25
   TextureWidth: 380
   TextureHeight: 216
-  BackgroundColor:
-    serializedVersion: 2
-    rgba: 14580358
-  CenteredAreaColor:
-    serializedVersion: 2
-    rgba: 14367245
 --- !u!114 &4703797651494189707
 MonoBehaviour:
   m_ObjectHideFlags: 0
