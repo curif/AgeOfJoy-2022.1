@@ -5,9 +5,6 @@ using UnityEngine.XR;
 public class DeviceController : MonoBehaviour
 {
     public static DeviceType Device { get; private set; } = DeviceType.Unknown;
-    public static string ControllerMeshL { get; set; } = null;
-    public static string ControllerMeshR { get; set; } = null;
-    public static string ControllerMeshMaterial { get; set; } = null;
 
     void Start()
     {
@@ -30,16 +27,10 @@ public class DeviceController : MonoBehaviour
         if (SystemInfo.deviceName.Contains("Quest 3"))
         {
             Device = DeviceType.OculusQuest3;
-            ControllerMeshL = "SM_Quest3Controller_L";
-            ControllerMeshR = "SM_Quest3Controller_R";
-            ControllerMeshMaterial = "MI_Quest3_Controller";
         }
         else if (SystemInfo.deviceModel.Contains("Quest"))
         {
             Device = DeviceType.OculusQuest2;
-            ControllerMeshL = "SM_QuestController_L";
-            ControllerMeshR = "SM_QuestController_R";
-            ControllerMeshMaterial = "M_Quest_Controller";
         }
         else if (SystemInfo.deviceType.Equals(UnityEngine.DeviceType.Desktop))
         {
