@@ -17,7 +17,7 @@ using CleverCrow.Fluid.BTs.Trees;
 using System.Linq;
 using AOJ.Managers; // Geometrrizer: Allows access to EventManager for player FX
 using LC = LibretroControlMapDictionnary;
-
+using UnityEngine.Audio;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -69,6 +69,7 @@ public class LibretroScreenController : MonoBehaviour
     [Tooltip("Name of the state file used to save/load the memory game state.")]
     public string StateFile = "state.nv";
 
+    [Header("Colors")]
     [Tooltip("Adjust Gamma from 1.0 to 2.0")]
     [SerializeField]
     public string Gamma = "1.0";
@@ -94,6 +95,11 @@ public class LibretroScreenController : MonoBehaviour
 
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
+    
+    [Header("Audio Settings")]
+    public AudioMixerGroup audioMixerAttractMode;
+    public AudioMixerGroup audioMixerGame;
+    private AudioSource audioSource;
 
     public LightGunInformation lightGunInformation;
     public Cabinet cabinet;
@@ -163,6 +169,9 @@ public class LibretroScreenController : MonoBehaviour
 
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
+
+        audioSource = GetComponent<AudioSource>();
+        audioSource.outputAudioMixerGroup = audioMixerAttractMode;
 
         ScreenName = name;
 
@@ -274,7 +283,7 @@ public class LibretroScreenController : MonoBehaviour
 
                   //start mame
                   ConfigManager.WriteConsole($"[LibretroScreenController] Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
-                  LibretroMameCore.Speaker = GetComponent<AudioSource>();
+                  LibretroMameCore.Speaker = audioSource;
                   LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
                   LibretroMameCore.Brightness = Brightness;
                   LibretroMameCore.Gamma = Gamma;
@@ -360,6 +369,9 @@ public class LibretroScreenController : MonoBehaviour
                   shader.Activate(LibretroMameCore.GameTexture);
                   shader.Invert(GameInvertX, GameInvertY);
 
+                  //audio mixer group
+                  audioSource.outputAudioMixerGroup = audioMixerGame;
+
                   // age basic Insert coin
                   if (ageBasicInformation != null && ageBasicInformation.active)
                       cabinetAGEBasic.ExecInsertCoinBas();
@@ -368,43 +380,43 @@ public class LibretroScreenController : MonoBehaviour
               })
             .End()
 
-.Sequence("Game Started")
-  .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
-  .RepeatUntilSuccess("Run until player exit")
-    .Sequence()
-      .Condition("user EXIT pressed?", () =>
-      {
-          if (PlayerWantsToExit())
-          {
-              if (!EventManager.Instance.IsPlayingExitSound)
-                  EventManager.Instance.PlayExitGameSound();
-              return true;
-          }
-          else
-          {
-              if (EventManager.Instance.IsPlayingExitSound)
+            .Sequence("Game Started")
+              .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
+              .RepeatUntilSuccess("Run until player exit")
+                .Sequence()
+                  .Condition("user EXIT pressed?", () =>
+                  {
+                      if (PlayerWantsToExit())
+                      {
+                          if (!EventManager.Instance.IsPlayingExitSound)
+                              EventManager.Instance.PlayExitGameSound();
+                          return true;
+                      }
+                      else
+                      {
+                          if (EventManager.Instance.IsPlayingExitSound)
+                              EventManager.Instance.StopExitGameSound();
+                          timeToExit = DateTime.MinValue;
+                          return false;
+                      }
+                  })
+                  .Condition("N secs pass with user EXIT pressed", () =>
+                  {
+                      if (timeToExit == DateTime.MinValue)
+                          timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
+                      else if (DateTime.Now > timeToExit)
+                          return true;
+                      return false;
+                  })
+                .End()
+              .End()
+              .Do("Exit game", () =>
+              {
                   EventManager.Instance.StopExitGameSound();
-              timeToExit = DateTime.MinValue;
-              return false;
-          }
-      })
-      .Condition("N secs pass with user EXIT pressed", () =>
-      {
-          if (timeToExit == DateTime.MinValue)
-              timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
-          else if (DateTime.Now > timeToExit)
-              return true;
-          return false;
-      })
-    .End()
-  .End()
-  .Do("Exit game", () =>
-  {
-      EventManager.Instance.StopExitGameSound();
-      ExitPlayerFromGame();
-      return TaskStatus.Success;
-  })
-.End()
+                  ExitPlayerFromGame();
+                  return TaskStatus.Success;
+              })
+            .End()
 
             .Sequence("Video Player control")
               //.Condition("Have video player", () => videoPlayer != null)
@@ -457,6 +469,10 @@ public class LibretroScreenController : MonoBehaviour
     }
     void ExitPlayerFromGame()
     {
+        
+        //audio mixer group
+        audioSource.outputAudioMixerGroup = audioMixerAttractMode;
+
         //to replace the shader texture ASAP:
         videoPlayer.Play();
 
