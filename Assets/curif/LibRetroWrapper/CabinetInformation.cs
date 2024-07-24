@@ -36,6 +36,7 @@ public class CabinetInformation
 {
     public string name;
     public string rom;
+    public List<string> roms;
     public List<Part> Parts { get; set; }
     public CRT crt; // = new CRT();
     public string style = "galaga";
@@ -90,10 +91,23 @@ public class CabinetInformation
 
     public void Validate()
     {
+        if (rom == null && roms != null)
+        {
+            rom = roms[0];
+        }
+
         CheckResourcePath(rom);
         CheckResourcePath(statefile);
         CheckResourcePath(model?.file);
         CheckResourcePath(video?.file);
+
+        if (roms != null)
+        {
+            foreach (string r in roms)
+            {
+                CheckResourcePath(r);
+            }
+        }
 
         if (Parts != null)
         {

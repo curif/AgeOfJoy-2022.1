@@ -827,6 +827,11 @@ public class Cabinet
         string type = cbinfo.crt.type;
         string orientation = cbinfo.crt.orientation;
         string gameFile = cbinfo.rom;
+        
+        List<string> playList = cbinfo.roms;
+        if (playList == null)
+            playList = new List<string>() { gameFile };
+
         int timeToLoad = cbinfo.timetoload;
         string pathBase = cbinfo.pathBase;
         bool invertX = cbinfo.crt.screen.invertx;
@@ -922,6 +927,7 @@ public class Cabinet
             LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
             libretroScreenController.GameFile = gameFile;
+            libretroScreenController.PlayList = playList;
             libretroScreenController.CabEnvironment = coreEnvironment;
             libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
             libretroScreenController.EnableSaveState = EnableSaveState;
