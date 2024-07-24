@@ -35,6 +35,7 @@ public class LibretroScreenController : MonoBehaviour
     [SerializeField]
     public string GameFile = "1942.zip";
     public string ScreenName = ""; //loaded on start, needed for the multitasking
+    public List<string> PlayList = new List<string>();
 
     [SerializeField]
     public string GameVideoFile;
@@ -335,7 +336,7 @@ public class LibretroScreenController : MonoBehaviour
                       CoinSlot.clean();
                   }
                   // start libretro
-                  if (!LibretroMameCore.Start(ScreenName, GameFile))
+                  if (!LibretroMameCore.Start(ScreenName, GameFile, PlayList))
                   {
                       CoinSlot.clean();
                       return TaskStatus.Failure;

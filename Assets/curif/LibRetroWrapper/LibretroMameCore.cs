@@ -22,8 +22,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
 using LC = LibretroControlMapDictionnary;
-using UnityEngine.InputSystem;
-using YamlDotNet.Core.Tokens;
 using UnityEngine.Events;
 
 /*
@@ -251,6 +249,9 @@ public static unsafe class LibretroMameCore
 
     //game info and storage.
     static string GameFileName = "";
+    static List<string> PlayList = new List<string>();
+    static int PlayListIndex = 0;
+
     static string ScreenName = ""; //name of the screen of the cabinet where is running the game
 
     //Status flags
@@ -445,15 +446,8 @@ public static unsafe class LibretroMameCore
         deviceIdsLightGun.controlMap = ControlMap;
     }
 
-    public static bool Start(string screenName, string gameFileName)
+    public static bool Start(string screenName, string gameFileName, List<string> playList)
     {
-        string path = ConfigManager.RomsDir + "/" + Core + "/" + gameFileName;
-
-        if (!File.Exists(path))
-        {
-            path = ConfigManager.RomsDir + "/" + gameFileName;
-        }
-
         if (GameLoaded)
         {
             WriteConsole($"[LibRetroMameCore.Start] ERROR a game was loaded previously ({GameFileName}), it's neccesary to call End() before the Start()");
@@ -462,12 +456,6 @@ public static unsafe class LibretroMameCore
         if (!String.IsNullOrEmpty(GameFileName) || !String.IsNullOrEmpty(ScreenName))
         {
             WriteConsole($"[LibRetroMameCore.Start] ERROR: MAME previously initalized with [{GameFileName} in {ScreenName}], End() is needed");
-            return false;
-        }
-
-        if (!File.Exists(path))
-        {
-            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} not found.");
             return false;
         }
 
@@ -521,28 +509,16 @@ public static unsafe class LibretroMameCore
         int needFullPath = wrapper_system_info_need_full_path();
         WriteConsole("[LibRetroMameCore.Start] Libretro initialized.");
         GameFileName = gameFileName;
+        PlayList = playList;
+        PlayListIndex = 0;
         ScreenName = screenName;
 
         //controls
         assignControls();
 
-        //lightgun
-        int xy_device = (lightGunTarget?.lightGunInformation != null && lightGunTarget.lightGunInformation.active) ? 1 : 0;
-
-        WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
-
-        byte[] data = null;
-        long fileSizeInBytes = 0;
-        if (needFullPath == 0)
+        bool loadSuccess = loadGame(gameFileName);
+        if (!loadSuccess)
         {
-            data = File.ReadAllBytes(path);
-            fileSizeInBytes = data.Length;
-        }
-        GameLoaded = wrapper_load_game(path, fileSizeInBytes, data, Gamma, Brightness, (uint)xy_device) == 1;
-        if (!GameLoaded)
-        {
-            ClearAll();
-            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} libretro can't start the game, please check if it is the correct version and is supported by {core}");
             return false;
         }
 
@@ -585,6 +561,49 @@ public static unsafe class LibretroMameCore
         DeviceController.Device.ApplySettings(true);
 
         OnPlayerStartPlaying.Invoke();
+
+        return true;
+    }
+
+    public static bool loadGame(string gameFileName)
+    {
+        string path = ConfigManager.RomsDir + "/" + Core + "/" + gameFileName;
+
+        if (!File.Exists(path))
+        {
+            path = ConfigManager.RomsDir + "/" + gameFileName;
+        }
+
+        if (!File.Exists(path))
+        {
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} not found.");
+            return false;
+        }
+
+        int needFullPath = wrapper_system_info_need_full_path();
+
+        //lightgun
+        int xy_device = (lightGunTarget?.lightGunInformation != null && lightGunTarget.lightGunInformation.active) ? 1 : 0;
+
+        WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
+
+        if (GameLoaded)
+            wrapper_unload_game();
+
+        byte[] data = null;
+        long fileSizeInBytes = 0;
+        if (needFullPath == 0)
+        {
+            data = File.ReadAllBytes(path);
+            fileSizeInBytes = data.Length;
+        }
+        GameLoaded = wrapper_load_game(path, fileSizeInBytes, data, Gamma, Brightness, (uint)xy_device) == 1;
+        if (!GameLoaded)
+        {
+            ClearAll();
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} libretro can't start the game, please check if it is the correct version and is supported by {Core}");
+            return false;
+        }
 
         return true;
     }
@@ -960,11 +979,29 @@ public static unsafe class LibretroMameCore
         );
     }
 
+    static bool changeGameAllowed = true;
     // Handle inputs for UI actions while game is running (e.g. non-libretro)
     public static void handleSpecialInputs()
     {
+        if (!ControlMap.isActive(LC.JOYPAD_L3))
+        {
+            // L3 is released, we can accept a new game change next time
+            changeGameAllowed = true;
+        }
+
         if (ControlMap.isActive(LC.MODIFIER))
         {
+            if (changeGameAllowed && ControlMap.isActive(LC.JOYPAD_L3) && PlayList.Count > 1)
+            {
+                PlayListIndex++;
+                if (PlayListIndex >= PlayList.Count)
+                {
+                    PlayListIndex = 0;
+                }
+                loadGame(PlayList[PlayListIndex]);
+                changeGameAllowed = false;
+            }
+
             // Reset game
             if (ControlMap.isActive(LC.JOYPAD_R3))
             {
