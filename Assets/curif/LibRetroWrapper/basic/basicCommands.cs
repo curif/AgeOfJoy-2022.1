@@ -185,6 +185,12 @@ public static class Commands
         functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);
         functions["SCREENHEIGHT"] = typeof(CommandFunctionSCREENHEIGHT);
 
+
+        // READ DATA RESTORE
+        commands["DATA"] = typeof(CommandDATA);
+        commands["READ"] = typeof(CommandREAD); 
+        commands["RESTORE"] = typeof(CommandRESTORE); 
+
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

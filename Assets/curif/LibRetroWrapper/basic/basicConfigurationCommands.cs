@@ -44,4 +44,7 @@ public class ConfigurationCommands
     public MusicPlayer MusicPlayerQueue;
 
     public float SleepTime;
+
+    public Dictionary<string, BasicValueList> basicValueLists = new();
+
 }

@@ -131,6 +131,59 @@ void* wrapper_get_memory_data(unsigned id) {
 	return handlers.retro_get_memory_data(id);
 }
 
+
+// Function to modify a memory section by a specific value
+int wrapper_set_memory_value(unsigned offset, unsigned value) {
+    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+
+    if (data && size > 0 && offset < size) {
+        unsigned *mem_section = (unsigned *)((char *)data + offset);
+        *mem_section = value;
+        wrapper_environment_log(RETRO_LOG_INFO, 
+					"Memory at offset 0x%X modified by %u\n", offset, value);
+				return 0;
+    } else {
+        wrapper_environment_log(RETRO_LOG_ERROR, 
+													"Error: Invalid memory access\n");
+				return -1;
+    }
+}
+
+// Function to modify a memory section by a specific value
+int wrapper_get_memory_value(unsigned offset) {
+    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+
+    if (data && size > 0 && offset < size) {
+        unsigned *mem_section = (unsigned *)((char *)data + offset);
+        return (int)*mem_section;
+    } else {
+        wrapper_environment_log(RETRO_LOG_ERROR, 
+													"Error: Invalid memory access\n");
+				return -1;
+		}
+}
+
+
+// Function to copy a memory section
+int wrapper_copy_memory_section(unsigned dest_offset, const void *src, size_t length) {
+    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+
+    if (data && size > 0 && dest_offset < size && dest_offset + length <= size) {
+        void *dest = (char *)data + dest_offset;
+        memcpy(dest, src, length);
+        wrapper_environment_log(RETRO_LOG_INFO, 
+                                "Memory copied from source to offset 0x%X, length %zu\n", dest_offset, length);
+        return 0;
+    } else {
+        wrapper_environment_log(RETRO_LOG_ERROR, 
+                                "Error: Invalid memory access\n");
+        return -1;
+    }
+}
+
 int wrapper_environment_open(wrapper_log_printf_t _log,
 	enum retro_log_level _minLogLevel,
 	char* _save_directory,
