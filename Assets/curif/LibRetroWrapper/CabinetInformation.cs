@@ -91,7 +91,8 @@ public class CabinetInformation
 
     public void Validate()
     {
-        if (rom == null && roms != null)
+        // If "roms" is present, "rom" is ignored and replaced with the first element of "roms"
+        if (roms != null && roms.Count >= 1)
         {
             rom = roms[0];
         }
