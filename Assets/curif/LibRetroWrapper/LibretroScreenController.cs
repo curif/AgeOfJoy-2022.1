@@ -381,7 +381,7 @@ public class LibretroScreenController : MonoBehaviour
             .End()
 
             .Sequence("Game Started")
-              .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
+              .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName))
               .RepeatUntilSuccess("Run until player exit")
                 .Sequence()
                   .Condition("user EXIT pressed?", () =>
@@ -516,7 +516,7 @@ public class LibretroScreenController : MonoBehaviour
         if (shader == null)
             return;
 
-        if (LibretroMameCore.isRunning(ScreenName, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName))
         {
             LibretroMameCore.UpdateTexture();
             LibretroMameCore.CalculateLightGunPosition();
@@ -554,13 +554,13 @@ public class LibretroScreenController : MonoBehaviour
 
     private void OnAudioFilterRead(float[] data, int channels)
     {
-        if (LibretroMameCore.isRunning(ScreenName, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName))
             LibretroMameCore.MoveAudioStreamTo(data);
     }
 
     private void OnDestroy()
     {
-        if (LibretroMameCore.isRunning(ScreenName, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName))
             PreparePlayerToPlayGame(false);
 
         LibretroMameCore.End(ScreenName, GameFile);

@@ -543,10 +543,6 @@ public static unsafe class LibretroMameCore
                             new AudioUnlockHandler(AudioUnlockCB));
         wrapper_input_init();
 
-#if !UNITY_EDITOR
-        loadState(GameFileName);
-#endif
-
         /* It's impossible to change the Sample Rate, fixed in 48000
         audioConfig.sampleRate = sampleRate;
         AudioSettings.Reset(audioConfig);
@@ -588,7 +584,11 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[LibRetroMameCore.Start] wrapper_load_game {GameFileName} in {ScreenName}");
 
         if (GameLoaded)
+        {
+            // save state for previous game and unload it
+            saveState(GameFileName);
             wrapper_unload_game();
+        }
 
         byte[] data = null;
         long fileSizeInBytes = 0;
@@ -605,19 +605,27 @@ public static unsafe class LibretroMameCore
             return false;
         }
 
+        // This is now the new active game. Load its state
+        GameFileName = gameFileName;
+        loadState(GameFileName);
+
         return true;
     }
 
     public static void loadState(string gameFileName)
     {
+#if !UNITY_EDITOR
         loadSram(gameFileName);
         loadPersistentState(gameFileName);
+#endif
     }
 
     public static void saveState(string gameFileName)
     {
+#if !UNITY_EDITOR
         saveSram(gameFileName);
         savePersistentState(gameFileName);
+#endif
     }
 
     public static void loadSram(string gameFileName)
@@ -741,9 +749,9 @@ public static unsafe class LibretroMameCore
 #endif
 
 
-    public static bool isRunning(string screenName, string gameFileName)
+    public static bool isRunning(string screenName)
     {
-        return GameLoaded && GameFileName == gameFileName && screenName == ScreenName;
+        return GameLoaded && screenName == ScreenName;
     }
 
 
