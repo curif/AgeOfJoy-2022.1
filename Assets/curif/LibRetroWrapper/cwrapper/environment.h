@@ -73,7 +73,10 @@ size_t wrapper_get_savestate_size();
 bool wrapper_set_savestate_data(void* data, size_t size);
 bool wrapper_get_savestate_data(void* data, size_t size);
 size_t wrapper_get_memory_size(unsigned id);
-void* wrapper_get_memory_data(unsigned id);
+int wrapper_set_memory_value(unsigned offset, unsigned value);
+int wrapper_get_memory_value(unsigned offset);
+int wrapper_copy_memory_section(unsigned dest_offset, const void *src, size_t length);
+void wrapper_modify_memory_section(unsigned offset, unsigned value);
 void wrapper_set_controller_port_device(unsigned port, unsigned device);
 void wrapper_reset();
 

@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Assets.curif.LibRetroWrapper;
 using LC = LibretroControlMapDictionnary;
 using UnityEngine.Events;
+using System.Text;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -301,8 +302,14 @@ public static unsafe class LibretroMameCore
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern char* wrapper_get_memory_data(uint id);
-
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_set_memory_value(uint id, uint value);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_get_memory_value(uint id);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_copy_memory_section(uint id, IntPtr src, uint value);
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+
     private static extern uint wrapper_get_savestate_size();
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern bool wrapper_set_savestate_data(void* data, uint size);
@@ -660,6 +667,41 @@ public static unsafe class LibretroMameCore
             File.WriteAllBytes(sramFileName, sramData);
             WriteConsole($"[LibRetroMameCore.saveSram] SRAM data saved: {sramFileName}: {sramSize} bytes");
         }
+    }
+
+    public static void setSramBlock(uint dest_offset, string src)
+    {
+        int ret;
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(src);
+        uint length = (uint)bytes.Length;
+        GCHandle pinnedArray = GCHandle.Alloc(bytes, GCHandleType.Pinned);
+        IntPtr pointer = pinnedArray.AddrOfPinnedObject();
+        try
+        {
+            ret = wrapper_copy_memory_section(dest_offset, pointer, length);
+        }
+        finally
+        {
+            pinnedArray.Free();
+        }
+
+        if (ret < 0)
+            throw new Exception("Error copying memory block");
+    }
+
+    public static int getSram(int offset)
+    {
+        int ret = wrapper_get_memory_value((uint)offset);
+        if (ret < 0)
+            throw new Exception("Error reading memory");
+        return ret;
+    }
+
+    public static void setSram(uint offset, uint value)
+    {
+        int ret = wrapper_set_memory_value(offset, value);
+        if (ret < 0)
+            throw new Exception("Error copying memory value");
     }
 
     public static string getSramFileName(string gameFileName)
