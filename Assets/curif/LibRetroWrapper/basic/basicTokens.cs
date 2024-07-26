@@ -70,15 +70,23 @@ public class TokenConsumer
         return this.Token;
     }
 
-/*
-    public List<string> Rest()
+    public string Previous()
     {
-        if (Remains() < 1)
-            return new List<string>();
+        if (pointer == 0)
+            return null;
 
-        return tokens.GetRange(pointer, tokens.Length - 1);
+        return tokens[pointer - 1];
     }
-*/
+
+    /*
+        public List<string> Rest()
+        {
+            if (Remains() < 1)
+                return new List<string>();
+
+            return tokens.GetRange(pointer, tokens.Length - 1);
+        }
+    */
     //how many tokens left? without count the token pointed by pointer.
     public int Remains()
     {
