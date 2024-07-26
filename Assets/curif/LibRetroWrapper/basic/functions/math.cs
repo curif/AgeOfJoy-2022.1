@@ -292,3 +292,30 @@ class CommandFunctionIIF : CommandFunctionExpressionListBase
         return exprs.ExecuteByPosition(2, vars);
     }
 }
+
+
+class CommandFunctionHEX : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionHEX(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "HEX";
+    }
+    static int HexStringToDecimal(string hex)
+    {
+        // Remove "0x" prefix if it exists
+        if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            hex = hex.Substring(2);
+        }
+
+        // Convert the hex string to an integer
+        return int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double ret = HexStringToDecimal(val.GetValueAsString());
+        return new BasicValue(ret);
+    }
+}
