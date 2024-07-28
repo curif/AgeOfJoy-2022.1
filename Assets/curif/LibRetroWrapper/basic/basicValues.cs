@@ -22,14 +22,14 @@ public class BasicValue
 
     static List<string> validOperations = new List<string> {
          "+", "-", "/", "*", "=", "<>", "!=", ">", "<", "<=", ">=",
-         "OR", "AND"
+         "||", "&&"
          };
 
     public static Dictionary<string, int> OperatorPrecedence =
         new Dictionary<string, int>
             {
-                { "AND", 1 },
-                { "OR", 2 },
+                { "&&", 1 },
+                { "||", 2 },
                 { "=", 3 },
                 { "!=", 3 },
                 { "<>", 3 },
@@ -88,6 +88,12 @@ public class BasicValue
             return;
         }
 
+        if (str.StartsWith("&"))
+        {
+            SetValue(FunctionHelper.HexStringToDecimal(str.Substring(1)));
+            return;
+        }
+
         if (double.TryParse(str, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double valueDouble))
         {
             SetValue(valueDouble);
@@ -109,6 +115,12 @@ public class BasicValue
     public BasicValue SetValue(double val)
     {
         this.number = val;
+        type = BasicValueType.Number;
+        return this;
+    }
+    public BasicValue SetValue(int val)
+    {
+        this.number = (double)val;
         type = BasicValueType.Number;
         return this;
     }
@@ -342,7 +354,20 @@ public class BasicValue
     {
         return validOperations.Contains(op);
     }
-
+    public static bool IsValidHexNumber(string hex)
+    {
+        if (!hex.StartsWith("&"))
+            return false;
+        // Check if all characters in the string are valid hex digits
+        foreach (char c in hex.Substring(1))
+        {
+            if (!Uri.IsHexDigit(c))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
     public static bool IsValidNumber(string str)
     {
         return double.TryParse(str, out _);
@@ -392,9 +417,9 @@ public class BasicValue
                 return new BasicValue(this <= bval ? 1 : 0);
             case ">=":
                 return new BasicValue(this >= bval ? 1 : 0);
-            case "AND":
+            case "&&":
                 return this & bval;
-            case "OR":
+            case "||":
                 return this | bval;
         }
         throw new Exception($"Operator unknown: [{operation}], allowed values are [{string.Join(", ", validOperations)}]...");

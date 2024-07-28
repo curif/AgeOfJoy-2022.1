@@ -171,4 +171,16 @@ public static class FunctionHelper
         return loadedCount;
     }
 
+    public static int HexStringToDecimal(string hex)
+    {
+        // Remove "0x" prefix if it exists
+        if (hex.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            hex = hex.Substring(2);
+        }
+
+        // Convert the hex string to an integer
+        return int.Parse(hex, System.Globalization.NumberStyles.HexNumber);
+    }
+
 }

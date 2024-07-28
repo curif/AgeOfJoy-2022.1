@@ -22,13 +22,16 @@ public class BackgroundSoundController : MonoBehaviour
     }
     private void CacheAudioSources()
     {
-        // Iterate through each child GameObject
-        foreach (Transform childTransform in transform)
-        {
-            // Attempt to get the AudioSource component from the current child GameObject
-            AudioSource audioSource = childTransform.GetComponent<AudioSource>();
+        // Find all GameObjects with the tag "backgroundsound"
+        GameObject[] backgroundSoundObjects = GameObject.FindGameObjectsWithTag("backgroundsound");
 
-            // If AudioSource component is found, add it to the list
+        // Clear the list to ensure it's empty before adding new AudioSources
+        audioSources.Clear();
+
+        // Iterate through each GameObject and get the AudioSource component
+        foreach (GameObject obj in backgroundSoundObjects)
+        {
+            AudioSource audioSource = obj.GetComponent<AudioSource>();
             if (audioSource != null)
                 audioSources.Add(audioSource);
         }

@@ -51,7 +51,8 @@ public static class Commands
         functions["AND"] = typeof(CommandFunctionAND);
         functions["OR"] = typeof(CommandFunctionOR);
         functions["IIF"] = typeof(CommandFunctionIIF);
-        
+        functions["HEXTODEC"] = typeof(CommandFunctionHEXTODEC);
+
         // strings
         functions["LEN"] = typeof(CommandFunctionLEN);
         functions["UCASE"] = typeof(CommandFunctionUCASE);

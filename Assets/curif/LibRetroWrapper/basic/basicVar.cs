@@ -42,6 +42,6 @@ public class BasicVar
 
     public override string ToString()
     {
-        return " var: " + name;
+        return "[" + name +"]";
     }
 }

@@ -27,7 +27,7 @@ public class CommandExpression : ICommandBase
         }
         public Element(string op)
         {
-            this.op = new BasicValue(op);
+            this.op = new BasicValue(op, forceType: BasicValue.BasicValueType.String);
             this.type = CommandType.Type.Operation;
         }
         public Element(CommandExpression expr)
@@ -72,7 +72,7 @@ public class CommandExpression : ICommandBase
             switch (type)
             {
                 case CommandType.Type.Variable:
-                    tostring += " var: " + var;
+                    tostring += var;
                     break;
                 case CommandType.Type.Constant:
                     tostring += " " + val.ToString();

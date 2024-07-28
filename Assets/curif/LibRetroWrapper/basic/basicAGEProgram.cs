@@ -137,7 +137,21 @@ public class AGEProgram
 
     public string[] ParseLineOfCode(string codeLine)
     {
-        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|==|>|<|')";
+        /*
+         * This pattern is designed to match various elements of AGEBasic code. Here's what each part does:
+
+            (?<Text>...): This creates a named capture group called "Text" that will contain the matched text.
+            ""[^""]*"": Matches a string literal enclosed in double quotes.
+            -?\d+(\.\d+)?: Matches integer or decimal numbers, optionally negative.
+            &[0-9A-Fa-f]+: Matches hexadecimal numbers starting with '&'.
+            \w+: Matches word characters (letters, digits, or underscores), typically used for identifiers or keywords.
+            [,\(\)=/*+\-]: Matches common operators and punctuation.
+            !=|<>|>=|<=|==|>|<: Matches comparison operators.
+            ': Matches a single quote, often used to start comments in BASIC.
+
+            The | character separates these different patterns, allowing the regex to match any of these elements.
+        */
+        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|&[0-9A-Fa-f]+|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|==|>|<|'|&&|\|\|)";
         //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
 
         //string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<|\s+)";

@@ -292,3 +292,20 @@ class CommandFunctionIIF : CommandFunctionExpressionListBase
         return exprs.ExecuteByPosition(2, vars);
     }
 }
+
+
+class CommandFunctionHEXTODEC : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionHEXTODEC(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "HEXTODEC";
+    }
+    
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+        double ret = FunctionHelper.HexStringToDecimal(val.GetValueAsString());
+        return new BasicValue(ret);
+    }
+}
