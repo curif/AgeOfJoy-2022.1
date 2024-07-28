@@ -2608,6 +2608,7 @@ MonoBehaviour:
   Loaded: 0
   Cabinets: []
   CoroutineIsRunning: 0
+  TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
 --- !u!1001 &547917942
 PrefabInstance:
@@ -2936,17 +2937,19 @@ LightProbeGroup:
   - {x: 1, y: -1, z: 2.3507977}
   - {x: 1, y: -1, z: -2.3697596}
   - {x: -0.21696663, y: -0.045761526, z: 1.906929}
-  - {x: -0.21696663, y: -0.045761526, z: -2.3697596}
+  - {x: 0.21478271, y: -0.045761526, z: -1.9066296}
   - {x: -1, y: -1, z: 2.3507977}
-  - {x: -1, y: -1, z: -2.3697596}
+  - {x: -0.34847546, y: 0.62632185, z: -1.5227404}
   - {x: 1, y: 1, z: 1}
   - {x: 1, y: -1, z: 1}
-  - {x: -0.21696663, y: -0.045761526, z: 0.29622316}
-  - {x: -1, y: -1, z: 1}
+  - {x: -0.21696663, y: -0.045761526, z: 0.12417936}
+  - {x: 0.39118004, y: -0.25896364, z: 1.5476046}
   - {x: 1, y: 1, z: -1}
   - {x: 1, y: -0.3440668, z: 0.2486744}
   - {x: -0.21696663, y: -0.045761526, z: -1.2808113}
   - {x: -1, y: -1, z: -1}
+  - {x: -0.42613697, y: -1, z: 0.9475765}
+  - {x: -0.4467535, y: -0.30410105, z: -2.1167984}
   m_Dering: 1
 --- !u!4 &589521124
 Transform:
@@ -3805,8 +3808,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.003254, y: 1.8939131, z: 6.021394}
-  m_Center: {x: -0.68348026, y: -0.44695657, z: 0.105139256}
+  m_Size: {x: 3.2208996, y: 1.8939131, z: 6.379868}
+  m_Center: {x: -0.6898813, y: -0.44695657, z: 0.066731215}
 --- !u!4 &877715763
 Transform:
   m_ObjectHideFlags: 0
@@ -3816,11 +3819,11 @@ Transform:
   m_GameObject: {fileID: 877715760}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -9.09, y: 0.898, z: 7.45}
+  m_LocalPosition: {x: 1.373147, y: 0.6636978, z: -0.9900007}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1624279458}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &894313923
 PrefabInstance:
@@ -6475,6 +6478,7 @@ Transform:
   - {fileID: 1962897877}
   - {fileID: 1819738375}
   - {fileID: 1495166877}
+  - {fileID: 877715763}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1626396327
@@ -8119,4 +8123,3 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1624279458}
-  - {fileID: 877715763}
