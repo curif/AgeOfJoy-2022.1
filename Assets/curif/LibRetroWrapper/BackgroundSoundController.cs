@@ -10,44 +10,36 @@ public class BackgroundSoundController : MonoBehaviour
 
     private RoomConfiguration roomConfiguration;
     private bool playerIsInGame;
-    private List<AudioSource> audioSources = new List<AudioSource>();
 
     // Start is called before the first frame update
     void Start()
     {
         roomConfiguration = RoomConfigurationGameObject.GetComponent<RoomConfiguration>();
-        CacheAudioSources();
         OnEnable();
         change();
     }
-    private void CacheAudioSources()
+    void changeWithBackgroundData(ConfigInformation.Background background)
     {
-        // Find all GameObjects with the tag "backgroundsound"
         GameObject[] backgroundSoundObjects = GameObject.FindGameObjectsWithTag("backgroundsound");
 
-        // Clear the list to ensure it's empty before adding new AudioSources
-        audioSources.Clear();
-
-        // Iterate through each GameObject and get the AudioSource component
         foreach (GameObject obj in backgroundSoundObjects)
         {
             AudioSource audioSource = obj.GetComponent<AudioSource>();
             if (audioSource != null)
-                audioSources.Add(audioSource);
-        }
-    }
-
-    void changeWithBackgroundData(ConfigInformation.Background background)
-    {
-        foreach (AudioSource audioSource in audioSources)
-        {
-            audioSource.mute = background.muted != null ? (bool)background.muted : audioSource.mute;
-            if (background.volume != null)
             {
-                float volume = (float)background.volume * 0.01f;
-                audioSource.volume = volume;
+                audioSource.mute = background.muted != null ? (bool)background.muted : audioSource.mute;
+                if (background.volume != null)
+                {
+                    float volume = (float)background.volume * 0.01f;
+                    audioSource.volume = volume;
+                }
+                ConfigManager.WriteConsole($"[BackgroundSoundController] volume {audioSource.volume} muted: {audioSource.mute}");
             }
-            ConfigManager.WriteConsole($"[BackgroundSoundController] volume {audioSource.volume} muted: {audioSource.mute}");
+            else
+            {
+                ConfigManager.WriteConsoleWarning($"[BackgroundSoundController] {obj.name} doesn't have a AudioSource component");
+            }
+            
         }
     }
 
