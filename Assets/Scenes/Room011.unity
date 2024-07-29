@@ -16419,6 +16419,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1862072339}
     m_Modifications:
+    - target: {fileID: 697090803246766830, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
+      propertyPath: RoomConfigurationGameObject
+      value: 
+      objectReference: {fileID: 423336112}
     - target: {fileID: 1361900954349496047, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: m_Volume
       value: 0.263
@@ -19363,13 +19367,40 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: dabbd7d329f88684bb9f15a59eb5b76d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1190536224}
   m_SourcePrefab: {fileID: 100100000, guid: dabbd7d329f88684bb9f15a59eb5b76d, type: 3}
 --- !u!4 &1190536222 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: dabbd7d329f88684bb9f15a59eb5b76d, type: 3}
   m_PrefabInstance: {fileID: 1190536221}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1190536223 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: dabbd7d329f88684bb9f15a59eb5b76d, type: 3}
+  m_PrefabInstance: {fileID: 1190536221}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1190536224
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1190536223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_OverrideArea: 0
+  m_Area: 0
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
 --- !u!1001 &1190751241
 PrefabInstance:
   m_ObjectHideFlags: 0

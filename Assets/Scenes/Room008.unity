@@ -9514,6 +9514,7 @@ MonoBehaviour:
   Loaded: 0
   Cabinets: []
   CoroutineIsRunning: 0
+  TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
 --- !u!4 &1069155983
 Transform:
@@ -11743,6 +11744,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1629989100}
     m_Modifications:
+    - target: {fileID: 697090803246766830, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
+      propertyPath: RoomConfigurationGameObject
+      value: 
+      objectReference: {fileID: 1910830340}
     - target: {fileID: 1361900954349496047, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: MaxDistance
       value: 3

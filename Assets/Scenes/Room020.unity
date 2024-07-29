@@ -1772,6 +1772,7 @@ MonoBehaviour:
   Loaded: 0
   Cabinets: []
   CoroutineIsRunning: 0
+  TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
 --- !u!1001 &360507207
 PrefabInstance:
@@ -13205,6 +13206,10 @@ PrefabInstance:
       propertyPath: MinDistance
       value: 5.65
       objectReference: {fileID: 0}
+    - target: {fileID: 3881692087077250598, guid: 6aed44b0dac7aec48883c3717b0fa046, type: 3}
+      propertyPath: RoomConfigurationGameObject
+      value: 
+      objectReference: {fileID: 234028261}
     - target: {fileID: 4454276497888835021, guid: 6aed44b0dac7aec48883c3717b0fa046, type: 3}
       propertyPath: audioSourceObjects.Array.data[0]
       value: 
@@ -13291,7 +13296,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5033530118674023111, guid: 6aed44b0dac7aec48883c3717b0fa046, type: 3}
       propertyPath: m_Name
-      value: PFV_A_HallMaster (1)
+      value: PFV_A_HallMaster
       objectReference: {fileID: 0}
     - target: {fileID: 6292356222460693754, guid: 6aed44b0dac7aec48883c3717b0fa046, type: 3}
       propertyPath: m_RootOrder

@@ -7755,6 +7755,7 @@ MonoBehaviour:
   Loaded: 0
   Cabinets: []
   CoroutineIsRunning: 0
+  TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
 --- !u!4 &238278363
 Transform:
@@ -43973,6 +43974,34 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
+    - target: {fileID: -7225797642451753917, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -6144775341970669521, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2453146557617921952, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3778152518820593552, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5902157118547068076, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6138903829361181027, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8985823622858259377, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: -9196096680256235381, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
       propertyPath: m_CastShadows
       value: 0
@@ -44352,34 +44381,6 @@ PrefabInstance:
     - target: {fileID: 9206838506001747648, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
       propertyPath: m_Layer
       value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -7225797642451753917, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -6144775341970669521, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -2453146557617921952, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3778152518820593552, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5902157118547068076, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6138903829361181027, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8985823622858259377, guid: 17019ab050523a488bbcf8bdcdf3e840, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -50561,6 +50562,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1862072339}
     m_Modifications:
+    - target: {fileID: 697090803246766830, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
+      propertyPath: RoomConfigurationGameObject
+      value: 
+      objectReference: {fileID: 423336112}
     - target: {fileID: 1361900954349496047, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: MaxDistance
       value: 7.5
