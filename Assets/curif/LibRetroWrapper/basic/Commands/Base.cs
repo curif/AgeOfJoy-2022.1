@@ -1,8 +1,6 @@
 #define AGEBASIC_DEBUG_ACTIVE
 
 using System;
-using System.Collections.Generic;
-using System.IO;
 
 public interface ICommandBase
 {
