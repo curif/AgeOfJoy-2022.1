@@ -84,7 +84,7 @@ void wrapper_dlclose() {
 	if (handlers.handle) {
 		wrapper_environment_log(RETRO_LOG_INFO,
 			"[wrapper_dlclose] close libretro\n");
-		if (handlers.handle == NULL) {
+		if (handlers.handle == NULL) 
 			return;
 		dlclose(handlers.handle);
 		INIT_STRUCT(handlers);
@@ -94,7 +94,7 @@ void wrapper_dlclose() {
 size_t wrapper_get_savestate_size() {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_get_savestate_size]\n");
-  if (handlers.handle == NULL) {
+  if (handlers.handle == NULL) 
 			return (size_t)0;
 	size_t result = handlers.retro_serialize_size();
 	wrapper_environment_log(RETRO_LOG_INFO,
@@ -105,7 +105,7 @@ size_t wrapper_get_savestate_size() {
 bool wrapper_set_savestate_data(void* data, size_t size) {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_set_savestate_data] size: %d\n", size);
-	if (handlers.handle == NULL) {
+	if (handlers.handle == NULL) 
 			return (bool)0;
 	bool result = handlers.retro_unserialize(data, size);
 	wrapper_environment_log(RETRO_LOG_INFO,
@@ -116,7 +116,7 @@ bool wrapper_set_savestate_data(void* data, size_t size) {
 bool wrapper_get_savestate_data(void* data, size_t size) {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_get_savestate_data] size: %d\n", size);
-	if (handlers.handle == NULL) {
+	if (handlers.handle == NULL) 
 			return (bool)0;
 	bool result = handlers.retro_serialize(data, size);
 	wrapper_environment_log(RETRO_LOG_INFO,
@@ -127,7 +127,7 @@ bool wrapper_get_savestate_data(void* data, size_t size) {
 size_t wrapper_get_memory_size(unsigned id) {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[wrapper_get_memory_size] id: %d\n", id);
-	if (handlers.handle == NULL) {
+	if (handlers.handle == NULL) 
 			return (size_t)0;
 	size_t size = handlers.retro_get_memory_size(id);
 	wrapper_environment_log(RETRO_LOG_INFO,
@@ -138,7 +138,7 @@ size_t wrapper_get_memory_size(unsigned id) {
 void* wrapper_get_memory_data(unsigned id) {
 	wrapper_environment_log(RETRO_LOG_INFO,
 		"[retro_get_memory_data] id: %d\n", id);
-	if (handlers.handle == NULL) {
+	if (handlers.handle == NULL) 
 			return NULL;
 	return handlers.retro_get_memory_data(id);
 }
@@ -146,7 +146,7 @@ void* wrapper_get_memory_data(unsigned id) {
 
 // Function to modify a memory section by a specific value
 int wrapper_set_memory_value(unsigned offset, unsigned value) {
-		if (handlers.handle == NULL) {
+		if (handlers.handle == NULL) 
 			return -1;
 
     size_t size = handlers.retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
@@ -167,7 +167,7 @@ int wrapper_set_memory_value(unsigned offset, unsigned value) {
 
 // Function to modify a memory section by a specific value
 int wrapper_get_memory_value(unsigned offset) {
-		if (handlers.handle == NULL) {
+		if (handlers.handle == NULL) 
 			return -1;
     size_t size = handlers.retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
     void *data = handlers.retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
@@ -185,10 +185,10 @@ int wrapper_get_memory_value(unsigned offset) {
 
 // Function to copy a memory section
 int wrapper_copy_memory_section(unsigned dest_offset, const void *src, size_t length) {
-		if (handlers.handle == NULL) {
+		if (handlers.handle == NULL) 
 			return -1;
-    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
-    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+    size_t size = handlers.retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    void *data = handlers.retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
 
     if (data && size > 0 && dest_offset < size && dest_offset + length <= size) {
         void *dest = (char *)data + dest_offset;
