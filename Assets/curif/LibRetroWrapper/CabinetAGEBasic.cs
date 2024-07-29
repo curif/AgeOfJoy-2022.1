@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 using UnityEditor;
-using static OVRHaptics;
 
 [Serializable]
 public class CabinetAGEBasicInformation
