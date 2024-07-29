@@ -5,7 +5,6 @@ using System.IO;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.EventSystems;
 
 
 #if UNITY_EDITOR

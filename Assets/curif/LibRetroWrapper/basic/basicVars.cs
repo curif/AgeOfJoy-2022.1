@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-
 public class BasicVars
 {
     Dictionary<string, BasicValue> vars = new();

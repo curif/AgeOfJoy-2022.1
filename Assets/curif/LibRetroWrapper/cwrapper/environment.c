@@ -134,8 +134,8 @@ void* wrapper_get_memory_data(unsigned id) {
 
 // Function to modify a memory section by a specific value
 int wrapper_set_memory_value(unsigned offset, unsigned value) {
-    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
-    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+    size_t size = handlers.retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    void *data = handlers.retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
 
     if (data && size > 0 && offset < size) {
         unsigned *mem_section = (unsigned *)((char *)data + offset);
@@ -152,8 +152,8 @@ int wrapper_set_memory_value(unsigned offset, unsigned value) {
 
 // Function to modify a memory section by a specific value
 int wrapper_get_memory_value(unsigned offset) {
-    size_t size = retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
-    void *data = retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
+    size_t size = handlers.retro_get_memory_size(RETRO_MEMORY_SAVE_RAM);
+    void *data = handlers.retro_get_memory_data(RETRO_MEMORY_SAVE_RAM);
 
     if (data && size > 0 && offset < size) {
         unsigned *mem_section = (unsigned *)((char *)data + offset);
