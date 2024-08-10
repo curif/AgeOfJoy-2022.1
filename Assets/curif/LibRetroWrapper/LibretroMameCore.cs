@@ -640,6 +640,9 @@ public static unsafe class LibretroMameCore
 
     public static void loadSram(string gameFileName)
     {
+        if (!GameLoaded)
+            throw new Exception($"Can't load the game state from the file if the game isn't loaded yet: {gameFileName}");
+
         string sramFileName = getSramFileName(gameFileName);
         if (File.Exists(sramFileName))
         {
@@ -657,6 +660,9 @@ public static unsafe class LibretroMameCore
 
     public static void saveSram(string gameFileName)
     {
+        if (!GameLoaded)
+            throw new Exception($"Can't save the game state to a file if the game isn't loaded: {gameFileName}");
+
         string sramFileName = getSramFileName(gameFileName);
         uint sramSize = wrapper_get_memory_size(RETRO_MEMORY_SAVE_RAM);
         if (sramSize > 0)
@@ -671,6 +677,8 @@ public static unsafe class LibretroMameCore
 
     public static void setSramBlock(uint dest_offset, string src)
     {
+        if (!GameLoaded)
+            throw new Exception($"[setSramBlock] Can't operate on memory of non loaded games.");
         int ret;
         byte[] bytes = System.Text.Encoding.UTF8.GetBytes(src);
         uint length = (uint)bytes.Length;
@@ -691,6 +699,8 @@ public static unsafe class LibretroMameCore
 
     public static int getSram(int offset)
     {
+        if (!GameLoaded)
+            throw new Exception($"[getSram] Can't operate on memory of non loaded games.");
         int ret = wrapper_get_memory_value((uint)offset);
         if (ret < 0)
             throw new Exception("Error reading memory");
@@ -699,6 +709,8 @@ public static unsafe class LibretroMameCore
 
     public static void setSram(uint offset, uint value)
     {
+        if (!GameLoaded)
+            throw new Exception($"[setSram] Can't operate on memory of non loaded games.");
         int ret = wrapper_set_memory_value(offset, value);
         if (ret < 0)
             throw new Exception("Error copying memory value");

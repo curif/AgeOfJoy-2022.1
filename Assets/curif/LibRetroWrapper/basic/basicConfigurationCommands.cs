@@ -45,4 +45,8 @@ public class ConfigurationCommands
 
     public Dictionary<string, BasicValueList> basicValueLists = new();
 
+    //after some tests 76% executes 100LPS (lines per second)
+    //with a delay max of 0.03f (CalculateDelay function)
+    public double cpuPercentage = 76;
+
 }

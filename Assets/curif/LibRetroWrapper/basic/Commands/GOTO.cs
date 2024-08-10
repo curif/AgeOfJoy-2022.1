@@ -25,8 +25,6 @@ class CommandGOTO : ICommandBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
 
         BasicValue lineNumber = expr.Execute(vars);
-        if (! lineNumber.IsNumber())
-            throw new Exception($"GOTO accepts number expression only");
 
         config.JumpTo = (int) lineNumber.GetValueAsNumber(); 
 
