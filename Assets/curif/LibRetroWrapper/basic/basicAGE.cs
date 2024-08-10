@@ -379,6 +379,18 @@ public class basicAGE : MonoBehaviour
             ConfigManager.WriteConsoleException("Error writing to file: " + filePathDebug, e);
         }
     }
+    public float CalculateDelay(double cpuPercentageDouble)
+    {
+        float cpuPercentage = (float)cpuPercentageDouble;
+        // Clamp the CPU percentage between 0 and 100 to avoid invalid input.
+        cpuPercentage = Mathf.Clamp(cpuPercentage, 0f, 100f);
+
+        // Calculate delay based on CPU percentage.
+        // 100% CPU = 0 delay, 
+        float delay = Mathf.Lerp(0.03f, 0f, cpuPercentage / 100f);
+
+        return delay;
+    }
 
     IEnumerator runProgram()
     {
@@ -389,19 +401,39 @@ public class basicAGE : MonoBehaviour
         bool moreLines = true;
         LastRuntimeException = null;
         Status = ProgramStatus.Running;
+
+        double cpuPercentage = configCommands.cpuPercentage;
+        float calculatedDelay = CalculateDelay(cpuPercentage);
+
         while (moreLines)
         {
             moreLines = RunALine();
             YieldInstruction delay;
-            if (configCommands.SleepTime == 0)
-            {
-                delay = new WaitForEndOfFrame();
-            }
-            else
+            if (configCommands.SleepTime > 0)
             {
                 delay = new WaitForSeconds(configCommands.SleepTime);
                 configCommands.SleepTime = 0;
             }
+            else if (cpuPercentage != configCommands.cpuPercentage)
+            {
+                //user changes cpu control
+                cpuPercentage = configCommands.cpuPercentage;
+                if (cpuPercentage == 100)
+                {
+                    calculatedDelay = 0;
+                    delay = null;
+                }
+                else
+                {
+                    calculatedDelay = CalculateDelay(cpuPercentage);
+                    delay = new WaitForSeconds(calculatedDelay);
+                }
+                ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} cpu: {cpuPercentage}% delay: {calculatedDelay} secs");
+            }
+            else {
+                delay = new WaitForSeconds(calculatedDelay);
+            }
+
             yield return delay;
         }
 

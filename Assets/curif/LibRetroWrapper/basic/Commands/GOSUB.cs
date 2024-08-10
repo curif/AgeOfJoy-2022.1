@@ -31,9 +31,6 @@ class CommandGOSUB : ICommandBase
         config.Gosub.Push(config.LineNumber);
 
         BasicValue lineNumber = expr.Execute(vars);
-        if (!lineNumber.IsNumber())
-            throw new Exception($"GOSUB accepts number expression only");
-
         config.JumpTo = (int)lineNumber.GetValueAsNumber();
 
         return null;

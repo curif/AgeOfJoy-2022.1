@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Unity.VisualScripting;
 
 
 public class CommandExpression : ICommandBase
@@ -178,6 +179,15 @@ public class CommandExpression : ICommandBase
     {
         // AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] [expression execution]");
         //ElementsLog();
+
+        //accelerator
+        if (elements.Count == 1)
+            if (elements[0].type == CommandType.Type.Constant)
+                return elements[0].val;
+            else if (elements[0].type == CommandType.Type.Variable)
+                return vars.GetValue(elements[0].var);
+            else if (elements[0].type == CommandType.Type.Function)
+                return elements[0].func.Execute(vars);
 
         Stack<BasicValue> operands = new Stack<BasicValue>();
         Stack<BasicValue> operators = new Stack<BasicValue>();

@@ -26,7 +26,7 @@ class CommandFunctionPEEK: CommandFunctionSingleExpressionBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
 
         if (!LibretroMameCore.GameLoaded)
-            throw new Exception("A game isn't running yet");
+            throw new Exception("[AGE BASIC RUN {CmdToken}] A game isn't running yet");
 
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(val);

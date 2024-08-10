@@ -188,7 +188,11 @@ public static class Commands
         // READ DATA RESTORE
         commands["DATA"] = typeof(CommandDATA);
         commands["READ"] = typeof(CommandREAD); 
-        commands["RESTORE"] = typeof(CommandRESTORE); 
+        commands["RESTORE"] = typeof(CommandRESTORE);
+
+        //CPU
+        functions["SETCPU"] = typeof(CommandFunctionSETCPU);
+        functions["GETCPU"] = typeof(CommandFunctionGETCPU);
 
     }
 

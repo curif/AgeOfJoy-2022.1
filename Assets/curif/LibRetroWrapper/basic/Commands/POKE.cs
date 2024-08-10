@@ -34,14 +34,14 @@ class CommandPOKE : ICommandBase
             throw new Exception($"{CmdToken} POKE parameters missing, example POKE offset, value.");
         FunctionHelper.ExpectedNumber(vals[0], " - memory offset");
         if (vals[1] == null)
-            throw new Exception($"{CmdToken} POKE parameter value is missing, example POKE offset, value.");
+            throw new Exception($"{CmdToken} POKE parameter value is missing, example: POKE offset, value.");
 
         uint offset = (uint)vals[0].GetNumber();
         if (vals[1].IsNumber())
         {
             int value = vals[0].GetInt();
             if (value < 0 || value > 255)
-                throw new Exception("value should be between 0 and 255");
+                throw new Exception($"{CmdToken} value should be between 0 and 255");
             LibretroMameCore.setSram(offset, (uint)value);
         }
         else
