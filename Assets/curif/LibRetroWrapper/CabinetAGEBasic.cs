@@ -9,6 +9,9 @@ using UnityEditor;
 using Unity.VisualScripting;
 using Palmmedia.ReportGenerator.Core;
 using YamlDotNet.Core;
+using static OVRHaptics;
+using UnityEditor.Experimental.GraphView;
+using Newtonsoft.Json.Converters;
 
 [Serializable]
 public class CabinetAGEBasicInformation
@@ -42,26 +45,56 @@ public class CabinetAGEBasicInformation
     public string afterLeave;
 
     public List<EventInformation> events;
+
+    public void Validate()
+    {
+        foreach (EventInformation e in events)
+        {
+            e.Validate();
+        }
+    }
     
 }
 
 [Serializable]
 public class EventInformation
 {
-    public string type;
+    //event identification
+    [YamlMember(Alias = "event", ApplyNamingConventions = false)]
+    public string eventId;
+    static string[] validEvents = { "on-timer", "on-always", "on-control-active" };
+
     public string program;
     public double delay = 0;
-    public List<string> controls;
+    public List<ControlInformation> controls;
 
-    public bool IsValid()
+    public void Validate()
     {
-        string[] stringArray = { "on-timer", "on-always", "on-control-active" };
-        
+        if (string.IsNullOrEmpty(eventId))
+            throw new Exception($"AGEBasic Event Id unespecified");
+
+        if (Array.IndexOf(validEvents, eventId) < 0)
+            throw new Exception($"AGEBasic Event [{eventId}] unknown");
+
         if (string.IsNullOrEmpty(program))
-            return false;
-        
-        return Array.IndexOf(stringArray, type) >= 0;
+            throw new Exception($"AGEBasic Event {eventId} doesn't have a program attached");
+
+        if (controls != null)
+        {
+            foreach (var control in controls)
+            {
+                if (string.IsNullOrEmpty(control.mameControl))
+                    throw new Exception($"Event {eventId} one of the control isn't specified");
+            }
+        }
     }
+}
+[Serializable]
+public class ControlInformation
+{
+    [YamlMember(Alias = "libretro-id", ApplyNamingConventions = false)]
+    public string mameControl;
+    public int port = 0;
 }
 
 /// Event execution
@@ -76,11 +109,12 @@ public class Event
     public EventInformation eventInformation;
     
     //AGEBasic
-    public double cpuPercentage;
     public BasicVars vars;
     public basicAGE AGEBasic;
 
-    private DateTime startTime;
+    protected DateTime startTime;
+
+    private bool triggered;
 
     public Event(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
     {
@@ -89,7 +123,17 @@ public class Event
         AGEBasic = agebasic;
     }
 
+    protected bool RegisterTrigger(bool isTriggered)
+    {
+        triggered = isTriggered;
+        return triggered;
+    }
+    protected bool WasTriggered()
+    {
+        return triggered;
+    }
     public virtual void Init() {
+        triggered = false;
         startTime = DateTime.Now;
     }
     public virtual void PrepareToRun() 
@@ -103,32 +147,31 @@ public class Event
         YieldInstruction yield;
         yield = AGEBasic.runNextLineCurrentProgram(ref moreLines);
         if (!moreLines)
+        {
+            triggered = false;
             startTime = DateTime.Now;
+        }
         return yield;
     }
 
-    public virtual bool Triggered() { 
-        if (eventInformation.delay > 0)
-            return (DateTime.Now - startTime).TotalSeconds >= eventInformation.delay;
-        return false; 
-    }
-}
-
-public static class EventsFactory
-{
-    public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
+    protected virtual bool IsTime()
     {
-        switch (eventInformation.type)
+        return (DateTime.Now - startTime).TotalSeconds >= eventInformation.delay;
+    }
+    public virtual bool Triggered() { 
+        if (triggered)
         {
-            case "on-always":
-                return new OnAlways(eventInformation, vars, agebasic);
-            case "on-timer":
-                return new OnTimer(eventInformation, vars, agebasic);
+            //was but not executed.
+            return true;
         }
-
-        throw new Exception($"AGEBasic Unknown event: {eventInformation.type}");
+        if (eventInformation.delay > 0)
+        {
+            return RegisterTrigger(IsTime());
+        }
+        return RegisterTrigger(false); 
     }
 }
+
 public class OnTimer : Event
 {
     public OnTimer(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
@@ -144,10 +187,55 @@ public class OnAlways : Event
 
     public override bool Triggered()
     {
-        return true;
+        return RegisterTrigger(true);
     }
 }
 
+public class OnControlActive: Event
+{
+    public OnControlActive(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override bool Triggered()
+    {
+        if (AGEBasic.ConfigCommands.ControlMap == null)
+            return RegisterTrigger(false);
+
+        if (WasTriggered())
+            return true;
+
+        bool ontime = base.IsTime();
+        if (ontime)
+        {
+            foreach (var control in eventInformation.controls)
+                if (AGEBasic.ConfigCommands.ControlMap.Active(control.mameControl, control.port) == 0)
+                    return RegisterTrigger(false);
+            return RegisterTrigger(true);
+        }
+        return RegisterTrigger(false);
+    }
+}
+
+public static class EventsFactory
+{
+    public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
+    {
+        switch (eventInformation.eventId)
+        {
+            case "on-always":
+                return new OnAlways(eventInformation, vars, agebasic);
+            case "on-timer":
+                return new OnTimer(eventInformation, vars, agebasic);
+            case "on-control-active":
+                return new OnControlActive(eventInformation, vars, agebasic);
+        }
+
+        throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");
+    }
+}
+
+// ----------------------------------------------------------------------------------------------
 [RequireComponent(typeof(basicAGE))]
 public class CabinetAGEBasic : MonoBehaviour
 {
@@ -254,19 +342,23 @@ public class CabinetAGEBasic : MonoBehaviour
 
         while (true) // Continuous loop to keep checking for triggered events
         {
-            if (!AGEBasic.IsRunning())
+            
+            foreach (Event evt in events)
             {
-                foreach (Event evt in events)
+
+                // Check if the event is/was triggered
+                if (evt.Triggered())
                 {
-
-                    // Check if the event is triggered
-                    if (evt.Triggered())
+                    ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting {evt.eventInformation.program}");
+                    if (!AGEBasic.IsRunning())
                     {
-                        ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting {evt.eventInformation.program}");
+                        //no other program is running
 
+                        //prepare
                         CompileWhenNeeded(evt.eventInformation.program);
                         evt.PrepareToRun();
 
+                        //run
                         bool moreLines = true;
                         while (moreLines)
                         {

@@ -20,6 +20,7 @@ using LC = LibretroControlMapDictionnary;
 using UnityEngine.Audio;
 
 #if UNITY_EDITOR
+using CM = ControlMapPathDictionary;
 using UnityEditor;
 #endif
 
@@ -322,11 +323,16 @@ public class LibretroScreenController : MonoBehaviour
                       ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
                       controlConf = new GlobalControlMap();
                   }
+#if UNITY_EDITOR
+                  controlConf.AddMap(LC.KEYB_UP, CM.KEYBOARD_W);
+                  controlConf.AddMap(LC.KEYB_DOWN, CM.KEYBOARD_S);
+                  controlConf.AddMap(LC.KEYB_LEFT, CM.KEYBOARD_A);
+                  controlConf.AddMap(LC.KEYB_RIGHT, CM.KEYBOARD_D);
+#endif
                   //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
                   //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
                   libretroControlMap.CreateFromConfiguration(controlConf);
                   LibretroMameCore.ControlMap = libretroControlMap;
-
                   // Light guns configuration
                   if (lightGunTarget != null && lightGunInformation != null)
                   {

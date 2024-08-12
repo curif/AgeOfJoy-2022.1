@@ -101,6 +101,8 @@ public class CabinetInformation
         CheckResourcePath(statefile);
         CheckResourcePath(model?.file);
         CheckResourcePath(video?.file);
+        CheckAGEBasic();
+
 
         if (roms != null)
         {
@@ -169,7 +171,12 @@ public class CabinetInformation
             throw new Exception("Resource path " + path + " cannot contain '..'");
         }
     }
-
+    public void CheckAGEBasic()
+    {
+        if (agebasic == null)
+            return;
+        agebasic.Validate();         
+    }
     public static CabinetInformation fromName(string cabName)
     {
         return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
