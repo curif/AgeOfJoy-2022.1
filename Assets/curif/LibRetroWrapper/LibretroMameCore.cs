@@ -904,6 +904,7 @@ public static unsafe class LibretroMameCore
 
     public static void UpdateTexture()
     {
+#if !UNITY_EDITOR
         if (wrapper_is_hardware_rendering())
         {
             LoadVulkanTextureData();
@@ -912,6 +913,8 @@ public static unsafe class LibretroMameCore
         {
             LoadTextureData();
         }
+#endif
+
     }
 
     //static int frame = 0;

@@ -67,7 +67,6 @@ public class AGEProgram
 
     public bool runNextLine()
     {
-
         if (config.stop)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop");
