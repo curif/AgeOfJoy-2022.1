@@ -4,14 +4,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
-using YamlDotNet.Serialization.NamingConventions;
 using UnityEditor;
-using Unity.VisualScripting;
-using Palmmedia.ReportGenerator.Core;
-using YamlDotNet.Core;
 using static OVRHaptics;
-using UnityEditor.Experimental.GraphView;
-using Newtonsoft.Json.Converters;
 
 [Serializable]
 public class CabinetAGEBasicInformation
