@@ -194,6 +194,10 @@ public static class Commands
         functions["SETCPU"] = typeof(CommandFunctionSETCPU);
         functions["GETCPU"] = typeof(CommandFunctionGETCPU);
 
+        //EVENTS
+        functions["EVENTTRIGGER"] = typeof(CommandFunctionEVENTTRIGGER);
+
+
     }
 
     public static ICommandBase GetNew(string CommandType, ConfigurationCommands config)

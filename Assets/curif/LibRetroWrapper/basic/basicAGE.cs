@@ -213,6 +213,11 @@ public class basicAGE : MonoBehaviour
         configCommands.CoinSlot = coinSlot;
     }
 
+    public void SetCabinetEvents(List<Event> events)
+    {
+        configCommands.events = events;
+    }
+
     public bool Exists(string name)
     {
         return programs.ContainsKey(name);

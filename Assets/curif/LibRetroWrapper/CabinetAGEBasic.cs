@@ -56,8 +56,9 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin" };
-
+    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom" };
+    
+    public string name = "";
     public string program;
     public double delay = 0;
     public List<ControlInformation> controls;
@@ -72,6 +73,9 @@ public class EventInformation
 
         if (string.IsNullOrEmpty(program))
             throw new Exception($"AGEBasic Event {eventId} doesn't have a program attached");
+
+        if (eventId == "on-custom" && string.IsNullOrEmpty(name))
+            throw new Exception($"AGEBasic Custom Event {eventId} must to specify a distinctive name");
 
         if (controls != null)
         {
@@ -95,12 +99,6 @@ public class ControlInformation
 /// Event execution
 public class Event
 {
-    public enum Type
-    {
-        Timer,
-        Always,
-        ControlActive
-    }
     public EventInformation eventInformation;
     
     //AGEBasic
@@ -158,12 +156,13 @@ public class Event
     {
         return (DateTime.Now - startTime).TotalSeconds >= eventInformation.delay;
     }
-    public virtual bool EvaluateTrigger() { 
+
+    public virtual void EvaluateTrigger() { 
         if (eventInformation.delay > 0)
         {
-            return RegisterTrigger(IsTime());
+            RegisterTrigger(IsTime());
         }
-        return RegisterTrigger(false); 
+        RegisterTrigger(false); 
     }
 }
 
@@ -180,9 +179,9 @@ public class OnAlways : Event
         base(eventInformation, vars, agebasic, 1)
     { }
 
-    public override bool EvaluateTrigger()
+    public override void EvaluateTrigger()
     {
-        return RegisterTrigger(true);
+        RegisterTrigger(true);
     }
 }
 
@@ -192,20 +191,23 @@ public class OnControlActive: Event
         base(eventInformation, vars, agebasic, 1)
     { }
 
-    public override bool EvaluateTrigger()
+    public override void EvaluateTrigger()
     {
         if (AGEBasic.ConfigCommands.ControlMap == null)
-            return RegisterTrigger(false);
+            RegisterTrigger(false);
 
         bool ontime = base.IsTime();
         if (ontime)
         {
             foreach (var control in eventInformation.controls)
                 if (AGEBasic.ConfigCommands.ControlMap.Active(control.mameControl, control.port) == 0)
-                    return RegisterTrigger(false);
-            return RegisterTrigger(true);
+                { 
+                    RegisterTrigger(false);
+                    return;
+                }
+            RegisterTrigger(true);
         }
-        return RegisterTrigger(false);
+         RegisterTrigger(false);
     }
 }
 
@@ -219,11 +221,28 @@ public class OnInsertCoin : Event
     {
         RegisterTrigger(true);
     }
+    public override void EvaluateTrigger()
+    {
+    }
     public override void Init()
     {
         AGEBasic.ConfigCommands.CoinSlot.OnInsertCoin.AddListener(OnInsertCoinTrigger);
         base.Init();
     }
+}
+
+public class OnCustom : Event
+{
+    public OnCustom(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public void ForceTrigger()
+    {
+        RegisterTrigger(true);
+    }
+    public override void EvaluateTrigger() {}
+
 }
 
 
@@ -241,6 +260,8 @@ public static class EventsFactory
                 return new OnControlActive(eventInformation, vars, agebasic);
             case "on-insert-coin":
                 return new OnInsertCoin(eventInformation, vars, agebasic);
+            case "on-custom":
+                return new OnCustom(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");
@@ -281,6 +302,8 @@ public class CabinetAGEBasic : MonoBehaviour
 
         AGEBasic.SetCoinSlot(coinSlot);
         AGEBasic.SetCabinet(cabinet);
+        AGEBasic.SetCabinetEvents(events);
+
 
         if (AGEInfo.Variables != null)
         {       
@@ -303,7 +326,6 @@ public class CabinetAGEBasic : MonoBehaviour
         //events ---
         if (AGEInfo.events.Count > 0)
         {
-
             foreach (EventInformation info in AGEInfo.events)
             {
                 Event ev = EventsFactory.Factory(info, vars, AGEBasic);
@@ -341,7 +363,7 @@ public class CabinetAGEBasic : MonoBehaviour
             }
         }
     }
-    public IEnumerator RunEvents()
+    private IEnumerator RunEvents()
     {
         if (events.Count == 0)
             yield break;
@@ -362,28 +384,23 @@ public class CabinetAGEBasic : MonoBehaviour
             
             foreach (Event evt in events)
             {
-
                 // Check if the event was triggered
-                if (evt.WasTriggered())
+                if (evt.WasTriggered() && !AGEBasic.IsRunning())
                 {
                     ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting {evt.eventInformation.program}");
-                    if (!AGEBasic.IsRunning())
+
+                    //prepare
+                    CompileWhenNeeded(evt.eventInformation.program);
+                    evt.PrepareToRun();
+
+                    //run
+                    bool moreLines = true;
+                    while (moreLines)
                     {
-                        //no other program is running
-
-                        //prepare
-                        CompileWhenNeeded(evt.eventInformation.program);
-                        evt.PrepareToRun();
-
-                        //run
-                        bool moreLines = true;
-                        while (moreLines)
-                        {
-                            YieldInstruction yield;
-                            // Run the event's program
-                            yield = evt.Run(ref moreLines);
-                            yield return yield;
-                        }
+                        YieldInstruction yield;
+                        // Run the event's program
+                        yield = evt.Run(ref moreLines);
+                        yield return yield;
                     }
                 }
             }
