@@ -56,7 +56,7 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always", "on-control-active" };
+    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin" };
 
     public string program;
     public double delay = 0;
@@ -83,6 +83,7 @@ public class EventInformation
         }
     }
 }
+
 [Serializable]
 public class ControlInformation
 {
@@ -107,28 +108,33 @@ public class Event
     public basicAGE AGEBasic;
 
     protected DateTime startTime;
+    protected bool initialized = false;
 
-    private bool triggered;
+    private int triggeredCount = 0;
+    protected int triggeredCountMAX = int.MaxValue;
 
-    public Event(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
+    public Event(EventInformation eventInformation, BasicVars vars, basicAGE agebasic, int triggerCountMAX = int.MaxValue)
     {
         this.eventInformation = eventInformation;
         this.vars = vars;
+        this.triggeredCountMAX = triggerCountMAX;
         AGEBasic = agebasic;
     }
 
     protected bool RegisterTrigger(bool isTriggered)
     {
-        triggered = isTriggered;
-        return triggered;
+        if (isTriggered && triggeredCount < triggeredCountMAX)
+            triggeredCount++;
+        return triggeredCount > 0;
     }
-    protected bool WasTriggered()
+    public bool WasTriggered()
     {
-        return triggered;
+        return triggeredCount > 0;
     }
     public virtual void Init() {
-        triggered = false;
+        triggeredCount = 0;
         startTime = DateTime.Now;
+        initialized = true;
     }
     public virtual void PrepareToRun() 
     {
@@ -142,7 +148,7 @@ public class Event
         yield = AGEBasic.runNextLineCurrentProgram(ref moreLines);
         if (!moreLines)
         {
-            triggered = false;
+            triggeredCount --;
             startTime = DateTime.Now;
         }
         return yield;
@@ -152,12 +158,7 @@ public class Event
     {
         return (DateTime.Now - startTime).TotalSeconds >= eventInformation.delay;
     }
-    public virtual bool Triggered() { 
-        if (triggered)
-        {
-            //was but not executed.
-            return true;
-        }
+    public virtual bool EvaluateTrigger() { 
         if (eventInformation.delay > 0)
         {
             return RegisterTrigger(IsTime());
@@ -176,10 +177,10 @@ public class OnTimer : Event
 public class OnAlways : Event
 {
     public OnAlways(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
-        base(eventInformation, vars, agebasic)
+        base(eventInformation, vars, agebasic, 1)
     { }
 
-    public override bool Triggered()
+    public override bool EvaluateTrigger()
     {
         return RegisterTrigger(true);
     }
@@ -188,16 +189,13 @@ public class OnAlways : Event
 public class OnControlActive: Event
 {
     public OnControlActive(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
-        base(eventInformation, vars, agebasic)
+        base(eventInformation, vars, agebasic, 1)
     { }
 
-    public override bool Triggered()
+    public override bool EvaluateTrigger()
     {
         if (AGEBasic.ConfigCommands.ControlMap == null)
             return RegisterTrigger(false);
-
-        if (WasTriggered())
-            return true;
 
         bool ontime = base.IsTime();
         if (ontime)
@@ -211,6 +209,24 @@ public class OnControlActive: Event
     }
 }
 
+public class OnInsertCoin : Event
+{
+    public OnInsertCoin(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    void OnInsertCoinTrigger()
+    {
+        RegisterTrigger(true);
+    }
+    public override void Init()
+    {
+        AGEBasic.ConfigCommands.CoinSlot.OnInsertCoin.AddListener(OnInsertCoinTrigger);
+        base.Init();
+    }
+}
+
+
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -223,6 +239,8 @@ public static class EventsFactory
                 return new OnTimer(eventInformation, vars, agebasic);
             case "on-control-active":
                 return new OnControlActive(eventInformation, vars, agebasic);
+            case "on-insert-coin":
+                return new OnInsertCoin(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");
@@ -336,12 +354,17 @@ public class CabinetAGEBasic : MonoBehaviour
 
         while (true) // Continuous loop to keep checking for triggered events
         {
+            foreach (Event evt in events)
+            {
+                //check and cache the trigger action
+                evt.EvaluateTrigger();
+            }
             
             foreach (Event evt in events)
             {
 
-                // Check if the event is/was triggered
-                if (evt.Triggered())
+                // Check if the event was triggered
+                if (evt.WasTriggered())
                 {
                     ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting {evt.eventInformation.program}");
                     if (!AGEBasic.IsRunning())

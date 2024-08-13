@@ -6,12 +6,15 @@ You should have received a copy of the GNU General Public License along with thi
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 [RequireComponent(typeof(AudioSource))]
 public class CoinSlotController : MonoBehaviour
 {
     int coins = 0;
     AudioSource caChin;
+
+    public UnityEvent OnInsertCoin;
 
     // Start is called before the first frame update
     void Start() {
@@ -21,6 +24,8 @@ public class CoinSlotController : MonoBehaviour
     public void insertCoin() {
         coins++;
         caChin.Play();
+        OnInsertCoin?.Invoke();
+
         ConfigManager.WriteConsole($"{gameObject.name} has {coins} coins in the bucket.");
     }
 
