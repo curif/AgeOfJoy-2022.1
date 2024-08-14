@@ -217,7 +217,10 @@ public class basicAGE : MonoBehaviour
     {
         configCommands.events = events;
     }
-
+    public void SetLightGunTarget(LightGunTarget lightGunTarget)
+    {
+        configCommands.lightGunTarget = lightGunTarget;
+    }
     public bool Exists(string name)
     {
         return programs.ContainsKey(name);

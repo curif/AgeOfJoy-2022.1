@@ -5,6 +5,9 @@ using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 using System.IO;
+using UnityEngine.Events;
+using System.Collections.Generic;
+using static CabinetInformation;
 
 public class LightGunInformation
 {
@@ -78,6 +81,8 @@ public class LightGunInformation
 
 // https://github.com/libretro/mame2003-plus-libretro/blob/89298ff12328433c7cdc63d38c65439079afcb5d/src/mame2003/mame2003.c#L1352
 // https://github.com/libretro/mame2003-plus-libretro/blob/master/src/mame2003/core_options.c#L66
+// This component could be attached to a cabinet and be filled with parts that can be shooted.
+// Or in a CRT (was designed originaly to be attached to a CRT). In this case it could have parts to shoot too.
 public class LightGunTarget : MonoBehaviour
 {
 
@@ -89,12 +94,6 @@ public class LightGunTarget : MonoBehaviour
     [Tooltip("Invert to gun model forward.")]
     public bool invertForward = false;
 
-    // Public properties to access the hit coordinates from other scripts if needed
-    [Tooltip("libretro shoot position X (calculated)")]
-    public int HitX;
-    [Tooltip("libretro shoot position Y (calculated).")]
-    public int HitY;
-
     [Tooltip("Is aiming above the screen ?")]
     public bool OutOfScreenTop;
     [Tooltip("Is aiming under the screen ?")]
@@ -103,13 +102,10 @@ public class LightGunTarget : MonoBehaviour
     public bool OutOfScreenLeft;
     [Tooltip("Is aiming right of the screen ?")]
     public bool OutOfScreenRight;
-    [Tooltip("libretro shoot position X (calculated), even if out of screen")]
-    public int AbsoluteHitX;
-    [Tooltip("libretro shoot position Y (calculated), even if out of screen")]
-    public int AbsoluteHitY;
 
     // Layer mask to filter the raycast hits
-    private LayerMask layerMask;
+    private LayerMask layerMaskCRT;
+    private LayerMask layerMaskParts;
 
     private GameObject hitPosition;
 
@@ -131,14 +127,23 @@ public class LightGunTarget : MonoBehaviour
     public float borderSizeY = 1f;
     public float adjustSightVertical = 0, adjustSightHorizontal = 0;
 
+    public List<GameObject> parts = new List<GameObject>(); //parts to hit.
+    private GameObject player;
+    private bool attachedToCRT; //old behavior
 
     //Cabinet path
     private string pathBase;
+
+    //CRT
     float CRTAreaWidth; //new width after substract borders
     float CRTAreaHeight; //new height after substract borders
     float factorX; //adjustment factor for hit point to translate to libretro width space
     float factorY; //adjustment factor for hit point to translate to libretro height space
-
+    int lastHitX;
+    int lastHitY;
+    GameObject lastGameObjectHit;
+    int AbsoluteHitX;
+    int AbsoluteHitY;
     /*
     It reports X/Y coordinates in screen space (similar to the pointer)
     in the range [-0x8000, 0x7fff] in both axes, with zero being center and
@@ -149,17 +154,34 @@ public class LightGunTarget : MonoBehaviour
     const int virtualScreenWidth = 32767; //libretro constant width
     const int virtualScreenHeight = 32767; //libretro constant height
 
+    [System.Serializable] public class OnHitCRTEvent : UnityEvent<int, int> { }
+    [System.Serializable] public class OnHitOutsideCRTEvent : UnityEvent { }
+    [System.Serializable] public class OnHitPartEvent : UnityEvent<GameObject> { }
+
+    RaycastHit hit;
+    public OnHitCRTEvent OnHitCRT;
+    public OnHitPartEvent OnHitPart;
+    public OnHitOutsideCRTEvent OnHitOutsideCRT;
+
+    public void Start()
+    {
+        attachedToCRT = gameObject.layer == LayerMask.NameToLayer("CRT");
+    }
+
     //to start the component only if light-gun is active for the game.
-    public void Init(LightGunInformation lightGunInfo, string pathBase)
+    public void Init(LightGunInformation lightGunInfo, string pathBase, GameObject player)
     {
         if (lightGunInfo == null || !lightGunInfo.active)
             return;
+        
+        ConfigManager.WriteConsole($"[LightGunTarget.init] lightGunInfo:{lightGunInfo.ToString()} pathbase: {pathBase}");
 
         lightGunInformation = lightGunInfo;
         this.pathBase = pathBase;
-        ConfigManager.WriteConsole($"[LightGunTarget.init] lightGunInfo:{lightGunInfo.ToString()} pathbase: {pathBase}");
+        this.player = player;
 
-        layerMask = LayerMask.GetMask("CRT");
+        layerMaskCRT = LayerMask.GetMask("CRT");
+        layerMaskParts = LayerMask.GetMask("LightGunTarget");
 
         if (lightGunInformation != null)
         {
@@ -205,6 +227,28 @@ public class LightGunTarget : MonoBehaviour
         //calculate the multiplication factor for the hit point after substract borders
         factorX = CRTAreaWidth / transform.localScale.x;
         factorY = CRTAreaHeight / transform.localScale.y;
+
+        //connect to the event to know when the lightgun is ready
+        ChangeControls chctrl = player.GetComponent<ChangeControls>();
+        if (chctrl != null)
+        {
+            chctrl.OnChangeRightJoystick.AddListener(OnLightGunActive);
+        }
+    }
+
+
+    //assign a part to shoot and change the part's layer
+    public void addPart(GameObject part)
+    {
+        if (part != null)
+        {
+            this.parts.Add(part);
+        }
+    }
+
+    public void OnLightGunActive(GameObject spaceGun)
+    {
+        this.spaceGun = spaceGun;
     }
 
     public bool Initialized()
@@ -223,11 +267,25 @@ public class LightGunTarget : MonoBehaviour
 
     private void declareOutOfScreen()
     {
-        HitX = -0x8000;
-        HitY = -0x8000;
+        lastHitX = -0x8000;
+        lastHitY = -0x8000;
         if (showHitPosition)
             hitPosition.SetActive(false);
+
         return;
+    }
+
+    public void GetLastHit(out int hitx, out int hity)
+    {
+        hitx = lastHitX; hity = lastHitY;
+    }
+    public GameObject GetLastGameObjectHit()
+    {
+        return lastGameObjectHit;
+    }
+    public void GetLastAbsoluteHit(out int hitx, out int hity)
+    {
+        hitx = AbsoluteHitX; hity = AbsoluteHitY;
     }
 
     public string GetModelPath()
@@ -237,14 +295,44 @@ public class LightGunTarget : MonoBehaviour
         return pathBase + "/" + lightGunInformation.gun.model;
     }
 
-    public bool OnScreen()
+    public bool PointingToTheScreen()
     {
-        return HitX != -0x8000;
+        return lastHitX != -0x8000 && lastHitY != -0x8000;
     }
-    public void Shoot()
+
+    public void Update()
     {
-        if (spaceGun == null || spaceGun.transform == null)
+        if (lightGunInformation == null || !lightGunInformation.active ||
+            spaceGun == null || spaceGun.transform == null ||
+            !spaceGun.activeSelf)
             return;
+
+        if (this.parts.Count > 0)
+        {
+            lastGameObjectHit = null;
+            if (isPoinitingToATarget(layerMaskParts))
+            {
+                foreach (GameObject part in this.parts)
+                {
+                    if (hit.collider.gameObject == part)
+                    {
+                        lastGameObjectHit = part;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (attachedToCRT)
+        {
+            // if this component is attached to a CRT
+            if (isPoinitingToATarget(layerMaskCRT) && hit.collider.gameObject == gameObject)
+                detectCRTCoordinates();
+        }
+    }
+
+    private bool isPoinitingToATarget(LayerMask layer)
+    {
 
         //adjust vertical/horizontal sight (in centimeters)
         Vector3 adjustedPosition = new Vector3(
@@ -253,64 +341,66 @@ public class LightGunTarget : MonoBehaviour
             spaceGun.transform.position.z
         );
         // Cast a ray from the spaceGun position to its forward direction
-        if (Physics.Raycast(adjustedPosition,
+        return Physics.Raycast(adjustedPosition,
                 invertForward ? -spaceGun.transform.forward : spaceGun.transform.forward,
-                out RaycastHit hit, Mathf.Infinity, layerMask))
-        {
-            // Check if the ray hits the TV screen GameObject
-            if (hit.collider.gameObject == gameObject)
+                out hit, Mathf.Infinity, layer);
+    }
+
+    private void detectCRTCoordinates()
+    {
+        if (hit.collider.gameObject == gameObject)
+        { 
+            // Get the hit point in local TV screen space
+            Vector3 localHitPoint = transform.InverseTransformPoint(hit.point);
+
+            // the X/Y coordinates in tv screen space in the range [-0x8000, 0x7fff] in both axes, 
+            // with zero being center and -0x8000 being out of bounds 
+            // (the ray fail to hit the screen). Remember: zero being center of the TV screen.
+
+            // Calculate the new x,y point value after shrink the screen to avoid borders
+            float hitPointX = localHitPoint.x * factorX;
+            float hitPointY = localHitPoint.y * factorY;
+
+            float translatedHitX = hitPointX * virtualScreenWidth / scaleFactorX;
+            float translatedHitY = hitPointY * virtualScreenHeight / scaleFactorY;
+
+            // translatedHitX += adjustSightHorizontal;
+            // translatedHitY += adjustSightVertical;
+
+            lastHitX = Mathf.RoundToInt(Mathf.Clamp(translatedHitX, -virtualScreenWidth, virtualScreenWidth));
+            lastHitY = Mathf.RoundToInt(Mathf.Clamp(translatedHitY, -virtualScreenHeight, virtualScreenHeight));
+
+            OutOfScreenLeft = lastHitX == -virtualScreenWidth;
+            OutOfScreenRight = lastHitX == virtualScreenWidth;
+            OutOfScreenTop = lastHitY == -virtualScreenHeight;
+            OutOfScreenBottom = lastHitY == virtualScreenHeight;
+            AbsoluteHitX = InvertX ? -lastHitX : lastHitX;
+            AbsoluteHitY = InvertY ? -lastHitY : lastHitY;
+
+            if (Math.Abs(lastHitX) == virtualScreenWidth || Math.Abs(lastHitY) == virtualScreenHeight)
             {
-                // Get the hit point in local TV screen space
-                Vector3 localHitPoint = transform.InverseTransformPoint(hit.point);
+                declareOutOfScreen();
+            }
+            else
+            {
+                if (InvertX)
+                    lastHitX = -lastHitX;
+                if (InvertY)
+                    lastHitY = -lastHitY;
 
-                // the X/Y coordinates in tv screen space in the range [-0x8000, 0x7fff] in both axes, 
-                // with zero being center and -0x8000 being out of bounds 
-                // (the ray fail to hit the screen). Remember: zero being center of the TV screen.
-
-                // Calculate the new x,y point value after shrink the screen to avoid borders
-                float hitPointX = localHitPoint.x * factorX;
-                float hitPointY = localHitPoint.y * factorY;
-
-                float translatedHitX = hitPointX * virtualScreenWidth / scaleFactorX;
-                float translatedHitY = hitPointY * virtualScreenHeight / scaleFactorY;
-
-                // translatedHitX += adjustSightHorizontal;
-                // translatedHitY += adjustSightVertical;
-
-                HitX = Mathf.RoundToInt(Mathf.Clamp(translatedHitX, -virtualScreenWidth, virtualScreenWidth));
-                HitY = Mathf.RoundToInt(Mathf.Clamp(translatedHitY, -virtualScreenHeight, virtualScreenHeight));
-
-                OutOfScreenLeft = HitX == -virtualScreenWidth;
-                OutOfScreenRight = HitX == virtualScreenWidth;
-                OutOfScreenTop = HitY == -virtualScreenHeight;
-                OutOfScreenBottom = HitY == virtualScreenHeight;
-                AbsoluteHitX = InvertX ? -HitX : HitX;
-                AbsoluteHitY = InvertY ? -HitY : HitY;
-
-                if (Math.Abs(HitX) == virtualScreenWidth || Math.Abs(HitY) == virtualScreenHeight)
+                if (showHitPosition)
                 {
-                    declareOutOfScreen();
+                    hitPosition.SetActive(true);
+                    hitPosition.transform.localPosition = localHitPoint;
                 }
-                else
-                {
-                    if (InvertX)
-                        HitX = -HitX;
-                    if (InvertY)
-                        HitY = -HitY;
-
-                    if (showHitPosition)
-                    {
-                        hitPosition.SetActive(true);
-                        hitPosition.transform.localPosition = localHitPoint;
-                    }
-                }
+                
+            }
 
 #if ON_DEBUG
-                // ConfigManager.WriteConsole($"[LightGunTarget] screen localscale w,h: {transform.localScale.x}, {transform.localScale.y} screen scale: {scaleX}, {scaleY} - x,y:{localHitPoint.x}, {localHitPoint.y} - HitX, HitY: {HitX}, {HitY} {hit.collider.gameObject.name}");
-                ConfigManager.WriteConsole($"[LightGunTarget] screen localscale w,h: {transform.localScale.x}, {transform.localScale.y} - x,y:{localHitPoint.x}, {localHitPoint.y} - HitX, HitY: {HitX}, {HitY} {hit.collider.gameObject.name}");
+            // ConfigManager.WriteConsole($"[LightGunTarget] screen localscale w,h: {transform.localScale.x}, {transform.localScale.y} screen scale: {scaleX}, {scaleY} - x,y:{localHitPoint.x}, {localHitPoint.y} - HitX, HitY: {HitX}, {HitY} {hit.collider.gameObject.name}");
+            ConfigManager.WriteConsole($"[LightGunTarget] screen localscale w,h: {transform.localScale.x}, {transform.localScale.y} - x,y:{localHitPoint.x}, {localHitPoint.y} - HitX, HitY: {HitX}, {HitY} {hit.collider.gameObject.name}");
 #endif
-                return;
-            }
+            return;
         }
 
         // If the ray doesn't hit anything, reset the hit coordinates to out-of-bounds

@@ -52,4 +52,5 @@ public class ConfigurationCommands
     //cabinet events
     public List<Event> events;
 
+    public LightGunTarget lightGunTarget;
 }

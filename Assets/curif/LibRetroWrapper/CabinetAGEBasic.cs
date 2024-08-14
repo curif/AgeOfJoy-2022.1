@@ -56,7 +56,8 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom" };
+    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom",
+                                    "on-lightgun"};
     
     public string name = "";
     public string program;
@@ -246,6 +247,21 @@ public class OnCustom : Event
 }
 
 
+public class OnLightGun : Event
+{
+    public OnLightGun(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void EvaluateTrigger()
+    {
+        if (AGEBasic.ConfigCommands.lightGunTarget != null)
+        {
+            RegisterTrigger(AGEBasic.ConfigCommands.lightGunTarget.GetLastGameObjectHit() != null);
+        }
+    }
+}
+
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -262,6 +278,8 @@ public static class EventsFactory
                 return new OnInsertCoin(eventInformation, vars, agebasic);
             case "on-custom":
                 return new OnCustom(eventInformation, vars, agebasic);
+            case "on-lightgun":
+                return new OnLightGun(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");
@@ -292,7 +310,8 @@ public class CabinetAGEBasic : MonoBehaviour
     public void Init(CabinetAGEBasicInformation AGEInfo,
             string pathBase,
             Cabinet cabinet,
-            CoinSlotController coinSlot)
+            CoinSlotController coinSlot, 
+            LightGunTarget lightGunTarget)
     {
         if (AGEBasic == null)
             AGEBasic = GetComponent<basicAGE>();
@@ -303,7 +322,7 @@ public class CabinetAGEBasic : MonoBehaviour
         AGEBasic.SetCoinSlot(coinSlot);
         AGEBasic.SetCabinet(cabinet);
         AGEBasic.SetCabinetEvents(events);
-
+        AGEBasic.SetLightGunTarget(lightGunTarget);
 
         if (AGEInfo.Variables != null)
         {       

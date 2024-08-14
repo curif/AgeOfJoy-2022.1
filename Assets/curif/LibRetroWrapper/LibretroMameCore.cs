@@ -229,7 +229,6 @@ public static unsafe class LibretroMameCore
     public static uint TextureWidth = 0, TextureHeight = 0;
     static bool RecreateTexture = true;
     static object GameTextureLock = new();
-    static object LightGunLock = new();
     public static ShaderScreenBase Shader;
 
 
@@ -1189,8 +1188,6 @@ public static unsafe class LibretroMameCore
         InteractionAvailable = false;
         FPSControlNoUnity = null;
 
-        LightGunLock = new();
-
         ResetTextureData();
 
         GameTextureLock = new();
@@ -1298,17 +1295,6 @@ public static unsafe class LibretroMameCore
         return (Int16)0;
     }
 
-    public static void CalculateLightGunPosition()
-    {
-        if (lightGunTarget?.lightGunInformation != null &&
-            lightGunTarget.lightGunInformation.active)
-        {
-            lock (LightGunLock)
-            {
-                lightGunTarget.Shoot();
-            }
-        }
-    }
 
     // Normalize lightgun coords (-0x7fff to 0x7fff) to screen coords (0 to res)
     public static Int16 toScreenCoord(int coord, uint res)
@@ -1467,14 +1453,17 @@ public static unsafe class LibretroMameCore
         }
         else
         {
+            int AbsoluteHitX, AbsoluteHitY;
+            lightGunTarget.GetLastAbsoluteHit(out AbsoluteHitX, out AbsoluteHitY);
+
             // Aim driven mouse emulation (uses lightgun data)
-            WriteConsole($"[inputStateCB_Mouse] Lightgun at {lightGunTarget.HitX}x{lightGunTarget.HitY}");
+            WriteConsole($"[inputStateCB_Mouse] Lightgun at {AbsoluteHitX}x{AbsoluteHitY}");
             switch (id)
             {
                 case RETRO_DEVICE_ID_MOUSE_X:
-                    return updateMouseX(toScreenCoord(lightGunTarget.AbsoluteHitX, TextureWidth));
+                    return updateMouseX(toScreenCoord(AbsoluteHitX, TextureWidth));
                 case RETRO_DEVICE_ID_MOUSE_Y:
-                    return updateMouseY(toScreenCoord(lightGunTarget.AbsoluteHitY, TextureHeight));
+                    return updateMouseY(toScreenCoord(AbsoluteHitY, TextureHeight));
                 default:
                     return (Int16)deviceIdsMouse.Active(id, (int)port);
             }
@@ -1483,6 +1472,7 @@ public static unsafe class LibretroMameCore
 
     private static Int16 inputStateCB_LightGun(uint port, uint device, uint index, uint id)
     {
+
         WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
 
         if (lightGunTarget?.lightGunInformation == null || !lightGunTarget.lightGunInformation.active)
@@ -1490,6 +1480,8 @@ public static unsafe class LibretroMameCore
             return 0;
         }
 
+        int lastHitX, lastHitY;
+        lightGunTarget.GetLastHit(out lastHitX, out lastHitY);
         switch (id)
         {
             case RETRO_DEVICE_ID_LIGHTGUN_SELECT:
@@ -1506,24 +1498,15 @@ public static unsafe class LibretroMameCore
                 }
                 else
                 {
-                    lock (LightGunLock)
-                    {
-                        WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.OnScreen()} ({lightGunTarget.HitX}, {lightGunTarget.HitY}) - port: {port}");
-                        return lightGunTarget.OnScreen() ? (Int16)0 : (Int16)1;
-                    }
+                    WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN: {!lightGunTarget.PointingToTheScreen()} ({lastHitX}, {lastHitY}) - port: {port}");
+                    return lightGunTarget.PointingToTheScreen() ? (Int16)0 : (Int16)1;
                 }
             case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X:
-                lock (LightGunLock)
-                {
-                    WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
-                    return (Int16)lightGunTarget.HitX;
-                }
+                WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X - port: {port} - HitX,Y: ({lastHitX}, {lastHitY})");
+                return (Int16)lastHitX;
             case RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y:
-                lock (LightGunLock)
-                {
-                    WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lightGunTarget.HitX}, {lightGunTarget.HitY})");
-                    return (Int16)lightGunTarget.HitY;
-                }
+                WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y - port: {port} - HitX,Y: ({lastHitX}, {lastHitY})");
+                return (Int16)lastHitY;
             default:
                 WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_ID_LIGHTGUN_???: id: {id} - port: {port}");
                 Int16 ret = (Int16)deviceIdsLightGun.Active(id, (int)port);
@@ -1536,12 +1519,14 @@ public static unsafe class LibretroMameCore
 
     private static Int16 inputStateCB_Pointer(uint port, uint device, uint index, uint id)
     {
+        int AbsoluteHitX, AbsoluteHitY;
+        lightGunTarget.GetLastAbsoluteHit(out AbsoluteHitX, out AbsoluteHitY);
         switch (id)
         {
             case RETRO_DEVICE_ID_POINTER_X:
-                return (Int16)lightGunTarget.AbsoluteHitX;
+                return (Int16)AbsoluteHitX;
             case RETRO_DEVICE_ID_POINTER_Y:
-                return (Int16)lightGunTarget.AbsoluteHitY;
+                return (Int16)AbsoluteHitY;
             case RETRO_DEVICE_ID_POINTER_PRESSED:
             case RETRO_DEVICE_ID_POINTER_COUNT:
                 if (index > 0)

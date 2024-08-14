@@ -23,6 +23,7 @@ public class Cabinet
     //those parts that the user can configure, but is not limited to.
     public static List<string> userStandarConfigurableParts = new List<string>() { "front", "left", "right", "joystick", "joystick-down", "screen-base" };
 
+    public LayerMask layerPart = LayerMask.NameToLayer("LightGunTarget");
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)
     {
@@ -788,6 +789,36 @@ public class Cabinet
         return this;
     }
 
+    //set a part as lightgun target.
+    public Cabinet SetLightGunTarget(string partName, LightGunInformation linfo)
+    {
+        return SetLightGunTarget(PartsPosition(partName), linfo);
+    }
+    public Cabinet SetLightGunTarget(int partNum, LightGunInformation linfo)
+    {
+        GameObject part = Parts(partNum);
+        LightGunTarget l = part.GetComponent<LightGunTarget>();
+        if (l != null)
+            return this;
+
+        part.layer = layerPart;
+
+        //needs a Mesh collider
+        MeshCollider collider = part.GetComponent<MeshCollider>();
+        if (collider == null)
+            part.AddComponent<MeshCollider>();
+        
+        return this;
+    }
+
+    public bool IsLightGunTarget(string partName)
+    {
+        return IsLightGunTarget(PartsPosition(partName));
+    }
+    public bool IsLightGunTarget(int partNum)
+    {
+        return Parts(partNum).layer == layerPart;
+    }
     public static string CRTName(string cabinetName, string gameFile)
     {
         return "screen-" + cabinetName + "-" + gameFile;

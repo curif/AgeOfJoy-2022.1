@@ -18,6 +18,8 @@ using System.Linq;
 using AOJ.Managers; // Geometrrizer: Allows access to EventManager for player FX
 using LC = LibretroControlMapDictionnary;
 using UnityEngine.Audio;
+using static Unity.VisualScripting.Metadata;
+
 
 #if UNITY_EDITOR
 using CM = ControlMapPathDictionary;
@@ -184,7 +186,15 @@ public class LibretroScreenController : MonoBehaviour
 
         player = GameObject.Find("OVRPlayerControllerGalery");
         changeControls = player.GetComponent<ChangeControls>();
+
         lightGunTarget = GetComponent<LightGunTarget>();
+        for (int i = 0; i < cabinet.gameObject.transform.childCount; i++)
+        {
+            Transform child = cabinet.gameObject.transform.GetChild(i);
+
+            if (cabinet.IsLightGunTarget(child.name))
+                lightGunTarget.addPart(child.gameObject);
+        }
 
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
@@ -205,7 +215,7 @@ public class LibretroScreenController : MonoBehaviour
         // age basic
         if (ageBasicInformation != null && ageBasicInformation.active)
         {
-            cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
+            cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);
             cabinetAGEBasic.ExecAfterLoadBas();
         }
 
@@ -241,6 +251,7 @@ public class LibretroScreenController : MonoBehaviour
                 mainCoroutine = StartCoroutine(runBT());
         }
     }
+
     private void OnDisable()
     {
         if (!initialized)
@@ -336,7 +347,7 @@ public class LibretroScreenController : MonoBehaviour
                   // Light guns configuration
                   if (lightGunTarget != null && lightGunInformation != null)
                   {
-                      lightGunTarget.Init(lightGunInformation, PathBase);
+                      lightGunTarget.Init(lightGunInformation, PathBase, player);
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
 
@@ -362,7 +373,7 @@ public class LibretroScreenController : MonoBehaviour
 
                   PreparePlayerToPlayGame(true);
                   if (lightGunTarget != null)
-                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
+                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
 
                   //admit user interactions (like insert coins)
                   LibretroMameCore.StartInteractions();
@@ -525,7 +536,6 @@ public class LibretroScreenController : MonoBehaviour
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
             LibretroMameCore.UpdateTexture();
-            LibretroMameCore.CalculateLightGunPosition();
         }
 
         shader.Update();

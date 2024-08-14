@@ -359,6 +359,7 @@ public class CabinetInformation
         public string type = Types[0];
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
+        public bool istarget = false;
     }
 
     public class CabinetInputDevice
