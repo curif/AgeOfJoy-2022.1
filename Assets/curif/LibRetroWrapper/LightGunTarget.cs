@@ -159,9 +159,9 @@ public class LightGunTarget : MonoBehaviour
     [System.Serializable] public class OnHitPartEvent : UnityEvent<GameObject> { }
 
     RaycastHit hit;
-    public OnHitCRTEvent OnHitCRT;
-    public OnHitPartEvent OnHitPart;
-    public OnHitOutsideCRTEvent OnHitOutsideCRT;
+    //public OnHitCRTEvent OnHitCRT;
+    //public OnHitPartEvent OnHitPart;
+    //public OnHitOutsideCRTEvent OnHitOutsideCRT;
 
     public void Start()
     {

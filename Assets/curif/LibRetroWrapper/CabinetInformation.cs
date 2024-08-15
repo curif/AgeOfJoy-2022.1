@@ -360,6 +360,7 @@ public class CabinetInformation
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
         public bool istarget = false;
+        public List<string> collision = new(); //list of parts to collide.
     }
 
     public class CabinetInputDevice

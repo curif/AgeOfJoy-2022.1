@@ -810,6 +810,40 @@ public class Cabinet
         
         return this;
     }
+    //add the Touch component and the gameobject to collide
+    public Cabinet SetColliding(string partName, List<string> colliders)
+    {
+        SetColliding(PartsPosition(partName), colliders);
+        return this;
+    }
+    public Cabinet SetColliding(int partNum, List<string> colliders)
+    {
+        GameObject part = Parts(partNum);
+        TouchDetection td = part.GetComponent<TouchDetection>();
+        if (td == null)
+            td = part.AddComponent<TouchDetection>();
+
+        foreach(string name in colliders)
+        {
+            td.allowedObjects.Add(name);
+            GameObject colliding = Parts(name);
+            if (colliding != null)
+            {
+                BoxCollider b = colliding.GetComponent<BoxCollider>();
+                if (b == null)
+                    b = colliding.AddComponent<BoxCollider>();
+                Rigidbody rb = colliding.GetComponent<Rigidbody>();
+                if (rb == null)
+                    rb = colliding.AddComponent<Rigidbody>();
+                rb.useGravity = false;
+                rb.isKinematic = true;
+                rb.automaticInertiaTensor = false;
+                rb.automaticCenterOfMass = false;
+            }
+        }
+
+        return this;
+    }
 
     public bool IsLightGunTarget(string partName)
     {

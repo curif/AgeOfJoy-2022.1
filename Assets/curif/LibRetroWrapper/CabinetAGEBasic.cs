@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using UnityEditor;
 using static OVRHaptics;
+using static CabinetInformation;
 
 [Serializable]
 public class CabinetAGEBasicInformation
@@ -56,13 +57,14 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom",
-                                    "on-lightgun"};
+    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom", "on-lightgun", 
+                                    "on-collision-start", "on-collision-stay", "on-collision-exit"};
     
     public string name = "";
     public string program;
     public double delay = 0;
     public List<ControlInformation> controls;
+    public string part;
 
     public void Validate()
     {
@@ -77,6 +79,9 @@ public class EventInformation
 
         if (eventId == "on-custom" && string.IsNullOrEmpty(name))
             throw new Exception($"AGEBasic Custom Event {eventId} must to specify a distinctive name");
+        
+        if (eventId.StartsWith("on-collision") && string.IsNullOrEmpty(part))
+            throw new Exception($"AGEBasic Collision event {eventId} needs the collider part name");
 
         if (controls != null)
         {
@@ -262,6 +267,87 @@ public class OnLightGun : Event
     }
 }
 
+
+public class OnCollisionBase: Event
+{
+    protected GameObject partCollider;
+    protected TouchDetection touchDetection;
+
+    public OnCollisionBase(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        base.Init();
+        partCollider = AGEBasic.ConfigCommands.Cabinet.Parts(eventInformation.part);
+        if (partCollider == null)
+            throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} not found");
+        touchDetection = partCollider.GetComponent<TouchDetection>();
+        if (touchDetection == null)
+            throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} wasn't declared collision parts in cabinet configuration (yaml)");
+        if (touchDetection.allowedObjects.Count == 0)
+            throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} needs declared collision parts list in cabinet configuration (yaml)");
+    }
+
+    public override void EvaluateTrigger()
+    {
+    }
+
+}
+
+public class OnCollisionStart : OnCollisionBase
+{
+    public OnCollisionStart(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        base.Init();
+        touchDetection.onTriggerEnterEvent.AddListener(OnCollisionTriggerStart);
+    }
+
+    void OnCollisionTriggerStart(string part)
+    {
+        RegisterTrigger(true);
+    }
+}
+public class OnCollisionStay : OnCollisionBase
+{
+    public OnCollisionStay(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        base.Init();
+        touchDetection.onTriggerStayEvent.AddListener(OnCollisionTriggerStay);
+    }
+
+    void OnCollisionTriggerStay(string part)
+    {
+        RegisterTrigger(true);
+    }
+}
+
+public class OnCollisionExit : OnCollisionBase
+{
+    public OnCollisionExit(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        base.Init();
+        touchDetection.onTriggerExitEvent.AddListener(OnCollisionTriggerExit);
+    }
+
+    void OnCollisionTriggerExit(string part)
+    {
+        RegisterTrigger(true);
+    }
+}
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -280,6 +366,12 @@ public static class EventsFactory
                 return new OnCustom(eventInformation, vars, agebasic);
             case "on-lightgun":
                 return new OnLightGun(eventInformation, vars, agebasic);
+            case "on-collision-start":
+                return new OnCollisionStart(eventInformation, vars, agebasic);
+            case "on-collision-stay":
+                return new OnCollisionStay(eventInformation, vars, agebasic);
+            case "on-collision-exit":
+                return new OnCollisionExit(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");
@@ -443,6 +535,14 @@ public class CabinetAGEBasic : MonoBehaviour
             coroutine = StartCoroutine(RunEvents());
     }
 
+    // stop programs and events.
+    public void Stop()
+    {
+        if (coroutine != null)
+            StopCoroutine(coroutine);
+        AGEBasic.ForceStop();
+    }
+
     public void StopInsertCoinBas()
     {
         if (AGEBasic.IsRunning(AGEInfo.afterInsertCoin))
@@ -455,8 +555,7 @@ public class CabinetAGEBasic : MonoBehaviour
     {
         AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLeave);
-        if (coroutine != null)
-            StopCoroutine(coroutine);
+
     }
     public void ExecAfterLoadBas()
     {

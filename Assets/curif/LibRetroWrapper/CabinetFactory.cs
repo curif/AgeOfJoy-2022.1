@@ -322,7 +322,7 @@ public static class CabinetFactory
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} NO-CRT controller added");
         }
 
-        //blockers and targets
+        //blockers, targets, etc
         if (cbinfo.Parts != null)
         {
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} blockers");
@@ -331,6 +331,8 @@ public static class CabinetFactory
                 if (p.istarget)
                     cabinet.SetLightGunTarget(p.name, cbinfo.lightGunInformation);
 
+                if (p.collision.Count > 0)
+                    cabinet.SetColliding(p.name, p.collision);
 
                 if (p.type == "blocker")
                 {

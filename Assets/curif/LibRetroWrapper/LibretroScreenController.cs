@@ -502,7 +502,7 @@ public class LibretroScreenController : MonoBehaviour
         // age basic
         if (ageBasicInformation != null && ageBasicInformation.active)
         {
-            cabinetAGEBasic.StopInsertCoinBas(); //force
+            cabinetAGEBasic.Stop(); //force
             cabinetAGEBasic.ExecAfterLeaveBas();
         }
 

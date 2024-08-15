@@ -283,7 +283,7 @@ public class AGEBasicCabinetController : MonoBehaviour
               .Do("END Program", () =>
               {
                   // age basic leave
-                  cabinetAGEBasic.StopInsertCoinBas(); //force
+                  cabinetAGEBasic.Stop(); //force
                   cabinetAGEBasic.ExecAfterLeaveBas();
 
                   EndPlayerActivities();
