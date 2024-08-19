@@ -328,11 +328,15 @@ public static class CabinetFactory
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} blockers");
             foreach (CabinetInformation.Part p in cbinfo.Parts)
             {
+                int partNum = cabinet.PartsPosition(p.name);
                 if (p.istarget)
-                    cabinet.SetLightGunTarget(p.name, cbinfo.lightGunInformation);
+                    cabinet.SetLightGunTarget(partNum, cbinfo.lightGunInformation);
 
                 if (p.collision.Count > 0)
-                    cabinet.SetColliding(p.name, p.collision);
+                    cabinet.SetColliding(partNum, p.collision);
+
+                if (p.touchable != null)
+                    cabinet.SetTouchable(partNum, p.touchable, p.collision);
 
                 if (p.type == "blocker")
                 {

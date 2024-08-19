@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
 using static CabinetInformation;
 
 public class Cabinet
@@ -810,6 +811,7 @@ public class Cabinet
         
         return this;
     }
+
     //add the Touch component and the gameobject to collide
     public Cabinet SetColliding(string partName, List<string> colliders)
     {
@@ -819,16 +821,18 @@ public class Cabinet
     public Cabinet SetColliding(int partNum, List<string> colliders)
     {
         GameObject part = Parts(partNum);
-        TouchDetection td = part.GetComponent<TouchDetection>();
-        if (td == null)
-            td = part.AddComponent<TouchDetection>();
-
-        foreach(string name in colliders)
+        CollisionDetection cd = part.GetComponent<CollisionDetection>();
+        if (cd == null)
+            cd = part.AddComponent<CollisionDetection>();
+        
+        foreach (string name in colliders)
         {
-            td.allowedObjects.Add(name);
+            cd.allowedObjects.Add(name);
             GameObject colliding = Parts(name);
             if (colliding != null)
             {
+                colliding.layer = LayerMask.NameToLayer("partCollision");
+
                 BoxCollider b = colliding.GetComponent<BoxCollider>();
                 if (b == null)
                     b = colliding.AddComponent<BoxCollider>();
@@ -845,6 +849,46 @@ public class Cabinet
         return this;
     }
 
+
+    //add the Touch component and the gameobject to collide
+    //Touchable: because the player could touch it. But also can hit other cabinet's parts.
+    public Cabinet SetTouchableAndColliding(string partName, Touchable touchableInfo, List<string> colliders)
+    {
+        SetTouchable(PartsPosition(partName), touchableInfo, colliders);
+        return this;
+    }
+    public Cabinet SetTouchable(int partNum, Touchable touchableInfo, List<string> colliders)
+    {
+        GameObject part = Parts(partNum);
+        
+        //add a collider first
+        BoxCollider boxCollider = part.GetComponent<BoxCollider>();
+        if (boxCollider == null)
+        {
+            boxCollider = part.AddComponent<BoxCollider>();
+            boxCollider.isTrigger = false;
+        }
+
+        Rigidbody rb = part.GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = part.AddComponent<Rigidbody>();
+            rb.useGravity = false;
+            rb.isKinematic = true;
+            rb.automaticInertiaTensor = false;
+            rb.automaticCenterOfMass = false;
+        }
+
+        GrabDetection gd = part.GetComponent<GrabDetection>();
+        if (gd == null)
+            gd = part.AddComponent<GrabDetection>();
+
+        if (touchableInfo != null)
+            gd.canBeGrabbed = touchableInfo.isgrabbable;
+
+
+        return this;
+    }
     public bool IsLightGunTarget(string partName)
     {
         return IsLightGunTarget(PartsPosition(partName));

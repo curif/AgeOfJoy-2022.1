@@ -359,8 +359,13 @@ public class CabinetInformation
         public string type = Types[0];
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
-        public bool istarget = false;
+        public bool istarget = false; //lightgun
         public List<string> collision = new(); //list of parts to collide.
+        public Touchable touchable;  //to be touched grabed by the user.
+    }
+    public class Touchable
+    {
+        public bool isgrabbable = false;
     }
 
     public class CabinetInputDevice
