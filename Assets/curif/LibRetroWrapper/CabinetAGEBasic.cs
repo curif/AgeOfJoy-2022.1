@@ -387,6 +387,42 @@ public class OnCollisionStart : OnCollisionBase
     }
 }
 
+public class OnCollisionStay : OnCollisionBase
+{
+    public OnCollisionStay(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+
+        base.Reset();
+
+        loadComponents();
+
+        //detected: some times onTriggerEnterEvent is null. needs reinitialization
+        if (touchDetection.onTouchStart == null)
+        {
+            status = Status.error;
+            return;
+        }
+        touchDetection.onTouchStay.AddListener(OnCollisionTrigger);
+        status = Status.initialized;
+    }
+
+    void OnCollisionTrigger(string part)
+    {
+        RegisterTrigger(true);
+    }
+
+    public override void Dispose()
+    {
+        touchDetection.onTouchStart?.RemoveListener(OnCollisionTrigger);
+        base.Dispose();
+    }
+}
 public class OnCollisionEnd : OnCollisionBase
 {
     public OnCollisionEnd(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
@@ -424,11 +460,12 @@ public class OnCollisionEnd : OnCollisionBase
     }
 }
 
-
-public class OnPlayerTouchEvent: Event
+public class OnPlayerBaseEvent : Event
 {
-    private GrabDetection grabDetection;
-    public OnPlayerTouchEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+    protected GrabDetection grabDetection;
+    protected GameObject part;
+
+    public OnPlayerBaseEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
 
@@ -437,11 +474,14 @@ public class OnPlayerTouchEvent: Event
         if (status == Status.initialized)
             return;
 
-        GameObject part = AGEBasic.ConfigCommands.Cabinet.Parts(eventInformation.part);
         if (part == null)
         {
-            status = Status.initialized;
-            throw new Exception($"AGEBasic event on-touch part {eventInformation.part} not found");
+            part = AGEBasic.ConfigCommands.Cabinet.Parts(eventInformation.part);
+            if (part == null)
+            {
+                status = Status.initialized;
+                throw new Exception($"AGEBasic event on-touch part {eventInformation.part} not found");
+            }
         }
 
         grabDetection = part.GetComponent<GrabDetection>();
@@ -452,6 +492,21 @@ public class OnPlayerTouchEvent: Event
         }
 
         base.Reset();
+    }
+}
+
+public class OnPlayerTouchStartEvent: OnPlayerBaseEvent
+{
+    public OnPlayerTouchStartEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+
+        base.Init();
 
         //detected: some time onTriggerEnterEvent is null. needs reinitialization
         if (grabDetection.OnPlayerTouchEnter == null)
@@ -476,6 +531,41 @@ public class OnPlayerTouchEvent: Event
     }
 }
 
+public class OnPlayerTouchEndEvent : OnPlayerBaseEvent
+{
+    public OnPlayerTouchEndEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+
+        base.Init();
+
+        //detected: some time onTriggerEnterEvent is null. needs reinitialization
+        if (grabDetection.OnPlayerTouchExit == null)
+        {
+            status = Status.error;
+            return;
+        }
+
+        grabDetection.OnPlayerTouchExit.AddListener(OnTouch);
+        status = Status.initialized;
+    }
+
+    void OnTouch()
+    {
+        RegisterTrigger(true);
+    }
+
+    public override void Dispose()
+    {
+        grabDetection.OnPlayerTouchExit?.RemoveListener(OnTouch);
+        base.Dispose();
+    }
+}
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -496,10 +586,14 @@ public static class EventsFactory
                 return new OnLightGun(eventInformation, vars, agebasic);
             case "on-collision-start":
                 return new OnCollisionStart(eventInformation, vars, agebasic);
+            case "on-collision-stay":
+                return new OnCollisionStay(eventInformation, vars, agebasic);
             case "on-collision-end":
                 return new OnCollisionEnd(eventInformation, vars, agebasic);
             case "on-touch-start":
-                return new OnPlayerTouchEvent(eventInformation, vars, agebasic);
+                return new OnPlayerTouchStartEvent(eventInformation, vars, agebasic);
+            case "on-touch-end":
+                return new OnPlayerTouchEndEvent(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");

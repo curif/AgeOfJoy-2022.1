@@ -336,7 +336,7 @@ public static class CabinetFactory
                     cabinet.SetColliding(partNum, p.collision);
 
                 if (p.touchable != null)
-                    cabinet.SetTouchable(partNum, p.touchable, p.collision);
+                    cabinet.SetTouchable(partNum, p.touchable);
 
                 if (p.type == "blocker")
                 {

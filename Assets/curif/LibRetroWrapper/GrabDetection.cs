@@ -8,29 +8,25 @@ using UnityEditor;
 [RequireComponent(typeof(BoxCollider))]
 public class GrabDetection : MonoBehaviour
 {
-    [Tooltip("If is used to detect parts colliding: List of object names that are allowed to collide.")]
-    public List<string> allowedObjects = new List<string>();
 
     //the LeftHand && RightHand have a Direct Interactor Left/Right Gameobject
     //with a XRDirectInteractor component. Set the InteractionLayerMask to partGrabable.
     //There are a sphere collider also, adjust it to the size of the control.
 
     // UnityEvents for touch and grab (enter and exit)
-    public UnityEvent<string> OnCollisionEnter; //other part touch
-    public UnityEvent<string> OnCollisionExit;
     public UnityEvent OnPlayerTouchEnter; //player touch
     public UnityEvent OnPlayerTouchExit;
     public UnityEvent OnGrabEnter; //player grab
     public UnityEvent OnGrabExit;
 
-    // Layer for interaction
+    // Interaction Layer for interaction
     string[] layers = new string[] { "partGrabable" };
 
     // Boolean to control whether the object can be grabbed
     public bool canBeGrabbed = true;
 
     private XRGrabInteractable interactable;
-    private void Awake()
+    private void Start()
     {
         // Initialize the XR Grab Interactable
         interactable = GetComponent<XRGrabInteractable>();
@@ -55,8 +51,6 @@ public class GrabDetection : MonoBehaviour
 
         if (isPlayer(interactor))
             OnPlayerTouchEnter?.Invoke();
-        else if (allowedObjects.Contains(interactor.name))
-            OnCollisionEnter?.Invoke(interactor.name);
     }
 
     private void OnTouchExitEvent(HoverExitEventArgs args)
@@ -65,8 +59,6 @@ public class GrabDetection : MonoBehaviour
 
         if (isPlayer(interactor))
             OnPlayerTouchExit?.Invoke();
-        else if (allowedObjects.Contains(interactor.name))
-            OnCollisionExit?.Invoke(interactor.name);
     }
     private void OnGrabEnterEvent(SelectEnterEventArgs args)
     {

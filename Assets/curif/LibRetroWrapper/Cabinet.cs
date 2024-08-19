@@ -852,12 +852,12 @@ public class Cabinet
 
     //add the Touch component and the gameobject to collide
     //Touchable: because the player could touch it. But also can hit other cabinet's parts.
-    public Cabinet SetTouchableAndColliding(string partName, Touchable touchableInfo, List<string> colliders)
+    public Cabinet SetTouchable(string partName, Touchable touchableInfo)
     {
-        SetTouchable(PartsPosition(partName), touchableInfo, colliders);
+        SetTouchable(PartsPosition(partName), touchableInfo);
         return this;
     }
-    public Cabinet SetTouchable(int partNum, Touchable touchableInfo, List<string> colliders)
+    public Cabinet SetTouchable(int partNum, Touchable touchableInfo)
     {
         GameObject part = Parts(partNum);
         
@@ -885,7 +885,6 @@ public class Cabinet
 
         if (touchableInfo != null)
             gd.canBeGrabbed = touchableInfo.isgrabbable;
-
 
         return this;
     }

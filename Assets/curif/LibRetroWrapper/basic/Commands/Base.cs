@@ -1,4 +1,4 @@
-#define AGEBASIC_DEBUG_ACTIVE
+//wwwwwwwwwwwwwwwwwwww#define AGEBASIC_DEBUG_ACTIVE
 
 using System;
 
