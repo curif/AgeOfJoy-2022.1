@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.XR.Interaction.Toolkit;
 //using UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets;
 using Siccity.GLTFUtility;
+using UnityEngine.Events;
 
 public class ChangeControls : MonoBehaviour
 {
@@ -42,7 +43,9 @@ public class ChangeControls : MonoBehaviour
     GameObject alternativeRightJoystick = null;
     string alternativeModelFilePath;
 
-    LightGunTarget lightGunTarget;
+    //LightGunTarget lightGunTarget;
+    [System.Serializable] public class OnChangeRightHandEvent: UnityEvent<GameObject> { }
+    public OnChangeRightHandEvent OnChangeRightJoystick;
 
     void Start()
     {
@@ -64,22 +67,20 @@ public class ChangeControls : MonoBehaviour
 
         leftJoystickModel.SetActive(false);
         rightJoystickModel.SetActive(false);
+
     }
 
-    public void ChangeRightJoystickModelLightGun(LightGunTarget lightGunTarget, bool async)
+    public void ChangeRightJoystickModelLightGun(string lightGunModelFilePath, bool async)
     {
         GameObject model = null;
 
-        string modelFilePath = lightGunTarget.GetModelPath();
-        this.lightGunTarget = lightGunTarget;
-
-        if (string.IsNullOrEmpty(modelFilePath))
+        if (string.IsNullOrEmpty(lightGunModelFilePath))
         {
             // ConfigManager.WriteConsoleError($"[ChangeControls.ChangeRightJoystickModel] ERROR model path missing");
             return;
         }
 
-        if (modelFilePath != alternativeModelFilePath && alternativeRightJoystick != null)
+        if (lightGunModelFilePath != alternativeModelFilePath && alternativeRightJoystick != null)
         {
             ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] destroy old model {alternativeModelFilePath} async: {async}");
             Destroy(alternativeRightJoystick);
@@ -92,8 +93,8 @@ public class ChangeControls : MonoBehaviour
             return;
         }
 
-        alternativeModelFilePath = modelFilePath;
-        ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] loading {modelFilePath} async: {async}");
+        alternativeModelFilePath = lightGunModelFilePath;
+        ConfigManager.WriteConsole($"[ChangeControls.ChangeRightJoystickModel] loading {lightGunModelFilePath} async: {async}");
 
         try
         {
@@ -187,7 +188,9 @@ public class ChangeControls : MonoBehaviour
 
         rightJoystickModel = alternativeRightJoystick;
 
-        lightGunTarget.spaceGun = alternativeRightJoystick;
+        //invoke event
+        OnChangeRightJoystick?.Invoke(alternativeRightJoystick);
+        //lightGunTarget.spaceGun = alternativeRightJoystick;
     }
 
     private void reserveValues()

@@ -49,4 +49,8 @@ public class ConfigurationCommands
     //with a delay max of 0.03f (CalculateDelay function)
     public double cpuPercentage = 76;
 
+    //cabinet events
+    public List<Event> events;
+
+    public LightGunTarget lightGunTarget;
 }

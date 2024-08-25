@@ -25,7 +25,6 @@ using CM = ControlMapPathDictionary;
 using UnityEditor;
 #endif
 
-
 //[AddComponentMenu("curif/LibRetroWrapper/VideoPlayer")]
 [RequireComponent(typeof(AudioSource))]
 [RequireComponent(typeof(GameVideoPlayer))]
@@ -147,7 +146,16 @@ public class AGEBasicScreenController : MonoBehaviour
 
         player = GameObject.Find("OVRPlayerControllerGalery");
         changeControls = player.GetComponent<ChangeControls>();
+
+        //lightgun activation
         lightGunTarget = GetComponent<LightGunTarget>();
+        for (int i = 0; i < cabinet.gameObject.transform.childCount; i++)
+        {
+            Transform child = cabinet.gameObject.transform.GetChild(i);
+
+            if (cabinet.IsLightGunTarget(child.name))
+                lightGunTarget.addPart(child.gameObject);
+        }
 
         CoinSlot = getCoinSlotController();
         if (CoinSlot == null)
@@ -215,7 +223,7 @@ public class AGEBasicScreenController : MonoBehaviour
 
         // LibretroMameCore.WriteConsole($"[AGEBasicScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
         videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
-        cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
+        cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);
         cabinetAGEBasic.ActivateShader(shader);
         shader.Invert(InvertX, InvertY);
         // age basic after load
@@ -299,8 +307,8 @@ public class AGEBasicScreenController : MonoBehaviour
                   // Ligth guns configuration (lazy load)
                   if (lightGunTarget != null && lightGunInformation != null && !lightGunTarget.Initialized())
                   {
-                      lightGunTarget.Init(lightGunInformation, PathBase);
-                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
+                      lightGunTarget.Init(lightGunInformation, PathBase, player);
+                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
                   }
 
                   CoinWasInserted = true;
@@ -365,7 +373,7 @@ public class AGEBasicScreenController : MonoBehaviour
                   .Do("END Program", () =>
                   {
                       // age basic leave
-                      cabinetAGEBasic.StopInsertCoinBas(); //force
+                      cabinetAGEBasic.Stop(); //force
                       cabinetAGEBasic.ExecAfterLeaveBas();
 
                       EndPlayerActivities();
@@ -441,26 +449,8 @@ public class AGEBasicScreenController : MonoBehaviour
 
     }
 
-
-    public void CalculateLightGunPosition()
-    {
-        if (lightGunTarget == null ||
-            lightGunInformation == null ||
-            !lightGunInformation.active ||
-            !lightGunTarget.Initialized())
-            return;
-
-        lightGunTarget.Shoot();
-    }
-
     public void Update()
     {
-        // LibretroMameCore.WriteConsole($"MAME {GameFile} Libretro {LibretroMameCore.GameFileName} loaded: {LibretroMameCore.GameLoaded}");
-        //LibretroMameCore.Run(name, GameFile); //only runs if this game is running
-
-        if (cabinetAGEBasic.AGEBasic.IsRunning())
-            CalculateLightGunPosition();
-
         if (shader != null)
             shader.Update();
 

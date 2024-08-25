@@ -1,0 +1,74 @@
+---
+name: XXXX
+rom: XXXX.zip
+timetoload: 5
+
+year: 1985
+
+enablesavestate: false 
+statefile: state.nv
+md5sum: 4e762e7a3f05e1341fd1bf780e692f0a
+
+model:
+  file: XXXX.glb
+
+video: 
+  file: XXXX.mp4
+  inverty: true
+  invertx: true
+
+material: black
+
+agebasic:
+  active: true
+  debug: true
+  after-insert-coin: peek_poke.bas  # Run this program when a coin is inserted
+
+parts:
+  - name: left
+    art: 
+      file: left.png
+      invertx: true
+      inverty: true
+  - name: right
+    art: 
+      file: right.png
+      invertx: true
+      inverty: true
+  - name: joystick
+    art: 
+      file: joystick.png
+      inverty: true
+  - name: joystick-down
+    art: 
+      file: joystick-down.png
+  - name: bezel
+    type: bezel
+    art:
+      file: bezel.png
+  - name: marquee
+    type: marquee
+    art:
+      file: marquee.png
+    color:
+      r: 238
+      g: 232
+      b: 176
+      intensity: -2
+
+crt:
+  type: 19i
+  orientation: vertical
+  screen:
+    damage: low
+    inverty: false
+    invertx: true
+  geometry:
+    rotation: 
+      x: -90
+
+coinslot: coin-slot-double
+coinslotgeometry:
+  rotation:
+    x: -90
+

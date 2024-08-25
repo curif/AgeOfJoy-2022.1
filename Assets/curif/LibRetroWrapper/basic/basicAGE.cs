@@ -112,7 +112,8 @@ public class basicAGE : MonoBehaviour
 #endif 
 
     ConfigurationCommands configCommands = new();
-
+    double cpuPercentage;
+    float calculatedDelay;
     public RuntimeException LastRuntimeException;
 
     public bool DebugMode
@@ -125,6 +126,10 @@ public class basicAGE : MonoBehaviour
         {
             configCommands.DebugMode = value;
         }
+    }
+
+    public ConfigurationCommands ConfigCommands {
+        get {return configCommands; }
     }
 
     void initComponents()
@@ -208,6 +213,14 @@ public class basicAGE : MonoBehaviour
         configCommands.CoinSlot = coinSlot;
     }
 
+    public void SetCabinetEvents(List<Event> events)
+    {
+        configCommands.events = events;
+    }
+    public void SetLightGunTarget(LightGunTarget lightGunTarget)
+    {
+        configCommands.lightGunTarget = lightGunTarget;
+    }
     public bool Exists(string name)
     {
         return programs.ContainsKey(name);
@@ -309,23 +322,7 @@ public class basicAGE : MonoBehaviour
     public void Run(string name, bool blocking = false, BasicVars pvars = null,
                         int maxExecutionLinesAllowed = 10000)
     {
-        initComponents();
-
-        ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
-
-        Status = ProgramStatus.WaitingForStart;
-
-        if (!programs.ContainsKey(name))
-            throw new Exception($"program {name} doesn't exists");
-
-        if (running != null)
-            throw new Exception($"you can't run {name}, {running.Name} is runnig");
-
-        running = null;
-        LastRuntimeException = null;
-        running = programs[name];
-        running.PrepareToRun(pvars);
-        running.MaxExecutionLinesAllowed = maxExecutionLinesAllowed;
+        PrepareToRun(name, pvars, maxExecutionLinesAllowed);
 
         if (!blocking)
         {
@@ -348,6 +345,29 @@ public class basicAGE : MonoBehaviour
         ConfigManager.WriteConsole($"[BasicAGE.Run] {running.Name} ENDED. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
 
         return;
+    }
+
+    public void PrepareToRun(string name, BasicVars pvars, int maxExecutionLinesAllowed)
+    {
+        initComponents();
+
+        ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
+
+        Status = ProgramStatus.WaitingForStart;
+
+        if (!programs.ContainsKey(name))
+            throw new Exception($"program {name} doesn't exists");
+
+        if (running != null)
+            throw new Exception($"you can't run {name}, {running.Name} is runnig");
+
+        running = null;
+        LastRuntimeException = null;
+        running = programs[name];
+        running.PrepareToRun(pvars);
+        running.MaxExecutionLinesAllowed = maxExecutionLinesAllowed;
+        cpuPercentage = configCommands.cpuPercentage;
+        calculatedDelay = CalculateDelay(cpuPercentage);
     }
 
     public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null)
@@ -392,6 +412,7 @@ public class basicAGE : MonoBehaviour
         return delay;
     }
 
+    // run a complete program in a coroutine
     IEnumerator runProgram()
     {
         initComponents();
@@ -399,54 +420,73 @@ public class basicAGE : MonoBehaviour
         ConfigManager.WriteConsole($"[BasicAGE.runProgram] START {running.Name}");
 
         bool moreLines = true;
-        LastRuntimeException = null;
         Status = ProgramStatus.Running;
-
-        double cpuPercentage = configCommands.cpuPercentage;
-        float calculatedDelay = CalculateDelay(cpuPercentage);
-
+        YieldInstruction yield;
         while (moreLines)
         {
-            moreLines = RunALine();
-            YieldInstruction delay;
-            if (configCommands.SleepTime > 0)
+            yield = runNextLineCurrentProgram(ref moreLines);
+            yield return yield;
+        }
+        yield break;
+    }
+
+    //run just one line of the current loaded program
+    public YieldInstruction runNextLineCurrentProgram(ref bool moreLines)
+    {
+        Status = ProgramStatus.Running;
+
+        YieldInstruction yield = RunAndYield(ref moreLines);
+        if (!moreLines)
+        {
+            if (configCommands.DebugMode)
+                SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
+
+            ConfigManager.WriteConsole($"[BasicAGE.runNextLineCurrentProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+            running = null;
+            if (LastRuntimeException != null)
+                Status = ProgramStatus.CancelledWithError;
+            else
+                Status = ProgramStatus.Finished;
+            return null;
+        }
+        return yield;
+    }
+
+    //run the line and calculate de delay (sleep)
+    public YieldInstruction RunAndYield(ref bool moreLines)
+    {
+        moreLines = RunALine();
+        if (!moreLines)
+            return null;
+
+        YieldInstruction delay;
+        if (configCommands.SleepTime > 0)
+        {
+            delay = new WaitForSeconds(configCommands.SleepTime);
+            configCommands.SleepTime = 0;
+        }
+        else if (cpuPercentage != configCommands.cpuPercentage)
+        {
+            //user changes cpu control
+            cpuPercentage = configCommands.cpuPercentage;
+            if (cpuPercentage == 100)
             {
-                delay = new WaitForSeconds(configCommands.SleepTime);
-                configCommands.SleepTime = 0;
+                calculatedDelay = 0;
+                delay = null;
             }
-            else if (cpuPercentage != configCommands.cpuPercentage)
+            else
             {
-                //user changes cpu control
-                cpuPercentage = configCommands.cpuPercentage;
-                if (cpuPercentage == 100)
-                {
-                    calculatedDelay = 0;
-                    delay = null;
-                }
-                else
-                {
-                    calculatedDelay = CalculateDelay(cpuPercentage);
-                    delay = new WaitForSeconds(calculatedDelay);
-                }
-                ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} cpu: {cpuPercentage}% delay: {calculatedDelay} secs");
-            }
-            else {
+                calculatedDelay = CalculateDelay(cpuPercentage);
                 delay = new WaitForSeconds(calculatedDelay);
             }
-
-            yield return delay;
+            //ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} cpu: {cpuPercentage}% delay: {calculatedDelay} secs");
+        }
+        else
+        {
+            delay = new WaitForSeconds(calculatedDelay);
         }
 
-        if (configCommands.DebugMode)
-            SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
-
-        ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
-        running = null;
-        if (LastRuntimeException != null)
-            Status = ProgramStatus.CancelledWithError;
-        else
-            Status = ProgramStatus.Finished;
-
+        return delay;
     }
 
     //run a line of an started program

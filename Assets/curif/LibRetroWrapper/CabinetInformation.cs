@@ -101,6 +101,8 @@ public class CabinetInformation
         CheckResourcePath(statefile);
         CheckResourcePath(model?.file);
         CheckResourcePath(video?.file);
+        CheckAGEBasic();
+
 
         if (roms != null)
         {
@@ -169,7 +171,12 @@ public class CabinetInformation
             throw new Exception("Resource path " + path + " cannot contain '..'");
         }
     }
-
+    public void CheckAGEBasic()
+    {
+        if (agebasic == null)
+            return;
+        agebasic.Validate();         
+    }
     public static CabinetInformation fromName(string cabName)
     {
         return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
@@ -352,6 +359,13 @@ public class CabinetInformation
         public string type = Types[0];
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
+        public bool istarget = false; //lightgun
+        public List<string> collision = new(); //list of parts to collide.
+        public Touchable touchable;  //to be touched grabed by the user.
+    }
+    public class Touchable
+    {
+        public bool isgrabbable = false;
     }
 
     public class CabinetInputDevice

@@ -15,6 +15,7 @@ using System.Linq;
 using Siccity.GLTFUtility;
 using System.Drawing;
 using Unity.VisualScripting;
+using UnityEngine.InputSystem.HID;
 
 //store Cabinets resources
 public static class CabinetFactory
@@ -321,12 +322,22 @@ public static class CabinetFactory
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} NO-CRT controller added");
         }
 
-        //blockers
+        //blockers, targets, etc
         if (cbinfo.Parts != null)
         {
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} blockers");
             foreach (CabinetInformation.Part p in cbinfo.Parts)
             {
+                int partNum = cabinet.PartsPosition(p.name);
+                if (p.istarget)
+                    cabinet.SetLightGunTarget(partNum, cbinfo.lightGunInformation);
+
+                if (p.collision.Count > 0)
+                    cabinet.SetColliding(partNum, p.collision);
+
+                if (p.touchable != null)
+                    cabinet.SetTouchable(partNum, p.touchable);
+
                 if (p.type == "blocker")
                 {
                     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} part {p.name} blockers");

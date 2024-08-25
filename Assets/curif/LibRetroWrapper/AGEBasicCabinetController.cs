@@ -91,7 +91,16 @@ public class AGEBasicCabinetController : MonoBehaviour
 
         player = GameObject.Find("OVRPlayerControllerGalery");
         changeControls = player.GetComponent<ChangeControls>();
+
+        //lightgun activation
         lightGunTarget = GetComponent<LightGunTarget>();
+        for (int i = 0; i < cabinet.gameObject.transform.childCount; i++)
+        {
+            Transform child = cabinet.gameObject.transform.GetChild(i);
+
+            if (cabinet.IsLightGunTarget(child.name))
+                lightGunTarget.addPart(child.gameObject);
+        }
 
         mainCoroutine = StartCoroutine(runBT());
 
@@ -185,7 +194,7 @@ public class AGEBasicCabinetController : MonoBehaviour
     {
         yield return new WaitForEndOfFrame();
 
-        cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot);
+        cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);
         // age basic after load
         cabinetAGEBasic.ExecAfterLoadBas();
 
@@ -222,8 +231,8 @@ public class AGEBasicCabinetController : MonoBehaviour
                   // Ligth guns configuration (lazy load)
                   if (lightGunTarget != null && lightGunInformation != null && !lightGunTarget.Initialized())
                   {
-                      lightGunTarget.Init(lightGunInformation, PathBase);
-                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget, true);
+                      lightGunTarget.Init(lightGunInformation, PathBase, player);
+                      changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
                   }
 
                   CoinWasInserted = true;
@@ -274,7 +283,7 @@ public class AGEBasicCabinetController : MonoBehaviour
               .Do("END Program", () =>
               {
                   // age basic leave
-                  cabinetAGEBasic.StopInsertCoinBas(); //force
+                  cabinetAGEBasic.Stop(); //force
                   cabinetAGEBasic.ExecAfterLeaveBas();
 
                   EndPlayerActivities();
@@ -312,25 +321,6 @@ public class AGEBasicCabinetController : MonoBehaviour
         libretroControlMap.Enable(isPlaying);
     }
 
-
-    public void CalculateLightGunPosition()
-    {
-        if (lightGunTarget == null ||
-            lightGunInformation == null ||
-            !lightGunInformation.active ||
-            !lightGunTarget.Initialized())
-            return;
-
-        lightGunTarget.Shoot();
-    }
-
-    public void Update()
-    {
-        if (cabinetAGEBasic.AGEBasic != null && cabinetAGEBasic.AGEBasic.IsRunning())
-            CalculateLightGunPosition();
-
-        return;
-    }
 
 #if UNITY_EDITOR
     public void InsertCoin()
