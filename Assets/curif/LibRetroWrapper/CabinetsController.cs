@@ -63,6 +63,10 @@ public class CabinetsController : MonoBehaviour
         //true: the OutOfOrder cab is active, else is the replacement
         public bool IsOutOfOrderActive = true;
 
+        private bool isFaulty = false;
+
+        public bool IsFaulty { get => isFaulty; }
+
         public GameObject Cabinet()
         {
             if (IsOutOfOrderActive)
@@ -71,6 +75,10 @@ public class CabinetsController : MonoBehaviour
             return GameObjectReplacement;
         }
 
+        public void SetAsFaultyCabinet()
+        {
+            isFaulty = true;
+        }
 
         public CabinetPosition Game()
         {
@@ -81,6 +89,8 @@ public class CabinetsController : MonoBehaviour
 
         public void ActivateReplacement()
         {
+            if (isFaulty)
+                return;
             IsOutOfOrderActive = false;
             GameObjectOutOfOrder.SetActive(false);
             GameObjectReplacement?.SetActive(true);
@@ -442,7 +452,7 @@ public class CabinetsController : MonoBehaviour
 
     void checkAndLoadCabinet(CabinetControllerInformation cci)
     {
-        if (!cci.IsOutOfOrderActive)
+        if (!cci.IsOutOfOrderActive || cci.IsFaulty)
             return;
 
         //check conditions to load the cabinet.
@@ -487,6 +497,7 @@ public class CabinetsController : MonoBehaviour
         }
         catch (System.Exception ex)
         {
+            cci.SetAsFaultyCabinet(); //prevent to load it next time.
             ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {cc.game.CabInfo.name}", ex);
             return;
         }
