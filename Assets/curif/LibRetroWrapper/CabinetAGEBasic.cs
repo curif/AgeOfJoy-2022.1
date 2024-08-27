@@ -5,8 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using UnityEditor;
-using static OVRHaptics;
-using static CabinetInformation;
 
 
 [Serializable]

@@ -18,7 +18,6 @@ using System.Linq;
 using AOJ.Managers; // Geometrrizer: Allows access to EventManager for player FX
 using LC = LibretroControlMapDictionnary;
 using UnityEngine.Audio;
-using static Unity.VisualScripting.Metadata;
 
 
 #if UNITY_EDITOR

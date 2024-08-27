@@ -28,7 +28,7 @@ public class CabinetPartAudioController : MonoBehaviour
     /// Configures the AudioSource based on the provided Part object's audio settings.
     /// </summary>
     /// <param name="part">The Part object containing audio settings from YAML.</param>
-    public static CabinetPartAudioController GetOrAdd(GameObject go, Audio audio)
+    public static CabinetPartAudioController GetOrAdd(GameObject go, CabinetAudio audio)
     {
         if (audio != null)
         {

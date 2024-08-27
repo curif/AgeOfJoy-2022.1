@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Events;
-using System.Collections.Generic;
 using static CabinetInformation;
 
 [RequireComponent(typeof(BoxCollider))]

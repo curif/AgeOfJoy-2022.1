@@ -7,7 +7,6 @@ using YamlDotNet.Serialization.NamingConventions;
 using System.IO;
 using UnityEngine.Events;
 using System.Collections.Generic;
-using static CabinetInformation;
 
 public class LightGunInformation
 {
