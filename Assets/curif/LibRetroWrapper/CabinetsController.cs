@@ -403,7 +403,7 @@ public class CabinetsController : MonoBehaviour
             catch (Exception e)
             {
                 ConfigManager.WriteConsoleException($"[CabinetController.GetOccupiedSpaces] [{cabName}] invalid cabinet (reading from yaml).", e);
-                spaces.Add("1x1x1");
+                spaces.Add("9x9x9"); //hack to do not select
 
                 continue;
             }
