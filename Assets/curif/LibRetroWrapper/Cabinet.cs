@@ -6,8 +6,10 @@ You should have received a copy of the GNU General Public License along with thi
 
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using static CabinetInformation;
+using static UnityEngine.UI.Image;
 
 public class Cabinet
 {
@@ -928,7 +930,7 @@ public class Cabinet
     }
     public static string CRTName(string cabinetName, string gameFile)
     {
-        return "screen-" + cabinetName + "-" + gameFile;
+        return "screen-" + cabinetName + "-" + gameFile.Replace("/","-").Replace(".","-");
     }
 
     //used instead of addCRT for cabinets without a CRT
