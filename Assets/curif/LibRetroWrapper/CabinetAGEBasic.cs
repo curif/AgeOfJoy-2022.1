@@ -41,18 +41,19 @@ public class CabinetAGEBasicInformation
     [YamlMember(Alias = "after-leave", ApplyNamingConventions = false)]
     public string afterLeave;
 
-    public List<EventInformation> events;
+    public List<EventInformation> events = new();
 
     public void Validate(string cabName)
     {
-        if (events == null || events.Count == 0)
-        {
-            return;
-        }
         foreach (EventInformation e in events)
         {
             e.Validate(cabName);
         }
+    }
+
+    public bool HasEvents()
+    {
+        return events != null && events.Count > 0;
     }
     
 }
@@ -646,16 +647,13 @@ public class CabinetAGEBasic : MonoBehaviour
         }
 
         //events ---
-        if (AGEInfo.events.Count > 0)
+        foreach (EventInformation info in AGEInfo.events)
         {
-            foreach (EventInformation info in AGEInfo.events)
-            {
-                Event ev = EventsFactory.Factory(info, vars, AGEBasic);
-                if (ev != null)
-                    events.Add(ev);
-            }
-
+            Event ev = EventsFactory.Factory(info, vars, AGEBasic);
+            if (ev != null)
+                events.Add(ev);
         }
+
     }
 
     private void IngestVariables(List<AGEBasicVariable> variables)
