@@ -26,7 +26,7 @@ public class GrabDetection : MonoBehaviour
     public bool canBeGrabbed = true;
 
     private XRGrabInteractable interactable;
-    private void Start()
+    private void Awake()
     {
         // Initialize the XR Grab Interactable
         interactable = GetComponent<XRGrabInteractable>();

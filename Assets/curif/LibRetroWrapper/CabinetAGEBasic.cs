@@ -45,11 +45,15 @@ public class CabinetAGEBasicInformation
 
     public List<EventInformation> events;
 
-    public void Validate()
+    public void Validate(string cabName)
     {
+        if (events == null || events.Count == 0)
+        {
+            return;
+        }
         foreach (EventInformation e in events)
         {
-            e.Validate();
+            e.Validate(cabName);
         }
     }
     
@@ -62,7 +66,7 @@ public class EventInformation
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
     static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom", "on-lightgun", 
-                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start", "on-touch-end", "on-grab-end"};
+                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start",   "on-touch-end", "on-grab-end"};
 
     static string[] requirePartName = { "on-collision-start", "on-collision-stay", "on-collision-end", 
                                         "on-touch-start", "on-grab-start", 
@@ -79,26 +83,26 @@ public class EventInformation
     [YamlMember(Alias = "variables", ApplyNamingConventions = false)]
     public List<AGEBasicVariable> Variables { get { return variables; } set { variables = value; } }
 
-    public void Validate()
+    public void Validate(string cabName)
     {
         if (string.IsNullOrEmpty(eventId))
-            throw new Exception($"AGEBasic Event Id unespecified");
+            throw new CabinetValidationException(cabName, $"AGEBasic Event Id unespecified");
 
         if (Array.IndexOf(validEvents, eventId) < 0)
-            throw new Exception($"AGEBasic Event [{eventId}] unknown");
+            throw new CabinetValidationException(cabName, $"AGEBasic Event [{eventId}] unknown");
 
         if (Array.IndexOf(requirePartName, eventId) >= 0 && string.IsNullOrEmpty(part))
-            throw new Exception($"AGEBasic Event {eventId} requires a part name");
+            throw new CabinetValidationException(cabName, $"AGEBasic Event {eventId} requires a part name");
 
         if (string.IsNullOrEmpty(program))
-            throw new Exception($"AGEBasic Event {eventId} doesn't have a program attached");
+            throw new CabinetValidationException(cabName, $"AGEBasic Event {eventId} doesn't have a program attached");
 
         if (controls != null)
         {
             foreach (var control in controls)
             {
                 if (string.IsNullOrEmpty(control.mameControl))
-                    throw new Exception($"Event {eventId} one of the control isn't specified");
+                    throw new CabinetValidationException(cabName, $"Event {eventId} one of the control isn't specified");
             }
         }
     }
@@ -337,7 +341,7 @@ public class OnCollisionBase: Event
             throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} wasn't declared collision parts in cabinet configuration (yaml)");
         }
 
-        if (touchDetection.allowedObjects.Count == 0)
+        if (touchDetection.impact.parts.Count == 0)
         {
             status = Status.initialized;
             throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} needs declared collision parts list in cabinet configuration (yaml)");
@@ -366,12 +370,12 @@ public class OnCollisionStart : OnCollisionBase
         loadComponents();
         
         //detected: some times onTriggerEnterEvent is null. needs reinitialization
-        if (touchDetection.onTouchStart == null)
+        if (touchDetection.OnCollisionStart == null)
         {
             status = Status.error;
             return;
         }
-        touchDetection.onTouchStart.AddListener(OnCollisionTriggerStart);
+        touchDetection.OnCollisionStart.AddListener(OnCollisionTriggerStart);
         status = Status.initialized;
     }
 
@@ -382,7 +386,7 @@ public class OnCollisionStart : OnCollisionBase
 
     public override void Dispose()
     {
-        touchDetection.onTouchStart?.RemoveListener(OnCollisionTriggerStart);
+        touchDetection.OnCollisionStart?.RemoveListener(OnCollisionTriggerStart);
         base.Dispose();
     }
 }
@@ -403,12 +407,12 @@ public class OnCollisionStay : OnCollisionBase
         loadComponents();
 
         //detected: some times onTriggerEnterEvent is null. needs reinitialization
-        if (touchDetection.onTouchStart == null)
+        if (touchDetection.OnCollisionStart == null)
         {
             status = Status.error;
             return;
         }
-        touchDetection.onTouchStay.AddListener(OnCollisionTrigger);
+        touchDetection.onCollisionContinue.AddListener(OnCollisionTrigger);
         status = Status.initialized;
     }
 
@@ -419,7 +423,7 @@ public class OnCollisionStay : OnCollisionBase
 
     public override void Dispose()
     {
-        touchDetection.onTouchStart?.RemoveListener(OnCollisionTrigger);
+        touchDetection.OnCollisionStart?.RemoveListener(OnCollisionTrigger);
         base.Dispose();
     }
 }
@@ -439,12 +443,12 @@ public class OnCollisionEnd : OnCollisionBase
         loadComponents();
         
         //detected: some time onTriggerEnterEvent is null. needs reinitialization
-        if (touchDetection.onTouchEnd == null)
+        if (touchDetection.OnCollisionEnd == null)
         {
             status = Status.error;
             return;
         }
-        touchDetection.onTouchStart.AddListener(OnCollisionTriggerExit);
+        touchDetection.OnCollisionStart.AddListener(OnCollisionTriggerExit);
         status = Status.initialized;
     }
 
@@ -455,7 +459,7 @@ public class OnCollisionEnd : OnCollisionBase
 
     public override void Dispose()
     {
-        touchDetection.onTouchEnd?.RemoveListener(OnCollisionTriggerExit);
+        touchDetection.OnCollisionEnd?.RemoveListener(OnCollisionTriggerExit);
         base.Dispose();
     }
 }

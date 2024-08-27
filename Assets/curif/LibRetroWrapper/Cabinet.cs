@@ -350,7 +350,7 @@ public class Cabinet
     {
         Transform childTransform = gameObject.transform.Find(partName);
         if (childTransform == null)
-            throw new Exception($"Unknown cabinet part: {partName}");
+            throw new CabinetPartException("", partName, $"Unknown cabinet part: {partName}");
         return childTransform;
     }
     public Transform PartsTransform(int partNum)
@@ -813,42 +813,58 @@ public class Cabinet
     }
 
     //add the Touch component and the gameobject to collide
-    public Cabinet SetColliding(string partName, List<string> colliders)
+    public Cabinet SetCollider(string partName, CabinetInformation.ReceiveImpacts impact)
     {
-        SetColliding(PartsPosition(partName), colliders);
+        SetCollider(PartsPosition(partName), impact);
         return this;
     }
-    public Cabinet SetColliding(int partNum, List<string> colliders)
+    public Cabinet SetCollider(int partNum, ReceiveImpacts impact)
     {
         GameObject part = Parts(partNum);
-        CollisionDetection cd = part.GetComponent<CollisionDetection>();
-        if (cd == null)
-            cd = part.AddComponent<CollisionDetection>();
-        
-        foreach (string name in colliders)
-        {
-            cd.allowedObjects.Add(name);
-            GameObject colliding = Parts(name);
-            if (colliding != null)
-            {
-                colliding.layer = LayerMask.NameToLayer("partCollision");
 
-                BoxCollider b = colliding.GetComponent<BoxCollider>();
-                if (b == null)
-                    b = colliding.AddComponent<BoxCollider>();
-                Rigidbody rb = colliding.GetComponent<Rigidbody>();
-                if (rb == null)
-                    rb = colliding.AddComponent<Rigidbody>();
-                rb.useGravity = false;
-                rb.isKinematic = true;
-                rb.automaticInertiaTensor = false;
-                rb.automaticCenterOfMass = false;
+        InteractablePart ip = InteractablePart.GetOrAdd(part);
+        ip.SetAsCollider(impact);
+
+        foreach (string name in impact.parts)
+        {
+            GameObject collider = Parts(name);
+            if (collider != null)
+            {
+                InteractablePart.GetOrAdd(collider);
             }
         }
 
         return this;
     }
 
+    //add the Touch component and the gameobject to collide
+    public Cabinet SetAudio(string partName, Audio audioInfo)
+    {
+        SetAudio(PartsPosition(partName), audioInfo);
+        return this;
+    }
+    public Cabinet SetAudio(int partNum, Audio audioInfo)
+    {
+        GameObject part = Parts(partNum);
+        CabinetPartAudioController.GetOrAdd(part, audioInfo);
+        return this;
+    }
+
+    //a moving part that collides with other.
+    //que reaction configuration is in the collider part.
+    public Cabinet SetColliding(string partName)
+    {
+        SetColliding(PartsPosition(partName));
+        return this;
+    }
+    public Cabinet SetColliding(int partNum)
+    {
+        GameObject part = Parts(partNum);
+
+        InteractablePart.GetOrAdd(part);
+
+        return this;
+    }
 
     //add the Touch component and the gameobject to collide
     //Touchable: because the player could touch it. But also can hit other cabinet's parts.
@@ -860,7 +876,7 @@ public class Cabinet
     public Cabinet SetTouchable(int partNum, Touchable touchableInfo)
     {
         GameObject part = Parts(partNum);
-        
+
         //add a collider first
         BoxCollider boxCollider = part.GetComponent<BoxCollider>();
         if (boxCollider == null)
@@ -888,6 +904,22 @@ public class Cabinet
 
         return this;
     }
+    public Cabinet SetPhysics(string partName, Physical physicalInfo)
+    {
+        SetPhysics(PartsPosition(partName), physicalInfo);
+        return this;
+    }
+    public Cabinet SetPhysics(int partNum, Physical physicalInfo)
+    {
+        if (physicalInfo == null)
+            return this;
+
+        GameObject part = Parts(partNum);
+        InteractablePart.GetOrAdd(part).SetAsPhysical(physicalInfo);
+        return this;
+    }
+    
+
     public bool IsLightGunTarget(string partName)
     {
         return IsLightGunTarget(PartsPosition(partName));

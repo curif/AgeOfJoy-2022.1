@@ -328,24 +328,40 @@ public static class CabinetFactory
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} blockers");
             foreach (CabinetInformation.Part p in cbinfo.Parts)
             {
-                int partNum = cabinet.PartsPosition(p.name);
-                if (p.istarget)
-                    cabinet.SetLightGunTarget(partNum, cbinfo.lightGunInformation);
-
-                if (p.collision.Count > 0)
-                    cabinet.SetColliding(partNum, p.collision);
-
-                if (p.touchable != null)
-                    cabinet.SetTouchable(partNum, p.touchable);
-
-                if (p.type == "blocker")
+                try
                 {
-                    ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} part {p.name} blockers");
-                    cabinet.AddAColliderBlocker(p.name, false);
-                    //disable main box collider for collissions but works on put on floor.
-                    boxCollider.excludeLayers = ~0;
+                    int partNum = cabinet.PartsPosition(p.name);
+                    if (p.istarget)
+                        cabinet.SetLightGunTarget(partNum, cbinfo.lightGunInformation);
+
+                    if (p.receiveImpacts != null)
+                    {
+                        if (p.receiveImpacts.parts.Count > 0)
+                            cabinet.SetCollider(partNum, p.receiveImpacts); //receive collisions
+                        else
+                            cabinet.SetColliding(partNum); //collide with others
+                    }
+
+                    if (p.touchable != null)
+                        cabinet.SetTouchable(partNum, p.touchable);
+
+                    if (p.physical != null)
+                        cabinet.SetPhysics(partNum, p.physical);
+
+                    if (p.type == "blocker")
+                    {
+                        ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} part {p.name} blockers");
+                        cabinet.AddAColliderBlocker(p.name, false);
+                        //disable main box collider for collissions but works on put on floor.
+                        boxCollider.excludeLayers = ~0;
+                    }
                 }
-            }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetFactory.fromInformation] {cbinfo.name} part {p.name}.", e);
+                    continue;
+                }
+            }            
         }
 
         return cabinet;

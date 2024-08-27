@@ -82,6 +82,7 @@ public static class Commands
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
         functions["TYPE"] = typeof(CommandFunctionTYPE);
 
+
         // configuration settings -------
 
         //ROOMs
@@ -116,6 +117,7 @@ public static class Commands
         functions["CABDBSAVE"] = typeof(CommandFunctionCABDBSAVE);
         functions["CABDBGETASSIGNED"] = typeof(CommandFunctionCABDBGETASSIGNED);
         functions["CABDBASSIGN"] = typeof(CommandFunctionCABDBASSIGN);
+        
 
         //cabinet in AGEBasic for the actual cabinet
         functions["CABPARTSCOUNT"] = typeof(CommandFunctionCABPARTSCOUNT);
@@ -140,6 +142,17 @@ public static class Commands
         functions["CABPARTSEMISSION"] = typeof(CommandFunctionCABPARTSEMISSION);
         functions["CABPARTSSETEMISSIONCOLOR"] = typeof(CommandFunctionCABPARTSSETEMISSIONCOLOR);
         functions["CABPARTSSETCOLOR"] = typeof(CommandFunctionCABPARTSSETCOLOR);
+
+        ////audio
+        functions["CABPARTSAUDIOVOLUME"] = typeof(CommandFunctionCABPARTSAUDIOVOLUME);
+        functions["CABPARTSAUDIODISTANCE"] = typeof(CommandFunctionCABPARTSAUDIODISTANCE);
+        functions["CABPARTSAUDIOFILE"] = typeof(CommandFunctionCABPARTSAUDIOFILE);
+        functions["CABPARTSAUDIOLOOP"] = typeof(CommandFunctionCABPARTSAUDIOLOOP);
+        functions["CABPARTSAUDIOPLAY"] = typeof(CommandFunctionCABPARTSAUDIOPLAY);
+        functions["CABPARTSAUDIOSTOP"] = typeof(CommandFunctionCABPARTSAUDIOSTOP);
+        functions["CABPARTSAUDIOPAUSE"] = typeof(CommandFunctionCABPARTSAUDIOPAUSE);
+
+
 
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);
