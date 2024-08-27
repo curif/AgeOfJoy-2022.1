@@ -11,19 +11,18 @@ You should have received a copy of the GNU General Public License along with thi
 
 //#define INPUT_DEBUG
 
-using System.Collections.Generic;
-using UnityEngine;
-using System.Runtime.InteropServices;
+using Assets.curif.LibRetroWrapper;
 using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Assets.curif.LibRetroWrapper;
-using LC = LibretroControlMapDictionnary;
+using UnityEngine;
 using UnityEngine.Events;
-using System.Text;
+using LC = LibretroControlMapDictionnary;
 
 /*
 this class have a lot of static properties, and because of that we only have one game runing at a time.
@@ -468,6 +467,12 @@ public static unsafe class LibretroMameCore
             return false;
         }
 
+        if (getPath(gameFileName) == null)
+        {
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {gameFileName} not found.");
+            return false;
+        }
+
         WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
         WriteConsole("[LibRetroMameCore.Start] ------------------- LIBRETRO INIT -----------------------");
         WriteConsole("[LibRetroMameCore.Start] ---------------------------------------------------------");
@@ -570,7 +575,7 @@ public static unsafe class LibretroMameCore
         return true;
     }
 
-    public static bool loadGame(string gameFileName)
+    public static string getPath(string gameFileName)
     {
         string path = ConfigManager.RomsDir + "/" + Core + "/" + gameFileName;
 
@@ -580,6 +585,18 @@ public static unsafe class LibretroMameCore
         }
 
         if (!File.Exists(path))
+        {
+            WriteConsole($"[LibRetroMameCore.Start] ERROR {path} not found.");
+            return null;
+        }
+
+        return path;
+    }
+
+    public static bool loadGame(string gameFileName)
+    {
+        string path = getPath(gameFileName);
+        if (path == null)
         {
             WriteConsole($"[LibRetroMameCore.Start] ERROR {path} not found.");
             return false;
