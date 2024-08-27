@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
-using System.Collections.Generic;
-using Oculus.Interaction;
 
 [RequireComponent(typeof(BoxCollider))]
 public class CollisionDetection : MonoBehaviour

@@ -371,7 +371,7 @@ public class CabinetInformation
         public ReceiveImpacts receiveImpacts;
 
         // Add audio property
-        public Audio audio;
+        public CabinetAudio audio;
     }
     public class Touchable
     {
@@ -444,7 +444,7 @@ public class CabinetInformation
 
     }
 
-    public class Audio
+    public class CabinetAudio
     {
         public string file;
         public float volume = 1.0f;

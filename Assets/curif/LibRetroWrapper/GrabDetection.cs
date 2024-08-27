@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.Events;
-using System.Collections.Generic;
-using UnityEditor;
 
 [RequireComponent(typeof(XRGrabInteractable))]
 [RequireComponent(typeof(BoxCollider))]

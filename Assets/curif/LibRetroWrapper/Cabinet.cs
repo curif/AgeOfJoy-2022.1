@@ -6,9 +6,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
-using UnityEngine.XR.Interaction.Toolkit;
 using static CabinetInformation;
 
 public class Cabinet
@@ -838,12 +836,12 @@ public class Cabinet
     }
 
     //add the Touch component and the gameobject to collide
-    public Cabinet SetAudio(string partName, Audio audioInfo)
+    public Cabinet SetAudio(string partName, CabinetAudio audioInfo)
     {
         SetAudio(PartsPosition(partName), audioInfo);
         return this;
     }
-    public Cabinet SetAudio(int partNum, Audio audioInfo)
+    public Cabinet SetAudio(int partNum, CabinetAudio audioInfo)
     {
         GameObject part = Parts(partNum);
         CabinetPartAudioController.GetOrAdd(part, audioInfo);
