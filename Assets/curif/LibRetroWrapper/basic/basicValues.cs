@@ -154,6 +154,15 @@ public class BasicValue
         return (int)number;
     }
 
+    public bool GetBoolean()
+    {
+        if (type == BasicValueType.String && str != null)
+            return true;
+        if (type == BasicValueType.Number && number != 0)
+            return true;
+        return false;
+    }
+
     public string GetString()
     {
         return str;

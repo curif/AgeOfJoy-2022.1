@@ -1,62 +1,66 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
+using Oculus.Interaction;
 
 [RequireComponent(typeof(BoxCollider))]
 public class CollisionDetection : MonoBehaviour
 {
     [Tooltip("List of object names that are allowed to collide. If empty, all objects are allowed.")]
-    public List<string> allowedObjects = new List<string>();
+    [SerializeField]
+    public CabinetInformation.ReceiveImpacts impact;
 
-    [System.Serializable]
     public class CollisionEvent : UnityEvent<string> { }
 
     // UnityEvents for entering, staying, and exiting trigger
-    public CollisionEvent onTouchStart;
-    public CollisionEvent onTouchStay;
-    public CollisionEvent onTouchEnd;
+    public CollisionEvent OnCollisionStart;
+    public CollisionEvent onCollisionContinue;
+    public CollisionEvent OnCollisionEnd;
 
     // Variable to store the name of the last object that collided
+    [SerializeField]
     public string lastCollidingObject;
 
     // Ensure the Collider is set to trigger mode
-    private void Start()
+    private void Awake()
     {
-        gameObject.layer = LayerMask.NameToLayer("partCollision");
-        BoxCollider col = GetComponent<BoxCollider>();
-        col.isTrigger = true; // Ensure it's set to a trigger
+        gameObject.layer = LayerMask.NameToLayer("InteractablePart");
     }
-
-    // Called when another object enters the trigger area
-    private void OnTriggerEnter(Collider other)
+    void OnCollisionEnter(Collision colliding)
     {
-        if (IsCollisionAllowed(other.gameObject.name))
+        if (IsCollisionAllowed(colliding.gameObject.name))
         {
-            lastCollidingObject = other.gameObject.name; // Register the name of the colliding object
-            Debug.Log("Touch started with: " + lastCollidingObject);
-            onTouchStart?.Invoke(lastCollidingObject);
+            if (impact != null && !colliding.rigidbody.isKinematic)
+            {
+                // Calculate rejection direction (opposite of collision normal)
+                Vector3 rejectDirection = -colliding.contacts[0].normal;
+
+                // Apply force to reject the colliding object
+                colliding.rigidbody.AddForce(rejectDirection * impact.repulsion.force, ForceMode.Impulse);
+            }
+
+            lastCollidingObject = colliding.gameObject.name; // Register the name of the colliding object
+            OnCollisionStart?.Invoke(lastCollidingObject);
         }
     }
 
     // Called while the object is still in the trigger area
-    private void OnTriggerStay(Collider other)
+    void OnCollisionStay(Collision other)
     {
         if (IsCollisionAllowed(other.gameObject.name))
         {
             lastCollidingObject = other.gameObject.name; // Update the last colliding object
-            Debug.Log("Still touching: " + lastCollidingObject);
-            onTouchStay?.Invoke(lastCollidingObject);
+            onCollisionContinue?.Invoke(lastCollidingObject);
         }
     }
 
     // Called when the object exits the trigger area
-    private void OnTriggerExit(Collider other)
+    void OnCollisionExit(Collision other)
     {
         if (IsCollisionAllowed(other.gameObject.name))
         {
             lastCollidingObject = other.gameObject.name; // Register the object that was last touched
-            Debug.Log("Touch ended with: " + lastCollidingObject);
-            onTouchEnd?.Invoke(lastCollidingObject);
+            OnCollisionEnd?.Invoke(lastCollidingObject);
         }
     }
 
@@ -68,7 +72,7 @@ public class CollisionDetection : MonoBehaviour
         //    return true;
 
         // Otherwise, only allow objects whose name is in the list
-        return allowedObjects.Contains(objectName);
+        return impact.parts.Contains(objectName);
     }
 
 }

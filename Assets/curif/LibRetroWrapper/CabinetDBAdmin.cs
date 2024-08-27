@@ -269,7 +269,16 @@ public class CabinetDBAdmin : MonoBehaviour
 
             if (!String.IsNullOrEmpty(cabPath))
             {
-                CabinetInformation cbInfo = CabinetInformation.fromYaml(cabPath);
+                CabinetInformation cbInfo;
+                try
+                {
+                    cbInfo = CabinetInformation.fromYaml(cabPath);
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[loadCabinetsCoroutine] Cabinet {zipFile} error", e);
+                    continue;
+                }
                 MoveMameFiles(cbInfo);
                 yield return new WaitForSeconds(0.1f);
             }
@@ -280,6 +289,5 @@ public class CabinetDBAdmin : MonoBehaviour
         }
 
         ConfigManager.WriteConsole($"[loadCabinetsCoroutine] END loading cabinets");
-
     }
 }

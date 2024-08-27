@@ -8,6 +8,7 @@ using Assets.curif.LibRetroWrapper;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using UnityEngine;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
@@ -96,38 +97,45 @@ public class CabinetInformation
         {
             rom = roms[0];
         }
+        try
+        { 
+            CheckResourcePath(rom);
+            CheckResourcePath(statefile);
+            CheckResourcePath(model?.file);
+            CheckResourcePath(video?.file);
 
-        CheckResourcePath(rom);
-        CheckResourcePath(statefile);
-        CheckResourcePath(model?.file);
-        CheckResourcePath(video?.file);
-        CheckAGEBasic();
-
-
-        if (roms != null)
-        {
-            foreach (string r in roms)
+            if (roms != null)
             {
-                CheckResourcePath(r);
+                foreach (string r in roms)
+                {
+                    CheckResourcePath(r);
+                }
+            }
+
+            if (Parts != null)
+            {
+                foreach (Part p in Parts)
+                {
+                    CheckResourcePath(p.art?.file);
+                    CheckResourcePath(p.emission?.art?.file);
+                }
+            }
+
+            if (MameFiles != null)
+            {
+                foreach (MameFile mf in MameFiles)
+                {
+                    CheckResourcePath(mf?.file);
+                }
             }
         }
-
-        if (Parts != null)
+        catch (Exception ex)
         {
-            foreach (Part p in Parts)
-            {
-                CheckResourcePath(p.art?.file);
-                CheckResourcePath(p.emission?.art?.file);
-            }
+            throw new CabinetValidationException(name, ex.Message, ex);
         }
 
-        if (MameFiles != null)
-        {
-            foreach (MameFile mf in MameFiles)
-            {
-                CheckResourcePath(mf?.file);
-            }
-        }
+        CheckAGEBasic(name);
+
     }
 
     public Dictionary<uint, LibretroInputDevice> GetLibretroInputDevices()
@@ -171,15 +179,11 @@ public class CabinetInformation
             throw new Exception("Resource path " + path + " cannot contain '..'");
         }
     }
-    public void CheckAGEBasic()
+    public void CheckAGEBasic(string cabName)
     {
         if (agebasic == null)
             return;
-        agebasic.Validate();         
-    }
-    public static CabinetInformation fromName(string cabName)
-    {
-        return CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cabName);
+        agebasic.Validate(cabName);         
     }
 
     public static string debugLogPath(string cabinetName)
@@ -212,7 +216,7 @@ public class CabinetInformation
                 writer.WriteLine($"CABINET: {cabinetName}");
                 writer.WriteLine($"YAML file: {path}");
                 writer.WriteLine($"{comments}");
-                writer.WriteLine($"[DateTime: {DateTime.Now.ToString()}]");
+                writer.WriteLine($"[DateTime]: {DateTime.Now.ToString()}");
                 writer.WriteLine($"[Exception Type]: {exception.GetType()}");
                 writer.WriteLine($"[Message]: {exception.Message}");
                 writer.WriteLine($"[StackTrace]: {exception.StackTrace}");
@@ -249,7 +253,7 @@ public class CabinetInformation
             //ConfigManager.WriteConsole($"[CabinetInformation]: {yamlPath} \n {yaml}");
             var cabInfo = deserializer.Deserialize<CabinetInformation>(yaml);
             if (cabInfo == null)
-                throw new IOException();
+                throw new CabinetValidationException(cabPath, "Deserialization error");
 
             cabInfo.pathBase = cabPath;
 
@@ -259,9 +263,9 @@ public class CabinetInformation
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
+            //ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
             WriteExceptionLog(yamlPath, e, "ERROR when decoding yaml file, syntax or semantic error");
-            return null;
+            throw;
         }
     }
 
@@ -282,9 +286,9 @@ public class CabinetInformation
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] YAML file {yamlPath} ", e);
+            //ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] YAML file {yamlPath} ", e);
             WriteExceptionLog(yamlPath, e, "ERROR trying to open the yaml file from disk");
-            return null;
+            throw;
         }
 
         return yaml;
@@ -360,12 +364,99 @@ public class CabinetInformation
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
         public bool istarget = false; //lightgun
-        public List<string> collision = new(); //list of parts to collide.
         public Touchable touchable;  //to be touched grabed by the user.
+        public Physical physical;
+
+        [YamlMember(Alias = "receive-impacts", ApplyNamingConventions = false)]
+        public ReceiveImpacts receiveImpacts;
+
+        // Add audio property
+        public Audio audio;
     }
     public class Touchable
     {
         public bool isgrabbable = false;
+    }
+    [Serializable]
+    public class ReceiveImpacts
+    {
+        [Serializable]
+        public class Repulsion
+        {
+            public float force = 1f;
+        }
+     
+        public List<string> parts = new(); //list of parts to collide.
+        public Repulsion repulsion = new Repulsion();
+    }
+
+    public class Physical
+    {
+        [Serializable]
+        public class Constraints
+        {
+            public bool x, y, z;
+        }
+        [Serializable]
+        //https://docs.unity3d.com/Manual/class-PhysicMaterial.html
+        public class Material
+        {
+            [YamlMember(Alias = "dynamic-friction", ApplyNamingConventions = false)]
+            public float dynamicFriction = 0.6f;
+            [YamlMember(Alias = "static-friction", ApplyNamingConventions = false)]
+            public float staticFriction = 0.6f;
+            public float bounciness = 0;
+            [YamlMember(Alias = "friction-combine", ApplyNamingConventions = false)]
+            public string frictionCombine = "average";
+            [YamlMember(Alias = "bounce-combine", ApplyNamingConventions = false)]
+            public string bounceCombine = "average";
+
+            //https://docs.unity3d.com/ScriptReference/PhysicMaterialCombine.html
+            //https://docs.unity3d.com/Manual/collider-surfaces-combine.html
+            public static PhysicMaterialCombine CombineFromString(string combine)
+            {
+                switch (combine.ToLower())
+                {
+                    case "average":
+                        return PhysicMaterialCombine.Average;
+                    case "minimum":
+                        return PhysicMaterialCombine.Minimum;
+                    case "multiply":
+                        return PhysicMaterialCombine.Multiply;
+                    case "maximum":
+                        return PhysicMaterialCombine.Maximum;
+                }
+                throw new System.Exception("Material freeze-combine or friction-combine invalid value");
+            }
+        }
+
+
+        //When enabled, the object will be affected by Unity's global gravity setting. The object will fall unless supported by another object (e.g., a floor).
+        public bool gravity = false;
+        //This defines the weight of the object in the physics system. Higher mass makes the object harder to move, while a lower mass makes it easier to move.
+        public float mass = 1.0f;
+        [YamlMember(Alias = "freeze-position", ApplyNamingConventions = false)]
+        public Constraints freezePosition = new Constraints();
+        [YamlMember(Alias = "freeze-rotation", ApplyNamingConventions = false)]
+        public Constraints freezeRotation = new Constraints();
+
+        public Material material;
+
+    }
+
+    public class Audio
+    {
+        public string file;
+        public float volume = 1.0f;
+        public bool loop = false;
+
+        public Distance distance = new Distance();
+
+        public class Distance
+        {
+            public float min = 1.0f;
+            public float max = 5.0f;
+        }
     }
 
     public class CabinetInputDevice

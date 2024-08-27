@@ -14,6 +14,8 @@ using System.Reflection;
 using System.IO;
 using UnityEngine.XR.Interaction.Toolkit;
 using static ConfigInformation;
+using System.Dynamic;
+using YamlDotNet.Core;
 
 //distribute cabinets games in the room for respawn.
 
@@ -28,7 +30,7 @@ public class CabinetsController : MonoBehaviour
     public bool Loaded = false; //set when the room cabinets where assigned.
 
     [SerializeField]
-    public List<CabinetControllerInformation> Cabinets;
+    public List<CabinetControllerInformation> CabinetsCtrlInfo;
 
     public bool CoroutineIsRunning;
 
@@ -63,6 +65,10 @@ public class CabinetsController : MonoBehaviour
         //true: the OutOfOrder cab is active, else is the replacement
         public bool IsOutOfOrderActive = true;
 
+        private bool isFaulty = false;
+
+        public bool IsFaulty { get => isFaulty; }
+
         public GameObject Cabinet()
         {
             if (IsOutOfOrderActive)
@@ -71,6 +77,10 @@ public class CabinetsController : MonoBehaviour
             return GameObjectReplacement;
         }
 
+        public void SetAsFaultyCabinet()
+        {
+            isFaulty = true;
+        }
 
         public CabinetPosition Game()
         {
@@ -81,6 +91,8 @@ public class CabinetsController : MonoBehaviour
 
         public void ActivateReplacement()
         {
+            if (isFaulty)
+                return;
             IsOutOfOrderActive = false;
             GameObjectOutOfOrder.SetActive(false);
             GameObjectReplacement?.SetActive(true);
@@ -116,20 +128,20 @@ public class CabinetsController : MonoBehaviour
             if (cabInfo.CabinetController == null)
                 cabInfo.CabinetController = cabInfo.GameObjectOutOfOrder.AddComponent<CabinetController>();
 
-            Cabinets.Add(cabInfo);
+            CabinetsCtrlInfo.Add(cabInfo);
         }
     }
 
     void initalizeCabinets()
     {
-        if (Cabinets.Count() == 0)
+        if (CabinetsCtrlInfo.Count() == 0)
             throw new Exception("Cabinet tree without cabinets");
 
         int idx = 0;
         Shader shader = Shader.Find("Standard");
         Vector2 newTiling = new Vector2(-1, -1);
 
-        foreach (CabinetControllerInformation cabInfo in Cabinets)
+        foreach (CabinetControllerInformation cabInfo in CabinetsCtrlInfo)
         {
             cabInfo.CabinetController.game = new();
             cabInfo.CabinetController.game.Position = idx;
@@ -247,36 +259,36 @@ public class CabinetsController : MonoBehaviour
 
     public CabinetController GetCabinetControllerByPosition(int position)
     {
-        CabinetControllerInformation cabinet = Cabinets.FirstOrDefault(c => c.Position == position);
+        CabinetControllerInformation cabinet = CabinetsCtrlInfo.FirstOrDefault(c => c.Position == position);
         return cabinet?.CabinetController;
     }
 
     public CabinetReplace GetCabinetReplaceByPosition(int position)
     {
-        CabinetControllerInformation cabinet = Cabinets.FirstOrDefault(c => c.Position == position);
+        CabinetControllerInformation cabinet = CabinetsCtrlInfo.FirstOrDefault(c => c.Position == position);
         return cabinet?.CabinetReplace;
     }
 
     public int Count()
     {
         //only active gameobjects:
-        return Cabinets.Max(cabinet => cabinet.Position) + 1;
+        return CabinetsCtrlInfo.Max(cabinet => cabinet.Position) + 1;
     }
 
     public CabinetControllerInformation GetCabinetControllerInformationByPosition(int position)
     {
-        return Cabinets.FirstOrDefault(c => c.Position == position);
+        return CabinetsCtrlInfo.FirstOrDefault(c => c.Position == position);
     }
     public GameObject GetCabinetChildByPosition(int position)
     {
-        CabinetControllerInformation cabinet = Cabinets.FirstOrDefault(c => c.Position == position);
+        CabinetControllerInformation cabinet = CabinetsCtrlInfo.FirstOrDefault(c => c.Position == position);
         return cabinet?.Cabinet();
     }
 
     //returns the game (CabinetPosition) assigned to the position
     public CabinetPosition GetCabinetByPosition(int position)
     {
-        CabinetControllerInformation cabinet = Cabinets.FirstOrDefault(c => c.Position == position);
+        CabinetControllerInformation cabinet = CabinetsCtrlInfo.FirstOrDefault(c => c.Position == position);
         return cabinet?.Game();
     }
 
@@ -304,37 +316,32 @@ public class CabinetsController : MonoBehaviour
         }
 
         //load unnasigned cabinets. Cabinets that aren't assigned to any room. New cabinets.
-        if (cabsPos.Count() < Cabinets.Count())
+        if (cabsPos.Count() < CabinetsCtrlInfo.Count())
         {
-            ConfigManager.WriteConsole($"[CabinetsController.load] {Room} there are {Cabinets.Count() - cabsPos.Count()} pending assignments");
+            ConfigManager.WriteConsole($"[CabinetsController.load] {Room} there are {CabinetsCtrlInfo.Count() - cabsPos.Count()} pending assignments");
 
-            List<CabinetControllerInformation> remainingOutOfOrderCabs = Cabinets.Where(cab =>
+            List<CabinetControllerInformation> remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
                         string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
-            List<string> cabNames = gameRegistry.GetUnassignedCabinets().
-                                                    OrderBy(x => UnityEngine.Random.value).ToList();
-            List<string> occupiedSpaces = cabNames.Select(cabName =>
-            {
-                string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
-                CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
-                return cabInfo.space;
-            }).ToList();
+            List<string> unnasignedCabNames = gameRegistry.GetUnassignedCabinets().
+                                                           OrderBy(x => UnityEngine.Random.value).ToList();
+            List<string> occupiedSpaces = GetOccupiedSpaces(unnasignedCabNames);
             ConfigManager.WriteConsole($"[CabinetsController.load] {Room}"
-                                        + $" unnasigned cabinets count: {cabNames.Count}");
+                                        + $" unnasigned cabinets count: {unnasignedCabNames.Count}");
             foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
             {
                 int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
                 if (bestFitIndex != -1)
                 {
                     CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
-                                                            cabCtrl.Position,
-                                                            cabNames[bestFitIndex]);
+                                                                            cabCtrl.Position,
+                                                                            unnasignedCabNames[bestFitIndex]);
                     cabCtrl.CabinetController.game = cabPos;
                     ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
-                                                + $" assigned cab: {cabNames[bestFitIndex]}"
+                                                + $" assigned cab: {unnasignedCabNames[bestFitIndex]}"
                                                 + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
 
                     occupiedSpaces.RemoveAt(bestFitIndex);
-                    cabNames.RemoveAt(bestFitIndex);
+                    unnasignedCabNames.RemoveAt(bestFitIndex);
                 }
             }
 
@@ -344,19 +351,19 @@ public class CabinetsController : MonoBehaviour
             //assign a random to non-assigned.
             //don't persist in gameRegistry.   
 
-            remainingOutOfOrderCabs = Cabinets.Where(cab =>
+            remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
                             string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
             if (remainingOutOfOrderCabs.Count() > 0)
             {
                 ConfigManager.WriteConsole($"[CabinetsController.load] {Room} random {remainingOutOfOrderCabs.Count} pending assignments");
 
-                cabNames = gameRegistry.GetRandomizedAllCabinetNames();
-                occupiedSpaces = cabNames.Select(cabName =>
-                    {
-                        string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
-                        CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
-                        return cabInfo.space;
-                    }).ToList();
+                unnasignedCabNames = gameRegistry.GetRandomizedAllCabinetNames();
+                occupiedSpaces = unnasignedCabNames.Select(cabName =>
+                {
+                    string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+                    CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+                    return cabInfo.space;
+                }).ToList();
                 ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
 
                 foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
@@ -371,20 +378,42 @@ public class CabinetsController : MonoBehaviour
                     }
                     CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
                                                             cabCtrl.Position,
-                                                            cabNames[bestFitIndex]);
+                                                            unnasignedCabNames[bestFitIndex]);
                     cabCtrl.CabinetController.game = cabPos;
                     ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position} "
-                                                + $" randomly assigned cab: {cabNames[bestFitIndex]}"
+                                                + $" randomly assigned cab: {unnasignedCabNames[bestFitIndex]}"
                                                 + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
 
                     occupiedSpaces.RemoveAt(bestFitIndex);
-                    cabNames.RemoveAt(bestFitIndex);
+                    unnasignedCabNames.RemoveAt(bestFitIndex);
                 }
             }
         }
 
         ConfigManager.WriteConsole($"[CabinetsController.load] {Room} END loaded cabinets");
         Loaded = true;
+    }
+
+    private static List<string> GetOccupiedSpaces(List<string> cabNames)
+    {
+        List<string> spaces = new List<string>();
+        foreach (string cabName in cabNames)
+        {
+            string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+            try
+            {
+                CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+                spaces.Add(cabInfo.space);
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[CabinetController.GetOccupiedSpaces] [{cabName}] invalid cabinet (reading from yaml).", e);
+                spaces.Add("1x1x1");
+
+                continue;
+            }
+        }
+        return spaces;
     }
 
     public bool ReplaceInRoom(int position, string room, string cabinetDBName)
@@ -396,7 +425,7 @@ public class CabinetsController : MonoBehaviour
         toAdd.CabinetDBName = cabinetDBName;
 
         //get cabinetReplace component first.
-        CabinetControllerInformation cabinet = Cabinets.FirstOrDefault(c => c.Position == position);
+        CabinetControllerInformation cabinet = CabinetsCtrlInfo.FirstOrDefault(c => c.Position == position);
 
         CabinetReplace cr = cabinet.CabinetReplace;
         if (cr != null)
@@ -442,7 +471,7 @@ public class CabinetsController : MonoBehaviour
 
     void checkAndLoadCabinet(CabinetControllerInformation cci)
     {
-        if (!cci.IsOutOfOrderActive)
+        if (!cci.IsOutOfOrderActive || cci.IsFaulty)
             return;
 
         //check conditions to load the cabinet.
@@ -465,10 +494,22 @@ public class CabinetsController : MonoBehaviour
         //never loaded. Load from disk/cache
         if (cc.game.CabInfo == null)
         {
-            cc.game.CabInfo = CabinetInformation.fromName(cc.game.CabinetDBName);
-            if (cc.game.CabInfo == null)
-                ConfigManager.WriteConsoleError($"[CabinetsController.load] loading cabinet from description fails {cc.game}");
-            return;
+            try
+            {
+                cc.game.CabInfo = CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cc.game.CabinetDBName);
+                if (cc.game.CabInfo == null)
+                {
+                    cci.SetAsFaultyCabinet(); //prevent to load it next time.
+                    ConfigManager.WriteConsoleError($"[CabinetsController.load] loading cabinet from description fails {cc.game}");
+                    return;
+                }
+            }
+            catch (Exception e) 
+            {
+                ConfigManager.WriteConsoleException($"[CabinetsController.load] loading cabinet fails {cc.game}", e);
+                cci.SetAsFaultyCabinet(); //prevent to load it next time.
+                return;
+            }
         }
 
         ConfigManager.WriteConsole($"[CabinetsController] Loading cabinet  {cc.game.CabInfo.name} ******");
@@ -485,8 +526,9 @@ public class CabinetsController : MonoBehaviour
                                                  cc.AgentPlayerPositionComponents,
                                                  cc.backgroundSoundController);
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
+            cci.SetAsFaultyCabinet(); //prevent to load it next time.
             ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {cc.game.CabInfo.name}", ex);
             return;
         }
@@ -549,15 +591,15 @@ public class CabinetsController : MonoBehaviour
         }
     }
 
-    void checkAndUnloadCabinet(CabinetControllerInformation cabInfo)
+    void checkAndUnloadCabinet(CabinetControllerInformation cabCtrlInfo)
     {
-        if (cabInfo.IsOutOfOrderActive)
+        if (cabCtrlInfo.IsOutOfOrderActive || cabCtrlInfo.IsFaulty)
             return;
 
-        if (!cabInfo.CabinetReplace.playerIsNotInAnyUnloadPosition())
+        if (!cabCtrlInfo.CabinetReplace.playerIsNotInAnyUnloadPosition())
             return;
 
-        cabInfo.ActivateOutOfOrder();
+        cabCtrlInfo.ActivateOutOfOrder();
 
         // outOfOrderCabinet.SetActive(true); //reactivate the out of order cabinet before destruction
         // Destroy(gameObject); //destroy me
@@ -567,10 +609,10 @@ public class CabinetsController : MonoBehaviour
     {
         while (true)
         {
-            foreach (CabinetControllerInformation cabInfo in Cabinets)
+            foreach (CabinetControllerInformation cabCtrlInfo in CabinetsCtrlInfo)
             {
-                checkAndLoadCabinet(cabInfo);
-                checkAndUnloadCabinet(cabInfo);
+                checkAndLoadCabinet(cabCtrlInfo);
+                checkAndUnloadCabinet(cabCtrlInfo);
                 yield return new WaitForSeconds(0.01f);
             }
             yield return new WaitForSeconds(TimeToWaitBetweenChecks);
