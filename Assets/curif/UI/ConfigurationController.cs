@@ -164,6 +164,7 @@ public class ConfigurationController : MonoBehaviour
     private SceneDatabase sceneDatabase;
     private Teleportation teleportation;
     private GenericOptions teleportDestination;
+    private GenericTimedLabel teleportResult;
     private GenericWidgetContainer teleportContainer;
 
     //locomotion
@@ -246,6 +247,8 @@ public class ConfigurationController : MonoBehaviour
     void Start()
     {
         ConfigManager.WriteConsole("[ConfigurationController] start");
+        
+        gameObject.tag = "screenControlCabinet";
 
         if (changeControls == null)
         {
@@ -923,14 +926,15 @@ public class ConfigurationController : MonoBehaviour
         teleportDestination = new GenericOptions(scr, "teleportdest",
                                     "des:", sceneDatabase.GetTeleportationDestinationRoomDescritions(),
                                     4, 7, maxLength: 26);
-
+        teleportResult = new GenericTimedLabel(scr, "teleportResult", "Teleport failed", 4, 12, true);
         teleportContainer = new(scr, "teleportContainer");
         teleportContainer.Add(new GenericWindow(scr, 2, 4, "teleportwin", 37, 12,
                                         " teleportation "))
                             .Add(new GenericLabel(scr, "lbl", "select destination", 4, 6))
                             .Add(teleportDestination)
                             .Add(new GenericButton(scr, "teleport", "teleport", 4, 11, true))
-                            .Add(new GenericButton(scr, "exit", "exit", 4, 12, true));
+                            .Add(teleportResult)
+                            .Add(new GenericButton(scr, "exit", "exit", 4, 14, true));
     }
 
     private void TeleportWindowDraw()
@@ -1347,6 +1351,22 @@ public class ConfigurationController : MonoBehaviour
                 UpdateInputValues();
             }
         }
+    }
+
+    public bool Teleport(string roomNameOrDescription)
+    {
+        SceneDocument toScene = sceneDatabase.FindByDescription(roomNameOrDescription);
+        if (toScene == null)
+            toScene = sceneDatabase.FindByName(roomNameOrDescription);
+
+        if (toScene == null)
+            return false;
+            //throw new Exception($"Teleport to room '{roomNameOrDescription}' fail: room is unknown, please chech the room name");
+        
+        ConfigManager.WriteConsole($"[ConfigurationController.Teleport] teleport to scene [{roomNameOrDescription}]");
+        ControllersEnable(false); //free the player
+        teleportation.Teleport(toScene);
+        return true;
     }
 
     private BehaviorTree buildBT()
@@ -1777,17 +1797,14 @@ public class ConfigurationController : MonoBehaviour
                         else if (w.name == "teleport")
                         {
                             string sceneDescription = teleportDestination.GetSelectedOption();
-                            SceneDocument toScene = sceneDatabase.FindByDescription(sceneDescription);
-                            if (toScene == null)
+                            bool teleported = Teleport(sceneDescription);
+                            if (teleported)
                             {
-                                ConfigManager.WriteConsoleError($"[ConfigurationController.tree] scene [{sceneDescription}] not found in scenes database, jump to room001");
-                                toScene = sceneDatabase.FindByName("Room001");
+                                ControllersEnable(false); //free the player
+                                status = StatusOptions.init;
+                                return TaskStatus.Success;                            
                             }
-                            ConfigManager.WriteConsole($"[ConfigurationController.tree] teleport to scene [{sceneDescription}]");
-                            ControllersEnable(false); //free the player
-                            teleportation.Teleport(toScene);
-                            status = StatusOptions.init;
-                            return TaskStatus.Success;
+                            teleportResult.Start(5);
                         }
                     }
                     scr.DrawScreen();

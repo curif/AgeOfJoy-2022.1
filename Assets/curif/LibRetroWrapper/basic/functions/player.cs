@@ -165,3 +165,35 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
         return BasicValue.True;
     }
 }
+
+class CommandFunctionPLAYERTELEPORT : CommandFunctionSingleExpressionBase
+{
+
+    public CommandFunctionPLAYERTELEPORT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "PLAYERTELEPORT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        BasicValue val = expr.Execute(vars);
+
+        GameObject[] cabinets = GameObject.FindGameObjectsWithTag("screenControlCabinet");
+        foreach (GameObject cabinet in cabinets)
+        {
+            ConfigurationController controller = cabinet.GetComponent<ConfigurationController>();
+            if (controller != null)
+            {
+                if (controller.Teleport(val.GetString()))
+                    return BasicValue.True;
+
+            }
+        }
+
+        return BasicValue.False;
+    }
+}
+
+    
