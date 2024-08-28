@@ -178,6 +178,7 @@ public static class Commands
         functions["PLAYERSETCOORDINATE"] = typeof(CommandFunctionPLAYERSETCOORDINATE);
         functions["PLAYERGETCOORDINATE"] = typeof(CommandFunctionPLAYERGETCOORDINATE);
         functions["PLAYERLOOKAT"] = typeof(CommandFunctionPLAYERLOOKAT);
+        functions["PLAYERTELEPORT"] = typeof(CommandFunctionPLAYERTELEPORT);
 
         //Music
         functions["MUSICPLAY"] = typeof(CommandFunctionMUSICPLAY);
@@ -210,7 +211,7 @@ public static class Commands
         functions["EVENTTRIGGER"] = typeof(CommandFunctionEVENTTRIGGER);
 
         //lightgun
-        functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionLIGHTGUNGETPOINTEDPART);
+        functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionCABPARTLIGHTGUNHIT);
         
 
     }

@@ -1,0 +1,1 @@
+10 LET teleportResult = PlayerTeleport("room001")
