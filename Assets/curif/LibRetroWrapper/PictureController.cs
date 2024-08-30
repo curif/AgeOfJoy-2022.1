@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using YamlDotNet.Serialization;
@@ -42,6 +43,19 @@ public class PictureController : MonoBehaviour
             ConfigManager.WriteConsoleWarning("[PictureController] No textures found in YAML file.");
             return;
         }
+        StartCoroutine(RandomizePictures());
+
+        
+    }
+
+    IEnumerator RandomizePictures()
+    {
+        // Yielding one frame allows Unity to finish initializing objects
+        yield return new WaitForEndOfFrame();
+        if (gameObject.transform.childCount == 0)
+        {
+            yield break;
+        }
 
         // Shuffle the texture data
         List<PictureAndFrameTextureInfo> textures = ShuffleList(textureData.textures);
@@ -58,9 +72,13 @@ public class PictureController : MonoBehaviour
             ApplyTextureToChild(texturePath, gameObject.transform.GetChild(childIdx));
 
             textureIndex++;
-        }
-    }
 
+            // Adding a small delay between setting textures in each iteration
+            yield return null;
+
+        }
+
+    }
     private PictureAndFrameTexture LoadYamlFromTextAsset(TextAsset yamlTextAsset)
     {
         if (yamlTextAsset == null)
