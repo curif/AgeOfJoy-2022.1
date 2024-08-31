@@ -1477,7 +1477,7 @@ MonoBehaviour:
   gameRegistry: {fileID: 0}
   backgroundSoundController: {fileID: 0}
   Loaded: 0
-  Cabinets: []
+  CabinetsCtrlInfo: []
   CoroutineIsRunning: 0
   TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
@@ -9291,6 +9291,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e99014bb67875b548aeba1443d84157, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  yamlResourcePath: Decoration/Pictures/contents
 --- !u!4 &814586840
 Transform:
   m_ObjectHideFlags: 0
@@ -15372,6 +15373,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1388098676}
     m_Modifications:
+    - target: {fileID: 1511297309289058435, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: b2b671481988f7a4fb4bed4e2946e21a, type: 2}
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_RootOrder
       value: -1
@@ -15436,6 +15441,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 6604573175301663474, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: b2b671481988f7a4fb4bed4e2946e21a, type: 2}
     - target: {fileID: 8320214804801100467, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483639
