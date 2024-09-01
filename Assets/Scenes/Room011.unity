@@ -4180,7 +4180,7 @@ MonoBehaviour:
   gameRegistry: {fileID: 0}
   backgroundSoundController: {fileID: 0}
   Loaded: 0
-  Cabinets: []
+  CabinetsCtrlInfo: []
   CoroutineIsRunning: 0
   TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
@@ -13475,6 +13475,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e99014bb67875b548aeba1443d84157, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  yamlResourcePath: Decoration/Pictures/contents
 --- !u!4 &814586840
 Transform:
   m_ObjectHideFlags: 0
@@ -18161,7 +18162,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -21816,7 +21817,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -22119,30 +22120,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
-    - target: {fileID: -3937029623693868008, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2473466639377136260, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3873534702789881788, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4211851413960300278, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5569666331985507727, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5958408522585506743, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: -8697316863189600284, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
       propertyPath: m_LightProbeUsage
       value: 1
@@ -22170,6 +22147,30 @@ PrefabInstance:
     - target: {fileID: 8985823622858259377, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
       propertyPath: m_LightProbeUsage
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -3937029623693868008, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2473466639377136260, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873534702789881788, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4211851413960300278, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5569666331985507727, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5958408522585506743, guid: b2c2c2960856a45488756d8b6e7fcef4, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: -9168301997562364265, guid: 1262b1db6e2d0394a97d41c2af1040dc, type: 3}
       propertyPath: m_Layer
