@@ -390,14 +390,25 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private void stop()
     {
         //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
-        animator.SetTrigger("Idle");
+        Debug.Log($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
+        animator.SetBool("Idle", true);
+        animator.SetBool("IsWalking", false); // Ensure everything else is disabled
+        animator.SetBool("Buy", false);
+        animator.SetBool("Play", false);
+        //animator.SetTrigger("Idle");
         agent.updateRotation = false;
         SetMovementController();
     }
     private void walk()
     {
+        //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
+        Debug.Log($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
+        animator.SetBool("IsWalking", true);
+        animator.SetBool("Idle", false); // Ensure everything else is disabled
+        animator.SetBool("Buy", false);
+        animator.SetBool("Play", false);
         agent.updateRotation = true;
-        animator.SetTrigger("Walk");
+        // animator.SetTrigger("Walk");
         SetMovementController();
     }
 
@@ -417,13 +428,20 @@ public class ArcadeRoomBehavior : MonoBehaviour
         {
             if (destination.Type == PlaceInformation.PlaceType.BoyPlay)
             {
-                //special behaviour
+                //special behaviour -- Geometrizer: I don't think this does anything
                 int index = UnityEngine.Random.Range(0, boyPlayTriggers.Length - 1);
                 animator.SetTrigger(boyPlayTriggers[index]);
+                animator.SetBool(boyPlayTriggers[index], true);
+                Debug.Log($"[runDestinationAnimation] on {name}");
             }
             else
-                animator.SetTrigger(animatorTriggers[(int)destination.Type]);
-
+                //animator.SetTrigger(animatorTriggers[(int)destination.Type]);
+                animator.SetBool("IsWalking", false);
+                animator.SetBool("Idle", false);
+                animator.SetBool(animatorTriggers[(int)destination.Type], true);
+            Debug.Log($"[runDestinationAnimation] on {name}");
+                Debug.Log($"Trigger set: {animatorTriggers[(int)destination.Type]}, Destination Type: {destination.Type}");
+                //geometrizer: This is where we start Buy/Play anims, need to shut down walk here
         }
         catch (Exception e)
         {
@@ -452,6 +470,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
         // TODO change for a new path to avoid the player.
         animator.applyRootMotion = true;
         animator.SetTrigger("Turn");
+        animator.SetBool("IsTurning", true);
     }
 
     private void OnTriggerEnter(Collider collision)
