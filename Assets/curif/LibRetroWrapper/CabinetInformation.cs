@@ -371,7 +371,7 @@ public class CabinetInformation
         public ReceiveImpacts receiveImpacts;
 
         // Add audio property
-        public CabinetAudio audio;
+        public CabinetAudio speaker;
     }
     public class Touchable
     {
@@ -471,6 +471,7 @@ public class CabinetInformation
         public string orientation = "vertical";
         public Screen screen = new Screen();
         public Geometry geometry = new Geometry();
+        public string name;
 
         public System.Exception validate(List<string> crtTypes)
         {
