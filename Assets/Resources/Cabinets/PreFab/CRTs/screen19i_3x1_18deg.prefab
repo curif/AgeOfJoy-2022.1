@@ -16,14 +16,12 @@ GameObject:
   - component: {fileID: 9020261596928811661}
   - component: {fileID: 3607137671920533558}
   - component: {fileID: 2500690833502563729}
-  - component: {fileID: 6109179531164059863}
   - component: {fileID: 3077526320661963279}
   - component: {fileID: 4338790136356453863}
   - component: {fileID: 8972917328849416490}
   - component: {fileID: 3707607308854403927}
   - component: {fileID: 2930086701241014134}
-  - component: {fileID: 2304435896953564567}
-  - component: {fileID: 113884556558417817}
+  - component: {fileID: 7304401735293628638}
   m_Layer: 10
   m_Name: screen19i_3x1_18deg
   m_TagString: Untagged
@@ -38,13 +36,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4579439272377624362}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &245838673134088757
 MeshFilter:
@@ -353,28 +351,6 @@ MonoBehaviour:
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
---- !u!64 &6109179531164059863
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4579439272377624362}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 1024
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -3094652150234452029, guid: 10b30e63147e13130ac51e46decf1699, type: 3}
 --- !u!114 &3077526320661963279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -573,41 +549,25 @@ MonoBehaviour:
   CachedTexture: {fileID: 0}
   texturePath: 
   SavingDelayTime: 1
---- !u!114 &2304435896953564567
-MonoBehaviour:
+--- !u!64 &7304401735293628638
+MeshCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4579439272377624362}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 1024
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 564223b6b6dd60849adae91a9c9c0ec7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ScenesToUnload: []
---- !u!114 &113884556558417817
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4579439272377624362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: df968a728f2775a9290ef6d393ba86a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  scr: {fileID: 0}
-  CoinSlot: {fileID: 0}
-  libretroControlMap: {fileID: 0}
-  changeControls: {fileID: 0}
-  cabinetsController: {fileID: 0}
-  roomConfiguration: {fileID: 0}
-  globalConfiguration: {fileID: 0}
-  AGEBasic: {fileID: 0}
-  canChangeAudio: 1
-  canChangeNPC: 1
-  canChangeControllers: 1
-  canChangeCabinets: 1
-  canTeleport: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 5014109557370566341, guid: e6c016bf8c76c9448b7e0668a6396343, type: 3}

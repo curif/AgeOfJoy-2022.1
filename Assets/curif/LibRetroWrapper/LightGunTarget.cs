@@ -40,9 +40,9 @@ public class LightGunInformation
     public class CRT
     {
         [YamlMember(Alias = "mesh-factor-scale-x", ApplyNamingConventions = false)]
-        public float meshFactorScaleX = 0.01f;
+        public float meshFactorScaleX = float.NaN;
         [YamlMember(Alias = "mesh-factor-scale-y", ApplyNamingConventions = false)]
-        public float meshFactorScaleY = 0.01f;
+        public float meshFactorScaleY = float.NaN;
 
         [YamlMember(Alias = "border-size-x", ApplyNamingConventions = false)]
         public float borderSizeX = 1.5f;
@@ -186,8 +186,10 @@ public class LightGunTarget : MonoBehaviour
         {
             borderSizeX = lightGunInformation.crt.borderSizeX;
             borderSizeY = lightGunInformation.crt.borderSizeY;
-            scaleFactorX = lightGunInformation.crt.meshFactorScaleX;
-            scaleFactorY = lightGunInformation.crt.meshFactorScaleY;
+            if (!float.IsNaN(lightGunInformation.crt.meshFactorScaleX))
+                scaleFactorX = lightGunInformation.crt.meshFactorScaleX;
+            if (!float.IsNaN(lightGunInformation.crt.meshFactorScaleY))
+                scaleFactorY = lightGunInformation.crt.meshFactorScaleY;
             InvertX = lightGunInformation.crt.invertx;
             InvertY = lightGunInformation.crt.inverty;
             adjustSightVertical = lightGunInformation.gun.adjustSight.vertical;
@@ -325,7 +327,7 @@ public class LightGunTarget : MonoBehaviour
         if (attachedToCRT)
         {
             // if this component is attached to a CRT
-            if (isPoinitingToATarget(layerMaskCRT) && hit.collider.gameObject == gameObject)
+            if (isPoinitingToATarget(layerMaskCRT) && hit.collider?.gameObject == gameObject)
                 detectCRTCoordinates();
         }
     }
@@ -343,6 +345,14 @@ public class LightGunTarget : MonoBehaviour
         return Physics.Raycast(adjustedPosition,
                 invertForward ? -spaceGun.transform.forward : spaceGun.transform.forward,
                 out hit, Mathf.Infinity, layer);
+    }
+
+    private void detectCRTCoordinatesUV()
+    {
+        if (hit.collider.gameObject == gameObject)
+        {
+            MeshCollider meshCollider = GetComponent<MeshCollider>();
+        }
     }
 
     private void detectCRTCoordinates()

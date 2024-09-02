@@ -15,13 +15,13 @@ GameObject:
   - component: {fileID: -6857671861487439488}
   - component: {fileID: 3607137671920533558}
   - component: {fileID: 2500690833502563729}
-  - component: {fileID: 6109179531164059863}
   - component: {fileID: 8972917328849416490}
   - component: {fileID: 3707607308854403927}
   - component: {fileID: 2930086701241014134}
   - component: {fileID: 5492392891573803847}
   - component: {fileID: 3281906526552414659}
   - component: {fileID: 8954019803348906745}
+  - component: {fileID: 5980957900575047569}
   m_Layer: 10
   m_Name: screen19iAGEBasic
   m_TagString: Untagged
@@ -304,28 +304,6 @@ MonoBehaviour:
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
---- !u!64 &6109179531164059863
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4579439272377624362}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 1024
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -3094652150234452029, guid: 10b30e63147e13130ac51e46decf1699, type: 3}
 --- !u!114 &8972917328849416490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -370,11 +348,13 @@ MonoBehaviour:
   AGEInfo:
     active: 0
     debug: 0
+    system_skin: c64
+    variables: []
+    afterStart: 
     afterLoad: 
     afterInsertCoin: 
     afterLeave: 
-    afterStart: 
-    variables: []
+    events: []
 --- !u!114 &2930086701241014134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -418,11 +398,13 @@ MonoBehaviour:
   ageBasicInformation:
     active: 0
     debug: 0
+    system_skin: c64
+    variables: []
+    afterStart: 
     afterLoad: 
     afterInsertCoin: 
     afterLeave: 
-    afterStart: 
-    variables: []
+    events: []
   backgroundSoundController: {fileID: 0}
 --- !u!114 &3281906526552414659
 MonoBehaviour:
@@ -436,17 +418,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a2731fefec8e827e9f6363295839b2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  c64Font: {fileID: 2800000, guid: 27b74844601859509959e3914b4b6f01, type: 3}
-  CharactersWidth: 40
-  CharactersHeight: 25
+  CharactersXCount: 40
+  CharactersYCount: 25
   TextureWidth: 380
   TextureHeight: 216
-  BackgroundColor:
-    serializedVersion: 2
-    rgba: 14580358
-  CenteredAreaColor:
-    serializedVersion: 2
-    rgba: 14367245
 --- !u!114 &8954019803348906745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -461,8 +436,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spaceGun: {fileID: 0}
   invertForward: 0
-  HitX: 0
-  HitY: 0
+  OutOfScreenTop: 0
+  OutOfScreenBottom: 0
+  OutOfScreenLeft: 0
+  OutOfScreenRight: 0
   showHitPosition: 0
   InvertX: 1
   InvertY: 1
@@ -472,3 +449,26 @@ MonoBehaviour:
   borderSizeY: 1
   adjustSightVertical: 0
   adjustSightHorizontal: 0
+  parts: []
+--- !u!64 &5980957900575047569
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4579439272377624362}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 1024
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -3094652150234452029, guid: 10b30e63147e13130ac51e46decf1699, type: 3}

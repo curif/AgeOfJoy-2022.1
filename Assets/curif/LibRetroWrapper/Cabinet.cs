@@ -1018,7 +1018,10 @@ public class Cabinet
             throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
 
         //LibretroScreenController will find the object using this name:
-        newCRT.name = CRTName(Name, gameFile);
+        if (string.IsNullOrEmpty(cbinfo.crt.name))
+            newCRT.name = CRTName(Name, gameFile);
+        else
+            newCRT.name = cbinfo.crt.name;
 
         // rotate and scale
         float scale = crtScalePercentage / 100f;
