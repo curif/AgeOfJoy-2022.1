@@ -696,6 +696,56 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
     }
 }
 
+// PHYSICAL ----------------------
+
+class CommandFunctionCABPARTSPHYACTIVATEGRAVITY : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCABPARTSPHYACTIVATEGRAVITY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSPHYACTIVATEGRAVITY";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue val = expr.Execute(vars);
+
+        if (val.IsString())
+            config.Cabinet.PhyActivateGravity(val.GetString());
+        else
+            config.Cabinet.PhyActivateGravity(val.GetInt());
+
+        return null;
+    }
+}
+
+class CommandFunctionCABPARTSPHYDEACTIVATEGRAVITY : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCABPARTSPHYDEACTIVATEGRAVITY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSPHYDEACTIVATEGRAVITY";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue val = expr.Execute(vars);
+
+        if (val.IsString())
+            config.Cabinet.PhyDeactivateGravity(val.GetString());
+        else
+            config.Cabinet.PhyDeactivateGravity(val.GetInt());
+
+        return null;
+    }
+}
+
 public static class ColorConverter
 {
     public static Color ConvertToColor(BasicValue bvr, BasicValue bvg, BasicValue bvb)

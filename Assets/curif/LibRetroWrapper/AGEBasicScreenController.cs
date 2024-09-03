@@ -301,6 +301,8 @@ public class AGEBasicScreenController : MonoBehaviour
 
                   //start mame
                   ConfigManager.WriteConsole($"[AGEBasicScreenController] in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
+                  
+                  cabinet.PhyActivate();
 
                   StartPlayerActivities();
 
@@ -372,6 +374,8 @@ public class AGEBasicScreenController : MonoBehaviour
                   .End()
                   .Do("END Program", () =>
                   {
+                      cabinet.PhyDeactivate();
+
                       // age basic leave
                       cabinetAGEBasic.Stop(); //force
                       cabinetAGEBasic.ExecAfterLeaveBas();

@@ -328,22 +328,6 @@ public static class CabinetFactory
                 try
                 {
                     int partNum = cabinet.PartsPosition(p.name);
-                    if (p.istarget)
-                        cabinet.SetLightGunTarget(partNum, cbinfo.lightGunInformation);
-
-                    if (p.receiveImpacts != null)
-                    {
-                        if (p.receiveImpacts.parts.Count > 0)
-                            cabinet.SetCollider(partNum, p.receiveImpacts); //receive collisions
-                        else
-                            cabinet.SetColliding(partNum); //collide with others
-                    }
-
-                    if (p.touchable != null)
-                        cabinet.SetTouchable(partNum, p.touchable);
-
-                    if (p.physical != null)
-                        cabinet.SetPhysics(partNum, p.physical);
 
                     if (p.type == "blocker")
                     {
@@ -351,6 +335,18 @@ public static class CabinetFactory
                         cabinet.AddAColliderBlocker(p.name, false);
                         //disable main box collider for collissions but works on put on floor.
                         boxCollider.excludeLayers = ~0;
+                    }
+                    else
+                    {
+
+                        if (p.istarget)
+                            cabinet.SetLightGunTarget(partNum, cbinfo.lightGunInformation);
+
+                        if (p.physical != null)
+                            cabinet.SetPhysics(partNum, p.physical);
+
+                        if (p.speaker != null)
+                            cabinet.SetAudio(partNum, p.speaker);
                     }
                 }
                 catch (Exception e)

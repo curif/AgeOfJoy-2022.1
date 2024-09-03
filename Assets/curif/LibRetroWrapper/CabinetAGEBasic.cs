@@ -61,6 +61,27 @@ public class CabinetAGEBasicInformation
 [Serializable]
 public class EventInformation
 {
+    /*
+    [Serializable]
+    public class PartImpact
+    {
+        [Serializable]
+        public class Or
+        {
+            [YamlMember(Alias = "impact-part", ApplyNamingConventions = false)]
+            public PartImpact partImpact;
+        }
+        [Serializable]
+        public class And
+        {
+            [YamlMember(Alias = "impact-part", ApplyNamingConventions = false)]
+            public PartImpact partImpact;
+        }
+        //public And and;
+        public Or or;
+        public string part;
+    }
+    */
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
@@ -75,6 +96,10 @@ public class EventInformation
     public double delay = 0;
     public List<ControlInformation> controls;
     public string part;
+    [YamlMember(Alias = "impact-parts", ApplyNamingConventions = false)]
+    public List<string> partImpacts; //name of the colliding part.
+    //public List<string> parts; //OR parts
+
     // Serialize this field to show it in the editor
     [SerializeField]
     private List<AGEBasicVariable> variables;
@@ -317,34 +342,23 @@ public class OnLightGun : Event
 public class OnCollisionBase: Event
 {
     protected GameObject partColliding;
-    protected CollisionDetection touchDetection;
+    protected InteractablePart interactablePart;
 
     public OnCollisionBase(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
 
-    protected void loadComponents()
+    protected bool loadComponents()
     {
         partColliding = AGEBasic.ConfigCommands.Cabinet.Parts(eventInformation.part);
         if (partColliding == null)
-        {
-            status = Status.initialized;
             throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} not found");
-        }
 
-        touchDetection = partColliding.GetComponent<CollisionDetection>();
-        if (touchDetection == null)
-        {
-            status = Status.initialized;
+        interactablePart = partColliding.GetComponent<InteractablePart>();
+        
+        //detected: some times onTriggerEnterEvent is null. 
 
-            throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} wasn't declared collision parts in cabinet configuration (yaml)");
-        }
-
-        if (touchDetection.impact.parts.Count == 0)
-        {
-            status = Status.initialized;
-            throw new Exception($"AGEBasic event on-collision-start part collider {eventInformation.part} needs declared collision parts list in cabinet configuration (yaml)");
-        }
+        return !(interactablePart == null || !interactablePart.Initialized || interactablePart.collisionDetection == null );
     }
 
     public override void EvaluateTrigger()
@@ -366,26 +380,27 @@ public class OnCollisionStart : OnCollisionBase
 
         base.Reset();
 
-        loadComponents();
-        
-        //detected: some times onTriggerEnterEvent is null. needs reinitialization
-        if (touchDetection.OnCollisionStart == null)
+        if (!loadComponents() || interactablePart.collisionDetection.OnCollisionStart == null)
         {
             status = Status.error;
             return;
         }
-        touchDetection.OnCollisionStart.AddListener(OnCollisionTriggerStart);
+        
+        interactablePart.collisionDetection.OnCollisionStart.AddListener(OnCollisionTriggerStart);
         status = Status.initialized;
     }
 
-    void OnCollisionTriggerStart(string part)
+    void OnCollisionTriggerStart(string collidingPartName)
     {
-        RegisterTrigger(true);
+        if (eventInformation.partImpacts == null ||
+            eventInformation.partImpacts.Count == 0 ||
+            eventInformation.partImpacts.Contains(collidingPartName))
+            RegisterTrigger(true);
     }
 
     public override void Dispose()
     {
-        touchDetection.OnCollisionStart?.RemoveListener(OnCollisionTriggerStart);
+        interactablePart.collisionDetection.OnCollisionStart?.RemoveListener(OnCollisionTriggerStart);
         base.Dispose();
     }
 }
@@ -403,26 +418,26 @@ public class OnCollisionStay : OnCollisionBase
 
         base.Reset();
 
-        loadComponents();
-
-        //detected: some times onTriggerEnterEvent is null. needs reinitialization
-        if (touchDetection.OnCollisionStart == null)
+        if (!loadComponents() || interactablePart.collisionDetection.OnCollisionContinue == null)
         {
             status = Status.error;
             return;
         }
-        touchDetection.onCollisionContinue.AddListener(OnCollisionTrigger);
+        interactablePart.collisionDetection.OnCollisionContinue.AddListener(OnCollisionTrigger);
         status = Status.initialized;
     }
 
-    void OnCollisionTrigger(string part)
+    void OnCollisionTrigger(string collidingPartName)
     {
-        RegisterTrigger(true);
+        if (eventInformation.partImpacts == null ||
+            eventInformation.partImpacts.Count == 0 ||
+            eventInformation.partImpacts.Contains(collidingPartName))
+            RegisterTrigger(true);
     }
 
     public override void Dispose()
     {
-        touchDetection.OnCollisionStart?.RemoveListener(OnCollisionTrigger);
+        interactablePart.collisionDetection.OnCollisionStart?.RemoveListener(OnCollisionTrigger);
         base.Dispose();
     }
 }
@@ -439,60 +454,62 @@ public class OnCollisionEnd : OnCollisionBase
 
         base.Reset();
 
-        loadComponents();
-        
-        //detected: some time onTriggerEnterEvent is null. needs reinitialization
-        if (touchDetection.OnCollisionEnd == null)
+        if (!loadComponents() || interactablePart.collisionDetection.OnCollisionEnd == null)
         {
             status = Status.error;
             return;
         }
-        touchDetection.OnCollisionStart.AddListener(OnCollisionTriggerExit);
+        
+        interactablePart.collisionDetection.OnCollisionEnd.AddListener(OnCollisionTriggerExit);
         status = Status.initialized;
     }
 
-    void OnCollisionTriggerExit(string part)
+    void OnCollisionTriggerExit(string collidingPartName)
     {
-        RegisterTrigger(true);
+        if (eventInformation.partImpacts == null || 
+            eventInformation.partImpacts.Count == 0 || 
+            eventInformation.partImpacts.Contains(collidingPartName))
+            RegisterTrigger(true);
     }
 
     public override void Dispose()
     {
-        touchDetection.OnCollisionEnd?.RemoveListener(OnCollisionTriggerExit);
+        interactablePart.collisionDetection.OnCollisionEnd?.RemoveListener(OnCollisionTriggerExit);
         base.Dispose();
     }
 }
 
 public class OnPlayerBaseEvent : Event
 {
-    protected GrabDetection grabDetection;
+    protected InteractablePart interactablePart;
     protected GameObject part;
 
     public OnPlayerBaseEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
 
-    public override void Init()
+    protected bool loadComponents()
     {
-        if (status == Status.initialized)
-            return;
-
         if (part == null)
         {
             part = AGEBasic.ConfigCommands.Cabinet.Parts(eventInformation.part);
             if (part == null)
             {
-                status = Status.initialized;
+                status = Status.error;
                 throw new Exception($"AGEBasic event on-touch part {eventInformation.part} not found");
             }
         }
 
-        grabDetection = part.GetComponent<GrabDetection>();
-        if (grabDetection == null)
-        {
-            status = Status.initialized;
-            throw new Exception($"AGEBasic event on-touch  part {eventInformation.part} bad configuration");
-        }
+        interactablePart = part.GetComponent<InteractablePart>();
+
+        //detected: some times onTriggerEnterEvent is null. 
+
+        return !(interactablePart == null || !interactablePart.Initialized || interactablePart.grabDetection == null);
+    }
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
 
         base.Reset();
     }
@@ -510,15 +527,13 @@ public class OnPlayerTouchStartEvent: OnPlayerBaseEvent
             return;
 
         base.Init();
-
-        //detected: some time onTriggerEnterEvent is null. needs reinitialization
-        if (grabDetection.OnPlayerTouchEnter == null)
+        if (!loadComponents() || interactablePart.grabDetection.OnPlayerTouchEnter == null)
         {
             status = Status.error;
             return;
         }
 
-        grabDetection.OnPlayerTouchEnter.AddListener(OnTouch);
+        interactablePart.grabDetection.OnPlayerTouchEnter.AddListener(OnTouch);
         status = Status.initialized;
     }
 
@@ -529,7 +544,7 @@ public class OnPlayerTouchStartEvent: OnPlayerBaseEvent
 
     public override void Dispose()
     {
-        grabDetection.OnPlayerTouchEnter?.RemoveListener(OnTouch);
+        interactablePart.grabDetection.OnPlayerTouchEnter?.RemoveListener(OnTouch);
         base.Dispose();
     }
 }
@@ -547,14 +562,12 @@ public class OnPlayerTouchEndEvent : OnPlayerBaseEvent
 
         base.Init();
 
-        //detected: some time onTriggerEnterEvent is null. needs reinitialization
-        if (grabDetection.OnPlayerTouchExit == null)
+        if (!loadComponents() || interactablePart.grabDetection.OnPlayerTouchExit == null)
         {
             status = Status.error;
             return;
         }
-
-        grabDetection.OnPlayerTouchExit.AddListener(OnTouch);
+        interactablePart.grabDetection.OnPlayerTouchExit.AddListener(OnTouch);
         status = Status.initialized;
     }
 
@@ -565,7 +578,7 @@ public class OnPlayerTouchEndEvent : OnPlayerBaseEvent
 
     public override void Dispose()
     {
-        grabDetection.OnPlayerTouchExit?.RemoveListener(OnTouch);
+        interactablePart.grabDetection.OnPlayerTouchExit?.RemoveListener(OnTouch);
         base.Dispose();
     }
 }

@@ -388,6 +388,8 @@ public class LibretroScreenController : MonoBehaviour
                   //audio mixer group
                   audioSource.outputAudioMixerGroup = audioMixerGame;
 
+                  cabinet.PhyActivate();
+
                   // age basic Insert coin
                   if (ageBasicInformation != null && ageBasicInformation.active)
                       cabinetAGEBasic.ExecInsertCoinBas();
@@ -485,7 +487,8 @@ public class LibretroScreenController : MonoBehaviour
     }
     void ExitPlayerFromGame()
     {
-        
+        cabinet.PhyDeactivate();
+
         //audio mixer group
         audioSource.outputAudioMixerGroup = audioMixerAttractMode;
 
@@ -504,6 +507,8 @@ public class LibretroScreenController : MonoBehaviour
             cabinetAGEBasic.Stop(); //force
             cabinetAGEBasic.ExecAfterLeaveBas();
         }
+
+
 
 #if UNITY_EDITOR
         SimulateExitGame = false;

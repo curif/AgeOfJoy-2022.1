@@ -134,8 +134,7 @@ GameObject:
   - component: {fileID: 99834705}
   - component: {fileID: 99834704}
   - component: {fileID: 99834703}
-  - component: {fileID: 99834702}
-  - component: {fileID: 99834701}
+  - component: {fileID: 99834706}
   m_Layer: 0
   m_Name: fff (1)
   m_TagString: Untagged
@@ -143,45 +142,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &99834701
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 99834700}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7745f49e3471a9c45a60dea7526c1116, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  impact:
-    parts:
-    - SphereColliding
-    repulsion:
-      force: 5
-  lastCollidingObject: 
---- !u!65 &99834702
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 99834700}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &99834703
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -202,7 +162,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: eb656fca911d0be478fc6f8a0f5388b8, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -239,14 +199,46 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 99834700}
-  m_LocalRotation: {x: -0.0009992413, y: -0, z: -0, w: 0.9999996}
+  m_LocalRotation: {x: -0.15970482, y: -0, z: -0, w: 0.98716486}
   m_LocalPosition: {x: -10.37, y: 1.3, z: -0.78}
   m_LocalScale: {x: 3.2096, y: 4.164, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 5
-  m_LocalEulerAnglesHint: {x: -0.115, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -18.38, y: 0, z: 0}
+--- !u!114 &99834706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 99834700}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: box
+    receiveImpacts:
+      parts:
+      - SphereColliding (1)
+      - SphereColliding (2)
+      repulsion:
+        force: 8
+    affectedBy: script
+    gravity: 0
+    mass: 1
 --- !u!1 &459230411
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,7 +250,6 @@ GameObject:
   - component: {fileID: 459230415}
   - component: {fileID: 459230414}
   - component: {fileID: 459230413}
-  - component: {fileID: 459230412}
   - component: {fileID: 459230416}
   m_Layer: 0
   m_Name: fff
@@ -267,27 +258,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!65 &459230412
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 459230411}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &459230413
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -362,15 +332,27 @@ MonoBehaviour:
   m_GameObject: {fileID: 459230411}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7745f49e3471a9c45a60dea7526c1116, type: 3}
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  impact:
-    parts:
-    - SphereColliding
-    repulsion:
-      force: 1
-  lastCollidingObject: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: box
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 0
+    mass: 1
 --- !u!1 &536591143
 GameObject:
   m_ObjectHideFlags: 0
@@ -382,8 +364,7 @@ GameObject:
   - component: {fileID: 536591148}
   - component: {fileID: 536591147}
   - component: {fileID: 536591146}
-  - component: {fileID: 536591145}
-  - component: {fileID: 536591144}
+  - component: {fileID: 536591149}
   m_Layer: 0
   m_Name: fff (2)
   m_TagString: Untagged
@@ -391,45 +372,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &536591144
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 536591143}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7745f49e3471a9c45a60dea7526c1116, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  impact:
-    parts:
-    - SphereColliding
-    repulsion:
-      force: 10
-  lastCollidingObject: 
---- !u!65 &536591145
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 536591143}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &536591146
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -495,6 +437,36 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 11.054, y: 0, z: 0}
+--- !u!114 &536591149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 536591143}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: box
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 0
+    mass: 1
 --- !u!1 &571029303
 GameObject:
   m_ObjectHideFlags: 0
@@ -506,8 +478,7 @@ GameObject:
   - component: {fileID: 571029308}
   - component: {fileID: 571029307}
   - component: {fileID: 571029306}
-  - component: {fileID: 571029305}
-  - component: {fileID: 571029304}
+  - component: {fileID: 571029309}
   m_Layer: 0
   m_Name: fff (3)
   m_TagString: Untagged
@@ -515,45 +486,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &571029304
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 571029303}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7745f49e3471a9c45a60dea7526c1116, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  impact:
-    parts:
-    - SphereColliding
-    repulsion:
-      force: 5
-  lastCollidingObject: 
---- !u!65 &571029305
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 571029303}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &571029306
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -619,6 +551,36 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: -0.115, y: 90, z: 0}
+--- !u!114 &571029309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 571029303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: box
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 0
+    mass: 1
 --- !u!1 &634944459
 GameObject:
   m_ObjectHideFlags: 0
@@ -722,8 +684,7 @@ GameObject:
   - component: {fileID: 925216859}
   - component: {fileID: 925216858}
   - component: {fileID: 925216857}
-  - component: {fileID: 925216856}
-  - component: {fileID: 925216855}
+  - component: {fileID: 925216860}
   m_Layer: 16
   m_Name: SphereColliding (1)
   m_TagString: Untagged
@@ -731,54 +692,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!135 &925216855
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 925216854}
-  m_Material: {fileID: 13400000, guid: 948611cc428a84b569ad7626e6649205, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &925216856
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 925216854}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!23 &925216857
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -837,13 +750,43 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 925216854}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -10.33, y: 6.01, z: 1.92}
+  m_LocalPosition: {x: -10.13, y: 7.85, z: 2.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &925216860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 925216854}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0.8
+      frictionCombine: average
+      bounceCombine: maximum
+    shape: sphere
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 1
+    mass: 1
 --- !u!1 &1059306514
 GameObject:
   m_ObjectHideFlags: 0
@@ -962,11 +905,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7745f49e3471a9c45a60dea7526c1116, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  impact:
-    parts:
-    - SphereColliding
+  impacts:
+    parts: []
     repulsion:
-      force: 1000
+      force: 1
   lastCollidingObject: 
 --- !u!1 &1257156043
 GameObject:
@@ -1073,8 +1015,7 @@ GameObject:
   - component: {fileID: 1807556026}
   - component: {fileID: 1807556025}
   - component: {fileID: 1807556024}
-  - component: {fileID: 1807556023}
-  - component: {fileID: 1807556022}
+  - component: {fileID: 1807556027}
   m_Layer: 0
   m_Name: fff (4)
   m_TagString: Untagged
@@ -1082,45 +1023,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1807556022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807556021}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7745f49e3471a9c45a60dea7526c1116, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  impact:
-    parts:
-    - SphereColliding
-    repulsion:
-      force: 5
-  lastCollidingObject: 
---- !u!65 &1807556023
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1807556021}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1807556024
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1186,6 +1088,36 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 37.974, y: 90, z: 0}
+--- !u!114 &1807556027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1807556021}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: box
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 0
+    mass: 1
 --- !u!1 &1825634524
 GameObject:
   m_ObjectHideFlags: 0
@@ -1197,8 +1129,7 @@ GameObject:
   - component: {fileID: 1825634529}
   - component: {fileID: 1825634528}
   - component: {fileID: 1825634527}
-  - component: {fileID: 1825634526}
-  - component: {fileID: 1825634525}
+  - component: {fileID: 1825634530}
   m_Layer: 16
   m_Name: SphereColliding (2)
   m_TagString: Untagged
@@ -1206,54 +1137,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!135 &1825634525
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1825634524}
-  m_Material: {fileID: 13400000, guid: 948611cc428a84b569ad7626e6649205, type: 2}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &1825634526
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1825634524}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!23 &1825634527
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1312,13 +1195,43 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1825634524}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.37, y: 6.01, z: 4.38}
+  m_LocalPosition: {x: -10.24, y: 14.39, z: 3.95}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1825634530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1825634524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: sphere
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 1
+    mass: 1
 --- !u!1 &1861035355
 GameObject:
   m_ObjectHideFlags: 0
@@ -1330,8 +1243,8 @@ GameObject:
   - component: {fileID: 1861035360}
   - component: {fileID: 1861035359}
   - component: {fileID: 1861035358}
-  - component: {fileID: 1861035356}
-  - component: {fileID: 1861035361}
+  - component: {fileID: 1861035362}
+  - component: {fileID: 1861035363}
   m_Layer: 16
   m_Name: SphereColliding
   m_TagString: Untagged
@@ -1339,33 +1252,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!54 &1861035356
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1861035355}
-  serializedVersion: 4
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_CenterOfMass: {x: 0, y: 0, z: 0}
-  m_InertiaTensor: {x: 1, y: 1, z: 1}
-  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ImplicitCom: 1
-  m_ImplicitTensor: 1
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
 --- !u!23 &1861035358
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1386,7 +1272,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e30aed4ead5380f4ca89889d8cde673f, type: 2}
+  - {fileID: 2100000, guid: 5dce1f8fd86e04f42a922b7a3ce2a2a7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1431,24 +1317,60 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!135 &1861035361
-SphereCollider:
+--- !u!114 &1861035362
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1861035355}
-  m_Material: {fileID: 13400000, guid: 948611cc428a84b569ad7626e6649205, type: 2}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b3e4378464e5d64caafea96363802ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 0}
+  collider: {fileID: 0}
+  collisionDetection: {fileID: 0}
+  physicalInfo:
+    material:
+      dynamicFriction: 0.6
+      staticFriction: 0.6
+      bounciness: 0
+      frictionCombine: average
+      bounceCombine: average
+    shape: sphere
+    receiveImpacts:
+      parts: []
+      repulsion:
+        force: 1
+    affectedBy: script
+    gravity: 0
+    mass: 1
+--- !u!54 &1861035363
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1861035355}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.5
-  m_Center: {x: 0, y: 0, z: 0}
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0

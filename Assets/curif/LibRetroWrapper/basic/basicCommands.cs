@@ -152,7 +152,9 @@ public static class Commands
         functions["CABPARTSAUDIOSTOP"] = typeof(CommandFunctionCABPARTSAUDIOSTOP);
         functions["CABPARTSAUDIOPAUSE"] = typeof(CommandFunctionCABPARTSAUDIOPAUSE);
 
-
+        // physics
+        functions["CABPARTSPHYACTIVATEGRAVITY"] = typeof(CommandFunctionCABPARTSPHYACTIVATEGRAVITY);
+        functions["CABPARTSPHYDEACTIVATEGRAVITY"] = typeof(CommandFunctionCABPARTSPHYDEACTIVATEGRAVITY);
 
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);

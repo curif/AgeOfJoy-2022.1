@@ -135,7 +135,6 @@ public class CabinetInformation
         }
 
         CheckAGEBasic(name);
-
     }
 
     public Dictionary<uint, LibretroInputDevice> GetLibretroInputDevices()
@@ -364,38 +363,19 @@ public class CabinetInformation
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
         public bool istarget = false; //lightgun
-        public Touchable touchable;  //to be touched grabed by the user.
         public Physical physical;
-
-        [YamlMember(Alias = "receive-impacts", ApplyNamingConventions = false)]
-        public ReceiveImpacts receiveImpacts;
 
         // Add audio property
         public CabinetAudio speaker;
     }
-    public class Touchable
-    {
-        public bool isgrabbable = false;
-    }
-    [Serializable]
-    public class ReceiveImpacts
-    {
-        [Serializable]
-        public class Repulsion
-        {
-            public float force = 1f;
-        }
-     
-        public List<string> parts = new(); //list of parts to collide.
-        public Repulsion repulsion = new Repulsion();
-    }
 
+    [Serializable]
     public class Physical
     {
         [Serializable]
         public class Constraints
         {
-            public bool x, y, z;
+            public bool? x, y, z;
         }
         [Serializable]
         //https://docs.unity3d.com/Manual/class-PhysicMaterial.html
@@ -410,6 +390,8 @@ public class CabinetInformation
             public string frictionCombine = "average";
             [YamlMember(Alias = "bounce-combine", ApplyNamingConventions = false)]
             public string bounceCombine = "average";
+            public static List<string> combineTypes = new List<string>() { "average", "minimum", "multiply", "maximum" };
+
 
             //https://docs.unity3d.com/ScriptReference/PhysicMaterialCombine.html
             //https://docs.unity3d.com/Manual/collider-surfaces-combine.html
@@ -425,11 +407,58 @@ public class CabinetInformation
                         return PhysicMaterialCombine.Multiply;
                     case "maximum":
                         return PhysicMaterialCombine.Maximum;
+                    default:
+                        return PhysicMaterialCombine.Average;
                 }
-                throw new System.Exception("Material freeze-combine or friction-combine invalid value");
+            }
+
+            public System.ArgumentException IsValid()
+            {
+                if (!combineTypes.Contains(bounceCombine) || !combineTypes.Contains(frictionCombine))
+                    return new System.ArgumentException("Material bounce-combine or friction-combine invalid value");
+                return null;
             }
         }
 
+        [Serializable]
+        public class ReceiveImpacts
+        {
+            [Serializable]
+            public class Repulsion
+            {
+                public float force = 1f;
+            }
+
+            public List<string> parts = new(); //list of parts to collide.
+            public Repulsion repulsion = new Repulsion();
+        }
+
+        [Serializable]
+        public class PlayerInteraction
+        {
+            [YamlMember(Alias = "can-grab", ApplyNamingConventions = false)]
+            public bool isGrababble = false;
+            [YamlMember(Alias = "can-touch", ApplyNamingConventions = false)]
+            public bool isTouchable = true;
+        }
+
+        public Material material;
+        
+        [YamlMember(Alias = "player-interaction", ApplyNamingConventions = false)]
+        public PlayerInteraction playerInteraction;  //to be touched grabed by the user.
+
+        //shape: sphere, box, capsule
+        public string shape = "box";
+        public static List<string> shapeTypes = new List<string>() { "box", "sphere", "capsule" };
+
+        [YamlMember(Alias = "receive-impacts", ApplyNamingConventions = false)]
+        public ReceiveImpacts receiveImpacts;
+
+        // gravity: affected by gravity and impact. Falls at start and bounce again objects.
+        // impact: gravity doesn't affects unless is hit by another object
+        // script: only moves by AGEBasic.
+        public string affectedBy = "script";
+        public static List<string> affectedByTypes = new List<string>() { "gravity", "impact", "agebasic" };
 
         //When enabled, the object will be affected by Unity's global gravity setting. The object will fall unless supported by another object (e.g., a floor).
         public bool gravity = false;
@@ -440,7 +469,13 @@ public class CabinetInformation
         [YamlMember(Alias = "freeze-rotation", ApplyNamingConventions = false)]
         public Constraints freezeRotation = new Constraints();
 
-        public Material material;
+
+        public System.ArgumentException IsValid()
+        {
+            if (!shapeTypes.Contains(shape))
+                return new System.ArgumentException($"Incorrect shape, use only: {string.Join(",", shapeTypes)}");
+            return null;
+        }
 
     }
 
@@ -656,6 +691,12 @@ public class CabinetInformation
                         p.transparency < 0 || p.transparency > 100 ?
                             new System.Exception("Transparency 0 to 100 only.")
                             : null);
+                if (p.physical != null)
+                {
+                     exceptions.Add($"Part #{number}: {p.name} PHYSICS",
+                            p.physical.material != null ? p.physical.material.IsValid() : null);
+                     exceptions.Add($"Part #{number}: {p.name} PHYSICS MATERIAL", p.physical.IsValid());
+                }
 
                 number++;
             }
