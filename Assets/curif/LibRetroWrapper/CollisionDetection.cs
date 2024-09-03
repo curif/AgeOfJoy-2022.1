@@ -1,40 +1,34 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-[RequireComponent(typeof(BoxCollider))]
 public class CollisionDetection : MonoBehaviour
 {
     [Tooltip("List of object names that are allowed to collide. If empty, all objects are allowed.")]
     [SerializeField]
-    public CabinetInformation.ReceiveImpacts impact;
+    public CabinetInformation.Physical.ReceiveImpacts impacts; 
 
     public class CollisionEvent : UnityEvent<string> { }
 
     // UnityEvents for entering, staying, and exiting trigger
-    public CollisionEvent OnCollisionStart;
-    public CollisionEvent onCollisionContinue;
-    public CollisionEvent OnCollisionEnd;
+    public CollisionEvent OnCollisionStart = new();
+    public CollisionEvent OnCollisionContinue = new();
+    public CollisionEvent OnCollisionEnd = new();
 
     // Variable to store the name of the last object that collided
     [SerializeField]
     public string lastCollidingObject;
 
-    // Ensure the Collider is set to trigger mode
-    private void Awake()
-    {
-        gameObject.layer = LayerMask.NameToLayer("InteractablePart");
-    }
     void OnCollisionEnter(Collision colliding)
     {
         if (IsCollisionAllowed(colliding.gameObject.name))
         {
-            if (impact != null && !colliding.rigidbody.isKinematic)
+            if (impacts != null && colliding.rigidbody.useGravity)
             {
                 // Calculate rejection direction (opposite of collision normal)
                 Vector3 rejectDirection = -colliding.contacts[0].normal;
 
                 // Apply force to reject the colliding object
-                colliding.rigidbody.AddForce(rejectDirection * impact.repulsion.force, ForceMode.Impulse);
+                colliding.rigidbody.AddForce(rejectDirection * impacts.repulsion.force, ForceMode.Impulse);
             }
 
             lastCollidingObject = colliding.gameObject.name; // Register the name of the colliding object
@@ -48,7 +42,7 @@ public class CollisionDetection : MonoBehaviour
         if (IsCollisionAllowed(other.gameObject.name))
         {
             lastCollidingObject = other.gameObject.name; // Update the last colliding object
-            onCollisionContinue?.Invoke(lastCollidingObject);
+            OnCollisionContinue?.Invoke(lastCollidingObject);
         }
     }
 
@@ -70,7 +64,7 @@ public class CollisionDetection : MonoBehaviour
         //    return true;
 
         // Otherwise, only allow objects whose name is in the list
-        return impact.parts.Contains(objectName);
+        return impacts.parts.Contains(objectName);
     }
 
 }

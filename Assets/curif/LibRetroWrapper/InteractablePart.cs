@@ -1,112 +1,149 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using static CabinetInformation;
+using static CabinetInformation.Physical;
 
-[RequireComponent(typeof(BoxCollider))]
 public class InteractablePart : MonoBehaviour
 {
-    CollisionDetection collisionDetection;
-    Rigidbody rigidBody;
-    BoxCollider boxCollider;
-    Physical physicalInfo;
+    public Rigidbody rigidBody;
+    public Collider collider;
+    public CollisionDetection collisionDetection;
+    public GrabDetection grabDetection;
 
-    private void Awake()
+    public Physical physicalInfo;
+
+    public bool Initialized;
+
+    private bool getbool(bool? b)
     {
-        gameObject.layer = LayerMask.NameToLayer("InteractablePart");
-        boxCollider = GetComponent<BoxCollider>();
+        if (b == null)
+            return false; //true is the default to freeze
+        return b.Value;
     }
 
-    public static InteractablePart GetOrAdd(GameObject go)
+    public void Start()
     {
-        InteractablePart ip = go.GetComponent<InteractablePart>();
-        if (ip == null)
-            ip = go.AddComponent<InteractablePart>();
-        ip.SetAsNotPhysical();
+        base.gameObject.layer = LayerMask.NameToLayer("InteractablePart");
 
-        return ip;
-    }
-
-    //The collider object refers to the object that is being hit or impacted by the colliding object.
-    public InteractablePart SetAsCollider(ReceiveImpacts impact)
-    {
-
-        collisionDetection = gameObject.GetComponent<CollisionDetection>();
-        if (collisionDetection == null)
-            collisionDetection = gameObject.AddComponent<CollisionDetection>();
-        collisionDetection.impact = impact;
-
-        return this;
-    }
-    public InteractablePart SetAsNotPhysical()
-    {
-        if (rigidBody != null)
+        switch (physicalInfo.shape)
         {
-            rigidBody.useGravity = false;
-            rigidBody.isKinematic = true;
+            case "box":
+                collider = gameObject.AddComponent<BoxCollider>();
+                break;
+            case "sphere":
+                collider = gameObject.AddComponent<SphereCollider>();
+                break;
+            case "capsule":
+                collider = gameObject.AddComponent<CapsuleCollider>();
+                break;
+            default:
+                collider = gameObject.AddComponent<BoxCollider>();
+                break;
         }
-        boxCollider.isTrigger = false;
-        return this;
-    }
-    public InteractablePart SetAsPhysical()
-    {
-        if (physicalInfo == null)
-            throw new System.Exception("The object should be assigned as physical in yaml description");
+        collider.isTrigger = false;
 
+        rigidBody = gameObject.GetComponent<Rigidbody>();
         if (rigidBody == null)
-            rigidBody = GetComponent<Rigidbody>();
-            if (rigidBody == null)
-                rigidBody = gameObject.AddComponent<Rigidbody>();
-
-        rigidBody.useGravity = true;
-        rigidBody.isKinematic = false;// !physicalInfo.gravity;
-
-        return this;
-    }
-
-    public InteractablePart SetAsPhysical(Physical physicalInfo)
-    {
-        this.physicalInfo = physicalInfo;
-        SetAsPhysical();
-
+            rigidBody = gameObject.AddComponent<Rigidbody>();
+        rigidBody.isKinematic = false;
         rigidBody.mass = physicalInfo.mass;
 
-        RigidbodyConstraints constraints = RigidbodyConstraints.None;
-
-        if (physicalInfo.freezePosition.x) constraints |= RigidbodyConstraints.FreezePositionX;
-        if (physicalInfo.freezePosition.y) constraints |= RigidbodyConstraints.FreezePositionY;
-        if (physicalInfo.freezePosition.z) constraints |= RigidbodyConstraints.FreezePositionZ;
-
-        if (physicalInfo.freezeRotation.x) constraints |= RigidbodyConstraints.FreezeRotationX;
-        if (physicalInfo.freezeRotation.y) constraints |= RigidbodyConstraints.FreezeRotationY;
-        if (physicalInfo.freezeRotation.z) constraints |= RigidbodyConstraints.FreezeRotationZ;
-
-        rigidBody.constraints = constraints;
+        if (physicalInfo.gravity)
+            ActivateGravity();
+        else
+            DeactivateGravity();
 
         if (physicalInfo.material != null)
         {
-            PhysicMaterial pmat = new PhysicMaterial($"{name}-physics-material");
+            PhysicMaterial pmat = new PhysicMaterial($"{gameObject.name}-physics-material");
             pmat.staticFriction = physicalInfo.material.staticFriction;
             pmat.dynamicFriction = physicalInfo.material.dynamicFriction;
             pmat.bounciness = physicalInfo.material.bounciness;
             pmat.frictionCombine = CabinetInformation.Physical.Material.CombineFromString(physicalInfo.material.frictionCombine);
             pmat.bounceCombine = CabinetInformation.Physical.Material.CombineFromString(physicalInfo.material.bounceCombine);
-            boxCollider.material = pmat;
+            collider.material = pmat;
         }
-        return this;
+
+        if (physicalInfo.receiveImpacts != null &&
+            physicalInfo.receiveImpacts.parts.Count > 0)
+        {
+            //add a collision detection component to process the events
+            collisionDetection = gameObject.GetComponent<CollisionDetection>();
+            if (collisionDetection == null)
+                collisionDetection = gameObject.AddComponent<CollisionDetection>();
+            collisionDetection.impacts = physicalInfo.receiveImpacts;
+        }
+
+        if (physicalInfo.playerInteraction != null)
+        {
+            grabDetection = gameObject.GetComponent<GrabDetection>();
+            if (grabDetection == null)
+                grabDetection = gameObject.AddComponent<GrabDetection>();
+            grabDetection.isGrabbable = physicalInfo.playerInteraction.isGrababble;
+            grabDetection.isTouchable = physicalInfo.playerInteraction.isTouchable;
+        }
+        Initialized = true;
+        Deactivate(); //wait for an insert coin or similar to start.
     }
 
-
-    //The colliding object is the object that is considered to be moving and initiating the collision.
-    public InteractablePart SetAsColliding()
+    public void Activate()
     {
-        //The isKinematic property determines whether the physics engine controls the movement of the Rigidbody, or whether the object's movement is controlled exclusively by the user via scripts or animations.
-        //When isKinematic is set to true: The Rigidbody will not be affected by forces, collisions, or other physics interactions.
-        //rigidbody.isKinematic = true;
-        //rigidbody.automaticInertiaTensor = false;
-        //rigidbody.automaticCenterOfMass = false;
-
-        //It controls whether the Rigidbody is affected by gravity, which is a fundamental force in the Unity physics engine.
-        //rigidbody.useGravity = false;
-
-        return this;
+        collider.enabled = true;
+        if (grabDetection != null) 
+            grabDetection.enabled = true;
+        if (collisionDetection != null)
+            collisionDetection.enabled = true;
+        rigidBody.isKinematic = false;
     }
+    public void Deactivate()
+    {
+        collider.enabled = false;
+        if (grabDetection != null)
+            grabDetection.enabled = false;
+        if (collisionDetection != null)
+            collisionDetection.enabled = false;
+        rigidBody.isKinematic = true;
+    }
+
+    public void ActivateGravity()
+    {
+        RigidbodyConstraints constraints = RigidbodyConstraints.None;
+
+        rigidBody.useGravity = true;
+
+        if (getbool(physicalInfo.freezePosition.x)) constraints |= RigidbodyConstraints.FreezePositionX;
+        if (getbool(physicalInfo.freezePosition.y)) constraints |= RigidbodyConstraints.FreezePositionY;
+        if (getbool(physicalInfo.freezePosition.z)) constraints |= RigidbodyConstraints.FreezePositionZ;
+
+        if (getbool(physicalInfo.freezeRotation.x)) constraints |= RigidbodyConstraints.FreezeRotationX;
+        if (getbool(physicalInfo.freezeRotation.y)) constraints |= RigidbodyConstraints.FreezeRotationY;
+        if (getbool(physicalInfo.freezeRotation.z)) constraints |= RigidbodyConstraints.FreezeRotationZ;
+        
+        rigidBody.constraints = constraints;
+    }
+
+
+    public void DeactivateGravity()
+    {
+        rigidBody.useGravity = false;
+        rigidBody.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+    }
+
+    public static InteractablePart Factory(GameObject go, Physical physicalInfo)
+    {
+
+        if (physicalInfo == null)
+            throw new System.ArgumentException($"physical information in missing in the construction of an Interactable Part: {go.name}");
+
+        InteractablePart ip = go.GetComponent<InteractablePart>();
+        if (ip == null)
+        {
+            // add components
+            ip = go.AddComponent<InteractablePart>();
+            ip.physicalInfo = physicalInfo;
+        }
+
+        return ip;
+    }
+
 }

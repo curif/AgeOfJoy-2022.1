@@ -222,6 +222,8 @@ public class AGEBasicCabinetController : MonoBehaviour
                   //start mame
                   ConfigManager.WriteConsole($"[AGEBasicCabinetController] in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
 
+                  cabinet.PhyActivate();
+
                   //controllers (lazy load)
                   setupActionMap();
 
@@ -282,6 +284,8 @@ public class AGEBasicCabinetController : MonoBehaviour
               .End()
               .Do("END Program", () =>
               {
+                  cabinet.PhyDeactivate();
+
                   // age basic leave
                   cabinetAGEBasic.Stop(); //force
                   cabinetAGEBasic.ExecAfterLeaveBas();

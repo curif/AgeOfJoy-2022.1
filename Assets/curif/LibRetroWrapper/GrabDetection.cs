@@ -3,7 +3,6 @@ using UnityEngine.XR.Interaction.Toolkit;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(XRGrabInteractable))]
-[RequireComponent(typeof(BoxCollider))]
 public class GrabDetection : MonoBehaviour
 {
 
@@ -12,16 +11,19 @@ public class GrabDetection : MonoBehaviour
     //There are a sphere collider also, adjust it to the size of the control.
 
     // UnityEvents for touch and grab (enter and exit)
-    public UnityEvent OnPlayerTouchEnter; //player touch
-    public UnityEvent OnPlayerTouchExit;
-    public UnityEvent OnGrabEnter; //player grab
-    public UnityEvent OnGrabExit;
+    public UnityEvent OnPlayerTouchEnter = new(); //player touch
+    public UnityEvent OnPlayerTouchExit = new();
+    public UnityEvent OnGrabEnter = new(); //player grab
+    public UnityEvent OnGrabExit = new();
 
     // Interaction Layer for interaction
-    string[] layers = new string[] { "partGrabable" };
+    static string[] layers = new string[] { "InteractablePart" };
 
     // Boolean to control whether the object can be grabbed
-    public bool canBeGrabbed = true;
+    public bool isGrabbable = false;
+    public bool isTouchable = true;
+
+    public bool Initialized;
 
     private XRGrabInteractable interactable;
     private void Awake()
@@ -29,6 +31,8 @@ public class GrabDetection : MonoBehaviour
         // Initialize the XR Grab Interactable
         interactable = GetComponent<XRGrabInteractable>();
         // right hand / left hand -> XRDirectInteractor -> layerMask = partGrabable (right includes coin too).
+        gameObject.layer = LayerMask.NameToLayer("InteractablePart");
+
         interactable.interactionLayers = InteractionLayerMask.GetMask(layers);
         
         // Register interaction events
@@ -36,10 +40,13 @@ public class GrabDetection : MonoBehaviour
         interactable.selectExited.AddListener(OnGrabExitEvent);
         interactable.hoverEntered.AddListener(OnTouchEnterEvent);
         interactable.hoverExited.AddListener(OnTouchExitEvent);
+
+        Initialized = true;
     }
 
     private bool isPlayer(GameObject interactor)
     {
+        //note: direct interactors should be in the layer "player" to detect collisions with "interactable part"
         return interactor.name == "Direct Interactor Left" || interactor.name == "Direct Interactor Right"; 
     }
 
@@ -47,7 +54,7 @@ public class GrabDetection : MonoBehaviour
     {
         GameObject interactor = args.interactorObject.transform.gameObject;
 
-        if (isPlayer(interactor))
+        if (isPlayer(interactor) && isTouchable)
             OnPlayerTouchEnter?.Invoke();
     }
 
@@ -55,14 +62,14 @@ public class GrabDetection : MonoBehaviour
     {
         GameObject interactor = args.interactorObject.transform.gameObject;
 
-        if (isPlayer(interactor))
+        if (isPlayer(interactor) && isTouchable)
             OnPlayerTouchExit?.Invoke();
     }
     private void OnGrabEnterEvent(SelectEnterEventArgs args)
     {
         GameObject interactor = args.interactorObject.transform.gameObject;
 
-        if (canBeGrabbed && isPlayer(interactor))
+        if (isGrabbable && isPlayer(interactor))
             OnGrabEnter?.Invoke();
     }
 
@@ -70,7 +77,7 @@ public class GrabDetection : MonoBehaviour
     {
         GameObject interactor = args.interactorObject.transform.gameObject;
 
-        if (canBeGrabbed && isPlayer(interactor))
+        if (isGrabbable && isPlayer(interactor))
             OnGrabExit?.Invoke();
     }
 

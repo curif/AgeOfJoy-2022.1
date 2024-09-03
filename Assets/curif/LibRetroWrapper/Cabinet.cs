@@ -813,31 +813,6 @@ public class Cabinet
     }
 
     //add the Touch component and the gameobject to collide
-    public Cabinet SetCollider(string partName, CabinetInformation.ReceiveImpacts impact)
-    {
-        SetCollider(PartsPosition(partName), impact);
-        return this;
-    }
-    public Cabinet SetCollider(int partNum, ReceiveImpacts impact)
-    {
-        GameObject part = Parts(partNum);
-
-        InteractablePart ip = InteractablePart.GetOrAdd(part);
-        ip.SetAsCollider(impact);
-
-        foreach (string name in impact.parts)
-        {
-            GameObject collider = Parts(name);
-            if (collider != null)
-            {
-                InteractablePart.GetOrAdd(collider);
-            }
-        }
-
-        return this;
-    }
-
-    //add the Touch component and the gameobject to collide
     public Cabinet SetAudio(string partName, CabinetAudio audioInfo)
     {
         SetAudio(PartsPosition(partName), audioInfo);
@@ -850,60 +825,6 @@ public class Cabinet
         return this;
     }
 
-    //a moving part that collides with other.
-    //que reaction configuration is in the collider part.
-    public Cabinet SetColliding(string partName)
-    {
-        SetColliding(PartsPosition(partName));
-        return this;
-    }
-    public Cabinet SetColliding(int partNum)
-    {
-        GameObject part = Parts(partNum);
-
-        InteractablePart.GetOrAdd(part);
-
-        return this;
-    }
-
-    //add the Touch component and the gameobject to collide
-    //Touchable: because the player could touch it. But also can hit other cabinet's parts.
-    public Cabinet SetTouchable(string partName, Touchable touchableInfo)
-    {
-        SetTouchable(PartsPosition(partName), touchableInfo);
-        return this;
-    }
-    public Cabinet SetTouchable(int partNum, Touchable touchableInfo)
-    {
-        GameObject part = Parts(partNum);
-
-        //add a collider first
-        BoxCollider boxCollider = part.GetComponent<BoxCollider>();
-        if (boxCollider == null)
-        {
-            boxCollider = part.AddComponent<BoxCollider>();
-            boxCollider.isTrigger = false;
-        }
-
-        Rigidbody rb = part.GetComponent<Rigidbody>();
-        if (rb == null)
-        {
-            rb = part.AddComponent<Rigidbody>();
-            rb.useGravity = false;
-            rb.isKinematic = true;
-            rb.automaticInertiaTensor = false;
-            rb.automaticCenterOfMass = false;
-        }
-
-        GrabDetection gd = part.GetComponent<GrabDetection>();
-        if (gd == null)
-            gd = part.AddComponent<GrabDetection>();
-
-        if (touchableInfo != null)
-            gd.canBeGrabbed = touchableInfo.isgrabbable;
-
-        return this;
-    }
     public Cabinet SetPhysics(string partName, Physical physicalInfo)
     {
         SetPhysics(PartsPosition(partName), physicalInfo);
@@ -915,10 +836,77 @@ public class Cabinet
             return this;
 
         GameObject part = Parts(partNum);
-        InteractablePart.GetOrAdd(part).SetAsPhysical(physicalInfo);
+        InteractablePart.Factory(part, physicalInfo);
+        /* artist should mark all parts involved as physicals
+        if (physicalInfo.receiveImpacts != null)
+        {
+
+            foreach (string name in physicalInfo.receiveImpacts.parts)
+            {
+                GameObject collider = Parts(name);
+                collider.
+                if (collider != null)
+                {
+                    InteractablePart.GetOrAdd(collider);
+                }
+            }
+        }
+        */
         return this;
     }
-    
+
+    public Cabinet PhyActivate()
+    {
+        foreach(Transform t in gameObject.transform)
+        {
+            InteractablePart ip = t.GetComponent<InteractablePart>();
+            if (ip != null)
+                ip.Activate();
+        }
+        return this;
+    }
+    public Cabinet PhyDeactivate()
+    {
+        foreach (Transform t in gameObject.transform)
+        {
+            InteractablePart ip = t.GetComponent<InteractablePart>();
+            if (ip != null)
+                ip.Deactivate();
+        }
+        return this;
+    }
+
+    public Cabinet PhyActivateGravity(string partName)
+    {
+        return PhyActivateGravity(PartsPosition(partName));
+
+    }
+    public Cabinet PhyActivateGravity(int partNum)
+    {
+        GameObject part = Parts(partNum);
+        InteractablePart gd = part.GetComponent<InteractablePart>();
+        if (gd != null)
+        {
+            gd.ActivateGravity();
+        }
+        return this;
+    }
+    public Cabinet PhyDeactivateGravity(string partName)
+    {
+        return PhyDeactivateGravity(PartsPosition(partName));
+
+    }
+    public Cabinet PhyDeactivateGravity(int partNum)
+    {
+        GameObject part = Parts(partNum);
+        InteractablePart gd = part.GetComponent<InteractablePart>();
+        if (gd != null)
+        {
+            gd.DeactivateGravity();
+        }
+        return this;
+    }
+
 
     public bool IsLightGunTarget(string partName)
     {
