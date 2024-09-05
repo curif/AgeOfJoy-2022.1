@@ -918,6 +918,8 @@ public class Cabinet
     }
     public static string CRTName(string cabinetName, string gameFile)
     {
+        if (gameFile == null)
+            gameFile = "no_file_game";
         return "screen-" + cabinetName + "-" + gameFile.Replace("/","-").Replace(".","-");
     }
 
@@ -943,7 +945,8 @@ public class Cabinet
         agec.lightGunInformation = lightGunInformation;
 
         //age basic
-        agec.ageBasicInformation = agebasic;
+        if (agebasic != null)
+            agec.ageBasicInformation = agebasic;
 
         //sound
         agec.backgroundSoundController = backgroundSoundController;
@@ -1047,7 +1050,8 @@ public class Cabinet
             ageb.lightGunInformation = lightGunInformation;
 
             //age basic
-            ageb.ageBasicInformation = agebasic;
+            if (agebasic != null)
+                ageb.ageBasicInformation = agebasic;
 
             //sound
             ageb.backgroundSoundController = backgroundSoundController;
@@ -1090,7 +1094,8 @@ public class Cabinet
             libretroScreenController.lightGunInformation = lightGunInformation;
 
             //age basic
-            libretroScreenController.ageBasicInformation = agebasic;
+            if (agebasic != null)
+                libretroScreenController.ageBasicInformation = agebasic;
 
             //sound
             libretroScreenController.backgroundSoundController = backgroundSoundController;

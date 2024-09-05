@@ -1,4 +1,4 @@
-#define ON_DEBUG
+//#define ON_DEBUG
 
 using UnityEngine;
 using System;

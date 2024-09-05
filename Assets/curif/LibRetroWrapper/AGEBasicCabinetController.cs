@@ -53,7 +53,7 @@ public class AGEBasicCabinetController : MonoBehaviour
     private CabinetReplace cabinetReplace;
 
     //age basic
-    public CabinetAGEBasicInformation ageBasicInformation;
+    public CabinetAGEBasicInformation ageBasicInformation = new();
     private CabinetAGEBasic cabinetAGEBasic;
     public BackgroundSoundController backgroundSoundController;
 
@@ -194,7 +194,6 @@ public class AGEBasicCabinetController : MonoBehaviour
     IEnumerator runBT()
     {
         yield return new WaitForEndOfFrame();
-
         cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);
         // age basic after load
         cabinetAGEBasic.ExecAfterLoadBas();
@@ -213,7 +212,7 @@ public class AGEBasicCabinetController : MonoBehaviour
         return new BehaviorTreeBuilder(gameObject).
           Selector()
             .Sequence("Start the agebasic screen")
-              .Condition("AGEBasic is active?", () => ageBasicInformation.active)
+              .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("CoinSlot is present", () => CoinSlot != null)
               .Condition("Not initialized?", () => !CoinWasInserted)
               .Condition("There are coins", () => CoinSlot.hasCoins())
@@ -247,7 +246,7 @@ public class AGEBasicCabinetController : MonoBehaviour
             .End()
 
             .Sequence("AGEBasic running control")
-              .Condition("AGEBasic is active?", () => ageBasicInformation.active)
+              .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("Coin inserted?", () => CoinWasInserted)
               .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
               .Do("Run main program", () =>

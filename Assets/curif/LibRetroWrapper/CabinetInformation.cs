@@ -67,7 +67,7 @@ public class CabinetInformation
     [YamlMember(Alias = "light-gun", ApplyNamingConventions = false)]
     public LightGunInformation lightGunInformation = new();
 
-    public CabinetAGEBasicInformation agebasic;// = new();
+    public CabinetAGEBasicInformation agebasic = new();
 
     [YamlMember(Alias = "debug-mode", ApplyNamingConventions = false)]
     public bool debug = false;
