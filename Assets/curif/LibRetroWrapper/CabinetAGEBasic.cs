@@ -643,8 +643,10 @@ public class CabinetAGEBasic : MonoBehaviour
             CoinSlotController coinSlot, 
             LightGunTarget lightGunTarget)
     {
+
         if (AGEBasic == null)
             AGEBasic = GetComponent<basicAGE>();
+        AGEInfo.active = false;
 
         this.AGEInfo = AGEInfo;
         this.pathBase = pathBase;

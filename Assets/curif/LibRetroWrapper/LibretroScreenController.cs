@@ -131,7 +131,7 @@ public class LibretroScreenController : MonoBehaviour
     public ControlMapConfiguration CabinetControlMapConfig = null;
 
     //age basic
-    public CabinetAGEBasicInformation ageBasicInformation;
+    public CabinetAGEBasicInformation ageBasicInformation = null;
     private CabinetAGEBasic cabinetAGEBasic;
     public BackgroundSoundController backgroundSoundController;
     public GlobalConfiguration globalConfiguration = null;
@@ -187,6 +187,7 @@ public class LibretroScreenController : MonoBehaviour
         changeControls = player.GetComponent<ChangeControls>();
 
         lightGunTarget = GetComponent<LightGunTarget>();
+        lightGunTarget.enabled = false;
         for (int i = 0; i < cabinet.gameObject.transform.childCount; i++)
         {
             Transform child = cabinet.gameObject.transform.GetChild(i);
@@ -346,6 +347,8 @@ public class LibretroScreenController : MonoBehaviour
                   // Light guns configuration
                   if (lightGunTarget != null && lightGunInformation != null)
                   {
+                      lightGunTarget.enabled = true;
+
                       lightGunTarget.Init(lightGunInformation, PathBase, player);
                       LibretroMameCore.lightGunTarget = lightGunTarget;
                   }
@@ -508,10 +511,12 @@ public class LibretroScreenController : MonoBehaviour
             cabinetAGEBasic.ExecAfterLeaveBas();
         }
 
+        if (lightGunTarget != null && lightGunInformation != null)
+            lightGunTarget.enabled = false;
 
 
 #if UNITY_EDITOR
-        SimulateExitGame = false;
+            SimulateExitGame = false;
         ConfigManager.WriteConsole($"simulated player exit finished.");
 #endif
     }

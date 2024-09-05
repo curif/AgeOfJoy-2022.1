@@ -149,6 +149,7 @@ public class AGEBasicScreenController : MonoBehaviour
 
         //lightgun activation
         lightGunTarget = GetComponent<LightGunTarget>();
+        lightGunTarget.enabled = false;
         for (int i = 0; i < cabinet.gameObject.transform.childCount; i++)
         {
             Transform child = cabinet.gameObject.transform.GetChild(i);
@@ -309,6 +310,7 @@ public class AGEBasicScreenController : MonoBehaviour
                   // Ligth guns configuration (lazy load)
                   if (lightGunTarget != null && lightGunInformation != null && !lightGunTarget.Initialized())
                   {
+                      lightGunTarget.enabled = true;
                       lightGunTarget.Init(lightGunInformation, PathBase, player);
                       changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
                   }
@@ -381,9 +383,12 @@ public class AGEBasicScreenController : MonoBehaviour
                       cabinetAGEBasic.ExecAfterLeaveBas();
 
                       EndPlayerActivities();
-    #if UNITY_EDITOR
+                      if (lightGunTarget != null && lightGunInformation != null)
+                           lightGunTarget.enabled = false;
+
+#if UNITY_EDITOR
                       SimulateExitGame = false;
-    #endif
+#endif
                       return TaskStatus.Success;
                   })
                 .End()
