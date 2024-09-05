@@ -17,7 +17,7 @@ Shader "Custom/SHA_AOJ_FishScreenSaver"
 		CGPROGRAM
 		#include "UnityShaderVariables.cginc"
 		#pragma target 3.0
-		#pragma surface surf Unlit keepalpha addshadow fullforwardshadows 
+		#pragma surface surf Standard keepalpha addshadow fullforwardshadows 
 		struct Input
 		{
 			float2 uv_texcoord;
@@ -26,18 +26,13 @@ Shader "Custom/SHA_AOJ_FishScreenSaver"
 		uniform sampler2D _TextureSample0;
 		uniform sampler2D _TextureSample1;
 
-		inline half4 LightingUnlit( SurfaceOutput s, half3 lightDir, half atten )
-		{
-			return half4 ( 0, 0, 0, s.Alpha );
-		}
-
-		void surf( Input i , inout SurfaceOutput o )
+		void surf( Input i , inout SurfaceOutputStandard o )
 		{
 			float4 color14 = IsGammaSpace() ? float4(0,0.3684628,1,0) : float4(0,0.111828,1,0);
-			float4 color18 = IsGammaSpace() ? float4(1,0,0.882441,0) : float4(1,0,0.7531122,0);
+			float4 color18 = IsGammaSpace() ? float4(1,0,0.882441,0) : float4(1,0,0.7531121,0);
 			float temp_output_32_0 = ( ( saturate( sin( ( i.uv_texcoord.y + _CosTime.w ) ) ) + 0.0 ) * 0.5 );
 			float4 lerpResult17 = lerp( color14 , color18 , temp_output_32_0);
-			float4 color21 = IsGammaSpace() ? float4(0.2458851,0,0.3144653,0) : float4(0.04924426,0,0.08060668,0);
+			float4 color21 = IsGammaSpace() ? float4(0.2458851,0,0.3144653,0) : float4(0.04924427,0,0.08060666,0);
 			float4 color20 = IsGammaSpace() ? float4(0.3553458,1,0.3815483,0) : float4(0.1036941,1,0.1203017,0);
 			float lerpResult36 = lerp( 2.0 , 6.0 , temp_output_32_0);
 			float2 appendResult34 = (float2(lerpResult36 , lerpResult36));
@@ -51,7 +46,11 @@ Shader "Custom/SHA_AOJ_FishScreenSaver"
 			float4 lerpResult8 = lerp( lerpResult17 , lerpResult19 , tex2DNode1.b);
 			float2 panner6 = ( 1.0 * _Time.y * float2( -0.2,-0.5 ) + i.uv_texcoord);
 			float4 color23 = IsGammaSpace() ? float4(0.07232696,0.6923644,1,0) : float4(0.00625177,0.4371918,1,0);
-			o.Emission = ( lerpResult8 + ( tex2D( _TextureSample1, panner6 ).g * color23 ) ).rgb;
+			float4 temp_output_15_0 = ( lerpResult8 + ( tex2D( _TextureSample1, panner6 ).g * color23 ) );
+			o.Albedo = temp_output_15_0.rgb;
+			o.Emission = ( temp_output_15_0 * float4( 0.7735849,0.7735849,0.7735849,0 ) ).rgb;
+			o.Metallic = 0.0;
+			o.Smoothness = 1.0;
 			o.Alpha = 1;
 		}
 
@@ -88,9 +87,12 @@ Node;AmplifyShaderEditor.ColorNode;23;-599.8905,426.7319;Inherit;False;Constant;
 Node;AmplifyShaderEditor.LerpOp;17;-834.5572,414.732;Inherit;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.LerpOp;8;-441.2233,-54.60141;Inherit;True;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode;22;-405.2239,258.7319;Inherit;False;2;2;0;FLOAT;0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
+Node;AmplifyShaderEditor.SimpleAddOpNode;15;-62.75676,12.39851;Inherit;True;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
 Node;AmplifyShaderEditor.Vector2Node;33;-2529.89,61.3985;Inherit;False;Constant;_Vector0;Vector 0;2;0;Create;True;0;0;0;False;0;False;1,2;0,0;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
-Node;AmplifyShaderEditor.SimpleAddOpNode;15;-70.55676,103.3985;Inherit;True;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;147.3333,23.33334;Float;False;True;-1;2;ASEMaterialInspector;0;0;Unlit;Custom/SHA_AOJ_FishScreenSaver;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
+Node;AmplifyShaderEditor.RangedFloatNode;39;143.0833,427.6156;Inherit;False;Constant;_Float1;Float 1;2;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;38;212.4166,184.9489;Inherit;False;Constant;_Float0;Float 0;2;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;40;434.2837,45.41555;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0.7735849,0.7735849,0.7735849,0;False;1;COLOR;0
+Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;644.8,-64.20005;Float;False;True;-1;2;ASEMaterialInspector;0;0;Standard;Custom/SHA_AOJ_FishScreenSaver;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
 WireConnection;25;0;12;2
 WireConnection;25;1;27;4
 WireConnection;29;0;25;0
@@ -120,6 +122,10 @@ WireConnection;22;0;4;2
 WireConnection;22;1;23;0
 WireConnection;15;0;8;0
 WireConnection;15;1;22;0
-WireConnection;0;2;15;0
+WireConnection;40;0;15;0
+WireConnection;0;0;15;0
+WireConnection;0;2;40;0
+WireConnection;0;3;38;0
+WireConnection;0;4;39;0
 ASEEND*/
-//CHKSM=00AD8D4E6920AD89A002A0F5725C2456FBD291DB
+//CHKSM=E9E11DA0C05C63309CC77F8439C224BF0B1F1088
