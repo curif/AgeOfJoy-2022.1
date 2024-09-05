@@ -1471,7 +1471,7 @@ public static unsafe class LibretroMameCore
         else
         {
             int AbsoluteHitX, AbsoluteHitY;
-            lightGunTarget.GetLastAbsoluteHit(out AbsoluteHitX, out AbsoluteHitY);
+            lightGunTarget.GetLastHit(out AbsoluteHitX, out AbsoluteHitY);
 
             // Aim driven mouse emulation (uses lightgun data)
             WriteConsole($"[inputStateCB_Mouse] Lightgun at {AbsoluteHitX}x{AbsoluteHitY}");
@@ -1536,14 +1536,14 @@ public static unsafe class LibretroMameCore
 
     private static Int16 inputStateCB_Pointer(uint port, uint device, uint index, uint id)
     {
-        int AbsoluteHitX, AbsoluteHitY;
-        lightGunTarget.GetLastAbsoluteHit(out AbsoluteHitX, out AbsoluteHitY);
+        int HitX, HitY;
+        lightGunTarget.GetLastHit(out HitX, out HitY);
         switch (id)
         {
             case RETRO_DEVICE_ID_POINTER_X:
-                return (Int16)AbsoluteHitX;
+                return (Int16)HitX;
             case RETRO_DEVICE_ID_POINTER_Y:
-                return (Int16)AbsoluteHitY;
+                return (Int16)HitY;
             case RETRO_DEVICE_ID_POINTER_PRESSED:
             case RETRO_DEVICE_ID_POINTER_COUNT:
                 if (index > 0)

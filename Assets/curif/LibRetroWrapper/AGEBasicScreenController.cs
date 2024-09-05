@@ -97,7 +97,7 @@ public class AGEBasicScreenController : MonoBehaviour
     public ControlMapConfiguration CabinetControlMapConfig = null;
 
     //age basic
-    public CabinetAGEBasicInformation ageBasicInformation;
+    public CabinetAGEBasicInformation ageBasicInformation = new();
     private CabinetAGEBasic cabinetAGEBasic;
     public BackgroundSoundController backgroundSoundController;
 
@@ -149,6 +149,7 @@ public class AGEBasicScreenController : MonoBehaviour
 
         //lightgun activation
         lightGunTarget = GetComponent<LightGunTarget>();
+        lightGunTarget.enabled = false;
         for (int i = 0; i < cabinet.gameObject.transform.childCount; i++)
         {
             Transform child = cabinet.gameObject.transform.GetChild(i);
@@ -292,7 +293,7 @@ public class AGEBasicScreenController : MonoBehaviour
         return new BehaviorTreeBuilder(gameObject).
           Selector()
             .Sequence("Start the agebasic screen")
-              .Condition("AGEBasic is active?", () => ageBasicInformation.active)
+              .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("CoinSlot is present", () => CoinSlot != null)
               .Condition("Not initialized?", () => !CoinWasInserted)
               .Condition("There are coins", () => CoinSlot.hasCoins())
@@ -309,6 +310,7 @@ public class AGEBasicScreenController : MonoBehaviour
                   // Ligth guns configuration (lazy load)
                   if (lightGunTarget != null && lightGunInformation != null && !lightGunTarget.Initialized())
                   {
+                      lightGunTarget.enabled = true;
                       lightGunTarget.Init(lightGunInformation, PathBase, player);
                       changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
                   }
@@ -321,7 +323,7 @@ public class AGEBasicScreenController : MonoBehaviour
             .End()
 
             .Sequence("AGEBasic running control")
-              .Condition("AGEBasic is active?", () => ageBasicInformation.active)
+              .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("Coin inserted?", () => CoinWasInserted)
               .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
               .Do("Run main program", () =>
@@ -381,9 +383,12 @@ public class AGEBasicScreenController : MonoBehaviour
                       cabinetAGEBasic.ExecAfterLeaveBas();
 
                       EndPlayerActivities();
-    #if UNITY_EDITOR
+                      if (lightGunTarget != null && lightGunInformation != null)
+                           lightGunTarget.enabled = false;
+
+#if UNITY_EDITOR
                       SimulateExitGame = false;
-    #endif
+#endif
                       return TaskStatus.Success;
                   })
                 .End()

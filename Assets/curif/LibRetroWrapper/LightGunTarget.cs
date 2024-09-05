@@ -7,6 +7,7 @@ using YamlDotNet.Serialization.NamingConventions;
 using System.IO;
 using UnityEngine.Events;
 using System.Collections.Generic;
+using UnityEngine.UIElements;
 
 public class LightGunInformation
 {
@@ -45,9 +46,9 @@ public class LightGunInformation
         public float meshFactorScaleY = float.NaN;
 
         [YamlMember(Alias = "border-size-x", ApplyNamingConventions = false)]
-        public float borderSizeX = 1.5f;
+        public float borderSizeX = float.NaN;
         [YamlMember(Alias = "border-size-y", ApplyNamingConventions = false)]
-        public float borderSizeY = 1f;
+        public float borderSizeY = float.NaN;
         public bool invertx = true;
         public bool inverty = true;
     }
@@ -82,6 +83,7 @@ public class LightGunInformation
 // https://github.com/libretro/mame2003-plus-libretro/blob/master/src/mame2003/core_options.c#L66
 // This component could be attached to a cabinet and be filled with parts that can be shooted.
 // Or in a CRT (was designed originaly to be attached to a CRT). In this case it could have parts to shoot too.
+[RequireComponent(typeof(LineRenderer))]
 public class LightGunTarget : MonoBehaviour
 {
 
@@ -93,20 +95,10 @@ public class LightGunTarget : MonoBehaviour
     [Tooltip("Invert to gun model forward.")]
     public bool invertForward = false;
 
-    [Tooltip("Is aiming above the screen ?")]
-    public bool OutOfScreenTop;
-    [Tooltip("Is aiming under the screen ?")]
-    public bool OutOfScreenBottom;
-    [Tooltip("Is aiming left of the screen ?")]
-    public bool OutOfScreenLeft;
-    [Tooltip("Is aiming right of the screen ?")]
-    public bool OutOfScreenRight;
-
     // Layer mask to filter the raycast hits
     private LayerMask layerMaskCRT;
     private LayerMask layerMaskParts;
 
-    private GameObject hitPosition;
 
     [Tooltip("show the debug ball.")]
     public bool showHitPosition = false;
@@ -115,15 +107,15 @@ public class LightGunTarget : MonoBehaviour
     [Tooltip("Invert to negative the y point.")]
     public bool InvertY = true;
 
-    [Tooltip("Screen mesh scale factor to adjust in width.")]
-    public float scaleFactorX = 0.01f;
-    [Tooltip("Screen mesh scale factor to adjust in height.")]
-    public float scaleFactorY = 0.01f;
+    //[Tooltip("Screen mesh scale factor to adjust in width.")]
+    //public float scaleFactorX = 0.01f;
+    //[Tooltip("Screen mesh scale factor to adjust in height.")]
+    //public float scaleFactorY = 0.01f;
 
-    [Tooltip("CRT border size left and right to exclude.")]
-    public float borderSizeX = 1.5f;
-    [Tooltip("CRT border size up and down to exclude.")]
-    public float borderSizeY = 1f;
+    //[Tooltip("CRT border size left and right to exclude.")]
+    //public float borderSizeX = 1.5f;
+    //[Tooltip("CRT border size up and down to exclude.")]
+    //public float borderSizeY = 1f;
     public float adjustSightVertical = 0, adjustSightHorizontal = 0;
 
     public List<GameObject> parts = new List<GameObject>(); //parts to hit.
@@ -134,15 +126,7 @@ public class LightGunTarget : MonoBehaviour
     private string pathBase;
 
     //CRT
-    float CRTAreaWidth; //new width after substract borders
-    float CRTAreaHeight; //new height after substract borders
-    float factorX; //adjustment factor for hit point to translate to libretro width space
-    float factorY; //adjustment factor for hit point to translate to libretro height space
-    int lastHitX;
-    int lastHitY;
     GameObject lastGameObjectHit;
-    int AbsoluteHitX;
-    int AbsoluteHitY;
     /*
     It reports X/Y coordinates in screen space (similar to the pointer)
     in the range [-0x8000, 0x7fff] in both axes, with zero being center and
@@ -150,21 +134,29 @@ public class LightGunTarget : MonoBehaviour
     [-0x7fff, 0x7fff]: -0x7fff corresponds to the far left/top of the screen,
      and 0x7fff corresponds to the far right/bottom of the screen.
     */
+    int lastHitX;
+    int lastHitY; 
     const int virtualScreenWidth = 32767; //libretro constant width
     const int virtualScreenHeight = 32767; //libretro constant height
 
-    [System.Serializable] public class OnHitCRTEvent : UnityEvent<int, int> { }
-    [System.Serializable] public class OnHitOutsideCRTEvent : UnityEvent { }
-    [System.Serializable] public class OnHitPartEvent : UnityEvent<GameObject> { }
-
+    Renderer CRTRenderer;
+    Texture2D texture;
     RaycastHit hit;
-    //public OnHitCRTEvent OnHitCRT;
-    //public OnHitPartEvent OnHitPart;
-    //public OnHitOutsideCRTEvent OnHitOutsideCRT;
+
+    // The MeshFilter from the hit GameObject
+    Mesh mesh;
+
+    // The triangle counts for each submesh
+    int[] trianglesSubmesh0; // Submesh 0
+    int[] trianglesSubmesh1; // Submesh 1
 
     public void Start()
     {
         attachedToCRT = gameObject.layer == LayerMask.NameToLayer("CRT");
+        if (attachedToCRT)
+        {
+            CRTRenderer = gameObject.GetComponent<Renderer>();
+        }
     }
 
     //to start the component only if light-gun is active for the game.
@@ -181,17 +173,25 @@ public class LightGunTarget : MonoBehaviour
 
         layerMaskCRT = LayerMask.GetMask("CRT");
         layerMaskParts = LayerMask.GetMask("interactablePart");
+        texture = null;
 
         if (lightGunInformation != null)
         {
-            borderSizeX = lightGunInformation.crt.borderSizeX;
-            borderSizeY = lightGunInformation.crt.borderSizeY;
+            /*
+             * deprecated.
+            if (!float.IsNaN(lightGunInformation.crt.borderSizeX))
+                borderSizeX = lightGunInformation.crt.borderSizeX;
+            if (!float.IsNaN(lightGunInformation.crt.borderSizeY))
+                borderSizeY = lightGunInformation.crt.borderSizeY;
             if (!float.IsNaN(lightGunInformation.crt.meshFactorScaleX))
                 scaleFactorX = lightGunInformation.crt.meshFactorScaleX;
             if (!float.IsNaN(lightGunInformation.crt.meshFactorScaleY))
                 scaleFactorY = lightGunInformation.crt.meshFactorScaleY;
+            */
+
             InvertX = lightGunInformation.crt.invertx;
             InvertY = lightGunInformation.crt.inverty;
+            
             adjustSightVertical = lightGunInformation.gun.adjustSight.vertical;
             adjustSightHorizontal = lightGunInformation.gun.adjustSight.horizontal;
 
@@ -202,39 +202,11 @@ public class LightGunTarget : MonoBehaviour
 #if ON_DEBUG
         showHitPosition = true;
 #endif
-        if (showHitPosition)
-        {
-            if (hitPosition == null)
-            {
-                float size = 0.005f;
-                hitPosition = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                hitPosition.transform.localScale = new Vector3(size, size, size); // Adjust the size of the sphere as needed
-                
-                Material emissiveMaterial = new Material(Shader.Find("Standard"));
-                Color color = Color.blue;
-                emissiveMaterial.color = color;
-                emissiveMaterial.EnableKeyword("_EMISSION");
-                emissiveMaterial.SetColor("_EmissionColor", color);
-                hitPosition.GetComponent<Renderer>().material = emissiveMaterial;
-
-                hitPosition.transform.SetParent(transform);
-            }
-            hitPosition.SetActive(true);
-        }
-
-        // Calculate the new x width after shrinking at both ends
-        CRTAreaWidth = transform.localScale.x - -borderSizeX * 2;
-        CRTAreaHeight = transform.localScale.y - -borderSizeY * 2;
-        //calculate the multiplication factor for the hit point after substract borders
-        factorX = CRTAreaWidth / transform.localScale.x;
-        factorY = CRTAreaHeight / transform.localScale.y;
 
         //connect to the event to know when the lightgun is ready
         ChangeControls chctrl = player.GetComponent<ChangeControls>();
         if (chctrl != null)
-        {
             chctrl.OnChangeRightJoystick.AddListener(OnLightGunActive);
-        }
     }
 
 
@@ -257,22 +229,12 @@ public class LightGunTarget : MonoBehaviour
         return lightGunInformation != null;
     }
 
-#if ON_DEBUG
-    void Update()
-    {
-        Shoot();
-        if (OnScreen())
-            ConfigManager.WriteConsole($"[LightGunTarget] {spaceGun.name}: Hitx:{HitX} Hitx:{HitY}");
-    }
-#endif
+
 
     private void declareOutOfScreen()
     {
         lastHitX = -0x8000;
         lastHitY = -0x8000;
-        if (showHitPosition)
-            hitPosition.SetActive(false);
-
         return;
     }
 
@@ -283,10 +245,6 @@ public class LightGunTarget : MonoBehaviour
     public GameObject GetLastGameObjectHit()
     {
         return lastGameObjectHit;
-    }
-    public void GetLastAbsoluteHit(out int hitx, out int hity)
-    {
-        hitx = AbsoluteHitX; hity = AbsoluteHitY;
     }
 
     public string GetModelPath()
@@ -326,6 +284,20 @@ public class LightGunTarget : MonoBehaviour
 
         if (attachedToCRT)
         {
+            if (texture == null)
+            {
+                Material secondMaterial = CRTRenderer.materials[1];
+                texture = secondMaterial.mainTexture as Texture2D;
+
+                // Get the MeshFilter from the hit GameObject
+                MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
+                mesh = meshFilter.mesh;
+
+                // Get the triangle counts for each submesh
+                trianglesSubmesh0 = mesh.GetTriangles(0); // Submesh 0
+                trianglesSubmesh1 = mesh.GetTriangles(1); // Submesh 1 - where the texture lives
+            }
+
             // if this component is attached to a CRT
             if (isPoinitingToATarget(layerMaskCRT) && hit.collider?.gameObject == gameObject)
                 detectCRTCoordinates();
@@ -334,80 +306,99 @@ public class LightGunTarget : MonoBehaviour
 
     private bool isPoinitingToATarget(LayerMask layer)
     {
-
+        Vector3 adjustedPosition;
+        Vector3 adjustedForward;
         //adjust vertical/horizontal sight (in centimeters)
-        Vector3 adjustedPosition = new Vector3(
-            spaceGun.transform.position.x + adjustSightHorizontal / 100f,
-            spaceGun.transform.position.y + adjustSightVertical / 100f,
-            spaceGun.transform.position.z
-        );
+        CalculateTransform(out adjustedPosition, out adjustedForward);
         // Cast a ray from the spaceGun position to its forward direction
-        return Physics.Raycast(adjustedPosition,
-                invertForward ? -spaceGun.transform.forward : spaceGun.transform.forward,
-                out hit, Mathf.Infinity, layer);
+        return Physics.Raycast(adjustedPosition, adjustedForward, out hit, Mathf.Infinity, layer);
     }
 
-    private void detectCRTCoordinatesUV()
+    private void CalculateTransform(out Vector3 pos, out Vector3 forward)
     {
-        if (hit.collider.gameObject == gameObject)
-        {
-            MeshCollider meshCollider = GetComponent<MeshCollider>();
-        }
+        pos = Vector3.zero;
+        pos.x = spaceGun.transform.position.x + adjustSightHorizontal / 100f;
+        pos.y = spaceGun.transform.position.y + adjustSightVertical / 100f;
+        pos.z = spaceGun.transform.position.z;
+        forward = spaceGun.transform.forward;
+        if (invertForward)
+            forward = -forward;
     }
 
     private void detectCRTCoordinates()
     {
         if (hit.collider.gameObject == gameObject)
-        { 
-            // Get the hit point in local TV screen space
-            Vector3 localHitPoint = transform.InverseTransformPoint(hit.point);
+        {
+                     
+            int hitTriangleIndex = hit.triangleIndex;
 
-            // the X/Y coordinates in tv screen space in the range [-0x8000, 0x7fff] in both axes, 
-            // with zero being center and -0x8000 being out of bounds 
-            // (the ray fail to hit the screen). Remember: zero being center of the TV screen.
+            // Determine if the hit triangle is within Submesh 1
+            int triangleIndexInSubmesh1 = -1; // Default invalid value
 
-            // Calculate the new x,y point value after shrink the screen to avoid borders
-            float hitPointX = localHitPoint.x * factorX;
-            float hitPointY = localHitPoint.y * factorY;
-
-            float translatedHitX = hitPointX * virtualScreenWidth / scaleFactorX;
-            float translatedHitY = hitPointY * virtualScreenHeight / scaleFactorY;
-
-            // translatedHitX += adjustSightHorizontal;
-            // translatedHitY += adjustSightVertical;
-
-            lastHitX = Mathf.RoundToInt(Mathf.Clamp(translatedHitX, -virtualScreenWidth, virtualScreenWidth));
-            lastHitY = Mathf.RoundToInt(Mathf.Clamp(translatedHitY, -virtualScreenHeight, virtualScreenHeight));
-
-            OutOfScreenLeft = lastHitX == -virtualScreenWidth;
-            OutOfScreenRight = lastHitX == virtualScreenWidth;
-            OutOfScreenTop = lastHitY == -virtualScreenHeight;
-            OutOfScreenBottom = lastHitY == virtualScreenHeight;
-            AbsoluteHitX = InvertX ? -lastHitX : lastHitX;
-            AbsoluteHitY = InvertY ? -lastHitY : lastHitY;
-
-            if (Math.Abs(lastHitX) == virtualScreenWidth || Math.Abs(lastHitY) == virtualScreenHeight)
+            // Check if the hit triangle index falls within the range of Submesh 1 triangles
+            if (hitTriangleIndex >= trianglesSubmesh0.Length / 3 &&
+                hitTriangleIndex < (trianglesSubmesh0.Length + trianglesSubmesh1.Length) / 3)
             {
-                declareOutOfScreen();
-            }
-            else
-            {
-                if (InvertX)
-                    lastHitX = -lastHitX;
+                // Adjust the triangle index to the local index within Submesh 1
+                triangleIndexInSubmesh1 = hitTriangleIndex - (trianglesSubmesh0.Length / 3);
+
+                // Get the vertex indices of the hit triangle in Submesh 1
+                int vertIndex1 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3];
+                int vertIndex2 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 1];
+                int vertIndex3 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 2];
+
+                // Get the barycentric coordinates of the hit point to interpolate UVs
+                Vector3 barycentricCoord = hit.barycentricCoordinate;
+
+                // Use the UVs (texture coordinates) for the vertices of the hit triangle
+                // Interpolate the UV coordinates using the barycentric coordinates
+                Vector2 interpolatedUV = mesh.uv[vertIndex1] * barycentricCoord.x + 
+                                            mesh.uv[vertIndex2] * barycentricCoord.y +
+                                            mesh.uv[vertIndex3] * barycentricCoord.z;
+
+                // Now we have the correct UV coordinates for Submesh 1
+                // Use interpolatedUV to work with the texture of Submesh 1
+                // Perform any necessary operations using the UV and texture...
+
+                // Convert UV to virtual screen space. Normalize texture coordinates from [0, 1] to [-1, 1]
+                float normalizedX = 2 * interpolatedUV.x - 1;
+                float normalizedY = 2 * interpolatedUV.y - 1;
+
+                // Invert the coordinates if needed
+                if (!InvertX) //back compat
+                    normalizedX = -normalizedX;
                 if (InvertY)
-                    lastHitY = -lastHitY;
+                    normalizedY = -normalizedY;
 
+                // Map the normalized coordinates to the virtual screen space
+                lastHitX = Mathf.Clamp(Mathf.RoundToInt(normalizedX * virtualScreenWidth), -virtualScreenWidth, virtualScreenWidth);
+                lastHitY = Mathf.Clamp(Mathf.RoundToInt(normalizedY * virtualScreenHeight), -virtualScreenHeight, virtualScreenHeight);
+
+                // Debug visualization of hit position on the texture
                 if (showHitPosition)
                 {
-                    hitPosition.SetActive(true);
-                    hitPosition.transform.localPosition = localHitPoint;
-                }
-                
-            }
+                    int x, y;
+                    // Calculate the x, y coordinates in Unity texture space
+                    x = Mathf.RoundToInt(interpolatedUV.x * texture.width);
+                    y = Mathf.RoundToInt(interpolatedUV.y * texture.height);
 
+                    // Invert the x and y coordinates if needed
+                    if (!InvertX)
+                        x = texture.width - 1 - x;
+                    if (InvertY)
+                        y = texture.height - 1 - y;
+
+                    // Clamp the x, y coordinates to ensure they're within the texture bounds
+                    x = Mathf.Clamp(x, 0, texture.width - 1);
+                    y = Mathf.Clamp(y, 0, texture.height - 1);
+
+                    // Draw a red circle at the hit point in the texture for debugging purposes
+                    DrawRedCircle(texture, x, y, 5);
+                    texture.Apply();
+                }
+            }
 #if ON_DEBUG
-            // ConfigManager.WriteConsole($"[LightGunTarget] screen localscale w,h: {transform.localScale.x}, {transform.localScale.y} screen scale: {scaleX}, {scaleY} - x,y:{localHitPoint.x}, {localHitPoint.y} - HitX, HitY: {HitX}, {HitY} {hit.collider.gameObject.name}");
-            ConfigManager.WriteConsole($"[LightGunTarget] screen localscale w,h: {transform.localScale.x}, {transform.localScale.y} - x,y:{localHitPoint.x}, {localHitPoint.y} - HitX, HitY: {HitX}, {HitY} {hit.collider.gameObject.name}");
+            ConfigManager.WriteConsole($"[LightGunTarget]  x,y:{lastHitX}, {lastHitY}");
 #endif
             return;
         }
@@ -418,11 +409,40 @@ public class LightGunTarget : MonoBehaviour
         return;
     }
 
+    // Function to draw a red circle
+    void DrawRedCircle(Texture2D texture, int centerX, int centerY, int radius)
+    {
+        Color red = Color.red;
+
+        for (int y = -radius; y <= radius; y++)
+        {
+            for (int x = -radius; x <= radius; x++)
+            {
+                if (x * x + y * y <= radius * radius) // Circle equation
+                {
+                    int px = centerX + x;
+                    int py = centerY + y;
+
+                    if (px >= 0 && px < texture.width && py >= 0 && py < texture.height)
+                    {
+                        texture.SetPixel(px, py, red);
+                    }
+                }
+            }
+        }
+    }
 #if ON_DEBUG
     void OnDrawGizmos()
     {
+        Vector3 adjustedPosition;
+        Vector3 adjustedForward;
+        if (spaceGun == null)
+            return;
+        //adjust vertical/horizontal sight (in centimeters)
+        CalculateTransform(out adjustedPosition, out adjustedForward);
+
         // Draw the ray as a debug ray from the spaceGun's position along its forward direction
-        Debug.DrawRay(spaceGun.transform.position, spaceGun.transform.forward * 100f, Color.red); // Change 100f to adjust the ray length
+        Debug.DrawRay(adjustedPosition, adjustedForward * 100f, Color.red); // Change 100f to adjust the ray length
     }
 #endif
 }

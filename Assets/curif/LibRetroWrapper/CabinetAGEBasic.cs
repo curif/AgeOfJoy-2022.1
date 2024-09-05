@@ -18,7 +18,7 @@ public class AGEBasicVariable
 [Serializable]
 public class CabinetAGEBasicInformation
 {
-    public bool active = true;
+    public bool? active = null;
     public bool debug = false;
 
     [YamlMember(Alias = "system-skin", ApplyNamingConventions = false)]
@@ -643,6 +643,7 @@ public class CabinetAGEBasic : MonoBehaviour
             CoinSlotController coinSlot, 
             LightGunTarget lightGunTarget)
     {
+
         if (AGEBasic == null)
             AGEBasic = GetComponent<basicAGE>();
 
