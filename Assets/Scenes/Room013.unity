@@ -2609,7 +2609,7 @@ MonoBehaviour:
   gameRegistry: {fileID: 0}
   backgroundSoundController: {fileID: 0}
   Loaded: 0
-  Cabinets: []
+  CabinetsCtrlInfo: []
   CoroutineIsRunning: 0
   TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
@@ -8446,6 +8446,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e99014bb67875b548aeba1443d84157, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  yamlResourcePath: Decoration/Pictures/contents
 --- !u!4 &814586840
 Transform:
   m_ObjectHideFlags: 0
@@ -9863,7 +9864,7 @@ Transform:
   m_GameObject: {fileID: 944411124}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.479999, y: 0.377, z: -2.770002}
+  m_LocalPosition: {x: 2.674, y: 0.377, z: -2.77}
   m_LocalScale: {x: 0.99999976, y: 1, z: 0.99999976}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9885,8 +9886,6 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: d178e537fa2109342be338c8543458aa, type: 3}
     sceneAssetGuidHex: d178e537fa2109342be338c8543458aa
-  - sceneAsset: {fileID: 102900000, guid: 16309e65ce5201d409f3db1e67af0644, type: 3}
-    sceneAssetGuidHex: 16309e65ce5201d409f3db1e67af0644
   ScenesToUnload: []
   SceneBlockers:
   - SceneRef:
@@ -10141,6 +10140,80 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4329997396853460666, guid: 6a97dfa39ac64a911af82a3e0dce5e96, type: 3}
   m_PrefabInstance: {fileID: 952683445}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &956546496
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 956546499}
+  - component: {fileID: 956546498}
+  - component: {fileID: 956546497}
+  m_Layer: 0
+  m_Name: GateControllerUnloader
+  m_TagString: door
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!65 &956546497
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956546496}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.1816194, y: 1.7841265, z: 7.577424}
+  m_Center: {x: -0.79385674, y: -0.15865791, z: 0.14393425}
+--- !u!114 &956546498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956546496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
+  ScenesToLoad: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 16309e65ce5201d409f3db1e67af0644, type: 3}
+    sceneAssetGuidHex: 16309e65ce5201d409f3db1e67af0644
+  - sceneAsset: {fileID: 102900000, guid: d178e537fa2109342be338c8543458aa, type: 3}
+    sceneAssetGuidHex: d178e537fa2109342be338c8543458aa
+  SceneBlockers: []
+--- !u!4 &956546499
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 956546496}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -20.48, y: -5.34, z: 10.92}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &968909497
 GameObject:
   m_ObjectHideFlags: 0
@@ -29118,3 +29191,4 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1862072339}
+  - {fileID: 956546499}

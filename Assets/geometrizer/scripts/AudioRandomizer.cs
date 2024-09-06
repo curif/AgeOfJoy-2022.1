@@ -22,19 +22,7 @@ public class AudioRandomizer : MonoBehaviour
             audioSources[i] = audioSourceObjects[i].GetComponent<AudioSource>();
         }
 
-        ApplySettingsBasedOnTransforms();
         StartCoroutine(RandomSoundRoutine());
-    }
-
-    void ApplySettingsBasedOnTransforms()
-    {
-        for (int i = 0; i < audioSources.Length && i < referenceObjects.Length; i++)
-        {
-            if (audioSources[i] != null && referenceObjects[i] != null)
-            {
-                audioSourceObjects[i].transform.position = referenceObjects[i].transform.position;
-            }
-        }
     }
 
     IEnumerator RandomSoundRoutine()
@@ -59,6 +47,9 @@ public class AudioRandomizer : MonoBehaviour
         int index = Random.Range(0, audioSources.Length);
         if (audioSources[index] != null)
         {
+            // Set the audio source's position to a random reference object position
+            SetRandomPosition(index);
+
             // Ensure the AudioSource has an AudioClip to play
             if (audioSources[index].clip != null)
             {
@@ -69,9 +60,18 @@ public class AudioRandomizer : MonoBehaviour
             }
             else
             {
-                // If no AudioClip is assigned, you could log or handle this situation as needed
                 Debug.Log($"No AudioClip assigned to AudioSource at position: {audioSourceObjects[index].transform.position}");
             }
+        }
+    }
+
+    void SetRandomPosition(int index)
+    {
+        // Pick a random reference object to assign the position
+        int randomRefIndex = Random.Range(0, referenceObjects.Length);
+        if (referenceObjects[randomRefIndex] != null)
+        {
+            audioSourceObjects[index].transform.position = referenceObjects[randomRefIndex].transform.position;
         }
     }
 }
