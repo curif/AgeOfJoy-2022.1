@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class AudioRandomizer : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class AudioRandomizer : MonoBehaviour
     public float chanceOfSoundEffect = 0.5f; // 0.5 = 50% chance
 
     private AudioSource[] audioSources;
+    private List<int> soundQueue = new List<int>();  // Queue of sounds to avoid repeats
 
     void Start()
     {
@@ -21,6 +23,9 @@ public class AudioRandomizer : MonoBehaviour
         {
             audioSources[i] = audioSourceObjects[i].GetComponent<AudioSource>();
         }
+
+        // Fill the sound queue with indexes and shuffle them
+        ResetSoundQueue();
 
         StartCoroutine(RandomSoundRoutine());
     }
@@ -43,8 +48,15 @@ public class AudioRandomizer : MonoBehaviour
 
     void PlayRandomSound()
     {
-        // Select a random AudioSource to play
-        int index = Random.Range(0, audioSources.Length);
+        if (soundQueue.Count == 0)
+        {
+            ResetSoundQueue();  // Refill the queue when all sounds have been played
+        }
+
+        // Take the next sound from the queue
+        int index = soundQueue[0];
+        soundQueue.RemoveAt(0);  // Remove the used sound
+
         if (audioSources[index] != null)
         {
             // Set the audio source's position to a random reference object position
@@ -62,6 +74,31 @@ public class AudioRandomizer : MonoBehaviour
             {
                 Debug.Log($"No AudioClip assigned to AudioSource at position: {audioSourceObjects[index].transform.position}");
             }
+        }
+    }
+
+    void ResetSoundQueue()
+    {
+        // Fill the queue with all available sound indices
+        soundQueue.Clear();
+        for (int i = 0; i < audioSources.Length; i++)
+        {
+            soundQueue.Add(i);
+        }
+
+        // Shuffle the queue to randomize the play order
+        ShuffleList(soundQueue);
+    }
+
+    void ShuffleList(List<int> list)
+    {
+        // Fisher-Yates shuffle algorithm
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int randomIndex = Random.Range(0, i + 1);
+            int temp = list[i];
+            list[i] = list[randomIndex];
+            list[randomIndex] = temp;
         }
     }
 
