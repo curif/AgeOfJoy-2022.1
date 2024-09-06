@@ -16,10 +16,21 @@ public class VolumeRamping : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         targetVolume = audioSource.volume; // Store the initial volume
         audioSource.volume = 0f; // Start volume at 0
-        audioSource.Play(); // Start playing the audio source
 
         // Choose a random ramp duration between min and max
         rampDuration = Random.Range(rampDurationMin, rampDurationMax);
+
+        // Ensure the audio clip exists and pick a random start time
+        if (audioSource.clip != null)
+        {
+            float randomStartTime = Random.Range(0f, audioSource.clip.length);
+            audioSource.time = randomStartTime; // Set the playback start time
+
+            // Play after setting the random start time
+            audioSource.Play();
+        }
+
+        audioSource.loop = true; // Ensure the audio will loop
     }
 
     void Update()
