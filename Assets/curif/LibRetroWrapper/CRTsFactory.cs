@@ -21,6 +21,7 @@ public static class CRTsFactory
         objects.Add("32i", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen32i"));
         objects.Add("50i", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen50i"));
         objects.Add("circle", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen_circle"));
+        objects.Add("square", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen_square"));
         objects.Add("19i-1x2", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i_1x2"));
         objects.Add("19i-2x1", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i_2x1"));
         objects.Add("19i-3x1", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i_3x1"));
