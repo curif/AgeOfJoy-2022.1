@@ -133,11 +133,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 117901626031786245, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: chanceOfSoundEffect
-      value: 0.33
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 117901626031786245, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: maxTimeBetweenSounds
-      value: 120
+      value: 70
       objectReference: {fileID: 0}
     - target: {fileID: 117901626031786245, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: minTimeBetweenSounds
@@ -391,6 +391,10 @@ PrefabInstance:
       propertyPath: panLevelCustomCurve.m_Curve.Array.data[0].value
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1361900954349496047, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: a33c81399aac174469761f94ee7fff51, type: 3}
     - target: {fileID: 1498700276706051365, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: m_LocalPosition.x
       value: -4.935999
@@ -507,6 +511,10 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 2.14
       objectReference: {fileID: 0}
+    - target: {fileID: 4685623517137580343, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
+      propertyPath: m_audioClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 0195e623f27bd3c43ac367b0351c7b9c, type: 3}
     - target: {fileID: 4741841972308846009, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: m_Volume
       value: 0.3
@@ -26363,28 +26371,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1714072618}
-    MaxTimeSpentThere: 40
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 5
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
-    MaxTimeSpentThere: 20
+    MaxTimeSpentThere: 5
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 1535934516}
-    MaxTimeSpentThere: 20
+    MaxTimeSpentThere: 5
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -26392,8 +26400,8 @@ MonoBehaviour:
     Type: 1
   DefaultDestination:
     Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -26404,7 +26412,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 15
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -26514,7 +26522,7 @@ Animator:
   m_GameObject: {fileID: 1305314739}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 1262b1db6e2d0394a97d41c2af1040dc, type: 3}
-  m_Controller: {fileID: 9100000, guid: c79ba8d52eee6f840af696072c22a07f, type: 2}
+  m_Controller: {fileID: 9100000, guid: 87988366af42dd34eac6a9d0ea835e8e, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -29099,7 +29107,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: c79ba8d52eee6f840af696072c22a07f, type: 2}
+      objectReference: {fileID: 9100000, guid: e0246a711907c5f4989526e8042fe969, type: 2}
     - target: {fileID: 5866666021909216657, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -29217,30 +29225,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1714072618}
-    MaxTimeSpentThere: 40
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
-    MaxTimeSpentThere: 20
+    MaxTimeSpentThere: 10
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 108282750}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 5
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   DefaultDestination:
     Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 5
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -29251,7 +29259,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 15
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -32106,7 +32114,7 @@ LightProbeGroup:
   m_SourcePositions:
   - {x: 1.59128, y: 1.1812575, z: 2.110051}
   - {x: 1.8973484, y: 1.0786319, z: -3.559899}
-  - {x: 1.59128, y: -0.6690633, z: 2.1257515}
+  - {x: 0.34057808, y: 0.044639826, z: 2.0755978}
   - {x: 1.8973484, y: -0.6050199, z: -3.4505765}
   - {x: -7.272127, y: 1.1812575, z: 2.0229125}
   - {x: -7.4109306, y: 1.9066424, z: -3.907533}
@@ -32145,6 +32153,7 @@ LightProbeGroup:
   - {x: -8.192509, y: -0.22042173, z: -2.3227954}
   - {x: -7.2667065, y: 1.8760674, z: -2.932485}
   - {x: -8.192509, y: 0.79202366, z: -2.2696872}
+  - {x: 1.59128, y: -0.6690633, z: 2.1257515}
   m_Dering: 1
 --- !u!4 &1572059808
 Transform:
@@ -34178,7 +34187,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 4067621191207027449, guid: 1dd706bb85d8aef4e83a6229dbd62c36, type: 2}
   m_audioClip: {fileID: 8300000, guid: 28d6a9b761233524bab012007efe0383, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.2
+  m_Volume: 0.1
   m_Pitch: 1
   Loop: 1
   Mute: 0

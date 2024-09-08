@@ -44,6 +44,7 @@ public class VolumeRamping : MonoBehaviour
             if (t >= 1f)
             {
                 isRamping = false; // Stop the ramping once complete
+                enabled = false; // Disable the component to stop Update from being called
             }
         }
     }

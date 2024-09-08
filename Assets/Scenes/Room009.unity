@@ -12879,7 +12879,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 37a0d71fa9596cb4990c61a7b7baed30, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 7cb940b39d11ab542aa9d60c14eba604, type: 2}
+      objectReference: {fileID: 9100000, guid: dda9242861b3a4b42a8022d44e7ef50e, type: 2}
     - target: {fileID: 5866666021909216657, guid: 37a0d71fa9596cb4990c61a7b7baed30, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -12973,7 +12973,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1234093522}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 15
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -12981,8 +12981,8 @@ MonoBehaviour:
     Type: 0
   DefaultDestination:
     Place: {fileID: 121902653}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 5
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -12992,8 +12992,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 2004435479}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 10
-  MinTimeSpentGaming: 3
+  MaxTimeSpentGaming: 45
+  MinTimeSpentGaming: 20
   AvoidPlayer: 1
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
