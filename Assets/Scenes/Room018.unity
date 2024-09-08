@@ -7659,7 +7659,7 @@ MonoBehaviour:
   gameRegistry: {fileID: 0}
   backgroundSoundController: {fileID: 0}
   Loaded: 0
-  Cabinets: []
+  CabinetsCtrlInfo: []
   CoroutineIsRunning: 0
   TimeToWaitBetweenChecks: 0.5
   cabinetsCount: 0
@@ -38714,7 +38714,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: db51f1b303e50eb458b674aceb21f643, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 20e4997d888ca80409aa9ae94c12fe3e, type: 2}
+      objectReference: {fileID: 9100000, guid: 7cb940b39d11ab542aa9d60c14eba604, type: 2}
     - target: {fileID: 5866666021909216657, guid: db51f1b303e50eb458b674aceb21f643, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -38817,22 +38817,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 2017020229}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 20
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -38844,7 +38844,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 20
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -42407,7 +42407,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 3dfd3721aba00d14dbae7e21a2fe22d5, type: 2}
+      objectReference: {fileID: 9100000, guid: c79ba8d52eee6f840af696072c22a07f, type: 2}
     - target: {fileID: 5866666021909216657, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -42510,15 +42510,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 60
+    MaxTimeSpentThere: 30
     MinTimeSpentThere: 20
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 2017020229}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -42526,7 +42526,7 @@ MonoBehaviour:
   DefaultDestination:
     Place: {fileID: 1282868784}
     MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MinTimeSpentThere: 20
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -42537,7 +42537,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 20
   AvoidPlayer: 1
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0

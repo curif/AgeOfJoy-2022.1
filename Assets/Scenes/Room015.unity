@@ -18624,30 +18624,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 1910874461}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 86594160}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -18657,8 +18657,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 1815384197}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MaxTimeSpentGaming: 25
+  MinTimeSpentGaming: 20
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -20358,38 +20358,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
-    - target: {fileID: -9196096680256235381, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -6970804188629696086, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -4552883733944604496, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 1106856210943459306, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 2041316333534289834, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 2322922891087809323, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2325153471040252360, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 6345175797324881869, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: -9168301997562364265, guid: 6b999b29450d0444bb67ceaa34cb3078, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -20766,6 +20734,38 @@ PrefabInstance:
       propertyPath: m_LightProbeUsage
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -9196096680256235381, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -6970804188629696086, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4552883733944604496, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1106856210943459306, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2041316333534289834, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 2322922891087809323, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2325153471040252360, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6345175797324881869, guid: ea5a0305fd45ca348826cf430ad0da95, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -20810,29 +20810,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 1910874461}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 86594160}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 15
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -20844,7 +20844,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 1815384197}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 20
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0

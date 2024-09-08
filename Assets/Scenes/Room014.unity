@@ -19276,34 +19276,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
-    - target: {fileID: -8697316863189600284, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -4878190413023060625, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -2676669560193214673, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2752594783328647803, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4576523981732521923, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8233712773023205445, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8985823622858259377, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: -9168301997562364265, guid: 97191c74a2954d541b31520390fcc484, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -19619,7 +19591,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 97191c74a2954d541b31520390fcc484, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: 7cb940b39d11ab542aa9d60c14eba604, type: 2}
+      objectReference: {fileID: 9100000, guid: e0246a711907c5f4989526e8042fe969, type: 2}
     - target: {fileID: 5866666021909216657, guid: 97191c74a2954d541b31520390fcc484, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -19672,6 +19644,34 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: -8697316863189600284, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -4878190413023060625, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2676669560193214673, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752594783328647803, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4576523981732521923, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8233712773023205445, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8985823622858259377, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -19722,8 +19722,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 7
+    MinTimeSpentThere: 6
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -19737,8 +19737,8 @@ MonoBehaviour:
     Type: 1
   DefaultDestination:
     Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 7
+    MinTimeSpentThere: 6
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -19748,8 +19748,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 60
-  MinTimeSpentGaming: 30
+  MaxTimeSpentGaming: 40
+  MinTimeSpentGaming: 25
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -21349,7 +21349,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: c79ba8d52eee6f840af696072c22a07f, type: 2}
+      objectReference: {fileID: 9100000, guid: e0246a711907c5f4989526e8042fe969, type: 2}
     - target: {fileID: 5866666021909216657, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -21452,23 +21452,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 7
+    MinTimeSpentThere: 6
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   - Place: {fileID: 2017020229}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 7
+    MinTimeSpentThere: 6
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -21478,8 +21478,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 60
-  MinTimeSpentGaming: 30
+  MaxTimeSpentGaming: 30
+  MinTimeSpentGaming: 20
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0

@@ -4807,14 +4807,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1714072618}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 15
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 15
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -4822,7 +4822,7 @@ MonoBehaviour:
     Type: 1
   DefaultDestination:
     Place: {fileID: 108282750}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 15
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -4834,7 +4834,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 20
   AvoidPlayer: 1
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -11169,26 +11169,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
-    - target: {fileID: -7067269384414559380, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -850809554729559827, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1705850488926821507, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6960660475329292832, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7158041636319941344, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: -9168301997562364265, guid: db51f1b303e50eb458b674aceb21f643, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -13056,6 +13036,26 @@ PrefabInstance:
     - target: {fileID: 1056455624699028784, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -7067269384414559380, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -850809554729559827, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1705850488926821507, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6960660475329292832, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7158041636319941344, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15387,22 +15387,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1714072618}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 20
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 20
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -15413,8 +15413,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MaxTimeSpentGaming: 45
+  MinTimeSpentGaming: 20
   AvoidPlayer: 1
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0

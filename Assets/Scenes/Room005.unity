@@ -20619,7 +20619,7 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: c79ba8d52eee6f840af696072c22a07f, type: 2}
+      objectReference: {fileID: 9100000, guid: e0246a711907c5f4989526e8042fe969, type: 2}
     - target: {fileID: 5866666021909216657, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_ApplyRootMotion
       value: 0
@@ -20722,16 +20722,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   DefaultDestination:
     Place: {fileID: 1117604845}
-    MaxTimeSpentThere: 30
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -20741,8 +20741,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MaxTimeSpentGaming: 20
+  MinTimeSpentGaming: 15
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -22691,15 +22691,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 60
-    MinTimeSpentThere: 20
+    MaxTimeSpentThere: 15
+    MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 0
   DefaultDestination:
     Place: {fileID: 1282868784}
-    MaxTimeSpentThere: 30
+    MaxTimeSpentThere: 15
     MinTimeSpentThere: 10
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -22711,7 +22711,7 @@ MonoBehaviour:
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
   MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 5
+  MinTimeSpentGaming: 20
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
