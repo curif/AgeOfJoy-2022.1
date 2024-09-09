@@ -86,8 +86,8 @@ public class TeleportationController : MonoBehaviour
                     {
                         if (SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
                         {
-                            AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
-                            while (!asyncLoad.isDone)
+                            AsyncOperation asyncUnLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
+                            while (!asyncUnLoad.isDone)
                                 yield return null;
 
                             ConfigManager.WriteConsole($"[TeleportLoop] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
@@ -95,7 +95,7 @@ public class TeleportationController : MonoBehaviour
                         }
                         else
                         {
-                            ConfigManager.WriteConsoleError($"[TeleportLoop] scene isn't ready to be unloaded {controledSceneToUnLoad}");
+                            ConfigManager.WriteConsoleError($"[TeleportLoop] scene isn't ready to be unloaded {controledSceneToUnLoad.Name}");
                         }
                     }
                 }
