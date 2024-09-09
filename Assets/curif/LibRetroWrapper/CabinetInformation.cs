@@ -454,12 +454,6 @@ public class CabinetInformation
         [YamlMember(Alias = "receive-impacts", ApplyNamingConventions = false)]
         public ReceiveImpacts receiveImpacts;
 
-        // gravity: affected by gravity and impact. Falls at start and bounce again objects.
-        // impact: gravity doesn't affects unless is hit by another object
-        // script: only moves by AGEBasic.
-        public string affectedBy = "script";
-        public static List<string> affectedByTypes = new List<string>() { "gravity", "impact", "agebasic" };
-
         //When enabled, the object will be affected by Unity's global gravity setting. The object will fall unless supported by another object (e.g., a floor).
         public bool gravity = false;
         //This defines the weight of the object in the physics system. Higher mass makes the object harder to move, while a lower mass makes it easier to move.
@@ -738,6 +732,11 @@ public class CabinetInformation
             exceptions.Add($"video", String.IsNullOrEmpty(video.file) || !fileExists(video.file) ?
                                         new System.ArgumentException($"video undeclared or file [{video.file}] doesn't exists") :
                                         null);
+        }
+
+        if (agebasic != null)
+        {
+            exceptions.Add($"agebasic", (Exception)agebasic.IsValid(name));
         }
 
         return exceptions;

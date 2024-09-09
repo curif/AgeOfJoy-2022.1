@@ -102,9 +102,15 @@ public class PutOnFloor : MonoBehaviour
             ConfigManager.WriteConsoleError($"[PutOnFloor.Start] there is not a boxCollider for {name}");
             return;
         }
-
-        if (!PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
-            ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
+        StartCoroutine(placeOnFloorCoroutine());
     }
 
+
+    private IEnumerator placeOnFloorCoroutine()
+    {
+
+        if (!PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
+            ConfigManager.WriteConsoleWarning($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
+        yield break;
+    }
 }

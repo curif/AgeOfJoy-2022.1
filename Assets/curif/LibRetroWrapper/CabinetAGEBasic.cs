@@ -5,6 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using UnityEditor;
+using System.Linq;
+using YamlDotNet.Core;
 
 
 [Serializable]
@@ -47,9 +49,24 @@ public class CabinetAGEBasicInformation
     {
         foreach (EventInformation e in events)
         {
-            e.Validate(cabName);
+            Exception ex = e.Validate(cabName);
+            if (ex != null)
+                throw ex;
         }
     }
+
+    public CabinetValidationException IsValid(string cabName)
+    {
+        foreach (EventInformation e in events)
+        {
+            CabinetValidationException ex = e.Validate(cabName);
+            if (ex != null)
+                return ex;
+        }
+        return null;
+    }
+
+
 
     public bool HasEvents()
     {
@@ -94,7 +111,7 @@ public class EventInformation
     public string name = "";
     public string program;
     public double delay = 0;
-    public List<ControlInformation> controls;
+    public ControlInformation control;
     public string part;
     [YamlMember(Alias = "impact-parts", ApplyNamingConventions = false)]
     public List<string> partImpacts; //name of the colliding part.
@@ -107,28 +124,27 @@ public class EventInformation
     [YamlMember(Alias = "variables", ApplyNamingConventions = false)]
     public List<AGEBasicVariable> Variables { get { return variables; } set { variables = value; } }
 
-    public void Validate(string cabName)
+    public CabinetValidationException Validate(string cabName)
     {
         if (string.IsNullOrEmpty(eventId))
-            throw new CabinetValidationException(cabName, $"AGEBasic Event Id unespecified");
+            return new CabinetValidationException(cabName, $"AGEBasic Event Id unespecified");
 
         if (Array.IndexOf(validEvents, eventId) < 0)
-            throw new CabinetValidationException(cabName, $"AGEBasic Event [{eventId}] unknown");
+            return new CabinetValidationException(cabName, $"AGEBasic Event [{eventId}] unknown");
 
         if (Array.IndexOf(requirePartName, eventId) >= 0 && string.IsNullOrEmpty(part))
-            throw new CabinetValidationException(cabName, $"AGEBasic Event {eventId} requires a part name");
+            return new CabinetValidationException(cabName, $"AGEBasic Event {eventId} requires a part name");
 
         if (string.IsNullOrEmpty(program))
-            throw new CabinetValidationException(cabName, $"AGEBasic Event {eventId} doesn't have a program attached");
+            return new CabinetValidationException(cabName, $"AGEBasic Event {eventId} doesn't have a program attached");
 
-        if (controls != null)
+        if (control != null)
         {
-            foreach (var control in controls)
-            {
-                if (string.IsNullOrEmpty(control.mameControl))
-                    throw new CabinetValidationException(cabName, $"Event {eventId} one of the control isn't specified");
-            }
+            CabinetValidationException ex = control.IsValid(cabName);
+            if (ex != null)
+                return ex;
         }
+        return null;
     }
 }
 
@@ -138,6 +154,20 @@ public class ControlInformation
     [YamlMember(Alias = "libretro-id", ApplyNamingConventions = false)]
     public string mameControl;
     public int port = 0;
+    public string state = "pressed";
+    public static string[] validStates = { "pressed", "held", "released" };
+    public CabinetValidationException IsValid(string cabName)
+    {
+        if (string.IsNullOrEmpty(mameControl))
+            return new CabinetValidationException(cabName, $"Event cabinet {cabName} control libretro-id isn't specified");
+
+
+        if (!validStates.Contains(state))
+            return new CabinetValidationException(cabName, $"Event cabinet {cabName} control {mameControl} state {state} is invalid, only {string.Join(',', validStates)} are allowed");
+
+        return null;
+
+    }
 }
 
 /// Event execution
@@ -256,10 +286,36 @@ public class OnAlways : Event
 
 public class OnControlActive: Event
 {
+    //across all the object of the same class.
+    protected static Dictionary<string, int> previousValues = new Dictionary<string, int>();
+    string key;
     public OnControlActive(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic, 1)
     { }
 
+    private void RegisterTriggerStatus(int status)
+    {
+        RegisterTrigger(true);
+        previousValues[key] = status;
+    }
+
+    private int getPreviousValue()
+    {
+        if (!previousValues.ContainsKey(key))
+            return 0;
+        return previousValues[key];
+    }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+        
+        key = eventInformation.control.mameControl + "_" + eventInformation.control.port;
+
+        Reset();
+        status = Status.initialized;
+    }
     public override void EvaluateTrigger()
     {
         if (AGEBasic.ConfigCommands.ControlMap == null)
@@ -268,15 +324,29 @@ public class OnControlActive: Event
         bool ontime = base.IsTime();
         if (ontime)
         {
-            foreach (var control in eventInformation.controls)
-                if (AGEBasic.ConfigCommands.ControlMap.Active(control.mameControl, control.port) == 0)
-                { 
-                    RegisterTrigger(false);
-                    return;
-                }
-            RegisterTrigger(true);
+            int status = AGEBasic.ConfigCommands.ControlMap.Active(eventInformation.control.mameControl, eventInformation.control.port);
+            switch (eventInformation.control.state)
+            {
+                case "pressed":
+                    if (status == 1 && getPreviousValue() == 0)
+                        RegisterTriggerStatus(status);
+                    else
+                        RegisterTrigger(false);
+                    break;
+                case "released":
+                    if (status == 0 && getPreviousValue() == 1)
+                        RegisterTriggerStatus(status);
+                    else
+                        RegisterTrigger(false);
+                    break;
+                case "held":
+                    if (status == 1 && getPreviousValue() == 1)
+                        RegisterTriggerStatus(status);
+                    else
+                        RegisterTrigger(false);
+                    break;
+            }
         }
-         RegisterTrigger(false);
     }
 }
 
