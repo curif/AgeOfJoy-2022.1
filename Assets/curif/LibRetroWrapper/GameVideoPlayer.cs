@@ -182,7 +182,7 @@ public class GameVideoPlayer : MonoBehaviour
 
     void ErrorReceived(VideoPlayer vp, string message)
     {
-        ConfigManager.WriteConsoleError($"[videoPlayer] ERROR {videoPath} - {message}");
+        ConfigManager.WriteConsoleWarning($"[videoPlayer] ERROR {videoPath} - {message}");
         showCachedImage();
     }
 }

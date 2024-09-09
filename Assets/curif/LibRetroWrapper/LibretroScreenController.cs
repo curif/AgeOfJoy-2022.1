@@ -220,6 +220,7 @@ public class LibretroScreenController : MonoBehaviour
         }
 
         mainCoroutine = StartCoroutine(runBT());
+        initialized = true;
 
         return;
     }
