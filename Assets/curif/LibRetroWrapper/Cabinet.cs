@@ -813,15 +813,16 @@ public class Cabinet
     }
 
     //add the Touch component and the gameobject to collide
-    public Cabinet SetAudio(string partName, CabinetAudio audioInfo)
+    public Cabinet SetAudio(string partName, string cabPathBase, CabinetAudioPart audioInfo)
     {
-        SetAudio(PartsPosition(partName), audioInfo);
+        SetAudio(PartsPosition(partName), cabPathBase, audioInfo);
         return this;
     }
-    public Cabinet SetAudio(int partNum, CabinetAudio audioInfo)
+
+    public Cabinet SetAudio(int partNum, string cabPathBase, CabinetInformation.CabinetAudioPart audioInfo)
     {
         GameObject part = Parts(partNum);
-        CabinetPartAudioController.GetOrAdd(part, audioInfo);
+        CabinetPartAudioController.GetOrAdd(part, cabPathBase, audioInfo);
         return this;
     }
 

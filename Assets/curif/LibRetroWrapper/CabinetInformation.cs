@@ -366,7 +366,7 @@ public class CabinetInformation
         public Physical physical;
 
         // Add audio property
-        public CabinetAudio speaker;
+        public CabinetAudioPart speaker;
     }
 
     [Serializable]
@@ -473,7 +473,7 @@ public class CabinetInformation
 
     }
 
-    public class CabinetAudio
+    public class CabinetAudioPart
     {
         public string file;
         public float volume = 1.0f;

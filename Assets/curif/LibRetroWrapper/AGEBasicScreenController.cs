@@ -19,6 +19,8 @@ using UnityEngine.XR.Interaction.Toolkit.Inputs;
 using System.Linq;
 using LC = LibretroControlMapDictionnary;
 using CM = ControlMapPathDictionary;
+using UnityEngine.Audio;
+
 
 
 #if UNITY_EDITOR

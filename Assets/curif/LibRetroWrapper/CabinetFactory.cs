@@ -346,7 +346,7 @@ public static class CabinetFactory
                             cabinet.SetPhysics(partNum, p.physical);
 
                         if (p.speaker != null)
-                            cabinet.SetAudio(partNum, p.speaker);
+                            cabinet.SetAudio(partNum, cbinfo.pathBase, p.speaker);
                     }
                 }
                 catch (Exception e)
