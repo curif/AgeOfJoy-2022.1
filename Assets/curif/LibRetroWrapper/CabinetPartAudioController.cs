@@ -1,13 +1,16 @@
 ﻿using System.Collections;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Networking;
-using static CabinetInformation;
 
 public class CabinetPartAudioController : MonoBehaviour
 {
     private AudioSource audioSource;
-    public AudioMixerGroup attractModeGroup;
+    public AudioMixerGroup gameModeGroup;
+    public AudioMixer audioMixer;
+    public string filePath;
+    public string cabPathBase;
 
     private void Awake()
     {
@@ -16,59 +19,97 @@ public class CabinetPartAudioController : MonoBehaviour
 
         // If no AudioSource is found, add one
         if (audioSource == null)
-        {
             audioSource = gameObject.AddComponent<AudioSource>();
-        }
 
-        // Set the output audio mixer group
-        audioSource.outputAudioMixerGroup = attractModeGroup;
+
+    }
+
+    private void SetAudioMixer()
+    {
+        if (gameModeGroup != null)
+            return;
+
+        if (audioMixer == null)
+            audioMixer = Resources.Load<AudioMixer>("Mixers/SpatializerMixer");
+
+        if (audioMixer != null && gameModeGroup == null)
+        {
+            AudioMixerGroup[] matchingGroups = audioMixer.FindMatchingGroups("Game");
+            gameModeGroup = matchingGroups[0];
+            audioSource.outputAudioMixerGroup = gameModeGroup;
+        }
     }
 
     /// <summary>
     /// Configures the AudioSource based on the provided Part object's audio settings.
     /// </summary>
     /// <param name="part">The Part object containing audio settings from YAML.</param>
-    public static CabinetPartAudioController GetOrAdd(GameObject go, CabinetAudio audio)
+    public static CabinetPartAudioController GetOrAdd(GameObject go, string cabPathBase, CabinetInformation.CabinetAudioPart audio)
     {
         if (audio != null)
         {
             CabinetPartAudioController audioCtrl = go.GetComponent<CabinetPartAudioController>();
-            if (audioCtrl ==  null)
+            if (audioCtrl == null)
                 audioCtrl = go.AddComponent<CabinetPartAudioController>();
-            audioCtrl.AssignAudioClip(audio.file);
             audioCtrl.SetVolume(audio.volume);
             audioCtrl.SetLoop(audio.loop);
             audioCtrl.SetMinMaxDistance(audio.distance.min, audio.distance.max);
+            audioCtrl.SetAudioMixer();
+            audioCtrl.cabPathBase = cabPathBase.Replace("\\", "/");
+            audioCtrl.SetFilePath(audio.file);
             return audioCtrl;
         }
         return null;
     }
 
-    private IEnumerator LoadAudioClip(string filePath)
+    private void SetFilePath(string audioFile)
+    {
+        filePath = cabPathBase + "/" + audioFile;
+    }
+
+
+    private IEnumerator LoadAudioClipAndPlay(bool play)
     {
         if (System.IO.File.Exists(filePath))
         {
-            using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file://" + filePath, GetAudioType(filePath)))
+            SetAudioMixer();
+
+            using (UnityWebRequest www = UnityWebRequestMultimedia.GetAudioClip("file:///" + filePath, GetAudioType()))
             {
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.ConnectionError || www.result == UnityWebRequest.Result.ProtocolError)
                 {
-                    Debug.LogError($"Error loading audio clip: {www.error}");
+                    ConfigManager.WriteConsoleWarning($"Loading audio clip {filePath}: {www.error}");
                 }
                 else
                 {
                     audioSource.clip = DownloadHandlerAudioClip.GetContent(www);
+                    if (play)
+                        audioSource.Play();
+
+                    yield break;
                 }
             }
         }
         else
         {
-            Debug.LogError($"Audio file not found at path: {filePath}");
+            ConfigManager.WriteConsoleWarning($"Audio file not found at path: {filePath}");
         }
     }
 
-    private AudioType GetAudioType(string filePath)
+    public void AssignAudioClip(string audioFileName)
+    {
+        SetFilePath(audioFileName);
+        AssignAudioClip(false);
+    }
+
+    public void AssignAudioClip(bool play = true)
+    {
+        StartCoroutine(LoadAudioClipAndPlay(play));
+    }
+
+    private AudioType GetAudioType()
     {
         string extension = System.IO.Path.GetExtension(filePath).ToLower();
         switch (extension)
@@ -90,6 +131,10 @@ public class CabinetPartAudioController : MonoBehaviour
         if (audioSource.clip != null)
         {
             audioSource.Play();
+        }
+        else
+        {
+            AssignAudioClip();
         }
     }
 
@@ -125,8 +170,4 @@ public class CabinetPartAudioController : MonoBehaviour
         audioSource.maxDistance = maxDistance;
     }
 
-    public void AssignAudioClip(string filePath)
-    {
-        StartCoroutine(LoadAudioClip(filePath));
-    }
 }
