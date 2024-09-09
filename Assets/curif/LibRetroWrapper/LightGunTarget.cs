@@ -83,7 +83,6 @@ public class LightGunInformation
 // https://github.com/libretro/mame2003-plus-libretro/blob/master/src/mame2003/core_options.c#L66
 // This component could be attached to a cabinet and be filled with parts that can be shooted.
 // Or in a CRT (was designed originaly to be attached to a CRT). In this case it could have parts to shoot too.
-[RequireComponent(typeof(LineRenderer))]
 public class LightGunTarget : MonoBehaviour
 {
 

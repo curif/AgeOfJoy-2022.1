@@ -211,17 +211,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spaceGun: {fileID: 0}
   invertForward: 0
-  HitX: 0
-  HitY: 0
   showHitPosition: 0
   InvertX: 1
   InvertY: 1
-  scaleFactorX: 0.01
-  scaleFactorY: 0.01
-  borderSizeX: 1.5
-  borderSizeY: 1
   adjustSightVertical: 0
   adjustSightHorizontal: 0
+  parts: []
 --- !u!114 &8972917328849416490
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,6 +241,7 @@ MonoBehaviour:
   Player: {fileID: 0}
   PlayerOrigin: {fileID: 0}
   PlayerControllerGameObject: {fileID: 0}
+  Status: 0
   nameToExecute: 
   path: 
 --- !u!114 &3707607308854403927
@@ -263,13 +259,14 @@ MonoBehaviour:
   AGEBasic: {fileID: 0}
   pathBase: 
   AGEInfo:
-    active: 0
     debug: 0
+    system_skin: c64
+    variables: []
+    afterStart: 
     afterLoad: 
     afterInsertCoin: 
     afterLeave: 
-    afterStart: 
-    variables: []
+    events: []
 --- !u!328 &8125360133984494729
 VideoPlayer:
   m_ObjectHideFlags: 0
@@ -321,12 +318,13 @@ MonoBehaviour:
   PathBase: 
   SimulateExitGame: 0
   ageBasicInformation:
-    active: 0
     debug: 0
+    system_skin: c64
+    variables: []
+    afterStart: 
     afterLoad: 
     afterInsertCoin: 
     afterLeave: 
-    afterStart: 
-    variables: []
+    events: []
   backgroundSoundController: {fileID: 0}
   SecondsToWaitToExit: 2
