@@ -103,8 +103,10 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom", 
-                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start", "on-touch-end", "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit"};
+    static string[] validEvents = { "on-timer", "on-always",  "on-insert-coin", "on-custom", 
+                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start", "on-touch-end",
+                                    "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit",
+                                    "on-control-active-pressed", "on-control-active-held", "on-control-active-released"};
 
     static string[] requirePartName = { "on-collision-start", "on-collision-stay", "on-collision-end", 
                                         "on-touch-start", "on-grab-start", 
@@ -156,16 +158,10 @@ public class ControlInformation
     [YamlMember(Alias = "libretro-id", ApplyNamingConventions = false)]
     public string mameControl;
     public int port = 0;
-    public string state = "pressed";
-    public static string[] validStates = { "pressed", "held", "released" };
     public CabinetValidationException IsValid(string cabName)
     {
         if (string.IsNullOrEmpty(mameControl))
             return new CabinetValidationException(cabName, $"Event cabinet {cabName} control libretro-id isn't specified");
-
-
-        if (!validStates.Contains(state))
-            return new CabinetValidationException(cabName, $"Event cabinet {cabName} control {mameControl} state {state} is invalid, only {string.Join(',', validStates)} are allowed");
 
         return null;
 
@@ -285,40 +281,18 @@ public class OnAlways : Event
         RegisterTrigger(true);
     }
 }
-
-public class OnControlActive: Event
+// ------------------------------- control-active ------------------------------
+public class OnControlActiveBase: Event
 {
-    //across all the object of the same class.
-    protected static Dictionary<string, int> previousValues = new Dictionary<string, int>();
-    string key;
-    public OnControlActive(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+    protected int previousValue, actualValue;
+    
+    public OnControlActiveBase(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic, 1)
     { }
 
-    private void RegisterTriggerStatus(int status)
-    {
-        RegisterTrigger(true);
-        previousValues[key] = status;
-    }
+    protected virtual bool evaluate() { return false; }
 
-    private int getPreviousValue()
-    {
-        if (!previousValues.ContainsKey(key))
-            return 0;
-        return previousValues[key];
-    }
-
-    public override void Init()
-    {
-        if (status == Status.initialized)
-            return;
-        
-        key = eventInformation.control.mameControl + "_" + eventInformation.control.port;
-
-        Reset();
-        status = Status.initialized;
-    }
-    public override void EvaluateTrigger()
+    public sealed override void EvaluateTrigger()
     {
         if (AGEBasic.ConfigCommands.ControlMap == null)
             RegisterTrigger(false);
@@ -326,32 +300,43 @@ public class OnControlActive: Event
         bool ontime = base.IsTime();
         if (ontime)
         {
-            int status = AGEBasic.ConfigCommands.ControlMap.Active(eventInformation.control.mameControl, eventInformation.control.port);
-            switch (eventInformation.control.state)
-            {
-                case "pressed":
-                    if (status == 1 && getPreviousValue() == 0)
-                        RegisterTriggerStatus(status);
-                    else
-                        RegisterTrigger(false);
-                    break;
-                case "released":
-                    if (status == 0 && getPreviousValue() == 1)
-                        RegisterTriggerStatus(status);
-                    else
-                        RegisterTrigger(false);
-                    break;
-                case "held":
-                    if (status == 1 && getPreviousValue() == 1)
-                        RegisterTriggerStatus(status);
-                    else
-                        RegisterTrigger(false);
-                    break;
-            }
+            actualValue = AGEBasic.ConfigCommands.ControlMap.Active(eventInformation.control.mameControl, eventInformation.control.port);
+            if (evaluate())
+                RegisterTrigger(true);
+            previousValue = actualValue;
         }
     }
 }
 
+public class OnControlActivePressed : OnControlActiveBase
+{
+    public OnControlActivePressed(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    protected override bool evaluate() { return actualValue == 1 && previousValue == 0; }
+
+}
+
+public class OnControlActiveReleased : OnControlActiveBase
+{
+    public OnControlActiveReleased(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    protected override bool evaluate() { return actualValue == 0 && previousValue == 1; }
+
+}
+
+public class OnControlActiveHeld : OnControlActiveBase
+{
+    public OnControlActiveHeld(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+    protected override bool evaluate() { return actualValue == 1 && previousValue == 1; }
+}
+
+// ------------------------ coin ------------------------------
 public class OnInsertCoin : Event
 {
     public OnInsertCoin(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
@@ -394,10 +379,10 @@ public class OnCustom : Event
 
 }
 
-
+// -------------------- lightguns ------------------------
 public class OnLightGunBase : Event
 {
-    bool previousState = false;
+    protected bool previousState = false;
     public OnLightGunBase(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
@@ -417,11 +402,8 @@ public class OnLightGunBase : Event
 
 }
 
-// -------------------- lightguns ------------------------
-
 public class OnLightGunStart : OnLightGunBase
 {
-    bool previousState = false;
     public OnLightGunStart(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
@@ -437,7 +419,6 @@ public class OnLightGunStart : OnLightGunBase
 
 public class OnLightGunStay : OnLightGunBase
 {
-    bool previousState = false;
     public OnLightGunStay(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
@@ -448,13 +429,11 @@ public class OnLightGunStay : OnLightGunBase
         if (state && previousState)
             RegisterTrigger(true);
         previousState = state;
-
     }
 }
 
 public class OnLightGunExit : OnLightGunBase
 {
-    bool previousState = false;
     public OnLightGunExit(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
@@ -722,8 +701,12 @@ public static class EventsFactory
                 return new OnAlways(eventInformation, vars, agebasic);
             case "on-timer":
                 return new OnTimer(eventInformation, vars, agebasic);
-            case "on-control-active":
-                return new OnControlActive(eventInformation, vars, agebasic);
+            case "on-control-active-pressed":
+                return new OnControlActivePressed(eventInformation, vars, agebasic);
+            case "on-control-active-held":
+                return new OnControlActiveHeld(eventInformation, vars, agebasic);
+            case "on-control-active-released":
+                return new OnControlActiveReleased(eventInformation, vars, agebasic);
             case "on-insert-coin":
                 return new OnInsertCoin(eventInformation, vars, agebasic);
             case "on-custom":
