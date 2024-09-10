@@ -7,6 +7,7 @@ using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using UnityEditor;
 using System.Linq;
 using YamlDotNet.Core;
+using static CabinetInformation;
 
 
 [Serializable]
@@ -102,12 +103,13 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom", "on-lightgun", 
-                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start",   "on-touch-end", "on-grab-end"};
+    static string[] validEvents = { "on-timer", "on-always", "on-control-active", "on-insert-coin", "on-custom", 
+                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start", "on-touch-end", "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit"};
 
     static string[] requirePartName = { "on-collision-start", "on-collision-stay", "on-collision-end", 
                                         "on-touch-start", "on-grab-start", 
-                                        "on-touch-end", "on-grab-end" };
+                                        "on-touch-end", "on-grab-end" ,
+                                        "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit"};
     public string name = "";
     public string program;
     public double delay = 0;
@@ -393,22 +395,80 @@ public class OnCustom : Event
 }
 
 
-public class OnLightGun : Event
+public class OnLightGunBase : Event
 {
-    public OnLightGun(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+    bool previousState = false;
+    public OnLightGunBase(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    protected bool actualState()
+    {
+        if (AGEBasic.ConfigCommands.lightGunTarget != null)
+        {
+            GameObject go = AGEBasic.ConfigCommands.lightGunTarget.GetLastGameObjectHit();
+            if (go != null)
+            {
+                return go.name == eventInformation.part;
+            }
+        }
+        return false;
+    }
+
+}
+
+// -------------------- lightguns ------------------------
+
+public class OnLightGunStart : OnLightGunBase
+{
+    bool previousState = false;
+    public OnLightGunStart(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
 
     public override void EvaluateTrigger()
     {
-        if (AGEBasic.ConfigCommands.lightGunTarget != null)
-        {
-            RegisterTrigger(AGEBasic.ConfigCommands.lightGunTarget.GetLastGameObjectHit() != null);
-        }
+        bool state = actualState();
+        if (state && !previousState)
+            RegisterTrigger(true);
+        previousState = state;
     }
 }
 
+public class OnLightGunStay : OnLightGunBase
+{
+    bool previousState = false;
+    public OnLightGunStay(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
 
+    public override void EvaluateTrigger()
+    {
+        bool state = actualState();
+        if (state && previousState)
+            RegisterTrigger(true);
+        previousState = state;
+
+    }
+}
+
+public class OnLightGunExit : OnLightGunBase
+{
+    bool previousState = false;
+    public OnLightGunExit(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void EvaluateTrigger()
+    {
+        bool state = actualState();
+        if (!state && previousState)
+            RegisterTrigger(true);
+        previousState = state;
+    }
+}
+
+// -------------------- collisions ------------------------
 public class OnCollisionBase: Event
 {
     protected GameObject partColliding;
@@ -668,8 +728,12 @@ public static class EventsFactory
                 return new OnInsertCoin(eventInformation, vars, agebasic);
             case "on-custom":
                 return new OnCustom(eventInformation, vars, agebasic);
-            case "on-lightgun":
-                return new OnLightGun(eventInformation, vars, agebasic);
+            case "on-lightgun-start":
+                return new OnLightGunStart(eventInformation, vars, agebasic);
+            case "on-lightgun-stay":
+                return new OnLightGunStay(eventInformation, vars, agebasic);
+            case "on-lightgun-exit":
+                return new OnLightGunExit(eventInformation, vars, agebasic);
             case "on-collision-start":
                 return new OnCollisionStart(eventInformation, vars, agebasic);
             case "on-collision-stay":
