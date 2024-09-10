@@ -25,6 +25,11 @@ public class InteractablePart : MonoBehaviour
     {
         base.gameObject.layer = LayerMask.NameToLayer("InteractablePart");
 
+        //remove the actual collider. 
+        Collider col= GetComponent<Collider>();
+        if (col != null && !(col is BoxCollider || col is SphereCollider || col is CapsuleCollider))
+            Destroy(col);
+        
         switch (physicalInfo.shape)
         {
             case "box":

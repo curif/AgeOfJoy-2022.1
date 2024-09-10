@@ -594,14 +594,24 @@ public class Cabinet
         r.material = m;
     }
 
+
+    public static Material GetMaterialPart(GameObject go)
+    {
+        if (go == null) return null;
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null)  return null;
+        return r.material;
+    }
+
     public static void SetColor(GameObject go, Color color)
     {
-        Renderer r = go.GetComponent<Renderer>();
-        if (r == null)
-            return;
-
-        Material mat = r.material;
-        if (mat != null)
+        Material mat = GetMaterialPart(go);
+        if (mat == null)
+            return ;
+        
+        if (mat.name.Contains("Base_VertexColor"))
+            PaintVertexColorMaterial(go, color);
+        else
             mat.color = color;
         return;
     }
@@ -610,6 +620,11 @@ public class Cabinet
     public static void SetColorVertex(GameObject go, Color color)
     {
         SetMaterialFromMaterial(go, CabinetMaterials.VertexColor);
+        PaintVertexColorMaterial(go, color);
+    }
+
+    private static void PaintVertexColorMaterial(GameObject go, Color color)
+    {
 
         // Retrieve all MeshFilter components in the GameObject and its children
         MeshFilter[] meshFilters = go.GetComponentsInChildren<MeshFilter>();
@@ -626,20 +641,18 @@ public class Cabinet
                     System.Array.Fill(colors, color);
                     mesh.colors = colors; // Apply the colors to the mesh
                 }
-                
+
             }
         }
     }
 
     public static void SetEmissionColor(GameObject go, Color emissionColor)
     {
-        Renderer r = go.GetComponent<Renderer>();
-        if (r == null)
-            return;
 
+        if (go == null) return;
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null) return;
         Material m = r.material;
-        if (m == null)
-            return;
 
         // Set emission color
         m.SetColor("_EmissionColor", emissionColor);
@@ -653,13 +666,11 @@ public class Cabinet
 
     public static void SetEmissionEnabled(GameObject go, bool enabled)
     {
-        Renderer r = go.GetComponent<Renderer>();
-        if (r == null)
-            return;
 
+        if (go == null) return;
+        Renderer r = go.GetComponent<Renderer>();
+        if (r == null) return;
         Material m = r.material;
-        if (m == null)
-            return;
 
         // Set emission enabled
         m.EnableKeyword("_EMISSION"); // Enable emission if true
@@ -678,11 +689,7 @@ public class Cabinet
 
     public static int GetTransparency(GameObject go)
     {
-        Renderer r = go.GetComponent<Renderer>();
-        if (r == null)
-            return 0; // Default to 0% transparency if no Renderer found
-
-        Material mat = r.material;
+        Material mat = GetMaterialPart(go);
         if (mat == null)
             return 0; // Default to 0% transparency if no Material found
 
@@ -691,11 +698,7 @@ public class Cabinet
 
     public static void SetTransparency(GameObject go, ref int transpPercent)
     {
-        Renderer r = go.GetComponent<Renderer>();
-        if (r == null)
-            return;
-
-        Material mat = r.material;
+        Material mat = GetMaterialPart(go);
         if (mat == null)
             return;
 
@@ -734,13 +737,12 @@ public class Cabinet
     {
         if (!PartsExist(part))
             return this;
-
-        Renderer r = Parts(part).GetComponent<Renderer>();
-        if (r != null)
+        Material mat = GetMaterialPart(Parts(part));
+        if (mat != null)
         {
-            r.material.SetColor("_EmissionColor", color);
+            mat.SetColor("_EmissionColor", color);
             float oldToNewIntensity = (intensity + 5) / 10;
-            r.material.SetFloat("_EmissionIntensity", oldToNewIntensity);
+            mat.SetFloat("_EmissionIntensity", oldToNewIntensity);
         }
 
         return this;

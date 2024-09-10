@@ -162,6 +162,13 @@ public static class CabinetFactory
 
             default:
                 {
+                    /* don't change material if the gameobject has one previously assigned #601
+                    didn't work. needs more analysis.
+                    GameObject go = cabinet.Parts(p.name);
+                    if (Cabinet.GetMaterialPart(go) != null)
+                        break;
+                    */
+
                     if (p.material == null &&
                         p.art == null &&
                         p.color == null &&
@@ -170,8 +177,8 @@ public static class CabinetFactory
                         cabinet.SetMaterialFrom(p.name, CabinetMaterials.Black);
                     else
                     {
-
                         int pos = cabinet.PartsPosition(p.name); //performance
+
                         ConfigManager.WriteConsole($"[CabinetFactory.skinCabinetPart] #{pos} {p.name}: type: {p.type} material: {p.material} color: {p.color} transp:{p.transparency} emission: {p.emission}");
 
                         if (p.material != null)
@@ -180,11 +187,11 @@ public static class CabinetFactory
                         if (p.art != null)
                         {
                             cabinet.PartNeedsAMaterialBase(pos)
-                                   .SetTextureTo(pos, cbinfo.getPath(p.art.file), null, invertX:                                p.art.invertx, invertY: p.art.inverty);
+                                   .SetTextureTo(pos, cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
                         }
 
                         if (p.color != null)
-                            cabinet.SetColorPart(pos, p.color.getColor());
+                            cabinet.PartNeedsAMaterialBase(pos).SetColorPart(pos, p.color.getColor());
 
                         if (p.transparency != 0)
                         {

@@ -171,7 +171,7 @@ public class LightGunTarget : MonoBehaviour
         this.player = player;
 
         layerMaskCRT = LayerMask.GetMask("CRT");
-        layerMaskParts = LayerMask.GetMask("interactablePart");
+        layerMaskParts = LayerMask.GetMask("InteractablePart");
         texture = null;
 
         if (lightGunInformation != null)
