@@ -3551,6 +3551,100 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 46535477069116922, guid: 3e223377d68ba2bc588efc6f28e4c9b0, type: 3}
   m_PrefabInstance: {fileID: 114150559}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &139949385
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 139949387}
+  - component: {fileID: 139949386}
+  m_Layer: 0
+  m_Name: VendLight
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!108 &139949386
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 139949385}
+  m_Enabled: 1
+  serializedVersion: 10
+  m_Type: 2
+  m_Shape: 0
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 1
+  m_Range: 0.82
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize: 10
+  m_Shadows:
+    m_Type: 1
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 2
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+--- !u!4 &139949387
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 139949385}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -5.7313004, y: 0.764491, z: -7.10358}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1281671081}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &140535415
 GameObject:
   m_ObjectHideFlags: 0
@@ -22145,6 +22239,7 @@ Transform:
   - {fileID: 589514505}
   - {fileID: 459072616}
   - {fileID: 2029765662}
+  - {fileID: 139949387}
   m_Father: {fileID: 1862072339}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1282868784
@@ -23855,9 +23950,11 @@ LightProbeGroup:
   - {x: 2.2153237, y: 0.11913961, z: -0.14907849}
   - {x: 2.2153237, y: 0.11913961, z: 0.83350766}
   - {x: 0.8953364, y: 0.11913961, z: -1.1574651}
-  - {x: -0.47923112, y: 0.11913961, z: -3.2551575}
+  - {x: -0.05062604, y: -0.7486988, z: -3.8790045}
   - {x: -0.95679784, y: 0.11913961, z: 0.42223442}
   - {x: -0.7867291, y: 0.11913961, z: -1.2324303}
+  - {x: -0.115899324, y: 0.11913961, z: -3.173966}
+  - {x: -0.05062604, y: -0.09432238, z: -3.8790045}
   m_Dering: 1
 --- !u!4 &1572059808
 Transform:
@@ -27892,23 +27989,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1714072618}
-    MaxTimeSpentThere: 15
-    MinTimeSpentThere: 5
+    MaxTimeSpentThere: 19
+    MinTimeSpentThere: 19
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
-    MaxTimeSpentThere: 15
-    MinTimeSpentThere: 5
-    MinimalDistanceToReachObject: 0.5
+    MaxTimeSpentThere: 19
+    MinTimeSpentThere: 19
+    MinimalDistanceToReachObject: 19
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1209770076}
-    MaxTimeSpentThere: 15
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -27918,8 +28015,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 20
+  MaxTimeSpentGaming: 60
+  MinTimeSpentGaming: 35
   AvoidPlayer: 1
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
