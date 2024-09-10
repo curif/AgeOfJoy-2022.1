@@ -137,11 +137,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 117901626031786245, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: maxTimeBetweenSounds
-      value: 70
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 117901626031786245, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: minTimeBetweenSounds
-      value: 60
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 117901626031786245, guid: 5b4fd41229c95bb4a9a6c34387d4302e, type: 3}
       propertyPath: referenceObjects.Array.size
@@ -26411,8 +26411,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 30
-  MinTimeSpentGaming: 15
+  MaxTimeSpentGaming: 40
+  MinTimeSpentGaming: 24
   AvoidPlayer: 0
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0
@@ -29225,14 +29225,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Destinations:
   - Place: {fileID: 1714072618}
-    MaxTimeSpentThere: 10
+    MaxTimeSpentThere: 5
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   - Place: {fileID: 1693930864}
-    MaxTimeSpentThere: 10
+    MaxTimeSpentThere: 5
     MinTimeSpentThere: 5
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
@@ -33698,6 +33698,78 @@ Light:
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!1 &1673872725
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1673872728}
+  - component: {fileID: 1673872727}
+  - component: {fileID: 1673872726}
+  m_Layer: 0
+  m_Name: GateControllerUnloader
+  m_TagString: door
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!65 &1673872726
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673872725}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.1816194, y: 1.7841265, z: 7.577424}
+  m_Center: {x: -0.79385674, y: -0.15865791, z: 0.14393425}
+--- !u!114 &1673872727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673872725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 348d1dab6d221167b92a2d61dc443658, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IdleTimeCheck: 0.5
+  ScenesToLoad: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 6f951ed3dea2d3fb68fcde79ca346941, type: 3}
+    sceneAssetGuidHex: 6f951ed3dea2d3fb68fcde79ca346941
+  SceneBlockers: []
+--- !u!4 &1673872728
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1673872725}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.3698624, z: -0, w: 0.92908657}
+  m_LocalPosition: {x: -17, y: 0.718, z: 24.79}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 43.414, z: 0}
 --- !u!1001 &1683002186
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -47038,3 +47110,4 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1862072339}
+  - {fileID: 1673872728}
