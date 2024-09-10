@@ -23954,7 +23954,6 @@ LightProbeGroup:
   - {x: -0.95679784, y: 0.11913961, z: 0.42223442}
   - {x: -0.7867291, y: 0.11913961, z: -1.2324303}
   - {x: -0.115899324, y: 0.11913961, z: -3.173966}
-  - {x: -0.05062604, y: 0.37982827, z: -3.8790045}
   - {x: -0.05062604, y: -0.09432238, z: -3.8790045}
   m_Dering: 1
 --- !u!4 &1572059808
@@ -27998,15 +27997,15 @@ MonoBehaviour:
     Type: 1
   - Place: {fileID: 1693930864}
     MaxTimeSpentThere: 19
-    MinTimeSpentThere: 5
+    MinTimeSpentThere: 19
     MinimalDistanceToReachObject: 19
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
     Type: 1
   DefaultDestination:
     Place: {fileID: 1209770076}
-    MaxTimeSpentThere: 15
-    MinTimeSpentThere: 10
+    MaxTimeSpentThere: 10
+    MinTimeSpentThere: 15
     MinimalDistanceToReachObject: 0.5
     ScenePosition: {fileID: 0}
     MaxAllowedSpace: 
@@ -28016,8 +28015,8 @@ MonoBehaviour:
   AnimationControlled: 0
   PlayerPositions: {fileID: 68383148}
   MinimalDistanceToReachArcade: 0.5
-  MaxTimeSpentGaming: 20
-  MinTimeSpentGaming: 20
+  MaxTimeSpentGaming: 60
+  MinTimeSpentGaming: 35
   AvoidPlayer: 1
   UseRayCastToAvoidPlayer: 0
   collisionWithPlayer: 0

@@ -9,10 +9,12 @@ using System;
 using UnityEngine;
 using UnityEngine.AI;
 using System.Linq;
+using Debug = UnityEngine.Debug;
 
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 using CleverCrow.Fluid.BTs.Tasks.Actions;
+using System.Diagnostics;
 
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Rigidbody))]
@@ -439,6 +441,13 @@ public class ArcadeRoomBehavior : MonoBehaviour
                 animator.SetBool("IsWalking", false);
                 animator.SetBool("Idle", false);
                 animator.SetBool(animatorTriggers[(int)destination.Type], true);
+
+            // geometrizer: Set the "Random" parameter to a random float value between 0 and 1
+            animator.SetFloat("Random", UnityEngine.Random.Range(0f, 1f));
+
+            // geometrizer: Output the current value of the "Random" parameter to the console
+            UnityEngine.Debug.Log("Random value: " + animator.GetFloat("Random"));
+
             Debug.Log($"[runDestinationAnimation] on {name}");
                 Debug.Log($"Trigger set: {animatorTriggers[(int)destination.Type]}, Destination Type: {destination.Type}");
                 //geometrizer: This is where we start Buy/Play anims, need to shut down walk here
