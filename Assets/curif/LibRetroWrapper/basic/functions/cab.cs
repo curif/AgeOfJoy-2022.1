@@ -180,7 +180,6 @@ class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
         string coord = vals[1].GetString().ToUpper();
         Vector3 currentPosition = child.localPosition; // Use localPosition
 
-
         switch (coord)
         {
             case "X":
@@ -378,8 +377,64 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
             default:
                 throw new Exception("cabPartsSetRotation: axis should be X, Y, or Z");
         }
-
         child.localEulerAngles = newRotation;
+
+        return BasicValue.True;
+    }
+}
+
+class CommandFunctionCABPARTSROTATE : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSROTATE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSROTATE";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 3); // Assuming the syntax is like: partNum, axis(X/Y/Z), angle
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+        {
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+        }
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
+        FunctionHelper.ExpectedNumber(vals[2], " - angle");
+
+        Transform child;
+        if (vals[0].IsString())
+            child = config.Cabinet.PartsTransform(vals[0].GetString());
+        else
+            child = config.Cabinet.PartsTransform(vals[0].GetInt());
+
+        string axis = vals[1].GetString().ToUpper();
+        float angle = (float)vals[2].GetNumber();
+        // Validate rotation value to be within 0 to 360 degrees
+        if (angle < -360 || angle > 360)
+            throw new Exception("Rotation angle must be between -360 and 360 degrees.");
+
+        Quaternion newRotation;
+        switch (axis)
+        {
+            case "X":
+                newRotation = Quaternion.Euler(angle, 0, 0);
+                break;
+            case "Y":
+                newRotation = Quaternion.Euler(0, angle, 0);
+                break;
+            case "Z":
+                newRotation = Quaternion.Euler(0, 0, angle);
+                break;
+            default:
+                throw new Exception("cabPartsSetGlobalRotation: axis should be X, Y, or Z");
+        }
+        child.localRotation *= newRotation;
 
         return BasicValue.True;
     }
