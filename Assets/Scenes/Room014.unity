@@ -20436,6 +20436,7 @@ GameObject:
   - component: {fileID: 1377166678}
   - component: {fileID: 1377166675}
   - component: {fileID: 1377166674}
+  - component: {fileID: 1377166680}
   m_Layer: 9
   m_Name: PlayerMarkPosition (7) Anchor
   m_TagString: Untagged
@@ -20452,7 +20453,7 @@ Transform:
   m_GameObject: {fileID: 1377166672}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.6958226, z: -0, w: -0.7182137}
-  m_LocalPosition: {x: 2.079999, y: -0.13109815, z: 0.81100124}
+  m_LocalPosition: {x: 2.051, y: -0.13109815, z: 0.798}
   m_LocalScale: {x: 0.050000016, y: 1, z: 0.050000016}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -20642,6 +20643,20 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1377166672}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &1377166680
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1377166672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29b2d97b158f49641b1ffa0bd1bc1d5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  arrowLength: 0.6
+  arrowColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &1377923296
 GameObject:
   m_ObjectHideFlags: 0
@@ -27283,6 +27298,7 @@ GameObject:
   - component: {fileID: 1901165417}
   - component: {fileID: 1901165420}
   - component: {fileID: 1901165419}
+  - component: {fileID: 1901165421}
   m_Layer: 7
   m_Name: PlayerMarkPosition (7)
   m_TagString: Untagged
@@ -27299,7 +27315,7 @@ Transform:
   m_GameObject: {fileID: 1901165415}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0.69582266, z: -0, w: -0.7182137}
-  m_LocalPosition: {x: -3.3806589, y: -0.658, z: -3.3265295}
+  m_LocalPosition: {x: -3.627, y: -0.658, z: -3.096}
   m_LocalScale: {x: 0.07469329, y: 0.025362205, z: 0.07699792}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -27396,6 +27412,20 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4.574332, y: 38.32418, z: 3.2777395}
   m_Center: {x: -0.12975806, y: 18.662094, z: 1.1388651}
+--- !u!114 &1901165421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1901165415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29b2d97b158f49641b1ffa0bd1bc1d5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  arrowLength: 0.6
+  arrowColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1001 &1906028788
 PrefabInstance:
   m_ObjectHideFlags: 0
