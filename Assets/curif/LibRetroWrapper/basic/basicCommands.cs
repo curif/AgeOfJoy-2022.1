@@ -45,6 +45,7 @@ public static class Commands
         functions["TAN"] = typeof(CommandFunctionTAN);
         functions["MOD"] = typeof(CommandFunctionMOD);
         functions["INT"] = typeof(CommandFunctionINT);
+        functions["VAL"] = typeof(CommandFunctionVAL);
         functions["NOT"] = typeof(CommandFunctionNOT);
         functions["AND"] = typeof(CommandFunctionAND);
         functions["OR"] = typeof(CommandFunctionOR);

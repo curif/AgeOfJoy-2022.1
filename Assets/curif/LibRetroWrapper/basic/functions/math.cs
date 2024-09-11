@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Windows;
 
 class CommandFunctionABS : CommandFunctionSingleExpressionBase
 {
@@ -177,6 +178,29 @@ class CommandFunctionINT : CommandFunctionSingleExpressionBase
         return new BasicValue((double)retInt);
     }
 }
+
+class CommandFunctionVAL : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionVAL(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "VAL";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        BasicValue val = expr.Execute(vars);
+
+        if (val.IsNumber())
+            return new BasicValue(val);
+
+        if (double.TryParse(val.GetValueAsString(), out double result))
+            return new BasicValue(result);
+
+        throw new Exception("string value can't be coarsed to a number");
+    }
+}
+
 class CommandFunctionNOT : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionNOT(ConfigurationCommands config) : base(config)
