@@ -134,6 +134,7 @@ public static class Commands
         functions["CABPARTSSETGLOBALCOORDINATE"] = typeof(CommandFunctionCABPARTSSETGLOBALCOORDINATE);
 
         functions["CABPARTSSETROTATION"] = typeof(CommandFunctionCABPARTSSETROTATION);
+        functions["CABPARTSROTATE"] = typeof(CommandFunctionCABPARTSROTATE);
         functions["CABPARTSSETGLOBALROTATION"] = typeof(CommandFunctionCABPARTSSETGLOBALROTATION);
 
         functions["CABPARTSGETROTATION"] = typeof(CommandFunctionCABPARTSGETROTATION);

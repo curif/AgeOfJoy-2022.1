@@ -156,8 +156,7 @@ public static class CabinetFactory
 
                     //after
                     if (p.color != null && p.marquee.illuminationType != "none")
-                        cabinet.SetMarqueeEmissionColor(p.name, p.color.getColorNoIntensity(), p.color.intensity,
-                                                        p.marquee.color.getColorNoIntensity());
+                        cabinet.SetMarqueeEmissionColor(p.name, p.color, p.marquee.color);
                 }
                 break;
 
