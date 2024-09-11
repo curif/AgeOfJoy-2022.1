@@ -733,7 +733,7 @@ public class Cabinet
     {
         return SetTextureTo(part, texturePath, marqueeMaterial, invertX: invertX, invertY: invertY);
     }
-    public Cabinet SetMarqueeEmissionColor(string part, Color emissionColor, float emissionIntensity, Color backLightColor)
+    public Cabinet SetMarqueeEmissionColor(string part, RGBColor emissionColor, RGBColor backLightColor)
     {
         if (!PartsExist(part))
             return this;
@@ -741,11 +741,15 @@ public class Cabinet
         Material mat = GetMaterialPart(Parts(part));
         if (mat != null)
         {
-            //lamp color and intensity
-            mat.SetColor("_EmissionColor", emissionColor); 
-            float oldToNewIntensity = (emissionIntensity + 5) / 10;
-            mat.SetFloat("_EmissionIntensity", oldToNewIntensity);
-            mat.SetColor("_BacklightColor", backLightColor);
+            if (emissionColor != null)
+            {
+                //lamp color and intensity
+                mat.SetColor("_EmissionColor", emissionColor.getColorNoIntensity());
+                float oldToNewIntensity = (emissionColor.intensity + 5) / 10;
+                mat.SetFloat("_EmissionIntensity", oldToNewIntensity);
+            }
+            if (backLightColor != null)
+                mat.SetColor("_BacklightColor", backLightColor.getColorNoIntensity());
         }
 
         return this;
