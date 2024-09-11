@@ -341,6 +341,7 @@ public class CabinetInformation
     {
         [YamlMember(Alias = "illumination-type", ApplyNamingConventions = false)]
         public string illuminationType = "one-lamp";
+        public RGBColor color;
     }
 
     public class Emission
