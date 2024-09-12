@@ -161,6 +161,10 @@ public static class Commands
 
         //debug
         functions["DEBUGMODE"] = typeof(CommandFunctionDEBUGMODE);
+        functions["LOG"] = typeof(CommandFunctionLOG);
+        functions["LOGERROR"] = typeof(CommandFunctionLOGERROR);
+        functions["LOGWARNING"] = typeof(CommandFunctionLOGWARNING);
+        functions["ASSERT"] = typeof(CommandFunctionASSERT);
 
         //lights
         functions["GETLIGHTS"] = typeof(CommandFunctionGETLIGHTS);
