@@ -439,7 +439,7 @@ public static unsafe class LibretroMameCore
         //GameTexture.anisoLevel = 0;
     }
 
-    static void assignControls()
+    public static void AssignControls()
     {
         if (ControlMap == null)
         {
@@ -528,7 +528,7 @@ public static unsafe class LibretroMameCore
         ScreenName = screenName;
 
         //controls
-        assignControls();
+        AssignControls();
 
         bool loadSuccess = loadGame(gameFileName);
         if (!loadSuccess)

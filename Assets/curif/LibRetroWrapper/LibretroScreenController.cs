@@ -97,7 +97,7 @@ public class LibretroScreenController : MonoBehaviour
 
     [SerializeField]
     public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
-    
+
     [Header("Audio Settings")]
     public AudioMixerGroup audioMixerAttractMode;
     public AudioMixerGroup audioMixerGame;
@@ -138,6 +138,7 @@ public class LibretroScreenController : MonoBehaviour
 
     private Coroutine mainCoroutine;
     private bool initialized = false;
+    private bool gameRunning = false;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -291,7 +292,10 @@ public class LibretroScreenController : MonoBehaviour
               //.Condition("Player looking screen", () => isPlayerLookingAtScreen3()) if coinslot is present with coins is sufficient
               .Do("Start game", () =>
               {
-                  videoPlayer.Pause();
+                  if (isGameFilePresent())
+                  {
+                      videoPlayer.Pause();
+                  }
 
                   //start mame
                   ConfigManager.WriteConsole($"[LibretroScreenController] Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
@@ -363,11 +367,18 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       CoinSlot.clean();
                   }
-                  // start libretro
-                  if (!LibretroMameCore.Start(ScreenName, GameFile, PlayList))
+                  if (isGameFilePresent()) 
                   {
-                      CoinSlot.clean();
-                      return TaskStatus.Failure;
+                      // start libretro
+                      if (!LibretroMameCore.Start(ScreenName, GameFile, PlayList))
+                      {
+                          CoinSlot.clean();
+                          return TaskStatus.Failure;
+                      }
+                  } 
+                  else
+                  {
+                      LibretroMameCore.AssignControls();
                   }
 #else
                   LibretroMameCore.simulateInEditor(ScreenName, GameFile);
@@ -382,14 +393,20 @@ public class LibretroScreenController : MonoBehaviour
 
                   // start retro_run cycle
 #if !UNITY_EDITOR
-                  LibretroMameCore.StartRunThread();
+                  if (isGameFilePresent()) 
+                  {
+                      LibretroMameCore.StartRunThread();
+                  }
 #endif
 
-                  shader.Activate(LibretroMameCore.GameTexture);
-                  shader.Invert(GameInvertX, GameInvertY);
+                  if (isGameFilePresent())
+                  {
+                      shader.Activate(LibretroMameCore.GameTexture);
+                      shader.Invert(GameInvertX, GameInvertY);
 
-                  //audio mixer group
-                  audioSource.outputAudioMixerGroup = audioMixerGame;
+                      //audio mixer group
+                      audioSource.outputAudioMixerGroup = audioMixerGame;
+                  }
 
                   cabinet.PhyActivate();
 
@@ -397,12 +414,14 @@ public class LibretroScreenController : MonoBehaviour
                   if (ageBasicInformation.active != false)
                       cabinetAGEBasic.ExecInsertCoinBas();
 
+                  gameRunning = true;
+
                   return TaskStatus.Success;
               })
             .End()
 
             .Sequence("Game Started")
-              .Condition("Game is running?", () => LibretroMameCore.isRunning(ScreenName, GameFile))
+              .Condition("Game is running?", () => gameRunning)
               .RepeatUntilSuccess("Run until player exit")
                 .Sequence()
                   .Condition("user EXIT pressed?", () =>
@@ -424,9 +443,13 @@ public class LibretroScreenController : MonoBehaviour
                   .Condition("N secs pass with user EXIT pressed", () =>
                   {
                       if (timeToExit == DateTime.MinValue)
+                      {
                           timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExitGame);
+                      }
                       else if (DateTime.Now > timeToExit)
+                      {
                           return true;
+                      }
                       return false;
                   })
                 .End()
@@ -475,10 +498,17 @@ public class LibretroScreenController : MonoBehaviour
         .Build();
     }
 
+    bool isGameFilePresent()
+    {
+        return GameFile != null && GameFile.Length > 0;
+    }
+
     bool PlayerWantsToExit()
     {
         if (libretroControlMap.isActive(LC.MODIFIER) && libretroControlMap.isActive(LC.EXIT))
+        {
             return true;
+        }
 #if UNITY_EDITOR
         if (SimulateExitGame)
         {
@@ -492,13 +522,16 @@ public class LibretroScreenController : MonoBehaviour
     {
         cabinet.PhyDeactivate();
 
-        //audio mixer group
-        audioSource.outputAudioMixerGroup = audioMixerAttractMode;
+        if (isGameFilePresent())
+        {
+            //audio mixer group
+            audioSource.outputAudioMixerGroup = audioMixerAttractMode;
 
-        //to replace the shader texture ASAP:
-        videoPlayer.Play();
+            //to replace the shader texture ASAP:
+            videoPlayer.Play();
 
-        LibretroMameCore.End(ScreenName, GameFile);
+            LibretroMameCore.End(ScreenName, GameFile);
+        }
         timeToExit = DateTime.MinValue;
 
         PreparePlayerToPlayGame(false);
@@ -516,9 +549,11 @@ public class LibretroScreenController : MonoBehaviour
 
 
 #if UNITY_EDITOR
-            SimulateExitGame = false;
+        SimulateExitGame = false;
         ConfigManager.WriteConsole($"simulated player exit finished.");
 #endif
+
+        gameRunning = false;
     }
 
     void PreparePlayerToPlayGame(bool isPlaying)
@@ -613,13 +648,13 @@ public class LibretroScreenControllerEditor : Editor
         DrawDefaultInspector();
 
         LibretroScreenController myScript = (LibretroScreenController)target;
-        if(GUILayout.Button("InsertCoin"))
+        if (GUILayout.Button("InsertCoin"))
         {
-          myScript.InsertCoin();
+            myScript.InsertCoin();
         }
-        if(GUILayout.Button("Simulate Exit Game"))
+        if (GUILayout.Button("Simulate Exit Game"))
         {
-          myScript.ExitGame();
+            myScript.ExitGame();
         }
     }
 }
