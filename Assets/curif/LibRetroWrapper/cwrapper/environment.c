@@ -668,8 +668,8 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 		return true;
 
 	case RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE:
-		wrapper_environment_log(RETRO_LOG_INFO,
-			"[RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE]\n");
+		// wrapper_environment_log(RETRO_LOG_INFO,
+		// 	"[RETRO_ENVIRONMENT_GET_AUDIO_VIDEO_ENABLE]\n");
 		if (!data)
 			return false;
 		//* Bit 0 (value 1) : Enable Video
