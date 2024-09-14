@@ -112,38 +112,15 @@ class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Cabinet == null)
-        {
             throw new Exception("AGEBasic can't access the Cabinet data.");
-        }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y, Z");
 
-        Transform child;
         if (vals[0].IsString())
-            child = config.Cabinet.PartsTransform(vals[0].GetString());
+            return new BasicValue(config.Cabinet.GetPartController(vals[0].GetString()).GetCoordinate(vals[1].GetString().ToUpper()));
         else
-            child = config.Cabinet.PartsTransform(vals[0].GetInt());
-
-        string coord = vals[1].GetString().ToUpper();
-
-        float coordinateValue = 0f;
-        switch (coord)
-        {
-            case "X":
-                coordinateValue = child.localPosition.x;
-                break;
-            case "Y":
-                coordinateValue = child.localPosition.y;
-                break;
-            case "Z":
-                coordinateValue = child.localPosition.z;
-                break;
-            default:
-                throw new Exception("cabPartsGetCoordinate: coordinate should be X, Y or Z");
-        }
-
-        return new BasicValue(coordinateValue);
+            return new BasicValue(config.Cabinet.GetPartController(vals[0].GetInt()).GetCoordinate(vals[1].GetString().ToUpper()));
     }
 }
 
@@ -520,9 +497,9 @@ class CommandFunctionCABPARTSGETTRANSPARENCY : CommandFunctionSingleExpressionBa
         BasicValue val = expr.Execute(vars);
 
         if (val.IsString())
-            return new BasicValue(config.Cabinet.GetTransparencyPart(val.GetString()));
-
-        return new BasicValue(config.Cabinet.GetTransparencyPart(val.GetInt()));
+            return new BasicValue(config.Cabinet.GetPartController(val.GetString()).GetTransparency());
+        
+        return new BasicValue(config.Cabinet.GetPartController(val.GetInt()).GetTransparency());
 
     }
 }
@@ -551,12 +528,10 @@ class CommandFunctionCABPARTSSETTRANSPARENCY : CommandFunctionExpressionListBase
         int percentage = (int)Mathf.Clamp((int)vals[1].GetNumber(), 0, 100);
 
         if (vals[0].IsString())
-            config.Cabinet.SetTransparencyPart(vals[0].GetString(), percentage);
-        else
-            config.Cabinet.SetTransparencyPart(vals[0].GetInt(), percentage);
-
+            config.Cabinet.GetPartController(vals[0].GetString()).SetTransparency(ref percentage);
+        else 
+            config.Cabinet.GetPartController(vals[0].GetInt()).SetTransparency(ref percentage);
         return new BasicValue(1);
-
     }
 }
 
@@ -581,14 +556,12 @@ class CommandFunctionCABPARTSEMISSION : CommandFunctionExpressionListBase
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedNumber(vals[1], " - true/false");
 
-
         if (vals[0].IsString())
-            config.Cabinet.SetEmissionEnabledPart(vals[0].GetString(), vals[1].IsTrue());
+            config.Cabinet.GetPartController(vals[0].GetString()).SetEmissionEnabled(vals[1].IsTrue());
         else
-            config.Cabinet.SetEmissionEnabledPart(vals[0].GetInt(), vals[1].IsTrue());
-
+            config.Cabinet.GetPartController(vals[0].GetInt()).SetEmissionEnabled(vals[1].IsTrue());
+        
         return new BasicValue(1);
-
     }
 }
 
@@ -615,12 +588,11 @@ class CommandFunctionCABPARTSSETEMISSIONCOLOR : CommandFunctionExpressionListBas
         Color color = ColorConverter.ConvertToColor(vals[1], vals[2], vals[3]);
 
         if (vals[0].IsString())
-            config.Cabinet.SetEmissionColorPart(vals[0].GetString(), color);
+            config.Cabinet.GetPartController(vals[0].GetString()).SetEmissionColor(color);
         else
-            config.Cabinet.SetEmissionColorPart(vals[0].GetInt(), color);
-
+            config.Cabinet.GetPartController(vals[0].GetInt()).SetEmissionColor(color);
+       
         return new BasicValue(1);
-
     }
 }
 
@@ -650,9 +622,9 @@ class CommandFunctionCABPARTSSETCOLOR : CommandFunctionExpressionListBase
         Color color = ColorConverter.ConvertToColor(vals[1], vals[2], vals[3]);
 
         if (vals[0].IsString())
-            config.Cabinet.SetColorPart(vals[0].GetString(), color);
+            config.Cabinet.GetPartController(vals[0].GetString()).SetColor(color);
         else
-            config.Cabinet.SetColorPart(vals[0].GetInt(), color);
+            config.Cabinet.GetPartController(vals[0].GetInt()).SetColor(color);
 
         return new BasicValue(1);
 
