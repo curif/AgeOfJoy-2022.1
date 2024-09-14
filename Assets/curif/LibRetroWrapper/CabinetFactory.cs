@@ -119,16 +119,16 @@ public static class CabinetFactory
         return hash;
     }
 
-    public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo,
-                                            CabinetInformation.Part p)
+    public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo, CabinetInformation.Part p)
     {
         CabinetPart cp = cabinet.GetPartController(p.name);
+
         switch (p.type)
         {
             case "bezel":
                 {
                     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
-                    cabinet.SetBezel(p.name, cbinfo.getPath(p.art.file));
+                    cp.SetBezel(cbinfo.getPath(p.art.file));
                 }
                 break;
 
@@ -151,13 +151,13 @@ public static class CabinetFactory
                     }
 
                     if (p.art != null)
-                        cabinet.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
+                        cp.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
                     else
-                        cabinet.SetMaterial(p.name, mat);
+                        cp.SetMaterial(mat);
 
                     //after
                     if (p.color != null && p.marquee.illuminationType != "none")
-                        cabinet.SetMarqueeEmissionColor(p.name, p.color, p.marquee.color);
+                        cp.SetMarqueeEmissionColor(p.color, p.marquee.color);
                 }
                 break;
 
@@ -175,7 +175,7 @@ public static class CabinetFactory
                         p.color == null &&
                         p.emission == null &&
                         p.transparency == 0)
-                        cabinet.SetMaterialFrom(p.name, CabinetMaterials.Black);
+                        cp.SetMaterial(CabinetMaterials.Black);
                     else
                     {
                         int pos = cabinet.PartsPosition(p.name); //performance
@@ -183,34 +183,31 @@ public static class CabinetFactory
                         ConfigManager.WriteConsole($"[CabinetFactory.skinCabinetPart] #{pos} {p.name}: type: {p.type} material: {p.material} color: {p.color} transp:{p.transparency} emission: {p.emission}");
 
                         if (p.material != null)
-                            cabinet.SetMaterialFrom(pos, CabinetMaterials.fromName(p.material));
+                            cp.SetMaterialFrom(CabinetMaterials.fromName(p.material));
 
                         if (p.art != null)
-                        {
-                            cabinet.PartNeedsAMaterialBase(pos)
-                                   .SetTextureTo(pos, cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
-                        }
+                            cp.PartNeedsAMaterialBase()
+                              .SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
 
                         if (p.color != null)
-                            cabinet.PartNeedsAMaterialBase(pos).SetColorPart(pos, p.color.getColor());
+                            cp.PartNeedsAMaterial().SetColor(p.color.getColor());
 
                         if (p.transparency != 0)
                         {
-                            cabinet.PartNeedsAMaterial(pos).SetTransparencyPart(pos, p.transparency);
+                            int transparency = p.transparency;
+                            cp.PartNeedsAMaterial().SetTransparency(ref transparency);
                         }
 
                         if (p.emission != null)
                         {
-                            cabinet.PartNeedsAMaterial(pos).
-                                    SetEmissionEnabledPart(pos, p.emission.emissive);
+                            cp.PartNeedsAMaterial().SetEmissionEnabled(p.emission.emissive);
                             if (p.emission.color != null)
-                                cabinet.SetEmissionColorPart(pos, p.emission.color.getColor());
+                                cp.SetEmissionColor(p.emission.color.getColor());
                             if (p.emission.art != null)
                             {
-                                cabinet.SetEmissionTextureTo(pos,
-                                                                cbinfo.getPath(p.emission.art.file),
-                                                                invertX: p.emission.art.invertx,
-                                                                invertY: p.emission.art.inverty);
+                                cp.SetEmissionTextureTo(cbinfo.getPath(p.emission.art.file),
+                                                        invertX: p.emission.art.invertx,
+                                                        invertY: p.emission.art.inverty);
                             }
                         }
 
@@ -221,7 +218,7 @@ public static class CabinetFactory
                             p.emission == null &&
                             p.transparency == 0)
                         {
-                            cabinet.SetColorVertexPart(pos, p.color.getColor());
+                            cp.SetColorVertex(p.color.getColor());
                         }
                     }
                 }
