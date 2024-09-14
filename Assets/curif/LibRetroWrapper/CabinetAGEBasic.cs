@@ -810,14 +810,16 @@ public class CabinetAGEBasic : MonoBehaviour
         if (string.IsNullOrEmpty(prgName))
             return false;
         
-        CompileWhenNeeded(prgName);
-
-        ConfigManager.WriteConsole($"[CabinetAGEBasic.execute] exec {prgName}");
-        AGEBasic.Run(prgName, blocking, vars, maxExecutionLines); //async blocking=false
-        return true;
+        if (CompileWhenNeeded(prgName))
+        {
+            ConfigManager.WriteConsole($"[CabinetAGEBasic.execute] exec {prgName}");
+            AGEBasic.Run(prgName, blocking, vars, maxExecutionLines); //async blocking=false
+            return true;
+        }
+        return false;
     }
 
-    private void CompileWhenNeeded(string prgName)
+    private bool CompileWhenNeeded(string prgName)
     {
         if (!AGEBasic.Exists(prgName) /*&& afterInsertCoinException == null*/)
         {
@@ -828,9 +830,10 @@ public class CabinetAGEBasic : MonoBehaviour
             catch (CompilationException e)
             {
                 ConfigManager.WriteConsoleException($"[CabinetAGEBasic.execute] parsing {prgName}", (Exception)e);
-                throw e;
+                return false;
             }
         }
+        return true;
     }
     private IEnumerator RunEvents()
     {
