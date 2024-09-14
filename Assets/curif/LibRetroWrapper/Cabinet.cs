@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using static CabinetInformation;
-using static UnityEngine.UI.Image;
 
 public class Cabinet
 {
@@ -25,6 +24,10 @@ public class Cabinet
     public static List<string> userStandarConfigurableParts = new List<string>() { "front", "left", "right", "joystick", "joystick-down", "screen-base" };
 
     public LayerMask layerPart = LayerMask.NameToLayer("LightGunTarget");
+
+    public Dictionary<string, CabinetPart> CabinetPartsControllersByName = new();
+    public Dictionary<int, CabinetPart> CabinetPartsControllersByIdx = new();
+
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)
     {
@@ -287,6 +290,23 @@ public class Cabinet
         return onFloor;
     }
 
+    public CabinetPart RegisterChild(GameObject child)
+    {
+        CabinetPart cp = child.GetComponent<CabinetPart>();
+        if (cp == null)
+            cp = child.AddComponent<CabinetPart>();
+        CabinetPartsControllersByName[child.name] = cp;
+        CabinetPartsControllersByIdx[child.transform.GetSiblingIndex()] = cp;
+        return cp;
+    }
+    public void RegisterChildren(GameObject cabinetRootGameObject)
+    {
+        // Get all first-level child objects
+        foreach (Transform child in cabinetRootGameObject.transform)
+        {
+            RegisterChild(child.gameObject);
+        }
+    }
     public Cabinet(string name, string controlScheme, Vector3 position, Quaternion rotation, Transform parent,
                         GameObject go = null, string model = "galaga")
     {
@@ -303,6 +323,7 @@ public class Cabinet
         //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
         gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
         gameObject.name = name;
+        RegisterChildren(gameObject);
 
         // if (!IsValid)
         //     throw new System.Exception($"[Cabinet] Malformed Cabinet {Name} , some parts are missing. List of expected parts: {string.Join(",", RequiredParts)}");
@@ -322,6 +343,50 @@ public class Cabinet
             return Parts(part);
         }
     }
+
+    public CabinetPart GetPartController(string partName)
+    {
+        if (CabinetPartsControllersByName.ContainsKey(partName))
+            return CabinetPartsControllersByName[partName];
+
+        throw new Exception($"Unknown cabinet part: {partName}");
+    }
+
+    public CabinetPart GetPartController(int idx)
+    {
+        if (idx >= 0 && idx < CabinetPartsControllersByIdx.Count)
+            return CabinetPartsControllersByIdx[idx];
+
+        throw new Exception($"Unknown cabinet part: #{idx}");
+    }
+
+    public CabinetPart GetPartControllerOrNull(string partName)
+    {
+        if (CabinetPartsControllersByName.ContainsKey(partName))
+            return CabinetPartsControllersByName[partName];
+
+        return null;
+    }
+
+    public CabinetPart GetPartControllerOrNull(int idx)
+    {
+        if (idx >= 0 && idx < CabinetPartsControllersByIdx.Count)
+            return CabinetPartsControllersByIdx[idx];
+
+        return null;
+    }
+
+    public GameObject PartsOrNull(string partName)
+    {
+        Transform childTransform = gameObject.transform.Find(partName);
+        return childTransform?.gameObject;
+    }
+    public GameObject PartsOrNull(int partNum)
+    {
+        Transform childTransform = gameObject.transform.GetChild(partNum);
+        return childTransform?.gameObject;
+    }
+
     public GameObject Parts(string partName)
     {
         GameObject go = PartsOrNull(partName);
@@ -336,16 +401,7 @@ public class Cabinet
             throw new Exception($"Unknown cabinet part: #{partNum}");
         return go;
     }
-    public GameObject PartsOrNull(string partName)
-    {
-        Transform childTransform = gameObject.transform.Find(partName);
-        return childTransform?.gameObject;
-    }
-    public GameObject PartsOrNull(int partNum)
-    {
-        Transform childTransform = gameObject.transform.GetChild(partNum);
-        return childTransform?.gameObject;
-    }
+
     public Transform PartsTransform(string partName)
     {
         Transform childTransform = gameObject.transform.Find(partName);
@@ -382,26 +438,7 @@ public class Cabinet
     {
         return gameObject.transform.childCount;
     }
-    public Cabinet ScalePart(string partName, float percentage, float xratio, float yratio, float zratio)
-    {
-        Scale(Parts(partName), percentage, xratio, yratio, zratio);
-        return this;
-    }
-    public Cabinet RotatePart(string partName, float angleX, float angleY, float angleZ)
-    {
-        Parts(partName).transform.Rotate(angleX, angleY, angleZ);
-        return this;
-    }
-    public Cabinet EnablePart(string cabinetPart, bool enabled)
-    {
-        Parts(cabinetPart).SetActive(enabled);
-        return this;
-    }
-    public Cabinet EnablePart(int cabinetNum, bool enabled)
-    {
-        Parts(cabinetNum).SetActive(enabled);
-        return this;
-    }
+
     public Cabinet SetColorPart(string partName, Color color)
     {
         SetColor(Parts(partName), color);
@@ -548,7 +585,7 @@ public class Cabinet
         Texture2D t = LoadTexture(textureFile);
         if (t == null)
         {
-            ConfigManager.WriteConsoleError($"Cabinet {go.name} texture error {textureFile}");
+            ConfigManager.WriteConsoleWarning($"Cabinet {go.name} texture error {textureFile}");
             return;
         }
         else
@@ -1010,13 +1047,13 @@ public class Cabinet
         }
 
         string CRTType = $"screen-mock-{orientation}";
-        GameObject CRT = PartsOrNull(CRTType);
-        if (CRT == null)
-            throw new System.Exception($"Malformed cabinet {Name} problem: mock CRT not found in model. Type: {CRTType}");
+        GameObject CRT = GetPartController(CRTType).GameObject;
 
         GameObject newCRT = CRTsFactory.Instantiate(type.ToLower(), CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
         if (newCRT == null)
             throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
+        newCRT.AddComponent<CabinetPart>();
+        CabinetPart cp = RegisterChild(newCRT);
 
         //LibretroScreenController will find the object using this name:
         if (string.IsNullOrEmpty(cbinfo.crt.name))
@@ -1024,19 +1061,13 @@ public class Cabinet
         else
             newCRT.name = cbinfo.crt.name;
 
-        // rotate and scale
-        float scale = crtScalePercentage / 100f;
-
-        newCRT.transform.localScale =
-            new Vector3(newCRT.transform.localScale.x * crtXratio * scale,
-                        newCRT.transform.localScale.y * crtYratio * scale,
-                        newCRT.transform.localScale.z * crtZratio * scale);
+        cp.Scale(crtScalePercentage, crtXratio, crtYratio, crtZratio);
 
         if (rotation != null)
-            newCRT.transform.Rotate((Vector3)rotation);
+            cp.Rotate((Vector3)rotation);
 
-        PartsOrNull("screen-mock-vertical")?.SetActive(false);
-        PartsOrNull("screen-mock-horizontal")?.SetActive(false);
+        GetPartControllerOrNull("screen-mock-vertical")?.GameObject.SetActive(false);
+        GetPartControllerOrNull("screen-mock-horizontal")?.GameObject.SetActive(false);
 
         if (type.ToLower() == "19i-agebasic")
         {

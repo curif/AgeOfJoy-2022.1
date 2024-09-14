@@ -122,6 +122,7 @@ public static class CabinetFactory
     public static Cabinet skinCabinetPart(Cabinet cabinet, CabinetInformation cbinfo,
                                             CabinetInformation.Part p)
     {
+        CabinetPart cp = cabinet.GetPartController(p.name);
         switch (p.type)
         {
             case "bezel":
@@ -226,12 +227,10 @@ public static class CabinetFactory
                 }
                 break;
         }
+        
         // Part scale and rotation
-        cabinet.ScalePart(p.name, p.geometry.scalepercentage, p.geometry.ratio.x, p.geometry.ratio.y,                       p.geometry.ratio.z);
-        cabinet.RotatePart(p.name, p.geometry.rotation.x, p.geometry.rotation.y, p.geometry.rotation.z);
-
         //enable / disable
-        cabinet.EnablePart(p.name, p.visible);
+        cp.ApplyUserConfigurationGeometry(p.geometry).Enable(p.visible);
 
         return cabinet;
     }
