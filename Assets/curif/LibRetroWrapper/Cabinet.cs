@@ -779,7 +779,9 @@ public class Cabinet
         newCoinSlot.transform.localScale *= scale;
         newCoinSlot.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
 
-        UnityEngine.Object.Destroy(coinSlotMock);
+        //never destroy a component.
+        //UnityEngine.Object.Destroy(coinSlotMock);
+        coinSlotMock.SetActive(false);
 
         return this;
     }
