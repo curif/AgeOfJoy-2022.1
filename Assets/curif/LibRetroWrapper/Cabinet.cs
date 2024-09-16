@@ -673,10 +673,11 @@ public class Cabinet
             newCRT.name = cbinfo.crt.name;
 
         cp.Scale(crtScalePercentage, crtXratio, crtYratio, crtZratio);
-
         if (rotation != null)
             cp.Rotate((Vector3)rotation);
 
+        RegisterChild(newCRT);
+        
         GetPartControllerOrNull("screen-mock-vertical")?.GameObject.SetActive(false);
         GetPartControllerOrNull("screen-mock-horizontal")?.GameObject.SetActive(false);
 
@@ -779,7 +780,10 @@ public class Cabinet
         newCoinSlot.transform.localScale *= scale;
         newCoinSlot.transform.Rotate(rotationAngleX, rotationAngleY, rotationAngleZ);
 
-        UnityEngine.Object.Destroy(coinSlotMock);
+        //never destroy a component.
+        //UnityEngine.Object.Destroy(coinSlotMock);
+        coinSlotMock.SetActive(false);
+        RegisterChild(newCoinSlot);
 
         return this;
     }

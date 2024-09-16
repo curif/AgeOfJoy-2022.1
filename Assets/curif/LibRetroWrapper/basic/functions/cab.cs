@@ -65,6 +65,37 @@ class CommandFunctionCABPARTSPOSITION : CommandFunctionSingleExpressionBase
     }
 }
 
+
+class CommandFunctionCABPARTSLIST : CommandFunctionSingleExpressionBase
+{
+
+    public CommandFunctionCABPARTSLIST(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSLIST";
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val);
+
+        string partSeparator = val.GetString();
+        string result = string.Empty;
+        string sep = string.Empty;
+        foreach (KeyValuePair<int, CabinetPart> entry in config.Cabinet.CabinetPartsControllersByIdx)
+        {
+            int idx = entry.Key;
+            CabinetPart cp = entry.Value;
+            result += sep + cp.GameObject.name;
+            sep = partSeparator;
+        }
+        return new BasicValue(result);
+    }
+}
+
 class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
 {
 
