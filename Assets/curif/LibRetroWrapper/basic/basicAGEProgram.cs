@@ -181,7 +181,6 @@ public class AGEProgram
     {
         Dictionary<int, ICommandBase> lines = new();
         this.config = config;
-        int lastLineNumberParsed = 0;
         string currentCommand = null;
         int currentLineNumber = 0;
 
@@ -205,8 +204,10 @@ public class AGEProgram
                     // Process the previous command if there is one
                     if (currentCommand != null)
                         ProcessCommand(currentLineNumber, currentCommand, lines, config, filePath);
-                    
-                    if (lineNumber <= lastLineNumberParsed)
+
+                    lastLineNumberParsed = currentLineNumber;
+
+                    if (lineNumber <= currentLineNumber)
                         throw new Exception($"Line numbers not in sequence, in file: {filePath}");
 
                     // Start a new command
