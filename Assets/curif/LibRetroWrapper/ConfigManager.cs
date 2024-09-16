@@ -237,12 +237,10 @@ public static class ConfigManager
     {
         UnityEngine.Debug.LogFormat(LogType.Log, LogOption.NoStacktrace, null, "[AGEBASIC LOG] {0}", st);
     }
-    // [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleErrorAGEBasic(string st)
     {
         UnityEngine.Debug.LogFormat(LogType.Error, LogOption.None, null, "[AGEBASIC LOG ERROR] {0}", st);
     }
-    // [System.Diagnostics.Conditional("DEBUG_ACTIVE")]
     public static void WriteConsoleWarningAGEBasic(string st)
     {
         UnityEngine.Debug.LogFormat(LogType.Warning, LogOption.None, null, "[AGEBASIC LOG WARNING] {0}", st);

@@ -125,6 +125,8 @@ public static class Commands
         functions["CABPARTSCOUNT"] = typeof(CommandFunctionCABPARTSCOUNT);
         functions["CABPARTSNAME"] = typeof(CommandFunctionCABPARTSNAME);
         functions["CABPARTSPOSITION"] = typeof(CommandFunctionCABPARTSPOSITION);
+        functions["CABPARTSLIST"] = typeof(CommandFunctionCABPARTSLIST);
+
         functions["CABPARTSENABLE"] = typeof(CommandFunctionCABPARTSENABLE);
 
         functions["CABPARTSGETCOORDINATE"] = typeof(CommandFunctionCABPARTSGETCOORDINATE);
