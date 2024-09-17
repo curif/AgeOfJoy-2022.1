@@ -3,8 +3,8 @@ using UnityEngine.XR;
 public class DeviceType
 {
     public static readonly DeviceType OculusQuest2 = new DeviceType(1.0f, 1.5f, OVRPlugin.FoveatedRenderingLevel.Medium, OVRPlugin.FoveatedRenderingLevel.High);
-    public static readonly DeviceType OculusQuest3 = new DeviceType(1.3f, 2.4f, OVRPlugin.FoveatedRenderingLevel.Low, OVRPlugin.FoveatedRenderingLevel.High);
-    //public static readonly DeviceType OculusQuest3 = new DeviceType(1.3f, 1.8f, OVRPlugin.FoveatedRenderingLevel.Low, OVRPlugin.FoveatedRenderingLevel.High);
+    //public static readonly DeviceType OculusQuest3 = new DeviceType(1.3f, 2.4f, OVRPlugin.FoveatedRenderingLevel.Low, OVRPlugin.FoveatedRenderingLevel.High);
+    public static readonly DeviceType OculusQuest3 = new DeviceType(1.3f, 1.8f, OVRPlugin.FoveatedRenderingLevel.Low, OVRPlugin.FoveatedRenderingLevel.High);
     public static readonly DeviceType Computer = new DeviceType(1.0f, 1.0f, OVRPlugin.FoveatedRenderingLevel.Off, OVRPlugin.FoveatedRenderingLevel.Off);
     public static readonly DeviceType Unknown = new DeviceType(1.0f, 1.0f, OVRPlugin.FoveatedRenderingLevel.Off, OVRPlugin.FoveatedRenderingLevel.Off);
 
