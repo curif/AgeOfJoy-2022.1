@@ -63,7 +63,7 @@ class CommandFunctionLOG : CommandFunctionSingleExpressionBase
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedString(val, "- LOG*() parameter expect a string");
 
-        ConfigManager.WriteConsoleAGEBasic("[AGEBASIC LOG] " + val.GetString());
+        ConfigManager.WriteConsoleAGEBasic(val.GetString());
 
         return null;
     }
@@ -85,7 +85,7 @@ class CommandFunctionLOGERROR : CommandFunctionSingleExpressionBase
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedString(val, "- LOG*() parameter expect a string");
 
-        ConfigManager.WriteConsoleErrorAGEBasic("[AGEBASIC LOG] " + val.GetString());
+        ConfigManager.WriteConsoleErrorAGEBasic(val.GetString());
 
         return null;
     }
@@ -107,7 +107,7 @@ class CommandFunctionLOGWARNING : CommandFunctionSingleExpressionBase
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedString(val, "- LOG*() parameter expect a string");
 
-        ConfigManager.WriteConsoleWarningAGEBasic("[AGEBASIC LOG] " + val.GetString());
+        ConfigManager.WriteConsoleWarningAGEBasic(val.GetString());
 
         return null;
     }

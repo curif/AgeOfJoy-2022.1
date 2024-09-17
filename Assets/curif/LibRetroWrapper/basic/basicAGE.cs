@@ -356,7 +356,7 @@ public class basicAGE : MonoBehaviour
         Status = ProgramStatus.WaitingForStart;
 
         if (!programs.ContainsKey(name))
-            throw new Exception($"program {name} doesn't exists");
+            throw new Exception($"program {name} doesn't exists or was erroneous");
 
         if (running != null)
             throw new Exception($"you can't run {name}, {running.Name} is runnig");

@@ -184,31 +184,36 @@ public static class CabinetFactory
 
                         if (p.material != null)
                             cp.SetMaterialFrom(CabinetMaterials.fromName(p.material));
+                        else
+                            cp.ForceMaterialBase();
 
                         if (p.art != null)
-                            cp.PartNeedsAMaterialBase()
-                              .SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
+                              cp.SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
 
                         if (p.color != null)
-                            cp.PartNeedsAMaterial().SetColor(p.color.getColor());
+                            cp.SetColor(p.color.getColor());
 
                         if (p.transparency != 0)
                         {
                             int transparency = p.transparency;
-                            cp.PartNeedsAMaterial().SetTransparency(ref transparency);
+                            cp.SetTransparency(ref transparency);
                         }
 
                         if (p.emission != null)
                         {
-                            cp.PartNeedsAMaterial().SetEmissionEnabled(p.emission.emissive);
-                            if (p.emission.color != null)
-                                cp.SetEmissionColor(p.emission.color.getColor());
-                            if (p.emission.art != null)
-                            {
-                                cp.SetEmissionTextureTo(cbinfo.getPath(p.emission.art.file),
+                            //assign the texture first
+                            if (!string.IsNullOrEmpty(p.emission.art?.file))
+                                cp.SetEmissive()
+                                  .SetEmissionTextureTo(cbinfo.getPath(p.emission.art.file),
                                                         invertX: p.emission.art.invertx,
-                                                        invertY: p.emission.art.inverty);
-                            }
+                                                        invertY: p.emission.art.inverty)
+                                  .SetEmissionColor(p.emission.color.getColor())
+                                  .ActivateEmission(p.emission.emissive);
+                            else
+                                cp.SetEmissive()
+                                  .UseEmissionMainTexture()
+                                  .SetEmissionColor(p.emission.color.getColor())
+                                  .ActivateEmission(p.emission.emissive);
                         }
 
                         //vertex color optimization

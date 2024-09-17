@@ -392,7 +392,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private void stop()
     {
         //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
-        Debug.Log($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
+        //Debug.Log($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
         animator.SetBool("Idle", true);
         animator.SetBool("IsWalking", false); // Ensure everything else is disabled
         animator.SetBool("Buy", false);
@@ -404,7 +404,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
     private void walk()
     {
         //ConfigManager.WriteConsole($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
-        Debug.Log($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
+        //Debug.Log($"[ArcadeRoomBehavior.stop]  {gameObject.name} ");
         animator.SetBool("IsWalking", true);
         animator.SetBool("Idle", false); // Ensure everything else is disabled
         animator.SetBool("Buy", false);
