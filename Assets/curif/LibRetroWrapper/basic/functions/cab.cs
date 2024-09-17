@@ -588,9 +588,9 @@ class CommandFunctionCABPARTSEMISSION : CommandFunctionExpressionListBase
         FunctionHelper.ExpectedNumber(vals[1], " - true/false");
 
         if (vals[0].IsString())
-            config.Cabinet.GetPartController(vals[0].GetString()).SetEmissionEnabled(vals[1].IsTrue());
+            config.Cabinet.GetPartController(vals[0].GetString()).ActivateEmission(vals[1].IsTrue());
         else
-            config.Cabinet.GetPartController(vals[0].GetInt()).SetEmissionEnabled(vals[1].IsTrue());
+            config.Cabinet.GetPartController(vals[0].GetInt()).ActivateEmission(vals[1].IsTrue());
         
         return new BasicValue(1);
     }

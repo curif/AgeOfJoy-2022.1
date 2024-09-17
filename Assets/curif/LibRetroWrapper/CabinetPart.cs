@@ -3,7 +3,6 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem.HID;
 using UnityEngine.UIElements;
-using static CabinetInformation;
 
 [System.Serializable]
 public class TransformData
@@ -72,7 +71,7 @@ public class CabinetPart : MonoBehaviour
         return this;
     }
 
-    public CabinetPart ApplyUserConfigurationGeometry(Geometry g)
+    public CabinetPart ApplyUserConfigurationGeometry(CabinetInformation.Geometry g)
     {
         if (g != null)
         {
@@ -254,13 +253,13 @@ public CabinetPart SetMaterial(Material mat)
     }
 
     //assign the Base material if doesn't have any.
-    public CabinetPart PartNeedsAMaterial()
+    public CabinetPart NeedsAMaterial()
     {
         return SetMaterialFromMaterial(CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: true);
     }
 
     //assign the Base material
-    public CabinetPart PartNeedsAMaterialBase()
+    public CabinetPart ForceMaterialBase()
     {
         return SetMaterialFromMaterial(CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: false);
     }
@@ -299,9 +298,17 @@ public CabinetPart SetMaterial(Material mat)
 
     public Material GetMaterial()
     {
-        if (rendererComponent == null) return null;
-        return rendererComponent.material;
+        /* Accessing the material property creates a copy (instance) of the material for that specific renderer, 
+         * which means changes will only affect that individual object.
+         * This can be more costly in terms of memory and performance if many objects are modified, 
+         * but it allows for unique modifications per object.
+         * change something like the color, you do not need to reassign the material to the renderer. 
+         * When you access the material property, Unity automatically creates a unique material instance for that specific
+         * renderer (if it hasn't done so already). Any changes you make, like modifying the color, are applied directly to this instance.
+         */
+        return rendererComponent?.material;
     }
+
     public CabinetPart SetColor(Color color)
     {
         Material mat = GetMaterial();
@@ -332,6 +339,7 @@ public CabinetPart SetMaterial(Material mat)
 
         currentColor.a = alpha;
         mat.color = currentColor;
+
         return this;
     }
 
@@ -344,27 +352,106 @@ public CabinetPart SetMaterial(Material mat)
         return (int)(mat.color.a * 100f);
     }
 
-    public CabinetPart SetEmissionEnabled(bool enabled)
+    // ------------------- EMISSION -----------------------
+
+    public CabinetPart SetEmissive()
     {
-        Material mat = GetMaterial();
-
-        // Set emission enabled
-        mat.EnableKeyword("_EMISSION"); // Enable emission if true
-        if (enabled)
+        // need SetEmmisionMapFromMainTexture previously called.
+        Material mat = GetMaterial(); //creates a copy of the material internally
+        if (mat == null) return this;
+        
+        if (mat.HasProperty("_EmissionMap"))
         {
-            Texture mainTexture = rendererComponent.sharedMaterial.mainTexture;
-            if (mainTexture != null)
-                // Set the emission map to be the same as the main texture
-                rendererComponent.sharedMaterial.SetTexture("_EmissionMap", mainTexture);
+            //enable the material emission
+            mat.EnableKeyword("_EMISSION");
+            mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
         }
-        else
-            mat.DisableKeyword("_EMISSION"); // Disable emission if false
-
-        rendererComponent.material = mat;
         return this;
     }
 
-    public CabinetPart SetMarqueeEmissionColor(RGBColor emissionColor, RGBColor backLightColor)
+
+    public CabinetPart UseEmissionMainTexture()
+    {
+        // need SetEmmisionMapFromMainTexture previously called.
+        Material mat = GetMaterial(); //creates a copy of the material internally
+        if (mat == null) return this;
+
+        if (mat.HasProperty("_EmissionMap"))
+        {
+            //don't assign it if have one already.
+            Texture currentEmissionMap = mat.GetTexture("_EmissionMap");
+            if (currentEmissionMap == null)
+            {
+                Texture mainTexture = mat.mainTexture;
+                if (mainTexture != null)
+                {
+                    // Set the emission map to be the same as the main texture
+                    mat.SetTexture("_EmissionMap", mainTexture);
+                }
+            }
+        }
+        return this;
+    }
+
+    // call SetEmissive before. 
+    public CabinetPart ActivateEmission(bool enabled)
+    {
+        Material mat = GetMaterial(); //creates a copy of the material
+        if (mat == null) return this;        // Set emission enabled
+        if (enabled)
+            mat.EnableKeyword("_EMISSION");
+        else
+            mat.DisableKeyword("_EMISSION");
+
+        return this;
+    }
+
+    public CabinetPart SetEmissionColor(Color emissionColor)
+    {
+        if (emissionColor == null) return this;
+
+        //remember: call SetEmmisive before.
+        Material mat = GetMaterial();
+        if (mat == null) return this;
+
+        // Set emission color
+        mat.SetColor("_EmissionColor", emissionColor);
+        return this;
+    }
+
+    public CabinetPart SetEmissionTextureFromFile(string textureFile, bool invertX = false, bool invertY = false)
+    {
+        Material mat = GetMaterial();
+        if (mat == null)
+            return this;
+
+        // Tiling
+        Vector2 emissionTextureScale = new Vector2(1, 1);
+        if (invertX)
+            emissionTextureScale.x = -1;
+        if (invertY)
+            emissionTextureScale.y = -1;
+        mat.SetTextureScale("_EmissionMap", emissionTextureScale);
+
+        // Emission texture
+        Texture2D t = LoadTexture(textureFile);
+        if (t == null)
+            ConfigManager.WriteConsoleError($"Error loading emission texture for {gameObject.name}: {textureFile}");
+        else
+            mat.SetTexture("_EmissionMap", t);
+
+        return this;
+    }
+
+    public CabinetPart SetEmissionTextureTo(string textureFile, bool invertX = false, bool invertY = false)
+    {
+        if (!string.IsNullOrEmpty(textureFile))
+            return SetEmissionTextureFromFile(textureFile, invertX, invertY);
+        return this;
+    }
+
+    // ---------------------------- MARQUEE ------------------------
+    public CabinetPart SetMarqueeEmissionColor(CabinetInformation.RGBColor emissionColor, CabinetInformation.RGBColor backLightColor)
     {
         Material mat = GetMaterial();
         if (mat != null)
@@ -441,51 +528,7 @@ public CabinetPart SetMaterial(Material mat)
         return this;
     }
 
-    public CabinetPart SetEmissionTextureFromFile(string textureFile, bool invertX = false, bool invertY = false)
-    {
-        Material m = GetMaterial();
-        if (m == null)
-            return this;
 
-        // Tiling
-        Vector2 emissionTextureScale = new Vector2(1, 1);
-        if (invertX)
-            emissionTextureScale.x = -1;
-        if (invertY)
-            emissionTextureScale.y = -1;
-        m.SetTextureScale("_EmissionMap", emissionTextureScale);
-
-        // Emission texture
-        Texture2D t = LoadTexture(textureFile);
-        if (t == null)
-        {
-            ConfigManager.WriteConsoleError($"Error loading emission texture for {gameObject.name}: {textureFile}");
-            return this;
-        }
-        else
-        {
-            m.SetTexture("_EmissionMap", t);
-        }
-
-        rendererComponent.material = m;
-        return this;
-    }
-
-    public CabinetPart SetEmissionColor(Color emissionColor)
-    {
-        Material m = GetMaterial();
-        if (m == null) return this;
-
-        // Set emission color
-        m.SetColor("_EmissionColor", emissionColor);
-        Texture mainTexture = rendererComponent.sharedMaterial.mainTexture;
-        if (mainTexture != null)
-            // Set the emission map to be the same as the main texture
-            rendererComponent.sharedMaterial.SetTexture("_EmissionMap", mainTexture);
-
-        rendererComponent.material = m;
-        return this;
-    }
     //change a material, or create a new one and change it.
     public CabinetPart SetTextureTo(string partName, string textureFile, Material mat, bool invertX = false, bool invertY = false)
     {
@@ -497,12 +540,6 @@ public CabinetPart SetMaterial(Material mat)
     {
         if (!string.IsNullOrEmpty(textureFile))
             SetTextureFromFile(textureFile, mat, invertX, invertY);
-        return this;
-    }
-    public CabinetPart SetEmissionTextureTo(string textureFile, bool invertX = false, bool invertY = false)
-    {
-        if (!string.IsNullOrEmpty(textureFile))
-            return SetEmissionTextureFromFile(textureFile, invertX, invertY);
         return this;
     }
 
