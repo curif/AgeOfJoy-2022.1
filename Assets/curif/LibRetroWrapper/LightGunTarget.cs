@@ -133,8 +133,8 @@ public class LightGunTarget : MonoBehaviour
     [-0x7fff, 0x7fff]: -0x7fff corresponds to the far left/top of the screen,
      and 0x7fff corresponds to the far right/bottom of the screen.
     */
-    int lastHitX;
-    int lastHitY; 
+    public int lastHitX;
+    public int lastHitY; 
     const int virtualScreenWidth = 32767; //libretro constant width
     const int virtualScreenHeight = 32767; //libretro constant height
 
@@ -300,6 +300,8 @@ public class LightGunTarget : MonoBehaviour
             // if this component is attached to a CRT
             if (isPoinitingToATarget(layerMaskCRT) && hit.collider?.gameObject == gameObject)
                 detectCRTCoordinates();
+            else
+                declareOutOfScreen();
         }
     }
 
@@ -324,86 +326,82 @@ public class LightGunTarget : MonoBehaviour
             forward = -forward;
     }
 
+    // called when the lightgun is pointing to the screen object
     private void detectCRTCoordinates()
     {
-        if (hit.collider.gameObject == gameObject)
+        int hitTriangleIndex = hit.triangleIndex;
+
+        // Determine if the hit triangle is within Submesh 1
+        int triangleIndexInSubmesh1 = -1; // Default invalid value
+
+        // Check if the hit triangle index falls within the range of Submesh 1 triangles
+        if (hitTriangleIndex >= trianglesSubmesh0.Length / 3 &&
+            hitTriangleIndex < (trianglesSubmesh0.Length + trianglesSubmesh1.Length) / 3)
         {
-                     
-            int hitTriangleIndex = hit.triangleIndex;
+            // Adjust the triangle index to the local index within Submesh 1
+            triangleIndexInSubmesh1 = hitTriangleIndex - (trianglesSubmesh0.Length / 3);
 
-            // Determine if the hit triangle is within Submesh 1
-            int triangleIndexInSubmesh1 = -1; // Default invalid value
+            // Get the vertex indices of the hit triangle in Submesh 1
+            int vertIndex1 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3];
+            int vertIndex2 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 1];
+            int vertIndex3 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 2];
 
-            // Check if the hit triangle index falls within the range of Submesh 1 triangles
-            if (hitTriangleIndex >= trianglesSubmesh0.Length / 3 &&
-                hitTriangleIndex < (trianglesSubmesh0.Length + trianglesSubmesh1.Length) / 3)
+            // Get the barycentric coordinates of the hit point to interpolate UVs
+            Vector3 barycentricCoord = hit.barycentricCoordinate;
+
+            // Use the UVs (texture coordinates) for the vertices of the hit triangle
+            // Interpolate the UV coordinates using the barycentric coordinates
+            Vector2 interpolatedUV = mesh.uv[vertIndex1] * barycentricCoord.x +
+                                        mesh.uv[vertIndex2] * barycentricCoord.y +
+                                        mesh.uv[vertIndex3] * barycentricCoord.z;
+
+            // Now we have the correct UV coordinates for Submesh 1
+            // Use interpolatedUV to work with the texture of Submesh 1
+            // Perform any necessary operations using the UV and texture...
+
+            // Convert UV to virtual screen space. Normalize texture coordinates from [0, 1] to [-1, 1]
+            float normalizedX = 2 * interpolatedUV.x - 1;
+            float normalizedY = 2 * interpolatedUV.y - 1;
+
+            // Invert the coordinates if needed
+            if (!InvertX) //back compat
+                normalizedX = -normalizedX;
+            if (InvertY)
+                normalizedY = -normalizedY;
+
+            // Map the normalized coordinates to the virtual screen space
+            lastHitX = Mathf.Clamp(Mathf.RoundToInt(normalizedX * virtualScreenWidth), -virtualScreenWidth, virtualScreenWidth);
+            lastHitY = Mathf.Clamp(Mathf.RoundToInt(normalizedY * virtualScreenHeight), -virtualScreenHeight, virtualScreenHeight);
+
+            // Debug visualization of hit position on the texture
+            if (showHitPosition)
             {
-                // Adjust the triangle index to the local index within Submesh 1
-                triangleIndexInSubmesh1 = hitTriangleIndex - (trianglesSubmesh0.Length / 3);
+                int x, y;
+                // Calculate the x, y coordinates in Unity texture space
+                x = Mathf.RoundToInt(interpolatedUV.x * texture.width);
+                y = Mathf.RoundToInt(interpolatedUV.y * texture.height);
 
-                // Get the vertex indices of the hit triangle in Submesh 1
-                int vertIndex1 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3];
-                int vertIndex2 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 1];
-                int vertIndex3 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 2];
-
-                // Get the barycentric coordinates of the hit point to interpolate UVs
-                Vector3 barycentricCoord = hit.barycentricCoordinate;
-
-                // Use the UVs (texture coordinates) for the vertices of the hit triangle
-                // Interpolate the UV coordinates using the barycentric coordinates
-                Vector2 interpolatedUV = mesh.uv[vertIndex1] * barycentricCoord.x + 
-                                            mesh.uv[vertIndex2] * barycentricCoord.y +
-                                            mesh.uv[vertIndex3] * barycentricCoord.z;
-
-                // Now we have the correct UV coordinates for Submesh 1
-                // Use interpolatedUV to work with the texture of Submesh 1
-                // Perform any necessary operations using the UV and texture...
-
-                // Convert UV to virtual screen space. Normalize texture coordinates from [0, 1] to [-1, 1]
-                float normalizedX = 2 * interpolatedUV.x - 1;
-                float normalizedY = 2 * interpolatedUV.y - 1;
-
-                // Invert the coordinates if needed
-                if (!InvertX) //back compat
-                    normalizedX = -normalizedX;
+                // Invert the x and y coordinates if needed
+                if (!InvertX)
+                    x = texture.width - 1 - x;
                 if (InvertY)
-                    normalizedY = -normalizedY;
+                    y = texture.height - 1 - y;
 
-                // Map the normalized coordinates to the virtual screen space
-                lastHitX = Mathf.Clamp(Mathf.RoundToInt(normalizedX * virtualScreenWidth), -virtualScreenWidth, virtualScreenWidth);
-                lastHitY = Mathf.Clamp(Mathf.RoundToInt(normalizedY * virtualScreenHeight), -virtualScreenHeight, virtualScreenHeight);
+                // Clamp the x, y coordinates to ensure they're within the texture bounds
+                x = Mathf.Clamp(x, 0, texture.width - 1);
+                y = Mathf.Clamp(y, 0, texture.height - 1);
 
-                // Debug visualization of hit position on the texture
-                if (showHitPosition)
-                {
-                    int x, y;
-                    // Calculate the x, y coordinates in Unity texture space
-                    x = Mathf.RoundToInt(interpolatedUV.x * texture.width);
-                    y = Mathf.RoundToInt(interpolatedUV.y * texture.height);
-
-                    // Invert the x and y coordinates if needed
-                    if (!InvertX)
-                        x = texture.width - 1 - x;
-                    if (InvertY)
-                        y = texture.height - 1 - y;
-
-                    // Clamp the x, y coordinates to ensure they're within the texture bounds
-                    x = Mathf.Clamp(x, 0, texture.width - 1);
-                    y = Mathf.Clamp(y, 0, texture.height - 1);
-
-                    // Draw a red circle at the hit point in the texture for debugging purposes
-                    DrawRedCircle(texture, x, y, 5);
-                    texture.Apply();
-                }
+                // Draw a red circle at the hit point in the texture for debugging purposes
+                DrawRedCircle(texture, x, y, 5);
+                texture.Apply();
             }
+        }
+        else
+            // If the ray doesn't hit anything, reset the hit coordinates to out-of-bounds
+            declareOutOfScreen();
 #if ON_DEBUG
             ConfigManager.WriteConsole($"[LightGunTarget]  x,y:{lastHitX}, {lastHitY}");
 #endif
-            return;
-        }
-
-        // If the ray doesn't hit anything, reset the hit coordinates to out-of-bounds
-        declareOutOfScreen();
 
         return;
     }
