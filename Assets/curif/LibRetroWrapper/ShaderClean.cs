@@ -1,7 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.ComponentModel;
 
 public class ShaderScreenClean : ShaderScreenBase
 {
