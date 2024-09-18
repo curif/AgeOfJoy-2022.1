@@ -9,8 +9,8 @@ public class SkyboxChangeTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player")) // Make sure the player has a tag "Player"
         {
-            // Swap the skybox material
-            if (newSkyboxMaterial != null)
+            // Only update the skybox if the material is different
+            if (RenderSettings.skybox != newSkyboxMaterial && newSkyboxMaterial != null)
             {
                 RenderSettings.skybox = newSkyboxMaterial;
                 DynamicGI.UpdateEnvironment(); // Update global illumination to reflect new skybox
