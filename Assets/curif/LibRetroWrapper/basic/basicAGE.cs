@@ -132,7 +132,7 @@ public class basicAGE : MonoBehaviour
         get {return configCommands; }
     }
 
-    void initComponents()
+    public void InitComponents()
     {
         if (initialized)
             return;
@@ -227,7 +227,7 @@ public class basicAGE : MonoBehaviour
     }
     public AGEProgram ParseFile(string filePath)
     {
-        initComponents();
+        InitComponents();
 
         string name = Path.GetFileName(filePath);
 
@@ -349,7 +349,7 @@ public class basicAGE : MonoBehaviour
 
     public void PrepareToRun(string name, BasicVars pvars, int maxExecutionLinesAllowed)
     {
-        initComponents();
+        InitComponents();
 
         ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
 
@@ -415,7 +415,7 @@ public class basicAGE : MonoBehaviour
     // run a complete program in a coroutine
     IEnumerator runProgram()
     {
-        initComponents();
+        InitComponents();
 
         ConfigManager.WriteConsole($"[BasicAGE.runProgram] START {running.Name}");
 

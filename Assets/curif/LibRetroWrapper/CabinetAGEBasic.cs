@@ -1,4 +1,4 @@
-
+#define EVENT_LOOP_DEBUG
 using UnityEngine;
 using System;
 using System.Collections;
@@ -104,7 +104,8 @@ public class EventInformation
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
     static string[] validEvents = { "on-timer", "on-always",  "on-insert-coin", "on-custom", 
-                                    "on-collision-start", "on-collision-stay", "on-collision-end", "on-touch-start", "on-grab-start", "on-touch-end",
+                                    "on-collision-start", "on-collision-stay", "on-collision-end", 
+                                    "on-touch-start", "on-grab-start", "on-touch-end",
                                     "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit",
                                     "on-control-active-pressed", "on-control-active-held", "on-control-active-released"};
 
@@ -300,9 +301,9 @@ public class OnControlActiveBase: Event
         bool ontime = base.IsTime();
         if (ontime)
         {
-            actualValue = AGEBasic.ConfigCommands.ControlMap.Active(eventInformation.control.mameControl, eventInformation.control.port);
-            if (evaluate())
-                RegisterTrigger(true);
+            actualValue = AGEBasic.ConfigCommands.ControlMap.Active(eventInformation.control.mameControl,
+                                                                    eventInformation.control.port);
+            RegisterTrigger(evaluate());
             previousValue = actualValue;
         }
     }
@@ -767,6 +768,7 @@ public class CabinetAGEBasic : MonoBehaviour
         this.AGEInfo = AGEInfo;
         this.pathBase = pathBase;
 
+        AGEBasic.InitComponents();
         AGEBasic.SetCoinSlot(coinSlot);
         AGEBasic.SetCabinet(cabinet);
         AGEBasic.SetCabinetEvents(events);
@@ -777,6 +779,7 @@ public class CabinetAGEBasic : MonoBehaviour
             IngestVariables(AGEInfo.Variables);
         }
 
+        
         //events ---
         foreach (EventInformation info in AGEInfo.events)
         {
@@ -809,7 +812,7 @@ public class CabinetAGEBasic : MonoBehaviour
     {
         if (string.IsNullOrEmpty(prgName))
             return false;
-        
+
         if (CompileWhenNeeded(prgName))
         {
             ConfigManager.WriteConsole($"[CabinetAGEBasic.execute] exec {prgName}");
@@ -849,10 +852,20 @@ public class CabinetAGEBasic : MonoBehaviour
                 // some events needs more than one initialization.
                 if (!evt.Initialized)
                     evt.Init();
+#if EVENT_LOOP_DEBUG
+                ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] evaluate {evt.eventInformation.eventId}");
+#endif
                 //check and cache the trigger action
-                evt.EvaluateTrigger();
+                try
+                {
+                    evt.EvaluateTrigger();
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetAGEBasic.RunEvents] evaluate exception {evt.eventInformation.eventId}", e);
+                }
             }
-            
+
             foreach (Event evt in events)
             {
                 // Check if the event was triggered
@@ -865,7 +878,7 @@ public class CabinetAGEBasic : MonoBehaviour
 
                     if (evt.eventInformation.Variables != null)
                         IngestVariables(evt.eventInformation.Variables);
-                    
+
                     evt.PrepareToRun();
 
                     //run
@@ -874,6 +887,7 @@ public class CabinetAGEBasic : MonoBehaviour
                     {
                         YieldInstruction yield;
                         // Run the event's program
+                        // excptions are catched internally
                         yield = evt.Run(ref moreLines);
                         yield return yield;
                     }
@@ -890,6 +904,7 @@ public class CabinetAGEBasic : MonoBehaviour
 
     public void ExecInsertCoinBas()
     {
+
         AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0);
 
