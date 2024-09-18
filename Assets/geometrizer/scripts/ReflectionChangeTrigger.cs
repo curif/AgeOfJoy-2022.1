@@ -9,8 +9,12 @@ public class ReflectionChangeTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player")) // Make sure the player has a tag "Player"
         {
-            RenderSettings.customReflection = newReflectionCubemap;
-            DynamicGI.UpdateEnvironment();
+            // Only update if the cubemap is different
+            if (RenderSettings.customReflection != newReflectionCubemap)
+            {
+                RenderSettings.customReflection = newReflectionCubemap;
+                DynamicGI.UpdateEnvironment();
+            }
         }
     }
 }
