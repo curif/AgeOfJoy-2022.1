@@ -8,36 +8,34 @@ public class ShaderScreenClean : ShaderScreenBase
     private bool actual_invertx = false, actual_inverty = false;
     private string damage = "none";
 
-    static Material ScreenCleanScanlinesBigPattern;
-    static Material ScreenCleanScanlinesBlackBorderPattern;
-    static Material ScreenCleanScanlines;
+    static Material ScreenCleanDamageHigh;
+    static Material ScreenCleanDamageLow;
+    static Material ScreenCleanDamageMedium;
     static Material ScreenClean;
     static ShaderScreenClean()
     {
-        ScreenCleanScanlinesBigPattern = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCleanScanlinesBigPattern");
-        ScreenCleanScanlinesBlackBorderPattern = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCleanScanlinesBlackBorderPattern");
-        ScreenCleanScanlines = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCleanScanlines");
+        ScreenCleanDamageHigh = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCleanDamageHigh");
+        ScreenCleanDamageLow = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCleanDamageLow");
+        ScreenCleanDamageMedium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCleanDamageMedium");
+        
+        
+        //standard shader. Set emission in true, intensity color white and intensity: 1 (increase for damage)
+        //albedo color in white.
         ScreenClean = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenClean");
     }
     public ShaderScreenClean(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
     {
-
+        
         material = ScreenClean;
-
+        
         config.TryGetValue("damage", out damage);
         if (damage == "high")
-            material = ScreenCleanScanlinesBigPattern;
+            material = ScreenCleanDamageHigh;
         else if (damage == "medium")
-            material = ScreenCleanScanlinesBlackBorderPattern;
+            material = ScreenCleanDamageMedium;
         else if (damage == "low")
-            material = ScreenCleanScanlines;
-
-        //material = new Material(originalMat);
-        //material.CopyPropertiesFromMaterial(originalMat);
-
-        //material = Object.Instantiate(Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenClean"));
-        //material.name = $"instance-ShaderScreenClean-{damage}";
-
+            material = ScreenCleanDamageLow;
+        
         // material = new Material(Resources.Load<Material>(materialPrefab));
         ConfigManager.WriteConsole($"[ShaderScreenClean] assigned material: {material} damage: {damage}");
 
