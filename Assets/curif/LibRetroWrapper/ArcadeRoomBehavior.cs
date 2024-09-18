@@ -446,10 +446,10 @@ public class ArcadeRoomBehavior : MonoBehaviour
             animator.SetFloat("Random", UnityEngine.Random.Range(0f, 1f));
 
             // geometrizer: Output the current value of the "Random" parameter to the console
-            UnityEngine.Debug.Log("Random value: " + animator.GetFloat("Random"));
+            //UnityEngine.Debug.Log("Random value: " + animator.GetFloat("Random"));
 
-            Debug.Log($"[runDestinationAnimation] on {name}");
-                Debug.Log($"Trigger set: {animatorTriggers[(int)destination.Type]}, Destination Type: {destination.Type}");
+            //Debug.Log($"[runDestinationAnimation] on {name}");
+            //    Debug.Log($"Trigger set: {animatorTriggers[(int)destination.Type]}, Destination Type: {destination.Type}");
                 //geometrizer: This is where we start Buy/Play anims, need to shut down walk here
         }
         catch (Exception e)
