@@ -1,4 +1,4 @@
-#define EVENT_LOOP_DEBUG
+//#define EVENT_LOOP_DEBUG
 using UnityEngine;
 using System;
 using System.Collections;
