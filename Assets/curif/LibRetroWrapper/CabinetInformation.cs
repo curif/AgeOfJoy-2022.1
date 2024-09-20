@@ -518,7 +518,7 @@ public class CabinetInformation
     public class Screen
     {
         public string shader = "crt";
-        public string damage = "low";
+        public string damage = "none";
         public bool invertx = false;
         public bool inverty = false;
         public string gamma = LibretroMameCore.DefaultGamma;
