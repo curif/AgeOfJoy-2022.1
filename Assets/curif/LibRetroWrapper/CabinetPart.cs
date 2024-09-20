@@ -487,7 +487,6 @@ public CabinetPart SetMaterial(Material mat)
         return CabinetTextureCache.LoadAndCacheTexture(filePath);
     }
 
-
     public CabinetPart SetTextureFromFile(string textureFile, Material mat, bool invertX, bool invertY)
     {
         if (rendererComponent == null)
@@ -504,6 +503,7 @@ public CabinetPart SetMaterial(Material mat)
         {
             m = new Material(mat);
             m.name = $"{gameObject.name}_from_{mat.name}";
+            rendererComponent.material = m;
         }
 
         //tiling
@@ -515,16 +515,17 @@ public CabinetPart SetMaterial(Material mat)
         m.mainTextureScale = mainTextureScale;
 
         //main texture
+        if (string.IsNullOrEmpty(textureFile))
+            return this;
+
         Texture2D t = LoadTexture(textureFile);
         if (t == null)
         {
-            ConfigManager.WriteConsoleWarning($"Cabinet {gameObject.name} texture error {textureFile}");
-            return this;
+            ConfigManager.WriteConsoleWarning($"Cabinet {gameObject.name} part {gameObject.name} texture error {textureFile}");
         }
         else
             m.SetTexture("_MainTex", t);
 
-        rendererComponent.material = m;
         return this;
     }
 
