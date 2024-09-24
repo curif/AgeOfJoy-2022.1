@@ -7,10 +7,10 @@ public class ShaderCRT : ShaderScreenBase
     protected virtual Material MaterialPrefabDamageLow { get { return Low; } }
     protected virtual Material MaterialPrefabDamageMedium { get { return Medium; } }
     protected virtual Material MaterialPrefabDamageHigh { get { return High; } }
-    private bool actual_invertx = false, actual_inverty = false;
     protected string damage;
 
     protected static Material Low, Medium, High;
+    protected Vector4? v4Invert;
 
     static ShaderCRT()
     {
@@ -19,7 +19,9 @@ public class ShaderCRT : ShaderScreenBase
         High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRTHigh");
     }
 
-    public ShaderCRT(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
+    public ShaderCRT(Renderer display, int position, Dictionary<string, string> config,
+        CabinetMaterials.MaterialPropertyTranslator translator = null) : 
+        base(display, position, config, translator == null ? new CabinetMaterials.MaterialCRTShaderProperties() :  translator)
     {
 
         material = MaterialPrefabDamageLow;
@@ -62,27 +64,21 @@ public class ShaderCRT : ShaderScreenBase
 
             display.materials[position].SetTexture("_MainTex", t);
             display.materials[position].SetVector("_CRTParameters", crtParameters);
+            if (v4Invert != null)
+                display.materials[position].SetVector("_CRTTiling", (Vector4)v4Invert);
         }
     }
 
     public override void Refresh(Texture texture)
     {
         Texture = texture;
-        Vector4 v4 = new Vector4(actual_invertx ? -1f : 1f, actual_inverty ? -1f : 1f, 0, 0);
-        display.materials[position].SetVector("_CRTTiling", v4);
     }
 
     public override ShaderScreenBase Invert(bool invertx, bool inverty)
     {
-        if (actual_invertx != invertx || actual_inverty != inverty)
-        {
-            Vector4 v4 = new Vector4(invertx ? -1f : 1f, inverty ? -1f : 1f, 0, 0);
-            display.materials[position].SetVector("_CRTTiling", v4);
-            ConfigManager.WriteConsole($"[ShaderCRT.Invert] {invertx}, {inverty} = {v4}");
+        v4Invert = new Vector4(invertx ? -1f : 1f, inverty ? -1f : 1f, 0, 0);
+        display.materials[position].SetVector("_CRTTiling", (Vector4)v4Invert);
 
-            actual_invertx = invertx;
-            actual_inverty = inverty;
-        }
         return this;
     }
 }

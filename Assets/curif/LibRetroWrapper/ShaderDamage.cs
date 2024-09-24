@@ -18,7 +18,8 @@ public class ShaderScreenDamage : ShaderScreenBase
         DamageMedium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenDamageMedium");
     }
 
-    public ShaderScreenDamage(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
+    public ShaderScreenDamage(Renderer display, int position, Dictionary<string, string> config) : 
+        base(display, position, config, null)
     {
         string damage;
         material = DamageLow;

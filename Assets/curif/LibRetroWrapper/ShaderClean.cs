@@ -21,7 +21,8 @@ public class ShaderScreenClean : ShaderScreenBase
         //albedo color in white.
         ScreenClean = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenClean");
     }
-    public ShaderScreenClean(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
+    public ShaderScreenClean(Renderer display, int position, Dictionary<string, string> config) : 
+        base(display, position, config, new CabinetMaterials.MaterialStandardProperties())
     {
         
         material = ScreenClean;
