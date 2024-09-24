@@ -25,6 +25,14 @@ public class MaterialsUtils
         }
     }
 
+    public static void ApplyCabinetConfiguration(Material material, Dictionary<string, string> config) 
+    { 
+        foreach (KeyValuePair<string, string> entry in config)
+        {
+            SetShaderValue(material, entry.Key, entry.Value);
+        }
+    }
+
     private static object GetShaderValue(Material material, MaterialPropertyType type, string propertyName)
     {
         if (!IsPropertySupported(material, type, propertyName))

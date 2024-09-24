@@ -19,7 +19,8 @@ public class ShaderProjector : ShaderScreenBase
         High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Projector_High");
     }
 
-    public ShaderProjector(Renderer display, int position, Dictionary<string, string> config) : base(display, position, config)
+    public ShaderProjector(Renderer display, int position, Dictionary<string, string> config) : 
+        base(display, position, config, new CabinetMaterials.MaterialCRTShaderProperties())
     {
 
         material = MaterialPrefabDamageLow;

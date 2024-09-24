@@ -22,5 +22,4 @@ public class ShaderCRTLOD : ShaderCRT
        base(display, position, config)
     {
     }
-
 }

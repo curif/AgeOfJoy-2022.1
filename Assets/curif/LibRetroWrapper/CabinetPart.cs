@@ -1,8 +1,6 @@
 ﻿using System;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem.HID;
-using UnityEngine.UIElements;
 
 [System.Serializable]
 public class TransformData
@@ -226,8 +224,8 @@ public class CabinetPart : MonoBehaviour
 
 // ==================== MATERIAL ===================
 
-//set the material to a component. Don't create new.
-public CabinetPart SetMaterial(Material mat)
+    //set the material to a component. Don't create new.
+    public CabinetPart SetMaterial(Material mat)
     {
         if (rendererComponent != null)
             rendererComponent.material = mat;
@@ -293,6 +291,7 @@ public CabinetPart SetMaterial(Material mat)
     {
         SetMaterialFromMaterial(CabinetMaterials.VertexColor);
         PaintVertexColorMaterial(color);
+
         return this;
     }
 
@@ -319,6 +318,20 @@ public CabinetPart SetMaterial(Material mat)
             PaintVertexColorMaterial(color);
         else
             mat.color = color;
+        return this;
+    }
+
+    public CabinetPart ApplyUserMaterialConfiguration(Dictionary<string, string> properties)
+    {
+        if (properties.Count == 0)
+            return this;
+
+        Material mat = GetMaterial();
+        if (mat == null)
+            return this;
+        
+        MaterialsUtils.ApplyCabinetConfiguration(mat, properties);
+        
         return this;
     }
 

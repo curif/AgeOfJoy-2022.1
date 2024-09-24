@@ -366,6 +366,9 @@ public class CabinetInformation
         public bool istarget = false; //lightgun
         public Physical physical;
 
+        [YamlMember(Alias = "material-properties", ApplyNamingConventions = false)]
+        public Dictionary<string, string> properties = new Dictionary<string, string>();
+
         // Add audio property
         public CabinetAudioPart speaker;
     }
@@ -521,14 +524,15 @@ public class CabinetInformation
         public string damage = "none";
         public bool invertx = false;
         public bool inverty = false;
-        public string gamma = LibretroMameCore.DefaultGamma;
-        public string brightness = LibretroMameCore.DefaultBrightness;
+        public string gamma = "1.0"; // LibretroMameCore.DefaultGamma;
+        public string brightness = "1.0"; // LibretroMameCore.DefaultBrightness;
+        public Dictionary<string, string> properties = new Dictionary<string, string>();
 
         public Dictionary<string, string> config()
         {
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic["damage"] = damage;
-            return dic;
+            //Dictionary<string, string> dic = new Dictionary<string, string>();
+            properties["damage"] = damage;
+            return properties;
         }
 
         public System.ArgumentException validate()
@@ -541,6 +545,13 @@ public class CabinetInformation
             return null;
         }
 
+    }
+    public class Video
+    {
+        public string file;
+        public bool invertx = false;
+        public bool inverty = false;
+        public Screen screen;
     }
 
     public class RGBColor
@@ -576,14 +587,6 @@ public class CabinetInformation
         {
             return new Color32(r, g, b, a);
         }
-    }
-
-    public class Video
-    {
-        public string file;
-        public bool invertx = false;
-        public bool inverty = false;
-
     }
 
     public static class MameFileType

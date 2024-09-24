@@ -63,18 +63,13 @@ public class AGEBasicScreenController : MonoBehaviour
     public bool InvertX = false;
     [SerializeField]
     public bool InvertY = false;
-
-    [SerializeField]
-    public string ShaderName = "crt";
+    public CabinetInformation.Screen screen = new();
 
     [SerializeField]
     [Tooltip("Path that holds cabinet information.")]
     public string PathBase;
     [Tooltip("Positions where the player can stay to activate videos")]
     public List<AgentScenePosition> AgentPlayerPositions;
-
-    [SerializeField]
-    public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
 
     public Cabinet cabinet;
 
@@ -165,14 +160,14 @@ public class AGEBasicScreenController : MonoBehaviour
             ConfigManager.WriteConsoleError($"[AGEBasicScreenController.Start] {name} Coin Slot not found in cabinet !!!! no one can play this game.");
 
         //material and shader
-        shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
+        shader = ShaderScreen.Factory(display, 1, screen.shader, screen.config());
         // shader hack to replace the CRT for the LOD version in attraction videos (if the user select CRT)
-        if (ShaderName == "crt")
-            videoShader = ShaderScreen.Factory(display, 1, "crtlod", ShaderConfig);
+        if (screen.shader == "crt")
+            videoShader = ShaderScreen.Factory(display, 1, "crtlod", screen.config());
         else
             videoShader = shader;
 
-        ConfigManager.WriteConsole($"[AGEBasicScreenController.Start]  {name} shader created: {shader}");
+        ConfigManager.WriteConsole($"[AGEBasicScreenController.Start]  {name} shader created: {shader} video shader {videoShader}");
 
         mainCoroutine = StartCoroutine(runBT());
 

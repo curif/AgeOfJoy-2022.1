@@ -129,6 +129,12 @@ public static class CabinetFactory
                 {
                     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
                     cp.SetBezel(cbinfo.getPath(p.art.file));
+
+                    if (p.properties.Count > 0)
+                    {
+                        CabinetMaterials.MaterialPropertyTranslator t = new CabinetMaterials.FrontGlassProperties();
+                        cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
+                    }
                 }
                 break;
 
@@ -158,6 +164,12 @@ public static class CabinetFactory
                     //after
                     if (p.color != null && p.marquee.illuminationType != "none")
                         cp.SetMarqueeEmissionColor(p.color, p.marquee.color);
+
+                    if (p.properties.Count > 0)
+                    {
+                        CabinetMaterials.MaterialPropertyTranslator t = new CabinetMaterials.MarqueeProperties();
+                        cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
+                    }
                 }
                 break;
 
@@ -176,16 +188,40 @@ public static class CabinetFactory
                         p.emission == null &&
                         p.transparency == 0)
                         cp.SetMaterial(CabinetMaterials.Black);
+
+                    else if (p.material == null &&
+                            p.art == null &&
+                            p.color != null &&
+                            p.emission == null &&
+                            p.transparency == 0)
+                    {
+                        //vertex color optimization
+                        cp.SetColorVertex(p.color.getColor());
+                        if (p.properties.Count > 0)
+                        {
+                            CabinetMaterials.MaterialPropertyTranslator t = CabinetMaterials.PropertyTranslator("Vertex Color");
+                            cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
+                        }
+                    }
                     else
                     {
                         int pos = cabinet.PartsPosition(p.name); //performance
 
                         ConfigManager.WriteConsole($"[CabinetFactory.skinCabinetPart] #{pos} {p.name}: type: {p.type} material: {p.material} color: {p.color} transp:{p.transparency} emission: {p.emission}");
 
+                        CabinetMaterials.MaterialPropertyTranslator propTranslator;
+
                         if (p.material != null)
-                            cp.SetMaterialFrom(CabinetMaterials.fromName(p.material));
+                        {
+                            Material mat = CabinetMaterials.fromName(p.material);
+                            cp.SetMaterialFrom(mat);
+                            propTranslator = CabinetMaterials.PropertyTranslator(p.material);
+                        }
                         else
+                        {
                             cp.ForceMaterialBase();
+                            propTranslator = CabinetMaterials.PropertyTranslator("base");
+                        }
 
                         if (p.art != null)
                               cp.SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
@@ -216,15 +252,9 @@ public static class CabinetFactory
                                   .ActivateEmission(p.emission.emissive);
                         }
 
-                        //vertex color optimization
-                        if (p.material == null &&
-                            p.art == null &&
-                            p.color != null &&
-                            p.emission == null &&
-                            p.transparency == 0)
-                        {
-                            cp.SetColorVertex(p.color.getColor());
-                        }
+                        //apply user configuration
+                        cp.ApplyUserMaterialConfiguration(propTranslator.Translate(p.properties));
+                        
                     }
                 }
                 break;
