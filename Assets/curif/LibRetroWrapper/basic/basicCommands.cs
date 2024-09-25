@@ -67,6 +67,7 @@ public static class Commands
         functions["INDEXMEMBER"] = typeof(CommandFunctionINDEXMEMBER);
         functions["REMOVEMEMBER"] = typeof(CommandFunctionREMOVEMEMBER);
         functions["ADDMEMBER"] = typeof(CommandFunctionADDMEMBER);
+        functions["STRINGMATCH"] = typeof(CommandFunctionSTRINGMATCH);
         
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
@@ -78,6 +79,12 @@ public static class Commands
         functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
         functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
         functions["MUSICPATH"] = typeof(CommandFunctionMUSICPATH);
+        functions["DEBUGPATH"] = typeof(CommandFunctionDEBUGPATH);
+        functions["FILEOPEN"] = typeof(CommandFunctionFILEOPEN);
+        functions["FILEREAD"] = typeof(CommandFunctionFILEREAD);
+        functions["FILECLOSE"] = typeof(CommandFunctionFILECLOSE);
+        functions["FILEEOF"] = typeof(CommandFunctionFILEEOF);
+        functions["FILEWRITE"] = typeof(CommandFunctionFILEWRITE);
 
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
