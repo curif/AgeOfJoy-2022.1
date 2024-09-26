@@ -134,6 +134,12 @@ public static class FunctionHelper
             throw new Exception("Parameter should be a number " + msg);
         return true;
     }
+    public static bool ExpectedNotNull(BasicValue val, string msg = "")
+    {
+        if (val == null)
+            throw new Exception("Missing parameter " + msg);
+        return true;
+    }
     public static bool ExpectedString(BasicValue val, string msg = "")
     {
         if (!val.IsString())

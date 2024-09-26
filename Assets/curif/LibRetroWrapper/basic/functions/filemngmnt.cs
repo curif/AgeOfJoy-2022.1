@@ -210,6 +210,9 @@ class CommandFunctionFILEOPEN : CommandFunctionExpressionListBase
 
         // Execute the expression list to get file path and mode
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - mode");
+
         string filePath = vals[0].GetValueAsString();
         string mode = vals[1].GetValueAsString().ToUpper(); // Mode should be case-insensitive
 
@@ -280,6 +283,7 @@ class CommandFunctionFILEREAD : CommandFunctionSingleExpressionBase
 
         // Execute the expression to get the file number
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val, " - file pointer");
         int fileNumber = val.GetInt();
 
         // Check if the file pointer position is valid
@@ -327,6 +331,7 @@ class CommandFunctionFILECLOSE : CommandFunctionSingleExpressionBase
 
         // Execute the expression to get the file number
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val, " - file pointer");
         int fileNumber = val.GetInt();
 
         // Check if the file pointer position is valid
@@ -366,6 +371,9 @@ class CommandFunctionFILEWRITE : CommandFunctionExpressionListBase
 
         // Execute the expression list to get the file number and string to write
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[0], " - file pointer");
+        FunctionHelper.ExpectedString(vals[1], " - string to write");
+
         int fileNumber = vals[0].GetInt();
         string contentToWrite = vals[1].GetValueAsString();
 
@@ -417,6 +425,7 @@ class CommandFunctionFILEEOF : CommandFunctionSingleExpressionBase
 
         // Execute the expression to get the file number
         BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val, " - file pointer");
         int fileNumber = val.GetInt();
 
         // Check if the file pointer position is valid
@@ -439,5 +448,35 @@ class CommandFunctionFILEEOF : CommandFunctionSingleExpressionBase
 
         // Return 1 if at EOF, otherwise return 0
         return new BasicValue(isEOF);
+    }
+}
+class CommandFunctionFILEEXIST : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionFILEEXIST(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "FILEEXIST";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        // Execute the expression to get the file path
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val, " - file path");
+
+        string filePath = val.GetValueAsString();
+
+        // Check if the file path is valid
+        if (string.IsNullOrEmpty(filePath))
+        {
+            return new BasicValue(0); // Return 0 if the file path is invalid or empty
+        }
+
+        // Check if the file exists at the specified path
+        bool fileExists = File.Exists(filePath);
+
+        // Return 1 if the file exists, otherwise return 0
+        return new BasicValue(fileExists ? 1 : 0);
     }
 }
