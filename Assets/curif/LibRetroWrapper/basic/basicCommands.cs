@@ -10,7 +10,6 @@ public static class Commands
     {
         commands["REM"] = typeof(CommandREM);
         commands["'"] = typeof(CommandREM2);
-        commands["PRINT"] = typeof(CommandPRINT);
         commands["LET"] = typeof(CommandLET);
         commands["LETS"] = typeof(CommandLETS);
         commands["GOTO"] = typeof(CommandGOTO);
@@ -26,6 +25,7 @@ public static class Commands
         //screen
         commands["CLS"] = typeof(CommandCLS);
         commands["PRINT"] = typeof(CommandPRINT);
+        commands["PRINTLN"] = typeof(CommandPRINTLN);
         commands["SHOW"] = typeof(CommandSHOW);
         commands["FGCOLOR"] = typeof(CommandFGCOLOR);
         commands["BGCOLOR"] = typeof(CommandBGCOLOR);
@@ -85,7 +85,8 @@ public static class Commands
         functions["FILECLOSE"] = typeof(CommandFunctionFILECLOSE);
         functions["FILEEOF"] = typeof(CommandFunctionFILEEOF);
         functions["FILEWRITE"] = typeof(CommandFunctionFILEWRITE);
-
+        functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXIST);
+        
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
         functions["TYPE"] = typeof(CommandFunctionTYPE);
