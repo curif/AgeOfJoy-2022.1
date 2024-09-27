@@ -5,6 +5,8 @@ using System.IO;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
+using UnityEngine.Events;
+
 
 
 #if UNITY_EDITOR
@@ -91,6 +93,13 @@ public class basicAGE : MonoBehaviour
     public PlayerController Player;
     public XROrigin PlayerOrigin;
     public GameObject PlayerControllerGameObject;
+
+
+    [System.Serializable]
+    public class AGEBasicEvent : UnityEvent<string> { }
+
+    public AGEBasicEvent OnProgramStarted;
+    public AGEBasicEvent OnProgramEnded;
 
     bool initialized = false;
 
@@ -319,10 +328,10 @@ public class basicAGE : MonoBehaviour
 
     }
 
-    public void Run(string name, bool blocking = false, BasicVars pvars = null,
+    public void Run(string programName, bool blocking = false, BasicVars pvars = null,
                         int maxExecutionLinesAllowed = 10000)
     {
-        PrepareToRun(name, pvars, maxExecutionLinesAllowed);
+        PrepareToRun(programName, pvars, maxExecutionLinesAllowed);
 
         if (!blocking)
         {
@@ -330,6 +339,7 @@ public class basicAGE : MonoBehaviour
             return;
         }
 
+        OnProgramStarted.Invoke(running.Name);
         bool moreLines = true;
         while (moreLines)
         {
@@ -338,6 +348,8 @@ public class basicAGE : MonoBehaviour
 
         if (configCommands.DebugMode)
             SaveDebug(running.Name, null, LastRuntimeException);
+        
+        OnProgramEnded.Invoke(running.Name);
 
         running = null;
         Status = ProgramStatus.Finished;
@@ -415,6 +427,9 @@ public class basicAGE : MonoBehaviour
     // run a complete program in a coroutine
     IEnumerator runProgram()
     {
+        string runningProgram = running.Name;
+        OnProgramStarted.Invoke(runningProgram);
+
         InitComponents();
 
         ConfigManager.WriteConsole($"[BasicAGE.runProgram] START {running.Name}");
@@ -427,6 +442,9 @@ public class basicAGE : MonoBehaviour
             yield = runNextLineCurrentProgram(ref moreLines);
             yield return yield;
         }
+        configCommands.CloseFiles();
+        OnProgramEnded.Invoke(runningProgram);
+
         yield break;
     }
 
@@ -501,6 +519,7 @@ public class basicAGE : MonoBehaviour
             string strerror = errorMessage(running, e);
             ConfigManager.WriteConsoleError($"[BasicAGE.RunALine] {strerror}");
             LastRuntimeException = new(running.Name, configCommands.LineNumber, e.Message, e);
+            configCommands.CloseFiles();
             return false;
         }
     }

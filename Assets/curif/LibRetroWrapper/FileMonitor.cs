@@ -9,18 +9,69 @@ using System.Threading;
 public class FileMonitor : MonoBehaviour
 {
     public string ConfigFileName = ""; // change this to the path of the file you want to monitor
+    public string ConfigPath = "";
     public float Interval = 2f; // interval in seconds to check for changes
     public UnityEvent OnFileChanged;
 
     private DateTime lastWriteTime;
-    private string filePath;
+
+    private FileSystemWatcher fileWatcher;
 
     private object lockFile = new();
     void Start()
     {
+        if (string.IsNullOrEmpty(ConfigPath))
+            ConfigPath = ConfigManager.ConfigDir;
+
+        ///filePath = Path.Combine(ConfigPath, ConfigFileName);
+        //ConfigManager.WriteConsole($"[FileMonitor.monitor]: file {filePath} ");
+
+        StartMonitor(ConfigPath, ConfigFileName);
+        // Initialize the FileSystemWatcher
+        
         // get the initial last write time of the file
-        StartCoroutine(monitor());
+        //StartCoroutine(monitor());
     }
+    public void StartMonitor(string path, string fileName)
+    {
+        if (fileWatcher != null)
+            fileWatcher.Dispose();
+
+        ConfigPath = path;
+        ConfigFileName = fileName;
+        fileWatcher = new FileSystemWatcher
+        {
+            Path = ConfigPath,
+            Filter = ConfigFileName, // Specify the file name
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName //changed or created
+        };
+
+        // Add event handlers
+        fileWatcher.Changed += OnChanged;
+        fileWatcher.Created += OnChanged;
+
+        // Begin watching
+        fileWatcher.EnableRaisingEvents = true;
+    }
+    private void OnChanged(object sender, FileSystemEventArgs e)
+    {
+        ConfigManager.WriteConsole($"[FileMonitor]: changed {ConfigFileName} ");
+        OnFileChanged.Invoke();
+    }
+
+    private void OnDestroy()
+    {
+        // Clean up the FileSystemWatcher
+        if (fileWatcher != null)
+        {
+            fileWatcher.EnableRaisingEvents = false;
+            fileWatcher.Changed -= OnChanged;
+            fileWatcher.Created -= OnChanged;
+            fileWatcher.Dispose();
+        }
+
+    }
+
     public void fileLock()
     {
         Monitor.Enter(lockFile);
@@ -29,7 +80,7 @@ public class FileMonitor : MonoBehaviour
     {
         Monitor.Exit(lockFile);
     }
-
+    /*
     IEnumerator monitor()
     {
         DateTime currentLastWriteTime;
@@ -40,7 +91,7 @@ public class FileMonitor : MonoBehaviour
             yield return new WaitForSeconds(1f);
         }
 
-        filePath = ConfigManager.ConfigDir + "/" + ConfigFileName;
+        filePath = Path.Combine(ConfigPath, ConfigFileName);
         ConfigManager.WriteConsole($"[FileMonitor.monitor]: file {filePath} ");
 
         lock (lockFile)
@@ -71,6 +122,6 @@ public class FileMonitor : MonoBehaviour
                 lastWriteTime = currentLastWriteTime;
             }
         }
-    }
+    }*/
 }
 

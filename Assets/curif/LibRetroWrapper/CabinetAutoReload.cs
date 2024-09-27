@@ -15,6 +15,7 @@ public class CabinetAutoReload : MonoBehaviour
     [Tooltip("Positions where the player can stay to load the cabinet")]
     public List<AgentScenePosition> AgentPlayerPositions;
     public BackgroundSoundController backgroundSoundController;
+    public CabinetDebugConsole debugConsole;
 
     static string testCabinetDir;
     static string testDescriptionCabinetFile;
