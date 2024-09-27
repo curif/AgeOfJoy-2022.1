@@ -14,6 +14,12 @@ public class BackgroundSoundController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        if (RoomConfigurationGameObject == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[BackgroundSoundController] {name} Devs must set the Room Configuration game object. This background sound controller can't run. EXIT.");
+            return;
+        }
+
         roomConfiguration = RoomConfigurationGameObject.GetComponent<RoomConfiguration>();
         OnEnable();
         change();

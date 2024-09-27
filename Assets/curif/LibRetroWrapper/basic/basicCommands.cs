@@ -10,7 +10,6 @@ public static class Commands
     {
         commands["REM"] = typeof(CommandREM);
         commands["'"] = typeof(CommandREM2);
-        commands["PRINT"] = typeof(CommandPRINT);
         commands["LET"] = typeof(CommandLET);
         commands["LETS"] = typeof(CommandLETS);
         commands["GOTO"] = typeof(CommandGOTO);
@@ -26,6 +25,7 @@ public static class Commands
         //screen
         commands["CLS"] = typeof(CommandCLS);
         commands["PRINT"] = typeof(CommandPRINT);
+        commands["PRINTLN"] = typeof(CommandPRINTLN);
         commands["SHOW"] = typeof(CommandSHOW);
         commands["FGCOLOR"] = typeof(CommandFGCOLOR);
         commands["BGCOLOR"] = typeof(CommandBGCOLOR);
@@ -67,6 +67,7 @@ public static class Commands
         functions["INDEXMEMBER"] = typeof(CommandFunctionINDEXMEMBER);
         functions["REMOVEMEMBER"] = typeof(CommandFunctionREMOVEMEMBER);
         functions["ADDMEMBER"] = typeof(CommandFunctionADDMEMBER);
+        functions["STRINGMATCH"] = typeof(CommandFunctionSTRINGMATCH);
         
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
@@ -78,7 +79,14 @@ public static class Commands
         functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
         functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
         functions["MUSICPATH"] = typeof(CommandFunctionMUSICPATH);
-
+        functions["DEBUGPATH"] = typeof(CommandFunctionDEBUGPATH);
+        functions["FILEOPEN"] = typeof(CommandFunctionFILEOPEN);
+        functions["FILEREAD"] = typeof(CommandFunctionFILEREAD);
+        functions["FILECLOSE"] = typeof(CommandFunctionFILECLOSE);
+        functions["FILEEOF"] = typeof(CommandFunctionFILEEOF);
+        functions["FILEWRITE"] = typeof(CommandFunctionFILEWRITE);
+        functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXIST);
+        
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
         functions["TYPE"] = typeof(CommandFunctionTYPE);

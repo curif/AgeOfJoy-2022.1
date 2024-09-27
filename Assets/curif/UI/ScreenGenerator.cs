@@ -27,6 +27,7 @@ public class ScreenGenerator : MonoBehaviour
     private int ScreenHeight; // Height of the target texture
     private int centerStartX;
     private int centerStartY;
+    private int lastX, lastY;
 
     private bool needsDraw = false;
 
@@ -221,10 +222,8 @@ public class ScreenGenerator : MonoBehaviour
             return 0;
         }
 
-        int startY = y;
-
         // Loop through all the characters in the text string
-        int charpos = x;
+        int startY = y;
         int i = 0;
         while (i < text.Length)
         {
@@ -232,7 +231,7 @@ public class ScreenGenerator : MonoBehaviour
             char c = text[i++];
             if (c == '\n')
             {
-                NextLine(ref charpos, ref y);
+                NextLine(ref x, ref y);
             }
             else if (c == '\\')
             {
@@ -257,34 +256,52 @@ public class ScreenGenerator : MonoBehaviour
                     {
                         index = '\\';
                     }
-                    PrintCharPosition((char)index, ref charpos, ref y, fgColor, bgColor, false);
+                    PrintCharPosition((char)index, ref x, ref y, fgColor, bgColor, false);
 
                 }
                 else
                 {
-                    PrintCharPosition('\\', ref charpos, ref y, fgColor, bgColor);
+                    PrintCharPosition('\\', ref x, ref y, fgColor, bgColor);
                 }
             }
             else
             {
-                PrintCharPosition(c, ref charpos, ref y, fgColor, bgColor);
+                PrintCharPosition(c, ref x, ref y, fgColor, bgColor);
             }
 
             //ConfigManager.WriteConsole($"[ScreenGenerator.Print]char:[{c}] position: {index}");
         }
-
+        //ready for the next line
+        lastY++;
+        lastX = 0;
         return (y - startY) + 1;
     }
 
+    public int Print(string text, bool inverted = false)
+    { 
+        return Print(lastX, lastY, text, inverted);
+    }
+
+    public void Locate(int x, int y)
+    {
+        // Check if the coordinates are valid
+        if (x < 0 || x >= CharactersXCount || y < 0 || y >= CharactersYCount)
+            return;
+        lastX = x; lastY = y;
+    }
     private void PrintCharPosition(char charNum, ref int x, ref int y, Color32 fgColor, Color32 bgColor, bool translate = true)
     {
         PrintChar(x, y, charNum, fgColor, bgColor, translate);
 
         x++;
+
         if (x >= CharactersXCount)
         {
             NextLine(ref x, ref y);
         }
+
+        lastY = y;
+        lastX = x;
     }
 
     private void NextLine(ref int x, ref int y)
@@ -323,6 +340,7 @@ public class ScreenGenerator : MonoBehaviour
                                 ScreenWidth, ScreenHeight,
                                 colorsBackgroundMatrix);
         needsDraw = true;
+        Locate(0, 0);
         return this;
     }
 
