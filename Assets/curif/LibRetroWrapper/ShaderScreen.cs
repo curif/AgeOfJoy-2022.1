@@ -8,16 +8,25 @@ public abstract class ShaderScreenBase
     protected int position;
     protected Renderer display;
     protected Material material;
+    Dictionary<string, string> configuration;
+    CabinetMaterials.MaterialPropertyTranslator translator;
 
     public static Texture2D StandByTexture { get; private set; }
     static ShaderScreenBase()
     {
         StandByTexture = Resources.Load<Texture2D>("Cabinets/OutOfOrder/Prefab/CRTOff");
     }
-    protected ShaderScreenBase(Renderer display, int position, Dictionary<string, string> config)
+    protected ShaderScreenBase(Renderer display, int position, Dictionary<string, string> config, CabinetMaterials.MaterialPropertyTranslator translator)
     {
         this.position = position;
         this.display = display;
+        if (translator != null)
+        {
+            this.translator = translator;
+            this.translator.Translate(config);
+        }
+
+        this.configuration = config;
     }
     public abstract string Name { get; }
     public abstract ShaderScreenBase Invert(bool invertx, bool inverty);
@@ -27,6 +36,8 @@ public abstract class ShaderScreenBase
     }
     public virtual void Update() { }
 
+
+  
     // sets the material to the display
     public virtual void Activate(Texture texture = null)
     {
@@ -58,6 +69,7 @@ public abstract class ShaderScreenBase
 
     public void ApplyConfiguration()
     {
+        MaterialsUtils.ApplyCabinetConfiguration(material, configuration);
         MaterialsUtils.ApplyConfiguration(material);
     }
 }

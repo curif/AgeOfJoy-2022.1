@@ -15,6 +15,7 @@ public class CabinetAutoReload : MonoBehaviour
     [Tooltip("Positions where the player can stay to load the cabinet")]
     public List<AgentScenePosition> AgentPlayerPositions;
     public BackgroundSoundController backgroundSoundController;
+    public CabinetDebugConsole debugConsole;
 
     static string testCabinetDir;
     static string testDescriptionCabinetFile;
@@ -154,6 +155,12 @@ public class CabinetAutoReload : MonoBehaviour
             return false;
         }
 
+
+        //force debug mode:
+        cbInfo.debug = true;
+        //
+
+
         try
         {
             CabinetDBAdmin.MoveMameFiles(cbInfo);
@@ -215,7 +222,7 @@ public class CabinetAutoReload : MonoBehaviour
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
-            CabinetInformation.showCabinetProblems(cbInfo, moreProblems: ex.Message);
+            CabinetInformation.showCabinetProblems(cbInfo, moreProblems: ex.Message, "test");
             return false;
         }
     }

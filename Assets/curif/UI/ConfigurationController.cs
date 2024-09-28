@@ -240,6 +240,8 @@ public class ConfigurationController : MonoBehaviour
     private List<string> inputKeys;
 
     private ShaderScreenBase shader;
+    private ShaderScreenBase shaderOffLine;
+
     private Renderer display;
 
 
@@ -247,7 +249,7 @@ public class ConfigurationController : MonoBehaviour
     void Start()
     {
         ConfigManager.WriteConsole("[ConfigurationController] start");
-        
+
         gameObject.tag = "screenControlCabinet";
 
         if (changeControls == null)
@@ -1202,17 +1204,25 @@ public class ConfigurationController : MonoBehaviour
 
         Dictionary<string, string> shaderConfig = new Dictionary<string, string>();
         shaderConfig["damage"] = "none";
-        shader = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
+        shader = ShaderScreen.Factory(display, 1, "crt", shaderConfig);
+        shaderOffLine = ShaderScreen.Factory(display, 1, "crtlod", shaderConfig);
 
         ConfigInformation config = configHelper.getConfigInformation(true);
 
         scr.Init(config.system_skin);
-        scr.ActivateShader(shader);
+        ActivateShader();
         scr.ClearBackground();
         scr.Clear();
         scr.PrintCentered(1, "BIOS ROM firmware loaded", true);
         scr.PrintCentered(2, GetRoomDescription());
         scr.DrawScreen();
+    }
+    void ActivateShader(bool isRunning = false)
+    {
+        if (isRunning)
+            scr.ActivateShader(shader);
+        else
+            scr.ActivateShader(shaderOffLine);
     }
 
     IEnumerator run()
@@ -1389,10 +1399,11 @@ public class ConfigurationController : MonoBehaviour
 
             .Sequence("Insert coin")
               .Condition("Waiting for coin", () => status == StatusOptions.waitingForCoin)
-              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()) /*|| 
-                        ControlActive("INSERT")*/)
+              .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()))
               .Do("coin inserted", () =>
                 {
+                    ActivateShader(true);
+
                     scr.Clear();
                     bootScreen.Reset();
                     ControllersEnable(true);
@@ -1939,7 +1950,8 @@ public class ConfigurationController : MonoBehaviour
               .Do("exit", () =>
               {
                   ConfigManager.WriteConsole($"[ConfigurationController] EXIT ");
-
+                  
+                  ActivateShader(false);
 
                   cleanActionMap();
                   ControllersEnable(false);

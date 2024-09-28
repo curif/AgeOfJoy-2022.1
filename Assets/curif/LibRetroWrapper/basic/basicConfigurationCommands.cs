@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -53,4 +54,20 @@ public class ConfigurationCommands
     public List<Event> events;
 
     public LightGunTarget lightGunTarget;
+
+    // File pointer array with 256 positions, initialized to null
+    public AGEBasicUserFile[] filepointer = new AGEBasicUserFile[256];
+
+    public void CloseFiles()
+    {
+        for (int i = 0; i < filepointer.Length; i++)
+        {
+            if (filepointer[i] != null)
+            {
+                filepointer[i].file.Close();
+                filepointer[i].file.Dispose();
+                filepointer[i].file = null;
+            }
+        }
+    }
 }

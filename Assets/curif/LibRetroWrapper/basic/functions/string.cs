@@ -361,3 +361,33 @@ class CommandFunctionADDMEMBER : CommandFunctionExpressionListBase
             separatedList + separator + member);
     }
 }
+class CommandFunctionSTRINGMATCH : CommandFunctionExpressionListBase
+{
+    public CommandFunctionSTRINGMATCH(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "STRINGMATCH";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        // Parse expects two values: the string and the pattern
+        return base.Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        // Execute the expressions to get the string and pattern
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        string inputString = vals[0].GetValueAsString();
+        string pattern = vals[1].GetValueAsString();
+
+        // Check if the pattern is in the string
+        bool isMatch = inputString.Contains(pattern);
+
+        // Return 1 if the pattern is found, 0 otherwise
+        return new BasicValue(isMatch ? 1 : 0);
+    }
+}
+

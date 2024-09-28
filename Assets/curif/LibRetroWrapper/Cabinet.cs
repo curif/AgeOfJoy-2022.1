@@ -635,8 +635,6 @@ public class Cabinet
         string gamma = cbinfo.crt.screen.gamma ?? "1.0";
         string brightness = cbinfo.crt.screen.brightness ?? "1.0";
         List<AgentScenePosition> agentPlayerPositions = _agentPlayerPositions;
-        string shaderName = cbinfo.crt.screen.shader ?? "damage";
-        Dictionary<string, string> shaderConfig = cbinfo.crt.screen.config();
         ControlMapConfiguration cabinetControlMap = cbinfo.ControlMap;
         LightGunInformation lightGunInformation = cbinfo.lightGunInformation;
         CabinetAGEBasicInformation agebasic = cbinfo.agebasic;
@@ -686,8 +684,6 @@ public class Cabinet
             AGEBasicScreenController ageb = newCRT.GetComponent<AGEBasicScreenController>();
             ageb.PathBase = pathBase;
             ageb.cabinet = this;
-            ageb.ShaderName = shaderName;
-            ageb.ShaderConfig = shaderConfig;
 
             ageb.AgentPlayerPositions = agentPlayerPositions;
 
@@ -723,17 +719,17 @@ public class Cabinet
             libretroScreenController.PathBase = pathBase;
             libretroScreenController.InsertCoinOnStartup = insertCoinOnStartup;
 
+            //needs refactor
             libretroScreenController.GameInvertX = invertX;
             libretroScreenController.GameInvertY = invertY;
             libretroScreenController.Gamma = gamma;
             libretroScreenController.Brightness = brightness;
+            libretroScreenController.screen = cbinfo.crt.screen;
+
             libretroScreenController.cabinet = this;
             libretroScreenController.Core = core;
             libretroScreenController.Persistent = persistent;
             libretroScreenController.LibretroInputDevices = libretroInputDevices;
-
-            libretroScreenController.ShaderName = shaderName;
-            libretroScreenController.ShaderConfig = shaderConfig;
 
             libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
 
@@ -741,6 +737,7 @@ public class Cabinet
             libretroScreenController.GameVideoFile = GameVideoFile;
             libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
             libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
+            libretroScreenController.GameVideoConfig = cbinfo.video;
 
             //control mapping
             libretroScreenController.CabinetControlMapConfig = cabinetControlMap;

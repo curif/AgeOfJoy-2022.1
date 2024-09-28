@@ -45,6 +45,9 @@ public class LibretroScreenController : MonoBehaviour
     public bool GameVideoInvertX = false;
     [SerializeField]
     public bool GameVideoInvertY = false;
+    public CabinetInformation.Video GameVideoConfig;
+
+
     public GameVideoPlayer videoPlayer;
 
     [SerializeField]
@@ -84,9 +87,6 @@ public class LibretroScreenController : MonoBehaviour
     public string Core = "mame2003+";
 
     [SerializeField]
-    public string ShaderName = "crt";
-
-    [SerializeField]
     public bool? Persistent;
 
     [SerializeField]
@@ -96,7 +96,7 @@ public class LibretroScreenController : MonoBehaviour
     public List<AgentScenePosition> AgentPlayerPositions;
 
     [SerializeField]
-    public Dictionary<string, string> ShaderConfig = new Dictionary<string, string>();
+    public CabinetInformation.Screen screen;
 
     [Header("Audio Settings")]
     public AudioMixerGroup audioMixerAttractMode;
@@ -201,19 +201,35 @@ public class LibretroScreenController : MonoBehaviour
         if (CoinSlot == null)
             ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} Coin Slot not found in cabinet !!!! no one can play this game.");
 
-        //material and shader
-        // shader hack to replace the CRT for the LOD version in attraction videos (if the user select CRT)
-        if (ShaderName == "crt")
-            videoShader = ShaderScreen.Factory(display, 1, "crtlod", ShaderConfig);
-        else
-            videoShader = ShaderScreen.Factory(display, 1, "clean", ShaderConfig);
-
+        //material and shader---------------------
         if (globalConfiguration.Configuration.cabinet.forcedShader != null)
-            ShaderName = globalConfiguration.Configuration.cabinet.forcedShader;
-        shader = ShaderScreen.Factory(display, 1, ShaderName, ShaderConfig);
-        ConfigManager.WriteConsole($"[LibretroScreenController.Start]  {name} shader created: {shader}");
+            shader = ShaderScreen.Factory(display, 1, globalConfiguration.Configuration.cabinet.forcedShader, screen.config());
+        else
+            shader = ShaderScreen.Factory(display, 1, screen.shader, screen.config());
 
-        // age basic
+        //video shader
+        if (GameVideoConfig?.screen != null)
+        {
+            //uses the same shader than the game
+            //defaults to "crt".
+            if (GameVideoConfig.screen.shader == "crt") //the defaul in Screen.
+                // hack to avoid the crt shader and change it for the lod version
+                videoShader = ShaderScreen.Factory(display, 1, "crtlod", GameVideoConfig.screen.config());
+            else
+                videoShader = ShaderScreen.Factory(display, 1, GameVideoConfig.screen.shader, GameVideoConfig.screen.config());
+        }
+        else
+        {
+            //if game crt -> crt lod else clean
+            if (screen.shader == "crt")
+                // hack to avoid the crt shader and change it for the lod version
+                videoShader = ShaderScreen.Factory(display, 1, "crtlod", screen.config());
+            else
+                videoShader = ShaderScreen.Factory(display, 1, "clean", screen.config());
+        }
+        ConfigManager.WriteConsole($"[LibretroScreenController.Start] {name} game shader created: {videoShader} game shader: {shader}");
+
+        // age basic ---------------------
         if (ageBasicInformation != null)
         {
             cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);

@@ -116,7 +116,9 @@ public class GameVideoPlayer : MonoBehaviour
             videoPlayer.isLooping = true;
             if (videoPlayer.canSetSkipOnDrop)
                 videoPlayer.skipOnDrop = true;
+            shader.ApplyConfiguration();
             shader.Invert(invertx, inverty);
+
             videoPlayer.texture.filterMode = FilterMode.Bilinear;
             videoPlayer.texture.anisoLevel = 0;
             shader.Activate(videoPlayer.texture);

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 
 class CommandPRINT : ICommandBase
 {
@@ -18,46 +16,113 @@ class CommandPRINT : ICommandBase
     public bool Parse(TokenConsumer tokens)
     {
         exprs.Parse(tokens);
-        if (exprs.Count < 3)
-            throw new Exception($"{CmdToken}() parameter/s missing, expected x,y, expr, 1/0.");
         return true;
     }
 
     public BasicValue Execute(BasicVars vars)
     {
+        BasicValue str;
+        BasicValue inverted = new BasicValue(false);
+        BasicValue draw = new BasicValue(true);
+        int x,y;
+
+        // print x,y, text/number              = 3 par
+        // print x,y, text/number, inv         = 4 par
+        // print x,y, text/number, inv, draw   = 5 par
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.ScreenGenerator == null)
             return null;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+
         FunctionHelper.ExpectedNumber(vals[0], " - pos X");
         FunctionHelper.ExpectedNumber(vals[1], " - pos Y");
 
-        int x = (int)vals[0].GetValueAsNumber();
-        int y = (int)vals[1].GetValueAsNumber();
+        x = vals[0].GetInt();
+        y = vals[1].GetInt();
 
         if (x < 0 || x >= config.ScreenGenerator.CharactersXCount)
             throw new Exception($"printing out of screen (width): {x} : {config.ScreenGenerator.CharactersXCount}");
         if (y < 0 || y >= config.ScreenGenerator.CharactersYCount)
             throw new Exception($"printing out of screen (height): {y} : {config.ScreenGenerator.CharactersYCount}");
 
-        BasicValue str = new BasicValue(vals[2]);
+        str = new BasicValue(vals[2]);
+
+        if (vals[3] != null)
+            inverted = vals[3];
+
+        if (vals[4] != null)
+            draw = vals[4];
+
         if (str.IsNumber())
             str.CastTo(BasicValue.BasicValueType.String);
-        string text = str.GetValueAsString();
 
-        bool inverted = false;
-        if (vals[3] != null)
-            inverted = vals[3].GetValueAsNumber() != 0;
-        bool draw = true;
-        if (vals[4] != null)
-            draw = vals[4].GetValueAsNumber() != 0;
+        string text = str.GetValueAsString();
 
         AGEBasicDebug.WriteConsole($"print {x}, {y}, {text}, {inverted}  ");
         config.ScreenGenerator.Print(x, y,
-                                     text,
-                                     inverted);
-        if (draw)
+                                        text,
+                                        inverted.GetBoolean());
+
+        if (draw.GetBoolean())
+            config.ScreenGenerator.DrawScreen();
+
+        return null;
+    }
+
+}
+
+
+class CommandPRINTLN : ICommandBase
+{
+    public string CmdToken { get; } = "PRINTLN";
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    ConfigurationCommands config;
+    CommandExpressionList exprs;
+
+    public CommandPRINTLN(ConfigurationCommands configuration)
+    {
+        this.config = configuration;
+        this.exprs = new(configuration);
+    }
+
+    public bool Parse(TokenConsumer tokens)
+    {
+        exprs.Parse(tokens);
+        return true;
+    }
+
+    public BasicValue Execute(BasicVars vars)
+    {
+        BasicValue str;
+        BasicValue inverted = new BasicValue(false);
+        BasicValue draw = new BasicValue(true);
+
+        // print text/number                   = 1 par
+        // print text/number, inv              = 2 par
+        // print text/number, inv, draw        = 3 par
+
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.ScreenGenerator == null)
+            return null;
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNotNull(vals[0], " - content to print.");
+
+        str = new BasicValue(vals[0]);
+
+        if (vals[1] != null)
+            inverted = vals[1];
+
+        if (vals[2] != null)
+            draw = vals[2];
+
+        if (str.IsNumber())
+            str.CastTo(BasicValue.BasicValueType.String);
+
+        config.ScreenGenerator.Print(str.GetValueAsString(), inverted.GetBoolean());
+
+        if (draw.GetBoolean())
             config.ScreenGenerator.DrawScreen();
 
         return null;

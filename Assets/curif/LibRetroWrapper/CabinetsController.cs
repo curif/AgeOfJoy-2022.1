@@ -11,6 +11,7 @@ using System;
 using System.IO;
 using UnityEngine.XR.Interaction.Toolkit;
 using static ConfigInformation;
+using static CabinetInformation;
 
 //distribute cabinets games in the room for respawn.
 
@@ -483,7 +484,12 @@ public class CabinetsController : MonoBehaviour
             return;
         }
 
+        //Check player position in room and cabinet status.
         if (!cc.LoadIsAllowed())
+            return;
+
+        //player should be static for first load.
+        if (!cc.PlayerIsStatic())
             return;
 
         //never loaded. Load from disk/cache
@@ -537,17 +543,10 @@ public class CabinetsController : MonoBehaviour
 
         if (cc.game.CabInfo.Parts != null)
         {
-            ConfigManager.WriteConsole($"[CabinetController] {cc.game.CabInfo.name} texture parts");
+            ConfigManager.WriteConsole($"[CabinetController] {cc.game.CabInfo.name} texture parts coroutine");
             foreach (CabinetInformation.Part part in cc.game.CabInfo.Parts)
             {
-                try
-                {
-                    CabinetFactory.skinCabinetPart(cab, cc.game.CabInfo, part);
-                }
-                catch (System.Exception ex)
-                {
-                    ConfigManager.WriteConsoleException($"[CabinetController] skinCabinetPart {cc.game.CabInfo.name}", ex);
-                }
+                StartCoroutine(skinCabinetPartCoroutine(cab, cc.game.CabInfo, part));
             }
         }
 
@@ -570,6 +569,19 @@ public class CabinetsController : MonoBehaviour
         cci.ActivateReplacement();
         ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {cc.game.CabInfo.name} ******");
 
+    }
+
+    IEnumerator skinCabinetPartCoroutine(Cabinet cab, CabinetInformation cbinfo, CabinetInformation.Part part)
+    {
+        try
+        {
+            CabinetFactory.skinCabinetPart(cab, cbinfo, part);
+        }
+        catch (System.Exception ex)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetController] skinCabinetPartCoroutine {cbinfo.name} part: {part.name}", ex);
+        }
+        yield return null;
     }
 
     void OnEnable()

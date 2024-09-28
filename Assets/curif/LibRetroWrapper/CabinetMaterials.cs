@@ -10,7 +10,7 @@ using System.Collections.Generic;
 public static class CabinetMaterials {
 
     public static Material Base; //uses the shade mobile/difusse
-    public static Material Black; 
+    public static Material Black;
     public static Material LightWood;
     public static Material DarkWood;
     public static Material Plastic;
@@ -28,9 +28,108 @@ public static class CabinetMaterials {
     // public static Material CoinSlotPlastic;
     // public static Material CoinSlotPlasticDouble;
     // public static Material LeftOrRight; //the material used with stickers in the sides of the cabinet.
-    
+
     //list of the materials by his name, usefull in serialization
-    public static Dictionary<string, Material> materialList = new Dictionary<string, Material>();
+    public static Dictionary<string, MaterialInfo> materialList = new Dictionary<string, MaterialInfo>();
+
+    public class MaterialPropertyTranslator
+    {
+        Dictionary<string, string> propertyTranslator;
+
+        public MaterialPropertyTranslator(Dictionary<string, string> propertyTranslator)
+        {
+            this.propertyTranslator = propertyTranslator;
+        }
+        public Dictionary<string, string> Translate(Dictionary<string, string> inputDictionary)
+        {
+            if (inputDictionary.Count == 0)
+                return inputDictionary;
+
+            foreach (var entry in propertyTranslator)
+            {
+                if (inputDictionary.ContainsKey(entry.Key))
+                {
+                    string value = inputDictionary[entry.Key];
+                    inputDictionary.Remove(entry.Key);
+                    inputDictionary.Add(propertyTranslator[entry.Key], value);
+                }
+            }
+            return inputDictionary;
+        }
+    }
+
+    static Dictionary<string, string> MaterialStandardPropertyTranslator = new Dictionary<string, string>()
+            {
+                {"smoothness", "_SmoothnessTextureChannel" },
+                {"metallic", "_Metallic" },
+                {"color", "_Color" },
+                {"emission-color", "_EmmisionColor" }
+            };
+    static Dictionary<string, string> MaterialVertexPropertyTranslator = new Dictionary<string, string>()
+            {
+                {"smoothness", "_Smoothness" },
+                {"metallic", "_Metallic" }
+            };
+    static Dictionary<string, string> MarqueePropertyTranslator = new Dictionary<string, string>()
+            {
+                {"smoothness", "_Glossiness" },
+                {"metallic", "_Metallic" },
+                {"emission-color", "_EmissionColor" },
+            };
+    static Dictionary<string, string> MaterialFrontGlassProperties = new Dictionary<string, string>()
+            {
+                {"smoothness", "_Glossiness" },
+                {"metallic", "_Metallic" },
+                {"color", "_Color" }
+            };
+    static Dictionary<string, string> MaterialCRTProperties = new Dictionary<string, string>()
+            {
+                {"tiling", "_CRTTiling" }
+            };
+    static Dictionary<string, string> MaterialCRTLODProperties = new Dictionary<string, string>()
+            {
+                {"tiling", "_CRTTiling" },
+                {"rotation", "_ScreenRotation" }
+            };
+
+    public class FrontGlassProperties : MaterialPropertyTranslator
+    {
+        public FrontGlassProperties() : base(MaterialFrontGlassProperties) { }
+    }
+
+    public class MarqueeProperties : MaterialPropertyTranslator
+    {
+        public MarqueeProperties() : base(MarqueePropertyTranslator) { }
+    }
+    public class MaterialStandardProperties : MaterialPropertyTranslator
+    {
+        public MaterialStandardProperties() : base(MaterialStandardPropertyTranslator) { }
+    }
+
+    // shaders ---------------------
+    public class MaterialCRTShaderProperties : MaterialPropertyTranslator
+    {
+        public MaterialCRTShaderProperties() : base(MaterialCRTProperties) { }
+    }
+
+    public class MaterialCRTLODShaderProperties : MaterialPropertyTranslator
+    {
+        public MaterialCRTLODShaderProperties() : base(MaterialCRTLODProperties) { }
+    }
+
+    // ------------------------
+    public class MaterialInfo
+    {
+        public Material material;
+        public MaterialPropertyTranslator propertyTranslator;
+
+        public MaterialInfo(Material material, MaterialPropertyTranslator propertyTranslator)
+        {
+            this.material = material;
+            this.propertyTranslator = propertyTranslator;
+        }
+    }
+
 
     static CabinetMaterials() {
         // the material base for stickers
@@ -46,15 +145,16 @@ public static class CabinetMaterials {
         LayerGlass = Resources.Load<Material>("Cabinets/Materials/GlassTranspLayer");
         VertexColor = Resources.Load<Material>("Cabinets/Materials/Base_VertexColor");
 
-        materialList.Add("black", Black);
-        materialList.Add("base", Base);
-        materialList.Add("lightwood", LightWood);
-        materialList.Add("darkwood", DarkWood);
-        materialList.Add("plastic", Plastic);
-        materialList.Add("dirty glass", DirtyGlass);
-        materialList.Add("layer glass", LayerGlass);
-        materialList.Add("clean glass", CleanGlass);
-        materialList.Add("Vertex Color", VertexColor);
+        //user configurable list:
+        materialList.Add("black", new MaterialInfo(Black, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("base", new MaterialInfo(Base, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("lightwood", new MaterialInfo(LightWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("darkwood", new MaterialInfo(DarkWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("plastic", new MaterialInfo(Plastic, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("dirty glass", new MaterialInfo(DirtyGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("layer glass", new MaterialInfo(LayerGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("clean glass", new MaterialInfo(CleanGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("Vertex Color", new MaterialInfo(VertexColor, new MaterialPropertyTranslator(MaterialVertexPropertyTranslator)));
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
 
@@ -74,7 +174,16 @@ public static class CabinetMaterials {
             ConfigManager.WriteConsole($"ERROR: material name {name} is unknown, fallback to material standard 'black'.");
             name = "black";
         }
-        return materialList[name];
+        return materialList[name].material;
     }
 
+    public static MaterialPropertyTranslator PropertyTranslator(string name)
+    {
+        if (!materialList.ContainsKey(name))
+        {
+            ConfigManager.WriteConsole($"ERROR: material name {name} is unknown, fallback to property translator standard 'black'.");
+            name = "black";
+        }
+        return materialList[name].propertyTranslator;
+    }
 }

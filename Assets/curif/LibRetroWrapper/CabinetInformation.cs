@@ -7,6 +7,7 @@ You should have received a copy of the GNU General Public License along with thi
 using Assets.curif.LibRetroWrapper;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq.Expressions;
 using UnityEngine;
@@ -366,6 +367,9 @@ public class CabinetInformation
         public bool istarget = false; //lightgun
         public Physical physical;
 
+        [YamlMember(Alias = "material-properties", ApplyNamingConventions = false)]
+        public Dictionary<string, string> properties = new Dictionary<string, string>();
+
         // Add audio property
         public CabinetAudioPart speaker;
     }
@@ -518,17 +522,18 @@ public class CabinetInformation
     public class Screen
     {
         public string shader = "crt";
-        public string damage = "low";
+        public string damage = "none";
         public bool invertx = false;
         public bool inverty = false;
-        public string gamma = LibretroMameCore.DefaultGamma;
-        public string brightness = LibretroMameCore.DefaultBrightness;
+        public string gamma = "1.0"; // LibretroMameCore.DefaultGamma;
+        public string brightness = "1.0"; // LibretroMameCore.DefaultBrightness;
+        public Dictionary<string, string> properties = new Dictionary<string, string>();
 
         public Dictionary<string, string> config()
         {
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic["damage"] = damage;
-            return dic;
+            //Dictionary<string, string> dic = new Dictionary<string, string>();
+            properties["damage"] = damage;
+            return properties;
         }
 
         public System.ArgumentException validate()
@@ -541,6 +546,13 @@ public class CabinetInformation
             return null;
         }
 
+    }
+    public class Video
+    {
+        public string file;
+        public bool invertx = false;
+        public bool inverty = false;
+        public Screen screen;
     }
 
     public class RGBColor
@@ -576,14 +588,6 @@ public class CabinetInformation
         {
             return new Color32(r, g, b, a);
         }
-    }
-
-    public class Video
-    {
-        public string file;
-        public bool invertx = false;
-        public bool inverty = false;
-
     }
 
     public static class MameFileType
@@ -783,13 +787,18 @@ public class CabinetInformation
 
     private static void showCabinetProblemsLog(CabinetInformation cbInfo,
                                                 Dictionary<string, System.Exception> exceptions,
-                                                string moreProblems)
+                                                string moreProblems, string debugFileName = null)
     {
 
-        string path = debugLogPath(cbInfo.name);
+        string path;
+        if (string.IsNullOrEmpty(debugFileName))
+            path = debugLogPath(cbInfo.name);
+        else
+            path = debugLogPath(debugFileName);
+
         ConfigManager.WriteConsole($"[showCabinetProblemsLog] {path}");
         // Write exception details to the log file
-        using (StreamWriter writer = new StreamWriter(path, true))
+        using (StreamWriter writer = new StreamWriter(path, false))
         {
             writer.WriteLine($"CABINET: {cbInfo.name}");
             foreach (KeyValuePair<string, System.Exception> error in exceptions)
@@ -798,20 +807,11 @@ public class CabinetInformation
             }
             writer.WriteLine(new string('-', 50)); // Separator
             if (!String.IsNullOrEmpty(moreProblems))
-                writer.WriteLine(moreProblems); // Separator
-            /*
-                        if (cabinet) transform
-                        {
-                            int count = CountFacesRecursively(cabinet);
-                            if (count > 10000)
-                                writer.WriteLine($"--WARNING: ");
-                            writer.WriteLine($"Cabinet faces total count: {count}");
-                        }
-                        */
+                writer.WriteLine(moreProblems); 
         }
     }
 
-    public static void showCabinetProblems(CabinetInformation cbInfo, string moreProblems = "")
+    public static void showCabinetProblems(CabinetInformation cbInfo, string moreProblems = "", string outputFile = "")
     {
         //all the errors are not a problem because there are defaults for each ones and the cabinet have to be made, exist or not an error.
         ConfigManager.WriteConsole("[showCabinetProblems] Alerts and errors");
@@ -835,7 +835,7 @@ public class CabinetInformation
 
         if (cbInfo.debug)
         {
-            showCabinetProblemsLog(cbInfo, exceptions, moreProblems);
+            showCabinetProblemsLog(cbInfo, exceptions, "ERROR: " + moreProblems, outputFile);
         }
 
         return;

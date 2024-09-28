@@ -16,7 +16,7 @@ public class MoviePosterController : MonoBehaviour
     [SerializeField]
     int decade = 80;
 
-    private static PictureAndFrameTexture textureData = null;
+    private PictureAndFrameTexture textureData = null;
     private System.Random random;
 
     void Start()
@@ -25,11 +25,8 @@ public class MoviePosterController : MonoBehaviour
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
         // Load and parse the YAML file as a TextAsset
-        if (textureData == null)
-        {
-            TextAsset yamlTextAsset = Resources.Load<TextAsset>($"Decoration/MoviePoster/Pictures/{decade}/contents");
-            textureData = LoadYamlFromTextAsset(yamlTextAsset);
-        }
+        TextAsset yamlTextAsset = Resources.Load<TextAsset>($"Decoration/MoviePoster/Pictures/{decade}/contents");
+        textureData = LoadYamlFromTextAsset(yamlTextAsset);
 
         if (textureData == null || textureData.textures.Count == 0)
         {
