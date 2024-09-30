@@ -550,6 +550,8 @@ public class CabinetInformation
     public class Video
     {
         public string file;
+        [YamlMember(Alias = "audio-file", ApplyNamingConventions = false)]
+        public string audioFile;
         public bool invertx = false;
         public bool inverty = false;
         public Screen screen;

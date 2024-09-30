@@ -28,7 +28,9 @@ using UnityEditor;
 
 //[AddComponentMenu("curif/LibRetroWrapper/VideoPlayer")]
 [RequireComponent(typeof(AudioSource))]
+[RequireComponent(typeof(AudioClip))]
 [RequireComponent(typeof(GameVideoPlayer))]
+[RequireComponent(typeof(GameAudioPlayer))]
 [RequireComponent(typeof(LibretroControlMap))]
 [RequireComponent(typeof(basicAGE))]
 [RequireComponent(typeof(CabinetAGEBasic))]
@@ -41,6 +43,10 @@ public class LibretroScreenController : MonoBehaviour
 
     [SerializeField]
     public string GameVideoFile;
+
+    [SerializeField]
+    public string GameAudioFile;
+
     [SerializeField]
     public bool GameVideoInvertX = false;
     [SerializeField]
@@ -49,6 +55,7 @@ public class LibretroScreenController : MonoBehaviour
 
 
     public GameVideoPlayer videoPlayer;
+    public GameAudioPlayer audioPlayer;
 
     [SerializeField]
     public bool GameInvertX = false;
@@ -169,6 +176,7 @@ public class LibretroScreenController : MonoBehaviour
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
         if (videoPlayer == null)
             ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} video player doesn't exists on screen.");
+        audioPlayer = gameObject.GetComponent<GameAudioPlayer>();
 
         libretroControlMap = GetComponent<LibretroControlMap>();
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
@@ -285,6 +293,7 @@ public class LibretroScreenController : MonoBehaviour
         // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
 
         videoPlayer.setVideo(GameVideoFile, videoShader, GameVideoInvertX, GameVideoInvertY);
+        audioPlayer.path = GameAudioFile;
 
         tree = buildScreenBT();
         while (true)
@@ -311,6 +320,7 @@ public class LibretroScreenController : MonoBehaviour
                   if (isGameFilePresent())
                   {
                       videoPlayer.Pause();
+                      audioPlayer.Stop();
                   }
 
                   //start mame
@@ -478,38 +488,43 @@ public class LibretroScreenController : MonoBehaviour
               })
             .End()
 
-            .Sequence("Video Player control")
-              //.Condition("Have video player", () => videoPlayer != null)
-              .Selector()
-                .Sequence()
-                  .Condition("Player not in the zone?", () => !playerIsInSomePosition())
-                  .Do("Stop video player", () =>
-                  {
-                      videoPlayer.Stop();
-                      return TaskStatus.Success;
-                  })
-                .End()
-                .Sequence()
-                  //.Condition("Is visible", () => videoPlayer.isVisible())
-                  //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
-                  //.Condition("Is visible", () => display.isVisible)
-                  .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
-                  .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
-                  //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
-                  .Do("Play video player", () =>
-                  {
-                      videoPlayer.Play();
-                      return TaskStatus.Success;
-                  })
-                .End()
-                .Do("Pause video player", () =>
-                {
-                    videoPlayer.Pause();
-                    return TaskStatus.Success;
-                })
-              .End()
-            .End()
+            .Sequence("Video/Audio Player control")
+                //.Condition("Have video player", () => videoPlayer != null)
+                .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
+                .Selector()
+                    .Sequence()
+                        .Condition("Player not in the zone?", () => !playerIsInSomePosition())
+                        .Do("Stop video and audio player", () =>
+                        {
+                            videoPlayer.Stop();
+                            audioPlayer.Stop();
+                            return TaskStatus.Success;
+                        })
+                    .End()
+                    .Sequence()
+                        //.Condition("Is visible", () => videoPlayer.isVisible())
+                        //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
+                        //.Condition("Is visible", () => display.isVisible)
+                        .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
+                            //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
+                        .Do("Play video player", () =>
+                        {
+                            audioPlayer.Stop(); 
+                            videoPlayer.Play();
 
+                            return TaskStatus.Success;
+                        })
+                    .End()
+                    .Sequence()
+                        .Do("Play audio clip", () =>
+                        {
+                            videoPlayer.Pause();
+                            audioPlayer.Play();
+
+                            return TaskStatus.Success;
+                        })
+                    .End()
+                .End()
           .End()
         .Build();
     }
