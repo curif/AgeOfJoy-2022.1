@@ -683,10 +683,6 @@ public class CabinetInformation
                     !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)
                         ? new System.Exception($"Unknown material: {p.material}")
                         : null);
-                exceptions.Add($"Part #{number}: {p.name} MATERIAL/ART",
-                    !string.IsNullOrEmpty(p.material) && p.art != null
-                        ? new System.Exception("Can't assign a material and ART to the same part")
-                        : null);
                 if (p.transparency != 0)
                     exceptions.Add($"Part #{number}: {p.name} TRANSPARENCY",
                         p.transparency < 0 || p.transparency > 100 ?
