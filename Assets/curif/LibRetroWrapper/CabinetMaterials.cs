@@ -60,7 +60,8 @@ public static class CabinetMaterials {
 
     static Dictionary<string, string> MaterialStandardPropertyTranslator = new Dictionary<string, string>()
             {
-                {"smoothness", "_SmoothnessTextureChannel" },
+                //{"smoothness", "_SmoothnessTextureChannel" },
+                {"smoothness", "_Glossiness" },
                 {"metallic", "_Metallic" },
                 {"color", "_Color" },
                 {"emission-color", "_EmmisionColor" }
