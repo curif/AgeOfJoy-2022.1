@@ -646,11 +646,13 @@ public class Cabinet
         Dictionary<uint, LibretroInputDevice> libretroInputDevices = cbinfo.GetLibretroInputDevices();
 
         string GameVideoFile = null;
+        string GameAudioFile = null;
         bool GameVideoFileInvertX = false;
         bool GameVideoFileInvertY = false;
         if (cbinfo.video != null)
         {
             GameVideoFile = cbinfo.getPath(cbinfo.video.file);
+            GameAudioFile = cbinfo.getPath(cbinfo.video.audioFile);
             GameVideoFileInvertX = cbinfo.video.invertx;
             GameVideoFileInvertY = cbinfo.video.inverty;
         }
@@ -735,6 +737,7 @@ public class Cabinet
 
             //video
             libretroScreenController.GameVideoFile = GameVideoFile;
+            libretroScreenController.GameAudioFile = GameAudioFile;
             libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
             libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
             libretroScreenController.GameVideoConfig = cbinfo.video;
