@@ -146,6 +146,7 @@ public class LibretroScreenController : MonoBehaviour
     private Coroutine mainCoroutine;
     private bool initialized = false;
     private bool gameRunning = false;
+    private bool playerInTheZone = false;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -298,6 +299,7 @@ public class LibretroScreenController : MonoBehaviour
         tree = buildScreenBT();
         while (true)
         {
+            playerInTheZone = playerIsInSomePosition();
             tree.Tick();
             // LibretroMameCore.WriteConsole($"[runBT] {gameObject.name} Is visible: {isVisible} Not running any game: {!LibretroMameCore.GameLoaded} There are coins: {CoinSlot.hasCoins()} Player looking screen: {isPlayerLookingAtScreen()}");
             yield return new WaitForSeconds(1f);
@@ -447,7 +449,7 @@ public class LibretroScreenController : MonoBehaviour
             .End()
 
             .Sequence("Game Started")
-              .Condition("Game is running?", () => gameRunning)
+              .Condition("Game is running?", () => gameRunning)             
               .RepeatUntilSuccess("Run until player exit")
                 .Sequence()
                   .Condition("user EXIT pressed?", () =>
@@ -488,34 +490,31 @@ public class LibretroScreenController : MonoBehaviour
               })
             .End()
 
-            .Sequence("Video/Audio Player control")
-                //.Condition("Have video player", () => videoPlayer != null)
-                .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
-                .Selector()
-                    .Sequence()
-                        .Condition("Player not in the zone?", () => !playerIsInSomePosition())
-                        .Do("Stop video and audio player", () =>
-                        {
-                            videoPlayer.Stop();
-                            audioPlayer.Stop();
-                            return TaskStatus.Success;
-                        })
-                    .End()
-                    .Sequence()
-                        //.Condition("Is visible", () => videoPlayer.isVisible())
-                        //.Condition("Game is not running?", () => !LibretroMameCore.isRunning(name, GameFile))
-                        //.Condition("Is visible", () => display.isVisible)
-                        .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
+            .Selector("Video/Audio Player control")
+                .Sequence()
+                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || !playerInTheZone)
+                    .Do("Stop video and audio player", () =>
+                    {
+                        videoPlayer.Stop();
+                        audioPlayer.Stop();
+                        return TaskStatus.Success;
+                    })
+                .End()
+                .Sequence()
+                    .Condition("Player in the zone?", () => playerInTheZone)
+                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
+                    .Selector()
+                        .Sequence()
+                            .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
                             //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
-                        .Do("Play video player", () =>
-                        {
-                            audioPlayer.Stop(); 
-                            videoPlayer.Play();
+                            .Do("Play video player", () =>
+                            {
+                                audioPlayer.Stop(); 
+                                videoPlayer.Play();
 
-                            return TaskStatus.Success;
-                        })
-                    .End()
-                    .Sequence()
+                                return TaskStatus.Success;
+                            })
+                        .End()
                         .Do("Play audio clip", () =>
                         {
                             videoPlayer.Pause();
@@ -525,6 +524,7 @@ public class LibretroScreenController : MonoBehaviour
                         })
                     .End()
                 .End()
+            .End()
           .End()
         .Build();
     }
