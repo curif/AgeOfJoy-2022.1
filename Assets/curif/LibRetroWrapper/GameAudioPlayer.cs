@@ -88,8 +88,9 @@ public class GameAudioPlayer : MonoBehaviour
 
     public void Stop()
     {
-        if (audioSource == null)
+        if (!isPlaying || audioSource == null)
             return;
+
         audioSource.Stop();
         audioSource.clip = null;
         isPlaying = false;
