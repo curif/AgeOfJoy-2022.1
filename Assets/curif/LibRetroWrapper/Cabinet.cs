@@ -649,12 +649,21 @@ public class Cabinet
         string GameAudioFile = null;
         bool GameVideoFileInvertX = false;
         bool GameVideoFileInvertY = false;
+        float AudioMaxPlayerDistance = float.MaxValue;
+        float VideoMaxPlayerDistance = float.MaxValue;
+
         if (cbinfo.video != null)
         {
             GameVideoFile = cbinfo.getPath(cbinfo.video.file);
-            GameAudioFile = cbinfo.getPath(cbinfo.video.audioFile);
             GameVideoFileInvertX = cbinfo.video.invertx;
             GameVideoFileInvertY = cbinfo.video.inverty;
+            VideoMaxPlayerDistance = cbinfo.video.MaxPlayerDistance;
+        }
+
+        if (cbinfo.audio != null)
+        {
+            GameAudioFile = cbinfo.getPath(cbinfo.audio.file);
+            AudioMaxPlayerDistance = cbinfo.audio.MaxPlayerDistance;
         }
 
         string CRTType = $"screen-mock-{orientation}";
@@ -735,12 +744,14 @@ public class Cabinet
 
             libretroScreenController.AgentPlayerPositions = agentPlayerPositions;
 
-            //video
+            //video & audio
             libretroScreenController.GameVideoFile = GameVideoFile;
             libretroScreenController.GameAudioFile = GameAudioFile;
             libretroScreenController.GameVideoInvertX = GameVideoFileInvertX;
             libretroScreenController.GameVideoInvertY = GameVideoFileInvertY;
             libretroScreenController.GameVideoConfig = cbinfo.video;
+            libretroScreenController.DistanceMaxToPlayerToActivateAudio = AudioMaxPlayerDistance;
+            libretroScreenController.DistanceMaxToPlayerToActivateVideo = VideoMaxPlayerDistance;
 
             //control mapping
             libretroScreenController.CabinetControlMapConfig = cabinetControlMap;

@@ -53,6 +53,7 @@ public class CabinetInformation
     public bool? persistent;
     public string statefile = "state.nv";
     public Video video;// = new Video();
+    public Audio audio;
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
@@ -547,14 +548,23 @@ public class CabinetInformation
         }
 
     }
+
     public class Video
     {
         public string file;
-        [YamlMember(Alias = "audio-file", ApplyNamingConventions = false)]
-        public string audioFile;
         public bool invertx = false;
         public bool inverty = false;
         public Screen screen;
+        [YamlMember(Alias = "max-player-distance", ApplyNamingConventions = false)]
+        public float MaxPlayerDistance = 3f;
+    }
+
+    public class Audio
+    {
+        public string file;
+
+        [YamlMember(Alias = "max-player-distance", ApplyNamingConventions = false)]
+        public float MaxPlayerDistance = 6f;
     }
 
     public class RGBColor
