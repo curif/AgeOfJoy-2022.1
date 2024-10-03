@@ -53,7 +53,6 @@ public class LibretroScreenController : MonoBehaviour
     public bool GameVideoInvertY = false;
     public CabinetInformation.Video GameVideoConfig;
 
-
     public GameVideoPlayer videoPlayer;
     public GameAudioPlayer audioPlayer;
 
@@ -67,9 +66,14 @@ public class LibretroScreenController : MonoBehaviour
 
     //[SerializeField]
     //public GameObject Player;
-    [Tooltip("The minimal distance between the player and the screen to active video.")]
+    [Tooltip("The maximum distance between the player and the screen to active video.")]
     [SerializeField]
-    public float DistanceMinToPlayerToActivate = 4f;
+    public float DistanceMaxToPlayerToActivateVideo = 2.5f;
+
+    [Tooltip("The maximum distance between the player and the screen to active audio.")]
+    [SerializeField]
+    public float DistanceMaxToPlayerToActivateAudio = 3.5f;
+
     [Tooltip("The time in secs that the player has to look to another side to exit the game and recover mobility.")]
     [SerializeField]
     public int SecondsToWaitToExitGame = 2;
@@ -118,9 +122,6 @@ public class LibretroScreenController : MonoBehaviour
 
     public bool SimulateExitGame;
 
-    // [Tooltip("The global action manager in the main rig. We will find one if not set.")]
-    // public InputActionManager inputActionManager;
-
     private ShaderScreenBase shader, videoShader;
     private GameObject player;
     private ChangeControls changeControls;
@@ -129,7 +130,6 @@ public class LibretroScreenController : MonoBehaviour
     private Camera cameraComponentCenterEye;
     private Renderer display;
     private DateTime timeToExit = DateTime.MinValue;
-    // private GameObject cabinet;
     private CabinetReplace cabinetReplace;
     private LightGunTarget lightGunTarget;
 
@@ -147,6 +147,7 @@ public class LibretroScreenController : MonoBehaviour
     private bool initialized = false;
     private bool gameRunning = false;
     private bool playerInTheZone = false;
+    private float distanceToPlayer;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -299,6 +300,8 @@ public class LibretroScreenController : MonoBehaviour
         tree = buildScreenBT();
         while (true)
         {
+
+            distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
             playerInTheZone = playerIsInSomePosition();
             tree.Tick();
             // LibretroMameCore.WriteConsole($"[runBT] {gameObject.name} Is visible: {isVisible} Not running any game: {!LibretroMameCore.GameLoaded} There are coins: {CoinSlot.hasCoins()} Player looking screen: {isPlayerLookingAtScreen()}");
@@ -434,6 +437,7 @@ public class LibretroScreenController : MonoBehaviour
 
                       //audio mixer group
                       audioSource.outputAudioMixerGroup = audioMixerGame;
+                      audioSource.spatialize = false;
                   }
 
                   cabinet.PhyActivate();
@@ -505,23 +509,34 @@ public class LibretroScreenController : MonoBehaviour
                     .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
                     .Selector()
                         .Sequence()
-                            .Condition("Is Player looking the screen", () => /*IsNearPlayer() ||*/  isPlayerLookingAtScreen4())
-                            //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
-                            .Do("Play video player", () =>
+                            .Condition("Is Player near enough to see video", () => 
+                                            distanceToPlayer <= DistanceMaxToPlayerToActivateVideo)
+                            .Condition("Is Player looking the screen zone", () => isPlayerLookingAtScreenZone())
+                            .Do("Play video", () =>
                             {
+                                audioSource.spatialize = true;
+                                audioSource.maxDistance = DistanceMaxToPlayerToActivateVideo;
+
                                 audioPlayer.Stop(); 
                                 videoPlayer.Play();
 
                                 return TaskStatus.Success;
                             })
                         .End()
-                        .Do("Play audio clip", () =>
-                        {
-                            videoPlayer.Pause();
-                            audioPlayer.Play();
+                        .Sequence()
+                            .Condition("Is Player near to ear audio", () =>
+                                    distanceToPlayer <= DistanceMaxToPlayerToActivateAudio)
+                            .Do("Play audio clip", () =>
+                            {
+                                audioSource.spatialize = true;
+                                audioSource.maxDistance = DistanceMaxToPlayerToActivateAudio;
 
-                            return TaskStatus.Success;
-                        })
+                                videoPlayer.Pause();
+                                audioPlayer.Play();
+
+                                return TaskStatus.Success;
+                            })
+                        .End()
                     .End()
                 .End()
             .End()
@@ -617,30 +632,30 @@ public class LibretroScreenController : MonoBehaviour
 
         return;
     }
-    public bool IsNearPlayer()
-    {
-        float distance = Vector3.Distance(transform.position, player.transform.position);
-        return distance <= DistanceMinToPlayerToActivate;
-    }
 
     private bool isPlayerLookingAtScreen4()
     {
+        if (!isPlayerLookingAtScreenZone())
+            return false;
+
+        // The target object is within the viewport bounds
         LayerMask layerMask = 1 << gameObject.layer; // 10:CRT
-        Vector3 screenPos = cameraComponentCenterEye.WorldToViewportPoint(transform.position);
-        if (screenPos.z > 0 && screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1)
+        RaycastHit hitInfo;
+        if (Physics.Linecast(cameraComponentCenterEye.transform.position,
+                                transform.position, out hitInfo, layerMask))
         {
-            // The target object is within the viewport bounds
-            RaycastHit hitInfo;
-            if (Physics.Linecast(cameraComponentCenterEye.transform.position,
-                                    transform.position, out hitInfo, layerMask))
-            {
-                // The linecast hit something, check if it was the target object
-                //special case when the screen is blocked with the cabine's box collider (it's own parent)
-                // return hitInfo.transform == transform || hitInfo.transform == display.transform.parent;
-                return hitInfo.transform == transform;
-            }
+            // The linecast hit something, check if it was the target object
+            //special case when the screen is blocked with the cabine's box collider (it's own parent)
+            // return hitInfo.transform == transform || hitInfo.transform == display.transform.parent;
+            return hitInfo.transform == transform;
         }
         return false;
+    }
+
+    private bool isPlayerLookingAtScreenZone()
+    {
+        Vector3 screenPos = cameraComponentCenterEye.WorldToViewportPoint(transform.position);
+        return (screenPos.z > 0 && screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1);
     }
 
     private void OnAudioFilterRead(float[] data, int channels)
