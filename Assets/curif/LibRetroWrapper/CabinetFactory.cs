@@ -304,6 +304,8 @@ public static class CabinetFactory
             }
         }
 
+        CabinetDBAdmin.MoveMameFiles(cbinfo);
+
         Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, cbinfo.controlScheme, modelFilePath,
                                                     number, room, position, rotation, parent,
                                                     cacheGlbModels: cacheGlbModels);
