@@ -100,7 +100,7 @@ public class CabinetDBAdmin : MonoBehaviour
         // using FileStream outputFileStream = File.Create(destPath);
         // using var decompressor = new GZipStream(compressedFileStream, CompressionMode.Decompress);
         // decompressor.CopyTo(outputFileStream);
-        ZipFile.ExtractToDirectory(path, destPath);
+        ZipFile.ExtractToDirectory(path, destPath, true); //overwrite.
     }
 
     public static string GetNameFromPath(string path)
@@ -166,13 +166,14 @@ public class CabinetDBAdmin : MonoBehaviour
                 if (!CabinetInformation.MameFileType.IsValid(mf.type))
                     throw new Exception($"invalid MAME file type '{mf.type}' for file ${mf.file}");
 
-                destPath = CabinetInformation.MameFileType.GetAndCreatePath(mf.type, 
-                                                                                    cbInfo.getPath(cbInfo.rom));
-                string destFilePath = Path.Combine(destPath, mf.file);
+                destPath = CabinetInformation.MameFileType.GetAndCreatePath(mf.type, cbInfo.getPath(cbInfo.rom));
                 string sourceFile = cbInfo.getPath(mf.file);
-
-                File.Copy(sourceFile, destFilePath, true); //overwrite
-                File.Delete(sourceFile);
+                if (File.Exists(sourceFile))
+                {
+                    string destFilePath = Path.Combine(destPath, mf.file);
+                    File.Copy(sourceFile, destFilePath, true); //overwrite
+                    File.Delete(sourceFile);
+                }
             }
         }
         catch (System.Exception e)
@@ -193,41 +194,6 @@ public class CabinetDBAdmin : MonoBehaviour
         }
         loadCabsCoroutine = StartCoroutine(loadCabinetsCoroutine());
 
-        /*
-
-        string[] files = Directory.GetFiles(ConfigManager.Cabinets, "*.zip");
-
-        foreach (string zipFile in files)
-        {
-            string cabPath = "";
-            if (File.Exists(zipFile) && !zipFile.EndsWith("test.zip") && 
-                ZipFileContainsDescriptionYaml(zipFile))
-            {
-                ConfigManager.WriteConsole($"[loadCabinets] {zipFile}");
-                try
-                {
-                    cabPath = loadCabinetFromZip(zipFile);
-                }
-                catch (System.Exception e)
-                {
-                    ConfigManager.WriteConsoleException($"ERROR decompressing Cabinet {zipFile}", e);
-                }
-
-                if (!String.IsNullOrEmpty(cabPath))
-                {
-                    try
-                    {
-                        CabinetInformation cbInfo = CabinetInformation.fromYaml(cabPath);
-                        MoveMameFiles(cbInfo);
-                    }
-                    catch (System.Exception e)
-                    {
-                        ConfigManager.WriteConsoleException($"ERROR moving MAME files from {zipFile}", e);
-                    }
-                }
-            }
-        }
-        */
         return;
     }
 
@@ -266,7 +232,7 @@ public class CabinetDBAdmin : MonoBehaviour
             ConfigManager.WriteConsole($"[loadCabinetsCoroutine] loadCabinetFromZip {zipFile}");
             cabPath = loadCabinetFromZip(zipFile);
             yield return new WaitForSeconds(0.1f);
-
+            /*
             if (!String.IsNullOrEmpty(cabPath))
             {
                 CabinetInformation cbInfo;
@@ -286,6 +252,7 @@ public class CabinetDBAdmin : MonoBehaviour
             {
                 ConfigManager.WriteConsoleError($"[loadCabinetsCoroutine] Cabinet {zip.Name} can't parse yaml file");
             }
+            */
         }
 
         ConfigManager.WriteConsole($"[loadCabinetsCoroutine] END loading cabinets");

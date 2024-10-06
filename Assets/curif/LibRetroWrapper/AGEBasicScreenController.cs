@@ -335,22 +335,57 @@ public class AGEBasicScreenController : MonoBehaviour
 
                   return TaskStatus.Success;
               })
+
+              .Sequence("AGEBasic Running")
+                .RepeatUntilSuccess("Until player exit")
+                    .Sequence()
+                        .Condition("user EXIT pressed?", () =>
+                        {
+                            if (libretroControlMap.isActive(LC.EXIT))
+                                return true;
+#if UNITY_EDITOR
+                            if (SimulateExitGame)
+                                return true;
+#endif
+                            timeToExit = DateTime.MinValue;
+                            return false;
+                        })
+                        .Condition("N secs pass with user EXIT pressed", () =>
+                        {
+                            if (timeToExit == DateTime.MinValue)
+                                timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
+                            else if (DateTime.Now > timeToExit)
+                                return true;
+                            return false;
+                        })
+                    .End()
+                .End()
+              .End()
+              /*
               .Sequence("AGEBasic Running")
                 .RepeatUntilSuccess("Until player exit")
                     .Sequence()
                         .Condition("user EXIT pressed or terminated?", () =>
                         {
-                            basicAGE.ProgramStatus status = cabinetAGEBasic.AGEBasic.Status;
-                            if (status == basicAGE.ProgramStatus.CancelledWithError ||
-                                status == basicAGE.ProgramStatus.CompilationError)
-                                return true;
+                            if (cabinetAGEBasic.HasEvents())
+                            {
+                                if (cabinetAGEBasic.IsCoroutineRunning())
+                                    return false;
 
-                            if (status == basicAGE.ProgramStatus.WaitingForStart)
-                                return false;
+                            }
+                            else
+                            {
+                                basicAGE.ProgramStatus status = cabinetAGEBasic.AGEBasic.Status;
+                                if (status == basicAGE.ProgramStatus.CancelledWithError ||
+                                    status == basicAGE.ProgramStatus.CompilationError)
+                                    return true;
 
-                            if (! cabinetAGEBasic.AGEBasic.IsRunning())
-                                return true;
+                                if (status == basicAGE.ProgramStatus.WaitingForStart)
+                                    return false;
 
+                                if (!cabinetAGEBasic.AGEBasic.IsRunning())
+                                    return true;
+                            }
                             if (libretroControlMap.isActive(LC.EXIT))
                                 return true;
 
@@ -371,6 +406,7 @@ public class AGEBasicScreenController : MonoBehaviour
                         })
                     .End()
                   .End()
+                    */
                   .Do("END Program", () =>
                   {
                       cabinet.PhyDeactivate();

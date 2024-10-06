@@ -53,6 +53,7 @@ public class CabinetInformation
     public bool? persistent;
     public string statefile = "state.nv";
     public Video video;// = new Video();
+    public Audio audio;
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
@@ -547,12 +548,23 @@ public class CabinetInformation
         }
 
     }
+
     public class Video
     {
         public string file;
         public bool invertx = false;
         public bool inverty = false;
         public Screen screen;
+        [YamlMember(Alias = "max-player-distance", ApplyNamingConventions = false)]
+        public float MaxPlayerDistance = 3f;
+    }
+
+    public class Audio
+    {
+        public string file;
+
+        [YamlMember(Alias = "max-player-distance", ApplyNamingConventions = false)]
+        public float MaxPlayerDistance = 6f;
     }
 
     public class RGBColor
@@ -680,10 +692,6 @@ public class CabinetInformation
                 exceptions.Add($"Part #{number}: {p.name} MATERIAL",
                     !string.IsNullOrEmpty(p.material) && !materialListNames.Contains(p.material)
                         ? new System.Exception($"Unknown material: {p.material}")
-                        : null);
-                exceptions.Add($"Part #{number}: {p.name} MATERIAL/ART",
-                    !string.IsNullOrEmpty(p.material) && p.art != null
-                        ? new System.Exception("Can't assign a material and ART to the same part")
                         : null);
                 if (p.transparency != 0)
                     exceptions.Add($"Part #{number}: {p.name} TRANSPARENCY",

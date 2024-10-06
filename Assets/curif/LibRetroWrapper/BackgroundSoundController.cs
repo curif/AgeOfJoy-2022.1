@@ -39,7 +39,7 @@ public class BackgroundSoundController : MonoBehaviour
                     float volume = (float)background.volume * 0.01f;
                     audioSource.volume = volume;
                 }
-                ConfigManager.WriteConsole($"[BackgroundSoundController] volume {audioSource.volume} muted: {audioSource.mute}");
+                //ConfigManager.WriteConsole($"[BackgroundSoundController] volume {audioSource.volume} muted: {audioSource.mute}");
             }
             else
             {

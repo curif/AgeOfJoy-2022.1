@@ -4,16 +4,11 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 //#define DISABLE_VIDEO
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Video;
-using System.IO;
-using System;
 
-[RequireComponent(typeof(UnityEngine.Video.VideoPlayer))]
+[RequireComponent(typeof(VideoPlayer))]
 [RequireComponent(typeof(TextureCache))]
-
 public class GameVideoPlayer : MonoBehaviour
 {
 
