@@ -34,11 +34,13 @@ public class AGEProgram
         tracker = new();
     }
 
-    public void PrepareToRun(BasicVars pvars = null)
+    public void PrepareToRun(BasicVars pvars = null, int lineNumber = 0)
     {
-        this.nextLineToExecute = -1;
+        this.nextLineToExecute = lineNumber - 1;
         config.Gosub = new Stack<int>();
-        config.LineNumber = config.JumpNextTo = config.JumpTo = 0;
+        config.LineNumber = 0;
+        config.JumpNextTo = 0;
+        config.JumpTo = 0;
         config.stop = false;
         if (pvars == null)
             vars = new();

@@ -359,11 +359,11 @@ public class basicAGE : MonoBehaviour
         return;
     }
 
-    public void PrepareToRun(string name, BasicVars pvars, int maxExecutionLinesAllowed)
+    public void PrepareToRun(string name, BasicVars pvars, int maxExecutionLinesAllowed = 0, int lineNumber = 0)
     {
         InitComponents();
 
-        ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name}.");
+        ConfigManager.WriteConsole($"[BasicAGE.Run] starting {name} goto line: {lineNumber}.");
 
         Status = ProgramStatus.WaitingForStart;
 
@@ -376,7 +376,7 @@ public class basicAGE : MonoBehaviour
         running = null;
         LastRuntimeException = null;
         running = programs[name];
-        running.PrepareToRun(pvars);
+        running.PrepareToRun(pvars, lineNumber: lineNumber);
         running.MaxExecutionLinesAllowed = maxExecutionLinesAllowed;
         cpuPercentage = configCommands.cpuPercentage;
         calculatedDelay = CalculateDelay(cpuPercentage);

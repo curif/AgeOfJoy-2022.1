@@ -1,4 +1,4 @@
-#define EVENT_LOOP_DEBUG
+//#define EVENT_LOOP_DEBUG
 using UnityEngine;
 using System;
 using System.Collections;
@@ -8,6 +8,8 @@ using UnityEditor;
 using System.Linq;
 using YamlDotNet.Core;
 using static CabinetInformation;
+using static EventInformation;
+using UnityEngine.UIElements;
 
 
 [Serializable]
@@ -115,6 +117,8 @@ public class EventInformation
                                         "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit"};
     public string name = "";
     public string program;
+    [YamlMember(Alias = "goto", ApplyNamingConventions = false)]
+    public int line;
     public double delay = 0;
     public ControlInformation control;
     public string part;
@@ -128,6 +132,18 @@ public class EventInformation
 
     [YamlMember(Alias = "variables", ApplyNamingConventions = false)]
     public List<AGEBasicVariable> Variables { get { return variables; } set { variables = value; } }
+
+    public Condition condition;
+    public class Condition
+    {
+        public string variable;
+        public string value;
+        public string comparison = "=";
+        [YamlMember(Alias = "compare-to", ApplyNamingConventions = false)]
+        public string compareToVariable;  // Another variable to compare against (optional)
+        public List<Condition> and;      // Sub-conditions that are combined with AND
+        public List<Condition> or;       // Sub-conditions that are combined with OR
+    }
 
     public CabinetValidationException Validate(string cabName)
     {
@@ -226,9 +242,10 @@ public class Event
         startTime = DateTime.Now;
     }
     
-    public virtual void PrepareToRun() 
+    public virtual void PrepareToRun(int lineNumber = 0) 
     {
-        AGEBasic.PrepareToRun(eventInformation.program, vars, 0);
+        AGEBasic.PrepareToRun(eventInformation.program, vars, 
+                                maxExecutionLinesAllowed: 0, lineNumber: lineNumber);
     }
 
     //run next line
@@ -262,6 +279,102 @@ public class Event
         status = Status.needsinitilization;
         return;
     }
+    private bool EvaluateCondition(Condition condition)
+    {
+        // Handle 'and' conditions
+        if (condition.and != null && condition.and.Count > 0)
+        {
+            foreach (var subCondition in condition.and)
+            {
+                if (!EvaluateCondition(subCondition))
+                    return false;
+            }
+            return true;
+        }
+
+        // Handle 'or' conditions
+        if (condition.or != null && condition.or.Count > 0)
+        {
+            foreach (var subCondition in condition.or)
+            {
+                if (EvaluateCondition(subCondition))
+                    return true;
+            }
+            return false;
+        }
+
+        // Handle single condition: compare variable to either another variable or a constant value
+        if (!string.IsNullOrEmpty(condition.variable))
+        {
+            if (vars.Exists(condition.variable))
+            {
+                BasicValue v = vars.GetValue(condition.variable);
+                BasicValue compareTo;
+
+                // Check if we're comparing to another variable or a constant value
+                if (!string.IsNullOrEmpty(condition.compareToVariable))
+                {
+                    // Compare two variables
+                    if (!vars.Exists(condition.compareToVariable))
+                        return false; // Fail if the second variable doesn't exist
+                    compareTo = vars.GetValue(condition.compareToVariable);
+                }
+                else if (!string.IsNullOrEmpty(condition.value))
+                {
+                    // Compare to a constant value
+                    compareTo = v.IsString()
+                        ? new BasicValue(condition.value)
+                        : new BasicValue(condition.value, forceType: BasicValue.BasicValueType.Number);
+                }
+                else
+                {
+                    //throw new InvalidOperationException("Condition must have either 'value' or 'compareToVariable'");
+                    return false;
+                }
+
+                // Perform comparison based on the 'comparison' field
+                switch (condition.comparison)
+                {
+                    case "=":
+                    case "==":
+                        return v.Equals(compareTo);
+
+                    case ">":
+                        return v > compareTo;
+
+                    case "<":
+                        return v < compareTo;
+
+                    case ">=":
+                        return v >= compareTo;
+
+                    case "<=":
+                        return v <= compareTo;
+
+                    case "<>":
+                    case "!=":
+                        return !v.Equals(compareTo);
+
+                    default:
+                        return false;
+                        //throw new InvalidOperationException($"Unsupported comparison: {condition.comparison}");
+                }
+            }
+        }
+
+        // Return false if the condition is invalid or unsupported
+        return false;
+    }
+
+    public virtual bool Condition()
+    {
+        if (eventInformation.condition == null)
+            return true;
+
+        // Recursively evaluate the condition (single, and, or)
+        return EvaluateCondition(eventInformation.condition);
+    }
+
 }
 
 public class OnTimer : Event
@@ -749,7 +862,8 @@ public class CabinetAGEBasic : MonoBehaviour
 
     private List<Event> events = new List<Event>();
 
-    private Coroutine coroutine;
+    private Coroutine eventCoroutine;
+    private bool eventCoroutineIsRunning;
 
     public void SetDebugMode(bool debug)
     {
@@ -783,9 +897,13 @@ public class CabinetAGEBasic : MonoBehaviour
         //events ---
         foreach (EventInformation info in AGEInfo.events)
         {
-            Event ev = EventsFactory.Factory(info, vars, AGEBasic);
-            if (ev != null)
-                events.Add(ev);
+            Event evt = EventsFactory.Factory(info, vars, AGEBasic);
+            if (evt != null)
+            {
+                events.Add(evt);
+                // some events needs more than one initialization.
+                evt.Init();
+            }
         }
 
     }
@@ -838,13 +956,23 @@ public class CabinetAGEBasic : MonoBehaviour
         }
         return true;
     }
+
+    public bool HasEvents()
+    {
+        return events.Count != 0;
+    }
     private IEnumerator RunEvents()
     {
         if (events.Count == 0)
             yield break;
-
+        eventCoroutineIsRunning = true;
         while (true) // Continuous loop to keep checking for triggered events
         {
+            if (AGEBasic.IsRunning())
+            {
+                yield return null;
+                continue;
+            }
 
             foreach (Event evt in events)
             {
@@ -858,20 +986,21 @@ public class CabinetAGEBasic : MonoBehaviour
                 //check and cache the trigger action
                 try
                 {
-                    evt.EvaluateTrigger();
+                    if (evt.Condition())
+                        evt.EvaluateTrigger();
                 }
                 catch (Exception e)
                 {
-                    ConfigManager.WriteConsoleException($"[CabinetAGEBasic.RunEvents] evaluate exception {evt.eventInformation.eventId}", e);
+                    ConfigManager.WriteConsoleException($"[CabinetAGEBasic.RunEvents] evaluate exception event:{evt.eventInformation.name} / {evt.eventInformation.eventId}", e);
                 }
             }
 
             foreach (Event evt in events)
             {
                 // Check if the event was triggered
-                if (evt.WasTriggered() && !AGEBasic.IsRunning())
+                if (evt.WasTriggered())
                 {
-                    ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting {evt.eventInformation.program}");
+                    ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting event:{evt.eventInformation.name} prg:{evt.eventInformation.program} goto:{evt.eventInformation.line} ");
 
                     //prepare
                     CompileWhenNeeded(evt.eventInformation.program);
@@ -879,7 +1008,7 @@ public class CabinetAGEBasic : MonoBehaviour
                     if (evt.eventInformation.Variables != null)
                         IngestVariables(evt.eventInformation.Variables);
 
-                    evt.PrepareToRun();
+                    evt.PrepareToRun(lineNumber: evt.eventInformation.line);
 
                     //run
                     bool moreLines = true;
@@ -893,6 +1022,7 @@ public class CabinetAGEBasic : MonoBehaviour
                     }
                 }
             }
+            
             yield return null;
         }
     }
@@ -908,22 +1038,37 @@ public class CabinetAGEBasic : MonoBehaviour
         AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0);
 
-        //  game started, time to start the events corroutine.
-        if (events.Count > 0)
-            coroutine = StartCoroutine(RunEvents());
+        startEventCoroutine();
     }
 
     // stop programs and events.
     public void Stop()
     {
-        if (coroutine != null)
-            StopCoroutine(coroutine);
+        if (eventCoroutine != null)
+            stopEventCoroutine();
+
         AGEBasic.ForceStop();
 
         foreach (Event evt in events)
         {
             evt.Dispose();
         }
+    }
+
+    private void stopEventCoroutine()
+    {
+        eventCoroutineIsRunning = false;
+        StopCoroutine(eventCoroutine);
+    }
+    private void startEventCoroutine()
+    {
+        //  game started, time to start the events corroutine.
+        if (events.Count > 0)
+            eventCoroutine = StartCoroutine(RunEvents());
+    }
+    public bool IsCoroutineRunning()
+    {
+        return eventCoroutineIsRunning;
     }
 
     public void StopInsertCoinBas()
