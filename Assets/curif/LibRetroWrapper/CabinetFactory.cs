@@ -235,6 +235,12 @@ public static class CabinetFactory
                             cp.SetTransparency(ref transparency);
                         }
 
+                        if (!string.IsNullOrEmpty(p.normal))
+                        {
+                            string realProperty = propTranslator.GetRealPropertyName("normal");
+                            cp.SetNormal(p.normal, realProperty);
+                        }
+
                         if (p.emission != null)
                         {
                             //assign the texture first
