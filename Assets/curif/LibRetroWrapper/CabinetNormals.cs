@@ -13,7 +13,7 @@ public class CabinetNormals
         normals["rubber"] = Resources.Load<Texture2D>("Cabinets/Materials/T_Base_Rubber_N");
         normals["scratches"] = Resources.Load<Texture2D>("Cabinets/Materials/T_Base_Scratches_N");
         normals["treadplate round"] = Resources.Load<Texture2D>("Cabinets/Materials/T_Base_TreadplateRound_N");
-        normals["treadplate dyamond"] = Resources.Load<Texture2D>("Cabinets/Materials/T_Base_TreadplateDiamond_N");
+        normals["treadplate diamond"] = Resources.Load<Texture2D>("Cabinets/Materials/T_Base_TreadplateDiamond_N");
 
     }
     public static Texture2D GetNormal(string name)
