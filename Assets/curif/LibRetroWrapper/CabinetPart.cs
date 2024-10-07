@@ -557,4 +557,22 @@ public class CabinetPart : MonoBehaviour
         return this;
     }
 
+    public CabinetPart SetNormal(string normalTextureName, string normalProperty)
+    {
+        if (string.IsNullOrEmpty(normalTextureName))
+            return this;
+
+        Material mat = GetMaterial();
+        if (mat == null)
+            return this;
+
+        Texture2D t = CabinetNormals.GetNormal(normalTextureName);
+        if (t == null)
+            return this;
+
+        mat.SetTexture(normalProperty, t);
+
+        return this;
+    }
+
 }
