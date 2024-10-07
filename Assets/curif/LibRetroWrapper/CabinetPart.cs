@@ -574,5 +574,17 @@ public class CabinetPart : MonoBehaviour
 
         return this;
     }
+    /*
+    public CabinetPart SetNormalHeight()
+    {
+        Material mat = GetMaterial();
+        if (mat == null)
+            return this;
+
+        mat.SetFloat("_BumpScale", 1f);
+
+        return this;
+    }
+    */
 
 }
