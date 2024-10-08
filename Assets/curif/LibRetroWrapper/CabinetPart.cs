@@ -466,6 +466,9 @@ public class CabinetPart : MonoBehaviour
     // ---------------------------- MARQUEE ------------------------
     public CabinetPart SetMarqueeEmissionColor(CabinetInformation.RGBColor emissionColor, CabinetInformation.RGBColor backLightColor)
     {
+        if (emissionColor == null && backLightColor == null)
+            return this;
+        
         Material mat = GetMaterial();
         if (mat != null)
         {
