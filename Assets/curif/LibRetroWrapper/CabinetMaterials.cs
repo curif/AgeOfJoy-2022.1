@@ -6,6 +6,7 @@ You should have received a copy of the GNU General Public License along with thi
 
 using UnityEngine;
 using System.Collections.Generic;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public static class CabinetMaterials {
 
@@ -56,6 +57,15 @@ public static class CabinetMaterials {
             }
             return inputDictionary;
         }
+
+        public string GetRealPropertyName(string name)
+        {
+            if (propertyTranslator.ContainsKey(name))
+            {
+                return propertyTranslator[name];
+            }
+            return null;
+        }
     }
 
     static Dictionary<string, string> MaterialStandardPropertyTranslator = new Dictionary<string, string>()
@@ -64,18 +74,21 @@ public static class CabinetMaterials {
                 {"smoothness", "_Glossiness" },
                 {"metallic", "_Metallic" },
                 {"color", "_Color" },
-                {"emission-color", "_EmmisionColor" }
+                {"emission-color", "_EmmisionColor" },
+                {"normal", "_BumpMap" }
+
             };
     static Dictionary<string, string> MaterialVertexPropertyTranslator = new Dictionary<string, string>()
             {
                 {"smoothness", "_Smoothness" },
-                {"metallic", "_Metallic" }
+                {"metallic", "_Metallic" },
+                {"normal", "_NormalMap" }
             };
     static Dictionary<string, string> MarqueePropertyTranslator = new Dictionary<string, string>()
             {
                 {"smoothness", "_Glossiness" },
                 {"metallic", "_Metallic" },
-                {"emission-color", "_EmissionColor" },
+                {"emission-color", "_EmissionColor" }
             };
     static Dictionary<string, string> MaterialFrontGlassProperties = new Dictionary<string, string>()
             {

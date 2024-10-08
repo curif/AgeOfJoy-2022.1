@@ -356,6 +356,7 @@ public class CabinetInformation
     {
         public string name;
         public string material;
+        public string normal;
         public Art art;
         public RGBColor color;
         public int transparency = 0;

@@ -161,9 +161,7 @@ public static class CabinetFactory
                     else
                         cp.SetMaterial(mat);
 
-                    //after
-                    if (p.color != null && p.marquee.illuminationType != "none")
-                        cp.SetMarqueeEmissionColor(p.color, p.marquee.color);
+                    cp.SetMarqueeEmissionColor(p.color, p.marquee?.color);
 
                     if (p.properties.Count > 0)
                     {
@@ -197,11 +195,18 @@ public static class CabinetFactory
                     {
                         //vertex color optimization
                         cp.SetColorVertex(p.color.getColor());
+                        CabinetMaterials.MaterialPropertyTranslator t = CabinetMaterials.PropertyTranslator("Vertex Color");
+
                         if (p.properties.Count > 0)
-                        {
-                            CabinetMaterials.MaterialPropertyTranslator t = CabinetMaterials.PropertyTranslator("Vertex Color");
                             cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
+
+                        if (!string.IsNullOrEmpty(p.normal))
+                        {
+                            string realProperty = t.GetRealPropertyName("normal");
+                            if (!string.IsNullOrEmpty(realProperty))
+                                cp.SetNormal(p.normal, realProperty);
                         }
+
                     }
                     else
                     {
@@ -223,6 +228,17 @@ public static class CabinetFactory
                             propTranslator = CabinetMaterials.PropertyTranslator("base");
                         }
 
+                        if (!string.IsNullOrEmpty(p.normal))
+                        {
+                            string realProperty = propTranslator.GetRealPropertyName("normal");
+                            if (!string.IsNullOrEmpty(realProperty))
+                            {
+                                cp.SetNormal(p.normal, realProperty);
+                                //cp.SetNormal(p.normal, "_ParallaxMap");
+                                //cp.SetNormalHeight();
+                            }
+
+                        }
                         if (p.art != null)
                               cp.SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
 
@@ -234,6 +250,7 @@ public static class CabinetFactory
                             int transparency = p.transparency;
                             cp.SetTransparency(ref transparency);
                         }
+
 
                         if (p.emission != null)
                         {

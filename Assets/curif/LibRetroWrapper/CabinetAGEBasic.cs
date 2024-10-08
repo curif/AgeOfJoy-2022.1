@@ -81,27 +81,6 @@ public class CabinetAGEBasicInformation
 [Serializable]
 public class EventInformation
 {
-    /*
-    [Serializable]
-    public class PartImpact
-    {
-        [Serializable]
-        public class Or
-        {
-            [YamlMember(Alias = "impact-part", ApplyNamingConventions = false)]
-            public PartImpact partImpact;
-        }
-        [Serializable]
-        public class And
-        {
-            [YamlMember(Alias = "impact-part", ApplyNamingConventions = false)]
-            public PartImpact partImpact;
-        }
-        //public And and;
-        public Or or;
-        public string part;
-    }
-    */
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
@@ -133,6 +112,7 @@ public class EventInformation
     [YamlMember(Alias = "variables", ApplyNamingConventions = false)]
     public List<AGEBasicVariable> Variables { get { return variables; } set { variables = value; } }
 
+    [YamlMember(Alias = "when", ApplyNamingConventions = false)]
     public Condition condition;
     public class Condition
     {
@@ -335,22 +315,28 @@ public class Event
                 // Perform comparison based on the 'comparison' field
                 switch (condition.comparison)
                 {
+                    case "equals":
                     case "=":
                     case "==":
                         return v.Equals(compareTo);
 
+                    case "greater than":
                     case ">":
                         return v > compareTo;
 
+                    case "less than":
                     case "<":
                         return v < compareTo;
 
+                    case "greater than or equals":
                     case ">=":
                         return v >= compareTo;
 
+                    case "less than or equals":
                     case "<=":
                         return v <= compareTo;
 
+                    case "not equals":
                     case "<>":
                     case "!=":
                         return !v.Equals(compareTo);

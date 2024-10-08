@@ -466,6 +466,9 @@ public class CabinetPart : MonoBehaviour
     // ---------------------------- MARQUEE ------------------------
     public CabinetPart SetMarqueeEmissionColor(CabinetInformation.RGBColor emissionColor, CabinetInformation.RGBColor backLightColor)
     {
+        if (emissionColor == null && backLightColor == null)
+            return this;
+        
         Material mat = GetMaterial();
         if (mat != null)
         {
@@ -556,5 +559,35 @@ public class CabinetPart : MonoBehaviour
             SetTextureFromFile(textureFile, mat, invertX, invertY);
         return this;
     }
+
+    public CabinetPart SetNormal(string normalTextureName, string normalProperty)
+    {
+        if (string.IsNullOrEmpty(normalTextureName))
+            return this;
+
+        Material mat = GetMaterial();
+        if (mat == null)
+            return this;
+
+        Texture2D t = CabinetNormals.GetNormal(normalTextureName);
+        if (t == null)
+            return this;
+
+        mat.SetTexture(normalProperty, t);
+
+        return this;
+    }
+    /*
+    public CabinetPart SetNormalHeight()
+    {
+        Material mat = GetMaterial();
+        if (mat == null)
+            return this;
+
+        mat.SetFloat("_BumpScale", 1f);
+
+        return this;
+    }
+    */
 
 }

@@ -2,7 +2,6 @@ import os
 import zipfile
 import yaml
 import subprocess
-from shutil import copy2
 
 # Folder containing zip files
 folder_path = '/mnt/d/AgeOfJoyCabinets'
@@ -13,7 +12,14 @@ def extract_audio_from_video(video_path, output_audio_path):
     """Uses ffmpeg to extract audio from the video and save it as an MP3 file."""
     print(f"  Extracting audio from video {video_path} to {output_audio_path}")
     try:
-        subprocess.run(['ffmpeg', '-i', video_path, '-q:a', '0', '-map', 'a', output_audio_path], check=True)
+        command = [
+            'ffmpeg', '-y', '-i', video_path,   # Input video file
+            '-q:a', '9',                  # Set audio quality (smaller size)
+            '-ac', '1',                   # Convert audio to mono
+            output_audio_path             # Output audio file (mp3)
+        ]
+
+        subprocess.run(command, check=True)
         print(f"  Audio extracted and saved as {output_audio_path}")
     except subprocess.CalledProcessError as e:
         print(f"  Error extracting audio: {e}")
@@ -61,16 +67,15 @@ def process_zip(zip_path, output_path):
             audio_path = os.path.join(output_path, audio_file)
             extract_audio_from_video(video_path, audio_path)
 
-            # Add the 'audio-file' entry to the yaml
-            if 'audio-file' not in yaml_data['video']:
-                yaml_data['video']['audio-file'] = audio_file
-                print(f"  Added 'audio-file' entry: {audio_file}")
-            
-            # Write the updated yaml content to a temporary file
-            updated_yaml_path = os.path.join(output_path, 'updated_description.yaml')
-            with open(updated_yaml_path, 'w') as updated_yaml_file:
-                yaml.dump(yaml_data, updated_yaml_file)
-            
+            # Check if 'audio-file' exists in the video section and remove it
+            if 'audio-file' in yaml_data.get('video', {}):
+                del yaml_data['video']['audio-file']
+                print(f"  Removed 'audio-file' entry from the video section.")
+
+            # Add the new 'audio' section with the audio file name
+            yaml_data['audio'] = {'file': audio_file}
+            print(f"  Added 'audio' section with file: {audio_file}")
+
             # Create a new zip file in the output folder, copying all contents except the old description.yaml
             with zipfile.ZipFile(temp_zip_path, 'w') as new_zip:
                 print(f"  Creating new zip file: {temp_zip_path}")
@@ -79,15 +84,15 @@ def process_zip(zip_path, output_path):
                         new_zip.writestr(item, zip_ref.read(item.filename))
                 
                 # Add the modified description.yaml
-                new_zip.write(updated_yaml_path, 'description.yaml')
+                new_zip.writestr('description.yaml', yaml.dump(yaml_data).encode())
 
-                # Add the extracted audio file
+                # Overwrite the existing audio file
                 new_zip.write(audio_path, audio_file)
+                print(f"  Overwrote audio file: {audio_file} in the zip.")
             
             # Clean up temporary files
             os.remove(video_path)
             os.remove(audio_path)
-            os.remove(updated_yaml_path)
             print(f"  Finished processing {zip_path}. Modified zip saved as {temp_zip_path}.")
 
     except Exception as e:
