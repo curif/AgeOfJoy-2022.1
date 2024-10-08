@@ -161,9 +161,7 @@ public static class CabinetFactory
                     else
                         cp.SetMaterial(mat);
 
-                    //after
-                    if (p.color != null && p.marquee.illuminationType != "none")
-                        cp.SetMarqueeEmissionColor(p.color, p.marquee.color);
+                    cp.SetMarqueeEmissionColor(p.color, p.marquee?.color);
 
                     if (p.properties.Count > 0)
                     {
