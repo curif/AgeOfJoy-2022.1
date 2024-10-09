@@ -10,7 +10,9 @@ using static UnityEngine.EventSystems.EventTrigger;
 
 public static class CabinetMaterials {
 
-    public static Material Base; //uses the shade mobile/difusse
+    public static Material Base; 
+    public static Material BaseNormal;
+    public static Material BlackNoNormal;
     public static Material Black;
     public static Material LightWood;
     public static Material DarkWood;
@@ -148,9 +150,12 @@ public static class CabinetMaterials {
     static CabinetMaterials() {
         // the material base for stickers
         Base = Resources.Load<Material>("Cabinets/Materials/Base");
+        BaseNormal = Resources.Load<Material>("Cabinets/Materials/BaseNormal");
+        BlackNoNormal = Resources.Load<Material>("Cabinets/Materials/CabinetBlack"); //used by default in un-named parts.
 
         //pre created in Unity editor
-        Black = Resources.Load<Material>("Cabinets/Materials/CabinetBlack");
+        //They should support normals ("normal map" loaded)
+        Black = Resources.Load<Material>("Cabinets/Materials/CabinetBlackNormal");
         LightWood = Resources.Load<Material>("Cabinets/Materials/LightWoodStandard");
         DarkWood = Resources.Load<Material>("Cabinets/Materials/DarkWoodStandard");
         Plastic = Resources.Load<Material>("Cabinets/Materials/Plastic");
@@ -161,7 +166,7 @@ public static class CabinetMaterials {
 
         //user configurable list:
         materialList.Add("black", new MaterialInfo(Black, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("base", new MaterialInfo(Base, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("base", new MaterialInfo(BaseNormal, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
         materialList.Add("lightwood", new MaterialInfo(LightWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
         materialList.Add("darkwood", new MaterialInfo(DarkWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
         materialList.Add("plastic", new MaterialInfo(Plastic, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));

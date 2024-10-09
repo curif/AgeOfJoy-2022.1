@@ -139,6 +139,18 @@ public class CabinetInformation
         CheckAGEBasic(name);
     }
 
+    public bool PartExists(string name)
+    {
+        if (Parts == null || Parts.Count == 0)
+            return false;
+        foreach (CabinetInformation.Part p in Parts)
+        {
+            if (p.name == name)
+                return true;
+        }
+        return false;
+    }
+
     public Dictionary<uint, LibretroInputDevice> GetLibretroInputDevices()
     {
         ConfigManager.WriteConsole($"[CabinetInformation.GetLibretroInputDevices]: START");
