@@ -262,6 +262,12 @@ public class CabinetPart : MonoBehaviour
         return SetMaterialFromMaterial(CabinetMaterials.Base, OnlyAssignIfDoesntHaveOne: false);
     }
 
+    //assign the Base material that support normals
+    public CabinetPart ForceMaterialBaseNormal()
+    {
+        return SetMaterialFromMaterial(CabinetMaterials.BaseNormal, OnlyAssignIfDoesntHaveOne: false);
+    }
+
     private CabinetPart PaintVertexColorMaterial(Color color)
     {
 

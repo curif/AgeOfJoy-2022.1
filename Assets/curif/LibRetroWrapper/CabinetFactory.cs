@@ -179,15 +179,17 @@ public static class CabinetFactory
                     if (Cabinet.GetMaterialPart(go) != null)
                         break;
                     */
+                    bool withoutMaterial = string.IsNullOrEmpty(p.material);
+                    bool withoutNormal = string.IsNullOrEmpty(p.normal);
 
-                    if (p.material == null &&
+                    if (withoutMaterial && withoutNormal &&
                         p.art == null &&
                         p.color == null &&
                         p.emission == null &&
                         p.transparency == 0)
-                        cp.SetMaterial(CabinetMaterials.Black);
+                        cp.SetMaterial(CabinetMaterials.BlackNoNormal);
 
-                    else if (p.material == null &&
+                    else if (withoutMaterial &&
                             p.art == null &&
                             p.color != null &&
                             p.emission == null &&
@@ -200,7 +202,7 @@ public static class CabinetFactory
                         if (p.properties.Count > 0)
                             cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
 
-                        if (!string.IsNullOrEmpty(p.normal))
+                        if (!withoutNormal)
                         {
                             string realProperty = t.GetRealPropertyName("normal");
                             if (!string.IsNullOrEmpty(realProperty))
@@ -216,19 +218,24 @@ public static class CabinetFactory
 
                         CabinetMaterials.MaterialPropertyTranslator propTranslator;
 
-                        if (p.material != null)
+                        // material base assignment
+                        if (!withoutMaterial)
                         {
-                            Material mat = CabinetMaterials.fromName(p.material);
-                            cp.SetMaterialFrom(mat);
                             propTranslator = CabinetMaterials.PropertyTranslator(p.material);
+                            cp.SetMaterialFrom(CabinetMaterials.fromName(p.material));
+                        }
+                        else if (!withoutNormal)
+                        {
+                            propTranslator = CabinetMaterials.PropertyTranslator("base");
+                            cp.ForceMaterialBaseNormal();
                         }
                         else
                         {
-                            cp.ForceMaterialBase();
                             propTranslator = CabinetMaterials.PropertyTranslator("base");
+                            cp.ForceMaterialBase();
                         }
 
-                        if (!string.IsNullOrEmpty(p.normal))
+                        if (!withoutNormal) 
                         {
                             string realProperty = propTranslator.GetRealPropertyName("normal");
                             if (!string.IsNullOrEmpty(realProperty))
@@ -239,6 +246,7 @@ public static class CabinetFactory
                             }
 
                         }
+
                         if (p.art != null)
                               cp.SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
 
@@ -333,15 +341,23 @@ public static class CabinetFactory
         BoxCollider boxCollider = cabinet.addBoxCollider(false);
         cabinet.toFloor();
 
+        //assign a material to all the components that aren't in the 
+        //description's parts list.
         if (cbinfo.material != null)
         {
-            cabinet.SetMaterial(CabinetMaterials.fromName(cbinfo.material));
+            //hack to avoid normals materials on default black cabinets.
+            Material mat;
+            if (cbinfo.material.ToLower() == "black")
+                mat = CabinetMaterials.BlackNoNormal;
+            else
+                mat = CabinetMaterials.fromName(cbinfo.material);
+            cabinet.SetMaterialToUnknownComponents(mat, cbinfo);
         }
         else if (cbinfo.color != null)
         {
             Material mat = new Material(CabinetMaterials.Base);
             mat.SetColor("_Color", cbinfo.color.getColor());
-            cabinet.SetMaterial(mat);
+            cabinet.SetMaterialToUnknownComponents(mat, cbinfo);
         }
 
         if (!string.IsNullOrEmpty(cbinfo.coinslot))
