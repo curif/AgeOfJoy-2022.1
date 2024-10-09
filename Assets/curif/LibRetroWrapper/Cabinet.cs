@@ -447,6 +447,19 @@ public class Cabinet
         return this;
     }
 
+    //set the same material to all unknown components.
+    public Cabinet SetMaterialToUnknownComponents(Material mat, CabinetInformation cbInfo)
+    {
+        Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            if (!NonStandardParts.Contains(renderer.gameObject.name) &&
+                !cbInfo.PartExists(renderer.gameObject.name))
+                renderer.material = mat;
+        }
+        return this;
+    }
+
     //set a part as lightgun target.
     public Cabinet SetLightGunTarget(string partName, LightGunInformation linfo)
     {
