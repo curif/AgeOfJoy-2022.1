@@ -339,6 +339,13 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_image_get_buffer_size();
 
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_image_get_light_red();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_image_get_light_green();
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_image_get_light_blue();
+
     //environment
 
     private delegate string EnvironmentHandler(string key);
@@ -438,6 +445,10 @@ public static unsafe class LibretroMameCore
         GameTexture.filterMode = FilterMode.Bilinear;
         //GameTexture.anisoLevel = 0;
     }
+
+    public static int getLightRed() { return wrapper_image_get_light_red(); }
+    public static int getLightGreen() { return wrapper_image_get_light_green(); }
+    public static int getLightBlue() { return wrapper_image_get_light_blue(); }
 
     public static void AssignControls()
     {
