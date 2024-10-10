@@ -329,7 +329,10 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       videoPlayer.Pause();
                       audioPlayer.Stop();
-                      Screenlight.active = true;
+                      if (Screenlight != null)
+                      {
+                          Screenlight.SetActive(true);
+                      }
                   }
 
                   //start mame
@@ -494,7 +497,10 @@ public class LibretroScreenController : MonoBehaviour
               {
                   EventManager.Instance.StopExitGameSound();
                   ExitPlayerFromGame();
-                  Screenlight.active = false;
+                  if (Screenlight != null)
+                  {
+                      Screenlight.SetActive(false);
+                  }
                   return TaskStatus.Success;
               })
             .End()
@@ -630,12 +636,18 @@ public class LibretroScreenController : MonoBehaviour
 
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
-            Light light = Screenlight.GetComponent<Light>();
-            light.color = new Color(
-                LibretroMameCore.getLightRed() / 255f,
-                LibretroMameCore.getLightGreen() / 255f,
-                LibretroMameCore.getLightBlue() / 255f
-                );
+            if (Screenlight != null)
+            {
+                Light light = Screenlight.GetComponent<Light>();
+                if (light != null)
+                {
+                    light.color = new Color(
+                        LibretroMameCore.getLightRed() / 255f,
+                        LibretroMameCore.getLightGreen() / 255f,
+                        LibretroMameCore.getLightBlue() / 255f
+                        );
+                }
+            }
             LibretroMameCore.UpdateTexture();
         }
 

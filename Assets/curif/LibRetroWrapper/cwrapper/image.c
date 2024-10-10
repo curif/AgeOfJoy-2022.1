@@ -114,21 +114,20 @@ void computeAverageRGB565(const unsigned short* imageBuf, int width, int height)
 		unsigned char green = (pixel >> 5) & 0x3F;
 		unsigned char blue = pixel & 0x1F;
 
-		// Scale to 8-bit values (0-255)
-		red = (red * 255) / 31;
-		green = (green * 255) / 63;
-		blue = (blue * 255) / 31;
-
 		totalRed += red;
 		totalGreen += green;
 		totalBlue += blue;
 		sampleCount++;
 	}
 
+	unsigned long avgRed = totalRed / sampleCount;
+	unsigned long avgGreen = totalGreen / sampleCount;
+	unsigned long avgBlue = totalBlue / sampleCount;
+
 	// Compute the average
-	light_red = (unsigned char)(totalRed / sampleCount);
-	light_green = (unsigned char)(totalGreen / sampleCount);
-	light_blue = (unsigned char)(totalBlue / sampleCount);
+	light_red = (unsigned char)((avgRed * 255) / 31);
+	light_green = (unsigned char)((avgGreen * 255) / 63);
+	light_blue = (unsigned char)((avgBlue * 255) / 31);
 }
 
 // NOTE: in rgb565 pitch = width*2.
