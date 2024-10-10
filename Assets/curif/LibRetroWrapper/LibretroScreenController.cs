@@ -329,6 +329,7 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       videoPlayer.Pause();
                       audioPlayer.Stop();
+                      Screenlight.active = true;
                   }
 
                   //start mame
@@ -456,7 +457,7 @@ public class LibretroScreenController : MonoBehaviour
             .End()
 
             .Sequence("Game Started")
-              .Condition("Game is running?", () => gameRunning)             
+              .Condition("Game is running?", () => gameRunning)
               .RepeatUntilSuccess("Run until player exit")
                 .Sequence()
                   .Condition("user EXIT pressed?", () =>
@@ -493,6 +494,7 @@ public class LibretroScreenController : MonoBehaviour
               {
                   EventManager.Instance.StopExitGameSound();
                   ExitPlayerFromGame();
+                  Screenlight.active = false;
                   return TaskStatus.Success;
               })
             .End()
@@ -512,7 +514,7 @@ public class LibretroScreenController : MonoBehaviour
                     .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
                     .Selector()
                         .Sequence()
-                            .Condition("Is Player near enough to see video", () => 
+                            .Condition("Is Player near enough to see video", () =>
                                             distanceToPlayer <= DistanceMaxToPlayerToActivateVideo)
                             .Condition("Is Player looking the screen zone", () => isPlayerLookingAtScreenZone())
                             .Do("Play video", () =>
@@ -520,7 +522,7 @@ public class LibretroScreenController : MonoBehaviour
                                 audioSource.spatialize = true;
                                 audioSource.maxDistance = DistanceMaxToPlayerToActivateVideo;
 
-                                audioPlayer.Stop(); 
+                                audioPlayer.Stop();
                                 videoPlayer.Play();
 
                                 return TaskStatus.Success;
@@ -628,6 +630,12 @@ public class LibretroScreenController : MonoBehaviour
 
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
+            Light light = Screenlight.GetComponent<Light>();
+            light.color = new Color(
+                LibretroMameCore.getLightRed() / 255f,
+                LibretroMameCore.getLightGreen() / 255f,
+                LibretroMameCore.getLightBlue() / 255f
+                );
             LibretroMameCore.UpdateTexture();
         }
 

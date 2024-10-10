@@ -18,7 +18,15 @@ static int bufIdx;
 static unsigned char* imageBuffer;
 static unsigned imageSize;
 
+static int light_red;
+static int light_green;
+static int light_blue;
+
 static handlers_t* handlers;
+
+int wrapper_image_get_light_red() { return light_red; }
+int wrapper_image_get_light_green() { return light_green; }
+int wrapper_image_get_light_blue() { return light_blue; }
 
 void wrapper_image_init(CreateTexture createTexture, TextureLock textureLock,
 	TextureUnlock textureUnlock,
@@ -91,6 +99,38 @@ void swapBuffers(unsigned char* imageBuf, unsigned size) {
 unsigned char* wrapper_image_get_buffer() { return imageBuffer; }
 unsigned wrapper_image_get_buffer_size() { return imageSize; }
 
+void computeAverageRGB565(const unsigned short* imageBuf, int width, int height) {
+	unsigned long totalRed = 0;
+	unsigned long totalGreen = 0;
+	unsigned long totalBlue = 0;
+	int sampleCount = 0;
+	int totalPixels = width * height;
+
+	for (int i = 0; i < totalPixels; i += 113) { // Sample every 113 pixels (irregular number for better results !)
+		unsigned short pixel = imageBuf[i];
+
+		// Extract RGB components from the RGB565 format
+		unsigned char red = (pixel >> 11) & 0x1F;
+		unsigned char green = (pixel >> 5) & 0x3F;
+		unsigned char blue = pixel & 0x1F;
+
+		// Scale to 8-bit values (0-255)
+		red = (red * 255) / 31;
+		green = (green * 255) / 63;
+		blue = (blue * 255) / 31;
+
+		totalRed += red;
+		totalGreen += green;
+		totalBlue += blue;
+		sampleCount++;
+	}
+
+	// Compute the average
+	light_red = (unsigned char)(totalRed / sampleCount);
+	light_green = (unsigned char)(totalGreen / sampleCount);
+	light_blue = (unsigned char)(totalBlue / sampleCount);
+}
+
 // NOTE: in rgb565 pitch = width*2.
 void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 	unsigned height, size_t pitch) {
@@ -155,8 +195,10 @@ void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 		// \n", width, height, pitch);
 		imageBuf = wrapper_image_conversion_convert0RGB1555ToRGB565(
 			data, width, height, pitch, bufIdx);
-		if (imageBuf)
+		if (imageBuf) {
+			computeAverageRGB565((unsigned short*)imageBuf, width, height);
 			swapBuffers(imageBuf, width * height * 2);
+		}
 		return;
 	}
 
@@ -165,8 +207,10 @@ void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 		// \n", width, height, pitch);
 		imageBuf = wrapper_image_conversion_convertXRGB8888ToRGB565(
 			data, width, height, pitch, bufIdx);
-		if (imageBuf)
+		if (imageBuf) {
+			computeAverageRGB565((unsigned short*)imageBuf, width, height);
 			swapBuffers(imageBuf, width * height * 2);
+		}
 		return;
 	}
 
@@ -185,8 +229,10 @@ void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 		else {
 			imageBuf = storeRGB565Image(data, width, height, pitch, bufIdx);
 		}
-		if (imageBuf)
+		if (imageBuf) {
+			computeAverageRGB565((unsigned short*)imageBuf, width, height);
 			swapBuffers(imageBuf, imageSize);
+		}
 
 		return;
 	}
