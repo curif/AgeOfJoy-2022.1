@@ -64,6 +64,9 @@ public class LibretroScreenController : MonoBehaviour
     [SerializeField]
     public BehaviorTree tree;
 
+    [SerializeField]
+    private GameObject Screenlight;
+
     //[SerializeField]
     //public GameObject Player;
     [Tooltip("The maximum distance between the player and the screen to active video.")]
