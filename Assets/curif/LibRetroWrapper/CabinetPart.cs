@@ -270,9 +270,15 @@ public class CabinetPart : MonoBehaviour
 
     private CabinetPart PaintVertexColorMaterial(Color color)
     {
+        PaintVertexColorMaterialToGameobject(color, gameObject);
+        return this ;
+    }
+
+    public static void PaintVertexColorMaterialToGameobject(Color color, GameObject g)
+    {
 
         // Retrieve all MeshFilter components in the GameObject and its children
-        MeshFilter[] meshFilters = gameObject.GetComponentsInChildren<MeshFilter>();
+        MeshFilter[] meshFilters = g.GetComponentsInChildren<MeshFilter>();
         if (meshFilters.Length > 0)
         {
             foreach (MeshFilter meshFilter in meshFilters)
@@ -289,13 +295,17 @@ public class CabinetPart : MonoBehaviour
 
             }
         }
-        return this;
+        return;
     }
 
     // @Gometrizer technique to colorize without a material.
-    public CabinetPart SetColorVertex(Color color)
+    public CabinetPart SetColorVertex(Color color, bool hasNormal)
     {
-        SetMaterialFromMaterial(CabinetMaterials.VertexColor);
+        if (hasNormal)
+            SetMaterialFromMaterial(CabinetMaterials.VertexColorNormal);
+        else
+            SetMaterialFromMaterial(CabinetMaterials.VertexColor);
+
         PaintVertexColorMaterial(color);
 
         return this;

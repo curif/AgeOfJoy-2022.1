@@ -18,7 +18,15 @@ static int bufIdx;
 static unsigned char* imageBuffer;
 static unsigned imageSize;
 
+static float light_red;
+static float light_green;
+static float light_blue;
+
 static handlers_t* handlers;
+
+float wrapper_image_get_light_red() { return light_red; }
+float wrapper_image_get_light_green() { return light_green; }
+float wrapper_image_get_light_blue() { return light_blue; }
 
 void wrapper_image_init(CreateTexture createTexture, TextureLock textureLock,
 	TextureUnlock textureUnlock,
@@ -91,6 +99,47 @@ void swapBuffers(unsigned char* imageBuf, unsigned size) {
 unsigned char* wrapper_image_get_buffer() { return imageBuffer; }
 unsigned wrapper_image_get_buffer_size() { return imageSize; }
 
+void computeAverageRGB565(const unsigned short* imageBuf, int width, int height) {
+	unsigned long totalRed = 0;
+	unsigned long totalGreen = 0;
+	unsigned long totalBlue = 0;
+	int sampleCount = 0;
+
+	// Use a set of close prime numbers for the X stride values
+	int primeStrides[] = { 17, 19, 23, 29 };
+	int numPrimes = sizeof(primeStrides) / sizeof(primeStrides[0]);
+	int strideY = 23; // Prime number for Y stride to ensure vertical variety
+
+	for (int y = 0; y < height; y += strideY) {
+		// Select a different prime stride for X based on the line index
+		int strideX = primeStrides[y % numPrimes];
+		for (int x = 0; x < width; x += strideX) {
+			int index = y * width + x;
+			unsigned short pixel = imageBuf[index];
+
+			// Extract RGB components from the RGB565 format
+			unsigned char red = (pixel >> 11) & 0x1F;
+			unsigned char green = (pixel >> 5) & 0x3F;
+			unsigned char blue = pixel & 0x1F;
+
+			totalRed += red;
+			totalGreen += green;
+			totalBlue += blue;
+			sampleCount++;
+		}
+	}
+
+	// Since the sample count is assumed to be sufficient, no need to check for zero
+	float avgRed = (float)(totalRed / (float)sampleCount) / 31.0f;
+	float avgGreen = (float)(totalGreen / (float)sampleCount) / 63.0f;
+	float avgBlue = (float)(totalBlue / (float)sampleCount) / 31.0f;
+
+	// Assign to global variables (0.0 to 1.0 range)
+	light_red = avgRed;
+	light_green = avgGreen;
+	light_blue = avgBlue;
+}
+
 // NOTE: in rgb565 pitch = width*2.
 void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 	unsigned height, size_t pitch) {
@@ -155,8 +204,10 @@ void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 		// \n", width, height, pitch);
 		imageBuf = wrapper_image_conversion_convert0RGB1555ToRGB565(
 			data, width, height, pitch, bufIdx);
-		if (imageBuf)
+		if (imageBuf) {
+			computeAverageRGB565((unsigned short*)imageBuf, width, height);
 			swapBuffers(imageBuf, width * height * 2);
+		}
 		return;
 	}
 
@@ -165,8 +216,10 @@ void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 		// \n", width, height, pitch);
 		imageBuf = wrapper_image_conversion_convertXRGB8888ToRGB565(
 			data, width, height, pitch, bufIdx);
-		if (imageBuf)
+		if (imageBuf) {
+			computeAverageRGB565((unsigned short*)imageBuf, width, height);
 			swapBuffers(imageBuf, width * height * 2);
+		}
 		return;
 	}
 
@@ -185,8 +238,10 @@ void wrapper_image_video_refresh_cb(const void* data, unsigned width,
 		else {
 			imageBuf = storeRGB565Image(data, width, height, pitch, bufIdx);
 		}
-		if (imageBuf)
+		if (imageBuf) {
+			computeAverageRGB565((unsigned short*)imageBuf, width, height);
 			swapBuffers(imageBuf, imageSize);
+		}
 
 		return;
 	}

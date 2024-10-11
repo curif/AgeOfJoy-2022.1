@@ -19,7 +19,7 @@ public class Cabinet
     //Al the parts in the gabinet that must exists, can be others.
     // static List<string> RequiredParts = new List<string>() { "screen-mock-vertical", "screen-mock-horizontal" };
     //Known parts that can exists or not.
-    static List<string> NonStandardParts = new List<string>() { "Marquee", "bezel", "coin-slot", "screen" };
+    static List<string> NonStandardParts = new List<string>() { "Marquee", "bezel", "coin-slot", "screen", "screen-mock-horizontal", "screen-mock-vertical" };
     //those parts that the user can configure, but is not limited to.
     public static List<string> userStandarConfigurableParts = new List<string>() { "front", "left", "right", "joystick", "joystick-down", "screen-base" };
 
@@ -453,9 +453,28 @@ public class Cabinet
         Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
-            if (!NonStandardParts.Contains(renderer.gameObject.name) &&
+            if (!NonStandardParts.Contains(renderer.gameObject.name) &&  /* && renderer.sharedMaterial == null &&*/
                 !cbInfo.PartExists(renderer.gameObject.name))
-                renderer.material = mat;
+                //renderer.materials = new Material[] { mat }; //can't do it, some cabinet aren't working. 
+                renderer.material = mat; //can't fix it, some cabinet aren't working. 
+        }
+        return this;
+    }
+
+    //set the same color to all unknown components.
+    public Cabinet SetVertexColorToUnknownComponents(Color32 color, CabinetInformation cbInfo)
+    {
+        
+        Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
+        foreach (Renderer renderer in renderers)
+        {
+            if (!NonStandardParts.Contains(renderer.gameObject.name) && !cbInfo.PartExists(renderer.gameObject.name)
+                && (renderer.sharedMaterial == null || renderer.sharedMaterial.name == "Default-Material"))
+            {
+                renderer.material = CabinetMaterials.VertexColor;
+                //renderer.materials = new Material[] { mat }; //can't do it, some cabinet aren't working.
+                CabinetPart.PaintVertexColorMaterialToGameobject(color, renderer.gameObject);
+            }
         }
         return this;
     }

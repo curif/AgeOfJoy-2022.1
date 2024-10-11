@@ -64,6 +64,9 @@ public class LibretroScreenController : MonoBehaviour
     [SerializeField]
     public BehaviorTree tree;
 
+    [SerializeField]
+    private GameObject Screenlight;
+
     //[SerializeField]
     //public GameObject Player;
     [Tooltip("The maximum distance between the player and the screen to active video.")]
@@ -326,6 +329,10 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       videoPlayer.Pause();
                       audioPlayer.Stop();
+                      if (Screenlight != null)
+                      {
+                          Screenlight.SetActive(true);
+                      }
                   }
 
                   //start mame
@@ -453,7 +460,7 @@ public class LibretroScreenController : MonoBehaviour
             .End()
 
             .Sequence("Game Started")
-              .Condition("Game is running?", () => gameRunning)             
+              .Condition("Game is running?", () => gameRunning)
               .RepeatUntilSuccess("Run until player exit")
                 .Sequence()
                   .Condition("user EXIT pressed?", () =>
@@ -490,6 +497,10 @@ public class LibretroScreenController : MonoBehaviour
               {
                   EventManager.Instance.StopExitGameSound();
                   ExitPlayerFromGame();
+                  if (Screenlight != null)
+                  {
+                      Screenlight.SetActive(false);
+                  }
                   return TaskStatus.Success;
               })
             .End()
@@ -509,7 +520,7 @@ public class LibretroScreenController : MonoBehaviour
                     .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
                     .Selector()
                         .Sequence()
-                            .Condition("Is Player near enough to see video", () => 
+                            .Condition("Is Player near enough to see video", () =>
                                             distanceToPlayer <= DistanceMaxToPlayerToActivateVideo)
                             .Condition("Is Player looking the screen zone", () => isPlayerLookingAtScreenZone())
                             .Do("Play video", () =>
@@ -517,7 +528,7 @@ public class LibretroScreenController : MonoBehaviour
                                 audioSource.spatialize = true;
                                 audioSource.maxDistance = DistanceMaxToPlayerToActivateVideo;
 
-                                audioPlayer.Stop(); 
+                                audioPlayer.Stop();
                                 videoPlayer.Play();
 
                                 return TaskStatus.Success;
@@ -625,6 +636,22 @@ public class LibretroScreenController : MonoBehaviour
 
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
+            if (Screenlight != null)
+            {
+                Light light = Screenlight.GetComponent<Light>();
+                if (light != null)
+                {
+                    light.color = new Color(
+                        LibretroMameCore.getLightRed(),
+                        LibretroMameCore.getLightGreen(),
+                        LibretroMameCore.getLightBlue()
+                        );
+                    float luminance = (LibretroMameCore.getLightRed() +
+                                      LibretroMameCore.getLightGreen() +
+                                      LibretroMameCore.getLightBlue()) / 3f;
+                    light.intensity = luminance * 4f;
+                }
+            }
             LibretroMameCore.UpdateTexture();
         }
 

@@ -187,7 +187,11 @@ public static class CabinetFactory
                         p.color == null &&
                         p.emission == null &&
                         p.transparency == 0)
-                        cp.SetMaterial(CabinetMaterials.BlackNoNormal);
+                    {
+                        //cp.SetMaterial(CabinetMaterials.BlackNoNormal);
+                        Color32 black = new Color32(0,0,0, 0);
+                        cp.SetColorVertex(black, false);
+                    }
 
                     else if (withoutMaterial &&
                             p.art == null &&
@@ -196,19 +200,20 @@ public static class CabinetFactory
                             p.transparency == 0)
                     {
                         //vertex color optimization
-                        cp.SetColorVertex(p.color.getColor());
                         CabinetMaterials.MaterialPropertyTranslator t = CabinetMaterials.PropertyTranslator("Vertex Color");
-
-                        if (p.properties.Count > 0)
-                            cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
 
                         if (!withoutNormal)
                         {
+                            cp.SetColorVertex(p.color.getColor(), true);
                             string realProperty = t.GetRealPropertyName("normal");
                             if (!string.IsNullOrEmpty(realProperty))
                                 cp.SetNormal(p.normal, realProperty);
                         }
+                        else
+                            cp.SetColorVertex(p.color.getColor(), false);
 
+                        if (p.properties.Count > 0)
+                            cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
                     }
                     else
                     {
@@ -346,20 +351,37 @@ public static class CabinetFactory
         if (cbinfo.material != null)
         {
             //hack to avoid normals materials on default black cabinets.
-            Material mat;
             if (cbinfo.material.ToLower() == "black")
-                mat = CabinetMaterials.BlackNoNormal;
+            {
+                // most used material by default, change it by a vertex.
+                Material mat = CabinetMaterials.BlackNoNormal;
+                cabinet.SetMaterialToUnknownComponents(mat, cbinfo); //only if the part doesn't have a material assigned
+                /*Color32 black = new Color32(0, 0, 0, 0);
+                Material mat = new Material(CabinetMaterials.VertexColor);
+                cabinet.SetVertexColorToUnknownComponents(black, cbinfo, mat); //only if the part doesn't have a material assigned
+                */
+            }
             else
-                mat = CabinetMaterials.fromName(cbinfo.material);
-            cabinet.SetMaterialToUnknownComponents(mat, cbinfo);
+            {
+                Material mat = CabinetMaterials.fromName(cbinfo.material);
+                cabinet.SetMaterialToUnknownComponents(mat, cbinfo); //only if the part doesn't have a material assigned
+            }
         }
         else if (cbinfo.color != null)
         {
-            Material mat = new Material(CabinetMaterials.Base);
-            mat.SetColor("_Color", cbinfo.color.getColor());
-            cabinet.SetMaterialToUnknownComponents(mat, cbinfo);
+            //Material mat = new Material(CabinetMaterials.Base);
+            //mat.SetColor("_Color", cbinfo.color.getColor());
+            Color32 color = cbinfo.color.getColor();
+            cabinet.SetVertexColorToUnknownComponents(color, cbinfo); //only if the part doesn't have a material assigned
         }
-
+        else
+        {
+            //fall to black any other component.
+            Color32 black = new Color32(0, 0, 0, 0);
+            cabinet.SetVertexColorToUnknownComponents(black, cbinfo); //only if the part doesn't have a material assigned
+        }
+        
+        
         if (!string.IsNullOrEmpty(cbinfo.coinslot))
         {
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
