@@ -646,6 +646,10 @@ public class LibretroScreenController : MonoBehaviour
                         LibretroMameCore.getLightGreen(),
                         LibretroMameCore.getLightBlue()
                         );
+                    float luminance = (LibretroMameCore.getLightRed() +
+                                      LibretroMameCore.getLightGreen() +
+                                      LibretroMameCore.getLightBlue()) / 3f;
+                    light.intensity = luminance * 4f;
                 }
             }
             LibretroMameCore.UpdateTexture();
