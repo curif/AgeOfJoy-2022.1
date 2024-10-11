@@ -22,6 +22,7 @@ public static class CabinetMaterials {
     public static Material DirtyGlass;
     public static Material TVBorder;
     public static Material VertexColor;
+    public static Material VertexColorNormal;
     public static Material FrontGlassWithBezel;
     public static Material MarqueeNoLamps;
     public static Material MarqueeOneLamp;
@@ -163,17 +164,7 @@ public static class CabinetMaterials {
         DirtyGlass = Resources.Load<Material>("Cabinets/Materials/GlassDirt");
         LayerGlass = Resources.Load<Material>("Cabinets/Materials/GlassTranspLayer");
         VertexColor = Resources.Load<Material>("Cabinets/Materials/Base_VertexColor");
-
-        //user configurable list:
-        materialList.Add("black", new MaterialInfo(Black, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("base", new MaterialInfo(BaseNormal, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("lightwood", new MaterialInfo(LightWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("darkwood", new MaterialInfo(DarkWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("plastic", new MaterialInfo(Plastic, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("dirty glass", new MaterialInfo(DirtyGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("layer glass", new MaterialInfo(LayerGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("clean glass", new MaterialInfo(CleanGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
-        materialList.Add("Vertex Color", new MaterialInfo(VertexColor, new MaterialPropertyTranslator(MaterialVertexPropertyTranslator)));
+        VertexColorNormal = Resources.Load<Material>("Cabinets/Materials/Base_VertexColor_Normal");
 
         TVBorder = Resources.Load<Material>("Cabinets/PreFab/CRTs/TVBorder");
 
@@ -185,6 +176,17 @@ public static class CabinetMaterials {
 
         //MarqueeStandardShader = Resources.Load<Material>("Cabinets/Materials/MarqueeStandardShader");
         FrontGlassWithBezel = Resources.Load<Material>("Cabinets/Materials/FrontGlass");
+
+        //user configurable list:
+        materialList.Add("black", new MaterialInfo(Black, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("base", new MaterialInfo(BaseNormal, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("lightwood", new MaterialInfo(LightWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("darkwood", new MaterialInfo(DarkWood, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("plastic", new MaterialInfo(Plastic, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("dirty glass", new MaterialInfo(DirtyGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("layer glass", new MaterialInfo(LayerGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("clean glass", new MaterialInfo(CleanGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("Vertex Color", new MaterialInfo(VertexColorNormal, new MaterialPropertyTranslator(MaterialVertexPropertyTranslator)));
 
     }
 
