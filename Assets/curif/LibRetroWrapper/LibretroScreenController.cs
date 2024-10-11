@@ -642,9 +642,9 @@ public class LibretroScreenController : MonoBehaviour
                 if (light != null)
                 {
                     light.color = new Color(
-                        LibretroMameCore.getLightRed() / 255f,
-                        LibretroMameCore.getLightGreen() / 255f,
-                        LibretroMameCore.getLightBlue() / 255f
+                        LibretroMameCore.getLightRed(),
+                        LibretroMameCore.getLightGreen(),
+                        LibretroMameCore.getLightBlue()
                         );
                 }
             }

@@ -18,15 +18,15 @@ static int bufIdx;
 static unsigned char* imageBuffer;
 static unsigned imageSize;
 
-static int light_red;
-static int light_green;
-static int light_blue;
+static float light_red;
+static float light_green;
+static float light_blue;
 
 static handlers_t* handlers;
 
-int wrapper_image_get_light_red() { return light_red; }
-int wrapper_image_get_light_green() { return light_green; }
-int wrapper_image_get_light_blue() { return light_blue; }
+float wrapper_image_get_light_red() { return light_red; }
+float wrapper_image_get_light_green() { return light_green; }
+float wrapper_image_get_light_blue() { return light_blue; }
 
 void wrapper_image_init(CreateTexture createTexture, TextureLock textureLock,
 	TextureUnlock textureUnlock,
@@ -104,30 +104,40 @@ void computeAverageRGB565(const unsigned short* imageBuf, int width, int height)
 	unsigned long totalGreen = 0;
 	unsigned long totalBlue = 0;
 	int sampleCount = 0;
-	int totalPixels = width * height;
 
-	for (int i = 0; i < totalPixels; i += 113) { // Sample every 113 pixels (irregular number for better results !)
-		unsigned short pixel = imageBuf[i];
+	// Use a set of close prime numbers for the X stride values
+	int primeStrides[] = { 17, 19, 23, 29 };
+	int numPrimes = sizeof(primeStrides) / sizeof(primeStrides[0]);
+	int strideY = 23; // Prime number for Y stride to ensure vertical variety
 
-		// Extract RGB components from the RGB565 format
-		unsigned char red = (pixel >> 11) & 0x1F;
-		unsigned char green = (pixel >> 5) & 0x3F;
-		unsigned char blue = pixel & 0x1F;
+	for (int y = 0; y < height; y += strideY) {
+		// Select a different prime stride for X based on the line index
+		int strideX = primeStrides[y % numPrimes];
+		for (int x = 0; x < width; x += strideX) {
+			int index = y * width + x;
+			unsigned short pixel = imageBuf[index];
 
-		totalRed += red;
-		totalGreen += green;
-		totalBlue += blue;
-		sampleCount++;
+			// Extract RGB components from the RGB565 format
+			unsigned char red = (pixel >> 11) & 0x1F;
+			unsigned char green = (pixel >> 5) & 0x3F;
+			unsigned char blue = pixel & 0x1F;
+
+			totalRed += red;
+			totalGreen += green;
+			totalBlue += blue;
+			sampleCount++;
+		}
 	}
 
-	unsigned long avgRed = totalRed / sampleCount;
-	unsigned long avgGreen = totalGreen / sampleCount;
-	unsigned long avgBlue = totalBlue / sampleCount;
+	// Since the sample count is assumed to be sufficient, no need to check for zero
+	float avgRed = (float)(totalRed / (float)sampleCount) / 31.0f;
+	float avgGreen = (float)(totalGreen / (float)sampleCount) / 63.0f;
+	float avgBlue = (float)(totalBlue / (float)sampleCount) / 31.0f;
 
-	// Compute the average
-	light_red = (unsigned char)((avgRed * 255) / 31);
-	light_green = (unsigned char)((avgGreen * 255) / 63);
-	light_blue = (unsigned char)((avgBlue * 255) / 31);
+	// Assign to global variables (0.0 to 1.0 range)
+	light_red = avgRed;
+	light_green = avgGreen;
+	light_blue = avgBlue;
 }
 
 // NOTE: in rgb565 pitch = width*2.
