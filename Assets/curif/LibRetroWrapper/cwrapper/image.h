@@ -27,9 +27,9 @@ void wrapper_image_lock();
 void wrapper_image_unlock();
 unsigned char *wrapper_image_get_buffer();
 unsigned wrapper_image_get_buffer_size();
-int wrapper_image_get_light_red();
-int wrapper_image_get_light_green();
-int wrapper_image_get_light_blue();
+float wrapper_image_get_light_red();
+float wrapper_image_get_light_green();
+float wrapper_image_get_light_blue();
 
 #ifdef __cplusplus
 }
