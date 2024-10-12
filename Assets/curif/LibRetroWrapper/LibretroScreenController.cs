@@ -65,7 +65,7 @@ public class LibretroScreenController : MonoBehaviour
     public BehaviorTree tree;
 
     [SerializeField]
-    private GameObject Screenlight;
+    private Light light;
 
     //[SerializeField]
     //public GameObject Player;
@@ -249,6 +249,9 @@ public class LibretroScreenController : MonoBehaviour
             cabinetAGEBasic.ExecAfterLoadBas();
         }
 
+        // glow light
+        light = GetComponentInChildren<Light>(true);
+
         mainCoroutine = StartCoroutine(runBT());
         initialized = true;
 
@@ -329,9 +332,9 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       videoPlayer.Pause();
                       audioPlayer.Stop();
-                      if (Screenlight != null)
+                      if (light != null)
                       {
-                          Screenlight.SetActive(true);
+                          light.gameObject.SetActive(true);
                       }
                   }
 
@@ -497,9 +500,9 @@ public class LibretroScreenController : MonoBehaviour
               {
                   EventManager.Instance.StopExitGameSound();
                   ExitPlayerFromGame();
-                  if (Screenlight != null)
+                  if (light != null)
                   {
-                      Screenlight.SetActive(false);
+                      light.gameObject.SetActive(false);
                   }
                   return TaskStatus.Success;
               })
@@ -636,23 +639,24 @@ public class LibretroScreenController : MonoBehaviour
 
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
         {
-            if (Screenlight != null)
+            if (light != null && globalConfiguration.Configuration.cabinet.screenGlowIntensity > 0)
             {
-                Light light = Screenlight.GetComponent<Light>();
-                if (light != null)
-                {
-                    light.color = new Color(
-                        LibretroMameCore.getLightRed(),
-                        LibretroMameCore.getLightGreen(),
-                        LibretroMameCore.getLightBlue()
-                        );
-                    float luminance = (LibretroMameCore.getLightRed() +
-                                      LibretroMameCore.getLightGreen() +
-                                      LibretroMameCore.getLightBlue()) / 3f;
-                    light.intensity = luminance * 4f;
-                }
+                float r, g, b;
+
+#if !UNITY_EDITOR
+                r = LibretroMameCore.getLightRed();
+                g = LibretroMameCore.getLightGreen();
+                b = LibretroMameCore.getLightBlue();
+#else
+                r = 255; g = 0; b = 0; //red color
+#endif
+                light.color = new Color(r,g,b);
+                float luminance = (r + g + b) / 3f;
+                light.intensity = luminance * globalConfiguration.Configuration.cabinet.screenGlowIntensity;
             }
+
             LibretroMameCore.UpdateTexture();
+
         }
 
         shader.Update();
