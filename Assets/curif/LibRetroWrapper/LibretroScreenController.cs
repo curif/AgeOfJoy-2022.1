@@ -400,7 +400,6 @@ public class LibretroScreenController : MonoBehaviour
 
                   LibretroMameCore.libretroInputDevices = LibretroInputDevices;
 
-#if !UNITY_EDITOR
                   // start libretro
                   bool insertCoinOnStartup = InsertCoinOnStartup.HasValue ? 
                     InsertCoinOnStartup.Value : globalConfiguration.Configuration.cabinet.insertCoinOnStartup;
@@ -408,6 +407,8 @@ public class LibretroScreenController : MonoBehaviour
                   {
                       CoinSlot.clean();
                   }
+#if !UNITY_EDITOR
+
                   if (isGameFilePresent()) 
                   {
                       // start libretro
