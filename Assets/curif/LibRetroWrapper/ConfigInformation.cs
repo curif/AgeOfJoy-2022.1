@@ -193,8 +193,8 @@ public class ConfigInformation
 
     public class CabinetConfiguration : ConfigInformationBase
     {
-        //[YamlMember(Alias = "insert-coin-on-startup", ApplyNamingConventions = false)]
-        //public bool insertCoinOnStartup = true;
+        [YamlMember(Alias = "insert-coin-on-startup", ApplyNamingConventions = false)]
+        public bool insertCoinOnStartup = true;
 
         [YamlMember(Alias = "forced-shader", ApplyNamingConventions = false)]
         public string forcedShader;
