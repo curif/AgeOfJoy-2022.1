@@ -198,6 +198,14 @@ public class ConfigInformation
 
         [YamlMember(Alias = "forced-shader", ApplyNamingConventions = false)]
         public string forcedShader;
+
+        [YamlMember(Alias = "screen-glow-intensity", ApplyNamingConventions = false)]
+        public float screenGlowIntensity = 5f;
+
+        public override bool IsValid()
+        {
+            return screenGlowIntensity >= 0;
+        }
     }
 
     // defaults ===================================================
@@ -226,8 +234,9 @@ public class ConfigInformation
     public static CabinetConfiguration CabinetDefault()
     {
         CabinetConfiguration cabinetConfiguration = new CabinetConfiguration();
-        cabinetConfiguration.insertCoinOnStartup = true;
+        //cabinetConfiguration.insertCoinOnStartup = true;
         cabinetConfiguration.forcedShader = null;
+        cabinetConfiguration.screenGlowIntensity = 5f;
         return cabinetConfiguration;
     }
 
