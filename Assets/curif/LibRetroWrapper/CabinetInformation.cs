@@ -7,9 +7,7 @@ You should have received a copy of the GNU General Public License along with thi
 using Assets.curif.LibRetroWrapper;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
-using System.Linq.Expressions;
 using UnityEngine;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
@@ -100,7 +98,7 @@ public class CabinetInformation
             rom = roms[0];
         }
         try
-        { 
+        {
             CheckResourcePath(rom);
             CheckResourcePath(statefile);
             CheckResourcePath(model?.file);
@@ -196,7 +194,7 @@ public class CabinetInformation
     {
         if (agebasic == null)
             return;
-        agebasic.Validate(cabName);         
+        agebasic.Validate(cabName);
     }
 
     public static string debugLogPath(string cabinetName)
@@ -462,7 +460,7 @@ public class CabinetInformation
         }
 
         public Material material;
-        
+
         [YamlMember(Alias = "player-interaction", ApplyNamingConventions = false)]
         public PlayerInteraction playerInteraction;  //to be touched grabed by the user.
 
@@ -607,11 +605,12 @@ public class CabinetInformation
             Color c = new Color32(r, g, b, a);
             Color cf = new Color(c.r * factor, c.g * factor, c.b * factor, a);
             // LibretroMameCore.WriteConsole($" marquee color: {cf}");
-            return cf;
+            return cf.linear;
         }
         public virtual Color getColorNoIntensity()
         {
-            return new Color32(r, g, b, a);
+            Color color = new Color32(r, g, b, a);
+            return color.linear;
         }
     }
 
@@ -713,9 +712,9 @@ public class CabinetInformation
                             : null);
                 if (p.physical != null)
                 {
-                     exceptions.Add($"Part #{number}: {p.name} PHYSICS",
-                            p.physical.material != null ? p.physical.material.IsValid() : null);
-                     exceptions.Add($"Part #{number}: {p.name} PHYSICS MATERIAL", p.physical.IsValid());
+                    exceptions.Add($"Part #{number}: {p.name} PHYSICS",
+                           p.physical.material != null ? p.physical.material.IsValid() : null);
+                    exceptions.Add($"Part #{number}: {p.name} PHYSICS MATERIAL", p.physical.IsValid());
                 }
 
                 number++;
@@ -828,7 +827,7 @@ public class CabinetInformation
             }
             writer.WriteLine(new string('-', 50)); // Separator
             if (!String.IsNullOrEmpty(moreProblems))
-                writer.WriteLine(moreProblems); 
+                writer.WriteLine(moreProblems);
         }
     }
 
