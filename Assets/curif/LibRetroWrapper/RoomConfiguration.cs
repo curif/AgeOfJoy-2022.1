@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using UnityEngine.Events;
@@ -7,19 +5,24 @@ using UnityEngine.Events;
 //[RequireComponent(typeof(FileMonitor))]
 public class RoomConfiguration : MonoBehaviour
 {
-    public GameObject FileMonitorGameObject;
-    public GameObject GlobalConfigurationGameObject;
     public UnityEvent OnRoomConfigChanged;
     public string Room;
 
     public string yamlPath;
-    private FileMonitor fileMonitor;
-    private GlobalConfiguration globalConfiguration;
+    public FileMonitor fileMonitor;
 
+    private GlobalConfiguration globalConfiguration;
+    private bool initialized = false;
     private ConfigInformation configuration;
+    private bool isListenerAdded = false;
+
+
     public ConfigInformation Configuration
     {
-        get { return configuration; }
+        get {
+            init();
+            return configuration; 
+        }
         set
         {
             configuration = value;
@@ -31,19 +34,35 @@ public class RoomConfiguration : MonoBehaviour
 
     void Start()
     {
-        if (GlobalConfigurationGameObject == null)
-            GlobalConfigurationGameObject = GameObject.Find("FixedGlobalConfiguration");
-        if (GlobalConfigurationGameObject == null)
+        init();
+    }
+
+    void init()
+    {
+        if ( initialized )
+            return;
+
+        if (globalConfiguration == null)
+        {
+            GameObject globalGO = GameObject.Find("FixedGlobalConfiguration");
+            globalConfiguration = globalGO.GetComponent<GlobalConfiguration>();
+        }
+
+        if (globalConfiguration == null)
         {
             ConfigManager.WriteConsoleError($"[RoomConfiguration.Start] Global Configuration isn't assigned, (check if IntroGallery is loaded) can't continue");
+            initialized = true;
             return;
         }
 
-        fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
-        yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
-        globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
+        initialized = true;
+        if (fileMonitor == null)
+            fileMonitor = GetComponent<FileMonitor>();
+        yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.FileName;
+
         OnEnable();
         Load();
+
     }
 
     private void mergeWithGlobalAndAssign(ConfigInformation config)
@@ -58,7 +77,7 @@ public class RoomConfiguration : MonoBehaviour
 
     public string GetName()
     {
-        return Path.GetFileNameWithoutExtension(fileMonitor?.ConfigFileName);
+        return Path.GetFileNameWithoutExtension(fileMonitor?.FileName);
     }
 
     public bool ExistsRoomConfiguration()
@@ -123,30 +142,41 @@ public class RoomConfiguration : MonoBehaviour
         fileMonitor.fileUnlock();
     }
 
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        isListenerAdded = false;
+    }
+
 
     void OnEnable()
     {
-        // Listen for the config reload message
-        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
-        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        addListener();
     }
 
     void OnDisable()
     {
-        // Stop listening for the config reload message
-        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
-        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        removeListener();
     }
 
     void OnGlobalConfigChanged()
     {
-        ConfigManager.WriteConsole($"[RoomConfiguration] global config changed, reload: {yamlPath}");
+        ConfigManager.WriteConsole($"[RoomConfiguration] room: {Room} global config changed, reload: {yamlPath}");
         Load();
     }
 
     void OnFileChanged()
     {
-        ConfigManager.WriteConsole($"[RoomConfiguration] file changed, reload: {yamlPath}");
+        ConfigManager.WriteConsole($"[RoomConfiguration] room: {Room} file changed, reload: {yamlPath}");
         Load();
     }
 }

@@ -31,6 +31,7 @@ public class CabinetDebugConsole : MonoBehaviour
     
     public bool BASFileFound = false;
     string debugbas;
+    private bool isListenerAdded = false;
 
     // Start is called before the first frame update
     void Start()
@@ -46,14 +47,13 @@ public class CabinetDebugConsole : MonoBehaviour
 
         debugbas = Path.Combine(ConfigManager.AGEBasicDir, AGEBasicFileName);
 
-
         //bas file
         string destination = Path.Combine(ConfigManager.AGEBasicDir, AGEBasicFileName);
         ConfigManager.WriteConsole($"[CabinetDebugConsole.run] AGEBasic program: {destination}");
 
         initScreen();
-        
-        
+        addListener();
+
         if (!File.Exists(destination))
         {
             ConfigManager.WriteConsole($"[CabinetDebugConsole.run] {destination} not found, copying: {destination}");
@@ -67,16 +67,27 @@ public class CabinetDebugConsole : MonoBehaviour
 
     }
 
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+        isListenerAdded = false;
+    }
     void OnEnable()
     {
-        // Listen for the config reload message
-        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        addListener();
     }
 
     void OnDisable()
     {
         // Stop listening for the config reload message
-        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+        removeListener();
     }
 
     void OnFileChanged()
@@ -219,8 +230,8 @@ public class CabinetDebugConsole : MonoBehaviour
         }
     }
 
-//should run only if BAS file is present.
-IEnumerator run()
+    //should run only if BAS file is present.
+    IEnumerator run()
     {
         ConfigManager.WriteConsole("[CabinetDebugConsole.run] coroutine started.");
         if (!compile())

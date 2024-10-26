@@ -91,6 +91,7 @@ public class ArcadeRoomBehavior : MonoBehaviour
 
     private bool initialized = false;
     private bool playerIsPlaying = false;
+    private bool isListenerAdded = false;
 
 
     void Start()
@@ -218,11 +219,23 @@ public class ArcadeRoomBehavior : MonoBehaviour
     }
     */
 
-    void OnEnable()
+    void addListener()
     {
+        if (isListenerAdded) return;
         LibretroMameCore.OnPlayerStartPlaying?.AddListener(OnPlayerStartPlaying);
         LibretroMameCore.OnPlayerStopPlaying?.AddListener(OnPlayerStopPlaying);
-
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
+        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
+        isListenerAdded = false;
+    }
+    void OnEnable()
+    {
+        addListener();
         if (!initialized)
             return;
 
@@ -239,16 +252,13 @@ public class ArcadeRoomBehavior : MonoBehaviour
             StopCoroutine(mainCoroutine);
             mainCoroutine = null;
         }
-        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
-        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
+        removeListener();
     }
 
     private void OnDisable()
     {
+        removeListener();
 
-        LibretroMameCore.OnPlayerStartPlaying?.RemoveListener(OnPlayerStartPlaying);
-        LibretroMameCore.OnPlayerStopPlaying?.RemoveListener(OnPlayerStopPlaying);
-    
         if (!initialized)
             return;
         

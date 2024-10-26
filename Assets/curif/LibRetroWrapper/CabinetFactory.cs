@@ -4,15 +4,14 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-using UnityEngine;
-using System.Collections.Generic;
-using System.IO;
-//using UnityEditor;
-using System;
-using System.Linq;
-
 //using UnityEngine.Networking;
 using Siccity.GLTFUtility;
+//using UnityEditor;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEngine;
 
 //store Cabinets resources
 public static class CabinetFactory
@@ -128,11 +127,23 @@ public static class CabinetFactory
             case "bezel":
                 {
                     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
-                    cp.SetBezel(cbinfo.getPath(p.art.file));
-
+                    cp.SubType = p.subType;
+                    cp.SetBezel(cbinfo.getPath(p.art.file), p.subType);
                     if (p.properties.Count > 0)
                     {
-                        CabinetMaterials.MaterialPropertyTranslator t = new CabinetMaterials.FrontGlassProperties();
+                        CabinetMaterials.MaterialPropertyTranslator t;
+                        switch (p.subType)
+                        {
+                            case "simple":
+                                t = new CabinetMaterials.FrontGlassCutOutProperties();
+                                break;
+                            case "dirty glass":
+                                t = new CabinetMaterials.FrontGlassDirtyProperties();
+                                break;
+                            default:
+                                t = new CabinetMaterials.FrontGlassProperties();
+                                break;
+                        }
                         cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
                     }
                 }
@@ -189,7 +200,7 @@ public static class CabinetFactory
                         p.transparency == 0)
                     {
                         //cp.SetMaterial(CabinetMaterials.BlackNoNormal);
-                        Color32 black = new Color32(0,0,0, 0);
+                        Color32 black = new Color32(0, 0, 0, 0);
                         cp.SetColorVertex(black, false);
                     }
 
@@ -240,7 +251,7 @@ public static class CabinetFactory
                             cp.ForceMaterialBase();
                         }
 
-                        if (!withoutNormal) 
+                        if (!withoutNormal)
                         {
                             string realProperty = propTranslator.GetRealPropertyName("normal");
                             if (!string.IsNullOrEmpty(realProperty))
@@ -253,7 +264,7 @@ public static class CabinetFactory
                         }
 
                         if (p.art != null)
-                              cp.SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
+                            cp.SetTextureTo(cbinfo.getPath(p.art.file), null, invertX: p.art.invertx, invertY: p.art.inverty);
 
                         if (p.color != null)
                             cp.SetColor(p.color.getColor());
@@ -284,12 +295,12 @@ public static class CabinetFactory
 
                         //apply user configuration
                         cp.ApplyUserMaterialConfiguration(propTranslator.Translate(p.properties));
-                        
+
                     }
                 }
                 break;
         }
-        
+
         // Part scale and rotation
         //enable / disable
         cp.ApplyUserConfigurationGeometry(p.geometry).Enable(p.visible);
@@ -380,8 +391,8 @@ public static class CabinetFactory
             Color32 black = new Color32(0, 0, 0, 0);
             cabinet.SetVertexColorToUnknownComponents(black, cbinfo); //only if the part doesn't have a material assigned
         }
-        
-        
+
+
         if (!string.IsNullOrEmpty(cbinfo.coinslot))
         {
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
@@ -449,7 +460,7 @@ public static class CabinetFactory
                     ConfigManager.WriteConsoleException($"[CabinetFactory.fromInformation] {cbinfo.name} part {p.name}.", e);
                     continue;
                 }
-            }            
+            }
         }
 
         return cabinet;

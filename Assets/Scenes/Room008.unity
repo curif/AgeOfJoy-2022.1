@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: f5ff613baed38bf069ef30ee2c7557bc
-  m_OcclusionCullingData: {fileID: 36300000, guid: 27ea878d23e58bf48a9c3244895d3712, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 149f58f73d122a14d91da84ce9c99ea3, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 668d43851c19f654f8cbe13907779281, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 9c08190543fc60841bc5f05c45663cb2, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -12199,7 +12199,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1910830341}
-  - {fileID: 1487674891}
   - {fileID: 1538840701}
   m_Father: {fileID: 1629989100}
   m_RootOrder: -2
@@ -13559,56 +13558,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
   m_PrefabInstance: {fileID: 1486347563}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1487674890
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1487674891}
-  - component: {fileID: 1487674892}
-  m_Layer: 0
-  m_Name: RoomFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1487674891
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1487674890}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1301852299}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1487674892
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1487674890}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: room008.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &1487890177
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19412,6 +19361,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1910830341}
   - component: {fileID: 1910830342}
+  - component: {fileID: 1910830343}
   m_Layer: 0
   m_Name: RoomConfiguration
   m_TagString: Untagged
@@ -19446,13 +19396,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 1487674890}
-  GlobalConfigurationGameObject: {fileID: 0}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
   Room: Room008
   yamlPath: 
+  fileMonitor: {fileID: 1910830343}
+--- !u!114 &1910830343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1910830340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: Room008.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1 &1912833494 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2ff1e981be5a63b43ada220bfddac2e1, type: 3}

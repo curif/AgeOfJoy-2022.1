@@ -9,6 +9,7 @@ public class LocomotionConfigController : MonoBehaviour
 
     [Tooltip("Change controls component in the PlayerControllerF")]
     public ChangeControls changeControls;
+    private bool isListenerAdded = false;
 
     void Start()
     {
@@ -54,15 +55,27 @@ public class LocomotionConfigController : MonoBehaviour
         change();
     }
 
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        isListenerAdded = false;
+    }
+
     void OnEnable()
     {
         // Listen for the config reload message
-        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        addListener();
     }
 
     void OnDisable()
     {
-        // Stop listening for the config reload message
-        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        removeListener();
     }
 }

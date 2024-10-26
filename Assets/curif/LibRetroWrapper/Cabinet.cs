@@ -6,7 +6,6 @@ You should have received a copy of the GNU General Public License along with thi
 
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using UnityEngine;
 using static CabinetInformation;
 
@@ -307,7 +306,22 @@ public class Cabinet
         gameObject.name = name;
         RegisterChildren(gameObject);
 
-        GetPartControllerOrNull("bezel")?.SetMaterial(CabinetMaterials.FrontGlassWithBezel);
+        CabinetPart bezel = GetPartControllerOrNull("bezel");
+        if (bezel != null)
+        {
+            switch (bezel.SubType)
+            {
+                case "simple":
+                    bezel.SetMaterial(CabinetMaterials.FrontGlassCutOut);
+                    break;
+                case "dirty glass":
+                    bezel.SetMaterial(CabinetMaterials.FrontGlassDirty);
+                    break;
+                default:
+                    bezel.SetMaterial(CabinetMaterials.FrontGlassWithBezel);
+                    break;
+            }
+        }
 
         //cached gameObjects could be inactive.
         gameObject.SetActive(true);
@@ -464,7 +478,7 @@ public class Cabinet
     //set the same color to all unknown components.
     public Cabinet SetVertexColorToUnknownComponents(Color32 color, CabinetInformation cbInfo)
     {
-        
+
         Renderer[] renderers = gameObject.GetComponentsInChildren<Renderer>();
         foreach (Renderer renderer in renderers)
         {
@@ -497,7 +511,7 @@ public class Cabinet
         MeshCollider collider = part.GetComponent<MeshCollider>();
         if (collider == null)
             part.AddComponent<MeshCollider>();
-        
+
         return this;
     }
 
@@ -547,7 +561,7 @@ public class Cabinet
 
     public Cabinet PhyActivate()
     {
-        foreach(Transform t in gameObject.transform)
+        foreach (Transform t in gameObject.transform)
         {
             InteractablePart ip = t.GetComponent<InteractablePart>();
             if (ip != null)
@@ -610,7 +624,7 @@ public class Cabinet
     {
         if (gameFile == null)
             gameFile = "no_file_game";
-        return "screen-" + cabinetName + "-" + gameFile.Replace("/","-").Replace(".","-");
+        return "screen-" + cabinetName + "-" + gameFile.Replace("/", "-").Replace(".", "-");
     }
 
     //used instead of addCRT for cabinets without a CRT
@@ -648,7 +662,7 @@ public class Cabinet
         string type = cbinfo.crt.type;
         string orientation = cbinfo.crt.orientation;
         string gameFile = cbinfo.rom;
-        
+
         List<string> playList = cbinfo.roms;
         if (playList == null)
             playList = new List<string>() { gameFile };
@@ -718,7 +732,7 @@ public class Cabinet
             cp.Rotate((Vector3)rotation);
 
         RegisterChild(newCRT);
-        
+
         GetPartControllerOrNull("screen-mock-vertical")?.GameObject.SetActive(false);
         GetPartControllerOrNull("screen-mock-horizontal")?.GameObject.SetActive(false);
 

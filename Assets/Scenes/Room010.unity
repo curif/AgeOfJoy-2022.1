@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: 159e12c1f8b371b41913da02f9f144bc
-  m_OcclusionCullingData: {fileID: 36300000, guid: 0c4366a27d08c414d9f0c9f453663afa, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: a6f33d85f67e001429b9119f7e03af45, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: a566dfb586673c64c8e7b29219073423, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 44dff93c39a799b40bbc6feca1572cff, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -501,6 +501,7 @@ GameObject:
   m_Component:
   - component: {fileID: 62110611}
   - component: {fileID: 62110612}
+  - component: {fileID: 62110613}
   m_Layer: 0
   m_Name: RoomConfiguration
   m_TagString: Untagged
@@ -535,13 +536,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 2128013668}
-  GlobalConfigurationGameObject: {fileID: 0}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
   Room: Room010
   yamlPath: 
+  fileMonitor: {fileID: 62110613}
+--- !u!114 &62110613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 62110610}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: Room010.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1 &68383148
 GameObject:
   m_ObjectHideFlags: 0
@@ -11177,6 +11195,50 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
+    - target: {fileID: -7067269384414559380, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -850809554729559827, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1705850488926821507, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6960660475329292832, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7158041636319941344, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
+      propertyPath: m_CastShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4150188384943470464, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -3975683398455939035, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -3431052697163369722, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -3214008979681029247, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -577009374818097885, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 1056455624699028784, guid: 96193edfc985f47459b753647f21471e, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: -9168301997562364265, guid: db51f1b303e50eb458b674aceb21f643, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -13020,50 +13082,6 @@ PrefabInstance:
     - target: {fileID: 9206838506001747648, guid: db51f1b303e50eb458b674aceb21f643, type: 3}
       propertyPath: m_Layer
       value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -4150188384943470464, guid: 96193edfc985f47459b753647f21471e, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -3975683398455939035, guid: 96193edfc985f47459b753647f21471e, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -3431052697163369722, guid: 96193edfc985f47459b753647f21471e, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -3214008979681029247, guid: 96193edfc985f47459b753647f21471e, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -577009374818097885, guid: 96193edfc985f47459b753647f21471e, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: 1056455624699028784, guid: 96193edfc985f47459b753647f21471e, type: 3}
-      propertyPath: m_Layer
-      value: 8
-      objectReference: {fileID: 0}
-    - target: {fileID: -7067269384414559380, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: -850809554729559827, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1705850488926821507, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6960660475329292832, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7158041636319941344, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
-      propertyPath: m_CastShadows
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -28269,7 +28287,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 62110611}
-  - {fileID: 2128013669}
   - {fileID: 1504787716}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2
@@ -28606,56 +28623,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4209322778780550609, guid: d78eb9e865306377a835208badd01160, type: 3}
   m_PrefabInstance: {fileID: 2125233499}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &2128013668
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2128013669}
-  - component: {fileID: 2128013670}
-  m_Layer: 0
-  m_Name: RoomFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
---- !u!4 &2128013669
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128013668}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2106624054}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2128013670
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2128013668}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: room010.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1 &2132604451
 GameObject:
   m_ObjectHideFlags: 0

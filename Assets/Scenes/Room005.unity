@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: dae2049ed93a1f23590ea1c44263e494
-  m_OcclusionCullingData: {fileID: 36300000, guid: 6ba8f4d5e8fa56d44873bf58ab34efe6, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: a318461f60eab6e40824743b7181604d, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: c2ef88687937b6049b5de7fa5fdca0b2, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 76dcefa23e02c3641b5c927067fcd264, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -7000,6 +7000,7 @@ GameObject:
   m_Component:
   - component: {fileID: 423336113}
   - component: {fileID: 423336114}
+  - component: {fileID: 423336115}
   m_Layer: 0
   m_Name: RoomConfiguration
   m_TagString: Untagged
@@ -7034,13 +7035,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 561716694}
-  GlobalConfigurationGameObject: {fileID: 0}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
   Room: Room005
   yamlPath: 
+  fileMonitor: {fileID: 423336115}
+--- !u!114 &423336115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423336112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: Room005.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1001 &425642585
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9765,56 +9783,6 @@ Transform:
   m_Father: {fileID: 2070111085}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
---- !u!1 &561716694
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 561716695}
-  - component: {fileID: 561716696}
-  m_Layer: 0
-  m_Name: RoomFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &561716695
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 561716694}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1250446164}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &561716696
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 561716694}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: room005.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &566511574
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19540,7 +19508,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 423336113}
-  - {fileID: 561716695}
   - {fileID: 201155709}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2
@@ -20340,34 +20307,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1857847729}
     m_Modifications:
-    - target: {fileID: -8697316863189600284, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -4878190413023060625, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: -2676669560193214673, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2752594783328647803, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4576523981732521923, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8233712773023205445, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 8985823622858259377, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
-      propertyPath: m_LightProbeUsage
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: -9021746744144393388, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_Layer
       value: 8
@@ -20739,6 +20678,34 @@ PrefabInstance:
     - target: {fileID: 8984900718250829444, guid: 96193edfc985f47459b753647f21471e, type: 3}
       propertyPath: m_Layer
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: -8697316863189600284, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -4878190413023060625, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -2676669560193214673, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2752594783328647803, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4576523981732521923, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8233712773023205445, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8985823622858259377, guid: a2df9227f5c614ee890ce2cb0fc686fc, type: 3}
+      propertyPath: m_LightProbeUsage
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

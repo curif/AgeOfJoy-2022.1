@@ -103,4 +103,9 @@ public static class ShaderScreen
         return ShaderNames.Contains(shaderName.ToLower());
     }
 
+    public static List<string> list()
+    {
+        return dic.Keys.ToList();
+    }
+
 }

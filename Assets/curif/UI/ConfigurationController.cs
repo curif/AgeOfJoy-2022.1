@@ -9,6 +9,7 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
 using LC = LibretroControlMapDictionnary;
 using CM = ControlMapPathDictionary;
+using static ConfigInformation;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -203,6 +204,7 @@ public class ConfigurationController : MonoBehaviour
         onChangePlayer,
         onRunAGEBasic,
         onRunAGEBasicRunning,
+        onCabinet,
         exit
     }
     private StatusOptions status;
@@ -221,10 +223,15 @@ public class ConfigurationController : MonoBehaviour
     private List<GenericOptions> controlMapRealControls;
     private ControlMapConfiguration controlMapConfiguration;
 
-    private GenericWidgetContainer cabinetsToChangeContainer;
+    private GenericWidgetContainer cabinetsReplacementToChangeContainer;
     private GenericOptions cabinetToReplace;
     private GenericOptions cabinetReplaced;
-    private GenericTimedLabel cabinetSavedLabel;
+    private GenericTimedLabel cabinetReplacementSavedLabel;
+
+    private GenericWidgetContainer cabinetsConfigurationContainer;
+    private GenericOptions cabinetWorldResolution, cabinetWorldFoveatingLevel, cabinetGameplyResolution,
+        cabinetGameplayFoveatingLevel, cabinetScreenGlowIntensity;
+    private GenericTimedLabel cabinetConfigurationSavedLabel;
 
     private GenericLabelOnOff lblHaveRoomConfiguration, lblRoomName;
 
@@ -633,6 +640,7 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("cabinets", " replace cabinets in the room  ");
         if (isGlobalConfigurationWidget.value)
         {
+            mainMenu.AddOption("configure cabinets", " tweak cabinet's behavior  ");
             mainMenu.AddOption("locomotion", " player movement configuration  ");
             mainMenu.AddOption("player", " player configuration  ");
         }
@@ -826,7 +834,7 @@ public class ConfigurationController : MonoBehaviour
         return cabinetsAll;
     }
 
-    private void SetCabinetsWidgets()
+    private void SetCabinetsReplacementWidgets()
     {
         if (!CanConfigureCabinets())
             return;
@@ -840,16 +848,16 @@ public class ConfigurationController : MonoBehaviour
         GenericLabel lblRoomName = new GenericLabel(scr, "lblRoomName", GetRoomName(), 4, 6);
         cabinetToReplace = new GenericOptions(scr, "cabinetToReplace", "replace:", GetCabinetsInRoom(), 4, 8, maxLength: 26);
         cabinetReplaced = new GenericOptions(scr, "cabinetReplaced", "with:", GetAllCabinets(), 4, 9, maxLength: 26);
-        cabinetSavedLabel = new(scr, "saved", "cabinet replaced", 3, 19, true);
+        cabinetReplacementSavedLabel = new(scr, "saved", "cabinet replaced", 3, 19, true);
 
-        cabinetsToChangeContainer = new(scr, "cabinetsToChangeContainer");
-        cabinetsToChangeContainer.Add(new GenericWindow(scr, 2, 4, "cabswin", 37, 12, " replace cabinets "))
+        cabinetsReplacementToChangeContainer = new(scr, "cabinetsToChangeContainer");
+        cabinetsReplacementToChangeContainer.Add(new GenericWindow(scr, 2, 4, "cabswin", 37, 12, " replace cabinets "))
                                 .Add(lblRoomName)
                                 .Add(cabinetToReplace)
                                 .Add(cabinetReplaced)
                                 .Add(new GenericButton(scr, "save", "save", 4, 11, true))
                                 .Add(new GenericButton(scr, "exit", "exit", 4, 12, true))
-                                .Add(cabinetSavedLabel);
+                                .Add(cabinetReplacementSavedLabel);
     }
     public void CabinetsExtractNumberAndName(out int number, out string name)
     {
@@ -883,6 +891,131 @@ public class ConfigurationController : MonoBehaviour
         cabinetsController.Replace(position, room, cabinetDBName);
     }
 
+    // ---------------------------------------------
+    private void CabinetConfigurationWindowDraw()
+    {
+        if (cabinetsConfigurationContainer == null)
+            return;
+
+        scr.Clear();
+        cabinetsConfigurationContainer.Draw();
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
+    }
+
+    private void SetCabinetsConfigurationWidgets()
+    {
+        List<string> resolutionMultiplier = CabinetConfigurationResolution.resolutions();
+        List<string> levels = CabinetConfigurationResolution.foveatedLevels();
+        List<string> glow = CabinetConfiguration.GlowIntensities();
+        List<string> shaders = ShaderScreen.list();
+        shaders.Insert(0, "");
+
+        cabinetsConfigurationContainer = new(scr, "cabinetsConfigurationContainer");
+        cabinetsConfigurationContainer.Add(new GenericWindow(scr, 1, 4, "cabswin", 37, 19, " Cabinet configuration "))
+            .Add(new GenericLabel(scr, "lbl0", "World graphics settings", 4, 6))
+            .Add(new GenericOptions(scr, "cabinetWorldResolution", "Resolution:", resolutionMultiplier, 4,                                                 cabinetsConfigurationContainer.lastYAdded + 1))
+            .Add(new GenericOptions(scr, "cabinetWorldFoveatingLevel", "Foveating Level:", levels, 4, 
+                        cabinetsConfigurationContainer.lastYAdded + 1))
+
+            .Add(new GenericLabel(scr, "lbl1", "Gameplay graphics settings", 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            .Add(new GenericOptions(scr, "cabinetGameplayResolution", "resolution:", resolutionMultiplier, 4,                                        cabinetsConfigurationContainer.lastYAdded + 1))
+            .Add(new GenericOptions(scr, "cabinetGameplayFoveatingLevel", "Foveating Level:", levels, 4, cabinetsConfigurationContainer.lastYAdded + 1))
+            
+            .Add(new GenericOptions(scr, "glowLevel", "Cabinet screen glow:", glow, 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            .Add(new GenericOptions(scr, "forceShader", "Force Shader:", shaders, 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            .Add(new GenericBool(scr, "insertCoinStartup", "Insert coin on startup:", false, 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            
+            .Add(new GenericButton(scr, "save", "save", 4, cabinetsConfigurationContainer.lastYAdded + 2, true))
+            .Add(new GenericButton(scr, "exit", "exit", 10, cabinetsConfigurationContainer.lastYAdded, true))
+            .Add(new GenericButton(scr, "reset", "reset", 16, cabinetsConfigurationContainer.lastYAdded, true))
+            .Add(new GenericTimedLabel(scr, "saved", "Change applies next game start", 4, cabinetsConfigurationContainer.lastYAdded + 1, true));
+    }
+
+    private void CabinetConfigurationSetWidgetsValues()
+    {
+        ConfigInformation config = configHelper.getConfigInformation(true);
+
+        if (config.cabinet.worldResolution == null)
+        {
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetWorldResolution")).SetCurrent(DeviceController.WorldScale.ToString());
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetWorldFoveatingLevel")).SetCurrent(DeviceController.WorldFovLevel.ToString());
+        }
+        else
+        {
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetWorldResolution")).SetCurrent(config.cabinet.worldResolution.resolution.ToString());
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetWorldFoveatingLevel")).SetCurrent(config.cabinet.worldResolution.foveatedLevelAsString);
+        }
+
+        if (config.cabinet.ingameResolution == null)
+        {
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayResolution")).SetCurrent(DeviceController.GameScale.ToString());
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayFoveatingLevel")).SetCurrent(DeviceController.GameFovLevel.ToString());
+        }
+        else
+        {
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayResolution")).SetCurrent(config.cabinet.ingameResolution.resolution.ToString());
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayFoveatingLevel")).SetCurrent(config.cabinet.ingameResolution.foveatedLevelAsString);
+        }
+
+        ((GenericOptions)cabinetsConfigurationContainer.GetWidget("glowLevel")).SetCurrent(config.cabinet.screenGlowIntensity.ToString());
+        
+        if (string.IsNullOrEmpty(config.cabinet.forcedShader))
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("forceShader")).SetCurrent("");
+        else
+            ((GenericOptions)cabinetsConfigurationContainer.GetWidget("forceShader")).SetCurrent(config.cabinet.forcedShader);
+            
+        ((GenericBool)cabinetsConfigurationContainer.GetWidget("insertCoinStartup")).SetValue(config.cabinet.insertCoinOnStartup);
+
+    }
+
+
+    private void CabinetConfigurationReset()
+    {
+        ConfigInformation config = configHelper.getConfigInformation(true);
+
+        DeviceController.ResetValues();
+        config.cabinet.ingameResolution = null;
+        config.cabinet.worldResolution = null;
+        config.cabinet.insertCoinOnStartup = CabinetConfiguration.insertCoinOnStartupDefault;
+        config.cabinet.forcedShader = CabinetConfiguration.forcedShaderDefault;
+        config.cabinet.screenGlowIntensity = CabinetConfiguration.screenGlowIntensityDefault;
+        configHelper.Save(true, config);
+    }
+
+
+    private void SaveCabinetConfiguration()
+    {
+        if (!isGlobalConfigurationWidget.value)
+            return;
+
+        ConfigInformation config = configHelper.getConfigInformation(true);
+
+        config.cabinet.worldResolution = new();
+        config.cabinet.worldResolution.foveatedLevelAsString = ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetWorldFoveatingLevel")).GetSelectedOption();
+        config.cabinet.worldResolution.resolution = float.Parse(((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetWorldResolution")).GetSelectedOption());
+
+        config.cabinet.ingameResolution = new();
+        config.cabinet.ingameResolution.foveatedLevelAsString = ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayFoveatingLevel")).GetSelectedOption();
+        config.cabinet.ingameResolution.resolution = float.Parse(((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayResolution")).GetSelectedOption());
+
+        config.cabinet.screenGlowIntensity = float.Parse(((GenericOptions)cabinetsConfigurationContainer.GetWidget("glowLevel")).GetSelectedOption());
+        
+        string forceShader = ((GenericOptions) cabinetsConfigurationContainer.GetWidget("forceShader")).GetSelectedOption();
+        if (forceShader == "")
+            config.cabinet.forcedShader = null;
+        else
+            config.cabinet.forcedShader = forceShader;
+
+        config.cabinet.insertCoinOnStartup = ((GenericBool)cabinetsConfigurationContainer.GetWidget("insertCoinStartup")).value;
+
+        configHelper.Save(true, config);
+    }
+
+    // ---------------------------------------------
+
+
+
     private bool CanConfigureCabinets()
     {
         if (isGlobalConfigurationWidget.value)
@@ -905,13 +1038,13 @@ public class ConfigurationController : MonoBehaviour
         return canChangeAudio && configHelper.CanConfigureRoom() && cabinetsController?.gameRegistry != null;
     }
 
-    private void CabinetsWindowDraw()
+    private void CabinetsReplacementWindowDraw()
     {
-        if (cabinetsToChangeContainer == null)
+        if (cabinetsReplacementToChangeContainer == null)
             return;
 
         scr.Clear();
-        cabinetsToChangeContainer.Draw();
+        cabinetsReplacementToChangeContainer.Draw();
         scr.Print(2, 23, UDLR_TO_CHANGE);
         scr.Print(2, 24, B_TO_SELECT);
     }
@@ -1371,8 +1504,8 @@ public class ConfigurationController : MonoBehaviour
 
         if (toScene == null)
             return false;
-            //throw new Exception($"Teleport to room '{roomNameOrDescription}' fail: room is unknown, please chech the room name");
-        
+        //throw new Exception($"Teleport to room '{roomNameOrDescription}' fail: room is unknown, please chech the room name");
+
         ConfigManager.WriteConsole($"[ConfigurationController.Teleport] teleport to scene [{roomNameOrDescription}]");
         ControllersEnable(false); //free the player
         teleportation.Teleport(toScene);
@@ -1387,31 +1520,31 @@ public class ConfigurationController : MonoBehaviour
             .Sequence("Init")
               .Condition("On init", () => status == StatusOptions.init)
               .Do("Process", () =>
-                {
-                    status = StatusOptions.waitingForCoin;
-                    scr.Clear()
-                       .PrintCentered(10, "Insert coin to start", true)
-                       .PrintCentered(12, GetRoomDescription(), false)
-                       .DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  status = StatusOptions.waitingForCoin;
+                  scr.Clear()
+                     .PrintCentered(10, "Insert coin to start", true)
+                     .PrintCentered(12, GetRoomDescription(), false)
+                     .DrawScreen();
+                  return TaskStatus.Success;
+              })
             .End()
 
             .Sequence("Insert coin")
               .Condition("Waiting for coin", () => status == StatusOptions.waitingForCoin)
               .Condition("Is a coin in the bucket", () => (CoinSlot != null && CoinSlot.takeCoin()))
               .Do("coin inserted", () =>
-                {
-                    ActivateShader(true);
+              {
+                  ActivateShader(true);
 
-                    scr.Clear();
-                    bootScreen.Reset();
-                    ControllersEnable(true);
+                  scr.Clear();
+                  bootScreen.Reset();
+                  ControllersEnable(true);
 
-                    status = StatusOptions.onBoot;
+                  status = StatusOptions.onBoot;
 
-                    return TaskStatus.Success;
-                })
+                  return TaskStatus.Success;
+              })
             .End()
 
             .Sequence("Boot")
@@ -1423,377 +1556,426 @@ public class ConfigurationController : MonoBehaviour
                   return finished;
               })
               .Do("Start main menu", () =>
-                {
-                    setupActionMap();
-                    status = StatusOptions.onMainMenu;
+              {
+                  setupActionMap();
+                  status = StatusOptions.onMainMenu;
 
-                    return TaskStatus.Success;
-                })
+                  return TaskStatus.Success;
+              })
             .End()
 
             .Sequence("Main menu")
               .Condition("On main menu", () => status == StatusOptions.onMainMenu)
               .Do("Init", () =>
-                {
-                    SetMainMenuWidgets();
-                    scr.Clear();
-                    mainMenuDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetMainMenuWidgets();
+                  scr.Clear();
+                  mainMenuDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    if (inputDictionary["up"])
-                        mainMenu.PreviousOption();
-                    else if (inputDictionary["down"])
-                        mainMenu.NextOption();
-                    else if (inputDictionary["action"])
-                        mainMenu.Select();
+              {
+                  if (inputDictionary["up"])
+                      mainMenu.PreviousOption();
+                  else if (inputDictionary["down"])
+                      mainMenu.NextOption();
+                  else if (inputDictionary["action"])
+                      mainMenu.Select();
 
-                    if (!mainMenu.IsSelected())
-                    {
-                        scr.DrawScreen();
-                        return TaskStatus.Continue;
-                    }
+                  if (!mainMenu.IsSelected())
+                  {
+                      scr.DrawScreen();
+                      return TaskStatus.Continue;
+                  }
 
-                    ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
-                    string selectedOption = mainMenu.GetSelectedOption();
-                    switch (selectedOption)
-                    {
-                        case "NPC configuration":
-                            status = StatusOptions.onNPCMenu;
-                            break;
-                        case "exit":
-                            status = StatusOptions.exit;
-                            break;
-                        case "Audio configuration":
-                            status = StatusOptions.onAudio;
-                            break;
-                        case "change mode (global/room)":
-                            status = StatusOptions.onChangeMode;
-                            break;
-                        case "reset":
-                            status = StatusOptions.onReset;
-                            break;
-                        case "cabinets":
-                            status = StatusOptions.onChangeCabinets;
-                            break;
-                        case "controllers":
-                            status = StatusOptions.onChangeController;
-                            break;
-                        case "teleport":
-                            status = StatusOptions.onTeleport;
-                            break;
-                        case "locomotion":
-                            status = StatusOptions.onChangeLocomotion;
-                            break;
-                        case "AGEBasic":
-                            status = StatusOptions.onRunAGEBasic;
-                            break;
-                        case "player":
-                            status = StatusOptions.onChangePlayer;
-                            break;
-                    }
+                  ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
+                  string selectedOption = mainMenu.GetSelectedOption();
+                  switch (selectedOption)
+                  {
+                      case "NPC configuration":
+                          status = StatusOptions.onNPCMenu;
+                          break;
+                      case "exit":
+                          status = StatusOptions.exit;
+                          break;
+                      case "Audio configuration":
+                          status = StatusOptions.onAudio;
+                          break;
+                      case "change mode (global/room)":
+                          status = StatusOptions.onChangeMode;
+                          break;
+                      case "reset":
+                          status = StatusOptions.onReset;
+                          break;
+                      case "cabinets":
+                          status = StatusOptions.onChangeCabinets;
+                          break;
+                      case "configure cabinets":
+                          status = StatusOptions.onCabinet;
+                          break;
+                      case "controllers":
+                          status = StatusOptions.onChangeController;
+                          break;
+                      case "teleport":
+                          status = StatusOptions.onTeleport;
+                          break;
+                      case "locomotion":
+                          status = StatusOptions.onChangeLocomotion;
+                          break;
+                      case "AGEBasic":
+                          status = StatusOptions.onRunAGEBasic;
+                          break;
+                      case "player":
+                          status = StatusOptions.onChangePlayer;
+                          break;
+                  }
 
-                    mainMenu.Deselect();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+                  mainMenu.Deselect();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
             .End()
 
             .Sequence("NPC Configuration")
               .Condition("On NPC Config", () => status == StatusOptions.onNPCMenu)
               .Do("Init", () =>
-                {
-                    SetNPCWidgets();
-                    NPCGetStatus();
-                    NPCScreenDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetNPCWidgets();
+                  NPCGetStatus();
+                  NPCScreenDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    changeContainerSelection(npcContainer);
+              {
+                  changeContainerSelection(npcContainer);
 
-                    if (inputDictionary["action"])
-                    {
-                        GenericWidget w = npcContainer.GetSelectedWidget();
-                        if (w.name == "exit")
-                        {
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
-                        }
-                        else if (w.name == "save")
-                        {
-                            NPCSave();
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
-                        }
-                        scr.DrawScreen();
-                        return TaskStatus.Success;
-                    }
-                    scr.DrawScreen();
-                    return TaskStatus.Continue;
-                })
+                  if (inputDictionary["action"])
+                  {
+                      GenericWidget w = npcContainer.GetSelectedWidget();
+                      if (w.name == "exit")
+                      {
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                      else if (w.name == "save")
+                      {
+                          NPCSave();
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                      scr.DrawScreen();
+                      return TaskStatus.Success;
+                  }
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
             .End()
 
             .Sequence("Audio Configuration")
               .Condition("On Config", () => status == StatusOptions.onAudio)
               .Do("Init", () =>
-                {
-                    SetAudioWidgets();
-                    audioScreen();
-                    audioContainer.Draw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetAudioWidgets();
+                  audioScreen();
+                  audioContainer.Draw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    changeContainerSelection(audioContainer);
-                    if (inputDictionary["action"])
-                    {
-                        GenericWidget w = audioContainer.GetSelectedWidget();
-                        if (w != null)
-                        {
-                            if (w.name == "exit")
-                            {
-                                status = StatusOptions.onMainMenu;
-                                return TaskStatus.Success;
-                            }
-                            else if (w.name == "save")
-                            {
-                                audioSave();
-                                status = StatusOptions.onMainMenu;
-                                return TaskStatus.Success;
-                            }
-                            w.Action();
-                        }
-                    }
-                    scr.DrawScreen();
-                    return TaskStatus.Continue;
-                })
+              {
+                  changeContainerSelection(audioContainer);
+                  if (inputDictionary["action"])
+                  {
+                      GenericWidget w = audioContainer.GetSelectedWidget();
+                      if (w != null)
+                      {
+                          if (w.name == "exit")
+                          {
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          else if (w.name == "save")
+                          {
+                              audioSave();
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          w.Action();
+                      }
+                  }
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
             .End()
 
             .Sequence("Player Configuration")
               .Condition("On Config", () => status == StatusOptions.onChangePlayer)
               .Do("Init", () =>
-                {
-                    SetPlayerWidgets();
-                    PlayerSetWidgetValues();
-                    PlayerWindowDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetPlayerWidgets();
+                  PlayerSetWidgetValues();
+                  PlayerWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    changeContainerSelection(playerContainer);
-                    if (inputDictionary["action"])
-                    {
-                        GenericWidget w = playerContainer.GetSelectedWidget();
-                        if (w != null)
-                        {
-                            if (w.name == "exit")
-                            {
-                                status = StatusOptions.onMainMenu;
-                                return TaskStatus.Success;
-                            }
-                            else if (w.name == "save")
-                            {
-                                PlayerUpdateConfigurationFromWidgets();
-                                status = StatusOptions.onMainMenu;
-                                return TaskStatus.Success;
-                            }
-                            w.Action();
-                        }
-                    }
-                    scr.DrawScreen();
-                    return TaskStatus.Continue;
-                })
+              {
+                  changeContainerSelection(playerContainer);
+                  if (inputDictionary["action"])
+                  {
+                      GenericWidget w = playerContainer.GetSelectedWidget();
+                      if (w != null)
+                      {
+                          if (w.name == "exit")
+                          {
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          else if (w.name == "save")
+                          {
+                              PlayerUpdateConfigurationFromWidgets();
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          w.Action();
+                      }
+                  }
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
             .End()
 
             .Sequence("Change Mode")
               .Condition("On change mode", () => status == StatusOptions.onChangeMode)
               .Do("Init", () =>
-                {
-                    SetChangeModeWidgets();
-                    changeModeWindowDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetChangeModeWidgets();
+                  changeModeWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    changeContainerSelection(changeModeContainer);
-                    GenericWidget w = changeModeContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
-                    {
-                        if (w.name == "exit")
-                        {
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
-                        }
-                        w.Action();
-                    }
-                    scr.DrawScreen();
-                    return TaskStatus.Continue;
-                })
+              {
+                  changeContainerSelection(changeModeContainer);
+                  GenericWidget w = changeModeContainer.GetSelectedWidget();
+                  if (w != null && inputDictionary["action"])
+                  {
+                      if (w.name == "exit")
+                      {
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                      w.Action();
+                  }
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
             .End()
 
             .Sequence("back to default reset")
               .Condition("On back to default", () => status == StatusOptions.onReset)
               .Do("Init", () =>
-                {
-                    SetResetWidgets();
-                    resetWindowDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetResetWidgets();
+                  resetWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    changeContainerSelection(resetContainer);
-                    GenericWidget w = resetContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
-                    {
-                        if (w.name == "exit")
-                        {
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
-                        }
-                        else if (w.name == "reset")
-                        {
-                            resetSave();
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
-                        }
-                    }
-                    scr.DrawScreen();
-                    return TaskStatus.Continue;
-                })
+              {
+                  changeContainerSelection(resetContainer);
+                  GenericWidget w = resetContainer.GetSelectedWidget();
+                  if (w != null && inputDictionary["action"])
+                  {
+                      if (w.name == "exit")
+                      {
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                      else if (w.name == "reset")
+                      {
+                          resetSave();
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                  }
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
             .End()
 
             .Sequence("controller config")
               .Condition("On selecting game", () => status == StatusOptions.onChangeController)
               .Do("Init", () =>
-                {
-                    SetControlMapWidgets();
-                    controlMapConfigurationLoad();
-                    controlMapUpdateWidgets();
-                    controllerContainerDraw();
-                    scr.DrawScreen();
+              {
+                  SetControlMapWidgets();
+                  controlMapConfigurationLoad();
+                  controlMapUpdateWidgets();
+                  controllerContainerDraw();
+                  scr.DrawScreen();
 
-                    return TaskStatus.Success;
-                })
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    if (inputDictionary["up"] || ControlActive(LC.KEYB_UP))
-                        controllerContainer.PreviousOption();
-                    else if (inputDictionary["down"] || ControlActive(LC.KEYB_DOWN))
-                        controllerContainer.NextOption();
+              {
+                  if (inputDictionary["up"] || ControlActive(LC.KEYB_UP))
+                      controllerContainer.PreviousOption();
+                  else if (inputDictionary["down"] || ControlActive(LC.KEYB_DOWN))
+                      controllerContainer.NextOption();
 
-                    GenericWidget w = controllerContainer.GetSelectedWidget();
+                  GenericWidget w = controllerContainer.GetSelectedWidget();
 
-                    if (w != null)
-                    {
-                        bool right = inputDictionary["left"] || ControlActive(LC.KEYB_LEFT);
-                        bool left = inputDictionary["right"] || ControlActive(LC.KEYB_RIGHT);
+                  if (w != null)
+                  {
+                      bool right = inputDictionary["left"] || ControlActive(LC.KEYB_LEFT);
+                      bool left = inputDictionary["right"] || ControlActive(LC.KEYB_RIGHT);
 
-                        if (inputDictionary["action"])
-                        {
-                            if (w.name == "exit")
-                            {
-                                status = StatusOptions.onMainMenu;
-                                return TaskStatus.Success;
-                            }
-                            else if (w.name == "save")
-                            {
-                                if (controlMapConfigurationSave())
-                                    controlMapSavedLabel.label = "saved ok    ";
-                                else
-                                    controlMapSavedLabel.label = "error saving";
-                                controlMapSavedLabel.SetSecondsAndDraw(2);
+                      if (inputDictionary["action"])
+                      {
+                          if (w.name == "exit")
+                          {
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          else if (w.name == "save")
+                          {
+                              if (controlMapConfigurationSave())
+                                  controlMapSavedLabel.label = "saved ok    ";
+                              else
+                                  controlMapSavedLabel.label = "error saving";
+                              controlMapSavedLabel.SetSecondsAndDraw(2);
 
-                                controlMapUpdateWidgets();
-                                controllerContainerDraw();
-                            }
-                        }
-                        else if (right || left)
-                        {
-                            if (left)
-                                w.NextOption();
-                            else if (right)
-                                w.PreviousOption();
+                              controlMapUpdateWidgets();
+                              controllerContainerDraw();
+                          }
+                      }
+                      else if (right || left)
+                      {
+                          if (left)
+                              w.NextOption();
+                          else if (right)
+                              w.PreviousOption();
 
-                            if (w.name == "gameId")
-                            {
-                                lblGameSelected.label = controlMapGameId.GetSelectedOption();
-                                controlMapPort.SetCurrent(0);
-                                controlMapConfigurationLoad();
-                            }
-                            else if (w.name == "mameControl")
-                            {
-                                controlMapPort.SetCurrent(0);
-                            }
-                            else if (w.name.StartsWith("controlMapRealControl")) // controlMapRealControl or mameControl
-                            {
-                                controlMapUpdateConfigurationFromWidgets();
-                            }
-                            controlMapUpdateWidgets();
-                            controllerContainerDraw();
-                        }
-                    }
+                          if (w.name == "gameId")
+                          {
+                              lblGameSelected.label = controlMapGameId.GetSelectedOption();
+                              controlMapPort.SetCurrent(0);
+                              controlMapConfigurationLoad();
+                          }
+                          else if (w.name == "mameControl")
+                          {
+                              controlMapPort.SetCurrent(0);
+                          }
+                          else if (w.name.StartsWith("controlMapRealControl")) // controlMapRealControl or mameControl
+                          {
+                              controlMapUpdateConfigurationFromWidgets();
+                          }
+                          controlMapUpdateWidgets();
+                          controllerContainerDraw();
+                      }
+                  }
 
-                    controlMapSavedLabel.Draw();
-                    scr.DrawScreen();
+                  controlMapSavedLabel.Draw();
+                  scr.DrawScreen();
 
-                    return TaskStatus.Continue;
-                })
+                  return TaskStatus.Continue;
+              })
 
             .End()
 
-            .Sequence("Cabinets")
+            .Sequence("Cabinets Replacement")
               .Condition("On cabinets replacement", () => status == StatusOptions.onChangeCabinets)
               .Condition("Can configure cabinets", () => CanConfigureCabinets())
               .Do("Init", () =>
-                {
-                    SetCabinetsWidgets();
-                    CabinetsWindowDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetCabinetsReplacementWidgets();
+                  CabinetsReplacementWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
               .Do("Process", () =>
-                {
-                    changeContainerSelection(cabinetsToChangeContainer);
-                    GenericWidget w = cabinetsToChangeContainer.GetSelectedWidget();
-                    if (w != null && inputDictionary["action"])
-                    {
-                        if (w.name == "exit")
-                        {
-                            status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
-                        }
-                        else if (w.name == "save")
-                        {
-                            SaveCabinetPositions();
-                            SetCabinetsWidgets();
-                            cabinetSavedLabel.SetSecondsAndDraw(2);
-                        }
-                    }
-                    cabinetSavedLabel.Draw();
-                    scr.DrawScreen();
-                    return TaskStatus.Continue;
-                })
+              {
+                  changeContainerSelection(cabinetsReplacementToChangeContainer);
+                  GenericWidget w = cabinetsReplacementToChangeContainer.GetSelectedWidget();
+                  if (w != null && inputDictionary["action"])
+                  {
+                      if (w.name == "exit")
+                      {
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                      else if (w.name == "save")
+                      {
+                          SaveCabinetPositions();
+                          SetCabinetsReplacementWidgets();
+                          cabinetReplacementSavedLabel.SetSecondsAndDraw(2);
+                      }
+                  }
+                  cabinetReplacementSavedLabel.Draw();
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
+            .End()
+
+
+            .Sequence("Cabinets")
+              .Condition("On cabinets", () => status == StatusOptions.onCabinet)
+              .Do("Init", () =>
+              {
+                  SetCabinetsConfigurationWidgets();
+                  CabinetConfigurationSetWidgetsValues();
+                  CabinetConfigurationWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
+              .Do("Process", () =>
+              {
+                  GenericTimedLabel tlbl = (GenericTimedLabel)cabinetsConfigurationContainer.GetWidget("saved");
+                  changeContainerSelection(cabinetsConfigurationContainer);
+                  GenericWidget w = cabinetsConfigurationContainer.GetSelectedWidget();
+                  if (w != null && inputDictionary["action"])
+                  {
+                      if (w.name == "exit")
+                      {
+                          status = StatusOptions.onMainMenu;
+                          return TaskStatus.Success;
+                      }
+                      else if (w.name == "reset")
+                      {
+                          CabinetConfigurationReset();
+                          CabinetConfigurationSetWidgetsValues();
+                          CabinetConfigurationWindowDraw();
+                      }
+                      else if (w.name == "save")
+                      {
+                          SaveCabinetConfiguration();
+                          //SetCabinetsConfigurationWidgets();
+                          tlbl.SetSecondsAndDraw(3);
+                      }
+                      else
+                      {
+                          w.Action();
+                      }
+                  }
+                  tlbl.Draw();
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
             .End()
 
             .Sequence("Teleport")
               .Condition("On teleport", () => status == StatusOptions.onTeleport)
               .Condition("Can teleport", () => canTeleport)
               .Do("Init", () =>
-                {
-                    SetTeleportWidgets();
-                    TeleportWindowDraw();
-                    scr.DrawScreen();
+              {
+                  SetTeleportWidgets();
+                  TeleportWindowDraw();
+                  scr.DrawScreen();
 
-                    return TaskStatus.Success;
-                })
+                  return TaskStatus.Success;
+              })
                 .Do("Process", () =>
                 {
                     changeContainerSelection(teleportContainer);
@@ -1813,7 +1995,7 @@ public class ConfigurationController : MonoBehaviour
                             {
                                 ControllersEnable(false); //free the player
                                 status = StatusOptions.init;
-                                return TaskStatus.Success;                            
+                                return TaskStatus.Success;
                             }
                             teleportResult.Start(5);
                         }
@@ -1827,13 +2009,13 @@ public class ConfigurationController : MonoBehaviour
               .Condition("On locomotion", () => status == StatusOptions.onChangeLocomotion)
               .Condition("is global config", () => isGlobalConfigurationWidget.value)
               .Do("Init", () =>
-                {
-                    SetLocomotionWidgets();
-                    LocomotionSetWidgetsValues();
-                    LocomotionWindowDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetLocomotionWidgets();
+                  LocomotionSetWidgetsValues();
+                  LocomotionWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
                 .Do("Process", () =>
                 {
                     changeContainerSelection(locomotionContainer);
@@ -1886,12 +2068,12 @@ public class ConfigurationController : MonoBehaviour
             .Sequence("AGEBasic")
               .Condition("On AGEBasic", () => status == StatusOptions.onRunAGEBasic)
               .Do("Init", () =>
-                {
-                    SetAGEBasicWidgets();
-                    AGEBasicWindowDraw();
-                    scr.DrawScreen();
-                    return TaskStatus.Success;
-                })
+              {
+                  SetAGEBasicWidgets();
+                  AGEBasicWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
                 .Do("Process", () =>
                 {
                     if (AGEBasicWaitForPressAKey)
@@ -1950,7 +2132,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("exit", () =>
               {
                   ConfigManager.WriteConsole($"[ConfigurationController] EXIT ");
-                  
+
                   ActivateShader(false);
 
                   cleanActionMap();

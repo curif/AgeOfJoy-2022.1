@@ -10,6 +10,7 @@ public class BackgroundSoundController : MonoBehaviour
 
     private RoomConfiguration roomConfiguration;
     private bool playerIsInGame;
+    private bool isListenerAdded = false;
 
     // Start is called before the first frame update
     void Start()
@@ -77,16 +78,26 @@ public class BackgroundSoundController : MonoBehaviour
         change();
     }
 
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        roomConfiguration?.OnRoomConfigChanged.AddListener(OnRoomConfigChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        roomConfiguration?.OnRoomConfigChanged.RemoveListener(OnRoomConfigChanged);
+        isListenerAdded = false;
+    }
+
     void OnEnable()
     {
-        // Listen for the config reload message
-        roomConfiguration?.OnRoomConfigChanged.AddListener(OnRoomConfigChanged);
-
+        addListener();
     }
 
     void OnDisable()
     {
-        // Stop listening for the config reload message
-        roomConfiguration?.OnRoomConfigChanged.RemoveListener(OnRoomConfigChanged);
+        removeListener();
     }
 }

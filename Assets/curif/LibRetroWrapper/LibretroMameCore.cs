@@ -579,7 +579,7 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
         // Boost the resolution of the eye texture during gameplay
-        DeviceController.Device.ApplySettings(true);
+        DeviceController.ApplySettings(true);
 
         OnPlayerStartPlaying.Invoke();
 
@@ -1191,7 +1191,7 @@ public static unsafe class LibretroMameCore
         OnPlayerStopPlaying.Invoke();
 
         // Restore eye resolution upon exiting game
-        DeviceController.Device.ApplySettings(false);
+        DeviceController.ApplySettings(false);
 
 #if !UNITY_EDITOR
         StopRunThread();

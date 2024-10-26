@@ -374,6 +374,8 @@ public class CabinetInformation
         public bool visible = true;
         public static List<string> Types = new List<string>() { "normal", "bezel", "marquee", "blocker" };
         public string type = Types[0];
+        [YamlMember(Alias = "sub-type", ApplyNamingConventions = false)]
+        public string subType = "default";
         public Geometry geometry = new Geometry();
         public Marquee marquee = new Marquee();
         public bool istarget = false; //lightgun

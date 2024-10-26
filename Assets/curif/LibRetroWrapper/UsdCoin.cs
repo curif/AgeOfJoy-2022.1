@@ -1,3 +1,4 @@
+using CleverCrow.Fluid.BTs.Tasks.Actions;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -18,6 +19,8 @@ public class UsdCoin : MonoBehaviour
     Vector3 originalLocalPosition;
     Quaternion originalLocalRotation;
     XRGrabInteractable grabInteractable;
+
+    private bool isListenerAdded = false;
 
     void Start()
     {
@@ -92,21 +95,32 @@ public class UsdCoin : MonoBehaviour
         ForceRelease();
     }
 
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        LibretroMameCore.OnPlayerStopPlaying?.AddListener(OnPlayerStopPlaying);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        LibretroMameCore.OnPlayerStopPlaying.RemoveListener(OnPlayerStopPlaying);
+        isListenerAdded = false;
+    }
 
     void OnEnable()
     {
-        LibretroMameCore.OnPlayerStopPlaying?.AddListener(OnPlayerStopPlaying);
+        addListener();
     }
 
     private void OnApplicationPause()
     {
-        LibretroMameCore.OnPlayerStopPlaying.RemoveListener(OnPlayerStopPlaying);
+        removeListener();
     }
 
     private void OnDisable()
     {
-        LibretroMameCore.OnPlayerStopPlaying.RemoveListener(OnPlayerStopPlaying);
-
+        removeListener();
     }
 
 }

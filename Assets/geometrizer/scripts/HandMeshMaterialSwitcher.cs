@@ -9,6 +9,8 @@ public class HandMeshMaterialSwitcher : MonoBehaviour
     [SerializeField, Tooltip("Drag the child object with the Renderer component here.")]
     private Renderer handRenderer;
 
+    private bool isListenerAdded = false;
+
     private void Start()
     {
         GameObject configuration = GameObject.Find("FixedGlobalConfiguration");
@@ -19,18 +21,31 @@ public class HandMeshMaterialSwitcher : MonoBehaviour
         OnEnable();
     }
 
+
+
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        isListenerAdded = false;
+    }
+
     void OnEnable()
     {
-        // Listen for the config reload message
-        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        addListener();
         SetMaterial();
 
     }
 
     void OnDisable()
     {
-        // Stop listening for the config reload message
-        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        removeListener();
     }
 
     void OnGlobalConfigChanged()

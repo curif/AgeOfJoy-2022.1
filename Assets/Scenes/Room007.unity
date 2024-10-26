@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: b9f33fb27c25da916b2fa46fffc6a3cc
-  m_OcclusionCullingData: {fileID: 36300000, guid: 2fedab5021f8fa542b34bb347ba5695b, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 3f604f18e0dbe544984db40577f83637, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: e50dfbd37f054da4a92fc19f6f77421d, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: b47085d6aa7752042bad1f32f0f13141, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -699,19 +699,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 30371600
+      value: 2.028289e+9
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: -6.480064e+27
+      value: NaN
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 8.9483366e+32
+      value: NaN
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 336947.2
+      value: -0.14999999
       objectReference: {fileID: 0}
     - target: {fileID: 4995453295751643000, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_Name
@@ -4072,19 +4072,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 509118200
+      value: -13.75
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 472.8601
+      value: -8.389999
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: -3838.0945
+      value: -19.07
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: -4.3194615e-32
+      value: -0.14999999
       objectReference: {fileID: 0}
     - target: {fileID: 4995453295751643000, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_Name
@@ -7251,6 +7251,7 @@ GameObject:
   m_Component:
   - component: {fileID: 423336113}
   - component: {fileID: 423336114}
+  - component: {fileID: 423336115}
   m_Layer: 0
   m_Name: RoomConfiguration
   m_TagString: Untagged
@@ -7285,13 +7286,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 561716694}
-  GlobalConfigurationGameObject: {fileID: 0}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
   Room: Room007
   yamlPath: 
+  fileMonitor: {fileID: 423336115}
+--- !u!114 &423336115
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423336112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: Room007.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1001 &425642585
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10929,56 +10947,6 @@ Transform:
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &561716694
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 561716695}
-  - component: {fileID: 561716696}
-  m_Layer: 0
-  m_Name: RoomFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &561716695
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 561716694}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1250446164}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &561716696
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 561716694}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: room007.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &566511574
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -20047,19 +20015,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 5.6e-44
+      value: 0.0151475705
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: -1.16352325e+23
+      value: 7.44e-43
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: -0.00022391231
+      value: 5.836397e+23
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 1.88e-43
+      value: 7.44e-43
       objectReference: {fileID: 0}
     - target: {fileID: 4995453295751643000, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_Name
@@ -23031,7 +22999,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 423336113}
-  - {fileID: 561716695}
   - {fileID: 201155709}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2

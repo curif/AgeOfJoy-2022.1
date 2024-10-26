@@ -21,6 +21,8 @@ public class CabinetPart : MonoBehaviour
     public GameObject GameObject { get { return gameObject; } }
     public Transform Transform { get { return transform; } }
 
+    public string SubType = "default";
+
     Renderer rendererComponent;
 
     private void Awake()
@@ -109,7 +111,7 @@ public class CabinetPart : MonoBehaviour
                 throw new Exception($"Rotation: {name} axis should be X, Y, or Z: {axis}");
         }
         transform.localRotation = initialLocalTransform.rotation * newRotation;
-        
+
         return this;
     }
 
@@ -222,7 +224,7 @@ public class CabinetPart : MonoBehaviour
         }
     }
 
-// ==================== MATERIAL ===================
+    // ==================== MATERIAL ===================
 
     //set the material to a component. Don't create new.
     public CabinetPart SetMaterial(Material mat)
@@ -247,7 +249,7 @@ public class CabinetPart : MonoBehaviour
         Material m = new Material(mat);
         m.name = $"{name}_from_{mat.name}";
         rendererComponent.material = mat;
-        return this ;
+        return this;
     }
 
     //assign the Base material if doesn't have any.
@@ -271,7 +273,7 @@ public class CabinetPart : MonoBehaviour
     private CabinetPart PaintVertexColorMaterial(Color color)
     {
         PaintVertexColorMaterialToGameobject(color, gameObject);
-        return this ;
+        return this;
     }
 
     public static void PaintVertexColorMaterialToGameobject(Color color, GameObject g)
@@ -345,9 +347,9 @@ public class CabinetPart : MonoBehaviour
         Material mat = GetMaterial();
         if (mat == null)
             return this;
-        
+
         MaterialsUtils.ApplyCabinetConfiguration(mat, properties);
-        
+
         return this;
     }
 
@@ -388,7 +390,7 @@ public class CabinetPart : MonoBehaviour
         // need SetEmmisionMapFromMainTexture previously called.
         Material mat = GetMaterial(); //creates a copy of the material internally
         if (mat == null) return this;
-        
+
         if (mat.HasProperty("_EmissionMap"))
         {
             //enable the material emission
@@ -484,7 +486,7 @@ public class CabinetPart : MonoBehaviour
     {
         if (emissionColor == null && backLightColor == null)
             return this;
-        
+
         Material mat = GetMaterial();
         if (mat != null)
         {
@@ -507,11 +509,23 @@ public class CabinetPart : MonoBehaviour
         return SetTextureFromFile(texturePath, marqueeMaterial, invertX: invertX, invertY: invertY);
     }
 
-    public CabinetPart SetBezel(string texturePath, bool invertX = false, bool invertY = false)
+    public CabinetPart SetBezel(string texturePath, string subType = "default", bool invertX = false, bool invertY = false)
     {
-        return SetTextureFromFile(texturePath, CabinetMaterials.FrontGlassWithBezel, invertX: invertX, invertY: invertY);
+        Material material;
+        switch (subType)
+        {
+            case "simple":
+                material = CabinetMaterials.FrontGlassCutOut;
+                break;
+            case "dirty glass":
+                material = CabinetMaterials.FrontGlassDirty;
+                break;
+            default:
+                material = CabinetMaterials.FrontGlassWithBezel;
+                break;
+        }
+        return SetTextureFromFile(texturePath, material, invertX: invertX, invertY: invertY);
     }
-
 
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)

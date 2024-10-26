@@ -4,13 +4,13 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 
-using UnityEngine;
 using System.Collections.Generic;
-using static UnityEngine.EventSystems.EventTrigger;
+using UnityEngine;
 
-public static class CabinetMaterials {
+public static class CabinetMaterials
+{
 
-    public static Material Base; 
+    public static Material Base;
     public static Material BaseNormal;
     public static Material BlackNoNormal;
     public static Material Black;
@@ -24,6 +24,8 @@ public static class CabinetMaterials {
     public static Material VertexColor;
     public static Material VertexColorNormal;
     public static Material FrontGlassWithBezel;
+    public static Material FrontGlassCutOut;
+    public static Material FrontGlassDirty;
     public static Material MarqueeNoLamps;
     public static Material MarqueeOneLamp;
     public static Material MarqueeTwoLamps;
@@ -99,6 +101,20 @@ public static class CabinetMaterials {
                 {"metallic", "_Metallic" },
                 {"color", "_Color" }
             };
+    static Dictionary<string, string> MaterialFrontGlassCutOutProperties = new Dictionary<string, string>()
+            {
+                {"smoothness", "_Glossiness" },
+                {"metallic", "_Metallic" },
+                {"color", "_Color" }
+            };
+    static Dictionary<string, string> MaterialFrontGlassDirtyProperties = new Dictionary<string, string>()
+            {
+                {"smoothness", "_Glossiness" },
+                {"metallic", "_Metallic" },
+                {"color", "_Color" },
+                {"glass-translucency", "_GlassTranslucency" },
+                {"dirtiness", "_Dirtiness" }
+            };
     static Dictionary<string, string> MaterialCRTProperties = new Dictionary<string, string>()
             {
                 {"tiling", "_CRTTiling" }
@@ -113,7 +129,14 @@ public static class CabinetMaterials {
     {
         public FrontGlassProperties() : base(MaterialFrontGlassProperties) { }
     }
-
+    public class FrontGlassCutOutProperties : MaterialPropertyTranslator
+    {
+        public FrontGlassCutOutProperties() : base(MaterialFrontGlassCutOutProperties) { }
+    }
+    public class FrontGlassDirtyProperties : MaterialPropertyTranslator
+    {
+        public FrontGlassDirtyProperties() : base(MaterialFrontGlassDirtyProperties) { }
+    }
     public class MarqueeProperties : MaterialPropertyTranslator
     {
         public MarqueeProperties() : base(MarqueePropertyTranslator) { }
@@ -148,7 +171,8 @@ public static class CabinetMaterials {
     }
 
 
-    static CabinetMaterials() {
+    static CabinetMaterials()
+    {
         // the material base for stickers
         Base = Resources.Load<Material>("Cabinets/Materials/Base");
         BaseNormal = Resources.Load<Material>("Cabinets/Materials/BaseNormal");
@@ -176,6 +200,9 @@ public static class CabinetMaterials {
 
         //MarqueeStandardShader = Resources.Load<Material>("Cabinets/Materials/MarqueeStandardShader");
         FrontGlassWithBezel = Resources.Load<Material>("Cabinets/Materials/FrontGlass");
+        FrontGlassCutOut = Resources.Load<Material>("Cabinets/Materials/FrontGlass_Cutout");
+        FrontGlassDirty = Resources.Load<Material>("Cabinets/Materials/FrontGlass_Bezel");
+
 
         //user configurable list:
         materialList.Add("black", new MaterialInfo(Black, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
@@ -190,8 +217,10 @@ public static class CabinetMaterials {
 
     }
 
-    public static Material fromName(string name) {
-        if (! materialList.ContainsKey(name)) {
+    public static Material fromName(string name)
+    {
+        if (!materialList.ContainsKey(name))
+        {
             ConfigManager.WriteConsole($"ERROR: material name {name} is unknown, fallback to material standard 'black'.");
             name = "black";
         }

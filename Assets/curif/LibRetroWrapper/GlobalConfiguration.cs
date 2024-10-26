@@ -1,49 +1,83 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using System;
 using UnityEngine.Events;
 using System.IO;
-using System.Reflection;
+using System;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
-//[RequireComponent(typeof(FileMonitor))]
+/*
+ * NOTE: The FileMonitor Unity function didn't work bcz runs out the main thread
+ */ 
+
+
+[RequireComponent(typeof(FileMonitor))]
 public class GlobalConfiguration : MonoBehaviour
 {
-    public GameObject FileMonitorGameObject;
     public UnityEvent OnGlobalConfigChanged;
 
-    //[Tooltip("Global Configuration should use the first File Monitor in attached to the gameobject if there are more than one.")]
-
-    private FileMonitor fileMonitor;
+    [Tooltip("Global Configuration should use the first File Monitor in attached to the gameobject if there are more than one.")]
+    public FileMonitor fileMonitor;
     public string yamlPath;
     private ConfigInformation configuration;
-    public ConfigInformation Configuration
-    {
-        get { return configuration; }
-        set
-        {
-            configuration = value;
-            ConfigManager.WriteConsole($"[GlobalConfiguration] new config asigned, invoke calls");
-            OnGlobalConfigChanged?.Invoke();
-        }
-    }
+    private bool initialized = false;
+    private bool isListenerAdded = false;
+
 
     // Start is called before the first frame update
     void Start()
     {
-        // Get all FileMonitor components attached to the GameObject
-        //FileMonitor[] fileMonitors = GetComponents<FileMonitor>();
+        init();
+    }
+
+    public ConfigInformation Configuration
+    {
+        get {
+            init();
+            return configuration; 
+        }
+        set
+        {
+            configuration = value;
+            ConfigManager.WriteConsole($"[GlobalConfiguration] new config asigned, invoke calls");
+            try
+            {
+                OnGlobalConfigChanged?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                ConfigManager.WriteConsoleException($"[GlobalConfiguration] error in invocation call", ex);
+            }
+        }
+    }
+
+    void init()
+    {
+        if ( initialized )
+            return;
 
         // Get the first FileMonitor component in the array
-        fileMonitor = FileMonitorGameObject.GetComponent<FileMonitor>();
-        yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.ConfigFileName;
+        initialized = true;
+
+        if (fileMonitor == null)
+            fileMonitor = GetComponent<FileMonitor>();
+
+        yamlPath = ConfigManager.ConfigDir + "/" + fileMonitor.FileName;
+        
         OnEnable();
         Load();
+    }
+
+    public void InvokeOnGlobalConfigChanged()
+    {
+        OnGlobalConfigChanged?.Invoke();
+        ConfigManager.WriteConsole($"[GlobalConfiguration] Manual event invoke called.");
     }
 
     private void Load()
     {
         ConfigInformation config;
+
         ConfigManager.WriteConsole($"[GlobalConfiguration] loadConfiguration: {yamlPath}");
         if (File.Exists(yamlPath))
         {
@@ -102,16 +136,44 @@ public class GlobalConfiguration : MonoBehaviour
         Load();
     }
 
+    private void addListener()
+    {
+        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        isListenerAdded = true;
+    }
+
     void OnEnable()
     {
         // Listen for the config reload message
-        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+        addListener();
     }
 
     void OnDisable()
     {
         // Stop listening for the config reload message
         fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+        isListenerAdded = false;
     }
 
 }
+
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(GlobalConfiguration))]
+public class GlobalConfigurationEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        // Draw the default inspector
+        DrawDefaultInspector();
+
+        GlobalConfiguration config = (GlobalConfiguration)target;
+
+        // Add a button to invoke the event
+        if (GUILayout.Button("Invoke OnGlobalConfigChanged"))
+        {
+            config.InvokeOnGlobalConfigChanged();
+        }
+    }
+}
+#endif

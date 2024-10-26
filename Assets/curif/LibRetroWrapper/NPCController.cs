@@ -17,6 +17,13 @@ public class NPCController : MonoBehaviour
     [Tooltip("List of controlled Characters (NPCs)")]
     public GameObject[] CharacterList;
 
+    private bool isListenerAdded = false;
+
+    private void Start()
+    {
+        addListener();
+    }
+
     void OnRoomConfigChanged()
     {
         bool isActive = true;
@@ -34,16 +41,30 @@ public class NPCController : MonoBehaviour
         }
     }
 
+
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        roomConfiguration?.OnRoomConfigChanged.AddListener(OnRoomConfigChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        roomConfiguration?.OnRoomConfigChanged.RemoveListener(OnRoomConfigChanged);
+        isListenerAdded = false;
+    }
+
     void OnEnable()
     {
         // Listen for the config reload message
-        roomConfiguration?.OnRoomConfigChanged.AddListener(OnRoomConfigChanged);
+        addListener();
 
     }
 
     void OnDisable()
     {
         // Stop listening for the config reload message
-        roomConfiguration?.OnRoomConfigChanged.RemoveListener(OnRoomConfigChanged);
+        removeListener();
     }
 }

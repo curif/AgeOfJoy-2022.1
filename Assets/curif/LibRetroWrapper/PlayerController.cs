@@ -23,8 +23,12 @@ public class PlayerController : MonoBehaviour
     public Transform cameraOffset;
     public ChangeControls changeControls;
 
+
     [SerializeField]
     float cameraYOffset;
+
+    private bool isListenerAdded = false;
+
     public float CameraYOffset
     {
         get => cameraYOffset;
@@ -187,16 +191,30 @@ public class PlayerController : MonoBehaviour
         change();
     }
 
+
+    void addListener()
+    {
+        if (isListenerAdded) return;
+        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        isListenerAdded = true;
+    }
+    void removeListener()
+    {
+        if (!isListenerAdded) return;
+        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        isListenerAdded = false;
+    }
+
     void OnEnable()
     {
         // Listen for the config reload message
-        globalConfiguration?.OnGlobalConfigChanged.AddListener(OnGlobalConfigChanged);
+        addListener();
     }
 
     void OnDisable()
     {
         // Stop listening for the config reload message
-        globalConfiguration?.OnGlobalConfigChanged.RemoveListener(OnGlobalConfigChanged);
+        removeListener();
     }
 }
 

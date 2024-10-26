@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.1
     backfaceThreshold: 100
   m_SceneGUID: 64fd20b20f1ca8c889969d613bef4583
-  m_OcclusionCullingData: {fileID: 36300000, guid: da378c3e21350bc4c97a224ab33e1f03, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 33b7cdcba55dd9c439d82de175170552, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 371703476f8a983498fa9e499882a7e4, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 7ff9218ab33c3fa4c943e3aaa7907b96, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -226,56 +226,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   type: 0
---- !u!1 &17394597
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 17394599}
-  - component: {fileID: 17394598}
-  m_Layer: 0
-  m_Name: GlobalFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &17394598
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 17394597}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: configuration.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!4 &17394599
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 17394597}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 329900754}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &21315715 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: fb04018d2b04d244fb0d78d632dc0e27, type: 3}
@@ -2159,55 +2109,6 @@ Mesh:
     offset: 0
     size: 0
     path: 
---- !u!1 &215137746
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 215137747}
-  - component: {fileID: 215137748}
-  m_Layer: 0
-  m_Name: GlobalConfiguration
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &215137747
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 215137746}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 329900754}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &215137748
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 215137746}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 065ec4751b28b93199003724891614f6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 17394597}
-  OnGlobalConfigChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  yamlPath: 
 --- !u!1001 &216626286
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3012,12 +2913,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7529236863240863499}
-  - {fileID: 215137747}
-  - {fileID: 17394599}
   - {fileID: 1762873377}
-  - {fileID: 896567483}
   - {fileID: 1147304883}
-  - {fileID: 1420321067}
   - {fileID: 1302987752}
   m_Father: {fileID: 1915306329}
   m_RootOrder: -2
@@ -6005,34 +5902,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 942325744}
     m_Modifications:
-    - target: {fileID: -8288555695648492878, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
-    - target: {fileID: -4287791641393406371, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
-    - target: {fileID: -4211469416023971191, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
-    - target: {fileID: -2604911511728774179, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
-    - target: {fileID: 1729854651497536393, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
-    - target: {fileID: 5549041356637121169, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
-    - target: {fileID: 8166527506229588508, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
-      propertyPath: m_StaticEditorFlags
-      value: 2147483639
-      objectReference: {fileID: 0}
     - target: {fileID: -9168301997562364265, guid: 433b165fd950a8648b9defd460c00014, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483639
@@ -6326,6 +6195,34 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 9206838506001747648, guid: 433b165fd950a8648b9defd460c00014, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: -8288555695648492878, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: -4287791641393406371, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: -4211469416023971191, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: -2604911511728774179, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: 1729854651497536393, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: 5549041356637121169, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483639
+      objectReference: {fileID: 0}
+    - target: {fileID: 8166527506229588508, guid: 57215f36e7365bd6184cf4f934ae600b, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
@@ -9354,56 +9251,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1992614298578569903, guid: cc9dcdff394caf241a49fc776967decb, type: 3}
   m_PrefabInstance: {fileID: 895971562}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &896567481
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 896567483}
-  - component: {fileID: 896567482}
-  m_Layer: 0
-  m_Name: RoomFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &896567482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 896567481}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: roominit.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!4 &896567483
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 896567481}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 329900754}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &901626421
 GameObject:
   m_ObjectHideFlags: 0
@@ -11462,6 +11309,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1147304883}
   - component: {fileID: 1147304884}
+  - component: {fileID: 1147304885}
   m_Layer: 0
   m_Name: RoomConfigurationRoom001
   m_TagString: Untagged
@@ -11496,13 +11344,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 1420321066}
-  GlobalConfigurationGameObject: {fileID: 215137746}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
-  Room: 
+  Room: Room001
   yamlPath: 
+  fileMonitor: {fileID: 1147304885}
+--- !u!114 &1147304885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147304882}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: Room001.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1 &1154431153
 GameObject:
   m_ObjectHideFlags: 0
@@ -13048,7 +12913,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0de9742af2e1bc4c8bb029572920734, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  globalConfiguration: {fileID: 215137748}
+  globalConfiguration: {fileID: 0}
   changeControls: {fileID: 0}
 --- !u!1001 &1303247471
 PrefabInstance:
@@ -14027,56 +13892,6 @@ MonoBehaviour:
   m_IgnoreFromBuild: 0
   m_ApplyToChildren: 1
   m_AffectedAgents: ffffffff
---- !u!1 &1420321066
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1420321067}
-  - component: {fileID: 1420321068}
-  m_Layer: 0
-  m_Name: RoomFileMonitorRoom001
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1420321067
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1420321066}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 329900754}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1420321068
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1420321066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConfigFileName: room001.yaml
-  ConfigPath: 
-  Interval: 2
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!1001 &1449913552
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14576,7 +14391,7 @@ PrefabInstance:
     - target: {fileID: 2876436268418612056, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: globalConfiguration
       value: 
-      objectReference: {fileID: 215137748}
+      objectReference: {fileID: 0}
     - target: {fileID: 2876436268418612056, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: canChangeControllers
       value: 0
@@ -14588,7 +14403,7 @@ PrefabInstance:
     - target: {fileID: 2876436268418612056, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: GlobalConfigurationGameObject
       value: 
-      objectReference: {fileID: 215137746}
+      objectReference: {fileID: 0}
     - target: {fileID: 3574112749737957998, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: m_ReceiveShadows
       value: 0
@@ -14608,7 +14423,7 @@ PrefabInstance:
     - target: {fileID: 5037610474660045650, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: globalConfiguration
       value: 
-      objectReference: {fileID: 215137748}
+      objectReference: {fileID: 0}
     - target: {fileID: 5037610474660045650, guid: aabf54175b7a56fb9afe7622b75ef6e0, type: 3}
       propertyPath: canChangeControllers
       value: 1
@@ -17148,6 +16963,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1762873377}
   - component: {fileID: 1762873378}
+  - component: {fileID: 1762873379}
   m_Layer: 0
   m_Name: RoomConfiguration
   m_TagString: Untagged
@@ -17182,13 +16998,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 896567481}
-  GlobalConfigurationGameObject: {fileID: 215137746}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
   Room: IntroGallery
   yamlPath: 
+  fileMonitor: {fileID: 1762873379}
+--- !u!114 &1762873379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1762873376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: roominit.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1 &1780507664
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,7 +10,7 @@ public class ControllerMeshSwapper : MonoBehaviour
     void Start()
     {
         ConfigManager.WriteConsole("[ControllerMeshSwapper.Start]");
-        Q2Mesh.SetActive(DeviceController.Device != DeviceType.OculusQuest3);
-        Q3Mesh.SetActive(DeviceController.Device == DeviceType.OculusQuest3);
+        Q2Mesh.SetActive(!DeviceController.IsQ3);
+        Q3Mesh.SetActive(DeviceController.IsQ3);
     }
 }
