@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 601e3454b5f415e4c882dc1417874460, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 3e42f9771bba26943be3b1a47ea8082f, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -2644,13 +2644,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4c56c90c1094b5dab8c0efb3cf6519b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileMonitorGameObject: {fileID: 2082915765}
-  GlobalConfigurationGameObject: {fileID: 0}
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
   Room: workshop
   yamlPath: 
+  fileMonitor: {fileID: 0}
 --- !u!4 &458953150
 Transform:
   m_ObjectHideFlags: 0
@@ -10927,12 +10926,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ConfigFileName: workshop.yaml
-  ConfigPath: 
-  Interval: 2
+  FileName: 
+  Path: 
   OnFileChanged:
     m_PersistentCalls:
       m_Calls: []
+  checkInterval: 2
 --- !u!4 &2082915767
 Transform:
   m_ObjectHideFlags: 0
