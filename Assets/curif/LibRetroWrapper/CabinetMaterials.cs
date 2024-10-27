@@ -113,7 +113,10 @@ public static class CabinetMaterials
                 {"metallic", "_Metallic" },
                 {"color", "_Color" },
                 {"glass-translucency", "_GlassTranslucency" },
-                {"dirtiness", "_Dirtiness" }
+                {"dirtiness", "_Dirtiness" },
+                {"glossiness-high", "_GlossinessHigh" },
+                {"glossiness-low", "_GlossinessLow" },
+                {"glossy-reflections", "_GlossyReflections" }
             };
     static Dictionary<string, string> MaterialCRTProperties = new Dictionary<string, string>()
             {
