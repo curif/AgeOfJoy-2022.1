@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.003277165, g: 0.003526051, b: 0.0053284494, a: 1}
+  m_IndirectSpecularColor: {r: 0.0032771635, g: 0.00352606, b: 0.005328464, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -6855,6 +6855,7 @@ Transform:
   m_Children:
   - {fileID: 140535416}
   - {fileID: 1555571229}
+  - {fileID: 2143301673}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -29780,13 +29781,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2143301672}
-  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 424229489}
+  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2143301674
 MonoBehaviour:
@@ -29800,12 +29801,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ConfigFileName: room001.yaml
-  ConfigPath: 
-  Interval: 2
+  FileName: 
+  Path: 
   OnFileChanged:
     m_PersistentCalls:
       m_Calls: []
+  checkInterval: 2
 --- !u!1001 &3547093814667634812
 PrefabInstance:
   m_ObjectHideFlags: 0

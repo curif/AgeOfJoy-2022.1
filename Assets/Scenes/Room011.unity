@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: f50564e87214884479401e824128403e, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.003277165, g: 0.003526051, b: 0.0053284494, a: 1}
+  m_IndirectSpecularColor: {r: 0.0032771635, g: 0.00352606, b: 0.005328464, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -9678,13 +9678,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 561716694}
-  serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1250446164}
+  m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &561716696
 MonoBehaviour:
@@ -9698,12 +9698,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ConfigFileName: room011.yaml
-  ConfigPath: 
-  Interval: 2
+  FileName: 
+  Path: 
   OnFileChanged:
     m_PersistentCalls:
       m_Calls: []
+  checkInterval: 2
 --- !u!1001 &566856486
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21108,6 +21108,7 @@ Transform:
   m_Children:
   - {fileID: 423336113}
   - {fileID: 201155709}
+  - {fileID: 561716695}
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
@@ -33353,7 +33354,7 @@ Transform:
   - {fileID: 242901536}
   - {fileID: 1614153907}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: -90, z: 0}
 --- !u!1001 &1880837933
 PrefabInstance:
@@ -35414,13 +35415,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1983720091}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 5.889, y: 0.9121309, z: -15.793}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1997424667
 GameObject:
@@ -38323,9 +38324,3 @@ Transform:
   m_Father: {fileID: 1862072339}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-  - {fileID: 1862072339}
-  - {fileID: 1983720092}
