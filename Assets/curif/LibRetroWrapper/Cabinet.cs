@@ -8,10 +8,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using static CabinetInformation;
+using System.IO;
 
 public class Cabinet
 {
     public string Name = "";
+    public string FilesPath = "";
     public string ControlScheme = "";
     public GameObject gameObject;
 
@@ -288,10 +290,11 @@ public class Cabinet
             RegisterChild(child.gameObject);
         }
     }
-    public Cabinet(string name, string controlScheme, Vector3 position, Quaternion rotation, Transform parent,
+    public Cabinet(string name, string path, string controlScheme, Vector3 position, Quaternion rotation, Transform parent,
                         GameObject go = null, string model = "galaga")
     {
         Name = name;
+        FilesPath = path;
         ControlScheme = controlScheme;
         if (go == null)
         {

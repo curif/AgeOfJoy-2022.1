@@ -71,6 +71,11 @@ public class MusicPlayer : MonoBehaviour
         }
     }
 
+    public string Separated(string separator)
+    {
+        return string.Join(separator, musicQueue);
+    }
+
     public void Play()
     {
         if (currentIndex == -1 && musicQueue.Count > 0)

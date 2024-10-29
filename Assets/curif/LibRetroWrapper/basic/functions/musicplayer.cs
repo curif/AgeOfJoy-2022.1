@@ -276,3 +276,25 @@ class CommandFunctionMUSICCOUNT : CommandFunctionNoExpressionBase
         return new BasicValue(config.MusicPlayerQueue.CountQueue());
     }
 }
+
+class CommandFunctionMUSICGETLIST: CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionMUSICGETLIST(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICGETLIST";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val, "string - list separator");
+
+        return new BasicValue(config.MusicPlayerQueue.Separated(val.GetString()));
+    }
+}

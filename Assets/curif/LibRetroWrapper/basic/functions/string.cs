@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 class CommandFunctionLEN : CommandFunctionSingleExpressionBase
 {
@@ -187,20 +188,21 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
 
         string input = vals[0].GetValueAsString();
         int memberIndex = (int)vals[1].GetValueAsNumber();
-        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+        char separator = vals[2].GetValueAsString()[0];
 
         int currentIndex = 0;
         int start = 0;
 
         for (int i = 0; i <= input.Length; i++)
         {
-            // Check if current character is the separator or if we've reached the end of the string
+            // Check if the current character is the separator or if we've reached the end of the string
             if (i == input.Length || input[i] == separator)
             {
                 if (currentIndex == memberIndex)
                 {
-                    string ret = input.Substring(start, i - start);
-                    return new BasicValue(ret);
+                    // Use a span to avoid string allocation
+                    var retSpan = input.AsSpan(start, i - start);
+                    return new BasicValue(new string(retSpan));
                 }
 
                 // Update start position after the separator for the next part
@@ -233,13 +235,35 @@ class CommandFunctionCOUNTMEMBERS : CommandFunctionExpressionListBase
         FunctionHelper.ExpectedString(vals[1], " - separator");
 
         string input = vals[0].GetValueAsString();
-        char separator = vals[1].GetValueAsString()[0]; // Since it's one character, take the first char directly.
-        int count = input.Split(new[] { separator }, StringSplitOptions.None).Length;
+        char separator = vals[1].GetValueAsString()[0];
+
+        int count = 0;
+        bool inSegment = false;
+
+        for (int i = 0; i < input.Length; i++)
+        {
+            if (input[i] == separator)
+            {
+                // End of a segment
+                if (inSegment)
+                {
+                    count++;
+                    inSegment = false;
+                }
+            }
+            else
+            {
+                // Inside a segment
+                inSegment = true;
+            }
+        }
+
+        // Account for the last segment if it didn't end with a separator
+        if (inSegment) count++;
 
         return new BasicValue(count);
     }
 }
-
 
 class CommandFunctionISMEMBER : CommandFunctionExpressionListBase
 {
@@ -247,6 +271,7 @@ class CommandFunctionISMEMBER : CommandFunctionExpressionListBase
     {
         cmdToken = "ISMEMBER";
     }
+
     public override bool Parse(TokenConsumer tokens)
     {
         return base.Parse(tokens, 3);
@@ -263,10 +288,30 @@ class CommandFunctionISMEMBER : CommandFunctionExpressionListBase
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+        char separator = vals[2].GetValueAsString()[0];
 
-        string[] parts = separatedList.Split(new[] { separator }, StringSplitOptions.None);
-        return new BasicValue(Array.IndexOf(parts, member) != -1);
+        int start = 0;
+
+        for (int i = 0; i <= separatedList.Length; i++)
+        {
+            if (i == separatedList.Length || separatedList[i] == separator)
+            {
+                // Get the current segment as a span to avoid allocation
+                var segmentSpan = separatedList.AsSpan(start, i - start);
+
+                // Check if the segment matches the member
+                if (segmentSpan.SequenceEqual(member.AsSpan()))
+                {
+                    return new BasicValue(true);
+                }
+
+                // Move start to the next character after the separator
+                start = i + 1;
+            }
+        }
+
+        // If no match is found, return false
+        return new BasicValue(false);
     }
 }
 
@@ -281,6 +326,7 @@ class CommandFunctionINDEXMEMBER : CommandFunctionExpressionListBase
         return base.Parse(tokens, 3);
     }
 
+
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
@@ -292,10 +338,29 @@ class CommandFunctionINDEXMEMBER : CommandFunctionExpressionListBase
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+        char separator = vals[2].GetValueAsString()[0];
 
-        string[] parts = separatedList.Split(new[] { separator }, StringSplitOptions.None);
-        return new BasicValue(Array.IndexOf(parts, member));
+        int start = 0;
+        int index = 0;
+
+        for (int i = 0; i <= separatedList.Length; i++)
+        {
+            if (i == separatedList.Length || separatedList[i] == separator)
+            {
+                var segmentSpan = separatedList.AsSpan(start, i - start);
+
+                if (segmentSpan.SequenceEqual(member.AsSpan()))
+                {
+                    return new BasicValue(index);
+                }
+
+                start = i + 1;
+                index++;
+            }
+        }
+
+        // Return -1 if the member is not found in the list
+        return new BasicValue(-1);
     }
 }
 
@@ -321,12 +386,31 @@ class CommandFunctionREMOVEMEMBER : CommandFunctionExpressionListBase
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+        char separator = vals[2].GetValueAsString()[0];
 
+        var result = new StringBuilder();
+        int start = 0;
 
-        string[] parts = separatedList.Split(new[] { separator }, StringSplitOptions.None);
-        string result = string.Join(separator, parts.Where(p => p != member)); 
-        return new BasicValue(result);
+        for (int i = 0; i <= separatedList.Length; i++)
+        {
+            if (i == separatedList.Length || separatedList[i] == separator)
+            {
+                var segmentSpan = separatedList.AsSpan(start, i - start);
+
+                if (!segmentSpan.SequenceEqual(member.AsSpan()))
+                {
+                    if (result.Length > 0)
+                    {
+                        result.Append(separator);
+                    }
+                    result.Append(segmentSpan);
+                }
+
+                start = i + 1;
+            }
+        }
+
+        return new BasicValue(result.ToString());
     }
 }
 
@@ -349,18 +433,25 @@ class CommandFunctionADDMEMBER : CommandFunctionExpressionListBase
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedString(vals[0]);
         FunctionHelper.ExpectedString(vals[1], " - list");
-        FunctionHelper.ExpectedString(vals[2], " - string");
+        FunctionHelper.ExpectedString(vals[2], " - separator");
 
         string separatedList = vals[0].GetValueAsString();
         string member = vals[1].GetValueAsString();
-        char separator = vals[2].GetValueAsString()[0]; // Since it's one character, take the first char directly.
+        char separator = vals[2].GetValueAsString()[0];
 
+        if (string.IsNullOrEmpty(separatedList))
+        {
+            return new BasicValue(member);
+        }
 
-        return new BasicValue(string.IsNullOrEmpty(separatedList) ? 
-            member : 
-            separatedList + separator + member);
+        // Use a StringBuilder to minimize temporary allocations
+        var result = new StringBuilder(separatedList.Length + member.Length + 1);
+        result.Append(separatedList).Append(separator).Append(member);
+
+        return new BasicValue(result.ToString());
     }
 }
+
 class CommandFunctionSTRINGMATCH : CommandFunctionExpressionListBase
 {
     public CommandFunctionSTRINGMATCH(ConfigurationCommands config) : base(config)

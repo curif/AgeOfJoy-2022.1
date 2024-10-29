@@ -77,6 +77,7 @@ public static class Commands
         functions["AGEBASICPATH"] = typeof(CommandFunctionAGEBASICPATH);
         functions["CABINETSDBPATH"] = typeof(CommandFunctionCABINETSDBPATH);
         functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
+        functions["CABINETPATH"] = typeof(CommandFunctionCABINETPATH);
         functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
         functions["MUSICPATH"] = typeof(CommandFunctionMUSICPATH);
         functions["DEBUGPATH"] = typeof(CommandFunctionDEBUGPATH);
@@ -192,6 +193,7 @@ public static class Commands
         functions["AUDIOMUSICSETVOLUME"] = typeof(CommandFunctionAUDIOMUSICSETVOLUME);
         functions["AUDIOAMBIENCESETVOLUME"] = typeof(CommandFunctionAUDIOAMBIENCESETVOLUME);
 
+
         //player
         functions["PLAYERSETHEIGHT"] = typeof(CommandFunctionPLAYERSETHEIGHT);
         functions["PLAYERGETHEIGHT"] = typeof(CommandFunctionPLAYERGETHEIGHT);
@@ -213,6 +215,7 @@ public static class Commands
         functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
         functions["MUSICRESET"] = typeof(CommandFunctionMUSICRESET);
         functions["MUSICCOUNT"] = typeof(CommandFunctionMUSICCOUNT);
+        functions["MUSICGETLIST"] = typeof(CommandFunctionMUSICGETLIST);
         
         //screen
         functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);

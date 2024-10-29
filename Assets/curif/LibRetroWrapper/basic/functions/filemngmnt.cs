@@ -137,6 +137,14 @@ class PathFunctionsBase : CommandFunctionNoExpressionBase
                 return new BasicValue(ConfigManager.CabinetsDB);
             case "CABINETSPATH":
                 return new BasicValue(ConfigManager.Cabinets);
+            case "CABINETPATH":
+                {
+                    if (string.IsNullOrEmpty(config.Cabinet?.FilesPath))
+                        throw new Exception("CabinetPath() allowed only in an AGEBasic program running in a cabinet.");
+
+                    return new BasicValue(config.Cabinet.FilesPath);
+                }
+                return new BasicValue(ConfigManager.Cabinets);
             case "ROOTPATH":
                 return new BasicValue(ConfigManager.BaseDir);
             case "MUSICPATH":
@@ -165,6 +173,11 @@ class CommandFunctionCABINETSDBPATH : PathFunctionsBase
 class CommandFunctionCABINETSPATH : PathFunctionsBase
 {
     public CommandFunctionCABINETSPATH(ConfigurationCommands config) : base(config, "CABINETSPATH") { }
+}
+
+class CommandFunctionCABINETPATH : PathFunctionsBase
+{
+    public CommandFunctionCABINETPATH(ConfigurationCommands config) : base(config, "CABINETPATH") { }
 }
 
 class CommandFunctionROOTPATH : PathFunctionsBase

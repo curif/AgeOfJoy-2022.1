@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: 031f00a80841cb5d88f0e31e56a93044
-  m_OcclusionCullingData: {fileID: 36300000, guid: 8a215b05b936b7b47b5331a91f086d37, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 910c2c0de6af8264bacdbed0d4082cfd, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 0.734
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.002405438, g: 0.002588128, b: 0.0039110924, a: 0.734}
+  m_IndirectSpecularColor: {r: 0.0027267593, g: 0.0028246816, b: 0.0042693624, a: 0.734}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 3e42f9771bba26943be3b1a47ea8082f, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: a289a02f4c3100f4eb0d519b7dd43a9b, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -2625,6 +2625,7 @@ GameObject:
   m_Component:
   - component: {fileID: 458953150}
   - component: {fileID: 458953149}
+  - component: {fileID: 458953151}
   m_Layer: 0
   m_Name: RoomConfiguration
   m_TagString: Untagged
@@ -2649,7 +2650,7 @@ MonoBehaviour:
       m_Calls: []
   Room: workshop
   yamlPath: 
-  fileMonitor: {fileID: 0}
+  fileMonitor: {fileID: 458953151}
 --- !u!4 &458953150
 Transform:
   m_ObjectHideFlags: 0
@@ -2665,6 +2666,24 @@ Transform:
   m_Father: {fileID: 1353110235}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &458953151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 458953148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  FileName: workshop.yaml
+  Path: 
+  OnFileChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  checkInterval: 2
 --- !u!1 &485988943
 GameObject:
   m_ObjectHideFlags: 0
@@ -7054,7 +7073,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 458953150}
-  - {fileID: 2082915767}
   m_Father: {fileID: 108284563}
   m_RootOrder: -2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -10897,56 +10915,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -7736421950082849260, guid: 4b75e96f6abe974f4825ef38697268b7, type: 3}
---- !u!1 &2082915765
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2082915767}
-  - component: {fileID: 2082915766}
-  m_Layer: 0
-  m_Name: RoomFileMonitor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2082915766
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2082915765}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  FileName: 
-  Path: 
-  OnFileChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  checkInterval: 2
---- !u!4 &2082915767
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2082915765}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1353110235}
-  m_RootOrder: -2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2089445182
 PrefabInstance:
   m_ObjectHideFlags: 0

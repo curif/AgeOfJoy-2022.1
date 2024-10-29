@@ -39,7 +39,7 @@ public static class CabinetFactory
         CabinetStyles.Add("cocktail", Resources.Load<GameObject>($"Cabinets/PreFab/Cocktail"));
     }
 
-    public static Cabinet Factory(string style, string name, string controlScheme, string modelFilePath,
+    public static Cabinet Factory(string style, string name, string path, string controlScheme, string modelFilePath,
                                     int number, string room, Vector3 position,
                                     Quaternion rotation, Transform parent,
                                     bool cacheGlbModels = true)
@@ -103,7 +103,7 @@ public static class CabinetFactory
         string cabinetName = $"cabinet-{name}-{room}-{number}";
 
 
-        return new Cabinet(cabinetName, controlScheme, position, rotation, parent, go: model);
+        return new Cabinet(cabinetName, path, controlScheme, position, rotation, parent, go: model);
     }
 
     public static string BuildKey(string modelFilePath)
@@ -347,7 +347,7 @@ public static class CabinetFactory
 
         CabinetDBAdmin.MoveMameFiles(cbinfo);
 
-        Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, cbinfo.controlScheme, modelFilePath,
+        Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, cbinfo.pathBase, cbinfo.controlScheme, modelFilePath,
                                                     number, room, position, rotation, parent,
                                                     cacheGlbModels: cacheGlbModels);
 

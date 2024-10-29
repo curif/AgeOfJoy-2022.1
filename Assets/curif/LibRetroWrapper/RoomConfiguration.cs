@@ -54,6 +54,12 @@ public class RoomConfiguration : MonoBehaviour
             initialized = true;
             return;
         }
+        if (string.IsNullOrEmpty(fileMonitor.FileName))
+        {
+            ConfigManager.WriteConsoleError($"[RoomConfiguration.Start] room configuration file name wasn't assigned. Can't continue.");
+            initialized = true;
+            return;
+        }
 
         initialized = true;
         if (fileMonitor == null)
