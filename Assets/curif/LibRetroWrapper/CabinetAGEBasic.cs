@@ -400,10 +400,10 @@ public class OnControlActiveBase: Event
         bool ontime = base.IsTime();
         if (ontime)
         {
+            previousValue = actualValue;
             actualValue = AGEBasic.ConfigCommands.ControlMap.Active(eventInformation.control.mameControl,
                                                                     eventInformation.control.port);
             RegisterTrigger(evaluate());
-            previousValue = actualValue;
         }
     }
 }
@@ -414,7 +414,7 @@ public class OnControlActivePressed : OnControlActiveBase
         base(eventInformation, vars, agebasic)
     { }
 
-    protected override bool evaluate() { return actualValue == 1 && previousValue == 0; }
+    protected override bool evaluate() { return actualValue != 0 && previousValue == 0; }
 
 }
 
@@ -424,7 +424,7 @@ public class OnControlActiveReleased : OnControlActiveBase
         base(eventInformation, vars, agebasic)
     { }
 
-    protected override bool evaluate() { return actualValue == 0 && previousValue == 1; }
+    protected override bool evaluate() { return actualValue == 0 && previousValue != 0; }
 
 }
 
@@ -433,7 +433,7 @@ public class OnControlActiveHeld : OnControlActiveBase
     public OnControlActiveHeld(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
         base(eventInformation, vars, agebasic)
     { }
-    protected override bool evaluate() { return actualValue == 1 && previousValue == 1; }
+    protected override bool evaluate() { return actualValue != 0 && previousValue != 0; }
 }
 
 // ------------------------ coin ------------------------------

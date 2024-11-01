@@ -186,10 +186,11 @@ class CommandFunctionMUSICADDLIST : CommandFunctionExpressionListBase
 
         foreach (string file in paths.Split(new[] { separator }, StringSplitOptions.None))
         {
-            string filePath = FunctionHelper.FileTraversalFree(
-                                                                Path.Combine(ConfigManager.MusicDir, file),
-                                                                ConfigManager.MusicDir
-                                                                );
+            if (string.IsNullOrEmpty(file))
+                continue;
+
+            string filePath = FunctionHelper.FileTraversalFree(Path.Combine(ConfigManager.MusicDir, file),
+                                                                ConfigManager.MusicDir);
 
             config.MusicPlayerQueue.AddMusic(filePath);
         }
