@@ -28,7 +28,7 @@ public class Init : MonoBehaviour
 
     private CabinetDBAdmin cabinetDBAdmin;
 
-    void Start()
+    void Awake()
     {
         ConfigManager.WriteConsole("[Init] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
 

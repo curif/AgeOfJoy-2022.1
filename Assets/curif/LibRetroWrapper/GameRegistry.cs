@@ -138,6 +138,7 @@ public class GameRegistry : MonoBehaviour
 
     public CabinetsPosition cabinetsPosition;
     public List<string> UnassignedCabinets = new List<string>();
+    public string[] cabinetDirectories;
 
     public int CabinetsInRegistry
     {
@@ -146,12 +147,29 @@ public class GameRegistry : MonoBehaviour
             return cabinetsPosition.Registry.Count;
         }
     }
+
     void Start()
     {
         //Init.OnRuntimeMethodLoad runs before
 
         Recover();
         ConfigManager.WriteConsole($"[GameRegistry.Start] {cabinetsPosition.Registry.Count} cabinets from registry, {UnassignedCabinets.Count} unassigned");
+
+    }
+
+    void Awake()
+    {
+        loadCabinetsFromDirectory();
+    }
+
+    private void loadCabinetsFromDirectory()
+    {
+        // Get all cabinet directories sorted in alphabetical order
+        cabinetDirectories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
+                                                .OrderBy(path => path)
+                                                .Select(path => System.IO.Path.GetFileName(path))
+                                                .ToArray();
+
     }
 
     public bool NeedsSave()
@@ -229,18 +247,7 @@ public class GameRegistry : MonoBehaviour
     }
     public int CountCabinets()
     {
-        try
-        {
-            // Get all directories in the specified path
-            string[] directories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB);
-            return directories.Length;
-        }
-        catch
-        {
-            // Handle any exception that might occur while accessing the directory
-            // For simplicity, this example logs the exception, but you can handle it differently based on your needs.
-            return -1; // Return a negative value to indicate an error occurred.
-        }
+        return cabinetDirectories.Length;
     }
 
     public GameRegistry Persist()
@@ -301,8 +308,7 @@ public class GameRegistry : MonoBehaviour
 
     public GameRegistry LoadUnnasigned()
     {
-        UnassignedCabinets = (from path in System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
-                              let cab = CabinetDBAdmin.GetNameFromPath(path)
+        UnassignedCabinets = (from cab in cabinetDirectories
                               where !CabinetInRoom(cab)
                               select cab).ToList();
         return this;
@@ -320,18 +326,10 @@ public class GameRegistry : MonoBehaviour
     {
         if (position < 0)
             throw new ArgumentException("Position must be a non-negative integer.");
+        if (position > cabinetDirectories.Length - 1)
+            throw new ArgumentException($"Position index out of range {position}: 0 - {cabinetDirectories.Length - 1}.");
 
-        // Get all cabinet directories sorted in alphabetical order
-        string[] cabinetDirectories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
-                                                        .OrderBy(path => path)
-                                                        .ToArray();
-
-        if (position >= cabinetDirectories.Length)
-            throw new ArgumentException($"Position {position} exceeds the number of cabinets: {cabinetDirectories.Length}.");
-
-        // Extract the cabinet name from the directory path
-        string cabinetName = CabinetDBAdmin.GetNameFromPath(cabinetDirectories[position]);
-        return cabinetName;
+        return cabinetDirectories[position];
     }
 
     private GameRegistry DeleteMissingCabinets()
@@ -354,28 +352,46 @@ public class GameRegistry : MonoBehaviour
     //get all from disk
     public List<string> GetAllCabinetsName()
     {
-        List<string> cabs = (from path in System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
-                             let cab = CabinetDBAdmin.GetNameFromPath(path)
-                             select cab).ToList();
-        return cabs;
+        return cabinetDirectories.ToList();
     }
     public List<string> GetRandomizedAllCabinetNames()
     {
-        List<string> allCabinetNames = (from path in System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
-                                        let cab = CabinetDBAdmin.GetNameFromPath(path)
-                                        select cab).ToList();
-
         // Use LINQ to order the cabinet names randomly
-        List<string> randomizedCabinetNames = allCabinetNames.OrderBy(x => UnityEngine.Random.value).ToList();
+        List<string> randomizedCabinetNames = cabinetDirectories.OrderBy(x => UnityEngine.Random.value).ToList();
 
         return randomizedCabinetNames;
+    }
+
+    public List<string> GetAllPrefixMatches(string val)
+    {
+        var result = new List<string>();
+
+        foreach (string dir in cabinetDirectories)
+        {
+            // Special case: if val is "#", include all entries less than "0"
+            if (val == "0" && string.Compare(dir, "0", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                result.Add(dir);
+            }
+            // Regular case: match entries that start with the prefix val
+            else if (val != "0" && dir.StartsWith(val, StringComparison.OrdinalIgnoreCase))
+            {
+                result.Add(dir);
+            }
+            // Early termination: if sorted order ensures no further matches
+            else if (val != "0" && string.Compare(dir, val, StringComparison.OrdinalIgnoreCase) > 0)
+            {
+                break;
+            }
+        }
+
+        return result;
     }
 
 
     public bool CabinetExists(string cabinetName)
     {
-        return Directory.EnumerateDirectories(ConfigManager.CabinetsDB)
-                        .Any(path => CabinetDBAdmin.GetNameFromPath(path) == cabinetName);
+        return Array.Exists(cabinetDirectories, d => d.Equals(cabinetName, StringComparison.OrdinalIgnoreCase));
     }
 
     public string GetRandomUnassignedCabinetDBName()

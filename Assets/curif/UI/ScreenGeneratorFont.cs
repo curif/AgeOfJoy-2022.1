@@ -136,6 +136,7 @@ public abstract class ScreenGeneratorFont
         }
     }
 
+    /*
     public void PrintChar(Texture2D screenTexture, int x, int y, char charNum, Color32 fgColor, Color32 bgColor, bool translate = true)
     {
         int destX = offsetX + (x * CharactersWidth);
@@ -154,6 +155,27 @@ public abstract class ScreenGeneratorFont
             }
         }
     }
+    */
+    public void PrintChar(Texture2D screenTexture, int x, int y, char charNum, Color32 fgColor, Color32 bgColor, bool translate = true)
+    {
+        int destX = offsetX + (x * CharactersWidth);
+        int destY = offsetY + ((screenGenerator.CharactersYCount - (y + 1)) * CharactersHeight);
+
+        int charIndex = translate ? TranslateCharacter(charNum) : charNum;
+        bool[] pixelData = characters[charIndex];
+
+        Color32[] buffer = new Color32[CharactersWidth * CharactersHeight];
+        for (int i = 0; i < CharactersHeight; i++)
+        {
+            for (int j = 0; j < CharactersWidth; j++)
+            {
+                buffer[i * CharactersWidth + j] = pixelData[i * CharactersWidth + j] ? fgColor : bgColor;
+            }
+        }
+
+        screenTexture.SetPixels32(destX, destY, CharactersWidth, CharactersHeight, buffer);
+    }
+
 
     protected virtual int TranslateCharacter(char charNum)
     {

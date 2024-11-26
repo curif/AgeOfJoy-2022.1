@@ -1501,7 +1501,7 @@ public static unsafe class LibretroMameCore
     private static Int16 inputStateCB_LightGun(uint port, uint device, uint index, uint id)
     {
 
-        WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_LIGHTGUN port {port} index:{index}");
+        //WriteConsole($"[inputStateCB_LightGun] RETRO_DEVICE_LIGHTGUN port {port} index:{index} id: {id}");
 
         if (lightGunTarget?.lightGunInformation == null || !lightGunTarget.lightGunInformation.active)
         {

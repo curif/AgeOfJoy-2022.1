@@ -2,29 +2,33 @@ using System;
 using System.Collections.Generic;
 public class BasicVars
 {
-    Dictionary<string, BasicValue> vars = new();
+    private readonly Dictionary<string, BasicValue> vars = new(); // Case-sensitive dictionary
 
     public BasicValue GetValue(BasicVar var)
     {
-        return GetValue(var.Name);
+        if (!vars.TryGetValue(var.Name, out var value))
+            throw new Exception($"Variable '{var.Name}' not defined");
+
+        return value;
+    }
+    public BasicValue GetValue(string name)
+    {
+        name = name.ToUpper();
+        if (!vars.TryGetValue(name, out var value))
+            throw new Exception($"Variable '{name}' not defined");
+
+        return value;
     }
 
     public bool Exists(string name)
     {
         return vars.ContainsKey(name.ToUpper());
     }
-    public BasicValue GetValue(string name)
-    {
-        name = name.ToUpper();
-        if (!vars.ContainsKey(name))
-            throw new Exception($"variable '{name}' not defined");
-
-        return vars[name];
-    }
 
     public BasicValue SetValue(BasicVar var, BasicValue val)
     {
-        return SetValue(var.Name, val);
+        vars[var.Name] = val; //is uppercase by contructor
+        return val;
     }
 
     public BasicValue SetValue(string name, BasicValue val)
@@ -35,7 +39,7 @@ public class BasicVars
 
     public void Clean()
     {
-        vars = new();
+        vars.Clear();
     }
 
     public void Remove(string name)

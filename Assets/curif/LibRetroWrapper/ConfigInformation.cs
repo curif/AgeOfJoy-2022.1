@@ -191,7 +191,7 @@ public class ConfigInformation
     public class CabinetConfigurationResolution
     {
         public float resolution;
-        [YamlMember(Alias = "foveated-evel", ApplyNamingConventions = false)]
+        [YamlMember(Alias = "foveated-level", ApplyNamingConventions = false)]
         public string foveatedLevelAsString;
         public OVRPlugin.FoveatedRenderingLevel foveatedLevel()
         {
@@ -221,11 +221,14 @@ public class ConfigInformation
         public string forcedShader;
         public static readonly string forcedShaderDefault = null;
 
+        public static readonly float screenGlowIntensityDefault = 0f;
+
         [YamlMember(Alias = "screen-glow-intensity", ApplyNamingConventions = false)]
-        public static readonly float screenGlowIntensityDefault = 5f;
         public float screenGlowIntensity = screenGlowIntensityDefault;
 
+        [YamlMember(Alias = "world-resolution", ApplyNamingConventions = false)]
         public CabinetConfigurationResolution worldResolution = null;
+        [YamlMember(Alias = "ingame-resolution", ApplyNamingConventions = false)]
         public CabinetConfigurationResolution ingameResolution = null;
 
         public override bool IsValid()
@@ -268,7 +271,7 @@ public class ConfigInformation
         CabinetConfiguration cabinetConfiguration = new CabinetConfiguration();
         //cabinetConfiguration.insertCoinOnStartup = true;
         cabinetConfiguration.forcedShader = null;
-        cabinetConfiguration.screenGlowIntensity = 5f;
+        cabinetConfiguration.screenGlowIntensity = CabinetConfiguration.screenGlowIntensityDefault;
         return cabinetConfiguration;
     }
 

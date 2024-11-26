@@ -29,11 +29,9 @@ class CommandDATA : ICommandBase
 
         vals = exprs.ExecuteList(vars);
 
-        if (vals == null || vals[0] == null)
+        if (vals.Length < 2)
             throw new Exception($"{CmdToken} DATA parameters missing, example DATA 'storage name', 10, 20, 30");
         FunctionHelper.ExpectedString(vals[0], " - storage name");
-        if (vals[1] == null)
-            throw new Exception($"{CmdToken} DATA needs a value list");
 
         string storageName = vals[0].ToString();
         if (!this.config.basicValueLists.ContainsKey(storageName))
@@ -162,8 +160,8 @@ class CommandRESTORE : ICommandBase
 
         vals = exprs.ExecuteList(vars);
 
-        if (vals == null || vals[0] == null)
-            throw new Exception($"{CmdToken} DATA parameters missing, example DATA 'storage name', 10, 20, 30");
+        if (vals.Length < 2)
+            throw new Exception($"{CmdToken} RESTORE parameters missing, example RESTORE 'storage name', 10");
         FunctionHelper.ExpectedString(vals[0], " - storage name");
         FunctionHelper.ExpectedNumber(vals[1], " - offset");
 

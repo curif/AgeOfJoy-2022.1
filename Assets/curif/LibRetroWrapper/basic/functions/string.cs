@@ -35,7 +35,7 @@ class CommandFunctionUCASE : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedString(val);
 
         string ret = val.GetValueAsString().ToUpper();
-        return new BasicValue(ret);
+        return new BasicValue(ret, forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -54,7 +54,7 @@ class CommandFunctionLCASE : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedString(val);
 
         string ret = val.GetValueAsString().ToLower();
-        return new BasicValue(ret);
+        return new BasicValue(ret, forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -73,7 +73,7 @@ class CommandFunctionRTRIM : CommandFunctionSingleExpressionBase
 
         string ret = val.GetValueAsString().TrimEnd();
 
-        return new BasicValue(ret);
+        return new BasicValue(ret, forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -92,7 +92,7 @@ class CommandFunctionLTRIM : CommandFunctionSingleExpressionBase
 
         string ret = val.GetValueAsString().TrimStart();
 
-        return new BasicValue(ret);
+        return new BasicValue(ret, forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -109,7 +109,7 @@ class CommandFunctionTRIM : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedString(val);
         string ret = val.GetValueAsString().Trim();
 
-        return new BasicValue(ret);
+        return new BasicValue(ret, forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -148,7 +148,7 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
 
         string ret = input.Substring(startIndex, length);
 
-        return new BasicValue(ret);
+        return new BasicValue(ret, forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -202,7 +202,7 @@ class CommandFunctionGETMEMBER : CommandFunctionExpressionListBase
                 {
                     // Use a span to avoid string allocation
                     var retSpan = input.AsSpan(start, i - start);
-                    return new BasicValue(new string(retSpan));
+                    return new BasicValue(new string(retSpan), forceType: BasicValue.BasicValueType.String);
                 }
 
                 // Update start position after the separator for the next part

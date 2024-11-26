@@ -262,8 +262,18 @@ class CommandFunctionAND : CommandFunctionExpressionListBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
-        
-        bool result = vals[0].IsTrue() && vals[1].IsTrue();
+
+        // Iterate through all expressions to evaluate logical AND
+        bool result = true;  // Start with true, and set to false if any expression is false
+        foreach (var val in vals)
+        {
+            if (val == null) break;
+            if (!val.IsTrue())  // If any expression is false, result will be false
+            {
+                result = false;
+                break;  // Short-circuit if we find one false expression
+            }
+        }
 
         return new BasicValue(result ? 1 : 0);
     }
@@ -286,7 +296,16 @@ class CommandFunctionOR : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
         BasicValue[] vals = exprs.ExecuteList(vars);
         
-        bool result = vals[0].IsTrue() || vals[1].IsTrue();
+        bool result = false;
+        foreach (var val in vals)
+        {
+            if (val == null) break;
+            if (val.IsTrue())  // If any expression is true, result will be true
+            {
+                result = true;
+                break;  // Short-circuit if we find one true expression
+            }
+        }
 
         return new BasicValue(result ? 1 : 0);
     }

@@ -902,7 +902,7 @@ public class CabinetAGEBasic : MonoBehaviour
         foreach (AGEBasicVariable var in variables)
         {
             BasicValue bv;
-            if (var.type.ToUpper() == "STRING")
+            if (string.IsNullOrEmpty(var?.type) || var.type.ToUpper() == "STRING")
                 bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
             else if (var.type.ToUpper() == "NUMBER")
                 bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);

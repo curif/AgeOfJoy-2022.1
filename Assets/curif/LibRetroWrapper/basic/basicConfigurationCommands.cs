@@ -13,12 +13,14 @@ public class ConfigurationCommands
     public SceneDatabase SceneDatabase = null;
     public Teleportation Teleportation = null;
 
-    public Stack<int> Gosub = new Stack<int>();
-    public int LineNumber; //in execution
+    public Stack<double> Gosub = new Stack<double>();
+    public double LineNumber; //in execution or parsing
+    public AGEProgram ageProgram = null;
     public bool stop; //the program should stop
 
-    public int JumpTo; //line to jump in the next line run
-    public int JumpNextTo; //jump to the next line of...
+    public double JumpTo; //line to jump in the next line run
+    public double JumpNextTo; //jump to the next line of...
+    public int JumpNextToMultiCommandIndex; //jump to the sentence of the multicommand in the line of...
 
     public CabinetsController CabinetsController;
     public GameRegistry GameRegistry;

@@ -160,6 +160,12 @@ public static class FunctionHelper
             throw new Exception($"Invalid file path: {path} Traversal back to parent directories is not allowed.");
         return normalizedPath;
     }
+    public static void ExpectedAtLeast(BasicValue[] vals, int count)
+    {
+        if (vals.Length < count)
+            throw new Exception($"At least {count} values are expected.");
+
+    }
 
 
     public static int GetValsCount(BasicValue[] vals)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine.SceneManagement;
 
 class CommandFunctionCABDBCOUNT : CommandFunctionNoExpressionBase
@@ -60,7 +61,37 @@ class CommandFunctionCABDBGETNAME : CommandFunctionSingleExpressionBase
         FunctionHelper.ExpectedNumber(val);
 
         return new BasicValue(
-                config.GameRegistry.GetCabinetNameByPosition((int)val.GetValueAsNumber())
+                config.GameRegistry.GetCabinetNameByPosition((int)val.GetValueAsNumber()), forceType: BasicValue.BasicValueType.String
+            );
+    }
+}
+
+
+class CommandFunctionCABDBSEARCH : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABDBSEARCH(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBSEARCH";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.GameRegistry == null)
+            return new BasicValue("");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(vals[0], " - cab name (part of)");
+        FunctionHelper.ExpectedString(vals[1], " - separator");
+
+        return new BasicValue(
+                string.Join(vals[1].GetValueAsString(), 
+                            config.GameRegistry.GetAllPrefixMatches(vals[0].GetValueAsString())), 
+                forceType: BasicValue.BasicValueType.String
             );
     }
 }
@@ -238,7 +269,7 @@ class CommandFunctionCABDBGETASSIGNED : CommandFunctionExpressionListBase
         if (cabPos == null)
             return new BasicValue("");
 
-        return new BasicValue(cabPos.CabinetDBName);
+        return new BasicValue(cabPos.CabinetDBName, forceType: BasicValue.BasicValueType.String);
     }
 }
 

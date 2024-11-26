@@ -34,7 +34,7 @@ class CommandPRINT : ICommandBase
             return null;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-
+        FunctionHelper.ExpectedAtLeast(vals, 3);
         FunctionHelper.ExpectedNumber(vals[0], " - pos X");
         FunctionHelper.ExpectedNumber(vals[1], " - pos Y");
 
@@ -48,12 +48,13 @@ class CommandPRINT : ICommandBase
 
         str = new BasicValue(vals[2]);
 
-        if (vals[3] != null)
+        if (vals.Length > 3)
+        {
             inverted = vals[3];
-
-        if (vals[4] != null)
-            draw = vals[4];
-
+            if (vals.Length > 4)
+                draw = vals[4];
+        }
+        
         if (str.IsNumber())
             str.CastTo(BasicValue.BasicValueType.String);
 
@@ -107,15 +108,17 @@ class CommandPRINTLN : ICommandBase
             return null;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 1);
         FunctionHelper.ExpectedNotNull(vals[0], " - content to print.");
 
         str = new BasicValue(vals[0]);
 
-        if (vals[1] != null)
+        if (vals.Length > 1)
+        {
             inverted = vals[1];
-
-        if (vals[2] != null)
-            draw = vals[2];
+            if (vals.Length > 2)
+                draw = vals[2];
+        }
 
         if (str.IsNumber())
             str.CastTo(BasicValue.BasicValueType.String);

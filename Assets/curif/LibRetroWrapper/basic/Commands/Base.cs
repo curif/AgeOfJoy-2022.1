@@ -1,4 +1,4 @@
-//wwwwwwwwwwwwwwwwwwww#define AGEBASIC_DEBUG_ACTIVE
+//#define AGEBASIC_DEBUG_ACTIVE
 
 using System;
 
@@ -14,8 +14,6 @@ public interface ICommandBase
 
 public interface ICommandList
 {
-
-    int MaxAllowed { get; }
 
     BasicValue[] ExecuteList(BasicVars vars);
 }

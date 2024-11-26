@@ -36,7 +36,7 @@ class CommandLET : ICommandBase
     public BasicValue Execute(BasicVars vars)
     {
         vars.SetValue(var, expr.Execute(vars));
-        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] []");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] var: {var}");
         return null;
     }
 

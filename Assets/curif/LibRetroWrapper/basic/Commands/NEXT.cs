@@ -29,7 +29,7 @@ class CommandNEXT : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}]");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC  #{config.LineNumber}  {CmdToken}]");
 
         if (!config.ForToNext.ContainsKey(var.Name))
             throw new Exception($"NEXT without FOR: {var.Name}");

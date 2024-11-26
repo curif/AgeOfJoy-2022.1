@@ -42,67 +42,42 @@ public class BasicValue
                 { "/", 5 }
             };
 
-    public BasicValue()
-    {
-        SetValue(0);
-    }
+    // Default constructor sets value to 0
+    public BasicValue() => SetValue(0);
 
-    public BasicValue(double number)
-    {
-        SetValue(number);
-    }
-    public BasicValue(int number)
-    {
-        SetValue((double)number);
-    }
-    public BasicValue(float number)
-    {
-        SetValue((double)number);
-    }
+    // Overloaded constructors for various data types
+    public BasicValue(double number) => SetValue(number);
+    public BasicValue(int number) => SetValue((double)number);
+    public BasicValue(float number) => SetValue((double)number);
+    public BasicValue(bool boolean) => SetValue(boolean ? 1.0 : 0.0);
+    public BasicValue(BasicValue val) => SetValue(val);
 
-
-    public BasicValue(bool boolean)
-    {
-        SetValue(boolean? 1 : 0);
-    }
-
-    public BasicValue(BasicValue val)
-    {
-        SetValue(val);
-    }
-
-    //strings could be surrounded by "
+    // String constructor with optional forced type
     public BasicValue(string str, BasicValueType forceType = BasicValueType.empty)
     {
-        bool startsAndEndsWithQuote = str.StartsWith("\"") && str.EndsWith("\"");
-        if (startsAndEndsWithQuote)
+        if (forceType == BasicValueType.String ||
+            (str.Length >= 2 && str[0] == '"' && str[^1] == '"'))
         {
-            str = str.Substring(1, str.Length - 2);
-            forceType = BasicValueType.String;
-        }
-
-        if (forceType == BasicValueType.String)
-        {
+            if (str.Length >= 2 && str[0] == '"' && str[^1] == '"')
+            {
+                str = str[1..^1]; // More efficient substring removal
+            }
             SetValue(str);
-            return;
         }
-
-        if (str.StartsWith("&"))
+        else if (str.Length > 1 && str[0] == '&') // Hexadecimal format
         {
-            SetValue(FunctionHelper.HexStringToDecimal(str.Substring(1)));
-            return;
+            SetValue(FunctionHelper.HexStringToDecimal(str[1..])); // Efficiently skip '&' character
         }
-
-        if (double.TryParse(str, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double valueDouble))
+        else if (double.TryParse(str, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double value))
         {
-            SetValue(valueDouble);
-            return;
+            SetValue(value);
         }
-
-        SetValue(str);
-
-        return;
+        else
+        {
+            SetValue(str); // Fallback for unquoted non-numeric strings
+        }
     }
+
 
     public BasicValue SetValue(BasicValue val)
     {
@@ -258,10 +233,14 @@ public class BasicValue
 
     public static BasicValue operator +(BasicValue obj1, BasicValue obj2)
     {
-        if (obj1.type != obj2.type)
-            throw new Exception($"Invalid operator + between {obj1.type} and {obj2.type}");
+        if (obj1.type == BasicValueType.Number && obj2.type == BasicValueType.String)
+            obj1.CastTo(BasicValueType.String);
+        else if (obj2.type == BasicValueType.Number && obj1.type == BasicValueType.String)
+            obj2.CastTo(BasicValueType.String);
+        
         if (obj1.type == BasicValueType.String)
-            return new BasicValue(obj1.str + obj2.str);
+            return new BasicValue(obj1.str + obj2.str, forceType: BasicValueType.String);
+        
         return new BasicValue(obj1.number + obj2.number);
     }
 
@@ -278,10 +257,10 @@ public class BasicValue
     {
        
         if (obj1.type == BasicValueType.String && obj2.type == BasicValueType.Number)
-            return new BasicValue(string.Concat(Enumerable.Repeat(obj1.str, (int)obj2.number)));
+            return new BasicValue(string.Concat(Enumerable.Repeat(obj1.str, (int)obj2.number)), forceType: BasicValueType.String);
 
         if (obj1.type == BasicValueType.Number && obj2.type == BasicValueType.String)
-            return new BasicValue(string.Concat(Enumerable.Repeat(obj2.str, (int)obj1.number)));
+            return new BasicValue(string.Concat(Enumerable.Repeat(obj2.str, (int)obj1.number)), forceType: BasicValueType.String);
 
         if (obj1.type == BasicValueType.String)
             throw new Exception("Invalid operation: String cannot be multiplied by another string.");

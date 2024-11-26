@@ -29,12 +29,12 @@ class ChangeColorsBase : ICommandBase
     public Color32 GetColorFromVals(BasicValue[] vals)
     {
 
-        if (vals == null || vals[0] == null)
+        if (vals == null || vals.Length == 0)
         {
             throw new Exception($"{CmdToken} parameteres missing.");
         }
         Color32 color;
-        if (vals[1] != null)
+        if (vals.Length > 2)
         {
             FunctionHelper.ExpectedNumber(vals[0], "- R");
             FunctionHelper.ExpectedNumber(vals[1], "- G");
@@ -45,7 +45,7 @@ class ChangeColorsBase : ICommandBase
         {
             if (!vals[0].IsString())
             {
-                throw new Exception($"{CmdToken} accepts a color name or and RGB color.");
+                throw new Exception($"{CmdToken} accepts a color name or a RGB color.");
             }
             else
             {

@@ -6,15 +6,15 @@ class CommandExpressionList : ICommandBase, ICommandList
 {
     public string CmdToken { get; } = "EXPRLIST";
 
-    public int MaxAllowed { get { return maxAllowed; } }
 
     public CommandType.Type Type { get; } = CommandType.Type.ExpressionList;
 
     const int maxAllowed = 15;
-    CommandExpression[] exprs = new CommandExpression[15];
+    //CommandExpression[] exprs = new CommandExpression[15];
+    List<CommandExpression> exprs = new List<CommandExpression>();
 
     int count = 0;
-    public int Count { get { return count; } private set { count = value; } }
+    public int Count { get { return exprs.Count; }}
 
     ConfigurationCommands config;
     public CommandExpressionList(ConfigurationCommands config)
@@ -26,24 +26,17 @@ class CommandExpressionList : ICommandBase, ICommandList
     {
         AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] START  {tokens.ToString()}");
 
-        int idx = -1;
         do
         {
             tokens.ConsumeIf(",");
-
-            if (idx + 1 > maxAllowed - 1)
-                throw new Exception($"More than {maxAllowed} members in an expressionList {tokens.ToString()}");
 
             AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] parsing  {tokens.ToString()}");
             CommandExpression expr = new(config);
             expr.Parse(tokens);
 
-            idx++;
-            exprs[idx] = expr;
+            exprs.Add(expr);
         }
         while (tokens.Token == ",");
-
-        this.count = idx + 1;
 
         AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] END members: {this.Count} {tokens.ToString()}");
 
@@ -54,7 +47,7 @@ class CommandExpressionList : ICommandBase, ICommandList
     {
         throw new Exception($"can't exec a expr list");
     }
-
+    /*
     public BasicValue[] ExecuteList(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] ExecuteList");
@@ -85,7 +78,31 @@ class CommandExpressionList : ICommandBase, ICommandList
         }
         return vals;
     }
-    
+    */
+    public BasicValue[] ExecuteList(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] ExecuteList");
+
+        // Use a List for dynamic sizing
+        List<BasicValue> vals = new List<BasicValue>();
+        for (int idx = 0; idx < exprs.Count; idx++)
+        {
+            CommandExpression expr = exprs[idx];
+            if (expr is ICommandList exprList)
+            {
+                BasicValue[] nestedVals = exprList.ExecuteList(vars);
+                vals.AddRange(nestedVals);
+            }
+            else
+            {
+                vals.Add(expr.Execute(vars));
+            }
+        }
+
+
+        return vals.ToArray(); // Convert to array at the end
+    }
+
     public BasicValue ExecuteByPosition(int idx, BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] execute expression idx: {idx}");

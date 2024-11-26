@@ -314,11 +314,14 @@ public class ConfigurationController : MonoBehaviour
     */
     void UpdateInputValues()
     {
-        inputDictionary["up"] = inputDictionary["up"] || ControlActive(LC.JOYPAD_UP) || ControlActive(LC.KEYB_UP);
-        inputDictionary["down"] = inputDictionary["down"] || ControlActive(LC.JOYPAD_DOWN) || ControlActive(LC.KEYB_DOWN);
-        inputDictionary["left"] = inputDictionary["left"] || ControlActive(LC.JOYPAD_LEFT) || ControlActive(LC.KEYB_LEFT);
-        inputDictionary["right"] = inputDictionary["right"] || ControlActive(LC.JOYPAD_RIGHT) || ControlActive(LC.KEYB_RIGHT);
+        inputDictionary["up"] = inputDictionary["up"] || ControlActive(LC.JOYPAD_UP) /*|| ControlActive(LC.KEYB_UP)*/;
+        inputDictionary["down"] = inputDictionary["down"] || ControlActive(LC.JOYPAD_DOWN) /*|| ControlActive(LC.KEYB_DOWN)*/;
+        inputDictionary["left"] = inputDictionary["left"] || ControlActive(LC.JOYPAD_LEFT);
+        inputDictionary["right"] = inputDictionary["right"] || ControlActive(LC.JOYPAD_RIGHT);
         inputDictionary["action"] = inputDictionary["action"] || ControlActive(LC.JOYPAD_B);
+        inputDictionary["x"] = inputDictionary["x"] || ControlActive(LC.JOYPAD_X);
+        inputDictionary["y"] = inputDictionary["y"] || ControlActive(LC.JOYPAD_Y);
+        inputDictionary["a"] = inputDictionary["a"] || ControlActive(LC.JOYPAD_A);
     }
 
     void ResetInputValues()
@@ -339,10 +342,14 @@ public class ConfigurationController : MonoBehaviour
 
         ControlMapConfiguration conf = new DefaultControlMap();
 #if UNITY_EDITOR
-        conf.AddMap(LC.KEYB_UP, CM.KEYBOARD_W);
-        conf.AddMap(LC.KEYB_DOWN, CM.KEYBOARD_S);
-        conf.AddMap(LC.KEYB_LEFT, CM.KEYBOARD_A);
-        conf.AddMap(LC.KEYB_RIGHT, CM.KEYBOARD_D);
+        conf.AddMap(LC.JOYPAD_UP, CM.KEYBOARD_W);
+        conf.AddMap(LC.JOYPAD_DOWN, CM.KEYBOARD_S);
+        conf.AddMap(LC.JOYPAD_LEFT, CM.KEYBOARD_A);
+        conf.AddMap(LC.JOYPAD_RIGHT, CM.KEYBOARD_D);
+        conf.AddMap(LC.JOYPAD_B, CM.KEYBOARD_ENTER);
+        conf.AddMap(LC.JOYPAD_X, CM.KEYBOARD_ESC);
+        conf.AddMap(LC.JOYPAD_Y, CM.KEYBOARD_Y);
+        conf.AddMap(LC.JOYPAD_A, CM.KEYBOARD_SPACE);
 #endif
         libretroControlMap.CreateFromConfiguration(conf, "inputMap_ConfigurationController_" + name);
         libretroControlMap.Enable(true);
@@ -1368,6 +1375,9 @@ public class ConfigurationController : MonoBehaviour
         inputDictionary.Add("left", false);
         inputDictionary.Add("right", false);
         inputDictionary.Add("action", false);
+        inputDictionary.Add("x", false);
+        inputDictionary.Add("y", false);
+        inputDictionary.Add("a", false);
         inputKeys = inputDictionary.Keys.ToList();
 
         configHelper = new(globalConfiguration, roomConfiguration);

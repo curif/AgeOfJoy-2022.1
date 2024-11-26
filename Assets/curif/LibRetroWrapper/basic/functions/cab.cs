@@ -39,7 +39,7 @@ class CommandFunctionCABPARTSNAME : CommandFunctionSingleExpressionBase
 
         int partNum = (int)val.GetNumber();
 
-        return new BasicValue(config.Cabinet.PartsName(partNum));
+        return new BasicValue(config.Cabinet.PartsName(partNum), forceType: BasicValue.BasicValueType.String);
     }
 }
 
@@ -114,6 +114,7 @@ class CommandFunctionCABPARTSENABLE : CommandFunctionExpressionListBase
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 1);
         // FunctionHelper.ExpectedNumber(vals[0], " - part number");
         // FunctionHelper.ExpectedNumber(vals[1], " - enabled true/false");
 
@@ -146,6 +147,7 @@ class CommandFunctionCABPARTSGETCOORDINATE : CommandFunctionExpressionListBase
             throw new Exception("AGEBasic can't access the Cabinet data.");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 1);
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y, Z");
 
         if (vals[0].IsString())
@@ -177,6 +179,7 @@ class CommandFunctionCABPARTSSETCOORDINATE : CommandFunctionExpressionListBase
         }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 2);
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate");
         FunctionHelper.ExpectedNumber(vals[2], " - coordinate value");
 
@@ -231,6 +234,7 @@ class CommandFunctionCABPARTSGETGLOBALCOORDINATE : CommandFunctionExpressionList
         }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 1);
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate X, Y, Z");
 
         Transform child;
@@ -282,6 +286,7 @@ class CommandFunctionCABPARTSSETGLOBALCOORDINATE : CommandFunctionExpressionList
         }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 2);
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - coordinate");
         FunctionHelper.ExpectedNumber(vals[2], " - coordinate value");
 
@@ -354,6 +359,7 @@ class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
         }
 
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 3);
         FunctionHelper.ExpectedNonEmptyString(vals[1], " - axis (X, Y, Z)");
         FunctionHelper.ExpectedNumber(vals[2], " - angle");
 

@@ -48,6 +48,8 @@ public static class ControlMapPathDictionary
     public const string KEYBOARD_SPACE = "keyboard-space";
     public const string KEYBOARD_ESC = "keyboard-esc";
     public const string KEYBOARD_ENTER = "keyboard-enter";
+    public const string KEYBOARD_X = "keyboard-x";
+    public const string KEYBOARD_Y = "keyboard-y";
 
     static ControlMapPathDictionary()
     {
@@ -109,7 +111,9 @@ public static class ControlMapPathDictionary
             { KEYBOARD_D, "<keyboard>/d" },
             { KEYBOARD_SPACE, "<keyboard>/space" },
             { KEYBOARD_ESC, "<keyboard>/escape" },
-            { KEYBOARD_ENTER, "<keyboard>/enter" }
+            { KEYBOARD_ENTER, "<keyboard>/enter" },
+            { KEYBOARD_X, "<keyboard>/#(x)" },
+            { KEYBOARD_Y, "<Keyboard>/#(y)" }
         };
     }
     public static string GetBehavior(string realControl)

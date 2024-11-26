@@ -18,7 +18,7 @@ class CommandEND : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}]");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN #{config.LineNumber} {CmdToken}]");
         // return new BasicValue(double.MaxValue);
         this.config.stop = true;
         return null;

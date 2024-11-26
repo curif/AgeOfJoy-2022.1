@@ -87,6 +87,35 @@ class CommandFunctionFILEEXISTS : CommandFunctionSingleExpressionBase
     }
 }
 
+
+class CommandFunctionFILEDELETE : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionFILEDELETE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "FILEDELETE";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNonEmptyString(val, " - file path");
+        string filePath = FunctionHelper.FileTraversalFree(val.GetValueAsString(), ConfigManager.BaseDir);
+        bool fileDeleted;
+        try
+        {
+            File.Delete(filePath);
+            fileDeleted = true;
+        }
+        catch { 
+            fileDeleted = false;
+        }
+
+        return new BasicValue(fileDeleted ? 1 : 0);
+    }
+}
+
 class CommandFunctionCOMBINEPATH : CommandFunctionExpressionListBase
 {
     public CommandFunctionCOMBINEPATH(ConfigurationCommands config) : base(config)

@@ -40,7 +40,7 @@ class CommandFunctionCABROOMGETNAME : CommandFunctionSingleExpressionBase
         if (cabPos == null)
             return new BasicValue("");
 
-        return new BasicValue(cabPos.CabinetDBName);
+        return new BasicValue(cabPos.CabinetDBName, forceType: BasicValue.BasicValueType.String);
     }
 }
 
