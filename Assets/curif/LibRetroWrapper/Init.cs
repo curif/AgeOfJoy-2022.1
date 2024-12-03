@@ -16,33 +16,40 @@ using System;
 public class Init : MonoBehaviour
 {
 
-//public class Init
-//{
-    public static bool PermissionGranted = false;
-
-    //    void Start()
-
-    //https://docs.unity3d.com/ScriptReference/RuntimeInitializeOnLoadMethodAttribute-ctor.html
-    //[RuntimeInitializeOnLoadMethod]
-    //static void OnRuntimeMethodLoad()
+    //public static bool PermissionGranted = false;
 
     private CabinetDBAdmin cabinetDBAdmin;
 
+    /*
+    static Init()
+    {
+        start();
+    }
+    */
     void Awake()
     {
-        ConfigManager.WriteConsole("[Init] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
-
+        /*
+        if (!PermissionGranted)
+        {
+            ConfigManager.WriteConsole("[Init] Async ask for permissions.");
+            askForPublicStoragePermissions();
+        }
+        */
+        cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
         Application.lowMemory += OnLowMemory;
         Application.memoryUsageChanged += OnMemoryUsageChanged;
-
-        cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
+        ConfigManager.InitFolders(true);
+        loadOperations();
+    }
+    /*
+    private static void start()
+    {
+        ConfigManager.WriteConsole("[Init] +++++++++++++++++++++  Initialize  +++++++++++++++++++++");
 
         if (ConfigManager.ShouldUseInternalStorage())
         {
             ConfigManager.WriteConsole("[Init] init folders names (private)");
             PermissionGranted = true;
-            ConfigManager.InitFolders(false);
-            loadOperations();
         }
         else
         {
@@ -51,18 +58,12 @@ public class Init : MonoBehaviour
             {
                 ConfigManager.WriteConsole("[Init] Already authorized, init public folders.");
                 PermissionGranted = true;
-                ConfigManager.InitFolders(true);
-                loadOperations();
-            }
-            else
-            {
-                ConfigManager.WriteConsole("[Init] Async ask for permissions.");
-                askForPublicStoragePermissions();
             }
         }
 
         ConfigManager.WriteConsole("+++++++++++++++++++++ initialization ends");
     }
+    */
 
     private void OnMemoryUsageChanged(in ApplicationMemoryUsageChange usage)
     {
@@ -85,6 +86,9 @@ public class Init : MonoBehaviour
         ConfigManager.WriteConsole("[Init] Loading cabinets");
         cabinetDBAdmin.loadCabinets();
     }
+
+    /***
+     * permission manager deprecated
     internal void onPermissionDenied(string permissionName)
     {
         ConfigManager.WriteConsole($"[Init.onPermissionDenied] DENIED");
@@ -136,5 +140,6 @@ public class Init : MonoBehaviour
         Permission.RequestUserPermissions(permissions, callbacks);
         
     }
+    */
 
 }

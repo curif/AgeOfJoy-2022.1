@@ -38,6 +38,33 @@ public static class ConfigManager
     public static string BaseDir = BasePrivateDir;
 
     // Private backing fields for properties
+    public static string Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
+    public static string CabinetsDB = Path.Combine(BaseDir, "cabinetsdb"); //uncompressed cabinets
+    public static string SystemDir = Path.Combine(BaseDir, "system");
+    public static string RomsDir = Path.Combine(BaseDir, "downloads");
+    public static string GameSaveDir = Path.Combine(BaseDir, "save");
+    public static string GameStatesDir = Path.Combine(BaseDir, "startstates");
+    public static string ConfigDir = Path.Combine(BaseDir, "configuration");
+    public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
+    public static string ConfigControllerSchemesDir = Path.Combine(ConfigDir, "controllers/schemes");
+    public static string AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
+    public static string DebugDir = Path.Combine(BaseDir, "debug");
+    public static string SamplesDir = Path.Combine(SystemDir, "samples");
+    public static string MameConfigDir = Path.Combine(GameSaveDir, "cfg");
+    public static string nvramDir = Path.Combine(GameSaveDir, "nvram");
+    public static string MusicDir = Path.Combine(BaseDir, "music");
+    public static string CoresDir = Path.Combine(BaseDir, "cores");
+    public static string InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
+    public static string ConfigCoresDir = Path.Combine(ConfigDir, "cores");
+
+
+    /*
+     * 
+     * Quest is not allowing to use another path different to
+     * the application path so to maintain this code is an overhead.
+     * 
+     * 
+    // Private backing fields for properties
     private static string _Cabinets;
     private static string _CabinetsDB;
     private static string _SystemDir;
@@ -78,7 +105,7 @@ public static class ConfigManager
     public static string CoresDir => Init.PermissionGranted ? _CoresDir : throw new InvalidOperationException("Player does not grant folder permissions.");
     public static string InternalCoresDir => Init.PermissionGranted ? _InternalCoresDir : throw new InvalidOperationException("Player does not grant folder permissions.");
     public static string ConfigCoresDir => Init.PermissionGranted ? _ConfigCoresDir : throw new InvalidOperationException("Player does not grant folder permissions.");
-
+    */
     public static bool DebugActive
     {
         get
@@ -95,10 +122,11 @@ public static class ConfigManager
 
     private static void createFolders(bool publicStorage)
     {
-        if (!Init.PermissionGranted)
+        /*if (!Init.PermissionGranted)
         {
             throw new InvalidOperationException("[ConfigManager.createFolders] Player does not grant folder permissions.");
         }
+        */
 
 #if UNITY_EDITOR
         CreateFolder(BaseDir);
@@ -111,42 +139,24 @@ public static class ConfigManager
 
         WriteConsole($"[ConfigManager] base folder: {BaseDir}");
 
-        _RomsDir = Path.Combine(BaseDir, "downloads");
-        _Cabinets = Path.Combine(BaseDir, "cabinets"); //$"{BaseDir}/cabinets"; //compressed
-        _CabinetsDB = Path.Combine(BaseDir, "cabinetsdb"); //uncompressed cabinets
-        _SystemDir = Path.Combine(BaseDir, "system");
-        _GameSaveDir = Path.Combine(BaseDir, "save");
-        _GameStatesDir = Path.Combine(BaseDir, "startstates");
-        _ConfigDir = Path.Combine(BaseDir, "configuration");
-        _ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
-        _ConfigControllerSchemesDir = Path.Combine(ConfigDir, "controllers/schemes");
-        _AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
-        _DebugDir = Path.Combine(BaseDir, "debug");
-        _SamplesDir = Path.Combine(SystemDir, "samples");
-        _MameConfigDir = Path.Combine(GameSaveDir, "cfg");
-        _nvramDir = Path.Combine(GameSaveDir, "nvram");
-        _MusicDir = Path.Combine(BaseDir, "music");
-        _CoresDir = Path.Combine(BaseDir, "cores");
-        _ConfigCoresDir = Path.Combine(ConfigDir, "cores");
-        _InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
 
-        CreateFolder(_Cabinets);
-        CreateFolder(_CabinetsDB);
-        CreateFolder(_ConfigDir);
-        CreateFolder(_ConfigControllersDir);
-        CreateFolder(_ConfigControllerSchemesDir);
-        CreateFolder(_AGEBasicDir);
-        CreateFolder(_DebugDir);
-        CreateFolder(_MusicDir);
-        CreateFolder(_CoresDir);
-        CreateFolder(_InternalCoresDir);
-        CreateFolder(_SystemDir);
-        CreateFolder(_RomsDir);
-        CreateFolder(_GameSaveDir);
-        CreateFolder(_SamplesDir);
-        CreateFolder(_MameConfigDir);
-        CreateFolder(_nvramDir);
-        CreateFolder(_ConfigCoresDir);
+        CreateFolder(Cabinets);
+        CreateFolder(CabinetsDB);
+        CreateFolder(ConfigDir);
+        CreateFolder(ConfigControllersDir);
+        CreateFolder(ConfigControllerSchemesDir);
+        CreateFolder(AGEBasicDir);
+        CreateFolder(DebugDir);
+        CreateFolder(MusicDir);
+        CreateFolder(CoresDir);
+        CreateFolder(InternalCoresDir);
+        CreateFolder(SystemDir);
+        CreateFolder(RomsDir);
+        CreateFolder(GameSaveDir);
+        CreateFolder(SamplesDir);
+        CreateFolder(MameConfigDir);
+        CreateFolder(nvramDir);
+        CreateFolder(ConfigCoresDir);
     }
 
     public static bool ShouldUseInternalStorage()
@@ -161,11 +171,11 @@ public static class ConfigManager
     //called from Init.cs
     public static void InitFolders(bool publicStorage)
     {
-        if (!Init.PermissionGranted)
+        /*if (!Init.PermissionGranted)
         {
             throw new Exception("[ConfigManager.InitFolders] Player does not grant folder permissions.");
         }
-
+        */
         WriteConsole($"[ConfigManager] =================  Config Manager START ========================");
         WriteConsole($"[ConfigManager] public storage available?: {publicStorage}");
         

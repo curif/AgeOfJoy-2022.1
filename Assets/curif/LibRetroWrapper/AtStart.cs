@@ -5,6 +5,15 @@ using System.Collections;
 [DefaultExecutionOrder(-499)] // This will ensure that this script executes before others
 public class AtStart : MonoBehaviour 
 {
+    public void Start()
+    {
+        SceneManager.LoadSceneAsync("IntroGalleryExterior", LoadSceneMode.Additive);
+        SceneManager.LoadSceneAsync("IntroGallery", LoadSceneMode.Additive);
+    }
+
+    /*
+     * permission has been deprecated
+     * Leave this code as a reference
     IEnumerator Start()
     {
         SceneManager.LoadSceneAsync("IntroGalleryExterior", LoadSceneMode.Additive);
@@ -49,4 +58,5 @@ public class AtStart : MonoBehaviour
             }
         }
     }
+    */
 }

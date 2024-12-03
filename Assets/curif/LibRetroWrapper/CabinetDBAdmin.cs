@@ -15,6 +15,7 @@ using YamlDotNet.Serialization.NamingConventions;
 public class CabinetDBAdmin : MonoBehaviour
 {
     private Coroutine loadCabsCoroutine = null;
+    public GameRegistry GameRegistry;
 
     private static void emptyDir(string path)
     {
@@ -197,6 +198,7 @@ public class CabinetDBAdmin : MonoBehaviour
         return;
     }
 
+    //called from Init()
     IEnumerator loadCabinetsCoroutine()
     {
         ConfigManager.WriteConsole($"[loadCabinetsCoroutine] {ConfigManager.Cabinets}");
@@ -231,6 +233,8 @@ public class CabinetDBAdmin : MonoBehaviour
 
             ConfigManager.WriteConsole($"[loadCabinetsCoroutine] loadCabinetFromZip {zipFile}");
             cabPath = loadCabinetFromZip(zipFile);
+            GameRegistry.AddNewCabinetDirectory(Path.GetFileNameWithoutExtension(zip.Name));
+
             yield return new WaitForSeconds(0.1f);
             /*
             if (!String.IsNullOrEmpty(cabPath))

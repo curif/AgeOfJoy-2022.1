@@ -138,7 +138,12 @@ public class GameRegistry : MonoBehaviour
 
     public CabinetsPosition cabinetsPosition;
     public List<string> UnassignedCabinets = new List<string>();
-    public string[] cabinetDirectories;
+    public static string[] cabinetDirectories = Array.Empty<string>();
+
+    static GameRegistry()
+    {
+        loadCabinetsFromDirectory();
+    }
 
     public int CabinetsInRegistry
     {
@@ -157,20 +162,36 @@ public class GameRegistry : MonoBehaviour
 
     }
 
-    void Awake()
+    private static void loadCabinetsFromDirectory()
     {
-        loadCabinetsFromDirectory();
-    }
+        if (!Directory.Exists(ConfigManager.CabinetsDB))
+        {
+            ConfigManager.WriteConsoleWarning("[GameRegistry.loadCabinetsFromDirectory] Game is initializing directories, not possible to load any cabinet. Load some cabinets and restart the game");
+            return;
+        }
 
-    private void loadCabinetsFromDirectory()
-    {
         // Get all cabinet directories sorted in alphabetical order
         cabinetDirectories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
                                                 .OrderBy(path => path)
                                                 .Select(path => System.IO.Path.GetFileName(path))
                                                 .ToArray();
-
     }
+    public void AddNewCabinetDirectory(string newDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(newDirectory))
+            throw new ArgumentException("Directory name cannot be null or empty.", nameof(newDirectory));
+
+        // Check if the directory already exists (case-insensitive)
+        if (!cabinetDirectories.Contains(newDirectory, StringComparer.OrdinalIgnoreCase))
+        {
+            // Add the new directory while maintaining sorted order
+            var newDirectories = new List<string>(cabinetDirectories) { newDirectory };
+            cabinetDirectories = newDirectories
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+    }
+
 
     public bool NeedsSave()
     {
