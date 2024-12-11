@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using YamlDotNet.Core.Tokens;
 
 public class ShaderScreenClean : ShaderScreenBase
 {
@@ -56,6 +57,16 @@ public class ShaderScreenClean : ShaderScreenBase
             return "_EmissionMap";
         }
     }
+
+    public override void Activate(Texture texture = null)
+    {
+        base.Activate(texture);
+
+        //this shader needs white color to show games like Asteroids.
+        display.materials[position].SetColor("_Color", Color.white);
+        display.materials[position].SetColor("_EmissionColor", Color.white);
+    }
+
 
     public override Texture Texture
     {

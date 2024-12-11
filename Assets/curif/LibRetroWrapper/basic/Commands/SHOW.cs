@@ -20,7 +20,7 @@ class CommandSHOW : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
         {
             return null;

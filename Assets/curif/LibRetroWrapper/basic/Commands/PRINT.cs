@@ -29,7 +29,7 @@ class CommandPRINT : ICommandBase
         // print x,y, text/number              = 3 par
         // print x,y, text/number, inv         = 4 par
         // print x,y, text/number, inv, draw   = 5 par
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
             return null;
 
@@ -103,7 +103,7 @@ class CommandPRINTLN : ICommandBase
         // print text/number, inv              = 2 par
         // print text/number, inv, draw        = 3 par
 
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
             return null;
 

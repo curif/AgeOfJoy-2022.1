@@ -247,7 +247,7 @@ public class CabinetDebugConsole : MonoBehaviour
         while (true)
         {
             if (mustRun && !AGEBasic.IsRunning(AGEBasicFileName))
-                AGEBasic.Run(AGEBasicFileName, blocking: false, maxExecutionLinesAllowed: 0);
+                AGEBasic.Run(AGEBasicFileName, maxExecutionLinesAllowed: 0);
             yield return new WaitForSeconds(runEverySecs);
         }
     }

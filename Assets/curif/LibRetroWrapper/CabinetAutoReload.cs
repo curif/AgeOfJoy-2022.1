@@ -113,15 +113,15 @@ public class CabinetAutoReload : MonoBehaviour
 
     private void writeGenericException(string cabName, string message, Exception ex)
     {
-        string path = CabinetInformation.debugLogPath(cabName);
+        string path = CabinetInformation.debugLogPath();
         ConfigManager.WriteConsole($"[CabinetAutoReload] {path}");
         // Write exception details to the log file
         using (StreamWriter writer = new StreamWriter(path, true))
         {
             writer.WriteLine($"CABINET: {cabName}");
             writer.WriteLine(new string('-', 50)); // Separator
-            writer.WriteLine(message);
-            writer.WriteLine(ex.Message);
+            writer.WriteLine($"Error message: {message}");
+            writer.WriteLine($"Exception message: {ex.Message}");
             writer.WriteLine(new string('-', 50)); // Separator
         }
         return;
@@ -160,7 +160,6 @@ public class CabinetAutoReload : MonoBehaviour
         cbInfo.debug = true;
         //
 
-
         try
         {
             CabinetDBAdmin.MoveMameFiles(cbInfo);
@@ -195,7 +194,7 @@ public class CabinetAutoReload : MonoBehaviour
             CabinetFactory.skinFromInformation(cab, cbInfo);
 
             ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
-            CabinetInformation.showCabinetProblems(cbInfo);
+            CabinetInformation.showCabinetProblems(cbInfo, "", "test");
 
             ConfigManager.WriteConsole("[CabinetAutoReload] New Test Cabinet deployed ******");
             //UnityEngine.Object.Destroy(gameObject);
@@ -222,7 +221,7 @@ public class CabinetAutoReload : MonoBehaviour
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
-            CabinetInformation.showCabinetProblems(cbInfo, moreProblems: ex.Message, "test");
+            CabinetInformation.showCabinetProblems(null, moreProblems: ex.Message, "test");
             return false;
         }
     }

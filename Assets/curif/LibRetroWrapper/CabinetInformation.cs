@@ -197,11 +197,17 @@ public class CabinetInformation
         agebasic.Validate(cabName);
     }
 
-    public static string debugLogPath(string cabinetName)
+    public static string debugLogPath(string cabinetName = null)
     {
-        string filename = cabinetName + ".log";
+        string filename;
+        if (cabinetName == null)
+            filename = "test.log";
+        else
+            filename = cabinetName + ".log";
+        
         return Path.Combine(ConfigManager.DebugDir, filename);
     }
+
     public static string getNameFromPath(string path)
     {
         string directoryName = Path.GetDirectoryName(path);
@@ -220,17 +226,17 @@ public class CabinetInformation
         try
         {
             string cabinetName = getNameFromPath(path);
-            string debugpath = debugLogPath(cabinetName);
+            string debugpath = debugLogPath();
             ConfigManager.WriteConsole($"[WriteExceptionLog] cab:{cabinetName} {debugpath}");
             using (StreamWriter writer = new StreamWriter(debugpath, true))
             {
                 writer.WriteLine($"CABINET: {cabinetName}");
                 writer.WriteLine($"YAML file: {path}");
-                writer.WriteLine($"{comments}");
-                writer.WriteLine($"[DateTime]: {DateTime.Now.ToString()}");
-                writer.WriteLine($"[Exception Type]: {exception.GetType()}");
-                writer.WriteLine($"[Message]: {exception.Message}");
-                writer.WriteLine($"[StackTrace]: {exception.StackTrace}");
+                writer.WriteLine($"DateTime: {DateTime.Now.ToString()}");
+                writer.WriteLine($"Exception Type: {exception.GetType()}");
+                writer.WriteLine($"Exception Message: {exception.Message}");
+                writer.WriteLine($"Exception comments: {comments}");
+                writer.WriteLine($"StackTrace: {exception.StackTrace}");
                 writer.WriteLine(new string('-', 50)); // Separator
             }
         }

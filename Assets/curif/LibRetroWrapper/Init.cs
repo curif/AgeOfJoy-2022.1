@@ -38,7 +38,7 @@ public class Init : MonoBehaviour
         cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
         Application.lowMemory += OnLowMemory;
         Application.memoryUsageChanged += OnMemoryUsageChanged;
-        ConfigManager.InitFolders(true);
+        ConfigManager.InitFolders();
         loadOperations();
     }
     /*

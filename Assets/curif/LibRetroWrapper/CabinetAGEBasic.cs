@@ -226,10 +226,11 @@ public class Event
     {
         AGEBasic.PrepareToRun(eventInformation.program, vars, 
                                 maxExecutionLinesAllowed: 0, lineNumber: lineNumber);
+        AGEBasic.PreRunTasks();
     }
 
     //run next line
-    public virtual YieldInstruction Run(ref bool moreLines)
+    public virtual YieldInstruction RunALine(ref bool moreLines)
     {
         YieldInstruction yield;
         yield = AGEBasic.runNextLineCurrentProgram(ref moreLines);
@@ -237,6 +238,8 @@ public class Event
         {
             triggeredCount --;
             startTime = DateTime.Now;
+            AGEBasic.PostRunTasks();
+            return null;
         }
         return yield;
     }
@@ -914,7 +917,7 @@ public class CabinetAGEBasic : MonoBehaviour
         }
     }
 
-    private bool execute(string prgName, bool blocking = false, int maxExecutionLines = 10000)
+    private bool execute(string prgName, int maxExecutionLines = 10000)
     {
         if (string.IsNullOrEmpty(prgName))
             return false;
@@ -922,7 +925,7 @@ public class CabinetAGEBasic : MonoBehaviour
         if (CompileWhenNeeded(prgName))
         {
             ConfigManager.WriteConsole($"[CabinetAGEBasic.execute] exec {prgName}");
-            AGEBasic.Run(prgName, blocking, vars, maxExecutionLines); //async blocking=false
+            AGEBasic.Run(prgName, vars, maxExecutionLines); //async blocking=false
             return true;
         }
         return false;
@@ -1002,11 +1005,9 @@ public class CabinetAGEBasic : MonoBehaviour
                     bool moreLines = true;
                     while (moreLines)
                     {
-                        YieldInstruction yield;
                         // Run the event's program
                         // excptions are catched internally
-                        yield = evt.Run(ref moreLines);
-                        yield return yield;
+                        yield return evt.RunALine(ref moreLines);
                     }
                 }
             }

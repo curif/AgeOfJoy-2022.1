@@ -22,7 +22,7 @@ class CommandSLEEP : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] [{expr}] ");
 
         BasicValue timeToSleepInSecs = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(timeToSleepInSecs, " - time to sleep (in secs)");

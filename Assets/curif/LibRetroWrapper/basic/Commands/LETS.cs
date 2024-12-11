@@ -64,7 +64,7 @@ class CommandLETS : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] {count} variables assignment");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}  #{config.LineNumber}] {count} variables assignment");
         BasicValue[] vals;
         if (fnct == null)
             vals = exprs.ExecuteList(vars);

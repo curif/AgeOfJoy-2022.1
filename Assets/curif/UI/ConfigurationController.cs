@@ -1150,7 +1150,7 @@ public class ConfigurationController : MonoBehaviour
     private void AGEBasicRun()
     {
         string program = AGEBasicPrograms.GetSelectedOption();
-        AGEBasic.Run(program, blocking: false);
+        AGEBasic.Run(program);
         return;
     }
 
@@ -1459,7 +1459,7 @@ public class ConfigurationController : MonoBehaviour
             {
                 ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] start run");
                 AGEBasic.DebugMode = ageBasicInformation.debug;
-                AGEBasic.Run(ageBasicInformation.afterLoad, blocking: false);
+                AGEBasic.Run(ageBasicInformation.afterLoad);
 
                 while (AGEBasic.IsRunning())
                     yield return new WaitForSeconds(1f / 2f);

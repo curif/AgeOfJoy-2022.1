@@ -26,13 +26,13 @@ public static class ConfigManager
     //paths
 #if UNITY_EDITOR
     public static  string BasePrivateDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cabs");
-    public static  string BasePublicDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "publiccabs");
+    //public static  string BasePublicDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "publiccabs");
 
     public static string BaseAppDir = BaseDir + "/data";
 #else
     public static string Bundle = "com.curif.AgeOfJoy";
     public static string BaseAppDir = "/data/data/" + Bundle;
-    public static  string BasePublicDir = "/storage/emulated/0/Documents/AgeOfJoy";
+    //public static  string BasePublicDir = "/storage/emulated/0/Documents/AgeOfJoy";
     public static  string BasePrivateDir = "/sdcard/Android/data/" + Bundle;
 #endif
     public static string BaseDir = BasePrivateDir;
@@ -120,14 +120,14 @@ public static class ConfigManager
 
     //public static bool PermissionStorage { get; set; }
 
-    private static void createFolders(bool publicStorage)
+    private static void createFolders()
     {
         /*if (!Init.PermissionGranted)
         {
             throw new InvalidOperationException("[ConfigManager.createFolders] Player does not grant folder permissions.");
         }
         */
-
+        /*
 #if UNITY_EDITOR
         CreateFolder(BaseDir);
 #endif
@@ -136,10 +136,12 @@ public static class ConfigManager
             BaseDir = BasePublicDir;
             CreateFolder(BaseDir);
         }
+        */
 
         WriteConsole($"[ConfigManager] base folder: {BaseDir}");
 
 
+        CreateFolder(BaseDir);
         CreateFolder(Cabinets);
         CreateFolder(CabinetsDB);
         CreateFolder(ConfigDir);
@@ -169,7 +171,7 @@ public static class ConfigManager
     }
 
     //called from Init.cs
-    public static void InitFolders(bool publicStorage)
+    public static void InitFolders()
     {
         /*if (!Init.PermissionGranted)
         {
@@ -177,10 +179,7 @@ public static class ConfigManager
         }
         */
         WriteConsole($"[ConfigManager] =================  Config Manager START ========================");
-        WriteConsole($"[ConfigManager] public storage available?: {publicStorage}");
-        
-        createFolders(publicStorage);
-        WriteConsole($"[ConfigManager] BaseDir {BaseDir}");
+        createFolders();
     }
 
     public static void CreateFolder(string path)

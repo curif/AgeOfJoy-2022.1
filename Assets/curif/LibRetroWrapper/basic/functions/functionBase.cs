@@ -157,7 +157,7 @@ public static class FunctionHelper
     {
         string normalizedPath = Path.GetFullPath(path);
         if (!normalizedPath.StartsWith(allowedBasePath))
-            throw new Exception($"Invalid file path: {path} Traversal back to parent directories is not allowed.");
+            throw new Exception($"Invalid file path: {path} Traversal back to parent directories is not allowed. Mininimal parent: {allowedBasePath}");
         return normalizedPath;
     }
     public static void ExpectedAtLeast(BasicValue[] vals, int count)

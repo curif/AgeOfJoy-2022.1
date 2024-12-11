@@ -53,7 +53,7 @@ class CommandNEXT : ICommandBase
         //it's faster than create a new instance and assign to the vars dic.
         actualValue.SetValue(actualValue.GetNumber() + step);
         // vars.SetValue(var, actualValue);
-        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name}: {actualValue.ToString()} to {endValue.ToString()} step {step}");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken} #{config.LineNumber}] var:{var.Name}: {actualValue.ToString()} to {endValue.ToString()} step {step}");
 
         if (actualValue > endValue)
             config.ForToNext.Remove(var.Name);

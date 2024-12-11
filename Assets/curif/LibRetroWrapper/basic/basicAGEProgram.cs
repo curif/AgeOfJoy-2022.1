@@ -62,6 +62,8 @@ public class AGEProgram
     public void PrepareToRun(BasicVars pvars = null, int lineNumber = 0)
     {
         this.nextLineToExecute = lineNumber - 1;
+        this.enumerator = null;
+
         config.Gosub = new Stack<double>();
         config.LineNumber = 0;
         config.JumpNextTo = 0;
@@ -107,48 +109,46 @@ public class AGEProgram
         }
 
         KeyValuePair<double, ICommandBase> cmd = getNext();
-        ICommandBase commandToExecute = cmd.Value;
+        if (cmd.Key == 0.0) //default
+            return false;
 
-        if (commandToExecute != null) // empty or REM line.
+        if (cmd.Value == null) // empty or REM line.
+            return true;
+
+        // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
+        config.LineNumber = cmd.Key;
+
+        cmd.Value.Execute(vars);
+        if (config.stop)
         {
-            // ConfigManager.WriteConsole($">> EXEC LINE #[{cmd.Key}] {cmd.Value.CmdToken}");
-
-            if (tracker == null)
-                tracker = new();
-
-            config.LineNumber = cmd.Key;
-
-            commandToExecute.Execute(vars);
-
-            tracker.ExecuteLine();
-
-            if (config.stop)
-            {
-                ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
-                return false;
-            }
-
-            if (config.JumpTo != 0) //exactly
-            {
-                if (!lines.ContainsKey(config.JumpTo))
-                    throw new Exception($"Line number not found: {config.JumpTo}");
-
-                // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
-                nextLineToExecute = config.JumpTo;
-                config.JumpTo = 0;
-                return true;
-            }
-            else if (config.JumpNextTo != 0) //next one.
-            {
-                // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
-                nextLineToExecute = config.JumpNextTo + MinJump;
-                config.JumpNextTo = 0;
-                return true;
-            }
+            ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
+            return false;
         }
 
-        //nextLineToExecute = cmd.Key + MinJump;
-        return true;
+        if (tracker == null)
+            tracker = new();
+        tracker.ExecuteLine();
+
+        if (config.JumpTo != 0) //exactly
+        {
+            if (!lines.ContainsKey(config.JumpTo))
+                throw new Exception($"Line number not found: {config.JumpTo}");
+
+            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line = {config.JumpTo}");
+            nextLineToExecute = config.JumpTo;
+            config.JumpTo = 0;
+            return true;
+        }
+        
+        if (config.JumpNextTo != 0) //next one.
+        {
+            // ConfigManager.WriteConsole($"[AGEProgram.runNextLine] jump to line >= {config.JumpNextTo}");
+            nextLineToExecute = config.JumpNextTo + MinJump;
+            config.JumpNextTo = 0;
+            return true;
+        }
+
+        return true; 
     }
 
     public string Log()

@@ -57,7 +57,7 @@ class ChangeColorsBase : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}  #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
         {
             return null;
@@ -105,7 +105,7 @@ class CommandRESETCOLOR : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
         {
             return null;
@@ -133,7 +133,7 @@ class CommandINVERTCOLOR : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
             return null;
 
@@ -164,7 +164,7 @@ class CommandSETCOLORSPACE : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
         {
             return null;
