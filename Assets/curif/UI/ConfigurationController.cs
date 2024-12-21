@@ -926,7 +926,7 @@ public class ConfigurationController : MonoBehaviour
                         cabinetsConfigurationContainer.lastYAdded + 1))
 
             .Add(new GenericLabel(scr, "lbl1", "Gameplay graphics settings", 4, cabinetsConfigurationContainer.lastYAdded + 2))
-            .Add(new GenericOptions(scr, "cabinetGameplayResolution", "resolution:", resolutionMultiplier, 4,                                        cabinetsConfigurationContainer.lastYAdded + 1))
+            .Add(new GenericOptions(scr, "cabinetGameplayResolution", "Resolution:", resolutionMultiplier, 4,                                        cabinetsConfigurationContainer.lastYAdded + 1))
             .Add(new GenericOptions(scr, "cabinetGameplayFoveatingLevel", "Foveating Level:", levels, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             
             .Add(new GenericOptions(scr, "glowLevel", "Cabinet screen glow:", glow, 4, cabinetsConfigurationContainer.lastYAdded + 2))
@@ -982,12 +982,15 @@ public class ConfigurationController : MonoBehaviour
         ConfigInformation config = configHelper.getConfigInformation(true);
 
         DeviceController.ResetValues();
+        DeviceController.ApplySettings(false);
+        
         config.cabinet.ingameResolution = null;
         config.cabinet.worldResolution = null;
         config.cabinet.insertCoinOnStartup = CabinetConfiguration.insertCoinOnStartupDefault;
         config.cabinet.forcedShader = CabinetConfiguration.forcedShaderDefault;
         config.cabinet.screenGlowIntensity = CabinetConfiguration.screenGlowIntensityDefault;
         configHelper.Save(true, config);
+
     }
 
 

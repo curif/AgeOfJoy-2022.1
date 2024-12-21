@@ -45,7 +45,7 @@ public class DeviceController : MonoBehaviour
         deviceName = SystemInfo.deviceName; //can be used in Start() only and in the main thread.
         deviceModel = SystemInfo.deviceModel;
         deviceType = SystemInfo.deviceType;
-
+        
         ResetValues();
         OnGlobalConfigChanged();
         ApplySettings(false);
