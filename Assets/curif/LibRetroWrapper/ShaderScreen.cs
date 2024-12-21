@@ -36,8 +36,18 @@ public abstract class ShaderScreenBase
     }
     public virtual void Update() { }
 
+    public virtual string AlternativeShaderForAttractionVideos() { return null; }
+    public virtual Dictionary<string, string> AlternativeConfigForAttractionVideos() { return configuration; }
+    public static string RecommendedReplacementForAttractionVideos(string shaderName) 
+    {
+        if (shaderName == null)
+            return "clean";
+        if (shaderName == "crt")
+            return "crtlod";
+        return shaderName;
+    }
 
-  
+
     // sets the material to the display
     public virtual void Activate(Texture texture = null)
     {
@@ -77,7 +87,7 @@ public abstract class ShaderScreenBase
 public static class ShaderScreen
 {
     private static Dictionary<string, Func<Renderer, int, Dictionary<string, string>, ShaderScreenBase>> dic = new();
-    private static string[] ShaderNames = new[] { "damage", "clean", "crt", "crtlod", "projector",                                                      "projectorLOD" };
+    private static string[] ShaderNames = new[] { "damage", "clean", "crt", "crtlod", "projector",                                                                                                  "projectorLOD", "crt-additive" };
 
     static ShaderScreen()
     {
@@ -86,7 +96,7 @@ public static class ShaderScreen
         dic["crt"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRT(display, position, config);
         dic["crtlod"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRTLOD(display, position, config);
         dic["projector"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderProjector(display, position, config);
-        dic["projectorlod"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderProjectorLOD(display, position, config);
+        dic["crt-additive"] = (Renderer display, int position, Dictionary<string, string> config) => new ShaderCRTAdditive(display, position, config);
     }
 
     public static ShaderScreenBase Factory(Renderer display, int position, string shaderName, Dictionary<string, string> config)
@@ -95,6 +105,9 @@ public static class ShaderScreen
         if (!dic.TryGetValue(shaderName, out shd))
             shd = dic["damage"];
 
+        if (config == null)
+            config = new Dictionary<string, string>();
+        
         return shd(display, position, config);
     }
 

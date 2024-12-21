@@ -26,6 +26,8 @@ public static class CRTsFactory
         objects.Add("19i-2x1", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i_2x1"));
         objects.Add("19i-3x1", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i_3x1"));
         objects.Add("19i-3x1-18deg", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i_3x1_18deg"));
+        objects.Add("dome-concave", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen_dome_concave"));
+        objects.Add("dome-convex", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen_dome_convex"));
         objects.Add("19i-agebasic", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19iAGEBasic"));
         objects.Add("no-crt", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/noScreen"));
     }

@@ -50,6 +50,7 @@ public class ShaderCRT : ShaderScreenBase
             return "_MainTex";
         }
     }
+    public override string AlternativeShaderForAttractionVideos() { return "crtlod"; }
 
     public override Texture Texture
     {

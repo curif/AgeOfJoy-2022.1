@@ -1,8 +1,8 @@
-
+﻿
 using UnityEngine;
 using System.Collections.Generic;
 
-public class ShaderProjector : ShaderScreenBase
+public class ShaderCRTAdditive : ShaderScreenBase
 {
     protected virtual Material MaterialPrefabDamageLow { get { return Low; } }
     protected virtual Material MaterialPrefabDamageMedium { get { return Medium; } }
@@ -12,14 +12,14 @@ public class ShaderProjector : ShaderScreenBase
 
     protected static Material Low, Medium, High;
 
-    static ShaderProjector()
+    static ShaderCRTAdditive()
     {
-        Low = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Projector_Low");
-        Medium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Projector_Medium");
-        High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Projector_High");
+        Low = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Additive_Low");
+        Medium = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Additive_Medium");
+        High = Resources.Load<Material>("Cabinets/PreFab/CRTs/ScreenCRT_Additive_High");
     }
 
-    public ShaderProjector(Renderer display, int position, Dictionary<string, string> config) : 
+    public ShaderCRTAdditive(Renderer display, int position, Dictionary<string, string> config) :
         base(display, position, config, new CabinetMaterials.MaterialCRTShaderProperties())
     {
 
@@ -38,7 +38,7 @@ public class ShaderProjector : ShaderScreenBase
     {
         get
         {
-            return "PROJECTOR" + $"({damage})";
+            return "DOME" + $"({damage})";
         }
     }
 
@@ -50,7 +50,13 @@ public class ShaderProjector : ShaderScreenBase
         }
     }
 
-    public override string AlternativeShaderForAttractionVideos() { return "projectorlod"; }
+    public override string AlternativeShaderForAttractionVideos() { return "crt-additive"; }
+    public override Dictionary<string, string> AlternativeConfigForAttractionVideos() { 
+        Dictionary<string, string> config = new();
+        config["damage"] = "low";
+        return config;    
+    }
+
 
     public override Texture Texture
     {
@@ -81,7 +87,7 @@ public class ShaderProjector : ShaderScreenBase
         {
             Vector4 v4 = new Vector4(invertx ? -1f : 1f, inverty ? -1f : 1f, 0, 0);
             display.materials[position].SetVector("_CRTTiling", v4);
-            ConfigManager.WriteConsole($"[ShaderProjector.Invert] {invertx}, {inverty} = {v4}");
+            ConfigManager.WriteConsole($"[ShaderDome.Invert] {invertx}, {inverty} = {v4}");
 
             actual_invertx = invertx;
             actual_inverty = inverty;
