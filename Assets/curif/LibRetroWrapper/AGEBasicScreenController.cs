@@ -71,6 +71,8 @@ public class AGEBasicScreenController : MonoBehaviour
     [Tooltip("Positions where the player can stay to activate videos")]
     public List<AgentScenePosition> AgentPlayerPositions;
 
+    public GlobalConfiguration globalConfiguration = null;
+
     public Cabinet cabinet;
 
     public bool SimulateExitGame;
@@ -123,6 +125,10 @@ public class AGEBasicScreenController : MonoBehaviour
     void Start()
     {
         LibretroMameCore.WriteConsole($"[AGEBasicScreenController.Start] {name}");
+        GameObject GlobalConfigurationGameObject = GameObject.Find("FixedGlobalConfiguration");
+        this.globalConfiguration = GlobalConfigurationGameObject.GetComponent<GlobalConfiguration>();
+        if (globalConfiguration == null)
+            ConfigManager.WriteConsoleError($"[LibretroScreenController.Start] {name} globalConfiguration not found.");
 
         display = GetComponent<Renderer>();
 
@@ -160,13 +166,16 @@ public class AGEBasicScreenController : MonoBehaviour
             ConfigManager.WriteConsoleError($"[AGEBasicScreenController.Start] {name} Coin Slot not found in cabinet !!!! no one can play this game.");
 
         //material and shader
-        shader = ShaderScreen.Factory(display, 1, screen.shader, screen.config());
-        // shader hack to replace the CRT for the LOD version in attraction videos (if the user select CRT)
-        if (screen.shader == "crt")
-            videoShader = ShaderScreen.Factory(display, 1, "crtlod", screen.config());
+        if (!string.IsNullOrEmpty(globalConfiguration.Configuration.cabinet.forcedShader))
+            shader = ShaderScreen.Factory(display, 1, globalConfiguration.Configuration.cabinet.forcedShader, screen.config());
+        else if (!string.IsNullOrEmpty(screen.shader))
+            shader = ShaderScreen.Factory(display, 1, screen.shader, screen.config());
         else
-            videoShader = shader;
+            shader = ShaderScreen.Factory(display, 1, "crt", screen.config());
 
+        //video shader ----------------
+        videoShader = ShaderScreen.Factory(display, 1, shader.AlternativeShaderForAttractionVideos(), screen.config());
+        
         ConfigManager.WriteConsole($"[AGEBasicScreenController.Start]  {name} shader created: {shader} video shader {videoShader}");
 
         mainCoroutine = StartCoroutine(runBT());
