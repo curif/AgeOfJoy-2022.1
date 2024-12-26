@@ -345,7 +345,7 @@ public static class CabinetFactory
             }
         }
 
-        CabinetDBAdmin.MoveMameFiles(cbinfo);
+        CabinetDBAdmin.MoveMameFiles(cbinfo); //and delete sources
 
         Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, cbinfo.pathBase, cbinfo.controlScheme, modelFilePath,
                                                     number, room, position, rotation, parent,

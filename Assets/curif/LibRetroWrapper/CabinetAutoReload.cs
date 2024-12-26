@@ -160,14 +160,8 @@ public class CabinetAutoReload : MonoBehaviour
         cbInfo.debug = true;
         //
 
-        try
-        {
-            CabinetDBAdmin.MoveMameFiles(cbInfo);
-        }
-        catch (System.Exception e)
-        {
-            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR moving MAME files", e);
-        }
+        ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
+        CabinetInformation.showCabinetProblems(cbInfo, "", "test");
 
         try
         {
@@ -193,8 +187,7 @@ public class CabinetAutoReload : MonoBehaviour
             }
             CabinetFactory.skinFromInformation(cab, cbInfo);
 
-            ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
-            CabinetInformation.showCabinetProblems(cbInfo, "", "test");
+
 
             ConfigManager.WriteConsole("[CabinetAutoReload] New Test Cabinet deployed ******");
             //UnityEngine.Object.Destroy(gameObject);
@@ -213,7 +206,7 @@ public class CabinetAutoReload : MonoBehaviour
             cabReplaceComp.outOfOrderCabinet = gameObject;
             */
             cabReplaceComp.backgroundSoundController = backgroundSoundController;
-            
+
             cab.gameObject.SetActive(true);
 
             return true;

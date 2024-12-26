@@ -558,7 +558,7 @@ public class CabinetInformation
 
         public System.ArgumentException validate()
         {
-            if (!ShaderScreen.Exists(shader))
+            if (!string.IsNullOrEmpty(shader) && !ShaderScreen.Exists(shader))
             {
                 return new System.ArgumentException($"Erroneous Shader {shader}");
             }
@@ -735,8 +735,8 @@ public class CabinetInformation
             {
                 if (!mf.IsValid(pathBase))
                 {
-                    exceptions.Add($"MAME file {mf.file} type: {mf.type}",
-                        new System.Exception($"type unknown or file doesn't exists"));
+                    exceptions.Add($"Install file {mf.file} type: {mf.type} is invalid. ",
+                        new System.Exception($"type unknown or file doesn't exists in {pathBase}"));
                 }
             }
         }
