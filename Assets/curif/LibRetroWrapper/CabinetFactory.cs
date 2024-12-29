@@ -310,14 +310,20 @@ public static class CabinetFactory
 
     public static Cabinet skinFromInformation(Cabinet cabinet, CabinetInformation cbinfo)
     {
-
         //process each part
         if (cbinfo.Parts != null)
         {
             ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} texture each part");
             foreach (CabinetInformation.Part p in cbinfo.Parts)
             {
-                skinCabinetPart(cabinet, cbinfo, p);
+                try
+                {
+                    skinCabinetPart(cabinet, cbinfo, p);
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetFactory.fromInformation] {cbinfo.name} skinning {p.name}.", e);
+                }
             }
         }
 
@@ -356,73 +362,94 @@ public static class CabinetFactory
         // cbinfo.debug = true;
         BoxCollider boxCollider = cabinet.addBoxCollider(false);
         cabinet.toFloor();
-
-        //assign a material to all the components that aren't in the 
-        //description's parts list.
-        if (cbinfo.material != null)
+        try
         {
-            //hack to avoid normals materials on default black cabinets.
-            if (cbinfo.material.ToLower() == "black")
+            //assign a material to all the components that aren't in the 
+            //description's parts list.
+            if (cbinfo.material != null)
             {
-                // most used material by default, change it by a vertex.
-                Material mat = CabinetMaterials.BlackNoNormal;
-                cabinet.SetMaterialToUnknownComponents(mat, cbinfo); //only if the part doesn't have a material assigned
-                /*Color32 black = new Color32(0, 0, 0, 0);
-                Material mat = new Material(CabinetMaterials.VertexColor);
-                cabinet.SetVertexColorToUnknownComponents(black, cbinfo, mat); //only if the part doesn't have a material assigned
-                */
+                //hack to avoid normals materials on default black cabinets.
+                if (cbinfo.material.ToLower() == "black")
+                {
+                    // most used material by default, change it by a vertex.
+                    Material mat = CabinetMaterials.BlackNoNormal;
+                    cabinet.SetMaterialToUnknownComponents(mat, cbinfo); //only if the part doesn't have a material assigned
+                    /*Color32 black = new Color32(0, 0, 0, 0);
+                    Material mat = new Material(CabinetMaterials.VertexColor);
+                    cabinet.SetVertexColorToUnknownComponents(black, cbinfo, mat); //only if the part doesn't have a material assigned
+                    */
+                }
+                else
+                {
+                    Material mat = CabinetMaterials.fromName(cbinfo.material);
+                    cabinet.SetMaterialToUnknownComponents(mat, cbinfo); //only if the part doesn't have a material assigned
+                }
+            }
+            else if (cbinfo.color != null)
+            {
+                //Material mat = new Material(CabinetMaterials.Base);
+                //mat.SetColor("_Color", cbinfo.color.getColor());
+                Color32 color = cbinfo.color.getColor();
+                cabinet.SetVertexColorToUnknownComponents(color, cbinfo); //only if the part doesn't have a material assigned
             }
             else
             {
-                Material mat = CabinetMaterials.fromName(cbinfo.material);
-                cabinet.SetMaterialToUnknownComponents(mat, cbinfo); //only if the part doesn't have a material assigned
+                //fall to black any other component.
+                Color32 black = new Color32(0, 0, 0, 0);
+                cabinet.SetVertexColorToUnknownComponents(black, cbinfo); //only if the part doesn't have a material assigned
             }
+
         }
-        else if (cbinfo.color != null)
+        catch (Exception e)
         {
-            //Material mat = new Material(CabinetMaterials.Base);
-            //mat.SetColor("_Color", cbinfo.color.getColor());
-            Color32 color = cbinfo.color.getColor();
-            cabinet.SetVertexColorToUnknownComponents(color, cbinfo); //only if the part doesn't have a material assigned
-        }
-        else
-        {
-            //fall to black any other component.
-            Color32 black = new Color32(0, 0, 0, 0);
-            cabinet.SetVertexColorToUnknownComponents(black, cbinfo); //only if the part doesn't have a material assigned
+            ConfigManager.WriteConsoleException($"[CabinetFactory.fromInformation] {cbinfo.name} assigning material.", e);
         }
 
 
         if (!string.IsNullOrEmpty(cbinfo.coinslot))
         {
-            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
-            cabinet.AddCoinSlot(cbinfo.coinslot,
-                    cbinfo.coinslotgeometry.rotation.x, cbinfo.coinslotgeometry.rotation.y, cbinfo.coinslotgeometry.rotation.z,
-                    cbinfo.coinslotgeometry.scalepercentage);
+            try
+            {
+                ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
+                cabinet.AddCoinSlot(cbinfo.coinslot,
+                        cbinfo.coinslotgeometry.rotation.x, cbinfo.coinslotgeometry.rotation.y, cbinfo.coinslotgeometry.rotation.z,
+                        cbinfo.coinslotgeometry.scalepercentage);
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[CabinetFactory.fromInformation] {cbinfo.name} setting coinslot.", e);
+            }
         }
 
-        if (cbinfo.crt != null &&
-            (cabinet.PartsExist("screen-mock-vertical") ||
-                cabinet.PartsExist("screen-mock-horizontal")))
+        try
         {
-            Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x,
-                                                cbinfo.crt.geometry.rotation.y,
-                                                cbinfo.crt.geometry.rotation.z);
-            ConfigManager.WriteConsole($"[fromInformation]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
+            if (cbinfo.crt != null &&
+                (cabinet.PartsExist("screen-mock-vertical") ||
+                    cabinet.PartsExist("screen-mock-horizontal")))
+            {
+                Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x,
+                                                    cbinfo.crt.geometry.rotation.y,
+                                                    cbinfo.crt.geometry.rotation.z);
+                ConfigManager.WriteConsole($"[fromInformation]AgentPlayerPositions: {string.Join(",", agentPlayerPositions.Select(x => x.ToString()))}");
 
-            cabinet.addCRT(cbinfo, agentPlayerPositions, backgroundSoundController, CRTrotation);
+                cabinet.addCRT(cbinfo, agentPlayerPositions, backgroundSoundController, CRTrotation);
 
-            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
+                ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} CRT added");
+            }
+            else if (cbinfo.agebasic != null)
+            {
+                cabinet.addController(cbinfo.pathBase,
+                                            cbinfo.ControlMap,
+                                            cbinfo.lightGunInformation,
+                                            cbinfo.agebasic,
+                                            backgroundSoundController
+                                        );
+                ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} NO-CRT controller added");
+            }
         }
-        else if (cbinfo.agebasic != null)
+        catch (Exception e)
         {
-            cabinet.addController(cbinfo.pathBase,
-                                        cbinfo.ControlMap,
-                                        cbinfo.lightGunInformation,
-                                        cbinfo.agebasic,
-                                        backgroundSoundController
-                                    );
-            ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} NO-CRT controller added");
+            ConfigManager.WriteConsoleException($"[CabinetFactory.fromInformation] {cbinfo.name} assigning screen.", e);
         }
 
         //blockers, targets, etc
