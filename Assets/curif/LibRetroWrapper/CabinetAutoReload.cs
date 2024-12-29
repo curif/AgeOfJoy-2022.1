@@ -163,32 +163,45 @@ public class CabinetAutoReload : MonoBehaviour
         ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
         CabinetInformation.showCabinetProblems(cbInfo, "", "test");
 
+        Cabinet cab;
         try
         {
             //cabinet inseption
             ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
             ConfigManager.WriteConsole($"[CabinetAutoReload]AgentPlayerPositions: {string.Join(",", AgentPlayerPositions.Select(x => x.ToString()))}");
 
-            Cabinet cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position,
+            cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position,
                                                          transform.rotation, transform.parent,
                                                          AgentPlayerPositions, backgroundSoundController,
                                                          cacheGlbModels: false);
+        }
+        catch (System.Exception ex)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
+            CabinetInformation.showCabinetProblems(null, moreProblems: ex.Message, "test"); //write to output file
+            return false;
+        }
 
-            // invalidate all cached textures for test cabinet
-            if (cbInfo.Parts != null)
-            { 
-                foreach (CabinetInformation.Part p in cbInfo.Parts)
+        if (cab == null)
+            return false;
+
+
+        // invalidate all cached textures for test cabinet
+        if (cbInfo.Parts != null)
+        { 
+            foreach (CabinetInformation.Part p in cbInfo.Parts)
+            {
+                if (p?.art?.file != null)
                 {
-                    if (p?.art?.file != null)
-                    {
-                        CabinetTextureCache.InvalidateCachedTexture(cbInfo.getPath(p.art.file));
-                    }
+                    CabinetTextureCache.InvalidateCachedTexture(cbInfo.getPath(p.art.file));
                 }
             }
-            CabinetFactory.skinFromInformation(cab, cbInfo);
+        }
+        CabinetFactory.skinFromInformation(cab, cbInfo);
 
 
-
+        try
+        {
             ConfigManager.WriteConsole("[CabinetAutoReload] New Test Cabinet deployed ******");
             //UnityEngine.Object.Destroy(gameObject);
 
@@ -214,7 +227,7 @@ public class CabinetAutoReload : MonoBehaviour
         catch (System.Exception ex)
         {
             ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
-            CabinetInformation.showCabinetProblems(null, moreProblems: ex.Message, "test");
+            CabinetInformation.showCabinetProblems(null, moreProblems: ex.Message, "test"); //write to output file
             return false;
         }
     }

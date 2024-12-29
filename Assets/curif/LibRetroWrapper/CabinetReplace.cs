@@ -61,22 +61,40 @@ public class CabinetReplace : MonoBehaviour
 
             ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] cabinet problems (if any):...");
             CabinetInformation.showCabinetProblems(cbInfo);
+        }
+        catch (System.Exception ex)
+        {
+            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from YAML {descriptionPath}: {ex}");
+            return null;
+        }
 
-            //cabinet inseption
+        Cabinet cab;
+        try
+        {
+            //cabinet inception
             ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] Deploy replacement cabinet {cbInfo.name}");
             //note: factory will add this CabinetReplace component (this component) to the new cabinet.
 
             //Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
-            Cabinet cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
+            cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
                                                          transform.position, transform.rotation,
-                                                         transform.parent, 
+                                                         transform.parent,
                                                          AgentPlayerPositionComponentsToLoad,
                                                          backgroundSoundController
                                                          );
 
             cab.gameObject.SetActive(false);
-            CabinetFactory.skinFromInformation(cab, cbInfo);
+        }
+        catch (System.Exception ex)
+        {
+            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from INFORMATION in yaml {descriptionPath}: {ex}");
+            return null;
+        }
 
+        CabinetFactory.skinFromInformation(cab, cbInfo);
+
+        try
+        {    
             //add CabinetReplace for the next replacement. CabinetController do the same.
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
             cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositionComponents;
