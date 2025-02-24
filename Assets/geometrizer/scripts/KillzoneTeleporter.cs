@@ -11,6 +11,9 @@ public class KillZoneTeleporter : MonoBehaviour
     [Header("Timing Settings")]
     public float teleportDelay = 1.0f;
 
+    [Header("Animation Settings")]
+    public bool enableFadeAnimation = false; // Default to OFF
+
     private Animator fadeAnimator;
     private const string FadeSphereName = "SM_FadeSphere";
     private const string FadeOutTrigger = "FadeOutTrigger";
@@ -56,7 +59,7 @@ public class KillZoneTeleporter : MonoBehaviour
 
         UnityEngine.Debug.Log("[KillZoneTeleporter] Player entered the kill zone.");
 
-        if (fadeAnimator != null)
+        if (enableFadeAnimation && fadeAnimator != null)
         {
             UnityEngine.Debug.Log("[KillZoneTeleporter] Triggering fade-out animation.");
             fadeAnimator.SetTrigger(FadeOutTrigger);
