@@ -13,17 +13,11 @@ public class LightWiggler : MonoBehaviour
     // Time (in seconds) for a full sine wave cycle on each axis.
     public Vector3 sineInterval = new Vector3(2f, 2f, 2f);
 
-    [Header("Light Intensity Settings")]
-    public float minIntensity = 0.5f;
-    public float maxIntensity = 2.0f;
-
     private Vector3 originalLocalPosition;
-    private Light lightSource;
 
     void Start()
     {
         originalLocalPosition = transform.localPosition;
-        lightSource = GetComponent<Light>();
     }
 
     void Update()
@@ -51,12 +45,6 @@ public class LightWiggler : MonoBehaviour
         else
         {
             transform.localPosition = newLocalPosition;
-        }
-
-        // Randomize the light's intensity.
-        if (lightSource != null)
-        {
-            lightSource.intensity = UnityEngine.Random.Range(minIntensity, maxIntensity);
         }
     }
 }

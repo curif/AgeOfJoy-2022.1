@@ -1844,6 +1844,8 @@ MonoBehaviour:
     Description: 
     PlayerSpawnGameObjectName: 
   playerSpawnPointName: PlayerSpawnRoom021
+  teleportDelay: 2
+  postTeleportDelay: 1
 --- !u!65 &317266981
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -15178,6 +15180,7 @@ GameObject:
   - component: {fileID: 1905849480}
   - component: {fileID: 1905849479}
   - component: {fileID: 1905849481}
+  - component: {fileID: 1905849482}
   m_Layer: 0
   m_Name: LightFlareDynamic
   m_TagString: Untagged
@@ -15256,7 +15259,7 @@ Transform:
   m_GameObject: {fileID: 1905849478}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.562, y: 0, z: 14.009}
+  m_LocalPosition: {x: 4.35, y: 0, z: 13.741}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15278,8 +15281,22 @@ MonoBehaviour:
   minBounds: {x: -1, y: -1, z: -1}
   maxBounds: {x: 1, y: 1, z: 1}
   sineInterval: {x: 1, y: 2.3, z: 0.75}
-  minIntensity: 3.6
-  maxIntensity: 3.7
+--- !u!114 &1905849482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1905849478}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 406c733f7f8ff4643aee5de322d0bb7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pulseLight: {fileID: 1905849479}
+  minIntensity: 2
+  maxIntensity: 3
+  pulseSpeed: 3
 --- !u!1 &1916487043
 GameObject:
   m_ObjectHideFlags: 0
@@ -20531,7 +20548,7 @@ Transform:
   m_GameObject: {fileID: 2040524072}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 4.3239, y: -0.4546, z: 13.6287}
+  m_LocalPosition: {x: 4.3239, y: -0.468, z: 13.6287}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
