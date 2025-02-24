@@ -1,8 +1,13 @@
 using UnityEngine;
+using System.Collections;
 
 public class PassthroughTriggerHandler : MonoBehaviour
 {
     private OVRPassthroughLayer passthroughLayer;
+    private Animator fadeSphereAnimator;
+
+    [SerializeField]
+    private float timeBeforeFadeIn = 2f; // Default to 2 seconds
 
     private void Start()
     {
@@ -19,6 +24,21 @@ public class PassthroughTriggerHandler : MonoBehaviour
         else
         {
             UnityEngine.Debug.LogWarning("Main Camera not found in the scene.");
+        }
+
+        // Find SM_FadeSphere and get its Animator component
+        GameObject fadeSphere = GameObject.Find("SM_FadeSphere");
+        if (fadeSphere != null)
+        {
+            fadeSphereAnimator = fadeSphere.GetComponent<Animator>();
+            if (fadeSphereAnimator == null)
+            {
+                UnityEngine.Debug.LogWarning("Animator component not found on SM_FadeSphere.");
+            }
+        }
+        else
+        {
+            UnityEngine.Debug.LogWarning("SM_FadeSphere not found in the scene.");
         }
     }
 
@@ -53,7 +73,20 @@ public class PassthroughTriggerHandler : MonoBehaviour
             {
                 UnityEngine.Debug.LogWarning("No Camera component found on the triggering object.");
             }
+
+            // Start fade-in coroutine
+            if (fadeSphereAnimator != null)
+            {
+                StartCoroutine(FadeInAfterDelay());
+            }
         }
+    }
+
+    private IEnumerator FadeInAfterDelay()
+    {
+        yield return new WaitForSeconds(timeBeforeFadeIn);
+        fadeSphereAnimator.SetTrigger("FadeInTrigger");
+        UnityEngine.Debug.Log("FadeInTrigger activated.");
     }
 
     private void OnTriggerExit(Collider other)

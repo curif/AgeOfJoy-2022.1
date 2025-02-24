@@ -10,18 +10,13 @@ public class KillZoneTeleporter : MonoBehaviour
 
     [Header("Timing Settings")]
     public float teleportDelay = 1.0f;
-    public float postTeleportDelay = 1.0f;
 
     private Animator fadeAnimator;
     private const string FadeSphereName = "SM_FadeSphere";
     private const string FadeOutTrigger = "FadeOutTrigger";
-    private const string FadeInTrigger = "FadeInTrigger";
 
     private void Start()
     {
-        // Keep this object alive across scene loads
-        DontDestroyOnLoad(gameObject);
-
         FindFadeSphere();
         FindTeleportController();
     }
@@ -84,40 +79,6 @@ public class KillZoneTeleporter : MonoBehaviour
         else
         {
             UnityEngine.Debug.LogError("[KillZoneTeleporter] Teleportation failed. Either teleportController or targetRoom is not set.");
-            yield break;
         }
-
-        yield return new WaitForSeconds(postTeleportDelay);
-
-        FindFadeSphere(); // Re-find in case it was lost
-
-        if (fadeAnimator != null)
-        {
-            UnityEngine.Debug.Log("[KillZoneTeleporter] Triggering fade-in animation.");
-            fadeAnimator.SetTrigger(FadeInTrigger);
-            StartCoroutine(DestroyAfterAnimation(fadeAnimator, FadeInTrigger));
-        }
-        else
-        {
-            UnityEngine.Debug.LogError("[KillZoneTeleporter] FadeSphere Animator is missing AFTER teleport, cannot play fade-in animation.");
-            Destroy(gameObject); // Just destroy if no animator
-        }
-    }
-
-    private IEnumerator DestroyAfterAnimation(Animator animator, string triggerName)
-    {
-        if (animator == null) yield break;
-
-        // Wait until the animator is actually in the FadeInTrigger state
-        while (!animator.GetCurrentAnimatorStateInfo(0).IsTag(triggerName))
-        {
-            yield return null;
-        }
-
-        // Wait for the animation to fully complete
-        yield return new WaitForSeconds(animator.GetCurrentAnimatorStateInfo(0).length);
-
-        UnityEngine.Debug.Log("[KillZoneTeleporter] Fade-in animation complete. Destroying teleporter.");
-        Destroy(gameObject);
     }
 }
