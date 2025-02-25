@@ -18,6 +18,8 @@ public class KillZoneTeleporter : MonoBehaviour
     private const string FadeSphereName = "SM_FadeSphere";
     private const string FadeOutTrigger = "FadeOutTrigger";
 
+    private bool hasTriggered = false; // Track if teleportation has already occurred
+
     private void Start()
     {
         FindFadeSphere();
@@ -55,8 +57,9 @@ public class KillZoneTeleporter : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player")) return;
+        if (!other.CompareTag("Player") || hasTriggered) return; // Prevent re-triggering
 
+        hasTriggered = true; // Mark as triggered
         UnityEngine.Debug.Log("[KillZoneTeleporter] Player entered the kill zone.");
 
         if (enableFadeAnimation && fadeAnimator != null)
