@@ -33,7 +33,7 @@ public class CabinetsController : MonoBehaviour
     public float TimeToWaitBetweenChecks = 0.5f;
 
     GameObject PlayerControllerGameObject;
-
+    public bool hideNumberMeshes = false; // Default OFF, visible in Inspector
 
     [SerializeField]
     private int cabinetsCount;
@@ -159,8 +159,16 @@ public class CabinetsController : MonoBehaviour
             
             if (renderer != null && meshFilter != null)
             {
-                // Construct the mesh file path based on the index (idx), starting at 0
-                string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
+                {
+                    //geometrizer: If hiding is enabled, disable the renderer and return early
+                    if (hideNumberMeshes)
+                    {
+                        renderer.enabled = false;
+                        return;
+                    }
+                }
+                    // Construct the mesh file path based on the index (idx), starting at 0
+                    string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
 
                 // Load the dynamically chosen mesh
                 Mesh numberMesh = Resources.Load<Mesh>(meshPath);
