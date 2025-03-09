@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using AOJ.Managers; // Import the namespace containing the EventManager
 
 public class PassthroughTriggerHandler : MonoBehaviour
 {
@@ -46,6 +47,12 @@ public class PassthroughTriggerHandler : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            // Set the EventManager's boolean to true indicating passthrough is active.
+            if (EventManager.Instance != null)
+            {
+                EventManager.Instance.IsPassthrough = true;
+            }
+
             UnityEngine.Debug.LogWarning("Turning OVRPassthroughLayer ON!");
             if (passthroughLayer != null)
             {
@@ -93,6 +100,12 @@ public class PassthroughTriggerHandler : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            // Set the EventManager's boolean to false since passthrough is now off.
+            if (EventManager.Instance != null)
+            {
+                EventManager.Instance.IsPassthrough = false;
+            }
+
             UnityEngine.Debug.LogWarning("Turning OVRPassthroughLayer OFF!");
             if (passthroughLayer != null)
             {

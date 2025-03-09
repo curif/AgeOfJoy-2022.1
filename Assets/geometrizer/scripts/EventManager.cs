@@ -12,6 +12,16 @@ namespace AOJ.Managers
         private AudioSource audioSource; // Reference to the AudioSource component
         private bool isPlayingExitSound; // Private field to track if the exit sound is playing
 
+        //geometrizer: Add the isPassthrough field and property.
+        [SerializeField]
+        private bool isPassthrough; // This is stored on the player object and defaults to false
+
+        public bool IsPassthrough
+        {
+            get { return isPassthrough; }
+            set { isPassthrough = value; }
+        }
+
         public bool IsPlayingExitSound // Public property to get the sound playing state
         {
             get { return isPlayingExitSound; }
