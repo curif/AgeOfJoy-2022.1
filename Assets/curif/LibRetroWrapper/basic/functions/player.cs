@@ -36,7 +36,8 @@ class CommandFunctionPLAYERSETHEIGHT : CommandFunctionSingleExpressionBase
 
         if (config?.Player == null)
             return new BasicValue(0);
-
+        if (config?.EventManager != null && config.EventManager.IsPassthrough)
+            return new BasicValue(0); //not allowed in passthroug
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(val, "Player height");
         float playerHeight = (float)val.GetValueAsNumber();
