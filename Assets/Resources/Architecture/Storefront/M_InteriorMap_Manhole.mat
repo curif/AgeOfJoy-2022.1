@@ -7,13 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_FadeSphere_Smooth
-  m_Shader: {fileID: 4800000, guid: 422d663f9bb9a454ebd00a9e7a651628, type: 3}
+  m_Name: M_InteriorMap_Manhole
+  m_Shader: {fileID: 4800000, guid: b77b40eb473fa99419ba8a4fe2695b99, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
-  m_LightmapFlags: 0
+  m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
@@ -59,16 +59,24 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _RoomCubemap:
+        m_Texture: {fileID: 8900000, guid: 1064b3af7c0210041ac63a494868bdef, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Texture0:
-        m_Texture: {fileID: 2800000, guid: a11563a4124b96c4db654a9ea7217d2c, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureSample0:
-        m_Texture: {fileID: 2800000, guid: 290a83dea9f03cf4c8d09cd8db33fdd7, type: 3}
+        m_Texture: {fileID: 8900000, guid: 77520064aae579b48aa2e3d446f8c536, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureSample1:
-        m_Texture: {fileID: 2800000, guid: 29457f7fa74e71c46a70bf45345e8884, type: 3}
+        m_Texture: {fileID: 2800000, guid: 7a170cdb7cc88024cb628cfcdbb6705c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample2:
+        m_Texture: {fileID: 2800000, guid: 2e7df1fb15fc2af439af22ebf06d4591, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -78,38 +86,36 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    - _ColorShiftMax: 0.63767606
-    - _ColorShiftMin: 0
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
+    - _DistortionAmount: 0.345
     - _DstBlend: 0
-    - _FadeAmount: 0
-    - _FlickerMax: 1
-    - _FlickerMin: 0.1
-    - _FlickerSpeed: 5
     - _GlossMapScale: 1
     - _Glossiness: 0.5
     - _GlossyReflections: 1
+    - _HashSize: 0.319
     - _Metallic: 0
     - _Mode: 0
     - _OcclusionStrength: 1
+    - _Offsetty: 0
     - _Parallax: 0.02
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
-    - _Tiler: 1
-    - _TimeBoxSpeed: 2
+    - _TimeBoxSpeed: 4
+    - _TimeBoxSpeed1: 9.4
+    - _TimeBoxSpeedMax: 8.9
+    - _TimeBoxSpeedMin: 21.5
     - _UVSec: 0
-    - _Visibility: 0
+    - _Wiggle: 0.428
     - _ZWrite: 1
-    - __dirty: 1
+    - __dirty: 0
+    - _hashsplit: 0.41
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Color0: {r: 0, g: 0.112697996, b: 1, a: 0}
-    - _Color1: {r: 0, g: 0.74202245, b: 1, a: 0}
+    - _ColorBottom: {r: 0, g: 0.5556111, b: 1, a: 0}
+    - _ColorTop: {r: 0, g: 0.5556111, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Offset: {r: 0, g: 0, b: 0, a: 0}
-    - _Scale: {r: -10, g: -5, b: -10, a: 0}
-    - _SmokeTilings: {r: 1.5, g: 3, b: 1, a: 2.5}
-    - _Tiling: {r: 3, g: 31, b: 0, a: 0}
+    - _Vector1: {r: 1, g: 2, b: 0, a: 0}
+    - _Vector2: {r: 1, g: 2, b: 0, a: 0}
   m_BuildTextureStacks: []
