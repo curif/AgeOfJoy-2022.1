@@ -1009,7 +1009,11 @@ public class ConfigurationController : MonoBehaviour
         config.cabinet.ingameResolution.foveatedLevelAsString = ((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayFoveatingLevel")).GetSelectedOption();
         config.cabinet.ingameResolution.resolution = float.Parse(((GenericOptions)cabinetsConfigurationContainer.GetWidget("cabinetGameplayResolution")).GetSelectedOption());
 
-        config.cabinet.screenGlowIntensity = float.Parse(((GenericOptions)cabinetsConfigurationContainer.GetWidget("glowLevel")).GetSelectedOption());
+        string glowLevel = ((GenericOptions)cabinetsConfigurationContainer.GetWidget("glowLevel")).GetSelectedOption();
+        if (glowLevel == "None")
+            config.cabinet.screenGlowIntensity = 0;
+        else    
+            config.cabinet.screenGlowIntensity = float.Parse(glowLevel);
         
         string forceShader = ((GenericOptions) cabinetsConfigurationContainer.GetWidget("forceShader")).GetSelectedOption();
         if (forceShader == "")

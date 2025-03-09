@@ -3,6 +3,7 @@ using System.IO;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
+using AOJ.Managers;
 
 
 public class ConfigurationCommands
@@ -39,6 +40,8 @@ public class ConfigurationCommands
 
     //convenience player component
     public PlayerController Player;
+    public EventManager EventManager;
+
     public GameObject PlayerGameObject;
     public XROrigin PlayerOrigin;
 

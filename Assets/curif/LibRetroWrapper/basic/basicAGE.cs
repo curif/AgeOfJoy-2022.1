@@ -6,8 +6,7 @@ using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
-
-
+using AOJ.Managers;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -89,7 +88,7 @@ public class basicAGE : MonoBehaviour
     public SceneDatabase SceneDatabase = null;
     public MoviePosterController PostersController;
     public AudioMixer audioMixer; // Drag your Audio Mixer asset here in the Unity Editor
-
+    public AOJ.Managers.EventManager EventManager;
     public PlayerController Player;
     public XROrigin PlayerOrigin;
     public GameObject PlayerControllerGameObject;
@@ -165,16 +164,17 @@ public class basicAGE : MonoBehaviour
             CabinetsController = ConfigurationController.cabinetsController;
         if (Teleportation == null)
             Teleportation = GetComponent<Teleportation>();
+
         if (PlayerControllerGameObject == null)
-        {
             PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
-            if (PlayerControllerGameObject != null)
-            {
-                if (Player == null)
-                    Player = PlayerControllerGameObject.GetComponent<PlayerController>();
-                if (PlayerOrigin == null)
-                    PlayerOrigin = PlayerControllerGameObject.GetComponent<XROrigin>();
-            }
+        if (PlayerControllerGameObject != null)
+        {
+            if (Player == null)
+                Player = PlayerControllerGameObject.GetComponent<PlayerController>();
+            if (PlayerOrigin == null)
+                PlayerOrigin = PlayerControllerGameObject.GetComponent<XROrigin>();
+            if (EventManager == null)
+                EventManager = PlayerControllerGameObject.GetComponent<EventManager>();
         }
 
         configCommands.ConfigurationController = ConfigurationController;

@@ -238,7 +238,7 @@ public class ConfigInformation
 
         public static List<string> GlowIntensities()
         {
-            return new List<string>() { "None", "1", "2", "3", "4", "5" };
+            return new List<string>() { "0", "1", "2", "3", "4", "5" };
         }
     }
 
