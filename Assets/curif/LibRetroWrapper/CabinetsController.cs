@@ -366,7 +366,10 @@ public class CabinetsController : MonoBehaviour
                 {
                     string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
                     CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
-                    return cabInfo.space;
+                    if (cabInfo != null )
+                        return cabInfo.space;
+                    else
+                        return "9x9x9"; //hack
                 }).ToList();
                 ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
 
@@ -404,18 +407,8 @@ public class CabinetsController : MonoBehaviour
         foreach (string cabName in cabNames)
         {
             string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
-            try
-            {
-                CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
-                spaces.Add(cabInfo.space);
-            }
-            catch (Exception e)
-            {
-                ConfigManager.WriteConsoleException($"[CabinetController.GetOccupiedSpaces] [{cabName}] invalid cabinet (reading from yaml).", e);
-                spaces.Add("9x9x9"); //hack to do not select
-
-                continue;
-            }
+            CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+            spaces.Add(cabInfo != null? cabInfo.space : "9x9x9");
         }
         return spaces;
     }
