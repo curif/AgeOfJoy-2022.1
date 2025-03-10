@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using UnityEngine;
 
 namespace AOJ.Managers
@@ -19,7 +20,14 @@ namespace AOJ.Managers
         public bool IsPassthrough
         {
             get { return isPassthrough; }
-            set { isPassthrough = value; }
+            set
+            {
+                if (isPassthrough != value)
+                {
+                    isPassthrough = value;
+                    UnityEngine.Debug.Log("Passthrough " + (isPassthrough ? "enabled" : "disabled"));
+                }
+            }
         }
 
         public bool IsPlayingExitSound // Public property to get the sound playing state
