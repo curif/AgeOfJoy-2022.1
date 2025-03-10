@@ -247,6 +247,12 @@ public class CabinetInformation
         }
     }
 
+    /// <summary>
+    /// read cabinet information from yamls
+    /// </summary>
+    /// <param name="cabPath"></param>
+    /// <param name="cache"></param>
+    /// <returns>null on fail or the cabinet information</returns>
     public static CabinetInformation fromYaml(string cabPath, bool cache = true)
     {
         if (cache && CabinetInformationCache.Contains(cabPath))
@@ -257,8 +263,9 @@ public class CabinetInformation
         string yamlPath = Path.Combine(cabPath, "description.yaml");
         // ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
         string yaml = yamlFileToString(yamlPath);
-        CabinetInformation cabInfo = parseYaml(cabPath, yamlPath, yaml);
-        if (cache)
+        CabinetInformation cabInfo = null;
+        cabInfo = parseYaml(cabPath, yamlPath, yaml);
+        if (cache && cabInfo != null)
             CabinetInformationCache.AddToCache(cabPath, cabInfo);
         return cabInfo;
     }
@@ -282,7 +289,7 @@ public class CabinetInformation
         {
             //ConfigManager.WriteConsoleException($"[CabinetInformation.fromYaml] Description YAML file in cabinet {yamlPath} ", e);
             WriteExceptionLog(yamlPath, e, "ERROR when decoding yaml file, syntax or semantic error");
-            throw;
+            return null;
         }
     }
 
