@@ -97,6 +97,9 @@ class CommandFunctionPLAYERSETCOORDINATE : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.PlayerOrigin == null)
             throw new Exception("AGEBasic can't access the Player data.");
+        
+        if (config?.EventManager != null && config.EventManager.IsPassthrough)
+            return new BasicValue(0); //not allowed in passthroug
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedNonEmptyString(vals[0], " - coordinate");
@@ -136,6 +139,9 @@ class CommandFunctionPLAYERLOOKAT : CommandFunctionSingleExpressionBase
             throw new Exception("AGEBasic can't access the Player data.");
         if (config?.Cabinet == null)
             throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        if (config?.EventManager != null && config.EventManager.IsPassthrough)
+            return new BasicValue(0); //not allowed in passthroug
 
         BasicValue val = expr.Execute(vars);
 
