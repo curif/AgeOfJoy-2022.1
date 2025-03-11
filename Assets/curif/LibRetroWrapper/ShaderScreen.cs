@@ -36,7 +36,7 @@ public abstract class ShaderScreenBase
     }
     public virtual void Update() { }
 
-    public virtual string AlternativeShaderForAttractionVideos() { return null; }
+    public virtual string AlternativeShaderForAttractionVideos() { return RecommendedReplacementForAttractionVideos(null); }
     public virtual Dictionary<string, string> AlternativeConfigForAttractionVideos() { return configuration; }
     public static string RecommendedReplacementForAttractionVideos(string shaderName) 
     {
