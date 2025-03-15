@@ -108,8 +108,7 @@ public class CabinetsController : MonoBehaviour
         PlayerControllerGameObject = GameObject.Find("OVRPlayerControllerGalery");
 
         loadCabinetList();
-        initalizeCabinets();
-        load();
+        StartCoroutine(initalizeCabinets());
     }
 
     void loadCabinetList()
@@ -128,14 +127,28 @@ public class CabinetsController : MonoBehaviour
         }
     }
 
-    void initalizeCabinets()
+    IEnumerator initalizeCabinets()
     {
+        Loaded = false;
+
         if (CabinetsCtrlInfo.Count() == 0)
-            throw new Exception("Cabinet tree without cabinets");
+        {
+            ConfigManager.WriteConsoleError("[cabinetsController.initalizeCabinets] Cabinet tree without cabinets");
+            yield break;
+        }
+
+        if (string.IsNullOrEmpty(Room))
+        {
+            ConfigManager.WriteConsoleError("[cabinetsController.initalizeCabinets] room id not assigned.");
+            yield break;
+        }
 
         int idx = 0;
-        Shader shader = Shader.Find("Standard");
-        Vector2 newTiling = new Vector2(-1, -1);
+        // Shader shader = Shader.Find("Standard");
+        //Vector2 newTiling = new Vector2(-1, -1);
+
+        // Load the numnber material
+        Material playerNumberMaterial = Resources.Load<Material>("Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/M_PlayerNumber");
 
         foreach (CabinetControllerInformation cabInfo in CabinetsCtrlInfo)
         {
@@ -159,21 +172,18 @@ public class CabinetsController : MonoBehaviour
             
             if (renderer != null && meshFilter != null)
             {
+                //geometrizer: If hiding is enabled, disable the renderer and return early
+                if (hideNumberMeshes)
                 {
-                    //geometrizer: If hiding is enabled, disable the renderer and return early
-                    if (hideNumberMeshes)
-                    {
-                        renderer.enabled = false;
-                        return;
-                    }
+                    renderer.enabled = false;
+                    continue;
                 }
-                    // Construct the mesh file path based on the index (idx), starting at 0
-                    string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
+                
+                // Construct the mesh file path based on the index (idx), starting at 0
+                string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
 
                 // Load the dynamically chosen mesh
                 Mesh numberMesh = Resources.Load<Mesh>(meshPath);
-                // Load the material
-                Material playerNumberMaterial = Resources.Load<Material>("Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/M_Playernumber");
 
                 if (numberMesh != null && playerNumberMaterial != null)
                 {
@@ -227,6 +237,7 @@ public class CabinetsController : MonoBehaviour
                     area.matchOrientation = MatchOrientation.None;
                     area.teleporting.AddListener(OnTeleportingMatchOrientation);
 
+
                     /*//this component rotates the player when teleports.
                     CustomTeleportOrientation cstTeleport = agentPlayerTeleportAnchor.AddComponent<CustomTeleportOrientation>();
                     cstTeleport.player = PlayerControllerGameObject.transform;
@@ -236,18 +247,122 @@ public class CabinetsController : MonoBehaviour
                 else
                 {
                     if (numberMesh == null)
-                        ConfigManager.WriteConsoleError($"[CabinetsController] initializeCabinets Agent Player Position mesh not found: {meshPath}");
-                    if (playerNumberMaterial == null)
-                        ConfigManager.WriteConsoleError("[CabinetsController] initializeCabinets Material not found: Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/M_Playernumber");
+                        ConfigManager.WriteConsoleError($"[CabinetsController.initializeCabinets]  Agent Player Position mesh not found: {meshPath}");
+
                 }
             }
             else
             {
                 ConfigManager.WriteConsoleError("[CabinetsController] initializeCabinets MeshRenderer or MeshFilter component missing on Agent Player Teleport Anchor.");
             }
-
+            
             idx++;  // Ensure idx is being incremented elsewhere in your code if this block is within a loop
+            yield return null; //next frame
         }
+
+        ConfigManager.WriteConsole($"[CabinetsController.load] ==== {Room} ====");
+
+        //persist registry with the new assignation if any.
+        List<CabinetPosition> cabsPos = gameRegistry.GetSetCabinetsAssignedToRoom(Room,
+                                                                                transform.childCount);
+        ConfigManager.WriteConsole($"[CabinetsController.load] Assigning {cabsPos.Count} cabinets to room {Room}");
+
+        //load already assigned games to cabinets
+        foreach (CabinetPosition cabPos in cabsPos)
+        {
+            CabinetControllerInformation cabInfo = GetCabinetControllerInformationByPosition(cabPos.Position);
+            //CabinetController will load the cabinet once asigned a cabinetName
+            cabInfo.CabinetController.game = cabPos;
+            ConfigManager.WriteConsole($"[CabinetsController.load] Load previously assigned {cabPos}");
+        }
+        yield return null;
+
+
+        //load unnasigned cabinets. Cabinets that aren't assigned to any room. New cabinets.
+        if (cabsPos.Count() < CabinetsCtrlInfo.Count())
+        {
+            ConfigManager.WriteConsole($"[CabinetsController.load] {Room} there are {CabinetsCtrlInfo.Count() - cabsPos.Count()} pending assignments");
+
+            List<CabinetControllerInformation> remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
+                        string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
+            List<string> unnasignedCabNames = gameRegistry.GetUnassignedCabinets().
+                                                           OrderBy(x => UnityEngine.Random.value).ToList();
+            List<string> occupiedSpaces = GetOccupiedSpaces(unnasignedCabNames);
+            ConfigManager.WriteConsole($"[CabinetsController.load] {Room}"
+                                        + $" unnasigned cabinets count: {unnasignedCabNames.Count}");
+            foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
+            {
+                int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
+                if (bestFitIndex != -1)
+                {
+                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                                            cabCtrl.Position,
+                                                                            unnasignedCabNames[bestFitIndex]);
+                    cabCtrl.CabinetController.game = cabPos;
+                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
+                                                + $" assigned cab: {unnasignedCabNames[bestFitIndex]}"
+                                                + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                    occupiedSpaces.RemoveAt(bestFitIndex);
+                    unnasignedCabNames.RemoveAt(bestFitIndex);
+                }
+            }
+
+            yield return null;
+
+            //assign a random to non-assigned.
+            //don't persist in gameRegistry.   
+
+            remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
+                                                            string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName))
+                                                      .ToList();
+            if (remainingOutOfOrderCabs.Count() > 0)
+            {
+                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} random {remainingOutOfOrderCabs.Count} pending assignments");
+
+                unnasignedCabNames = gameRegistry.GetRandomizedAllCabinetNames();
+                occupiedSpaces = unnasignedCabNames.Select(cabName =>
+                {
+                    string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+                    CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+                    if (cabInfo != null)
+                        return cabInfo.space;
+                    else
+                        return "9x9x9"; //hack
+                }).ToList();
+                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
+
+                foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
+                {
+                    int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
+                    if (bestFitIndex == -1)
+                    {
+                        ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
+                                                + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} "
+                                                + $" not fit found in: {occupiedSpaces.ToString()}");
+                        continue;
+                    }
+                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                                            cabCtrl.Position,
+                                                                            unnasignedCabNames[bestFitIndex]);
+                    cabCtrl.CabinetController.game = cabPos;
+                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position} "
+                                                + $" randomly assigned cab: {unnasignedCabNames[bestFitIndex]}"
+                                                + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                    occupiedSpaces.RemoveAt(bestFitIndex);
+                    unnasignedCabNames.RemoveAt(bestFitIndex);
+
+                    yield return null;
+                }
+            }
+        }
+        
+        if (gameRegistry.NeedsSave())
+            gameRegistry.Persist();
+
+        ConfigManager.WriteConsole($"[CabinetsController.load] {Room} END loaded cabinets");
+        Loaded = true;
     }
 
     void OnTeleportingMatchOrientation(TeleportingEventArgs args)
@@ -296,110 +411,6 @@ public class CabinetsController : MonoBehaviour
         return cabinet?.Game();
     }
 
-    void load()
-    {
-        Loaded = false;
-
-        if (string.IsNullOrEmpty(Room))
-            throw new Exception("[cabinetsController.load] room id not assigned.");
-
-        ConfigManager.WriteConsole($"[CabinetsController.load] ==== {Room} ====");
-
-        //persist registry with the new assignation if any.
-        List<CabinetPosition> cabsPos = gameRegistry.GetSetCabinetsAssignedToRoom(Room,
-                                                                                transform.childCount);
-        ConfigManager.WriteConsole($"[CabinetsController.load] Assigning {cabsPos.Count} cabinets to room {Room}");
-
-        //load already assigned games to cabinets
-        foreach (CabinetPosition cabPos in cabsPos)
-        {
-            CabinetControllerInformation cabInfo = GetCabinetControllerInformationByPosition(cabPos.Position);
-            //CabinetController will load the cabinet once asigned a cabinetName
-            cabInfo.CabinetController.game = cabPos;
-            ConfigManager.WriteConsole($"[CabinetsController.load] Load previously assigned {cabPos}");
-        }
-
-        //load unnasigned cabinets. Cabinets that aren't assigned to any room. New cabinets.
-        if (cabsPos.Count() < CabinetsCtrlInfo.Count())
-        {
-            ConfigManager.WriteConsole($"[CabinetsController.load] {Room} there are {CabinetsCtrlInfo.Count() - cabsPos.Count()} pending assignments");
-
-            List<CabinetControllerInformation> remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
-                        string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
-            List<string> unnasignedCabNames = gameRegistry.GetUnassignedCabinets().
-                                                           OrderBy(x => UnityEngine.Random.value).ToList();
-            List<string> occupiedSpaces = GetOccupiedSpaces(unnasignedCabNames);
-            ConfigManager.WriteConsole($"[CabinetsController.load] {Room}"
-                                        + $" unnasigned cabinets count: {unnasignedCabNames.Count}");
-            foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
-            {
-                int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
-                if (bestFitIndex != -1)
-                {
-                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
-                                                                            cabCtrl.Position,
-                                                                            unnasignedCabNames[bestFitIndex]);
-                    cabCtrl.CabinetController.game = cabPos;
-                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
-                                                + $" assigned cab: {unnasignedCabNames[bestFitIndex]}"
-                                                + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
-
-                    occupiedSpaces.RemoveAt(bestFitIndex);
-                    unnasignedCabNames.RemoveAt(bestFitIndex);
-                }
-            }
-
-            if (gameRegistry.NeedsSave())
-                gameRegistry.Persist();
-
-            //assign a random to non-assigned.
-            //don't persist in gameRegistry.   
-
-            remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
-                            string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
-            if (remainingOutOfOrderCabs.Count() > 0)
-            {
-                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} random {remainingOutOfOrderCabs.Count} pending assignments");
-
-                unnasignedCabNames = gameRegistry.GetRandomizedAllCabinetNames();
-                occupiedSpaces = unnasignedCabNames.Select(cabName =>
-                {
-                    string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
-                    CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
-                    if (cabInfo != null )
-                        return cabInfo.space;
-                    else
-                        return "9x9x9"; //hack
-                }).ToList();
-                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
-
-                foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
-                {
-                    int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
-                    if (bestFitIndex == -1)
-                    {
-                        ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
-                                                + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} "
-                                                + $" not fit found in: {occupiedSpaces.ToString()}");
-                        continue;
-                    }
-                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
-                                                            cabCtrl.Position,
-                                                            unnasignedCabNames[bestFitIndex]);
-                    cabCtrl.CabinetController.game = cabPos;
-                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position} "
-                                                + $" randomly assigned cab: {unnasignedCabNames[bestFitIndex]}"
-                                                + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
-
-                    occupiedSpaces.RemoveAt(bestFitIndex);
-                    unnasignedCabNames.RemoveAt(bestFitIndex);
-                }
-            }
-        }
-
-        ConfigManager.WriteConsole($"[CabinetsController.load] {Room} END loaded cabinets");
-        Loaded = true;
-    }
 
     private static List<string> GetOccupiedSpaces(List<string> cabNames)
     {
