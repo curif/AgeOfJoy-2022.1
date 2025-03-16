@@ -14,7 +14,7 @@ public static class CabinetTextureCache
     private static byte[] astcMagicNumber = new byte[] { 0x13, 0xAB, 0xA1, 0x5C };
 
     // Dictionary to store cached textures
-    private static ResourceCache<string, Texture2D> cachedTextures = ResourceCacheManager.Create<string, Texture2D>();
+    private static ResourceCache<string, Texture2D> cachedTextures = ResourceCacheManager.Create<string, Texture2D>(1000);
 
     // Method to load and cache a texture
     public static Texture2D LoadAndCacheTexture(string path)

@@ -67,13 +67,13 @@ public class Init : MonoBehaviour
 
     private void OnMemoryUsageChanged(in ApplicationMemoryUsageChange usage)
     {
-        ConfigManager.WriteConsole("+++++++++++++++++++++ OnMemoryUsageChanged");
+        ConfigManager.WriteConsole("+++++++++++++++++++++ OnMemoryUsageChanged ***********************");
         ConfigManager.WriteConsole($"+++++++++++++++++++++++ {usage.memoryUsage}");
     }
 
     private void OnLowMemory()
     {
-        ConfigManager.WriteConsole("+++++++++++++++++++++ OnLowMemory START");
+        ConfigManager.WriteConsole("+++++++++++++++++++++ ALERT OnLowMemory START *******************");
         ResourceCacheManager.FreeResources();
         GC.Collect();
         GC.WaitForPendingFinalizers();
