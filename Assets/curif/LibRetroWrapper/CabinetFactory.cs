@@ -17,7 +17,7 @@ using UnityEngine;
 public static class CabinetFactory
 {
     public static Dictionary<string, GameObject> CabinetStyles = new Dictionary<string, GameObject>();
-    public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>();
+    public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>(50);
 
     static CabinetFactory()
     {

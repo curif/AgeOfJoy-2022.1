@@ -11,25 +11,6 @@ using System.IO;
 using UnityEngine;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
-public static class CabinetInformationCache
-{
-    private static readonly Dictionary<string, CabinetInformation> _cache = new Dictionary<string, CabinetInformation>();
-
-    public static void AddToCache(string key, CabinetInformation cabInfo)
-    {
-        _cache[key] = cabInfo;
-    }
-
-    public static CabinetInformation GetFromCache(string key)
-    {
-        return _cache.TryGetValue(key, out var cabInfo) ? cabInfo : null;
-    }
-
-    public static bool Contains(string key)
-    {
-        return _cache.ContainsKey(key);
-    }
-}
 
 
 public class CabinetInformation
@@ -89,6 +70,9 @@ public class CabinetInformation
     private Dictionary<uint, LibretroInputDevice> libretroInputDevices;
 
     public CabinetInformation() { }
+
+    public static ResourceCache<string, CabinetInformation> CabinetInformationCache = ResourceCacheManager.Create<string, CabinetInformation>();
+
 
     public void Validate()
     {
@@ -255,10 +239,10 @@ public class CabinetInformation
     /// <returns>null on fail or the cabinet information</returns>
     public static CabinetInformation fromYaml(string cabPath, bool cache = true)
     {
-        if (cache && CabinetInformationCache.Contains(cabPath))
+        if (cache && CabinetInformationCache.ContainsKey(cabPath))
         {
             // ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
-            return CabinetInformationCache.GetFromCache(cabPath);
+            return CabinetInformationCache.Get(cabPath);
         }
         string yamlPath = Path.Combine(cabPath, "description.yaml");
         // ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
@@ -266,7 +250,7 @@ public class CabinetInformation
         CabinetInformation cabInfo = null;
         cabInfo = parseYaml(cabPath, yamlPath, yaml);
         if (cache && cabInfo != null)
-            CabinetInformationCache.AddToCache(cabPath, cabInfo);
+            CabinetInformationCache.Add(cabPath, cabInfo);
         return cabInfo;
     }
 
