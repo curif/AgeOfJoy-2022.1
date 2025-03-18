@@ -106,6 +106,25 @@ public static class ConfigManager
     public static string InternalCoresDir => Init.PermissionGranted ? _InternalCoresDir : throw new InvalidOperationException("Player does not grant folder permissions.");
     public static string ConfigCoresDir => Init.PermissionGranted ? _ConfigCoresDir : throw new InvalidOperationException("Player does not grant folder permissions.");
     */
+
+    #region Cache
+
+    // deserealization of glb files. We maintain it in the tree and are copied any time we need to create a new cabinet.
+    public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>("CabinetCache", 512f);
+    
+    // Cabinet information are objects created using the deserealization of the description.yaml file. We cannot know easily the size
+    // of the object so we are using a counter to maintain to N elements in the cache.
+    public static ResourceCache<string, CabinetInformation> CabinetInformationCache =
+                                       ResourceCacheManager.Create<string, CabinetInformation>("CabinetInformationCache", 100f); //units not MB
+
+    // textures are loaded from image files  and assigned to cabinets parts (no copy).
+    // If cache exceed the limit the manager will delete old textures in the cache. 
+    // Deleted textures are noticiable when they are showing in cabinets, we need to maintain the cabinet amount in a minimum.
+    public static ResourceCache<string, Texture2D> CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 512f);
+
+    #endregion
+
+
     public static bool DebugActive
     {
         get

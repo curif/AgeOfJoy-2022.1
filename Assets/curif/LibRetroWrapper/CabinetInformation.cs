@@ -71,8 +71,7 @@ public class CabinetInformation
 
     public CabinetInformation() { }
 
-    public static ResourceCache<string, CabinetInformation> CabinetInformationCache = ResourceCacheManager.Create<string, CabinetInformation>();
-
+   
 
     public void Validate()
     {
@@ -239,10 +238,10 @@ public class CabinetInformation
     /// <returns>null on fail or the cabinet information</returns>
     public static CabinetInformation fromYaml(string cabPath, bool cache = true)
     {
-        if (cache && CabinetInformationCache.ContainsKey(cabPath))
+        if (cache && ConfigManager.CabinetInformationCache.ContainsKey(cabPath))
         {
             // ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
-            return CabinetInformationCache.Get(cabPath);
+            return ConfigManager.CabinetInformationCache.Get(cabPath);
         }
         string yamlPath = Path.Combine(cabPath, "description.yaml");
         // ConfigManager.WriteConsole($"[CabinetInformation]: load from Yaml: {yamlPath}");
@@ -250,7 +249,7 @@ public class CabinetInformation
         CabinetInformation cabInfo = null;
         cabInfo = parseYaml(cabPath, yamlPath, yaml);
         if (cache && cabInfo != null)
-            CabinetInformationCache.Add(cabPath, cabInfo);
+            ConfigManager.CabinetInformationCache.Add(cabPath, cabInfo, 1f); //cant know object size, using 1mb per object and allow N on cache creation (Max N objects allowed).
         return cabInfo;
     }
 

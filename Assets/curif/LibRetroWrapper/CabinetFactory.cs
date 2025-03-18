@@ -17,7 +17,6 @@ using UnityEngine;
 public static class CabinetFactory
 {
     public static Dictionary<string, GameObject> CabinetStyles = new Dictionary<string, GameObject>();
-    public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>(50);
 
     static CabinetFactory()
     {
@@ -59,10 +58,10 @@ public static class CabinetFactory
                 ConfigManager.WriteConsole($"[CabinetFactory] load default model {modelFilePath}");
                 model = CabinetStyles[cacheKey];
             }
-            else if (cacheGlbModels && cacheKey != null && CabinetCache.ContainsKey(cacheKey))
+            else if (cacheGlbModels && cacheKey != null && ConfigManager.CabinetCache.ContainsKey(cacheKey))
             {
                 ConfigManager.WriteConsole($"[CabinetFactory] load cached model {modelFilePath}");
-                model = CabinetCache.Get(cacheKey);
+                model = ConfigManager.CabinetCache.Get(cacheKey);
             }
             else
             {
@@ -86,7 +85,8 @@ public static class CabinetFactory
                     if (cacheGlbModels && cacheKey != null)
                     {
                         ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
-                        CabinetCache.Add(cacheKey, model);
+                        FileInfo fileInfo = new FileInfo(modelFilePath);
+                        ConfigManager.CabinetCache.Add(cacheKey, model, fileInfo.Length / (1024f * 1024f)); //dont know correct size in memory, in disk is used.
                     }
                 }
             }
