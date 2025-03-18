@@ -13,13 +13,12 @@ public static class CabinetTextureCache
 
     private static byte[] astcMagicNumber = new byte[] { 0x13, 0xAB, 0xA1, 0x5C };
 
-    // Dictionary to store cached textures
-    private static ResourceCache<string, Texture2D> cachedTextures = ResourceCacheManager.Create<string, Texture2D>(1000);
 
     // Method to load and cache a texture
     public static Texture2D LoadAndCacheTexture(string path)
     {
         Texture2D tex = null;
+        float sizeBytes = 4f;
 
         if (!IsTextureCached(path))
         {
@@ -44,6 +43,7 @@ public static class CabinetTextureCache
                     tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
                     tex.LoadRawTextureData(fileData);
                     tex.Apply(true, true);
+                    sizeBytes = tex.width * tex.height * (16f / 36f); // 16 bytes per 6x6 block (~0.4444 bytes/pixel)
                 }
                 else
                 {
@@ -53,6 +53,7 @@ public static class CabinetTextureCache
                     tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
                     tex.LoadImage(fileData); //..this will auto-resize the texture dimensions.
                     tex.Apply(true, true);
+                    sizeBytes = tex.width * tex.height * 2f; // 5 - 6 - 5 bits, 16 bits total(2 bytes)
 
 #if FORCE_565
                     if (tex.format != TextureFormat.RGB565 && !path.ContainsInsensitive("bezel")) // quick fix for bezel textures
@@ -85,7 +86,7 @@ public static class CabinetTextureCache
                 ConfigManager.WriteConsole($"TEXTURESPECS: {path} -> format:{tex.format}  rawTextureDataLength:{tex.GetRawTextureData().Length}  w/h:{tex.width}x{tex.height}");
 #endif
                 // Cache the loaded texture
-                cachedTextures.Add(path, tex);
+                ConfigManager.CachedTextures.Add(path, tex, sizeBytes / (1024f * 1024f));
                 return tex;
             }
             catch (Exception e)
@@ -117,17 +118,17 @@ public static class CabinetTextureCache
 
     public static void InvalidateCachedTexture(string path)
     {
-        cachedTextures.Remove(path);
+        ConfigManager.CachedTextures.Remove(path);
     }
 
     // Method to retrieve a cached texture
     public static Texture2D GetCachedTexture(string path)
     {
-        return cachedTextures.Get(path);
+        return ConfigManager.CachedTextures.Get(path);
     }
 
     public static bool IsTextureCached(string path)
     {
-        return cachedTextures.ContainsKey(path);
+        return ConfigManager.CachedTextures.ContainsKey(path);
     }
 }
