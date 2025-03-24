@@ -120,7 +120,7 @@ public static class ConfigManager
     // textures are loaded from image files  and assigned to cabinets parts (no copy).
     // If cache exceed the limit the manager will delete old textures in the cache. 
     // Deleted textures are noticiable when they are showing in cabinets, we need to maintain the cabinet amount in a minimum.
-    public static ResourceCache<string, Texture2D> CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 512f);
+    public static ResourceCache<string, Texture2D> CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1536f);
 
     #endregion
 
