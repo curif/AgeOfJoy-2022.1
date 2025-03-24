@@ -90,7 +90,7 @@ public class ResourceCache<K, V> : IResourceCache
         else
         {
             if (CacheExceeded(sizeInMB))
-                ConfigManager.WriteConsoleWarning($"Cache {this.Name} Exceeded adding {sizeInMB}MB Actual: {currentSizeInMB} Max: {maxSizeInMB} <<<<<<<<");
+                ConfigManager.WriteConsoleWarning($">>> Cache {this.Name} Exceeded adding key: {key} \n size: {sizeInMB}MB \n Actual: {currentSizeInMB}\n Max: {maxSizeInMB}MB");
 
             // Evict items if necessary
             while (CacheExceeded(sizeInMB))
@@ -146,7 +146,7 @@ public class ResourceCache<K, V> : IResourceCache
         {
             if (!unityObj.Equals(null))
             {
-                Object.Destroy(unityObj);
+                Object.DestroyImmediate(unityObj);
             }
         }
     }
