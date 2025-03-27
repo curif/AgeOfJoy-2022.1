@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 public static class CabinetObjectSelector
 {
-    [MenuItem("Custom/Select elements in Cabinets to move it")]
+    [MenuItem("Custom/Cabinet: Select elements in Cabinets to move it", false, 10)]
     private static void SelectObjectsInCabinetController()
     {
         GameObject[] selectedGameObjects = Selection.gameObjects;
