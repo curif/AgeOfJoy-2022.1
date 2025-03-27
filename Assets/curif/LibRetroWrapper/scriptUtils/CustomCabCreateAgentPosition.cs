@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
+#if UNITY_EDITOR
 public class CreateAgentPosition : Editor
 {
     [MenuItem("Custom/Cabinet: Create Agent Position", false, 10)]
@@ -83,3 +84,4 @@ public class CreateAgentPosition : Editor
         return Selection.activeGameObject != null;
     }
 }
+#endif

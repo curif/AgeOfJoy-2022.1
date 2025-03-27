@@ -2,6 +2,8 @@
 using UnityEditor;
 using UnityEngine.XR.Interaction.Toolkit;
 
+#if UNITY_EDITOR
+
 [CustomEditor(typeof(CabinetController))]
 public class CabinetEditor : Editor
 {
@@ -80,3 +82,5 @@ public class CabinetEditor : Editor
                Selection.activeGameObject.GetComponent<CabinetController>() != null;
     }
 }
+
+#endif
