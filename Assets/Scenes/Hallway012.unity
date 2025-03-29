@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: a1061c556d81ea1458a7e1fd11f1b60b, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: d40aba1f62d4e8046bc086b8754d2d5a, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: 60d7e4b1ec7402525b85753e355eed24, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -412,7 +412,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (4)
@@ -628,6 +628,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1913833248}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 1.4999996
@@ -759,7 +763,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (1)
@@ -786,6 +790,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 803560594}
     m_Modifications:
+    - target: {fileID: 2735449587468905987, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 7096900823963730090, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
       propertyPath: m_Name
       value: PFV_Neontube_Curvy_Green (1)
@@ -856,6 +864,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 803560594}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 1.4999996
@@ -928,6 +940,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1913833248}
     m_Modifications:
+    - target: {fileID: 2735449587468905987, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 7096900823963730090, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
       propertyPath: m_Name
       value: PFV_Neontube_Curvy_Green
@@ -1124,7 +1140,7 @@ ReflectionProbe:
   m_Enabled: 1
   serializedVersion: 2
   m_Type: 0
-  m_Mode: 0
+  m_Mode: 2
   m_RefreshMode: 0
   m_TimeSlicingMode: 0
   m_Resolution: 128
@@ -1143,10 +1159,10 @@ ReflectionProbe:
   m_BlendDistance: 1
   m_HDR: 0
   m_BoxProjection: 1
-  m_RenderDynamicObjects: 0
+  m_RenderDynamicObjects: 1
   m_UseOcclusionCulling: 1
   m_Importance: 1
-  m_CustomBakedTexture: {fileID: 0}
+  m_CustomBakedTexture: {fileID: 8900000, guid: 72cb86ed0bce28743b6adfdb0e4e5ffc, type: 3}
 --- !u!4 &259116037
 Transform:
   m_ObjectHideFlags: 0
@@ -1438,6 +1454,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 803560594}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 1.4999996
@@ -1510,6 +1530,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1738888891}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.6242941
@@ -1635,7 +1659,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (1)
@@ -1827,7 +1851,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (1)
@@ -1857,7 +1881,7 @@ PrefabInstance:
     - target: {fileID: 1511297309289058435, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 3a4e8b689bd850a4facf5d188639e157, type: 2}
+      objectReference: {fileID: 2100000, guid: 599ed247600bf6d4d806af09d1122499, type: 2}
     - target: {fileID: 3582276439692116517, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_RootOrder
       value: 0
@@ -1925,7 +1949,7 @@ PrefabInstance:
     - target: {fileID: 6604573175301663474, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 3a4e8b689bd850a4facf5d188639e157, type: 2}
+      objectReference: {fileID: 2100000, guid: 599ed247600bf6d4d806af09d1122499, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 3899841572188747219, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
@@ -2220,6 +2244,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 803560594}
     m_Modifications:
+    - target: {fileID: 2735449587468905987, guid: 32b5a296fe8eab646bf63cc49a346e32, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: a56b4b9704ffe134c83ed252c53751d9, type: 2}
     - target: {fileID: 7096900823963730090, guid: 32b5a296fe8eab646bf63cc49a346e32, type: 3}
       propertyPath: m_Name
       value: PFV_Neontube_Curvy_Yellow
@@ -2353,7 +2381,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (3)
@@ -2443,7 +2471,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (2)
@@ -2470,6 +2498,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 308973927}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.6242941
@@ -3137,6 +3169,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 162152319}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.6242941
@@ -3387,7 +3423,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (2)
@@ -3641,6 +3677,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1913833248}
     m_Modifications:
+    - target: {fileID: 2735449587468905987, guid: 32b5a296fe8eab646bf63cc49a346e32, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: a56b4b9704ffe134c83ed252c53751d9, type: 2}
     - target: {fileID: 7096900823963730090, guid: 32b5a296fe8eab646bf63cc49a346e32, type: 3}
       propertyPath: m_Name
       value: PFV_Neontube_Curvy_Yellow
@@ -3925,6 +3965,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 803560594}
     m_Modifications:
+    - target: {fileID: 2735449587468905987, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 7096900823963730090, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
       propertyPath: m_Name
       value: PFV_Neontube_Curvy_Green
@@ -4054,7 +4098,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (1)
@@ -4081,6 +4125,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1913833248}
     m_Modifications:
+    - target: {fileID: 2735449587468905987, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 7096900823963730090, guid: 2d5e751edf5e0f041a99753fe6e199f0, type: 3}
       propertyPath: m_Name
       value: PFV_Neontube_Curvy_Green (1)
@@ -4229,6 +4277,57 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1593038524014086401, guid: 2d66723206fdd84d3adea673919bd0e6, type: 3}
   m_PrefabInstance: {fileID: 1594557339}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1615548677
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1615548679}
+  - component: {fileID: 1615548678}
+  m_Layer: 0
+  m_Name: Light Probe Group
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!220 &1615548678
+LightProbeGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1615548677}
+  m_Enabled: 1
+  m_SourcePositions:
+  - {x: 1, y: 1, z: 1}
+  - {x: 1, y: 1, z: -1}
+  - {x: 1, y: -1, z: 1}
+  - {x: 1, y: -1, z: -1}
+  - {x: -1, y: 1, z: 1}
+  - {x: -1, y: 1, z: -1}
+  - {x: -1, y: -1, z: 1}
+  - {x: -1, y: -1, z: -1}
+  - {x: 24.07, y: -1.3334594, z: 10.59}
+  m_Dering: 1
+--- !u!4 &1615548679
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1615548677}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -24.07, y: 1.3334594, z: -10.59}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1639265112
 GameObject:
   m_ObjectHideFlags: 0
@@ -4297,6 +4396,83 @@ Transform:
   - {fileID: 1963066880}
   m_Father: {fileID: 1280276495}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1679882568
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -25.89
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.47656286
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -11.87
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 826891222967621248, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Size.x
+      value: 5.996975
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Size.z
+      value: 1.8890295
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Center.x
+      value: 1.3772774
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Center.z
+      value: 1.1922717
+      objectReference: {fileID: 0}
+    - target: {fileID: 7402869355966646056, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: newReflectionCubemap
+      value: 
+      objectReference: {fileID: 8900000, guid: 72cb86ed0bce28743b6adfdb0e4e5ffc, type: 3}
+    - target: {fileID: 7492979911400093374, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Name
+      value: PF_ReflectionChangeTrigger
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
 --- !u!1001 &1714254463
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4415,6 +4591,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1913833248}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 1.4999996
@@ -4550,7 +4730,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (4)
@@ -5134,7 +5314,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (3)
@@ -5224,7 +5404,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (1)
@@ -5866,7 +6046,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 20ef7b1bc2014314e9451460aae3838f, type: 2}
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 919132149155446097, guid: 5bb170c4790313947bb46c336527b0b5, type: 3}
       propertyPath: m_Name
       value: SM_NeonTube (1)
@@ -5893,6 +6073,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 203123533}
     m_Modifications:
+    - target: {fileID: 1899049214172536249, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 3426e74cfd13f1b448c2e6bcc3dc4a99, type: 2}
     - target: {fileID: 5146571275022317837, guid: 880e95a3fa37beb41b53041c87614503, type: 3}
       propertyPath: m_LocalScale.z
       value: 0.6242941
@@ -6048,7 +6232,7 @@ PrefabInstance:
     - target: {fileID: 1511297309289058435, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: a18b23ab81ac4e446a542e1392fd5ce4, type: 2}
+      objectReference: {fileID: 2100000, guid: b151e565a2634dc47a5682ba4f711c02, type: 2}
     - target: {fileID: 2479097821187861966, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -6101,6 +6285,34 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -5.839
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.00000035762784
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4419391965924962153, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -360
+      objectReference: {fileID: 0}
     - target: {fileID: 5614758927437073876, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -6116,7 +6328,7 @@ PrefabInstance:
     - target: {fileID: 6604573175301663474, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: a18b23ab81ac4e446a542e1392fd5ce4, type: 2}
+      objectReference: {fileID: 2100000, guid: b151e565a2634dc47a5682ba4f711c02, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6137,3 +6349,5 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1280276495}
+  - {fileID: 1679882568}
+  - {fileID: 1615548679}
