@@ -136,23 +136,25 @@ public class GlobalConfiguration : MonoBehaviour
         Load();
     }
 
-    private void addListener()
-    {
-        fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
-        isListenerAdded = true;
-    }
 
     void OnEnable()
     {
-        // Listen for the config reload message
-        addListener();
+        if (!isListenerAdded)
+        {
+            // Listen for the config reload message
+            fileMonitor?.OnFileChanged.AddListener(OnFileChanged);
+            isListenerAdded = true;
+        }
     }
 
     void OnDisable()
     {
-        // Stop listening for the config reload message
-        fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
-        isListenerAdded = false;
+        if (isListenerAdded)
+        {
+            // Stop listening for the config reload message
+            fileMonitor?.OnFileChanged.RemoveListener(OnFileChanged);
+            isListenerAdded = false;
+        }
     }
 
 }

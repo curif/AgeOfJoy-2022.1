@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 32968376c638dad4bb1c843f90d03854, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.003277165, g: 0.003526051, b: 0.0053284494, a: 1}
+  m_IndirectSpecularColor: {r: 0.0032805116, g: 0.0035285922, b: 0.0053302962, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: 1e812606a1542c644a3272ec4f773665, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: d54de603149a7724eb220acffe537321, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -123,6 +123,38 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &42377657
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 42377658}
+  m_Layer: 2
+  m_Name: PlayerController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &42377658
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 42377657}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 149079754}
+  m_Father: {fileID: 1836024371}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &66397456
 GameObject:
   m_ObjectHideFlags: 0
@@ -136,7 +168,6 @@ GameObject:
   - component: {fileID: 66397459}
   - component: {fileID: 66397458}
   - component: {fileID: 66397461}
-  - component: {fileID: 66397462}
   m_Layer: 0
   m_Name: LeftHand
   m_TagString: Untagged
@@ -535,18 +566,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &66397462
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 66397456}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8886a121827ff0b449cdaafcfb543329, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &111584155
 GameObject:
   m_ObjectHideFlags: 0
@@ -739,8 +758,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 149079753}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.296, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.9, y: 0.9, z: 0.9}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -749,7 +768,7 @@ Transform:
   - {fileID: 707082713}
   - {fileID: 2055482363}
   - {fileID: 910450729}
-  m_Father: {fileID: 1836024371}
+  m_Father: {fileID: 42377658}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &214201760
 PrefabInstance:
@@ -1527,6 +1546,7 @@ GameObject:
   - component: {fileID: 484994778}
   - component: {fileID: 484994783}
   - component: {fileID: 484994784}
+  - component: {fileID: 484994786}
   m_Layer: 0
   m_Name: FixedObject
   m_TagString: Untagged
@@ -1779,6 +1799,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GameRegistry: {fileID: 484994781}
+--- !u!114 &484994786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 484994777}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f42bc8bac0bef24b8a0228d67cd7411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  CatalogYamlFilePath: C:\Users\curif\desarr\ageofjoy.0.5.1\marketplace.yaml
+  CabinetsTSVCatalogName: catalog 1
+  CabinetsTSVFilePath: D:\desarr\pyExportCatalogAOJ\exportCatalog\src\cabinets.tsv
 --- !u!1 &557732383
 GameObject:
   m_ObjectHideFlags: 0
@@ -10009,7 +10044,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1628702336}
-  - component: {fileID: 1628702338}
   - component: {fileID: 1628702337}
   m_Layer: 0
   m_Name: PlayerSFX
@@ -10129,18 +10163,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &1628702338
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1628702335}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 08134165e3483994080a57a4c38eafda, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &1644902239 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 222ef2000741d0c439b37c49d053b7db, type: 3}
@@ -10569,11 +10591,11 @@ Transform:
   m_GameObject: {fileID: 1836024333}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.475, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 149079754}
+  - {fileID: 42377658}
   - {fileID: 2050714719}
   - {fileID: 1644902239}
   - {fileID: 1628702336}
@@ -10597,7 +10619,7 @@ MonoBehaviour:
   m_OriginBaseGameObject: {fileID: 1836024333}
   m_CameraFloorOffsetObject: {fileID: 149079753}
   m_RequestedTrackingOriginMode: 2
-  m_CameraYOffset: 1.65
+  m_CameraYOffset: 1.6
 --- !u!114 &1836024373
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10697,6 +10719,7 @@ MonoBehaviour:
   characterController: {fileID: 1836024374}
   cameraOffset: {fileID: 149079754}
   changeControls: {fileID: 0}
+  PlayerControllerGameObject: {fileID: 42377657}
   cameraYOffset: 0
   playerScale: 0
 --- !u!114 &1836024378
