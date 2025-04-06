@@ -22,13 +22,17 @@ public class PlayerController : MonoBehaviour
     public CharacterController characterController;
     public Transform cameraOffset;
     public ChangeControls changeControls;
+    public GameObject PlayerControllerGameObject;
 
+    private Coroutine coroutine;
 
+    private const float IntroGalleryPFMegaFloorY = 0.4826951f; //compensate. Same value that IntroGallery's PF MegaFloor.
+    
     [SerializeField]
     float cameraYOffset;
 
     private bool isListenerAdded = false;
-
+    /*
     public float CameraYOffset
     {
         get => cameraYOffset;
@@ -39,6 +43,17 @@ public class PlayerController : MonoBehaviour
                 AdjustCameraYOffset();
             else
                 changeToCalculatedFromFloor();
+        }
+    }
+    */
+
+    public float CameraYOffset
+    {
+        get => cameraYOffset;
+        set
+        {
+            cameraYOffset = value;
+            AdjustCameraYOffset();
         }
     }
 
@@ -82,23 +97,79 @@ public class PlayerController : MonoBehaviour
         OnEnable();
         change();
     }
+
     public void AdjustCameraYOffset()
     {
-        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Device;
-        xrorigin.CameraYOffset = cameraYOffset;
+       
+        Vector3 localPosition = PlayerControllerGameObject.transform.localPosition;
+        if (cameraYOffset == 0)
+            cameraYOffset = ConfigInformation.Player.avgHeigh;
+
+#if UNITY_EDITOR
+        ConfigInformation.Player.ShowHeightPlayers();
+        localPosition.y = cameraYOffset;
+#else
+        ConfigManager.WriteConsole($"[PlayerController.AdjustCameraYOffset] actual cameraOfset transform: {cameraOffset.localPosition}");
+
+        /*
+        adjust the gameobject that controls the player position Y to a position that is the main floor Y (introgallery)
+        plus the difference between the average height and the height set by the user.
+        */
+        localPosition.y = /*IntroGalleryPFMegaFloorY +*/ cameraYOffset - ConfigInformation.Player.avgHeigh ;
+#endif
+
+        PlayerControllerGameObject.transform.localPosition = localPosition;
+        ConfigManager.WriteConsole($"[PlayerController.AdjustCameraYOffset] height: {cameraYOffset} PlayerControllerGameObject: {PlayerControllerGameObject.transform.localPosition}. Actual CameraYOffset (xrorigin):{xrorigin.CameraYOffset}");
+        
+
+        //if (coroutine == null)
+        //    coroutine = StartCoroutine(SetFakeHeightRoutine(cameraYOffset));
 
 #if XR_MODULE_AVAILABLE
-        ConfigManager.WriteConsole($"[AdjustCameraYOffset] XR_MODULE_AVAILABLE CameraYOffset = {cameraYOffset}");
+
+        //ConfigManager.WriteConsole($"[AdjustCameraYOffset] XR_MODULE_AVAILABLE CameraYOffset = {cameraYOffset}");
 
         /*
         this should be done by MoveOffsetHeight and MoveOffsetHeight(float y) in xrOrigin 
         when CameraYOffset is assigned, but don't work even when XR_MODULE_AVAILABLE is defined.
         */
-        Vector3 localPosition = cameraOffset.localPosition;
-        localPosition.y = cameraYOffset;
-        cameraOffset.localPosition = localPosition;
+        //Vector3 localPosition = cameraOffset.localPosition;
+        //localPosition.y = cameraYOffset;
+        //cameraOffset.localPosition = localPosition;
+
 #endif
     }
+    /*
+    private IEnumerator SetFakeHeightRoutine(float height)
+    {
+        Debug.Log($"[SetFakeHeightRoutine] Setting Player Height to FAKE ({height}m) (Device Tracking)");
+
+        // 1. Set the desired offset VALUE first
+        xrorigin.CameraYOffset = height;
+
+        // 2. Request the mode switch
+        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Device;
+
+        // 3. Wait a frame for the system to potentially process the mode switch and recenter
+        yield return null;
+
+        // 4. (Optional but sometimes helpful) Re-assert the offset value
+        // This ensures the internal MoveOffsetHeight uses the correct value AFTER the mode switch settles.
+        xrorigin.CameraYOffset = height;
+
+        ConfigManager.WriteConsole($"[SetFakeHeightRoutine] Fake Height routine finished. CameraFloorOffsetObject localPos: {xrorigin.CameraFloorOffsetObject.transform.localPosition}");
+
+        coroutine = null;
+    }
+    void changeToCalculatedFromFloor()
+    {
+        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+        cameraYOffset = 0f;
+        xrorigin.CameraYOffset = 0f;
+
+        ConfigManager.WriteConsole($"[changeToCalculatedFromFloor] new player eye height calculated from floor");
+    }
+    */
 
     public void AdjustScale()
     {
@@ -112,14 +183,6 @@ public class PlayerController : MonoBehaviour
         characterController.center = center;
     }
 
-    void changeToCalculatedFromFloor()
-    {
-        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
-        cameraYOffset = 0f;
-        xrorigin.CameraYOffset = 0f;
-
-        ConfigManager.WriteConsole($"[changeToCalculatedFromFloor] new player eye height calculated from floor");
-    }
 
     void changeWithPlayerData(ConfigInformation.Player player)
     {
@@ -129,53 +192,18 @@ public class PlayerController : MonoBehaviour
             ConfigManager.WriteConsoleError("[PlayerController.changeWithPlayerData] Camera Offset gameobject transform not found.");
             return;
         }
-        else
-        {
+
 #if ADJUST_SCALE
             PlayerScale = player.scale;
 #else
             PlayerScale = 0.9f;
 #endif
-        }
 
-        //player height
-        if (player.height == 0f)
-        {
-            //calculated
-            changeToCalculatedFromFloor();
-        }
-        else
-        {
-            // about NotSpecified: when changing to this value after startup, the 
-            //   Tracking Origin Mode will not be changed.
+        CameraYOffset = player.height;
 
-            CameraYOffset = player.height;
-
-            // characterController.height = player.height + 0.1f;
-            ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height {player.height}");
-            ConfigManager.WriteConsole($"[changeWithPlayerData] {player.ShowHeightPlayers()}");
-        }
-
-        /*
-         * replaced by HandMeshMaterialSwitcher connected to the change configuration event.
-        // Switch the hand mesh material based on the skin color
-        HandMeshMaterialSwitcher leftHandMaterialSwitcher = changeControls.leftHandPrefab.GetComponent<HandMeshMaterialSwitcher>();
-        HandMeshMaterialSwitcher rightHandMaterialSwitcher = changeControls.leftHandPrefab.GetComponent<HandMeshMaterialSwitcher>();
-
-        if (player.skinColor == "light")
-        {
-            leftHandMaterialSwitcher.SetLightMaterial();
-            rightHandMaterialSwitcher.SetLightMaterial();
-            ConfigManager.WriteConsole($"[changeWithPlayerData] Switching materials to light.");
-        }
-        else if (player.skinColor == "dark")
-        {
-            leftHandMaterialSwitcher.SetDarkMaterial();
-            rightHandMaterialSwitcher.SetDarkMaterial();
-            ConfigManager.WriteConsole($"[changeWithPlayerData] Switching materials to dark.");
-        }
-        */
-
+        // characterController.height = player.height + 0.1f;
+        ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height {player.height}");
+        ConfigManager.WriteConsole($"[changeWithPlayerData] {ConfigInformation.Player.ShowHeightPlayers()}");
         return;
     }
 
