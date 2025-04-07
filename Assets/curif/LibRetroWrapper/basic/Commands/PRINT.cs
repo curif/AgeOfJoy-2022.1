@@ -42,9 +42,15 @@ class CommandPRINT : ICommandBase
         y = vals[1].GetInt();
 
         if (x < 0 || x >= config.ScreenGenerator.CharactersXCount)
-            throw new Exception($"printing out of screen (width): {x} : {config.ScreenGenerator.CharactersXCount}");
+        {
+            AGEBasicDebug.WriteConsole($"printing out of screen (width): {x} : {config.ScreenGenerator.CharactersXCount}");
+            return null;
+        }
         if (y < 0 || y >= config.ScreenGenerator.CharactersYCount)
-            throw new Exception($"printing out of screen (height): {y} : {config.ScreenGenerator.CharactersYCount}");
+        {
+            AGEBasicDebug.WriteConsole($"printing out of screen (height): {y} : {config.ScreenGenerator.CharactersYCount}");
+            return null;
+        }
 
         str = new BasicValue(vals[2]);
 
