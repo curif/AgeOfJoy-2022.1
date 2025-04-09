@@ -13,6 +13,7 @@ using UnityEngine;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine.Experimental.Rendering;
 public static class CabinetTextureCache
 {
 
@@ -77,21 +78,20 @@ public static class CabinetTextureCache
                     // Create and load texture with original data, ensuring it's readable
                     tex = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
                     tex.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
-                   
+
                     // Get original dimensions using the provided routine
                     //int originalWidth, originalHeight;
                     //GetImageDimensions(fileData, out originalWidth, out originalHeight);
                     // Calculate nearest lower power of 2 dimensions
-                    int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
-                    int height = Mathf.FloorToInt(Mathf.Log(tex.height, 2));
-                    int newWidth = (int)Mathf.Pow(2, width);
-                    int newHeight = (int)Mathf.Pow(2, height);
-
                     ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {tex.format.ToString()} - {tex.width}x{tex.height}");
 
                     // Check if the image has transparency using a Burst job
                     //bool hasTransparency = HasTransparency(tex);
 #if RESCALE
+                    int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
+                    int height = Mathf.FloorToInt(Mathf.Log(tex.height, 2));
+                    int newWidth = (int)Mathf.Pow(2, width);
+                    int newHeight = (int)Mathf.Pow(2, height);
                     if (tex.width != newWidth || tex.height != newHeight || tex.format != TextureFormat.RGBA4444)
                     {
                         // Step 1: Get original pixel data into a NativeArray for Burst
@@ -122,7 +122,7 @@ public static class CabinetTextureCache
 
                                 byte[] pngData = tex.EncodeToJPG(95);
                                 File.WriteAllBytes(processedPath, pngData);
-#endif                            
+#endif
                             }
                             else
                             {
@@ -131,21 +131,21 @@ public static class CabinetTextureCache
                         }
                     }
 #endif
+                    Texture2D texConverted = ConvertIfAlphaUnused(tex);
+                    if (texConverted != null)
+                    {
+                        UnityEngine.Object.Destroy(tex);
+                        tex = texConverted;
+                    }
 
                     tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
                     tex.mipMapBias = -0.3f; // Recommended by Meta for high-detail textures
                     tex.Apply(true, true); // Final apply with mipmaps, now safe to make non-readable
 
                     // Calculate size based on final format
-                    if (tex.format == TextureFormat.RGBA4444)
-                        sizeBytes = tex.width * tex.height * 2f; // 2 bytes per pixel for RGB565
-                    else
-                        sizeBytes = tex.width * tex.height * 4f; // 4 bytes per pixel for RGBA32 or similar
+                    sizeBytes = CalculateManualSizeBytes(tex);
 
                     ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: FINAL format: {tex.format.ToString()} - {tex.width}x{tex.height} size: {sizeBytes} Bytes");
-
-
-
 
 #if FORCE_565
                     if (tex.format != TextureFormat.RGB565 && !path.ContainsInsensitive("bezel")) // quick fix for bezel textures
@@ -188,6 +188,121 @@ public static class CabinetTextureCache
             }
         }
         return GetCachedTexture(path);
+    }
+
+    // Helper for fallback (less accurate)
+    public static float CalculateManualSizeBytes(Texture2D tex)
+    {
+        // This is a rough estimate and doesn't handle compressed formats well
+        switch (tex.format)
+        {
+            case TextureFormat.RGB24: return tex.width * tex.height * 3;
+            case TextureFormat.RGBA32: return tex.width * tex.height * 4;
+            case TextureFormat.ARGB32: return tex.width * tex.height * 4;
+            case TextureFormat.RGB565: return tex.width * tex.height * 2;
+            case TextureFormat.RGBA4444: return tex.width * tex.height * 2;
+            // Add other formats as needed, but this gets complex for compressed ones
+            default:
+                //Debug.LogWarning($"CalculateManualSizeBytes: Unhandled format {tex.format}. Returning rough estimate.");
+                // Very rough guess for others (often 4 bytes uncompressed)
+                return tex.width * tex.height * 4;
+        }
+    }
+
+    public static Texture2D ConvertIfAlphaUnused(Texture2D inputTexture, byte alphaThreshold = 255)
+    {
+        if (inputTexture == null)
+        {
+            Debug.LogError("[ConvertIfAlphaUnused] Input texture is null.");
+            return null;
+        }
+
+        // GetPixels/SetPixels requires the texture to be readable
+        if (!inputTexture.isReadable)
+        {
+            ConfigManager.WriteConsoleError($"[ConvertIfAlphaUnused] Input texture '{inputTexture.name}' is not readable. Cannot process pixels.");
+            return null; // Indicate failure clearly
+        }
+
+        // 1. Check if the format even supports an alpha channel
+        bool formatHasAlpha = GraphicsFormatUtility.HasAlphaChannel(inputTexture.graphicsFormat);
+
+        if (!formatHasAlpha)
+        {
+            // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) does not have alpha. No conversion needed.");
+            return null; // No alpha channel in format, return original
+        }
+
+        // 2. Format has alpha, now check the actual pixel data
+        // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) has alpha. Checking pixel data...");
+
+        Color32[] pixels;
+        try
+        {
+            pixels = inputTexture.GetPixels32(); // Use Color32 for direct byte access to alpha
+        }
+        catch (UnityException ex)
+        {
+            ConfigManager.WriteConsoleError($"[ConvertIfAlphaUnused] Failed to GetPixels32 for texture '{inputTexture.name}': {ex.Message}. Texture might be too large or in an unsupported format for GetPixels32.");
+            // Decide how to handle: return original? return null?
+            // Returning original might be safer if the process fails.
+            return null;
+        }
+
+
+        bool alphaIsUsed = false;
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            // Check if any pixel's alpha is below the threshold (e.g., not 255)
+            if (pixels[i].a < alphaThreshold) // Common case: Check if not fully opaque
+            {
+                alphaIsUsed = true;
+                break; // Found a used alpha value, no need to check further
+            }
+        }
+
+        // 3. Decide action based on pixel check
+        if (alphaIsUsed)
+        {
+            // Alpha channel contains transparency data. Keep the original texture.
+            // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' uses its alpha channel. No conversion needed.");
+            return inputTexture;
+        }
+        else
+        {
+            // Alpha channel exists in the format, but all pixels are opaque (or above threshold). Convert to RGB24.
+            Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' has an alpha channel, but it's unused (all alpha >= {alphaThreshold}). Converting to RGB24.");
+
+            try
+            {
+                // --- Conversion logic (same as EnsureRGB24 before) ---
+                bool createMipmaps = inputTexture.mipmapCount > 1;
+                Texture2D rgbTexture = new Texture2D(inputTexture.width, inputTexture.height, TextureFormat.RGB24, createMipmaps, false); // false = sRGB
+
+                // SetPixels32 correctly ignores the source alpha when destination is RGB24
+                rgbTexture.SetPixels32(pixels); // Reuse the pixels we already read
+
+                // Apply changes. Generate mipmaps if the original had them. Make readable for now.
+                rgbTexture.Apply(createMipmaps, false); // makeNoLongerReadable = false
+
+                // Copy relevant properties
+                rgbTexture.name = inputTexture.name + "_RGB24_Converted";
+                rgbTexture.filterMode = inputTexture.filterMode;
+                rgbTexture.wrapMode = inputTexture.wrapMode;
+                rgbTexture.anisoLevel = inputTexture.anisoLevel;
+                rgbTexture.mipMapBias = inputTexture.mipMapBias;
+
+                // Debug.Log($"[ConvertIfAlphaUnused] Conversion complete for '{inputTexture.name}'. New texture '{rgbTexture.name}' created.");
+
+                // IMPORTANT: Caller is responsible for Destroying the original inputTexture if this new one is used.
+                return rgbTexture;
+            }
+            catch (UnityException ex)
+            {
+                Debug.LogError($"[ConvertIfAlphaUnused] Error converting texture '{inputTexture.name}' to RGB24: {ex.Message}");
+                return null; // Indicate conversion failure
+            }
+        }
     }
 
 
