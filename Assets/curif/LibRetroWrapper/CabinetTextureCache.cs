@@ -211,11 +211,6 @@ public static class CabinetTextureCache
 
     public static Texture2D ConvertIfAlphaUnused(Texture2D inputTexture, byte alphaThreshold = 255)
     {
-        if (inputTexture == null)
-        {
-            Debug.LogError("[ConvertIfAlphaUnused] Input texture is null.");
-            return null;
-        }
 
         // GetPixels/SetPixels requires the texture to be readable
         if (!inputTexture.isReadable)
@@ -230,7 +225,7 @@ public static class CabinetTextureCache
         if (!formatHasAlpha)
         {
             // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) does not have alpha. No conversion needed.");
-            return null; // No alpha channel in format, return original
+            return null; // No alpha channel in format
         }
 
         // 2. Format has alpha, now check the actual pixel data
@@ -266,7 +261,7 @@ public static class CabinetTextureCache
         {
             // Alpha channel contains transparency data. Keep the original texture.
             // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' uses its alpha channel. No conversion needed.");
-            return inputTexture;
+            return null;
         }
         else
         {
