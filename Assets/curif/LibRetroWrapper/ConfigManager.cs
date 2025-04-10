@@ -15,11 +15,14 @@ You should have received a copy of the GNU General Public License along with thi
 //#define EXTERNAL_STORAGE_ACTIVE
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Android;
+using static UnityEngine.XR.Interaction.Toolkit.Inputs.Simulation.XRDeviceSimulator;
+using UnityEngine.XR;
 
 public static class ConfigManager
 {
@@ -107,9 +110,9 @@ public static class ConfigManager
     public static string ConfigCoresDir => Init.PermissionGranted ? _ConfigCoresDir : throw new InvalidOperationException("Player does not grant folder permissions.");
     */
 
-    #region Cache
+#region Cache
 
-    // deserealization of glb files. We maintain it in the tree and are copied any time we need to create a new cabinet.
+// deserealization of glb files. We maintain it in the tree and are copied any time we need to create a new cabinet.
     public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>("CabinetCache", 512f);
     
     // Cabinet information are objects created using the deserealization of the description.yaml file. We cannot know easily the size
@@ -120,9 +123,9 @@ public static class ConfigManager
     // textures are loaded from image files  and assigned to cabinets parts (no copy).
     // If cache exceed the limit the manager will delete old textures in the cache. 
     // Deleted textures are noticiable when they are showing in cabinets, we need to maintain the cabinet amount in a minimum.
-    public static ResourceCache<string, Texture2D> CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1536f);
+    //public static ResourceCache<string, Texture2D> CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1536f); moved to CAbinetTextureCache.cs
 
-    #endregion
+ #endregion
 
 
     public static bool DebugActive
