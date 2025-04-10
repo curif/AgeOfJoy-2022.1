@@ -19,12 +19,23 @@ public static class CabinetTextureCache
 
     private static byte[] astcMagicNumber = new byte[] { 0x13, 0xAB, 0xA1, 0x5C };
 
+    private static ResourceCache<string, Texture2D> CachedTextures = null;
 
     // Method to load and cache a texture
     public static Texture2D LoadAndCacheTexture(string path)
     {
         Texture2D tex = null;
         float sizeBytes = 4f;
+
+        if (CachedTextures == null)
+        {
+            // lazy creation:
+           if (DeviceController.IsQ3)
+                CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1536f); 
+           else
+                CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1024f);
+
+        }
 
         if (!IsTextureCached(path))
         {
@@ -77,6 +88,7 @@ public static class CabinetTextureCache
                     
                     // Create and load texture with original data, ensuring it's readable
                     tex = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
+                    //
                     tex.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
 
                     // Get original dimensions using the provided routine
@@ -178,7 +190,7 @@ public static class CabinetTextureCache
                 ConfigManager.WriteConsole($"TEXTURESPECS: {path} -> format:{tex.format}  rawTextureDataLength:{tex.GetRawTextureData().Length}  w/h:{tex.width}x{tex.height}");
 #endif
                 // Cache the loaded texture
-                ConfigManager.CachedTextures.Add(path, tex, sizeBytes / (1024f * 1024f));
+                CachedTextures.Add(path, tex, sizeBytes / (1024f * 1024f));
                 return tex;
             }
             catch (Exception e)
@@ -396,18 +408,23 @@ public static class CabinetTextureCache
 
     public static void InvalidateCachedTexture(string path)
     {
-        ConfigManager.CachedTextures.Remove(path);
+        if (CachedTextures == null) return;
+
+        CachedTextures.Remove(path);
     }
 
     // Method to retrieve a cached texture
     public static Texture2D GetCachedTexture(string path)
     {
-        return ConfigManager.CachedTextures.Get(path);
+        if (CachedTextures == null) return null;
+        return CachedTextures.Get(path);
     }
 
     public static bool IsTextureCached(string path)
     {
-        return ConfigManager.CachedTextures.ContainsKey(path);
+        if (CachedTextures == null)
+            return false;
+        return CachedTextures.ContainsKey(path);
     }
 }
 
