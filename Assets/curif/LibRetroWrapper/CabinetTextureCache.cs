@@ -20,6 +20,7 @@ public static class CabinetTextureCache
     private static byte[] astcMagicNumber = new byte[] { 0x13, 0xAB, 0xA1, 0x5C };
 
     private static ResourceCache<string, Texture2D> CachedTextures = null;
+    private static GpuRgb565Converter gpuRgb565Converter = null;
 
     // Method to load and cache a texture
     public static Texture2D LoadAndCacheTexture(string path)
@@ -35,6 +36,12 @@ public static class CabinetTextureCache
            else
                 CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1024f);
 
+        }
+
+        if (gpuRgb565Converter == null)
+        {
+            GameObject fixedObject = UnityEngine.GameObject.Find("FixedObject");
+            gpuRgb565Converter = fixedObject.GetComponent<GpuRgb565Converter>();
         }
 
         if (!IsTextureCached(path))
@@ -87,15 +94,21 @@ public static class CabinetTextureCache
                     fileData = File.ReadAllBytes(path);
                     
                     // Create and load texture with original data, ensuring it's readable
-                    tex = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
+                    Texture2D texTmp = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
                     //
-                    tex.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
+                    texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
+                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{CalculateManualSizeBytes(texTmp)}");
+
+                    tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                    if (tex == null)
+                        tex = texTmp;
+                    else
+                        UnityEngine.Object.DestroyImmediate(texTmp);
 
                     // Get original dimensions using the provided routine
                     //int originalWidth, originalHeight;
                     //GetImageDimensions(fileData, out originalWidth, out originalHeight);
                     // Calculate nearest lower power of 2 dimensions
-                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {tex.format.ToString()} - {tex.width}x{tex.height}");
 
                     // Check if the image has transparency using a Burst job
                     //bool hasTransparency = HasTransparency(tex);
@@ -143,12 +156,14 @@ public static class CabinetTextureCache
                         }
                     }
 #endif
+                    /*
                     Texture2D texConverted = ConvertIfAlphaUnused(tex);
                     if (texConverted != null)
                     {
                         UnityEngine.Object.Destroy(tex);
                         tex = texConverted;
                     }
+                    */
 
                     tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
                     tex.mipMapBias = -0.3f; // Recommended by Meta for high-detail textures
