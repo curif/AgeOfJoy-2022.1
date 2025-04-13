@@ -98,12 +98,18 @@ public static class CabinetTextureCache
                     //
                     texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
                     ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{CalculateManualSizeBytes(texTmp)}");
-
-                    tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
-                    if (tex == null)
-                        tex = texTmp;
+                    if (SystemInfo.SupportsTextureFormat(TextureFormat.RGB565) )
+                    {
+                        tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                        if (tex == null)
+                            tex = texTmp;
+                        else
+                            UnityEngine.Object.DestroyImmediate(texTmp);
+                    }
                     else
-                        UnityEngine.Object.DestroyImmediate(texTmp);
+                    {
+                        tex = texTmp;
+                    }
 
                     // Get original dimensions using the provided routine
                     //int originalWidth, originalHeight;
