@@ -14,6 +14,7 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine.Experimental.Rendering;
+using UnityEngine.UIElements;
 public static class CabinetTextureCache
 {
 
@@ -98,26 +99,48 @@ public static class CabinetTextureCache
                     //
                     texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
                     ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{CalculateManualSizeBytes(texTmp)}");
-                    if (SystemInfo.SupportsTextureFormat(TextureFormat.RGB565) )
+
+                    bool hasAlphaUsed = IsAlphaUsed(texTmp);
+                    if (!hasAlphaUsed)
                     {
-                        tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
-                        if (tex == null)
-                            tex = texTmp;
-                        else
+                        Texture2D texTmp2 = ConvertIfAlphaUnused(texTmp);
+
+                        if (texTmp2 != null)
+                        {
+                            //converted to RGB24 because no alpha
                             UnityEngine.Object.DestroyImmediate(texTmp);
+                            texTmp = texTmp2;
+                            hasAlphaUsed = false; //anymore
+                        }
+                    }
+
+                    if (!hasAlphaUsed)
+                    { 
+                        if (SystemInfo.SupportsTextureFormat(TextureFormat.RGB565))
+                        {
+                            tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                            if (tex == null)
+                                tex = texTmp;
+                            else
+                                UnityEngine.Object.DestroyImmediate(texTmp);
+                        }
+                        else
+                        {
+                            tex = texTmp;
+                        }
                     }
                     else
                     {
                         tex = texTmp;
                     }
 
-                    // Get original dimensions using the provided routine
-                    //int originalWidth, originalHeight;
-                    //GetImageDimensions(fileData, out originalWidth, out originalHeight);
-                    // Calculate nearest lower power of 2 dimensions
+                        // Get original dimensions using the provided routine
+                        //int originalWidth, originalHeight;
+                        //GetImageDimensions(fileData, out originalWidth, out originalHeight);
+                        // Calculate nearest lower power of 2 dimensions
 
-                    // Check if the image has transparency using a Burst job
-                    //bool hasTransparency = HasTransparency(tex);
+                        // Check if the image has transparency using a Burst job
+                        //bool hasTransparency = HasTransparency(tex);
 #if RESCALE
                     int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
                     int height = Mathf.FloorToInt(Mathf.Log(tex.height, 2));
@@ -162,14 +185,14 @@ public static class CabinetTextureCache
                         }
                     }
 #endif
-                    /*
-                    Texture2D texConverted = ConvertIfAlphaUnused(tex);
-                    if (texConverted != null)
-                    {
-                        UnityEngine.Object.Destroy(tex);
-                        tex = texConverted;
-                    }
-                    */
+                        /*
+                        Texture2D texConverted = ConvertIfAlphaUnused(tex);
+                        if (texConverted != null)
+                        {
+                            UnityEngine.Object.Destroy(tex);
+                            tex = texConverted;
+                        }
+                        */
 
                     tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
                     tex.mipMapBias = -0.3f; // Recommended by Meta for high-detail textures
@@ -242,6 +265,55 @@ public static class CabinetTextureCache
         }
     }
 
+    public static bool IsAlphaUsed(Texture2D inputTexture, byte alphaThreshold = 255)
+    {
+
+        // GetPixels/SetPixels requires the texture to be readable
+        if (!inputTexture.isReadable)
+        {
+            ConfigManager.WriteConsoleError($"[ConvertIfAlphaUnused] Input texture '{inputTexture.name}' is not readable. Cannot process pixels.");
+            return false; // Indicate failure clearly
+        }
+
+        // 1. Check if the format even supports an alpha channel
+        bool formatHasAlpha = GraphicsFormatUtility.HasAlphaChannel(inputTexture.graphicsFormat);
+
+        if (!formatHasAlpha)
+        {
+            // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) does not have alpha. No conversion needed.");
+            return false; // No alpha channel in format
+        }
+
+        // 2. Format has alpha, now check the actual pixel data
+        // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) has alpha. Checking pixel data...");
+
+        Color32[] pixels;
+        try
+        {
+            pixels = inputTexture.GetPixels32(); // Use Color32 for direct byte access to alpha
+        }
+        catch (UnityException ex)
+        {
+            ConfigManager.WriteConsoleError($"[ConvertIfAlphaUnused] Failed to GetPixels32 for texture '{inputTexture.name}': {ex.Message}. Texture might be too large or in an unsupported format for GetPixels32.");
+            // Decide how to handle: return original? return null?
+            // Returning original might be safer if the process fails.
+            return false;
+        }
+
+
+        bool alphaIsUsed = false;
+        for (int i = 0; i < pixels.Length; i++)
+        {
+            // Check if any pixel's alpha is below the threshold (e.g., not 255)
+            if (pixels[i].a < alphaThreshold) // Common case: Check if not fully opaque
+            {
+                alphaIsUsed = true;
+                break; // Found a used alpha value, no need to check further
+            }
+        }
+        return alphaIsUsed;
+    }
+
     public static Texture2D ConvertIfAlphaUnused(Texture2D inputTexture, byte alphaThreshold = 255)
     {
 
@@ -299,7 +371,7 @@ public static class CabinetTextureCache
         else
         {
             // Alpha channel exists in the format, but all pixels are opaque (or above threshold). Convert to RGB24.
-            Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' has an alpha channel, but it's unused (all alpha >= {alphaThreshold}). Converting to RGB24.");
+            ConfigManager.WriteConsole($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' has an alpha channel, but it's unused (all alpha >= {alphaThreshold}). Converting to RGB24.");
 
             try
             {
@@ -327,7 +399,7 @@ public static class CabinetTextureCache
             }
             catch (UnityException ex)
             {
-                Debug.LogError($"[ConvertIfAlphaUnused] Error converting texture '{inputTexture.name}' to RGB24: {ex.Message}");
+                ConfigManager.WriteConsoleException($"[ConvertIfAlphaUnused] Error converting texture '{inputTexture.name}' to RGB24", ex);
                 return null; // Indicate conversion failure
             }
         }
