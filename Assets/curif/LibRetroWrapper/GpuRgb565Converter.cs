@@ -8,6 +8,7 @@ using System; // Required for Action
 using UnityEditor; // Required for AssetDatabase
 #endif
 
+
 public class GpuRgb565Converter : MonoBehaviour
 {
     public Texture sourceTexture; // Assign your source RGB24/32 texture here
@@ -18,8 +19,8 @@ public class GpuRgb565Converter : MonoBehaviour
     /// <summary>
     /// Converts the input texture to RGB565 format synchronously using the GPU, blocking until complete.
     /// Returns a NEW Texture2D object containing the RGB565 data.
-    /// Relies on ReadPixels directly into an RGB565 Texture2D format. No CPU conversion loops.
-    /// NOTE: Using ReadPixels into TextureFormat.RGB565 might be less reliable across platforms than other methods.
+    /// Uses an intermediate ARGB32 RenderTexture for better mobile compatibility.
+    /// Relies on ReadPixels to perform the final format conversion into the target RGB565 Texture2D.
     /// NOTE: This WILL cause a stall on the main thread while waiting for the GPU.
     /// </summary>
     /// <param name="sourceInputTexture">The texture to convert.</param>
@@ -30,15 +31,31 @@ public class GpuRgb565Converter : MonoBehaviour
         // --- Input Validation ---
         if (sourceInputTexture == null)
         {
-            sourceInputTexture = sourceTexture;
-            ConfigManager.WriteConsoleError("ConvertTextureToRgb565Texture2DSync: sourceInputTexture is null.");
+            // Fallback to public variable if argument is null
+            sourceInputTexture = this.sourceTexture;
+            if (sourceInputTexture == null)
+            {
+                Debug.LogError("ConvertTextureToRgb565Texture2DSync: sourceInputTexture is null (both argument and component field).");
+                // Consider using ConfigManager if that's your logging standard
+                // ConfigManager.WriteConsoleError("ConvertTextureToRgb565Texture2DSync: sourceInputTexture is null.");
+                return null;
+            }
         }
 
         if (conversionShader == null)
         {
-            ConfigManager.WriteConsoleError("ConvertTextureToRgb565Texture2DSync: conversionShader is not assigned to the component.");
+            Debug.LogError("ConvertTextureToRgb565Texture2DSync: conversionShader is not assigned to the component.");
+            // ConfigManager.WriteConsoleError("ConvertTextureToRgb565Texture2DSync: conversionShader is not assigned to the component.");
             return null;
         }
+
+        // --- Check Project Color Space ---
+        if (QualitySettings.activeColorSpace != ColorSpace.Linear)
+        {
+            Debug.LogWarning("ConvertTextureToRgb565Texture2DSync: Project color space is not set to Linear. The shader expects Linear input for correct conversions.");
+            // ConfigManager.WriteConsoleWarning("ConvertTextureToRgb565Texture2DSync: Project color space is not set to Linear...");
+        }
+
 
         // --- Temporary Resources ---
         RenderTexture tempRT = null;
@@ -50,46 +67,63 @@ public class GpuRgb565Converter : MonoBehaviour
 
         try
         {
-            // 1. Create Temporary Render Texture (GPU Target is RGB565)
-            ConfigManager.WriteConsole($"Creating temporary RGB565 RT ({sourceInputTexture.width}x{sourceInputTexture.height})...");
-            tempRT = new RenderTexture(sourceInputTexture.width, sourceInputTexture.height, 0, RenderTextureFormat.RGB565);
+            // 1. Create Temporary Render Texture (Use a common, well-supported format like ARGB32)
+            // This is often more reliable on mobile platforms than specific formats like RGB565.
+            RenderTextureFormat intermediateFormat = RenderTextureFormat.ARGB32;
+            Debug.Log($"Creating temporary {intermediateFormat} RT ({sourceInputTexture.width}x{sourceInputTexture.height})...");
+            // ConfigManager.WriteConsole($"Creating temporary {intermediateFormat} RT ({sourceInputTexture.width}x{sourceInputTexture.height})...");
+
+            // Explicitly set sRGB read/write based on project color space.
+            // In Linear mode, RTs default to linear, which is what we want after the shader runs.
+            bool readWrite = (QualitySettings.activeColorSpace == ColorSpace.Linear) ? false : true; // Typically false (Linear) for intermediate RTs in Linear workflow
+            tempRT = new RenderTexture(sourceInputTexture.width, sourceInputTexture.height, 0, intermediateFormat, readWrite ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear);
             tempRT.Create();
 
             // 2. Create Temporary Material
-            tempMat = new Material(conversionShader); // Uses the shader for Linear->Gamma etc.
+            tempMat = new Material(conversionShader); // Uses the shader for Linear->Gamma->Quantize->Linear
             tempMat.SetTexture("_MainTex", sourceInputTexture);
 
             // 3. Perform GPU Conversion & Quantization (Blit)
-            // The GPU writes color-corrected AND quantized RGB565 data into tempRT here.
-            ConfigManager.WriteConsole("Performing GPU conversion/quantization (Blit)...");
+            // The shader writes the *quantized* color (converted back to Linear) into the temp ARGB32 RT.
+            Debug.Log("Performing GPU conversion/quantization (Blit) into temporary ARGB32 RT...");
+            // ConfigManager.WriteConsole("Performing GPU conversion/quantization (Blit)...");
             Graphics.Blit(sourceInputTexture, tempRT, tempMat);
 
-            // 4. Create the RESULT Texture2D (Target is also RGB565)
+            // 4. Create the RESULT Texture2D (Target is RGB565)
             // This is the texture that will eventually be returned.
-            resultTex = new Texture2D(tempRT.width, tempRT.height, TextureFormat.RGB565, false); // false = no mipmaps
+            Debug.Log($"Creating result Texture2D with format {TextureFormat.RGB565}...");
+            resultTex = new Texture2D(tempRT.width, tempRT.height, TextureFormat.RGB565, false, QualitySettings.activeColorSpace == ColorSpace.Linear); // false = no mipmaps, match linear state
+            resultTex.name = (sourceInputTexture.name ?? "SourceTex") + "_ConvertedRGB565";
 
-            // 5. Synchronous Readback (Copy RGB565 GPU data directly into resultTex)
+
+            // 5. Synchronous Readback (Copy GPU data from tempRT into resultTex)
+            // Let ReadPixels handle the conversion from the tempRT's format (ARGB32)
+            // to the resultTex's format (RGB565). This might be more reliable on mobile.
             RenderTexture previousActiveRT = RenderTexture.active;
             RenderTexture.active = tempRT;
-            ConfigManager.WriteConsole("Attempting synchronous ReadPixels into the result RGB565 Texture2D...");
+            Debug.Log($"Attempting synchronous ReadPixels from {intermediateFormat} RT into the result {resultTex.format} Texture2D...");
+            // ConfigManager.WriteConsole("Attempting synchronous ReadPixels into the result RGB565 Texture2D...");
 
             // *** This copies from the active RT (tempRT) into resultTex ***
+            // *** Crucially, it performs format conversion if RT format != Tex format ***
             resultTex.ReadPixels(new Rect(0, 0, tempRT.width, tempRT.height), 0, 0);
 
             // Apply is needed to upload the pixel data from CPU memory to the GPU texture memory
-            // if you intend to use this texture for rendering immediately.
+            // if you intend to use this texture for rendering immediately or want it visible in Inspector preview.
             // false = don't make unreadable, false = don't update mipmaps immediately
             resultTex.Apply(false, false);
             RenderTexture.active = previousActiveRT; // IMPORTANT: Restore
 
-            ConfigManager.WriteConsole($"Successfully read pixels into new RGB565 Texture2D: {resultTex.name}");
+            Debug.Log($"Successfully read pixels into new {resultTex.format} Texture2D: {resultTex.name} ({resultTex.width}x{resultTex.height})");
+            // ConfigManager.WriteConsole($"Successfully read pixels into new RGB565 Texture2D: {resultTex.name}");
 
             // The resultTex now holds the RGB565 data.
 
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleException("Error during synchronous RGB565 Texture2D conversion", e);
+            Debug.LogException(e); // Use standard Unity exception logging
+            // ConfigManager.WriteConsoleException("Error during synchronous RGB565 Texture2D conversion", e);
             // If an error occurred, make sure we destroy any partially created result texture
             if (resultTex != null)
             {
@@ -105,20 +139,27 @@ public class GpuRgb565Converter : MonoBehaviour
             {
                 if (RenderTexture.active == tempRT) RenderTexture.active = null; // Ensure not active
                 tempRT.Release();
-                ConfigManager.WriteConsole("Releasing temporary RT...");
+                Debug.Log("Releasing temporary RT...");
+                // ConfigManager.WriteConsole("Releasing temporary RT...");
                 destroyAction(tempRT);
             }
             if (tempMat != null)
             {
+                Debug.Log("Destroying temporary material...");
                 destroyAction(tempMat);
             }
-            ConfigManager.WriteConsole("Synchronous RGB565 Texture2D conversion process finished.");
+            Debug.Log("Synchronous RGB565 Texture2D conversion process finished.");
+            // ConfigManager.WriteConsole("Synchronous RGB565 Texture2D conversion process finished.");
         }
 
         // Return the newly created and populated texture (or null if error)
         return resultTex;
     }
+
+    // --- Include other methods like Start, OnDestroy, Async, Editor button handlers etc. ---
+    // Make sure the editor script still calls this modified version.
 }
+
 // --- Include all other necessary methods from your class here ---
 // Start, OnDestroy, Async methods, Editor methods, etc.
 
