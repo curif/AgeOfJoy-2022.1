@@ -248,6 +248,7 @@ public class ConfigInformation
         public static readonly string forcedShaderDefault = null;
 
         public static readonly float screenGlowIntensityDefault = 0f;
+        public static readonly bool HiResTexturesDefault = false;
 
         [YamlMember(Alias = "screen-glow-intensity", ApplyNamingConventions = false)]
         public float screenGlowIntensity = screenGlowIntensityDefault;
@@ -256,6 +257,9 @@ public class ConfigInformation
         public CabinetConfigurationResolution worldResolution = null;
         [YamlMember(Alias = "ingame-resolution", ApplyNamingConventions = false)]
         public CabinetConfigurationResolution ingameResolution = null;
+
+        [YamlMember(Alias = "hi-res-textures", ApplyNamingConventions = false)]
+        public bool HiResTextures = HiResTexturesDefault;
 
         public override bool IsValid()
         {

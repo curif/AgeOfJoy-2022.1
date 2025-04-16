@@ -906,8 +906,7 @@ public class ConfigurationController : MonoBehaviour
 
         scr.Clear();
         cabinetsConfigurationContainer.Draw();
-        scr.Print(2, 23, UDLR_TO_CHANGE);
-        scr.Print(2, 24, B_TO_SELECT);
+        scr.Print(2, 24, UDLR_TO_CHANGE + " " + B_TO_SELECT);
     }
 
     private void SetCabinetsConfigurationWidgets()
@@ -919,7 +918,7 @@ public class ConfigurationController : MonoBehaviour
         shaders.Insert(0, "");
 
         cabinetsConfigurationContainer = new(scr, "cabinetsConfigurationContainer");
-        cabinetsConfigurationContainer.Add(new GenericWindow(scr, 1, 4, "cabswin", 37, 19, " Cabinet configuration "))
+        cabinetsConfigurationContainer.Add(new GenericWindow(scr, 1, 4, "cabswin", 37, 20, " Cabinet configuration "))
             .Add(new GenericLabel(scr, "lbl0", "World graphics settings", 4, 6))
             .Add(new GenericOptions(scr, "cabinetWorldResolution", "Resolution:", resolutionMultiplier, 4,                                                 cabinetsConfigurationContainer.lastYAdded + 1))
             .Add(new GenericOptions(scr, "cabinetWorldFoveatingLevel", "Foveating Level:", levels, 4, 
@@ -930,6 +929,7 @@ public class ConfigurationController : MonoBehaviour
             .Add(new GenericOptions(scr, "cabinetGameplayFoveatingLevel", "Foveating Level:", levels, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             
             .Add(new GenericOptions(scr, "glowLevel", "Cabinet screen glow:", glow, 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            .Add(new GenericBool(scr, "hiResTextures", "High resolution textures:", false, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             .Add(new GenericOptions(scr, "forceShader", "Force Shader:", shaders, 4, cabinetsConfigurationContainer.lastYAdded + 2))
             .Add(new GenericBool(scr, "insertCoinStartup", "Insert coin on startup:", false, 4, cabinetsConfigurationContainer.lastYAdded + 2))
             
@@ -966,7 +966,8 @@ public class ConfigurationController : MonoBehaviour
         }
 
         ((GenericOptions)cabinetsConfigurationContainer.GetWidget("glowLevel")).SetCurrent(config.cabinet.screenGlowIntensity.ToString());
-        
+        ((GenericBool)cabinetsConfigurationContainer.GetWidget("hiResTextures")).SetValue(config.cabinet.HiResTextures);
+
         if (string.IsNullOrEmpty(config.cabinet.forcedShader))
             ((GenericOptions)cabinetsConfigurationContainer.GetWidget("forceShader")).SetCurrent("");
         else
@@ -989,6 +990,8 @@ public class ConfigurationController : MonoBehaviour
         config.cabinet.insertCoinOnStartup = CabinetConfiguration.insertCoinOnStartupDefault;
         config.cabinet.forcedShader = CabinetConfiguration.forcedShaderDefault;
         config.cabinet.screenGlowIntensity = CabinetConfiguration.screenGlowIntensityDefault;
+        config.cabinet.HiResTextures = CabinetConfiguration.HiResTexturesDefault;
+
         configHelper.Save(true, config);
 
     }
@@ -1022,7 +1025,7 @@ public class ConfigurationController : MonoBehaviour
             config.cabinet.forcedShader = forceShader;
 
         config.cabinet.insertCoinOnStartup = ((GenericBool)cabinetsConfigurationContainer.GetWidget("insertCoinStartup")).value;
-
+        config.cabinet.HiResTextures = ((GenericBool)cabinetsConfigurationContainer.GetWidget("hiResTextures")).value;
         configHelper.Save(true, config);
     }
 
