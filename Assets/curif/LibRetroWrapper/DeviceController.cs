@@ -15,7 +15,7 @@ public class DeviceController : MonoBehaviour
     static string deviceName;
     static string deviceModel;
     static UnityEngine.DeviceType deviceType;
-
+    public static bool HiResTextures = ConfigInformation.CabinetConfiguration.HiResTexturesDefault;
     public static float WorldScale;
     public static float GameScale;
     public static OVRPlugin.FoveatedRenderingLevel GameFovLevel;
@@ -129,6 +129,9 @@ public class DeviceController : MonoBehaviour
             GameScale = info.cabinet.ingameResolution.resolution;
             GameFovLevel = info.cabinet.ingameResolution.foveatedLevel();
         }
+
+        HiResTextures = info.cabinet.HiResTextures;
+    
     }
 
 

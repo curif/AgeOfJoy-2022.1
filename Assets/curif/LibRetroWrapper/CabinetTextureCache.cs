@@ -99,31 +99,57 @@ public static class CabinetTextureCache
                     texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
                     ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{CalculateManualSizeBytes(texTmp)}");
 
-                    //verify if the texture is using the alpha channel.
+                    //verify if the texture is using alpha channel.
                     //two different methods, jobs are better for large textures.
+                    Color32[] pixels = texTmp.GetPixels32();
                     bool hasAlphaUsed = GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat) && 
-                                        texTmp.width > 1024 ? IsAlphaUsedJob(texTmp.GetPixels32()) : IsAlphaUsed(texTmp.GetPixels32());
+                                        texTmp.width > 1024 ? IsAlphaUsedJob(pixels) : IsAlphaUsed(pixels);
                     
-                    // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
-                    if (!hasAlphaUsed)
-                    { 
-                        tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
-                        if (tex == null)
-                            tex = texTmp;
+                    if (!DeviceController.HiResTextures)
+                    {
+                        // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
+                        if (!hasAlphaUsed)
+                        {
+                            tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                            if (tex == null)
+                                tex = texTmp;
+                            else
+                                UnityEngine.Object.DestroyImmediate(texTmp);
+                        }
                         else
-                            UnityEngine.Object.DestroyImmediate(texTmp);
+                        {
+                            //original texture when the image hasAlpha and it is in use.
+                            tex = texTmp;
+                        }
                     }
                     else
                     {
-                        //original texture when the image hasAlpha and it is in use.
-                        tex = texTmp;
+                        //the user decide to keep the original textures.
+                        if (!hasAlphaUsed)
+                        {
+                            //remove alpha channel as it is unused
+                            Texture2D rgbTexture = new Texture2D(texTmp.width, texTmp.height, TextureFormat.RGB24, false, false); // false = sRGB
+
+                            // SetPixels32 correctly ignores the source alpha when destination is RGB24
+                            rgbTexture.SetPixels32(pixels); // Reuse the pixels we already read
+
+                            tex = rgbTexture;
+                            UnityEngine.Object.DestroyImmediate(texTmp);
+                        }
+                        else
+                        {
+                            //original texture when the image hasAlpha and it is in use.
+                            tex = texTmp;
+                        }
                     }
-                    tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
+                    
+                    
                     /*
                      * A negative mipmap bias (e.g., -0.3f, -0.5f, -0.7f) sharpens the texture by delaying the switch to lower mipmap levels, but excessive negative bias can reduce performance. Community feedback suggests trying values like -0.5f or -0.7f, but results may vary, and  performance impacts should be monitored.
                        Action: If flickering persists, experiment with different mipmap bias values (e.g., -0.5f, -0.7f), but be cautious of performance impacts.
                     */
                     //tex.mipMapBias = -0.3f; // Recommended by Meta for high-detail textures
+                    tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
                     tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
                     tex.Apply(true, true); // Final apply with mipmaps, now safe to make non-readable
 
@@ -245,97 +271,6 @@ public static class CabinetTextureCache
             jobHandle.Complete(); // Wait for the job to finish
 
             return result[0];
-        }
-    }
-
-    public static Texture2D ConvertIfAlphaUnused(Texture2D inputTexture, byte alphaThreshold = 255)
-    {
-
-        // GetPixels/SetPixels requires the texture to be readable
-        if (!inputTexture.isReadable)
-        {
-            ConfigManager.WriteConsoleError($"[ConvertIfAlphaUnused] Input texture '{inputTexture.name}' is not readable. Cannot process pixels.");
-            return null; // Indicate failure clearly
-        }
-
-        // 1. Check if the format even supports an alpha channel
-        bool formatHasAlpha = GraphicsFormatUtility.HasAlphaChannel(inputTexture.graphicsFormat);
-
-        if (!formatHasAlpha)
-        {
-            // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) does not have alpha. No conversion needed.");
-            return null; // No alpha channel in format
-        }
-
-        // 2. Format has alpha, now check the actual pixel data
-        // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' format ({inputTexture.format}) has alpha. Checking pixel data...");
-
-        Color32[] pixels;
-        try
-        {
-            pixels = inputTexture.GetPixels32(); // Use Color32 for direct byte access to alpha
-        }
-        catch (UnityException ex)
-        {
-            ConfigManager.WriteConsoleError($"[ConvertIfAlphaUnused] Failed to GetPixels32 for texture '{inputTexture.name}': {ex.Message}. Texture might be too large or in an unsupported format for GetPixels32.");
-            // Decide how to handle: return original? return null?
-            // Returning original might be safer if the process fails.
-            return null;
-        }
-
-
-        bool alphaIsUsed = false;
-        for (int i = 0; i < pixels.Length; i++)
-        {
-            // Check if any pixel's alpha is below the threshold (e.g., not 255)
-            if (pixels[i].a < alphaThreshold) // Common case: Check if not fully opaque
-            {
-                alphaIsUsed = true;
-                break; // Found a used alpha value, no need to check further
-            }
-        }
-
-        // 3. Decide action based on pixel check
-        if (alphaIsUsed)
-        {
-            // Alpha channel contains transparency data. Keep the original texture.
-            // Debug.Log($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' uses its alpha channel. No conversion needed.");
-            return null;
-        }
-        else
-        {
-            // Alpha channel exists in the format, but all pixels are opaque (or above threshold). Convert to RGB24.
-            ConfigManager.WriteConsole($"[ConvertIfAlphaUnused] Texture '{inputTexture.name}' has an alpha channel, but it's unused (all alpha >= {alphaThreshold}). Converting to RGB24.");
-
-            try
-            {
-                // --- Conversion logic (same as EnsureRGB24 before) ---
-                bool createMipmaps = inputTexture.mipmapCount > 1;
-                Texture2D rgbTexture = new Texture2D(inputTexture.width, inputTexture.height, TextureFormat.RGB24, createMipmaps, false); // false = sRGB
-
-                // SetPixels32 correctly ignores the source alpha when destination is RGB24
-                rgbTexture.SetPixels32(pixels); // Reuse the pixels we already read
-
-                // Apply changes. Generate mipmaps if the original had them. Make readable for now.
-                rgbTexture.Apply(createMipmaps, false); // makeNoLongerReadable = false
-
-                // Copy relevant properties
-                rgbTexture.name = inputTexture.name + "_RGB24_Converted";
-                rgbTexture.filterMode = inputTexture.filterMode;
-                rgbTexture.wrapMode = inputTexture.wrapMode;
-                rgbTexture.anisoLevel = inputTexture.anisoLevel;
-                rgbTexture.mipMapBias = inputTexture.mipMapBias;
-
-                // Debug.Log($"[ConvertIfAlphaUnused] Conversion complete for '{inputTexture.name}'. New texture '{rgbTexture.name}' created.");
-
-                // IMPORTANT: Caller is responsible for Destroying the original inputTexture if this new one is used.
-                return rgbTexture;
-            }
-            catch (UnityException ex)
-            {
-                ConfigManager.WriteConsoleException($"[ConvertIfAlphaUnused] Error converting texture '{inputTexture.name}' to RGB24", ex);
-                return null; // Indicate conversion failure
-            }
         }
     }
 
