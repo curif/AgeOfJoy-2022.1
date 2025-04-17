@@ -929,7 +929,7 @@ public class ConfigurationController : MonoBehaviour
             .Add(new GenericOptions(scr, "cabinetGameplayFoveatingLevel", "Foveating Level:", levels, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             
             .Add(new GenericOptions(scr, "glowLevel", "Cabinet screen glow:", glow, 4, cabinetsConfigurationContainer.lastYAdded + 2))
-            .Add(new GenericBool(scr, "hiResTextures", "High resolution textures:", false, 4, cabinetsConfigurationContainer.lastYAdded + 1))
+            .Add(new GenericBool(scr, "OrigTextures", "Original textures:", false, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             .Add(new GenericOptions(scr, "forceShader", "Force Shader:", shaders, 4, cabinetsConfigurationContainer.lastYAdded + 2))
             .Add(new GenericBool(scr, "insertCoinStartup", "Insert coin on startup:", false, 4, cabinetsConfigurationContainer.lastYAdded + 2))
             
@@ -966,7 +966,7 @@ public class ConfigurationController : MonoBehaviour
         }
 
         ((GenericOptions)cabinetsConfigurationContainer.GetWidget("glowLevel")).SetCurrent(config.cabinet.screenGlowIntensity.ToString());
-        ((GenericBool)cabinetsConfigurationContainer.GetWidget("hiResTextures")).SetValue(config.cabinet.HiResTextures);
+        ((GenericBool)cabinetsConfigurationContainer.GetWidget("OrigTextures")).SetValue(config.cabinet.OriginalTextures);
 
         if (string.IsNullOrEmpty(config.cabinet.forcedShader))
             ((GenericOptions)cabinetsConfigurationContainer.GetWidget("forceShader")).SetCurrent("");
@@ -990,7 +990,7 @@ public class ConfigurationController : MonoBehaviour
         config.cabinet.insertCoinOnStartup = CabinetConfiguration.insertCoinOnStartupDefault;
         config.cabinet.forcedShader = CabinetConfiguration.forcedShaderDefault;
         config.cabinet.screenGlowIntensity = CabinetConfiguration.screenGlowIntensityDefault;
-        config.cabinet.HiResTextures = CabinetConfiguration.HiResTexturesDefault;
+        config.cabinet.OriginalTextures = CabinetConfiguration.originalTexturesDefault;
 
         configHelper.Save(true, config);
 
@@ -1025,7 +1025,7 @@ public class ConfigurationController : MonoBehaviour
             config.cabinet.forcedShader = forceShader;
 
         config.cabinet.insertCoinOnStartup = ((GenericBool)cabinetsConfigurationContainer.GetWidget("insertCoinStartup")).value;
-        config.cabinet.HiResTextures = ((GenericBool)cabinetsConfigurationContainer.GetWidget("hiResTextures")).value;
+        config.cabinet.OriginalTextures = ((GenericBool)cabinetsConfigurationContainer.GetWidget("OrigTextures")).value;
         configHelper.Save(true, config);
     }
 

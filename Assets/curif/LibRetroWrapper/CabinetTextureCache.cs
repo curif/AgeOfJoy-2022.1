@@ -95,7 +95,8 @@ public static class CabinetTextureCache
                     
                     // Create and load texture with original data, ensuring it's readable
                     Texture2D texTmp = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
-                    //
+                    texTmp.name = "original-" + path;
+
                     texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
                     ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{CalculateManualSizeBytes(texTmp)}");
 
@@ -105,21 +106,31 @@ public static class CabinetTextureCache
                     bool hasAlphaUsed = GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat) && 
                                         texTmp.width > 1024 ? IsAlphaUsedJob(pixels) : IsAlphaUsed(pixels);
                     
-                    if (!DeviceController.HiResTextures)
+                    if (!DeviceController.originalTextures)
                     {
                         // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
                         if (!hasAlphaUsed)
                         {
-                            tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                            tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp, 12);
                             if (tex == null)
-                                tex = texTmp;
-                            else
+                            {
+                                // no RGB565 conversion, no alpha -> delete alpha channel.
+                                tex = removeAlpha(path, texTmp, pixels);
                                 UnityEngine.Object.DestroyImmediate(texTmp);
+                            }
+                            else
+                            {
+                                tex.name = "RGB565-" + path;
+                                UnityEngine.Object.DestroyImmediate(texTmp);
+                            }
                         }
                         else
                         {
                             //original texture when the image hasAlpha and it is in use.
                             tex = texTmp;
+                            tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
+                            tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
+                            tex.Apply(true, true);
                         }
                     }
                     else
@@ -127,31 +138,26 @@ public static class CabinetTextureCache
                         //the user decide to keep the original textures.
                         if (!hasAlphaUsed)
                         {
-                            //remove alpha channel as it is unused
-                            Texture2D rgbTexture = new Texture2D(texTmp.width, texTmp.height, TextureFormat.RGB24, false, false); // false = sRGB
-
-                            // SetPixels32 correctly ignores the source alpha when destination is RGB24
-                            rgbTexture.SetPixels32(pixels); // Reuse the pixels we already read
-
-                            tex = rgbTexture;
+                            tex = removeAlpha(path, texTmp, pixels);
                             UnityEngine.Object.DestroyImmediate(texTmp);
                         }
                         else
                         {
                             //original texture when the image hasAlpha and it is in use.
                             tex = texTmp;
+                            tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
+                            tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
+                            tex.Apply(true, true);
                         }
                     }
-                    
-                    
+
+
                     /*
                      * A negative mipmap bias (e.g., -0.3f, -0.5f, -0.7f) sharpens the texture by delaying the switch to lower mipmap levels, but excessive negative bias can reduce performance. Community feedback suggests trying values like -0.5f or -0.7f, but results may vary, and  performance impacts should be monitored.
                        Action: If flickering persists, experiment with different mipmap bias values (e.g., -0.5f, -0.7f), but be cautious of performance impacts.
                     */
                     //tex.mipMapBias = -0.3f; // Recommended by Meta for high-detail textures
-                    tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
-                    tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
-                    tex.Apply(true, true); // Final apply with mipmaps, now safe to make non-readable
+                     // Final apply with mipmaps, now safe to make non-readable
 
 #if RESCALE
                     int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
@@ -221,6 +227,21 @@ public static class CabinetTextureCache
         return GetCachedTexture(path);
     }
 
+    private static Texture2D removeAlpha(string path, Texture2D texTmp, Color32[] pixels)
+    {
+        //remove alpha channel as it is unused
+        Texture2D rgbTexture = new Texture2D(texTmp.width, texTmp.height, TextureFormat.RGB24, true, false); // false = sRGB
+
+        // SetPixels32 correctly ignores the source alpha when destination is RGB24
+        rgbTexture.SetPixels32(pixels); // Reuse the pixels we already read
+
+        rgbTexture.name = "RGB24-" + path;
+        rgbTexture.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
+        rgbTexture.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
+        rgbTexture.Apply(true, true);
+        return rgbTexture;
+    }
+
     // Helper for fallback (less accurate)
     public static float CalculateManualSizeBytes(Texture2D tex)
     {
@@ -264,6 +285,7 @@ public static class CabinetTextureCache
             var transparencyJob = new HasTransparencyJob
             {
                 Pixels = pixelData,
+                alphaThreshold = 255,
                 Result = result
             };
 
@@ -415,13 +437,14 @@ public struct HasTransparencyJob : IJob
 {
     [ReadOnly]
     public NativeArray<Color32> Pixels;
+    public byte alphaThreshold;
     public NativeArray<bool> Result; // Single-element array to store the result
 
     public void Execute()
     {
         for (int i = 0; i < Pixels.Length; i++)
         {
-            if (Pixels[i].a < 1.0f) // Check if any pixel has alpha less than fully opaque
+            if (Pixels[i].a < alphaThreshold) // Check if any pixel has alpha less than fully opaque
             {
                 Result[0] = true;
                 return; // Early exit once transparency is found
