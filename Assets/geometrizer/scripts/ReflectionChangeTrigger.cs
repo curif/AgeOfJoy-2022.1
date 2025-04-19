@@ -4,6 +4,8 @@ using UnityEngine.Rendering;
 public class ReflectionChangeTrigger : MonoBehaviour
 {
     public Cubemap newReflectionCubemap; // Assign this in the Inspector
+    [Tooltip("Drag a UserLight Prefab GameObject here")]
+    public GameObject userLightPrefab; // New prefab reference field
 
     private void OnTriggerEnter(Collider other)
     {
