@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class RandomGuy : MonoBehaviour
 {
     [System.Serializable]
-    public class MaterialVariant
+    public class MaterialSwap
     {
         public GameObject targetObject;
         public List<Material> alternateMaterials = new List<Material>();
@@ -16,8 +16,8 @@ public class RandomGuy : MonoBehaviour
     [SerializeField] private List<GameObject> eyebrows = new List<GameObject>();
     [SerializeField] private List<GameObject> facialHair = new List<GameObject>();
 
-    [Header("Material Variants")]
-    [SerializeField] private List<MaterialVariant> materialVariants = new List<MaterialVariant>();
+    [Header("Optional Material Swaps")]
+    [SerializeField] private List<MaterialSwap> materialSwaps = new List<MaterialSwap>();
 
     private void Start()
     {
@@ -25,12 +25,13 @@ public class RandomGuy : MonoBehaviour
         RandomizeCategory(eyeglasses);
         RandomizeCategory(eyebrows);
         RandomizeCategory(facialHair);
+
+        ApplyMaterialSwaps();
     }
 
     private void RandomizeCategory(List<GameObject> list)
     {
         List<GameObject> validObjects = list.FindAll(obj => obj != null);
-
         int count = validObjects.Count;
         int indexToShow = (count > 0) ? UnityEngine.Random.Range(0, count + 1) : -1;
 
@@ -40,28 +41,27 @@ public class RandomGuy : MonoBehaviour
             {
                 bool shouldBeActive = (validObjects.IndexOf(obj) == indexToShow);
                 obj.SetActive(shouldBeActive);
-
-                if (shouldBeActive)
-                {
-                    TryApplyRandomMaterial(obj);
-                }
             }
         }
     }
 
-    private void TryApplyRandomMaterial(GameObject obj)
+    private void ApplyMaterialSwaps()
     {
-        foreach (MaterialVariant variant in materialVariants)
+        foreach (MaterialSwap swap in materialSwaps)
         {
-            if (variant.targetObject == obj && obj.TryGetComponent(out Renderer rend))
-            {
-                Material defaultMat = rend.sharedMaterial;
-                List<Material> options = new List<Material> { defaultMat };
-                options.AddRange(variant.alternateMaterials);
+            if (swap.targetObject == null || !swap.targetObject.activeInHierarchy)
+                continue;
 
-                int selected = UnityEngine.Random.Range(0, options.Count);
-                rend.material = options[selected];
-            }
+            Renderer renderer = swap.targetObject.GetComponent<Renderer>();
+            if (renderer == null)
+                continue;
+
+            Material originalMaterial = renderer.sharedMaterial;
+            List<Material> options = new List<Material> { originalMaterial };
+            options.AddRange(swap.alternateMaterials.FindAll(mat => mat != null));
+
+            int choice = UnityEngine.Random.Range(0, options.Count);
+            renderer.material = options[choice];
         }
     }
 }
