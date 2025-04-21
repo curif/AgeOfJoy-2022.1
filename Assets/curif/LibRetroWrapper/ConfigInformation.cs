@@ -10,6 +10,7 @@ using System;
 using YamlDotNet.Serialization; //https://github.com/aaubry/YamlDotNet
 using YamlDotNet.Serialization.NamingConventions;
 using System.Linq;
+using UnityEngine;
 
 public class ConfigInformationBase
 {
@@ -25,7 +26,7 @@ public class ConfigInformation
     public LocomotionConfiguration locomotion;
     public Player player = new();
     public CabinetConfiguration cabinet = CabinetDefault();
-
+    public UserLightSettings light = null;
     public AGEBasicInformation agebasic = null;
 
     [YamlMember(Alias = "system-skin", ApplyNamingConventions = false)]
@@ -41,7 +42,12 @@ public class ConfigInformation
       npc.status = "enabled";
     }
     */
-
+    public class UserLightSettings : ConfigInformationBase
+    {
+        public RGBColor color = null;
+        public float intensity = 0;
+        //public Vector3 eulerRotation = Vector3.zero;
+    }
     public class NPC : ConfigInformationBase
     {
         public static string[] validStatus = new string[] { "enabled", "static", "disabled" };
@@ -56,50 +62,34 @@ public class ConfigInformation
     public class Player : ConfigInformationBase
     {
         //remember: floor starts in y=-0.532
-        //          1.6 = average (1.7 height) - Note: Calculation seems slightly off based on 1.7m = avgHeigh
         public const float minHeight = 1.35f;
-        // Updated maxHeight to reflect the new tallest option (N=13)
-        public const float maxHeight = minHeight + (13f * 0.05f); // Now 2.00f
-        public const float avgHeigh = minHeight + (7f * 0.05f); // 1.35 + 0.35 = 1.70f
+        // Updated maxHeight to reflect the new tallest option (N=17)
+        public const float maxHeight = minHeight + (17f * 0.05f); // Now 2.20f
+        public const float avgHeigh = minHeight + (7f * 0.05f); // 1.35 + 0.35 = 1.70f (remains the same)
 
-        /*
-         * Calculated: 0m (Represents using the default character model scale)
-            Pac-man (short): 1.35m
-            Sonic: 1.40m
-            Pikachu: 1.45m
-            Mario: 1.50m
-            Luigi: 1.55m
-            Final Fantasy: 1.60m
-            Megaman: 1.65m
-            Street Fighter (avg): 1.70m
-            Donkey Kong: 1.75m
-            Mega Boss: 1.80m
-            NBA Jam (tall): 1.85m
-            Giant: 1.90m
-            Titan: 1.95m
-            Colossus: 2.00m
-        */
         public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
-         {
-             {"Average", 0f}, // Special value, likely means 'use default scale' or applies avgHeigh elsewhere
-             {"Pac-man (short)", minHeight},                     // N=0 -> 1.35m
-             {"Sonic", minHeight + (1f * 0.05f)},              // N=1 -> 1.40m
-             {"Pikachu", minHeight + (2f * 0.05f)},            // N=2 -> 1.45m
-             {"Mario", minHeight + (3f * 0.05f)},              // N=3 -> 1.50m
-             {"Luigi", minHeight + (4f * 0.05f)},              // N=4 -> 1.55m
-             {"Final Fantasy", minHeight + (5f * 0.05f)},        // N=5 -> 1.60m
-             {"Megaman", minHeight + (6f * 0.05f)},            // N=6 -> 1.65m
-             {"Street Fighter (avg)", avgHeigh },              // N=7 -> 1.70m (Using avgHeigh directly)
-             {"Donkey Kong", minHeight + (8f * 0.05f)},        // N=8 -> 1.75m
-             {"Mega Boss", minHeight + (9f * 0.05f)},          // N=9 -> 1.80m
-             {"NBA Jam", minHeight + (10f * 0.05f)},    // N=10 -> 1.85m
+          {
+              {"Average", 0f}, // Special value, likely means 'use default scale' or applies avgHeigh elsewhere
+              {"Pac-man (short)", minHeight},                     // N=0 -> 1.35m
+              {"Sonic", minHeight + (1f * 0.05f)},              // N=1 -> 1.40m
+              {"Pikachu", minHeight + (2f * 0.05f)},            // N=2 -> 1.45m
+              {"Mario", minHeight + (3f * 0.05f)},              // N=3 -> 1.50m
+              {"Luigi", minHeight + (4f * 0.05f)},              // N=4 -> 1.55m
+              {"Final Fantasy", minHeight + (5f * 0.05f)},        // N=5 -> 1.60m
+              {"Megaman", minHeight + (6f * 0.05f)},            // N=6 -> 1.65m
+              {"Street Fighter (avg)", avgHeigh },              // N=7 -> 1.70m (Using avgHeigh directly)
+              {"Donkey Kong", minHeight + (8f * 0.05f)},        // N=8 -> 1.75m
+              {"Mega Boss", minHeight + (9f * 0.05f)},          // N=9 -> 1.80m
+              {"NBA Jam", minHeight + (10f * 0.05f)},           // N=10 -> 1.85m
+              {"Mutant Baddie", minHeight + (11f * 0.05f)},     // N=11 -> 1.90m
+              {"Rampage!", minHeight + (12f * 0.05f)},          // N=12 -> 1.95m
+              {"Final Boss", minHeight + (13f * 0.05f)},        // N=13 -> 2.00m
+              {"Giant", minHeight + (14f * 0.05f)},             // N=14 -> 2.05m
+              {"Titan", minHeight + (15f * 0.05f)},             // N=15 -> 2.10m
+              {"Kaiju", minHeight + (16f * 0.05f)},             // N=16 -> 2.15m
+              {"Colossus", maxHeight }                          // N=17 -> 2.20m (Using updated maxHeight)
+          };
 
-             // --- NEW TALLER OPTIONS ---
-             {"Mutant Baddie", minHeight + (11f * 0.05f)},             // N=11 -> 1.90m
-             {"Rampage!", minHeight + (12f * 0.05f)},             // N=12 -> 1.95m
-             {"Final Boss", maxHeight }                          // N=13 -> 2.00m (Using updated maxHeight)
-             // Or explicitly: {"Colossus", minHeight + (13f * 0.05f)}
-         };
 
         public static Dictionary<string, float> Scales = new Dictionary<string, float>
         {
@@ -509,8 +499,12 @@ public class ConfigInformation
                                                     (AGEBasicInformation)ci1.agebasic.Clone();
         }
 
-        return ret;
+        if (ci1?.light != null || ci2?.light != null)
+        {
+            ret.light = ci2?.light != null ? ci2.light : ci1.light;
+        }
 
+        return ret;
     }
 
     public class AGEBasicInformation : ICloneable

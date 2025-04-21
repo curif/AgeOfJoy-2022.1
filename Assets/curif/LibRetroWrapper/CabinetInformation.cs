@@ -576,41 +576,6 @@ public class CabinetInformation
         public float MaxPlayerDistance = 6f;
     }
 
-    public class RGBColor
-    {
-        public byte r = 255;
-        public byte g = 255;
-        public byte b = 255;
-        public byte a = 255;
-
-        public float intensity = 0;
-
-        /*
-        public virtual System.Exception checkForProblems() {
-            if (
-                r < 0 || r > 255 || 
-                g < 0 || g > 255 || 
-                b < 0 || b > 255 
-            ) {
-                return new System.Exception("Each value in a RGB color must be between zero and 255");
-            }
-            return null;
-        }
-        */
-        public virtual Color getColor()
-        {
-            float factor = Mathf.Pow(2, intensity);
-            Color c = new Color32(r, g, b, a);
-            Color cf = new Color(c.r * factor, c.g * factor, c.b * factor, a);
-            // LibretroMameCore.WriteConsole($" marquee color: {cf}");
-            return cf.linear;
-        }
-        public virtual Color getColorNoIntensity()
-        {
-            Color color = new Color32(r, g, b, a);
-            return color.linear;
-        }
-    }
 
     public static class MameFileType
     {

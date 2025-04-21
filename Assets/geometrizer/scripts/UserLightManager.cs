@@ -1,69 +1,72 @@
 using System.Collections;
 using UnityEngine;
 
-[System.Serializable]
-public class UserLightSettings
-{
-    public float intensity = 1f;
-    public Color color = Color.white;
-    public Vector3 eulerRotation = Vector3.zero;
-}
-
 public class UserLightManager : MonoBehaviour
 {
     private Coroutine lightTransitionCoroutine;
-    private Light targetLight;
+    public Light targetLight;
 
     void Awake()
     {
-        targetLight = GetComponent<Light>();
         if (targetLight == null)
         {
-            UnityEngine.Debug.LogError("UserLightManager requires a Light component on the same GameObject.");
+            targetLight = GetComponent<Light>();
+            if (targetLight == null)
+            {
+                ConfigManager.WriteConsoleError("UserLightManager requires a Light component on the same GameObject.");
+            }
         }
     }
 
-    public void ApplyUserLightSettings(UserLightSettings newSettings, float transitionDuration = 1f)
+    public void ApplyUserLightSettings(RGBColor color, float intensity, float transitionDuration = 1f)
     {
-        UnityEngine.Debug.Log($"[UserLightManager] ApplyUserLightSettings called with values: " +
-                              $"Color = {newSettings.color}, Intensity = {newSettings.intensity}, Rotation = {newSettings.eulerRotation}, Duration = {transitionDuration}");
+        ConfigManager.WriteConsole($"[UserLightManager] ApplyUserLightSettings called with values: " +
+                              $"Color = {color}, Intensity: {intensity}, Duration = {transitionDuration}");
 
         if (lightTransitionCoroutine != null)
         {
             StopCoroutine(lightTransitionCoroutine);
         }
-        lightTransitionCoroutine = StartCoroutine(TransitionLightSettings(newSettings, transitionDuration));
+        lightTransitionCoroutine = StartCoroutine(TransitionLightSettings(color, intensity, transitionDuration));
     }
 
-    private IEnumerator TransitionLightSettings(UserLightSettings newSettings, float duration)
+    private IEnumerator TransitionLightSettings(RGBColor newColor, float newIntensity, float duration)
     {
         if (targetLight == null) yield break;
 
-        UnityEngine.Debug.Log("[UserLightManager] Starting light transition...");
+        ConfigManager.WriteConsole("[UserLightManager] Starting light transition...");
 
         float time = 0f;
 
         float initialIntensity = targetLight.intensity;
         Color initialColor = targetLight.color;
-        Quaternion initialRotation = targetLight.transform.rotation;
-        Quaternion targetRotation = Quaternion.Euler(newSettings.eulerRotation);
+        //Quaternion initialRotation = targetLight.transform.rotation;
+        //Quaternion targetRotation = Quaternion.Euler(newSettings.eulerRotation);
+        Color color;
+        if (newColor == null)
+            color = initialColor;
+        else
+            color = newColor.getColor();
+
+        if (initialColor == color && initialIntensity == newIntensity)
+            yield break;
 
         while (time < duration)
         {
             float t = time / duration;
-            targetLight.intensity = Mathf.Lerp(initialIntensity, newSettings.intensity, t);
-            targetLight.color = Color.Lerp(initialColor, newSettings.color, t);
-            targetLight.transform.rotation = Quaternion.Slerp(initialRotation, targetRotation, t);
+            targetLight.intensity = Mathf.Lerp(initialIntensity, newIntensity, t);
+            targetLight.color = Color.Lerp(initialColor, color, t);
+            //targetLight.transform.rotation = Quaternion.Slerp(initialRotation, targetRotation, t);
 
             time += Time.deltaTime;
             yield return null;
         }
 
         // Ensure final values are set
-        targetLight.intensity = newSettings.intensity;
-        targetLight.color = newSettings.color;
-        targetLight.transform.rotation = targetRotation;
+        targetLight.intensity = newIntensity;
+        targetLight.color = color;
+        //targetLight.transform.rotation = targetRotation;
 
-        UnityEngine.Debug.Log("[UserLightManager] Light transition complete. Final values applied.");
+        ConfigManager.WriteConsole("[UserLightManager] Light transition complete. Final values applied.");
     }
 }
