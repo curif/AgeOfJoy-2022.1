@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2567931027181609668}
   - component: {fileID: 7402869355966646056}
   - component: {fileID: 2325864756173734168}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: PF_ReflectionChangeTrigger
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -44,7 +44,7 @@ BoxCollider:
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -68,6 +68,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   newReflectionCubemap: {fileID: 8900000, guid: 8572496c029995a48b49ab7072afe53b, type: 3}
+  lightTransitionDuration: 1
+  userLightManager: {fileID: 0}
+  pfUserLight: {fileID: 0}
 --- !u!114 &2325864756173734168
 MonoBehaviour:
   m_ObjectHideFlags: 0
