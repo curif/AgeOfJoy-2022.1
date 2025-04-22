@@ -7,9 +7,9 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MI_FramedImage_Con_43_Billiard
-  m_Shader: {fileID: 4800000, guid: 7a672dc051ec8a04caeb8c7ded5ae6c3, type: 3}
-  m_Parent: {fileID: 2100000, guid: 6ceea4a75d1b1e74f8e55e8f61680e8c, type: 2}
+  m_Name: MI_PackedSignage_Con_43_Billiard
+  m_Shader: {fileID: 4800000, guid: a7f2d1200d334f2498c2b7c0ab635307, type: 3}
+  m_Parent: {fileID: 2100000, guid: de6f4a4e6a047af469bbe2ae5934ea21, type: 2}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords: []
@@ -27,6 +27,14 @@ Material:
         m_Texture: {fileID: 2800000, guid: 4e5abef8469863f49ae1b71453b76ad6, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DiffusePacked:
+        m_Texture: {fileID: 2800000, guid: 4e5abef8469863f49ae1b71453b76ad6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Normal:
+        m_Texture: {fileID: 2800000, guid: 9081f3564338b784283ef4770ccb2475, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Wrinkles:
         m_Texture: {fileID: 2800000, guid: b7eb02c9dfb28d140873af33f0bf5ffc, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -36,9 +44,15 @@ Material:
     - _EmissiveAmount: 0
     - _Metallic: 1
     - _NormalPower: 0
-    - _Smoothness: 0.83
+    - _Smoothness: 0
+    - _SmoothnessA: 1
+    - _SmoothnessB: 0
+    - __dirty: 0
     m_Colors:
+    - _ColorA: {r: 0.21861425, g: 1, b: 0, a: 0}
+    - _ColorB: {r: 0.5283019, g: 0.074759595, b: 0.5228592, a: 0}
     - _DiffuseTint: {r: 0.6027479, g: 1, b: 0.3238992, a: 0}
     - _EmissiveTint: {r: 1, g: 1, b: 1, a: 0}
     - _FrameColor: {r: 0.25157225, g: 0.25157225, b: 0.25157225, a: 0}
+    - _UseChannel: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

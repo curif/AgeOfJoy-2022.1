@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8479556793555097617}
   - component: {fileID: 8750558577452673871}
-  - component: {fileID: 2407927672959768673}
   m_Layer: 0
   m_Name: PF_RandomGuy
   m_TagString: Untagged
@@ -55,19 +54,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 5, y: 2, z: 5}
   m_Center: {x: 0, y: 1, z: 0}
---- !u!114 &2407927672959768673
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1613548562652094731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2574f947d3ecba4b9ca35361f55bb51, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  triggerCollider: {fileID: 8750558577452673871}
 --- !u!1001 &1262485455591351511
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -128,6 +114,10 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7916417181227867736, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 8e1e3b9d6aaf4d84d90f59d633f6353b, type: 2}
     - target: {fileID: -6189778816993844544, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
       propertyPath: m_CastShadows
       value: 0
@@ -148,10 +138,18 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3026367246469094409, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 5b92f0bd51f8cc44283a866ace47ce5b, type: 2}
     - target: {fileID: 4323753377479302309, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4323753377479302309, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 69dc282b32abfa344acfcbbb181a2b32, type: 2}
     - target: {fileID: 4816400914739660297, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
       propertyPath: m_CastShadows
       value: 0
@@ -160,10 +158,18 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5968040158316464100, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 05af78600d8a87f408210f9a61b18be1, type: 2}
     - target: {fileID: 6345175797324881869, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6345175797324881869, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: f0176bfdec3e1fa4a9413ac73ccfc273, type: 2}
     - target: {fileID: 6819722677127916303, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
       propertyPath: m_CastShadows
       value: 0
@@ -180,6 +186,10 @@ PrefabInstance:
       propertyPath: m_CastShadows
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8592768362110633289, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: dc012fc25719b364fb108b430e2e600f, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -251,6 +261,10 @@ MonoBehaviour:
   - targetObject: {fileID: 3884089926237854838}
     alternateMaterials:
     - {fileID: 2100000, guid: 5c056325704c09e4b84584cbf93b4016, type: 2}
+  randomHairColors:
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 0, g: 1, b: 0.12173247, a: 0}
+  - {r: 0, g: 1, b: 0.95722246, a: 0}
 --- !u!1 &3585328294335106335 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2325153471040252360, guid: 88a3f4c584e1b8246bd61ebc2502ae17, type: 3}

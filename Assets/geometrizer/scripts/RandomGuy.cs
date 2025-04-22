@@ -19,6 +19,9 @@ public class RandomGuy : MonoBehaviour
     [Header("Optional Material Swaps")]
     [SerializeField] private List<MaterialSwap> materialSwaps = new List<MaterialSwap>();
 
+    [Header("Random Hair Colors")]
+    [SerializeField] private List<Color> randomHairColors = new List<Color>();
+
     private void Start()
     {
         RandomizeCategory(hair);
