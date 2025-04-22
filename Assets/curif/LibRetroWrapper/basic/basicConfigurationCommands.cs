@@ -13,7 +13,8 @@ public class ConfigurationCommands
     public ScreenGenerator ScreenGenerator = null;
     public SceneDatabase SceneDatabase = null;
     public Teleportation Teleportation = null;
-
+    //public DownloadManager DownloadManager = null;
+    public UserLightManager UserLightManager = null; //lazy load.
     public Stack<double> Gosub = new Stack<double>();
     public double LineNumber; //in execution or parsing
     public AGEProgram ageProgram = null;

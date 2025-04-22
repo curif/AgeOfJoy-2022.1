@@ -345,15 +345,19 @@ public class ConfigInformation
         return configInfo;
     }
 
-    public bool ToYaml(string yamlPath)
+    public bool ToYaml(string yamlPath, ConfigInformation config = null)
     {
         string yaml;
+
+        if (config == null)
+            config = this;
+
         try
         {
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .Build();
-            yaml = serializer.Serialize(this);
+            yaml = serializer.Serialize(config);
         }
         catch (Exception e)
         {

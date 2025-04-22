@@ -89,6 +89,11 @@ public static class Commands
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXIST);
         functions["FILEDELETE"] = typeof(CommandFunctionFILEDELETE);
 
+        //download manager
+        //functions["DOWNLOAD"] = typeof(CommandFunctionDOWNLOAD);
+        //functions["DOWNLOADSTATUS"] = typeof(CommandFunctionDOWNLOADSTATUS);
+        //functions["DOWNLOADPROGRESS"] = typeof(CommandFunctionDOWNLOADPROGRESS);
+
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
         functions["TYPE"] = typeof(CommandFunctionTYPE);
@@ -179,13 +184,16 @@ public static class Commands
         functions["LOGWARNING"] = typeof(CommandFunctionLOGWARNING);
         functions["ASSERT"] = typeof(CommandFunctionASSERT);
 
-        //lights
+        //lights (deprecated)
         functions["GETLIGHTS"] = typeof(CommandFunctionGETLIGHTS);
         functions["GETLIGHTINTENSITY"] = typeof(CommandFunctionGETLIGHTINTENSITY);
         functions["SETLIGHTINTENSITY"] = typeof(CommandFunctionSETLIGHTINTENSITY);
         functions["LIGHTSCOUNT"] = typeof(CommandFunctionLIGHTSCOUNT);
         functions["SETLIGHTCOLOR"] = typeof(CommandFunctionSETLIGHTCOLOR);
-        
+        //-
+        functions["GETGLOBALLIGHT"] = typeof(CommandFunctionGETGLOBALLIGHT);
+        functions["SETGLOBALLIGHT"] = typeof(CommandFunctionSETGLOBALLIGHT);
+
         //audio
         functions["AUDIOGAMEGETVOLUME"] = typeof(CommandFunctionAUDIOGAMEGETVOLUME);
         functions["AUDIOMUSICGETVOLUME"] = typeof(CommandFunctionAUDIOMUSICGETVOLUME);

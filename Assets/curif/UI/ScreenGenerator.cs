@@ -28,6 +28,10 @@ public class ScreenGenerator : MonoBehaviour
     private int centerStartX;
     private int centerStartY;
     private int lastX, lastY;
+    private int characterAreaWidthPixels; // Width of the character area in pixels
+    private int characterAreaHeightPixels; // Height of the character area in pixels
+    private int characterAreaStartX; // Top-left X pixel coord of character area within texture
+    private int characterAreaStartY; // Top-left Y pixel coord of character area within texture
 
     private bool needsDraw = false;
 
@@ -274,6 +278,10 @@ public class ScreenGenerator : MonoBehaviour
         //ready for the next line
         lastY++;
         lastX = 0;
+        
+        if (lastY > ScreenHeight)
+            lastY = ScreenHeight;
+
         return (y - startY) + 1;
     }
 
@@ -384,6 +392,408 @@ public class ScreenGenerator : MonoBehaviour
         // Print the text using the Print method with the x coordinate of 0
         Print(0, y, text, inverted);
         return this;
+    }
+
+    /// <summary>
+    /// Internal helper to draw a single pixel onto the screen texture.
+    /// Handles coordinate translation from character area space to texture space
+    /// and performs bounds checking.
+    /// </summary>
+    /// <param name="x">X coordinate within the character pixel area (0 to characterAreaWidthPixels-1)</param>
+    /// <param name="y">Y coordinate within the character pixel area (0 to characterAreaHeightPixels-1)</param>
+    /// <param name="color">The color of the pixel.</param>
+    private void DrawPixel(int x, int y, Color32 color)
+    {
+        if (screenTexture == null) return;
+
+        // Translate coordinates from character area space to full texture space
+        int texX = x + characterAreaStartX;
+        int texY = y + characterAreaStartY;
+
+        // Bounds check against the *entire* texture dimensions
+        if (texX >= 0 && texX < TextureWidth && texY >= 0 && texY < TextureHeight)
+        {
+            screenTexture.SetPixel(texX, texY, color);
+            needsDraw = true; // Mark texture as modified
+        }
+        // Else: Pixel is outside the drawable texture area, do nothing.
+    }
+
+    /// <summary>
+    /// Draws a single point (pixel) at the specified coordinates within the character area.
+    /// </summary>
+    /// <param name="x">X coordinate (pixel space, 0 to characterAreaWidthPixels-1).</param>
+    /// <param name="y">Y coordinate (pixel space, 0 to characterAreaHeightPixels-1).</param>
+    /// <param name="color">The color of the point.</param>
+    public ScreenGenerator DrawPoint(int x, int y, Color32 color)
+    {
+        // Optional: Bounds check against character area dimensions *before* translation
+        if (x < 0 || x >= characterAreaWidthPixels || y < 0 || y >= characterAreaHeightPixels)
+        {
+            // ConfigManager.WriteConsole($"[ScreenGenerator.DrawPoint] Point ({x},{y}) outside character area.");
+            return this; // Optionally log or handle out-of-bounds points
+        }
+        DrawPixel(x, y, color);
+        return this;
+    }
+
+    /// <summary>
+    /// Draws a line between two points using Bresenham's line algorithm.
+    /// Coordinates are relative to the character pixel area.
+    /// </summary>
+    /// <param name="x1">Start X coordinate.</param>
+    /// <param name="y1">Start Y coordinate.</param>
+    /// <param name="x2">End X coordinate.</param>
+    /// <param name="y2">End Y coordinate.</param>
+    /// <param name="color">The color of the line.</param>
+    public ScreenGenerator DrawLine(int x1, int y1, int x2, int y2, Color32 color)
+    {
+        if (screenTexture == null) return this;
+
+        int dx = Mathf.Abs(x2 - x1);
+        int dy = -Mathf.Abs(y2 - y1);
+        int sx = x1 < x2 ? 1 : -1;
+        int sy = y1 < y2 ? 1 : -1;
+        int err = dx + dy;
+
+        int currentX = x1;
+        int currentY = y1;
+
+        while (true)
+        {
+            DrawPixel(currentX, currentY, color); // Draw the current pixel
+
+            if (currentX == x2 && currentY == y2) break; // Reached the end
+
+            int e2 = 2 * err;
+            if (e2 >= dy) // Error threshold crossed?
+            {
+                if (currentX == x2) break; // Prevent X overshoot
+                err += dy;
+                currentX += sx;
+            }
+            if (e2 <= dx) // Error threshold crossed?
+            {
+                if (currentY == y2) break; // Prevent Y overshoot
+                err += dx;
+                currentY += sy;
+            }
+        }
+        needsDraw = true; // Ensure flag is set (though DrawPixel does it too)
+        return this;
+    }
+
+    /// <summary>
+    /// Draws a horizontal line efficiently. Internal helper.
+    /// </summary>
+    private void DrawHorizontalLine(int xStart, int xEnd, int y, Color32 color)
+    {
+        if (screenTexture == null) return;
+        int start = Mathf.Min(xStart, xEnd);
+        int end = Mathf.Max(xStart, xEnd);
+        for (int x = start; x <= end; x++)
+        {
+            DrawPixel(x, y, color);
+        }
+        // Optimization possible here using SetPixels32 for long lines
+    }
+
+    /// <summary>
+    /// Draws a vertical line efficiently. Internal helper.
+    /// </summary>
+    private void DrawVerticalLine(int x, int yStart, int yEnd, Color32 color)
+    {
+        if (screenTexture == null) return;
+        int start = Mathf.Min(yStart, yEnd);
+        int end = Mathf.Max(yStart, yEnd);
+        for (int y = start; y <= end; y++)
+        {
+            DrawPixel(x, y, color);
+        }
+        // Optimization possible here using SetPixels32 for long lines
+    }
+
+
+    /// <summary>
+    /// Draws a rectangle (box). Coordinates are relative to the character pixel area.
+    /// </summary>
+    /// <param name="x">Top-left X coordinate.</param>
+    /// <param name="y">Top-left Y coordinate.</param>
+    /// <param name="width">Width of the box in pixels.</param>
+    /// <param name="height">Height of the box in pixels.</param>
+    /// <param name="borderColor">Color of the border.</param>
+    /// <param name="filled">If true, fill the box.</param>
+    /// <param name="fillColor">Color to fill the box with (required if filled is true).</param>
+    public ScreenGenerator DrawBox(int x, int y, int width, int height, Color32 borderColor, bool filled, Color32? fillColor = null)
+    {
+        if (screenTexture == null || width <= 0 || height <= 0) return this;
+
+        int x2 = x + width - 1;
+        int y2 = y + height - 1;
+
+        // --- Fill ---
+        if (filled && fillColor.HasValue)
+        {
+            Color32 fillCol = fillColor.Value;
+
+            // Optimized Fill using SetPixels32 (Much faster than DrawPixel per pixel)
+            int fillWidth = width;
+            int fillHeight = height;
+            int fillStartX = x;
+            int fillStartY = y;
+
+            // Clip fill area to character area bounds
+            int fillEndX = fillStartX + fillWidth;
+            int fillEndY = fillStartY + fillHeight;
+
+            fillStartX = Mathf.Max(fillStartX, 0);
+            fillStartY = Mathf.Max(fillStartY, 0);
+            fillEndX = Mathf.Min(fillEndX, characterAreaWidthPixels);
+            fillEndY = Mathf.Min(fillEndY, characterAreaHeightPixels);
+
+            fillWidth = fillEndX - fillStartX;
+            fillHeight = fillEndY - fillStartY;
+
+            if (fillWidth > 0 && fillHeight > 0)
+            {
+                Color32[] fillPixels = new Color32[fillWidth * fillHeight];
+                Array.Fill(fillPixels, fillCol);
+
+                // Translate fill start coordinates to texture space
+                int texFillStartX = fillStartX + characterAreaStartX;
+                int texFillStartY = fillStartY + characterAreaStartY;
+
+                // Check if fill area is within texture bounds before SetPixels32
+                if (texFillStartX >= 0 && texFillStartX + fillWidth <= TextureWidth &&
+                    texFillStartY >= 0 && texFillStartY + fillHeight <= TextureHeight)
+                {
+                    screenTexture.SetPixels32(texFillStartX, texFillStartY, fillWidth, fillHeight, fillPixels);
+                    needsDraw = true;
+                }
+                else
+                {
+                    // Fallback or partial fill if SetPixels32 cannot be used due to boundary issues
+                    // (could implement pixel-by-pixel DrawPixel loop here if needed for partial fills crossing texture edge)
+                    // For simplicity, we'll just log if the full optimized fill isn't possible.
+                    // ConfigManager.WriteConsole($"[ScreenGenerator.DrawBox] Fill area ({fillStartX},{fillStartY} -> {fillEndX},{fillEndY}) partially outside texture. Optimized fill skipped.");
+                    // Simple fallback (slower):
+                    for (int iy = fillStartY; iy < fillEndY; iy++)
+                    {
+                        for (int ix = fillStartX; ix < fillEndX; ix++)
+                        {
+                            DrawPixel(ix, iy, fillCol);
+                        }
+                    }
+                }
+            }
+
+            /* // Slow fill (pixel by pixel) - Keep for reference
+            for (int iy = y; iy <= y2; iy++)
+            {
+                for (int ix = x; ix <= x2; ix++)
+                {
+                    DrawPixel(ix, iy, fillCol);
+                }
+            }
+            */
+        }
+
+        // --- Border ---
+        // Draw border after fill so it's on top
+        if (borderColor.a > 0) // Check if border color is visible
+        {
+            // Use efficient horizontal/vertical line helpers
+            DrawHorizontalLine(x, x2, y, borderColor);      // Top
+            DrawHorizontalLine(x, x2, y2, borderColor);     // Bottom
+            DrawVerticalLine(x, y + 1, y2 - 1, borderColor); // Left (avoid corners)
+            DrawVerticalLine(x2, y + 1, y2 - 1, borderColor);// Right (avoid corners)
+
+            // DrawLine version (slightly less efficient for axis-aligned lines):
+            // DrawLine(x, y, x2, y, borderColor);       // Top
+            // DrawLine(x, y2, x2, y2, borderColor);    // Bottom
+            // DrawLine(x, y + 1, x, y2 - 1, borderColor); // Left (avoid corners)
+            // DrawLine(x2, y + 1, x2, y2 - 1, borderColor); // Right (avoid corners)
+        }
+
+
+        needsDraw = true;
+        return this;
+    }
+
+
+    /// <summary>
+    /// Draws a circle using the Midpoint Circle Algorithm.
+    /// Coordinates are relative to the character pixel area.
+    /// </summary>
+    /// <param name="centerX">Center X coordinate.</param>
+    /// <param name="centerY">Center Y coordinate.</param>
+    /// <param name="radius">Radius in pixels.</param>
+    /// <param name="borderColor">Color of the border.</param>
+    /// <param name="filled">If true, fill the circle.</param>
+    /// <param name="fillColor">Color to fill the circle with (required if filled is true).</param>
+    public ScreenGenerator DrawCircle(int centerX, int centerY, int radius, Color32 borderColor, bool filled, Color32? fillColor = null)
+    {
+        if (screenTexture == null || radius <= 0) return this;
+
+        // --- Fill (Scanline method) ---
+        if (filled && fillColor.HasValue)
+        {
+            Color32 fillCol = fillColor.Value;
+            int rSquared = radius * radius;
+
+            // Iterate through bounding box rows
+            for (int y = -radius; y <= radius; y++)
+            {
+                // Calculate horizontal span (x) for this row using circle equation
+                // x^2 + y^2 = r^2  => x^2 = r^2 - y^2 => x = +/- sqrt(r^2 - y^2)
+                int span = (int)Mathf.Sqrt(rSquared - y * y);
+                DrawHorizontalLine(centerX - span, centerX + span, centerY + y, fillCol);
+            }
+        }
+
+        // --- Border (Midpoint Circle Algorithm) ---
+        if (borderColor.a > 0)
+        {
+            int d = (5 - radius * 4) / 4; // Initial decision parameter
+            int x = 0;
+            int y = radius;
+
+            do
+            {
+                // Draw points in all 8 octants
+                DrawPixel(centerX + x, centerY + y, borderColor);
+                DrawPixel(centerX + x, centerY - y, borderColor);
+                DrawPixel(centerX - x, centerY + y, borderColor);
+                DrawPixel(centerX - x, centerY - y, borderColor);
+                DrawPixel(centerX + y, centerY + x, borderColor);
+                DrawPixel(centerX + y, centerY - x, borderColor);
+                DrawPixel(centerX - y, centerY + x, borderColor);
+                DrawPixel(centerX - y, centerY - x, borderColor);
+
+                // Update decision parameter and coordinates
+                if (d < 0)
+                {
+                    d += 2 * x + 1;
+                }
+                else
+                {
+                    d += 2 * (x - y) + 1;
+                    y--;
+                }
+                x++;
+            } while (x <= y);
+        }
+
+        needsDraw = true;
+        return this;
+    }
+
+
+    /// <summary>
+    /// Draws an ellipse (oval) using a modified Midpoint Algorithm.
+    /// Coordinates are relative to the character pixel area.
+    /// </summary>
+    /// <param name="centerX">Center X coordinate.</param>
+    /// <param name="centerY">Center Y coordinate.</param>
+    /// <param name="radiusX">Horizontal radius in pixels.</param>
+    /// <param name="radiusY">Vertical radius in pixels.</param>
+    /// <param name="borderColor">Color of the border.</param>
+    /// <param name="filled">If true, fill the oval.</param>
+    /// <param name="fillColor">Color to fill the oval with (required if filled is true).</param>
+    public ScreenGenerator DrawOval(int centerX, int centerY, int radiusX, int radiusY, Color32 borderColor, bool filled, Color32? fillColor = null)
+    {
+        if (screenTexture == null || radiusX <= 0 || radiusY <= 0) return this;
+
+        // --- Fill (Scanline method) ---
+        if (filled && fillColor.HasValue)
+        {
+            Color32 fillCol = fillColor.Value;
+            float rxSq = radiusX * radiusX;
+            float rySq = radiusY * radiusY;
+
+            // Iterate through bounding box rows
+            for (int y = -radiusY; y <= radiusY; y++)
+            {
+                // Calculate horizontal span (x) for this row using ellipse equation
+                // (x/rx)^2 + (y/ry)^2 = 1 => x^2 / rx^2 = 1 - y^2 / ry^2
+                // x^2 = rx^2 * (1 - y^2 / ry^2)
+                // x = +/- rx * sqrt(1 - y^2 / ry^2)
+                // Ensure argument to Sqrt is non-negative
+                float yTerm = (float)(y * y) / rySq;
+                if (yTerm <= 1.0f)
+                {
+                    int span = (int)(radiusX * Mathf.Sqrt(1.0f - yTerm));
+                    DrawHorizontalLine(centerX - span, centerX + span, centerY + y, fillCol);
+                }
+            }
+        }
+
+        // --- Border (Midpoint Ellipse Algorithm) ---
+        if (borderColor.a > 0)
+        {
+            long rxSq = (long)radiusX * radiusX; // Use long to avoid overflow
+            long rySq = (long)radiusY * radiusY;
+            long twoRxSq = 2 * rxSq;
+            long twoRySq = 2 * rySq;
+            long p;
+            int x = 0;
+            int y = radiusY;
+            long px = 0;
+            long py = twoRxSq * y;
+
+            // Plot initial points
+            DrawEllipsePoints(centerX, centerY, x, y, borderColor);
+
+            // Region 1
+            p = (long)Math.Round(rySq - (rxSq * radiusY) + (0.25 * rxSq));
+            while (px < py)
+            {
+                x++;
+                px += twoRySq;
+                if (p < 0)
+                {
+                    p += rySq + px;
+                }
+                else
+                {
+                    y--;
+                    py -= twoRxSq;
+                    p += rySq + px - py;
+                }
+                DrawEllipsePoints(centerX, centerY, x, y, borderColor);
+            }
+
+            // Region 2
+            p = (long)Math.Round(rySq * (x + 0.5) * (x + 0.5) + rxSq * (y - 1) * (y - 1) - rxSq * rySq);
+            while (y > 0)
+            {
+                y--;
+                py -= twoRxSq;
+                if (p > 0)
+                {
+                    p += rxSq - py;
+                }
+                else
+                {
+                    x++;
+                    px += twoRySq;
+                    p += rxSq - py + px;
+                }
+                DrawEllipsePoints(centerX, centerY, x, y, borderColor);
+            }
+        }
+
+        needsDraw = true;
+        return this;
+    }
+
+    // Helper to draw points for all four quadrants of the ellipse
+    private void DrawEllipsePoints(int cx, int cy, int x, int y, Color32 color)
+    {
+        DrawPixel(cx + x, cy + y, color);
+        DrawPixel(cx - x, cy + y, color);
+        DrawPixel(cx + x, cy - y, color);
+        DrawPixel(cx - x, cy - y, color);
     }
 
 }
