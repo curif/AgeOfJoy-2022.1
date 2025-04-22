@@ -16,7 +16,7 @@ abstract class GenericWidget
     protected ScreenGenerator screen; // The screen generator to use
 
     // A constructor that takes the screen generator, the x and y coordinates and the name of the widget
-    public GenericWidget(ScreenGenerator screen, int x, int y, string name, bool isSelectable = true)
+    public GenericWidget(ScreenGenerator screen, int x = 0, int y = 0, string name = "Unknown", bool isSelectable = true)
     {
         // Check if the screen generator is valid
         if (screen == null)

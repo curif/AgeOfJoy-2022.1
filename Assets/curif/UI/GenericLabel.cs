@@ -8,7 +8,7 @@ class GenericLabel : GenericWidget // Inherit from GenericWidget
     private bool inverted; // Add this field
 
     // The constructor that takes the label, the coordinates, the screen generator and the inverted property
-    public GenericLabel(ScreenGenerator screen, string name, string label, int x, int y, bool inverted = false, bool isSelectable = false) : 
+    public GenericLabel(ScreenGenerator screen, string name, string label, int x = 0, int y = 0, bool inverted = false, bool isSelectable = false) : 
       base(screen, x, y, name, isSelectable) // Call the base constructor with the screen, x and y parameters
     {
         this.label = label; // Set the label field

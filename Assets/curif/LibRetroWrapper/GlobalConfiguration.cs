@@ -98,8 +98,7 @@ public class GlobalConfiguration : MonoBehaviour
         else
         {
             ConfigManager.WriteConsole($"[GlobalConfiguration] file doesn't exists, create default: {yamlPath}");
-            Configuration = ConfigInformation.newDefault();
-            Save();
+            Save(ConfigInformation.newDefault());
             ConfigManager.WriteConsole($"[GlobalConfiguration] ");
             ConfigManager.WriteConsole(configuration.ToString());
         }
@@ -123,11 +122,11 @@ public class GlobalConfiguration : MonoBehaviour
         }
     }
 
-    public void Save()
+    public void Save(ConfigInformation config)
     {
         ConfigManager.WriteConsole($"[GlobalConfiguration] writing configuration: {yamlPath}");
         fileMonitor.fileLock();
-        configuration.ToYaml(yamlPath);
+        configuration.ToYaml(yamlPath, config); //file monitor will detect the file change and invoke to load the new info
         fileMonitor.fileUnlock();
     }
 

@@ -10,7 +10,7 @@ class GenericBool : GenericWidget
     public bool value;
 
     // A constructor that takes a ScreenGenerator object, a name, a label text and an initial bool value
-    public GenericBool(ScreenGenerator screen, string name, string label, bool value, int x, int y, bool isSelectable = true) : 
+    public GenericBool(ScreenGenerator screen, string name, string label, bool value, int x = 0, int y = 0, bool isSelectable = true) : 
       base(screen, x, y, name, isSelectable)
     {
       this.label = label + " ( )"; // Add the square brackets to the label text

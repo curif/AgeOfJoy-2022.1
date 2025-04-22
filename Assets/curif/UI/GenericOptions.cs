@@ -14,7 +14,7 @@ class GenericOptions : GenericWidget // derived class (child)
     public int MaxLength { get; set; } = 0; // auto-implemented property with default value
 
     // The constructor that takes a list of options, the coordinates, the screen generator and the maximum length
-    public GenericOptions(ScreenGenerator screen, string name, string label, List<string> options, int x, int y, bool isSelectable = true, int maxLength = 0) :
+    public GenericOptions(ScreenGenerator screen, string name, string label, List<string> options, int x = 0, int y = 0, bool isSelectable = true, int maxLength = 0) :
     base(screen, x, y, name, isSelectable) // call the base class constructor
     {
         this.label = label;

@@ -11,7 +11,8 @@ public class RoomConfiguration : MonoBehaviour
     public string yamlPath;
     public FileMonitor fileMonitor;
 
-    private GlobalConfiguration globalConfiguration;
+    public GlobalConfiguration globalConfiguration;
+
     private bool initialized = false;
     private ConfigInformation configuration;
     private bool isListenerAdded = false;
@@ -140,11 +141,11 @@ public class RoomConfiguration : MonoBehaviour
         ConfigManager.WriteConsole(configuration.ToString());
     }
 
-    public void Save()
+    public void Save(ConfigInformation config)
     {
         ConfigManager.WriteConsole($"[RoomConfiguration] writing configuration: {yamlPath}");
         fileMonitor.fileLock();
-        configuration.ToYaml(yamlPath);
+        configuration.ToYaml(yamlPath, config); //will be loaded when fileMonitor invoke the event.
         fileMonitor.fileUnlock();
     }
 

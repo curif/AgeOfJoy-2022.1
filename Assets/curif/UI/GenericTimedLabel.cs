@@ -9,7 +9,7 @@ class GenericTimedLabel : GenericLabel
     private double seconds;
 
     // The constructor that takes the label, the coordinates, the screen generator and the inverted property
-    public GenericTimedLabel(ScreenGenerator screen, string name, string label, int x, int y, bool inverted = false, bool isSelectable = false) :
+    public GenericTimedLabel(ScreenGenerator screen, string name, string label,int x = 0, int y = 0, bool inverted = false, bool isSelectable = false) :
     base(screen, name, label, x, y, inverted, isSelectable) // Call the base constructor with the same parameters
     {
         Clear(); // Call the Clear method to start cleared

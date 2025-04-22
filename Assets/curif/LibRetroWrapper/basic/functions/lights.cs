@@ -195,3 +195,78 @@ class CommandFunctionSETLIGHTCOLOR : CommandFunctionExpressionListBase
         return new BasicValue(0); // Indicate failure
     }
 }
+
+
+
+
+
+// ---------------- GLOBAL LIGHTS ---------------------------
+
+
+class CommandFunctionGETGLOBALLIGHT : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionGETGLOBALLIGHT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "GETGLOBALLIGHT";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue separator = expr.Execute(vars);
+
+        if (config.UserLightManager == null)
+        {
+            GameObject userLightGO = GameObject.Find("UserLightManager");
+            if (userLightGO != null)
+                config.UserLightManager = userLightGO.GetComponent<UserLightManager>();
+        }
+        if (config.UserLightManager == null)
+        {
+            return new BasicValue((double)0);
+        }
+        RGBColor c = new RGBColor(config.UserLightManager.targetLight.color, config.UserLightManager.targetLight.intensity);
+        return new BasicValue(c.ToAGEBasicList(separator.GetString()));
+    }
+}
+
+class CommandFunctionSETGLOBALLIGHT : CommandFunctionExpressionListBase
+{
+    public CommandFunctionSETGLOBALLIGHT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "SETGLOBALLIGHT";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 4); // Expecting 4 parameters: lightname, R, G, B
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        // Retrieve the parameters "lightname", "R", "G", and "B"
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNumber(vals[0], "- R");
+        FunctionHelper.ExpectedNumber(vals[1], "- G");
+        FunctionHelper.ExpectedNumber(vals[2], "- B");
+        FunctionHelper.ExpectedNumber(vals[3], "- Intensity");
+
+        byte r = (byte)vals[0].GetValueAsNumber();
+        byte g = (byte)vals[1].GetValueAsNumber();
+        byte b = (byte)vals[2].GetValueAsNumber();
+        float intensity = (float)vals[3].GetValueAsNumber();
+
+        if (config.UserLightManager == null)
+        {
+            GameObject userLightGO = GameObject.Find("UserLightManager");
+            if (userLightGO != null)
+                config.UserLightManager = userLightGO.GetComponent<UserLightManager>();
+        }
+        if (config.UserLightManager == null)
+        {
+            return new BasicValue((double)0);
+        }
+        config.UserLightManager.ApplyUserLightSettings(new RGBColor(r,g,b,0), intensity);
+
+        return new BasicValue(0); // Indicate failure
+    }
+}

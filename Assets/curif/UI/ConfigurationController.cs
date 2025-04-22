@@ -85,13 +85,11 @@ public class ConfigurationHelper
 */
         if (saveGlobal)
         {
-            globalConfiguration.Configuration = config;
-            globalConfiguration.Save();
+            globalConfiguration.Save(config);
         }
         else
         {
-            roomConfiguration.Configuration = config;
-            roomConfiguration.Save();
+            roomConfiguration.Save(config);
         }
         return;
     }
@@ -205,6 +203,7 @@ public class ConfigurationController : MonoBehaviour
         onRunAGEBasic,
         onRunAGEBasicRunning,
         onCabinet,
+        onLights,
         exit
     }
     private StatusOptions status;
@@ -250,6 +249,11 @@ public class ConfigurationController : MonoBehaviour
     private ShaderScreenBase shaderOffLine;
 
     private Renderer display;
+
+    private GenericOptions lightColorR, lightColorG, lightColorB;
+    private GenericOptions lightIntensity;
+    private GenericWidgetContainer lightContainer;
+
 
 
     // Start is called before the first frame update
@@ -651,6 +655,7 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("locomotion", " player movement configuration  ");
             mainMenu.AddOption("player", " player configuration  ");
         }
+        mainMenu.AddOption("lights", "  Change color and light intensity ");
         mainMenu.AddOption("change mode (global/room)", "  global or room configuration ");
         mainMenu.AddOption("reset", "         back to default       ");
         mainMenu.AddOption("teleport", "       teleport to a room       ");
@@ -1348,6 +1353,69 @@ public class ConfigurationController : MonoBehaviour
 
     }
 
+    //------------ Lights
+    private void LightWindowDraw()
+    {
+        if (lightContainer == null)
+            return;
+
+        scr.Clear();
+        lightContainer.Draw();
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
+    }
+    private void SetLightWidgets()
+    {
+        if (lightContainer != null)
+            return;
+
+        lightColorR = new GenericOptionsInteger(scr, "lightColorR", "color: R", 0, 255);
+        lightColorG = new GenericOptionsInteger(scr, "lightColorG", "       G", 0, 255);
+        lightColorB = new GenericOptionsInteger(scr, "lightColorB", "       B", 0, 255);
+        lightIntensity = new GenericOptionsDecimal(scr, "lightIntensity", "Intensity: ", 0, 5.1, 0.1);
+        lightContainer = new(scr, "lightContainer");
+        lightContainer.Add(new GenericWindow(scr, 2, 2, "lightContainer", 37, 12, " Lights "))
+                      .Add(lightColorR, 4, 4)
+                      .Add(lightColorG, 4, lightContainer.lastYAdded + 1)
+                      .Add(lightColorB, 4, lightContainer.lastYAdded + 1)
+                      .Add(lightIntensity, 4, lightContainer.lastYAdded + 1)
+                      .Add(new GenericButton(scr, "save", "save", 4, lightContainer.lastYAdded + 2, true))
+                      .Add(new GenericButton(scr, "exit", "exit", 4, lightContainer.lastYAdded + 1, true));
+    }
+    private void LightSetWidgetValues()
+    {
+        float intensity = 0;
+        RGBColor color = new RGBColor(0, 0, 0, 0);
+        ConfigInformation config = configHelper.getConfigInformation(isGlobalConfigurationWidget.value);
+        if (config.light?.color != null)
+        {
+            color = config.light.color;
+            intensity = config.light.intensity;
+        }
+        lightColorR.SetCurrent(((int)color.r).ToString());
+        lightColorR.SetCurrent(((int)color.g).ToString());
+        lightColorR.SetCurrent(((int)color.b).ToString());
+        lightIntensity.SetCurrent(intensity.ToString());
+    }
+
+    private void LightUpdateConfigurationFromWidgets()
+    {
+
+        ConfigInformation config = configHelper.getConfigInformation(isGlobalConfigurationWidget.value);
+        if (config.light == null)
+            config.light = new();
+        if (config.light.color == null)
+            config.light.color = new();
+        
+        config.light.intensity = float.Parse(lightIntensity.GetSelectedOption());
+        config.light.color.r = byte.Parse(lightColorR.GetSelectedOption());
+        config.light.color.g = byte.Parse(lightColorG.GetSelectedOption());
+        config.light.color.b = byte.Parse(lightColorB.GetSelectedOption());
+        
+        configHelper.Save(isGlobalConfigurationWidget.value, config);
+
+    }
+
     void initScreen()
     {
         display = GetComponent<Renderer>();
@@ -1649,6 +1717,9 @@ public class ConfigurationController : MonoBehaviour
                       case "player":
                           status = StatusOptions.onChangePlayer;
                           break;
+                      case "lights":
+                          status = StatusOptions.onLights;
+                          break;
                   }
 
                   mainMenu.Deselect();
@@ -1756,6 +1827,44 @@ public class ConfigurationController : MonoBehaviour
                           else if (w.name == "save")
                           {
                               PlayerUpdateConfigurationFromWidgets();
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          w.Action();
+                      }
+                  }
+                  scr.DrawScreen();
+                  return TaskStatus.Continue;
+              })
+            .End()
+
+
+            .Sequence("Light Configuration")
+              .Condition("On Config", () => status == StatusOptions.onLights)
+              .Do("Init", () =>
+              {
+                  SetLightWidgets();
+                  LightSetWidgetValues();
+                  LightWindowDraw();
+                  scr.DrawScreen();
+                  return TaskStatus.Success;
+              })
+              .Do("Process", () =>
+              {
+                  changeContainerSelection(lightContainer);
+                  if (inputDictionary["action"])
+                  {
+                      GenericWidget w = lightContainer.GetSelectedWidget();
+                      if (w != null)
+                      {
+                          if (w.name == "exit")
+                          {
+                              status = StatusOptions.onMainMenu;
+                              return TaskStatus.Success;
+                          }
+                          else if (w.name == "save")
+                          {
+                              LightUpdateConfigurationFromWidgets();
                               status = StatusOptions.onMainMenu;
                               return TaskStatus.Success;
                           }
