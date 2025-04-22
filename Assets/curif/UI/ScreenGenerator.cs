@@ -40,6 +40,34 @@ public class ScreenGenerator : MonoBehaviour
 
     public ScreenGeneratorSkin Skin;
 
+    public static readonly Dictionary<string, Color32> ColorMap = new Dictionary<string, Color32>()
+    {
+        { "none", new Color32(0, 0, 0, 0) },
+        { "red", new Color32(255, 0, 0, 255) },
+        { "green", new Color32(0, 255, 0, 255) },
+        { "blue", new Color32(0, 0, 255, 255) },
+        { "yellow", new Color32(255, 255, 0, 255) },
+        { "cyan", new Color32(0, 255, 255, 255) },
+        { "magenta", new Color32(255, 0, 255, 255) },
+        { "white", new Color32(255, 255, 255, 255) },
+        { "black", new Color32(0, 0, 0, 255) },
+        { "orange", new Color32(255, 165, 0, 255) },
+        { "lime", new Color32(0, 255, 0, 255) }, // Same as green, but included for completeness
+        { "purple", new Color32(128, 0, 128, 255) },
+        { "teal", new Color32(0, 128, 128, 255) },
+        { "maroon", new Color32(128, 0, 0, 255) },
+        { "navy", new Color32(0, 0, 128, 255) },
+        { "olive", new Color32(128, 128, 0, 255) },
+        { "silver", new Color32(192, 192, 192, 255) },
+        { "gray", new Color32(128, 128, 128, 255) },
+        { "brown", new Color32(165, 42, 42, 255) },
+        { "aqua", new Color32(0, 255, 255, 255) }, // Same as cyan, but included for completeness
+        { "fuchsia", new Color32(255, 0, 255, 255) }, // Same as magenta, but included for completeness
+        { "lightgray", new Color32(211, 211, 211, 255) },
+        { "darkgray", new Color32(169, 169, 169, 255) }
+        // You can add more color names and their corresponding Color32 values here
+    };
+
     public Texture2D Screen
     {
         get

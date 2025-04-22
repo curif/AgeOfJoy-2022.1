@@ -10,6 +10,8 @@ using CleverCrow.Fluid.BTs.Trees;
 using LC = LibretroControlMapDictionnary;
 using CM = ControlMapPathDictionary;
 using static ConfigInformation;
+using System.Drawing;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -250,7 +252,7 @@ public class ConfigurationController : MonoBehaviour
 
     private Renderer display;
 
-    private GenericOptions lightColorR, lightColorG, lightColorB;
+    private GenericOptions lightColorR, lightColorG, lightColorB, lightColor;
     private GenericOptions lightIntensity;
     private GenericWidgetContainer lightContainer;
 
@@ -1369,16 +1371,20 @@ public class ConfigurationController : MonoBehaviour
         if (lightContainer != null)
             return;
 
-        lightColorR = new GenericOptionsInteger(scr, "lightColorR", "color: R", 0, 255);
+        lightColorR = new GenericOptionsInteger(scr, "lightColorR", "Color: R", 0, 255);
         lightColorG = new GenericOptionsInteger(scr, "lightColorG", "       G", 0, 255);
         lightColorB = new GenericOptionsInteger(scr, "lightColorB", "       B", 0, 255);
         lightIntensity = new GenericOptionsDecimal(scr, "lightIntensity", "Intensity: ", 0, 5.1, 0.1);
+        lightColor = new GenericOptions(scr, "lightColor", "Color: ", ScreenGenerator.ColorMap.Keys.ToList());
         lightContainer = new(scr, "lightContainer");
-        lightContainer.Add(new GenericWindow(scr, 2, 2, "lightContainer", 37, 12, " Lights "))
-                      .Add(lightColorR, 4, 4)
-                      .Add(lightColorG, 4, lightContainer.lastYAdded + 1)
-                      .Add(lightColorB, 4, lightContainer.lastYAdded + 1)
-                      .Add(lightIntensity, 4, lightContainer.lastYAdded + 1)
+        lightContainer.Add(new GenericWindow(scr, 2, 2, "lightContainer", 37, 14, " Lights "))
+                      .Add(new GenericLabel(scr, "lbl", "Select RGB color:"), 4, 4)
+                      .Add(lightColorR, 5, lightContainer.lastYAdded + 1)
+                      .Add(lightColorG, 5, lightContainer.lastYAdded + 1)
+                      .Add(lightColorB, 5, lightContainer.lastYAdded + 1)
+                      .Add(new GenericLabel(scr,"lbl2", "OR by name:"), 4, lightContainer.lastYAdded + 1)
+                      .Add(lightColor, 5, lightContainer.lastYAdded + 1)
+                      .Add(lightIntensity, 4, lightContainer.lastYAdded + 2)
                       .Add(new GenericButton(scr, "save", "save", 4, lightContainer.lastYAdded + 2, true))
                       .Add(new GenericButton(scr, "exit", "exit", 4, lightContainer.lastYAdded + 1, true));
     }
@@ -1392,12 +1398,24 @@ public class ConfigurationController : MonoBehaviour
             color = config.light.color;
             intensity = config.light.intensity;
         }
-        lightColorR.SetCurrent(((int)color.r).ToString());
-        lightColorR.SetCurrent(((int)color.g).ToString());
-        lightColorR.SetCurrent(((int)color.b).ToString());
-        lightIntensity.SetCurrent(intensity.ToString());
+        lightColorR.SetCurrent(((int)color.r).ToString("D2"));
+        lightColorG.SetCurrent(((int)color.g).ToString("D2"));
+        lightColorB.SetCurrent(((int)color.b).ToString("D2"));
+        lightColor.SetCurrent("none");
+        lightIntensity.SetCurrent(intensity.ToString("N2"));
     }
 
+    private void LightAdjustColorWidgetByName()
+    {
+        if (lightColor.GetSelectedOption() != "none")
+        {
+            Color32 c = ScreenGenerator.ColorMap[lightColor.GetSelectedOption()];
+            RGBColor color = new RGBColor(c, 0);
+            lightColorR.SetCurrent(((int)color.r).ToString("D2"));
+            lightColorG.SetCurrent(((int)color.g).ToString("D2"));
+            lightColorB.SetCurrent(((int)color.b).ToString("D2"));
+        }
+    }
     private void LightUpdateConfigurationFromWidgets()
     {
 
@@ -1406,7 +1424,9 @@ public class ConfigurationController : MonoBehaviour
             config.light = new();
         if (config.light.color == null)
             config.light.color = new();
-        
+
+        LightAdjustColorWidgetByName();
+       
         config.light.intensity = float.Parse(lightIntensity.GetSelectedOption());
         config.light.color.r = byte.Parse(lightColorR.GetSelectedOption());
         config.light.color.g = byte.Parse(lightColorG.GetSelectedOption());
@@ -1852,11 +1872,14 @@ public class ConfigurationController : MonoBehaviour
               .Do("Process", () =>
               {
                   changeContainerSelection(lightContainer);
+                  LightAdjustColorWidgetByName();
+
                   if (inputDictionary["action"])
                   {
                       GenericWidget w = lightContainer.GetSelectedWidget();
                       if (w != null)
                       {
+
                           if (w.name == "exit")
                           {
                               status = StatusOptions.onMainMenu;
