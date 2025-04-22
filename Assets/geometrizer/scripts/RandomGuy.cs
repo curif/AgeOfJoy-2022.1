@@ -30,6 +30,7 @@ public class RandomGuy : MonoBehaviour
         RandomizeCategory(facialHair);
 
         ApplyMaterialSwaps();
+        ApplyHairColorIfNeeded();
     }
 
     private void RandomizeCategory(List<GameObject> list)
@@ -65,6 +66,28 @@ public class RandomGuy : MonoBehaviour
 
             int choice = UnityEngine.Random.Range(0, options.Count);
             renderer.material = options[choice];
+        }
+    }
+
+    private void ApplyHairColorIfNeeded()
+    {
+        List<GameObject> activeHair = hair.FindAll(h => h != null && h.activeInHierarchy);
+        List<GameObject> activeFacialHair = facialHair.FindAll(f => f != null && f.activeInHierarchy);
+        if ((activeHair.Count > 0 || activeFacialHair.Count > 0) && randomHairColors.Count > 0)
+        {
+            Color chosenColor = randomHairColors[UnityEngine.Random.Range(0, randomHairColors.Count)];
+            foreach (GameObject obj in activeHair)
+            {
+                Renderer renderer = obj.GetComponent<Renderer>();
+                if (renderer != null && renderer.material != null)
+                    renderer.material.color = chosenColor;
+            }
+            foreach (GameObject obj in activeFacialHair)
+            {
+                Renderer renderer = obj.GetComponent<Renderer>();
+                if (renderer != null && renderer.material != null)
+                    renderer.material.color = chosenColor;
+            }
         }
     }
 }
