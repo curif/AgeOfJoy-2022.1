@@ -5,7 +5,7 @@ using System.Linq;
 // A class to show a list of numbers to choose from that extends the GenericOptions class
 class GenericOptionsDecimal : GenericOptions
 {
-    private string numberFormat;
+    public string NumberFormat;
 
     // The constructor that takes a screen generator, a name, a label text, a range of numbers and the coordinates
     public GenericOptionsDecimal(ScreenGenerator screen, string name,
@@ -18,7 +18,7 @@ class GenericOptionsDecimal : GenericOptions
             GenericOptionsDecimal.CreateStringListFromDouble(min, max, increment, numberFormat),
             x, y, isSelectable)
     {
-        this.numberFormat = numberFormat;
+        this.NumberFormat = numberFormat;
     }
     public static List<string> CreateStringListFromDouble(double min, double max, double increment, string numberFormat)
     {
@@ -31,15 +31,20 @@ class GenericOptionsDecimal : GenericOptions
     }
 
     // A method to get the selected option. Override from GenericOptions.
-    public new int GetSelectedOption()
+    public new double GetSelectedOption()
     {
-        return int.Parse(options[current]); // Return the current option as an integer
+        return double.Parse(options[current]); // Return the current option as an integer
     }
 
     // A method to set the current option by its value. Override from GenericOptions.
-    public void SetCurrent(int value) // Change this parameter type
+    public void SetCurrent(double value) // Change this parameter type
     {
-        base.SetCurrent(value.ToString(numberFormat)); // Call the parent method with a string argument
+        base.SetCurrent(value.ToString(NumberFormat)); // Call the parent method with a string argument
+    }
+
+    public override string ToString()
+    {
+        return GetSelectedOption().ToString(NumberFormat);
     }
 
     private static List<string> GenerateDecimalSequence(double min, double max, double increment, string numberFormat)

@@ -160,6 +160,9 @@ public class ConfigurationController : MonoBehaviour
     [Tooltip("Applies only for room configuration")]
     public bool canChangeCabinets = true;
 
+    [Tooltip("Must be writeable")]
+    public Texture2D presentationTexture;
+
     //Teleport
     public bool canTeleport = true;
     private SceneDatabase sceneDatabase;
@@ -252,11 +255,10 @@ public class ConfigurationController : MonoBehaviour
 
     private Renderer display;
 
-    private GenericOptions lightColorR, lightColorG, lightColorB, lightColor;
-    private GenericOptions lightIntensity;
+    private GenericOptionsInteger lightColorR, lightColorG, lightColorB;
+    private GenericOptions lightColor;
+    private GenericOptionsDecimal lightIntensity;
     private GenericWidgetContainer lightContainer;
-
-
 
     // Start is called before the first frame update
     void Start()
@@ -1371,10 +1373,10 @@ public class ConfigurationController : MonoBehaviour
         if (lightContainer != null)
             return;
 
-        lightColorR = new GenericOptionsInteger(scr, "lightColorR", "Color: R", 0, 255);
-        lightColorG = new GenericOptionsInteger(scr, "lightColorG", "       G", 0, 255);
-        lightColorB = new GenericOptionsInteger(scr, "lightColorB", "       B", 0, 255);
-        lightIntensity = new GenericOptionsDecimal(scr, "lightIntensity", "Intensity: ", 0, 5.1, 0.1);
+        lightColorR = new GenericOptionsInteger(scr, "lightColorR", "Color: R", 0, 255, numberFormat: "D3");
+        lightColorG = new GenericOptionsInteger(scr, "lightColorG", "       G", 0, 255, numberFormat: "D3");
+        lightColorB = new GenericOptionsInteger(scr, "lightColorB", "       B", 0, 255, numberFormat: "D3");
+        lightIntensity = new GenericOptionsDecimal(scr, "lightIntensity", "Intensity: ", 0, 5.1, 0.1, numberFormat: "N2");
         lightColor = new GenericOptions(scr, "lightColor", "Color: ", ScreenGenerator.ColorMap.Keys.ToList());
         lightContainer = new(scr, "lightContainer");
         lightContainer.Add(new GenericWindow(scr, 2, 2, "lightContainer", 37, 14, " Lights "))
@@ -1398,24 +1400,35 @@ public class ConfigurationController : MonoBehaviour
             color = config.light.color;
             intensity = config.light.intensity;
         }
-        lightColorR.SetCurrent(((int)color.r).ToString("D2"));
-        lightColorG.SetCurrent(((int)color.g).ToString("D2"));
-        lightColorB.SetCurrent(((int)color.b).ToString("D2"));
+        string r = color.r.ToString(lightColorR.NumberFormat);
+        string g = color.g.ToString(lightColorG.NumberFormat);
+        string b = color.b.ToString(lightColorB.NumberFormat);
+        lightColorR.SetCurrent(r);
+        lightColorG.SetCurrent(g);
+        lightColorB.SetCurrent(b);
         lightColor.SetCurrent("none");
-        lightIntensity.SetCurrent(intensity.ToString("N2"));
+        lightIntensity.SetCurrent(intensity.ToString(lightIntensity.NumberFormat));
     }
 
-    private void LightAdjustColorWidgetByName()
+    private void LightAdjustColorWidgets()
     {
         if (lightColor.GetSelectedOption() != "none")
         {
             Color32 c = ScreenGenerator.ColorMap[lightColor.GetSelectedOption()];
             RGBColor color = new RGBColor(c, 0);
-            lightColorR.SetCurrent(((int)color.r).ToString("D2"));
-            lightColorG.SetCurrent(((int)color.g).ToString("D2"));
-            lightColorB.SetCurrent(((int)color.b).ToString("D2"));
+            string r = ((int)color.r).ToString(lightColorR.NumberFormat);
+            string g = ((int)color.g).ToString(lightColorG.NumberFormat);
+            string b = ((int)color.b).ToString(lightColorB.NumberFormat);
+            lightColorR.SetCurrent(r);
+            lightColorG.SetCurrent(g);
+            lightColorB.SetCurrent(b);
         }
+
+        Vector2Int v = scr.GetCharPixelPosition(25, 4);
+        scr.DrawBox(v.x, v.y, 30, 30, ScreenGenerator.ColorMap["black"], true, 
+                    new Color32((byte)lightColorR.GetSelectedOption(), (byte)lightColorG.GetSelectedOption(), (byte)lightColorB.GetSelectedOption(), 0));
     }
+
     private void LightUpdateConfigurationFromWidgets()
     {
 
@@ -1425,16 +1438,18 @@ public class ConfigurationController : MonoBehaviour
         if (config.light.color == null)
             config.light.color = new();
 
-        LightAdjustColorWidgetByName();
+        LightAdjustColorWidgets();
        
-        config.light.intensity = float.Parse(lightIntensity.GetSelectedOption());
-        config.light.color.r = byte.Parse(lightColorR.GetSelectedOption());
-        config.light.color.g = byte.Parse(lightColorG.GetSelectedOption());
-        config.light.color.b = byte.Parse(lightColorB.GetSelectedOption());
+        config.light.intensity = (float)lightIntensity.GetSelectedOption();
+        config.light.color.r = (byte)lightColorR.GetSelectedOption();
+        config.light.color.g = (byte)lightColorG.GetSelectedOption();
+        config.light.color.b = (byte)lightColorB.GetSelectedOption();
         
         configHelper.Save(isGlobalConfigurationWidget.value, config);
 
     }
+    
+    // ------------------------------------------------------------------
 
     void initScreen()
     {
@@ -1514,14 +1529,15 @@ public class ConfigurationController : MonoBehaviour
         //init status
         status = StatusOptions.init;
 
+
         //AGEBASIC
         ConfigInformation config = configHelper.getConfigInformation(false);
         ConfigInformation.AGEBasicInformation ageBasicInformation = config?.agebasic;
         if (ageBasicInformation != null && ageBasicInformation.active)
         {
             ConfigManager.WriteConsole($"[ConfigurationController] run after load agebasic program {ageBasicInformation.afterLoad}");
-
             scr.Clear();
+
             scr.PrintCentered(1, "Running After-load");
             scr.PrintCentered(2, "program");
             scr.PrintCentered(3, ageBasicInformation.afterLoad, true);
@@ -1630,8 +1646,11 @@ public class ConfigurationController : MonoBehaviour
               .Do("Process", () =>
               {
                   status = StatusOptions.waitingForCoin;
-                  scr.Clear()
-                     .PrintCentered(10, "Insert coin to start", true)
+                  scr.Clear();
+                  //presentation
+                  if (presentationTexture != null)
+                      scr.DrawTextureRescaled(0, 0, scr.TextureWidth, scr.TextureHeight, presentationTexture);
+                  scr.PrintCentered(10, "Insert coin to start", true)
                      .PrintCentered(12, GetRoomDescription(), false)
                      .DrawScreen();
                   return TaskStatus.Success;
@@ -1872,7 +1891,7 @@ public class ConfigurationController : MonoBehaviour
               .Do("Process", () =>
               {
                   changeContainerSelection(lightContainer);
-                  LightAdjustColorWidgetByName();
+                  LightAdjustColorWidgets();
 
                   if (inputDictionary["action"])
                   {
