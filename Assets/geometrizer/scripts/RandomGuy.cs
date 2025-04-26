@@ -22,6 +22,10 @@ public class RandomGuy : MonoBehaviour
     [Header("Random Hair Colors")]
     [SerializeField] private List<Color> randomHairColors = new List<Color>();
 
+    [Header("Random Clothing Colors")]
+    [SerializeField] private List<Color> randomClothingColors = new List<Color>();
+    [SerializeField] private GameObject randomColorClothing;
+
     [Header("Random Scale")]
     [SerializeField] private float minScale = 1f;
     [SerializeField] private float maxScale = 1f;
@@ -35,6 +39,7 @@ public class RandomGuy : MonoBehaviour
 
         ApplyMaterialSwaps();
         ApplyHairColorIfNeeded();
+        ApplyClothingColor();
         ApplyRandomScale();
     }
 
@@ -92,6 +97,21 @@ public class RandomGuy : MonoBehaviour
                 Renderer renderer = obj.GetComponent<Renderer>();
                 if (renderer != null && renderer.material != null)
                     renderer.material.color = chosenColor;
+            }
+        }
+    }
+
+    private void ApplyClothingColor()
+    {
+        if (randomColorClothing != null && randomClothingColors.Count > 0)
+        {
+            Renderer renderer = randomColorClothing.GetComponent<Renderer>();
+            if (renderer != null && renderer.material != null)
+            {
+                Color chosenColor = randomClothingColors[UnityEngine.Random.Range(0, randomClothingColors.Count)];
+                renderer.material.color = chosenColor;
+                float hueShift = UnityEngine.Random.Range(-1f, 1f);
+                renderer.material.SetFloat("_HueShift", hueShift);
             }
         }
     }
