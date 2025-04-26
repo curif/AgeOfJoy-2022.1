@@ -22,6 +22,10 @@ public class RandomGuy : MonoBehaviour
     [Header("Random Hair Colors")]
     [SerializeField] private List<Color> randomHairColors = new List<Color>();
 
+    [Header("Random Scale")]
+    [SerializeField] private float minScale = 1f;
+    [SerializeField] private float maxScale = 1f;
+
     private void Start()
     {
         RandomizeCategory(hair);
@@ -31,6 +35,7 @@ public class RandomGuy : MonoBehaviour
 
         ApplyMaterialSwaps();
         ApplyHairColorIfNeeded();
+        ApplyRandomScale();
     }
 
     private void RandomizeCategory(List<GameObject> list)
@@ -89,5 +94,17 @@ public class RandomGuy : MonoBehaviour
                     renderer.material.color = chosenColor;
             }
         }
+    }
+
+    private void ApplyRandomScale()
+    {
+        if (minScale > maxScale)
+        {
+            float temp = minScale;
+            minScale = maxScale;
+            maxScale = temp;
+        }
+        float randomValue = UnityEngine.Random.Range(minScale, maxScale);
+        transform.localScale = Vector3.one * randomValue;
     }
 }
