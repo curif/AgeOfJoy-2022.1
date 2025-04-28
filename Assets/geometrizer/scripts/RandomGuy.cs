@@ -19,6 +19,17 @@ public class RandomGuy : MonoBehaviour
     [Header("Optional Material Swaps")]
     [SerializeField] private List<MaterialSwap> materialSwaps = new List<MaterialSwap>();
 
+    [Header("Random Hair Colors")]
+    [SerializeField] private List<Color> randomHairColors = new List<Color>();
+
+    [Header("Random Clothing Colors")]
+    [SerializeField] private List<Color> randomClothingColors = new List<Color>();
+    [SerializeField] private GameObject randomColorClothing;
+
+    [Header("Random Scale")]
+    [SerializeField] private float minScale = 1f;
+    [SerializeField] private float maxScale = 1f;
+
     private void Start()
     {
         RandomizeCategory(hair);
@@ -27,6 +38,9 @@ public class RandomGuy : MonoBehaviour
         RandomizeCategory(facialHair);
 
         ApplyMaterialSwaps();
+        ApplyHairColorIfNeeded();
+        ApplyClothingColor();
+        ApplyRandomScale();
     }
 
     private void RandomizeCategory(List<GameObject> list)
@@ -63,5 +77,54 @@ public class RandomGuy : MonoBehaviour
             int choice = UnityEngine.Random.Range(0, options.Count);
             renderer.material = options[choice];
         }
+    }
+
+    private void ApplyHairColorIfNeeded()
+    {
+        List<GameObject> activeHair = hair.FindAll(h => h != null && h.activeInHierarchy);
+        List<GameObject> activeFacialHair = facialHair.FindAll(f => f != null && f.activeInHierarchy);
+        if ((activeHair.Count > 0 || activeFacialHair.Count > 0) && randomHairColors.Count > 0)
+        {
+            Color chosenColor = randomHairColors[UnityEngine.Random.Range(0, randomHairColors.Count)];
+            foreach (GameObject obj in activeHair)
+            {
+                Renderer renderer = obj.GetComponent<Renderer>();
+                if (renderer != null && renderer.material != null)
+                    renderer.material.color = chosenColor;
+            }
+            foreach (GameObject obj in activeFacialHair)
+            {
+                Renderer renderer = obj.GetComponent<Renderer>();
+                if (renderer != null && renderer.material != null)
+                    renderer.material.color = chosenColor;
+            }
+        }
+    }
+
+    private void ApplyClothingColor()
+    {
+        if (randomColorClothing != null && randomClothingColors.Count > 0)
+        {
+            Renderer renderer = randomColorClothing.GetComponent<Renderer>();
+            if (renderer != null && renderer.material != null)
+            {
+                Color chosenColor = randomClothingColors[UnityEngine.Random.Range(0, randomClothingColors.Count)];
+                renderer.material.color = chosenColor;
+                float hueShift = UnityEngine.Random.Range(-1f, 1f);
+                renderer.material.SetFloat("_HueShift", hueShift);
+            }
+        }
+    }
+
+    private void ApplyRandomScale()
+    {
+        if (minScale > maxScale)
+        {
+            float temp = minScale;
+            minScale = maxScale;
+            maxScale = temp;
+        }
+        float randomValue = UnityEngine.Random.Range(minScale, maxScale);
+        transform.localScale = Vector3.one * randomValue;
     }
 }
