@@ -8,12 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: MI_Packed_Con_Logo
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: a7f2d1200d334f2498c2b7c0ab635307, type: 3}
   m_Parent: {fileID: 2100000, guid: de6f4a4e6a047af469bbe2ae5934ea21, type: 2}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
+  m_ValidKeywords: []
+  m_InvalidKeywords:
   - _NORMALMAP
-  m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -28,6 +28,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: b3ffad2c8e7020b2dab0cd1f7168cb2c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DiffusePacked:
+        m_Texture: {fileID: 2800000, guid: 9fa0a6acc28120f4ba6110044d0fdf6e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: b435bd455f6b8c547891edec9b2376ba, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -35,5 +39,12 @@ Material:
     m_Ints: []
     m_Floats:
     - _BumpScale: 1
-    m_Colors: []
+    - _MetalA: 0
+    - _SmoothnessA: 0
+    - _SmoothnessB: 0.863
+    - __dirty: 0
+    m_Colors:
+    - _ColorA: {r: 0.90970063, g: 0.9496855, b: 0.22995517, a: 0}
+    - _ColorB: {r: 0.8113207, g: 0.07909087, b: 0.07909087, a: 0}
+    - _UseChannel: {r: 1, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
