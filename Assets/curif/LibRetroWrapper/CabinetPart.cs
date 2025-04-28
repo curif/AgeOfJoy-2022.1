@@ -464,13 +464,29 @@ public class CabinetPart : MonoBehaviour
             emissionTextureScale.y = -1;
         mat.SetTextureScale("_EmissionMap", emissionTextureScale);
 
+        StartCoroutine(CabinetTextureCache.LoadAndCacheAsync(
+            textureFile,
+            tex => {
+                if (tex != null)
+                {
+                    // assign to material, UI, etc.
+                    mat.SetTexture("_EmissionMap", tex);
+                }
+                else
+                {
+                    ConfigManager.WriteConsoleWarning($"[SetEmissionTextureFromFile] Cabinet {gameObject.name} texture error {textureFile}");
+                }
+            }
+        ));
+
+        /*
         // Emission texture
         Texture2D t = LoadTexture(textureFile);
         if (t == null)
             ConfigManager.WriteConsoleError($"Error loading emission texture for {gameObject.name}: {textureFile}");
         else
             mat.SetTexture("_EmissionMap", t);
-
+        */
         return this;
     }
 
@@ -527,11 +543,13 @@ public class CabinetPart : MonoBehaviour
         return SetTextureFromFile(texturePath, material, invertX: invertX, invertY: invertY);
     }
 
+    /*
     // load a texture from disk.
     private static Texture2D LoadTexture(string filePath)
     {
         return CabinetTextureCache.LoadAndCacheTexture(filePath);
     }
+    */
 
     public CabinetPart SetTextureFromFile(string textureFile, Material mat, bool invertX, bool invertY)
     {
@@ -564,6 +582,21 @@ public class CabinetPart : MonoBehaviour
         if (string.IsNullOrEmpty(textureFile))
             return this;
 
+        StartCoroutine(CabinetTextureCache.LoadAndCacheAsync(
+            textureFile,
+            tex => {
+                if (tex != null)
+                {
+                    // assign to material, UI, etc.
+                    m.SetTexture("_MainTex", tex);
+                }
+                else
+                {
+                    ConfigManager.WriteConsoleWarning($"[SetTextureFromFile] Cabinet {gameObject.name} part - texture error {textureFile}");
+                }
+            }
+        ));
+        /*
         Texture2D t = LoadTexture(textureFile);
         if (t == null)
         {
@@ -571,7 +604,7 @@ public class CabinetPart : MonoBehaviour
         }
         else
             m.SetTexture("_MainTex", t);
-
+        */
         return this;
     }
 
