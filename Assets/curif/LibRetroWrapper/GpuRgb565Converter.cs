@@ -2,6 +2,9 @@
 using UnityEngine.Rendering; // Required for RenderTextureFormat
 using UnityEngine.Experimental.Rendering;
 using System; // Required for Action
+using System.Diagnostics;
+using Unity.VisualScripting;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -37,28 +40,60 @@ public class GpuRgb565Converter : MonoBehaviour
         }
     }
 
-    public Texture2D ConvertToRgb565(Texture src)
+    public Texture2D ConvertToRgb565(Texture2D src)
     {
-#if UNITY_ANDROID && !UNITY_EDITOR
+        /*
+        Stopwatch stopwatch = new Stopwatch();
+        Texture2D ret, ret2;
+        float sizeOrig = CabinetTextureCache.CalculateManualSizeBytes(src);
+        stopwatch.Start();
+        ret = ConvertRgb565ViaReadback(src);
+        stopwatch.Stop();
+        long elapsed1 = stopwatch.ElapsedMilliseconds/1000;
+        float sizeFinal = CabinetTextureCache.CalculateManualSizeBytes(ret);
+            
+        stopwatch.Restart();
+        ret2 = ConvertTextureToRgb565Texture2DSync(src);
+        stopwatch.Stop();
+        long elapsed2 = stopwatch.ElapsedMilliseconds / 1000;
+        float sizeFinal2 = CabinetTextureCache.CalculateManualSizeBytes(ret2);
 
-        // 1) First, check whether we can do a non-stalling GPU copy into RGB565:
-        bool supportsRtToTex = (SystemInfo.copyTextureSupport & CopyTextureSupport.RTToTexture) != 0;
-        bool supportsRgb565RT = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RGB565);
+        ConfigManager.WriteConsole($"[ConvertToRgb565] RGB565 time analysis {src.name} - Original size: {sizeOrig}\n" +
+            $"ConvertRgb565ViaReadback              size: {sizeFinal} time: {elapsed1} \n" +
+            $"ConvertTextureToRgb565Texture2DSync   size: {sizeFinal2} time: {elapsed2} \n" +
+            $"Gain: {sizeOrig - sizeFinal} bytes");
+        */
 
-        if (supportsRtToTex && supportsRgb565RT)
-        {
-            // On Quest (with Vulkan or GLES3.1+), this will be true:
-            return ConvertRgb565ViaCopy(src);
-        }
-        else
-        {
-            // In the Editor on Windows, or on GLES3.0 devices, fall back to the sync path:
-            return ConvertTextureToRgb565Texture2DSync(src);
-        }
-#else
-        // All other platforms (including Windows Editor) always fall back:
-        return ConvertTextureToRgb565Texture2DSync(src);
-#endif
+
+        return ConvertRgb565ViaReadback(src);
+
+
+
+        /*
+        #if UNITY_ANDROID && !UNITY_EDITOR
+
+                // 1) First, check whether we can do a non-stalling GPU copy into RGB565:
+                bool supportsRtToTex = (SystemInfo.copyTextureSupport & CopyTextureSupport.RTToTexture) != 0;
+                bool supportsRgb565RT = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RGB565);
+
+                if (supportsRtToTex && supportsRgb565RT)
+                {
+                    // On Quest (with Vulkan or GLES3.1+), this will be true:
+                    return ConvertRgb565ViaCopy(src);
+                }
+                else
+                {
+                    // In the Editor on Windows, or on GLES3.0 devices, fall back to the sync path:
+                    return ConvertTextureToRgb565Texture2DSync(src);
+                }
+        #else
+
+                // All other platforms (including Windows Editor) always fall back:
+                //return ConvertRgb565ViaCopy(src); //R5G6B5_UNormPack16 is not supported on this platform.
+                return ConvertTextureToRgb565Texture2DSync(src);
+
+        #endif
+        */
     }
 
 
@@ -93,6 +128,50 @@ public class GpuRgb565Converter : MonoBehaviour
             return false;
         }
     }
+
+    //slower than ConvertRgb565ViaCopy but it is compatible.
+    public Texture2D ConvertRgb565ViaReadback(Texture src)
+    {
+        InitializeMaterial();
+
+        // Step 1: Render into a standard format (like ARGB32)
+        var rt = RenderTexture.GetTemporary(src.width, src.height, 0, RenderTextureFormat.ARGB32);
+        RenderTexture.active = rt;
+        Graphics.Blit(src, rt, m_ConversionMaterial);
+
+        // Step 2: Read back pixels into RGB565 texture
+        var tex = new Texture2D(src.width, src.height, TextureFormat.RGB565, true, true);
+        tex.ReadPixels(new Rect(0, 0, src.width, src.height), 0, 0);
+        tex.Apply(updateMipmaps: true, makeNoLongerReadable: true);
+
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(rt);
+        return tex;
+    }
+
+    //This version uses CPU.
+    //cant use  RenderTexture.active = rt;
+    public void ConvertRgb565ViaReadbackAsync(Texture src, Action<Texture2D> onDone)
+    {
+        InitializeMaterial();
+
+        var rt = RenderTexture.GetTemporary(src.width, src.height, 0, RenderTextureFormat.ARGB32);
+        Graphics.Blit(src, rt, m_ConversionMaterial);
+
+        AsyncGPUReadback.Request(rt, 0, request =>
+        {
+            Texture2D tex = new Texture2D(src.width, src.height, TextureFormat.RGB565, true, true);
+            tex.LoadRawTextureData(request.GetData<byte>());
+            tex.Apply(updateMipmaps: true, makeNoLongerReadable: true);
+
+            onDone?.Invoke(tex);
+            RenderTexture.ReleaseTemporary(rt);
+        });
+    }
+
+
+
+    //great, all GPU but shows textures all white.
     public Texture2D ConvertRgb565ViaCopy(Texture src)
     {
         InitializeMaterial();
@@ -107,29 +186,39 @@ public class GpuRgb565Converter : MonoBehaviour
         };
 
         var rt = RenderTexture.GetTemporary(desc);
+        try
+        {
+            // 2) Blit your source into level-0 of the RT
+            Graphics.Blit(src, rt, m_ConversionMaterial);
 
-        // 2) Blit your source into level-0 of the RT
-        Graphics.Blit(src, rt, m_ConversionMaterial);
+            // 3) Manually regenerate the mips on the GPU
+            rt.GenerateMips(); 
 
-        // 3) Manually regenerate the mips on the GPU
-        //    (RenderTexture.GenerateMips is the instance method you call here)
-        rt.GenerateMips();  // :contentReference[oaicite:0]{index=0}
+            // 4) Create your Texture2D with mipChain=true
+            bool isLinear = (QualitySettings.activeColorSpace == ColorSpace.Linear);
+            var dst = new Texture2D(src.width, src.height,
+                                    TextureFormat.RGB565,
+                                    /*mipChain*/ true,
+                                    isLinear);
 
-        // 4) Create your Texture2D with mipChain=true
-        bool isLinear = (QualitySettings.activeColorSpace == ColorSpace.Linear);
-        var dst = new Texture2D(src.width, src.height,
-                                TextureFormat.RGB565,
-                                /*mipChain*/ true,
-                                isLinear);
+            // 5) Copy *all* levels (Unity will match mip counts automatically)
+            Graphics.CopyTexture(rt, dst);  // GPU→GPU, non-blocking
 
-        // 5) Copy *all* levels (Unity will match mip counts automatically)
-        Graphics.CopyTexture(rt, dst);  // GPU→GPU, non-blocking
-
-        // 6) Upload the GPU texture into Unity and discard the CPU-side copy
-        dst.Apply(updateMipmaps: false, makeNoLongerReadable: true);
-
-        RenderTexture.ReleaseTemporary(rt);
-        return dst;
+            // 6) Upload the GPU texture into Unity and discard the CPU-side copy
+            dst.Apply(updateMipmaps: false, makeNoLongerReadable: true);
+            
+            return dst;
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleException("[GpuRgb565Converter] ConvertRgb565ViaCopy.", ex);
+            return null;
+        }
+        finally
+        {
+            // in C#, if you return inside a try, the finally still executes properly.
+            RenderTexture.ReleaseTemporary(rt);
+        }
     }
 
     /// <summary>
@@ -264,7 +353,79 @@ public class GpuRgb565Converter : MonoBehaviour
 
         return resultTex;
     }
+    public void ConvertTextureToRgb565Texture2DAsync(Texture sourceInputTexture, Action<Texture2D> onCompleted)
+    {
+        if (sourceInputTexture == null)
+        {
+            sourceInputTexture = this.sourceTexture;
+            if (sourceInputTexture == null)
+            {
+                ConfigManager.WriteConsoleError("[ConvertTextureToRgb565Texture2DAsync] sourceInputTexture is null.");
+                onCompleted?.Invoke(null);
+                return;
+            }
+        }
+
+        if (!InitializeMaterial())
+        {
+            onCompleted?.Invoke(null);
+            return;
+        }
+
+        if (QualitySettings.activeColorSpace != ColorSpace.Linear)
+        {
+            ConfigManager.WriteConsoleWarning("[ConvertTextureToRgb565Texture2DAsync] Color space is not Linear.");
+        }
+
+        var width = sourceInputTexture.width;
+        var height = sourceInputTexture.height;
+        var intermediateFormat = RenderTextureFormat.ARGB32;
+        var readWrite = (QualitySettings.activeColorSpace == ColorSpace.Linear)
+            ? RenderTextureReadWrite.Linear
+            : RenderTextureReadWrite.sRGB;
+
+        RenderTexture tempRT = RenderTexture.GetTemporary(width, height, 0, intermediateFormat, readWrite);
+        Graphics.Blit(sourceInputTexture, tempRT, m_ConversionMaterial);
+
+        AsyncGPUReadback.Request(tempRT, 0, request =>
+        {
+            RenderTexture.ReleaseTemporary(tempRT);
+
+            if (request.hasError)
+            {
+                ConfigManager.WriteConsoleError("[ConvertTextureToRgb565Texture2DAsync] AsyncGPUReadback failed.");
+                onCompleted?.Invoke(null);
+                return;
+            }
+
+            var mipCount = Mathf.FloorToInt(Mathf.Log(Mathf.Max(width, height), 2f)) + 1;
+            mipCount = Mathf.Max(1, mipCount);
+            bool isLinear = (QualitySettings.activeColorSpace == ColorSpace.Linear);
+
+            Texture2D resultTex = new Texture2D(width, height, TextureFormat.RGB565, mipCount > 1, isLinear);
+
+            if (mipCount > 1)
+            {
+                resultTex.filterMode = FilterMode.Trilinear;
+                resultTex.mipMapBias = -0.5f;
+            }
+            else
+            {
+                resultTex.filterMode = FilterMode.Bilinear;
+                resultTex.mipMapBias = 0f;
+            }
+
+            resultTex.LoadRawTextureData(request.GetData<byte>());
+            
+            resultTex.Apply(updateMipmaps: true, makeNoLongerReadable: true);
+
+            ConfigManager.WriteConsole("[ConvertTextureToRgb565Texture2DAsync] Async conversion completed.");
+            onCompleted?.Invoke(resultTex);
+        });
+    }
+
 }
+
 
 
 // --- Optimized Editor Script ---

@@ -61,12 +61,22 @@ public static class CabinetTextureCache
 
             // Grab the decoded RGBA32 texture
             Texture2D texTmp = DownloadHandlerTexture.GetContent(www);
+            texTmp.name = path;
             texTmp.filterMode = FilterMode.Trilinear;
             texTmp.mipMapBias = -0.3f;
 
             //size check
             float originalSizeInBytes = CalculateManualSizeBytes(texTmp);
-            bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+            //bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+
+            /*
+             * The conversion to RGB565 wasn't possible for
+             * Meta Quest. Even when the docs
+             * says it suport RGB565 the shader conversion didn't 
+             * work as expected and the GPU was 
+             * blocked
+             */
+            bool useOriginal = true;
             if (useOriginal)
             {
                 ConfigManager.WriteConsole($"[LoadAndCacheAsync] useOriginal by size {originalSizeInBytes} or player conf {path}");
@@ -134,11 +144,20 @@ public static class CabinetTextureCache
                 gpuRgb565Converter = go.GetComponent<GpuRgb565Converter>();
             }
 
-            Texture2D finalTex;
-            finalTex = gpuRgb565Converter.ConvertToRgb565(texTmp);         // picks copy‐vs‐sync for you
+            Texture2D finalTex = null;
+            bool done = false;
+            gpuRgb565Converter.ConvertTextureToRgb565Texture2DAsync(texTmp, (converted) => {
+                finalTex = converted;
+                done = true;
+            });
+
+            // Wait until the async readback finishes
+            yield return new WaitUntil(() => done);
+
+            //finalTex = gpuRgb565Converter.ConvertToRgb565(texTmp);         // picks copy‐vs‐sync for you
             UnityEngine.Object.Destroy(texTmp);
 
-            yield return null;
+            //yield return null;
 
             // Cache it
             finalTex.name = "RGB565-" + path;
@@ -149,7 +168,7 @@ public static class CabinetTextureCache
             onComplete?.Invoke(finalTex);
         }
     }
-    
+    /*
     // Method to load and cache a texture
     public static Texture2D LoadAndCacheTexture(string path)
     {
@@ -252,12 +271,12 @@ public static class CabinetTextureCache
                             //hasAlphaUsed = GpuAlphaCheck.HasAnyTransparencyGpu(texTmp);
                             hasAlphaUsed = GpuAlphaCheckCompute.HasAnyTransparencyComputeSync(texTmp);
                             
-                            /* has alpha check
-                            Color32[] pixels = texTmp.GetPixels32();
-                            bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
-                            if (hasAlphaUsed != hasAlphaUsedToCheck)
-                                throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
-                            */
+                            // has alpha check
+                            //Color32[] pixels = texTmp.GetPixels32();
+                            //bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
+                            //if (hasAlphaUsed != hasAlphaUsedToCheck)
+                            //    throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
+                            //
                             ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: GPU Alpha Check Result: {hasAlphaUsed}");
                         }
                         catch (System.Exception gpuCheckError)
@@ -380,6 +399,7 @@ public static class CabinetTextureCache
         }
         return GetCachedTexture(path);
     }
+    */
 
     private static void keepOriginalForVR(Texture2D tex, string path, string prefix = "ORIGINAL")
     {

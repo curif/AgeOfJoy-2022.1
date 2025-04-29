@@ -238,7 +238,7 @@ public class ConfigInformation
         public static readonly string forcedShaderDefault = null;
 
         public static readonly float screenGlowIntensityDefault = 0f;
-        public static readonly bool originalTexturesDefault = false;
+        public static readonly bool originalTexturesDefault = true;
 
         [YamlMember(Alias = "screen-glow-intensity", ApplyNamingConventions = false)]
         public float screenGlowIntensity = screenGlowIntensityDefault;
