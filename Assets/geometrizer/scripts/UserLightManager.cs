@@ -18,7 +18,7 @@ public class UserLightManager : MonoBehaviour
         }
     }
 
-    public void ApplyUserLightSettings(RGBColor color, float intensity, float transitionDuration = 1f)
+    public void ApplyUserLightSettings(RGBColor color, float? intensity = null, float transitionDuration = 1f)
     {
         ConfigManager.WriteConsole($"[UserLightManager] ApplyUserLightSettings called with values: " +
                               $"Color = {color}, Intensity: {intensity}, Duration = {transitionDuration}");
@@ -30,7 +30,13 @@ public class UserLightManager : MonoBehaviour
         lightTransitionCoroutine = StartCoroutine(TransitionLightSettings(color, intensity, transitionDuration));
     }
 
-    private IEnumerator TransitionLightSettings(RGBColor newColor, float newIntensity, float duration)
+    public void ApplyUserLightSettings(Color color, float? intensity = null, float transitionDuration = 1f)
+    {
+        RGBColor c = new RGBColor(color, 0);
+        ApplyUserLightSettings(c, intensity, transitionDuration);
+    }
+
+    private IEnumerator TransitionLightSettings(RGBColor newColor, float? newIntensity, float duration)
     {
         if (targetLight == null) yield break;
 
@@ -46,7 +52,10 @@ public class UserLightManager : MonoBehaviour
         if (newColor == null)
             color = initialColor;
         else
-            color = newColor.getColor();
+            color = new Color(newColor.r, newColor.g, newColor.b);
+
+        if (newIntensity == null)
+            newIntensity = initialIntensity;
 
         if (initialColor == color && initialIntensity == newIntensity)
             yield break;
@@ -54,7 +63,7 @@ public class UserLightManager : MonoBehaviour
         while (time < duration)
         {
             float t = time / duration;
-            targetLight.intensity = Mathf.Lerp(initialIntensity, newIntensity, t);
+            targetLight.intensity = Mathf.Lerp(initialIntensity, (float) newIntensity, t);
             targetLight.color = Color.Lerp(initialColor, color, t);
             //targetLight.transform.rotation = Quaternion.Slerp(initialRotation, targetRotation, t);
 
@@ -63,7 +72,7 @@ public class UserLightManager : MonoBehaviour
         }
 
         // Ensure final values are set
-        targetLight.intensity = newIntensity;
+        targetLight.intensity = (float)newIntensity;
         targetLight.color = color;
         //targetLight.transform.rotation = targetRotation;
 

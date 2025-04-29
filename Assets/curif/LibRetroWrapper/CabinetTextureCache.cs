@@ -1,4 +1,4 @@
-//#define GAMMA_FIX
+﻿//#define GAMMA_FIX
 //#define TEXTURE_DEBUG
 //#define TEXTURE_SAVE
 //#define RESCALE
@@ -13,7 +13,9 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine.Experimental.Rendering;
-using UnityEngine.UIElements;
+using UnityEngine.Networking;  // for UnityWebRequest & DownloadHandlerTexture
+using System.Collections; 
+
 public static class CabinetTextureCache
 {
 
@@ -22,6 +24,151 @@ public static class CabinetTextureCache
     private static ResourceCache<string, Texture2D> CachedTextures = null;
     private static GpuRgb565Converter gpuRgb565Converter = null;
 
+    //convert textures > X mb
+    private const float ORIGINAL_SIZE_THRESHOLD = 5f * 1024 * 1024;
+    public const float CACHE_SIZE = 1024;
+    public const float CACHE_SIZE_Q3 = 1536f;
+
+    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete)
+    {
+        if (IsTextureCached(path))
+        {
+            onComplete?.Invoke(GetCachedTexture(path));
+            yield break;
+        }
+
+        if (CachedTextures == null)
+        {
+            // lazy creation:
+            float cacheSize = CACHE_SIZE;
+            if (DeviceController.IsQ3)
+                cacheSize = CACHE_SIZE_Q3;
+            CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", cacheSize);
+            ConfigManager.WriteConsole($"[LoadAndCacheAsync] created cache textures size: {cacheSize}");
+        }
+
+        //load file
+        using (var www = UnityWebRequestTexture.GetTexture("file://" + path, /*nonReadable=*/ true))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                ConfigManager.WriteConsoleError($"Failed to load {path}: {www.error}");
+                onComplete?.Invoke(null);
+                yield break;
+            }
+
+            // Grab the decoded RGBA32 texture
+            Texture2D texTmp = DownloadHandlerTexture.GetContent(www);
+            texTmp.name = path;
+            texTmp.filterMode = FilterMode.Trilinear;
+            texTmp.mipMapBias = -0.3f;
+
+            //size check
+            float originalSizeInBytes = CalculateManualSizeBytes(texTmp);
+            //bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+
+            /*
+             * The conversion to RGB565 wasn't possible for
+             * Meta Quest. Even when the docs
+             * says it suport RGB565 the shader conversion didn't 
+             * work as expected and the GPU was 
+             * blocked
+             */
+            bool useOriginal = true;
+            if (useOriginal)
+            {
+                ConfigManager.WriteConsole($"[LoadAndCacheAsync] useOriginal by size {originalSizeInBytes} or player conf {path}");
+
+                texTmp.name = "ORIGINALBYSIZE-" + path;
+                Texture2D cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
+                if (cached != texTmp)
+                {
+                    UnityEngine.Object.Destroy(texTmp);
+                    texTmp = cached;
+                }
+                onComplete?.Invoke(texTmp);
+                yield break;
+            }
+
+            yield return null;
+
+            bool hasAlphaUsed = false; // Default assumption or based on format first?
+            if (GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat))
+            {
+                // Use the GPU check instead of GetPixels32 + CPU loop or Job
+                // Note: texTmp MUST be readable for Graphics.Blit to work correctly from it.
+                // LoadImage already makes it readable, so we should be okay here.
+                // If texTmp could be non-readable here, you'd need to handle that.
+                try
+                {
+
+                    //hasAlphaUsed = GpuAlphaCheck.HasAnyTransparencyGpu(texTmp);
+                    hasAlphaUsed = GpuAlphaCheckCompute.HasAnyTransparencyComputeSync(texTmp);
+
+                    /* has alpha check
+                    Color32[] pixels = texTmp.GetPixels32();
+                    bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
+                    if (hasAlphaUsed != hasAlphaUsedToCheck)
+                        throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
+                    */
+                    ConfigManager.WriteConsole($"[LoadAndCacheAsync] {path}: GPU Alpha Check Result: {hasAlphaUsed}");
+                }
+                catch (System.Exception gpuCheckError)
+                {
+                    ConfigManager.WriteConsoleError($"[LoadAndCacheAsync] {path}: GPU Alpha Check texfailed: {gpuCheckError.Message}. Assuming alpha is used.");
+                    hasAlphaUsed = true; // Fail safe: assume alpha is used if check fails
+                }
+            }
+
+            if (hasAlphaUsed)
+            {
+                ConfigManager.WriteConsole($"[LoadAndCacheAsync] useOriginal hasAlphaUsed {path}");
+
+                texTmp.name = "ALPHA-" + path;
+                Texture2D cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
+                if (cached != texTmp)
+                {
+                    UnityEngine.Object.Destroy(texTmp);
+                    texTmp = cached;
+                }
+                onComplete?.Invoke(texTmp);
+
+                yield break;
+            }
+
+            if (gpuRgb565Converter == null)
+            {
+                var go = GameObject.Find("FixedObject");
+                gpuRgb565Converter = go.GetComponent<GpuRgb565Converter>();
+            }
+
+            Texture2D finalTex = null;
+            bool done = false;
+            gpuRgb565Converter.ConvertTextureToRgb565Texture2DAsync(texTmp, (converted) => {
+                finalTex = converted;
+                done = true;
+            });
+
+            // Wait until the async readback finishes
+            yield return new WaitUntil(() => done);
+
+            //finalTex = gpuRgb565Converter.ConvertToRgb565(texTmp);         // picks copy‐vs‐sync for you
+            UnityEngine.Object.Destroy(texTmp);
+
+            //yield return null;
+
+            // Cache it
+            finalTex.name = "RGB565-" + path;
+            float sizeMB = CalculateManualSizeBytes(finalTex) / (1024f * 1024f);
+            CachedTextures.Add(path, finalTex, sizeMB);
+
+            // And hand it back
+            onComplete?.Invoke(finalTex);
+        }
+    }
+    /*
     // Method to load and cache a texture
     public static Texture2D LoadAndCacheTexture(string path)
     {
@@ -95,69 +242,95 @@ public static class CabinetTextureCache
                     
                     // Create and load texture with original data, ensuring it's readable
                     Texture2D texTmp = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
-                    texTmp.name = "original-" + path;
 
                     texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
-                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{CalculateManualSizeBytes(texTmp)}");
+                    float originalSizeInBytes = CalculateManualSizeBytes(texTmp);
+                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{originalSizeInBytes}");
 
-                    //verify if the texture is using alpha channel.
-                    //two different methods, jobs are better for large textures.
-                    Color32[] pixels = texTmp.GetPixels32();
-                    bool hasAlphaUsed = GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat) && 
-                                        texTmp.width > 1024 ? IsAlphaUsedJob(pixels) : IsAlphaUsed(pixels);
-                    
-                    if (!DeviceController.originalTextures)
+                    bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+                    if (useOriginal)
                     {
-                        // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
-                        if (!hasAlphaUsed)
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] useOriginal {path}");
+
+                        tex = texTmp;
+                        keepOriginalForVR(tex, path);
+
+                        CachedTextures.Add(path, tex, originalSizeInBytes / (1024f * 1024f));
+                        return tex;
+                    }
+
+                    bool hasAlphaUsed = false; // Default assumption or based on format first?
+                    if (GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat))
+                    {
+                        // Use the GPU check instead of GetPixels32 + CPU loop or Job
+                        // Note: texTmp MUST be readable for Graphics.Blit to work correctly from it.
+                        // LoadImage already makes it readable, so we should be okay here.
+                        // If texTmp could be non-readable here, you'd need to handle that.
+                        try
                         {
-                            tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp, 12);
-                            if (tex == null)
-                            {
-                                // no RGB565 conversion, no alpha -> delete alpha channel.
-                                tex = removeAlpha(path, texTmp, pixels);
-                                UnityEngine.Object.DestroyImmediate(texTmp);
-                            }
-                            else
-                            {
-                                tex.name = "RGB565-" + path;
-                                UnityEngine.Object.DestroyImmediate(texTmp);
-                            }
+                            //hasAlphaUsed = GpuAlphaCheck.HasAnyTransparencyGpu(texTmp);
+                            hasAlphaUsed = GpuAlphaCheckCompute.HasAnyTransparencyComputeSync(texTmp);
+                            
+                            // has alpha check
+                            //Color32[] pixels = texTmp.GetPixels32();
+                            //bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
+                            //if (hasAlphaUsed != hasAlphaUsedToCheck)
+                            //    throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
+                            //
+                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: GPU Alpha Check Result: {hasAlphaUsed}");
                         }
-                        else
+                        catch (System.Exception gpuCheckError)
                         {
-                            //original texture when the image hasAlpha and it is in use.
-                            tex = texTmp;
-                            tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
-                            tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
-                            tex.Apply(true, true);
+                            ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] {path}: GPU Alpha Check texfailed: {gpuCheckError.Message}. Assuming alpha is used.");
+                            hasAlphaUsed = true; // Fail safe: assume alpha is used if check fails
                         }
                     }
                     else
                     {
-                        //the user decide to keep the original textures.
-                        if (!hasAlphaUsed)
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Format {texTmp.graphicsFormat} has no alpha channel.");
+                        hasAlphaUsed = false;
+                    }
+
+                    // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
+                    if (!hasAlphaUsed)
+                    {
+                        //tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                        //tex = gpuRgb565Converter.ConvertRgb565ViaCopy(texTmp); //must be supported by the platform. Windows for example can't support this format.
+                        tex = gpuRgb565Converter.ConvertToRgb565(texTmp);
+                        
+                        if (tex == null)
                         {
-                            tex = removeAlpha(path, texTmp, pixels);
-                            UnityEngine.Object.DestroyImmediate(texTmp);
+                            // no RGB565 conversion, no alpha -> delete alpha channel.
+                            //tex = removeAlpha(path, texTmp, pixels);
+                            Texture2D convertedTex = GpuAlphaCheck.RemoveAlphaGpu(texTmp);
+                            if (convertedTex != null)
+                            {
+                                // Success! Destroy the temporary source texture
+                                UnityEngine.Object.DestroyImmediate(texTmp);
+                                tex = convertedTex; // Assign the result
+                                tex.name = "RGB24-" + path; // Set name
+                                ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] {path}:ConvertTextureToRgb565Texture2DSync texfailed and Removed alpha using GPU.");
+                            }
+                            else
+                            {
+                                ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] not originalTextures {path}: ConvertTextureToRgb565Texture2DSync texfailed and GPU removeAlpha texfailed.");
+                                tex = texTmp;
+                                keepOriginalForVR(tex, path, "ERRGPU");
+                            }
                         }
                         else
                         {
-                            //original texture when the image hasAlpha and it is in use.
-                            tex = texTmp;
-                            tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
-                            tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
-                            tex.Apply(true, true);
+                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}:ConvertTextureToRgb565Texture2DSync ok.");
+                            tex.name = "RGB565-" + path;
+                            UnityEngine.Object.DestroyImmediate(texTmp);
                         }
                     }
-
-
-                    /*
-                     * A negative mipmap bias (e.g., -0.3f, -0.5f, -0.7f) sharpens the texture by delaying the switch to lower mipmap levels, but excessive negative bias can reduce performance. Community feedback suggests trying values like -0.5f or -0.7f, but results may vary, and  performance impacts should be monitored.
-                       Action: If flickering persists, experiment with different mipmap bias values (e.g., -0.5f, -0.7f), but be cautious of performance impacts.
-                    */
-                    //tex.mipMapBias = -0.3f; // Recommended by Meta for high-detail textures
-                     // Final apply with mipmaps, now safe to make non-readable
+                    else
+                    {
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] not originalTextures {path}:  hasAlphaUsed back to original.");
+                        tex = texTmp;
+                        keepOriginalForVR(tex, path, "ALPHA");
+                    }
 
 #if RESCALE
                     int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
@@ -226,7 +399,20 @@ public static class CabinetTextureCache
         }
         return GetCachedTexture(path);
     }
+    */
 
+    private static void keepOriginalForVR(Texture2D tex, string path, string prefix = "ORIGINAL")
+    {
+        tex.name = prefix + "-" + path;
+
+        tex.filterMode = FilterMode.Trilinear; // Provides better mip transitions in VR
+        tex.mipMapBias = -0.5f; // Recommended by Meta for high-detail textures
+        /*
+         * normally LoadImage() on a texture constructed with mipmaps will auto-generate them (on most platforms), and so you don’t have to manually call Apply for that purpose. Indeed, Unity’s API specifically says after Texture2D.LoadImage(...), “Texture will be uploaded to the GPU automatically; there’s no need to call Apply.”​
+.          In short: for a Texture2D created with mipmaps, calling LoadImage is enough to send it (and its mips) to the GPU. Changing filterMode or                 mipMapBias after that does not require another Apply – those are sampler settings that take effect immediately. You would only call Apply                   (true,true) if you had used SetPixels/SetPixelData on the CPU and want to regenerate mipmaps or to release the CPU copy. In typical dynamic-        load use (just loading a PNG/JPG byte array), an extra Apply isn’t necessary​
+        */
+        //tex.Apply(true, true);
+    }
     private static Texture2D removeAlpha(string path, Texture2D texTmp, Color32[] pixels)
     {
         //remove alpha channel as it is unused

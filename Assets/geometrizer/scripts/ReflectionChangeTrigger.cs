@@ -154,7 +154,8 @@ public class ReflectionChangeTrigger : MonoBehaviour
 
     void change()
     {
-        if (userLightManager != null)
+        if (userLightManager != null &&
+            roomConfiguration.Configuration?.light != null)
         {
             userLightManager.ApplyUserLightSettings(roomConfiguration.Configuration.light.color, roomConfiguration.Configuration.light.intensity);
         }

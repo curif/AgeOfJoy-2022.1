@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -33,6 +34,7 @@ public class ResourceCache<K, V> : IResourceCache
     private Dictionary<K, float> sizeMap = new Dictionary<K, float>(); // Tracks size of each item
     private LinkedList<K> lruList = new LinkedList<K>(); // Tracks usage order
     string Name;
+    private readonly object locker = new object();
 
     internal ResourceCache(string name, float maxSizeInMB = 512f)
     {
@@ -43,85 +45,130 @@ public class ResourceCache<K, V> : IResourceCache
 
     public void FreeResources()
     {
-        foreach (var pair in cache)
+        lock (locker)
         {
-            DestroyIfUnityObject(pair.Value);
+            foreach (var pair in cache)
+            {
+                DestroyIfUnityObject(pair.Value);
+            }
+            cache.Clear();
+            sizeMap.Clear();
+            lruList.Clear();
+            currentSizeInMB = 0f;
         }
-        cache.Clear();
-        sizeMap.Clear();
-        lruList.Clear();
-        currentSizeInMB = 0f;
     }
+
 
     public V Get(K key)
     {
-        if (key != null && cache.ContainsKey(key))
+        if (key == null) return default;
+
+        lock (locker)
         {
-            // Move to front (most recently used)
-            lruList.Remove(key);
-            lruList.AddFirst(key);
-            return cache[key];
+            if (cache.TryGetValue(key, out var value))
+            {
+                lruList.Remove(key);
+                lruList.AddFirst(key);
+                return value;
+            }
+            return default;
         }
-        return default;
     }
 
     //is the cache exeeded in case of add the element with sizeInMB mb?
     public bool CacheExceeded(float sizeInMB)
     {
-        return currentSizeInMB + sizeInMB > maxSizeInMB && lruList.Count > 0;
+        lock (locker)
+        {
+            return currentSizeInMB + sizeInMB > maxSizeInMB && lruList.Count > 0;
+        }
     }
 
-    public void Add(K key, V value, float sizeInMB)
+    public V Add(K key, V value, float sizeInMB, bool replaceIfExists = false)
     {
-        if (key == null || value == null || sizeInMB < 0f) return; // Enforce valid size
+        if (key == null || value == null || sizeInMB < 0f) return value;
 
-        if (cache.ContainsKey(key))
+        lock (locker)
         {
-            // Update existing entry
-            float oldSize = sizeMap[key];
-            currentSizeInMB -= oldSize;
-            currentSizeInMB += sizeInMB;
-
-            lruList.Remove(key);
-            lruList.AddFirst(key);
-            cache[key] = value;
-            sizeMap[key] = sizeInMB;
-        }
-        else
-        {
-            if (CacheExceeded(sizeInMB))
-                ConfigManager.WriteConsoleWarning($">>> Cache {this.Name} Exceeded adding key: {key} \n size: {sizeInMB}MB \n Actual: {currentSizeInMB}\n Max: {maxSizeInMB}MB");
-
-            // Evict items if necessary
-            while (CacheExceeded(sizeInMB))
+            if (cache.ContainsKey(key))
             {
-                K lruKey = lruList.Last.Value;
-                lruList.RemoveLast();
-                DestroyIfUnityObject(cache[lruKey]);
-                currentSizeInMB -= sizeMap[lruKey];
-                cache.Remove(lruKey);
-                sizeMap.Remove(lruKey);
-            }
+                if (replaceIfExists)
+                {
+                    DestroyIfUnityObject(cache[key]);
 
-            // Add new entry
-            cache.Add(key, value);
-            sizeMap.Add(key, sizeInMB);
-            lruList.AddFirst(key);
-            currentSizeInMB += sizeInMB;
+                    float oldSize = sizeMap[key];
+                    currentSizeInMB -= oldSize;
+
+                    lruList.Remove(key);
+
+                    currentSizeInMB += sizeInMB;
+                    lruList.AddFirst(key);
+                    cache[key] = value;
+                    sizeMap[key] = sizeInMB;
+
+                    if (oldSize > sizeInMB)
+                    {
+                        makeSpaceFor(oldSize - sizeInMB);
+                    }
+                }
+            }
+            else
+            {
+                /* unnecesary message because this is usual*/
+                // if (CacheExceeded(sizeInMB))
+                //  ConfigManager.WriteConsole($"[ResourceCache] {this.Name} Exceeded adding key: {key} \n size: {sizeInMB}MB \n Actual: {currentSizeInMB}\n Max: {maxSizeInMB}MB");
+
+                Status();
+
+                makeSpaceFor(sizeInMB);
+
+                cache.Add(key, value);
+                sizeMap.Add(key, sizeInMB);
+                lruList.AddFirst(key);
+                currentSizeInMB += sizeInMB;
+            }
         }
+
+        return cache[key];
+    }
+
+    private void makeSpaceFor(float sizeInMB)
+    {
+        while (CacheExceeded(sizeInMB))
+        {
+            K lruKey = lruList.Last.Value;
+            lruList.RemoveLast();
+            DestroyIfUnityObject(cache[lruKey]);
+            currentSizeInMB -= sizeMap[lruKey];
+            ConfigManager.WriteConsole($"[ResourceCache] {this.Name} \n removed {lruKey} of size: {sizeMap[lruKey]}MB");
+            cache.Remove(lruKey);
+            sizeMap.Remove(lruKey);
+
+        }
+    }
+
+    public void Status()
+    {
+        ConfigManager.WriteConsole($"[ResourceCache] {this.Name} \n size: {currentSizeInMB}MB \n Count: {lruList.Count}");
     }
 
     public void Remove(K key)
     {
-        if (key != null && cache.ContainsKey(key))
+        if (key == null) return;
+
+        lock (locker)
         {
-            lruList.Remove(key);
-            DestroyIfUnityObject(cache[key]);
-            currentSizeInMB -= sizeMap[key];
-            cache.Remove(key);
-            sizeMap.Remove(key);
+            if (cache.ContainsKey(key))
+            {
+                lruList.Remove(key);
+                DestroyIfUnityObject(cache[key]);
+                currentSizeInMB -= sizeMap[key];
+                cache.Remove(key);
+                sizeMap.Remove(key);
+            }
         }
     }
+
 
     public void Clear()
     {
@@ -137,40 +184,51 @@ public class ResourceCache<K, V> : IResourceCache
 
     public bool ContainsKey(K key)
     {
-        return key != null && cache.ContainsKey(key);
+        if (key == null) return false;
+        lock (locker)
+        {
+            return cache.ContainsKey(key);
+        }
     }
-
     private void DestroyIfUnityObject(V value)
     {
-        if (value is Object unityObj && unityObj != null)
+        if (value is UnityEngine.Object unityObj && unityObj != null)
         {
             if (!unityObj.Equals(null))
             {
-                Object.DestroyImmediate(unityObj);
+                /*
+                DestroyImmediate is dangerous in play mode and recommended only in Editor scripts.
+                On Meta Quest, you want the safe version(Destroy), which schedules destruction properly for next frame.
+                */
+                ConfigManager.WriteConsole($"[ResourceCache] destroying {unityObj}");
+
+                //UnityEngine.Object.DestroyImmediate(unityObj);
+                UnityEngine.Object.Destroy(unityObj);
             }
         }
     }
     public void FreeHalfResources()
     {
-        if (lruList.Count <= 1 || currentSizeInMB <= 0f) // No need to process if empty or no size
-            return;
-
-        float targetSizeToFree = currentSizeInMB / 2f; // Target amount of MBs to free
-        float freedSize = 0f;
-
-        // Remove from the end (least recently used) until we've freed half the size
-        while (freedSize < targetSizeToFree && lruList.Count > 0)
+        lock (locker)
         {
-            K lruKey = lruList.Last.Value;
-            float itemSize = sizeMap[lruKey];
+            if (lruList.Count <= 1 || currentSizeInMB <= 0f) return;
 
-            lruList.RemoveLast();
-            DestroyIfUnityObject(cache[lruKey]);
-            cache.Remove(lruKey);
-            sizeMap.Remove(lruKey);
+            float targetSizeToFree = currentSizeInMB / 2f;
+            float freedSize = 0f;
 
-            currentSizeInMB -= itemSize;
-            freedSize += itemSize;
+            while (freedSize < targetSizeToFree && lruList.Count > 0)
+            {
+                K lruKey = lruList.Last.Value;
+                float itemSize = sizeMap[lruKey];
+
+                lruList.RemoveLast();
+                DestroyIfUnityObject(cache[lruKey]);
+                cache.Remove(lruKey);
+                sizeMap.Remove(lruKey);
+
+                currentSizeInMB -= itemSize;
+                freedSize += itemSize;
+            }
         }
     }
 }

@@ -128,7 +128,6 @@ public static class CabinetFactory
                 {
                     ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} bezel {p.art.file}");
                     cp.SubType = p.subType;
-                    cp.SetBezel(cbinfo.getPath(p.art.file), p.subType);
                     if (p.properties.Count > 0)
                     {
                         CabinetMaterials.MaterialPropertyTranslator t;
@@ -146,6 +145,7 @@ public static class CabinetFactory
                         }
                         cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
                     }
+                    cp.SetBezel(cbinfo.getPath(p.art.file), p.subType);
                 }
                 break;
 
@@ -167,10 +167,6 @@ public static class CabinetFactory
                             mat = CabinetMaterials.MarqueeOneLamp;
                     }
 
-                    if (p.art != null)
-                        cp.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
-                    else
-                        cp.SetMaterial(mat);
 
                     cp.SetMarqueeEmissionColor(p.color, p.marquee?.color);
 
@@ -179,6 +175,11 @@ public static class CabinetFactory
                         CabinetMaterials.MaterialPropertyTranslator t = new CabinetMaterials.MarqueeProperties();
                         cp.ApplyUserMaterialConfiguration(t.Translate(p.properties));
                     }
+
+                    if (p.art != null)
+                        cp.SetTextureTo(p.name, cbinfo.getPath(p.art.file), mat, invertX: p.art.invertx, invertY: p.art.inverty);
+                    else
+                        cp.SetMaterial(mat);
                 }
                 break;
 
@@ -281,11 +282,12 @@ public static class CabinetFactory
                             //assign the texture first
                             if (!string.IsNullOrEmpty(p.emission.art?.file))
                                 cp.SetEmissive()
-                                  .SetEmissionTextureTo(cbinfo.getPath(p.emission.art.file),
-                                                        invertX: p.emission.art.invertx,
-                                                        invertY: p.emission.art.inverty)
                                   .SetEmissionColor(p.emission.color.getColor())
-                                  .ActivateEmission(p.emission.emissive);
+                                  .ActivateEmission(p.emission.emissive)
+                                  .SetEmissionTextureTo(cbinfo.getPath(p.emission.art.file), //coroutine
+                                                        invertX: p.emission.art.invertx,
+                                                        invertY: p.emission.art.inverty);
+
                             else
                                 cp.SetEmissive()
                                   .UseEmissionMainTexture()
