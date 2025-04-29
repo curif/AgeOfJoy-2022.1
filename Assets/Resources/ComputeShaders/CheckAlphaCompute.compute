@@ -1,0 +1,25 @@
+#pragma kernel CSMain
+
+Texture2D<float4> SourceTex; // Input Texture
+RWStructuredBuffer<uint> ResultBuffer; // Output buffer (size 1)
+float texWidth; // Texture width
+float texHeight; // Texture height
+
+[numthreads(8, 8, 1)] // Adjust thread group size as needed
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    // Check if the current thread ID is within the texture bounds
+    if (id.x < texWidth && id.y < texHeight)
+    {
+        // Read alpha from the source texture
+        float alpha = SourceTex[id.xy].a;
+
+        // Check if alpha is less than fully opaque (with epsilon)
+        float epsilon = 0.001;
+        if (alpha < (1.0 - epsilon))
+        {
+            // Atomically OR the result buffer's first element with 1
+            InterlockedOr(ResultBuffer[0], 1);
+        }
+    }
+}
