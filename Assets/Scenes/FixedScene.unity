@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 32968376c638dad4bb1c843f90d03854, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.003278396, g: 0.0035271808, b: 0.0053292187, a: 1}
+  m_IndirectSpecularColor: {r: 0.0032783952, g: 0.003527169, b: 0.0053292327, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: d54de603149a7724eb220acffe537321, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: 1e812606a1542c644a3272ec4f773665, type: 2}
   m_LightingSettings: {fileID: 0}
 --- !u!196 &4
 NavMeshSettings:
@@ -1729,6 +1729,12 @@ MonoBehaviour:
     SceneName: room022
     Description: room022 - "Dojo"
     PlayerSpawnGameObjectName: PlayerSpawnRoom022
+  - Scene:
+      sceneAsset: {fileID: 102900000, guid: 729c519a4e4b0b745bd699c419672108, type: 3}
+      sceneAssetGuidHex: 729c519a4e4b0b745bd699c419672108
+    SceneName: room023
+    Description: room022 - "The Expo"
+    PlayerSpawnGameObjectName: PlayerSpawnRoom023
 --- !u!114 &484994781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10738,7 +10744,6 @@ MonoBehaviour:
   CameraOffset: {fileID: 149079754}
   xrorigin: {fileID: 1836024372}
   characterController: {fileID: 1836024374}
-  playerController: {fileID: 0}
 --- !u!114 &1836024379
 MonoBehaviour:
   m_ObjectHideFlags: 0
