@@ -573,7 +573,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: PFV_IndustrialWallLight_Red (2)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 5404841285592418327, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 6959208322293521391, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 5989444749061325037, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -921,7 +930,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: PFV_IndustrialWallLight_Red (3)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 5404841285592418327, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 6959208322293521391, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 5989444749061325037, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -992,7 +1010,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: b905652862d040a4d939e47964e8979a, type: 2}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Name
-      value: DoorToRoom015
+      value: DoorToRoom023
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_IsActive
@@ -1126,7 +1144,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: PFV_IndustrialWallLight_Red (1)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 5404841285592418327, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 6959208322293521391, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 5989444749061325037, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1489,7 +1516,7 @@ GameObject:
   - component: {fileID: 862554715}
   - component: {fileID: 862554714}
   m_Layer: 0
-  m_Name: GateToRoom015
+  m_Name: GateToRoom023
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1504,7 +1531,7 @@ Transform:
   m_GameObject: {fileID: 862554712}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.42, y: 0.35230517, z: 21.04}
+  m_LocalPosition: {x: -6.42, y: 0.35230517, z: 20.856}
   m_LocalScale: {x: 1.3633, y: 1, z: 1.2385}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1545,13 +1572,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IdleTimeCheck: 0.5
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: c6f394821021d8e43b4371896f0232bc, type: 3}
-    sceneAssetGuidHex: c6f394821021d8e43b4371896f0232bc
-  ScenesToUnload: []
+  - sceneAsset: {fileID: 102900000, guid: 729c519a4e4b0b745bd699c419672108, type: 3}
+    sceneAssetGuidHex: 729c519a4e4b0b745bd699c419672108
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 83a8cbaf822fb8b4a8ab3560de58c849, type: 3}
+    sceneAssetGuidHex: 83a8cbaf822fb8b4a8ab3560de58c849
+  - sceneAsset: {fileID: 102900000, guid: b072882af3739f929bc4252c490ccef1, type: 3}
+    sceneAssetGuidHex: b072882af3739f929bc4252c490ccef1
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: c6f394821021d8e43b4371896f0232bc, type: 3}
-      sceneAssetGuidHex: c6f394821021d8e43b4371896f0232bc
+      sceneAsset: {fileID: 102900000, guid: 729c519a4e4b0b745bd699c419672108, type: 3}
+      sceneAssetGuidHex: 729c519a4e4b0b745bd699c419672108
     Blockers:
     - {fileID: 2035889305}
 --- !u!1 &914630031
@@ -1592,7 +1623,7 @@ ReflectionProbe:
   m_FarClip: 1000
   m_ShadowDistance: 100
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1828,7 +1859,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: PFV_IndustrialWallLight_Red
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 5404841285592418327, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 6959208322293521391, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 5989444749061325037, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -2824,7 +2864,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: PFV_IndustrialWallLight_Red (4)
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 5404841285592418327, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 6959208322293521391, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 5989444749061325037, guid: 3ed1546f8f61481429a06d711c57a592, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -2968,7 +3017,7 @@ GameObject:
   - component: {fileID: 2014162374}
   - component: {fileID: 2014162373}
   m_Layer: 0
-  m_Name: GateToRoom017
+  m_Name: GateToRoom018
   m_TagString: door
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2983,7 +3032,7 @@ Transform:
   m_GameObject: {fileID: 2014162371}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -6.42, y: 0.35230517, z: 24.209}
+  m_LocalPosition: {x: -8.988, y: 0.35230517, z: 24.209}
   m_LocalScale: {x: 1.3633, y: 1, z: 1.2385}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3008,8 +3057,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3161985, y: 1.5116475, z: 1.6340007}
-  m_Center: {x: 0.052756347, y: -0.0132113695, z: -0.29030102}
+  m_Size: {x: 1.3161985, y: 1.5116475, z: 1.0869005}
+  m_Center: {x: 0.052756343, y: -0.0132113695, z: -0.016752925}
 --- !u!114 &2014162374
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3024,15 +3073,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   IdleTimeCheck: 0.5
   ScenesToLoad:
-  - sceneAsset: {fileID: 102900000, guid: 00b1b4459013def458adae4ffab8063e, type: 3}
-    sceneAssetGuidHex: 00b1b4459013def458adae4ffab8063e
+  - sceneAsset: {fileID: 102900000, guid: 83a8cbaf822fb8b4a8ab3560de58c849, type: 3}
+    sceneAssetGuidHex: 83a8cbaf822fb8b4a8ab3560de58c849
   ScenesToUnload:
-  - sceneAsset: {fileID: 102900000, guid: 4b8dd033bc2e4004ea27c5ee0942fec5, type: 3}
-    sceneAssetGuidHex: 4b8dd033bc2e4004ea27c5ee0942fec5
+  - sceneAsset: {fileID: 102900000, guid: 729c519a4e4b0b745bd699c419672108, type: 3}
+    sceneAssetGuidHex: 729c519a4e4b0b745bd699c419672108
   SceneBlockers:
   - SceneRef:
-      sceneAsset: {fileID: 102900000, guid: 00b1b4459013def458adae4ffab8063e, type: 3}
-      sceneAssetGuidHex: 00b1b4459013def458adae4ffab8063e
+      sceneAsset: {fileID: 102900000, guid: 83a8cbaf822fb8b4a8ab3560de58c849, type: 3}
+      sceneAssetGuidHex: 83a8cbaf822fb8b4a8ab3560de58c849
     Blockers:
     - {fileID: 2137373621}
 --- !u!1 &2022099475
@@ -3422,7 +3471,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: b905652862d040a4d939e47964e8979a, type: 2}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_Name
-      value: DoorToRoom017
+      value: DoorToRoom018
       objectReference: {fileID: 0}
     - target: {fileID: 5818521690164746105, guid: b656a78d6a1ac925a863955c39137f8d, type: 3}
       propertyPath: m_IsActive
