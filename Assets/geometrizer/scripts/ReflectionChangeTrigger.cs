@@ -68,6 +68,8 @@ public class ReflectionChangeTrigger : MonoBehaviour
             if (roomConfiguration?.Configuration?.light?.color != null)
             {
                 ConfigManager.WriteConsole($"[ReflectionChangeTrigger] '{triggerScene.name}' using room yaml configuration {roomConfiguration.Configuration.light.color}");
+                //force user intesity to 0:
+                roomConfiguration.Configuration.light.color.intensity = 0;
                 userLightManager.ApplyUserLightSettings(roomConfiguration.Configuration.light.color, roomConfiguration.Configuration.light.intensity);
             }
             /*

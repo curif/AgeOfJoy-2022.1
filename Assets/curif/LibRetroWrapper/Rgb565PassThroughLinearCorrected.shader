@@ -60,6 +60,7 @@ Shader "Unlit/Rgb565PassThroughLinearCorrected"
 
             float4 frag (v2f i) : SV_Target
             {
+                /*
                 // 1. Sample Texture (gets Linear color)
                 float4 col_linear = tex2D(_MainTex, i.uv);
 
@@ -82,6 +83,19 @@ Shader "Unlit/Rgb565PassThroughLinearCorrected"
                 // 5. Output: Return quantized Linear RGB and set Alpha to 1.0 (fully opaque)
                 //          This simulates the lack of an alpha channel in the RGB565 format.
                 return float4(col_linear_quantized, 1.0);
+                */
+
+                // Sample directly in Linear space (since _MainTex is sampled in linear due to project settings)
+                float4 col_linear = tex2D(_MainTex, i.uv);
+
+                // Quantize directly in linear space
+                float r = Quantize(col_linear.r, 31.0);
+                float g = Quantize(col_linear.g, 63.0);
+                float b = Quantize(col_linear.b, 31.0);
+
+                float3 col_quantized = saturate(float3(r, g, b));
+
+                return float4(col_quantized, 1.0);
             }
             ENDCG
         }

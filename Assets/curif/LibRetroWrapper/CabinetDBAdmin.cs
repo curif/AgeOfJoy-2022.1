@@ -80,7 +80,7 @@ public class CabinetDBAdmin : MonoBehaviour
                     {
                         file = "marquee.png"
                     },
-                    color = new CabinetInformation.RGBColor() { r = 238, g = 232, b = 176, intensity = -2 }
+                    color = new RGBColor() { r = 238, g = 232, b = 176, intensity = -2 }
                 }
             }
         };

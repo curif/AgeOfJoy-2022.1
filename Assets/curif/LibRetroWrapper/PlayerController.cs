@@ -14,15 +14,18 @@ using Unity.XR.CoreUtils;
 using UnityEngine.XR.Interaction.Toolkit;
 using UnityEditor;
 using System.Collections.Specialized;
+using UnityEditor.XR.LegacyInputHelpers;
+using static OVRHaptics;
 
 public class PlayerController : MonoBehaviour
 {
     public GlobalConfiguration globalConfiguration;
     public XROrigin xrorigin;
     public CharacterController characterController;
-    public Transform cameraOffset;
     public ChangeControls changeControls;
     public GameObject PlayerControllerGameObject;
+    public Transform cameraOffset; // Assign the CameraOffset GameObject
+    public GameObject OVRPlayerGameObject; // Assign the root XR Origin (OVRPlayer)
 
     private Coroutine coroutine;
 
@@ -97,13 +100,70 @@ public class PlayerController : MonoBehaviour
         OnEnable();
         change();
     }
+    public void ForceHeightBad3(float targetHeight)
+    {
+        // This is your real-world head height (headset Y relative to rig origin)
+        float cameraLocalY = Camera.main.transform.localPosition.y;
 
+        // Calculate how much to shift the rig to get the desired world height
+        float diff = targetHeight - cameraLocalY;
+
+        // Apply offset to XR Origin (root)
+        Vector3 pos = OVRPlayerGameObject.transform.position;
+        pos.y = diff; // Set absolute rig position so camera ends up at target height
+        OVRPlayerGameObject.transform.position = pos;
+
+        Debug.Log($"[ForceHeight] Target: {targetHeight:F2}, Local Camera Y: {cameraLocalY:F2}, Setting Rig Y to: {diff:F2}");
+    }
+
+
+
+    public void ForceHeightBad2(float targetHeight)
+    {
+        // Get current world camera height
+        float currentCameraHeight = Camera.main.transform.position.y;
+
+        // Get the difference between current and target height
+        float diff = currentCameraHeight - targetHeight;
+
+        // Move the entire XR rig (PlayerController or root) downward to match the desired height
+        Vector3 localPos = PlayerControllerGameObject.transform.localPosition;
+        localPos.y -= diff;
+        PlayerControllerGameObject.transform.localPosition = localPos;
+
+        Debug.Log($"[ForceHeight] Target: {targetHeight:F2}, Current: {currentCameraHeight:F2}, Diff: {diff:F2}");
+    }
+
+    public float GetHeightBAd()
+    {
+        // Assumes the MainCamera is the HMD camera
+        return Camera.main.transform.localPosition.y;
+    }
+
+    //activate playerPositionDebug to debug the player behavior. Deactivate on production.
+    public void ForceHeightBad(float height)
+    {
+        //[AGE][PlayerController.ForceHeight] height: 1.261735 PlayerControllerGameObject: (0.00, -0.34, 0.00).Actual CameraYOffset(xrorigin):1.6
+        Vector3 playerControllerLocalPosition = PlayerControllerGameObject.transform.localPosition;
+        Vector3 cameraOffsetLocalPosition = xrorigin.CameraFloorOffsetObject.transform.localPosition;
+        float realHeight = cameraOffsetLocalPosition.y + playerControllerLocalPosition.y;
+        float diff = realHeight - height;
+
+        playerControllerLocalPosition.y -= diff;
+        PlayerControllerGameObject.transform.localPosition = playerControllerLocalPosition;
+        ConfigManager.WriteConsole($"[PlayerController.ForceHeight] height: {height} Player RealHeight: {realHeight} PlayerControllerGameObject: {PlayerControllerGameObject.transform.localPosition}. Actual CameraYOffset (xrorigin):{xrorigin.CameraYOffset}");
+     }
+
+    //activate playerPositionDebug to debug the player behavior. Deactivate on production.
     public void AdjustCameraYOffset()
     {
-       
         Vector3 localPosition = PlayerControllerGameObject.transform.localPosition;
+
         if (cameraYOffset == 0)
             cameraYOffset = ConfigInformation.Player.avgHeigh;
+        else if (cameraYOffset < ConfigInformation.Player.minimalHeight)
+            cameraYOffset = ConfigInformation.Player.minimalHeight;
+
 
 #if UNITY_EDITOR
         ConfigInformation.Player.ShowHeightPlayers();
@@ -200,6 +260,7 @@ public class PlayerController : MonoBehaviour
 #endif
 
         CameraYOffset = player.height;
+        //ForceHeight(player.height);
 
         // characterController.height = player.height + 0.1f;
         ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height {player.height}");

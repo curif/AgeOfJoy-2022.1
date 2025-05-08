@@ -84,6 +84,7 @@ public class basicAGE : MonoBehaviour
     public GameRegistry GameRegistry;
     public CabinetsController CabinetsController;
     public Teleportation Teleportation;
+    public DownloadManager DownloadManager;
 
     public SceneDatabase SceneDatabase = null;
     public MoviePosterController PostersController;
@@ -148,10 +149,12 @@ public class basicAGE : MonoBehaviour
         GameObject roomInit = GameObject.Find("FixedObject");
         if (roomInit != null)
         {
-            if (SceneDatabase == null && roomInit != null)
+            if (SceneDatabase == null)
                 SceneDatabase = roomInit.GetComponent<SceneDatabase>();
-            if (GameRegistry == null && roomInit != null)
+            if (GameRegistry == null)
                 GameRegistry = roomInit.GetComponent<GameRegistry>();
+            if (DownloadManager == null)
+                DownloadManager = roomInit.GetComponent<DownloadManager>();
         }
 
         //if (ConfigurationController == null)
@@ -178,6 +181,7 @@ public class basicAGE : MonoBehaviour
         }
 
         configCommands.ConfigurationController = ConfigurationController;
+        //configCommands.DownloadManager = DownloadManager;
         configCommands.ControlMap = libretroControlMap;
         configCommands.ScreenGenerator = ScreenGenerator;
         configCommands.SceneDatabase = SceneDatabase;

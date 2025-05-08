@@ -52,7 +52,10 @@ public class UserLightManager : MonoBehaviour
         if (newColor == null)
             color = initialColor;
         else
-            color = new Color(newColor.r, newColor.g, newColor.b);
+        {
+            // color = new Color(newColor.r, newColor.g, newColor.b, newColor.a, newIntensity);
+            color = newColor.getColorNoIntensity();
+        }
 
         if (newIntensity == null)
             newIntensity = initialIntensity;
@@ -60,7 +63,7 @@ public class UserLightManager : MonoBehaviour
         if (initialColor == color && initialIntensity == newIntensity)
             yield break;
 
-        while (time < duration)
+         while (time < duration)
         {
             float t = time / duration;
             targetLight.intensity = Mathf.Lerp(initialIntensity, (float) newIntensity, t);

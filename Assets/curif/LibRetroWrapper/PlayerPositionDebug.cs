@@ -12,7 +12,7 @@ public class PlayerPositionDebug : MonoBehaviour
     public Transform CameraOffset;
     public XROrigin xrorigin;
     public CharacterController characterController;
-
+    public PlayerController playerController;
 
     private LibretroMameCore.Waiter waiter;
 
@@ -32,6 +32,7 @@ public class PlayerPositionDebug : MonoBehaviour
         ConfigManager.WriteConsole($"[PlayerPositionDebug] XRRig Y: {XRRigTransform.position.y}");
         ConfigManager.WriteConsole($"[PlayerPositionDebug] Camera:       tracking mode: {xrorigin.RequestedTrackingOriginMode}");
         ConfigManager.WriteConsole($"[PlayerPositionDebug]           xrorigin Y offset: {xrorigin.CameraYOffset}");
+        ConfigManager.WriteConsole($"[PlayerPositionDebug]   PlayerController Y offset: {playerController.CameraYOffset}");
         ConfigManager.WriteConsole($"[PlayerPositionDebug]                            : {ConfigInformation.Player.FindNearestKey(xrorigin.CameraYOffset)}");
         ConfigManager.WriteConsole($"[PlayerPositionDebug]                    Y offset: {CameraOffset.position.y}");
         ConfigManager.WriteConsole($"[PlayerPositionDebug]                       Scale: {CameraOffset.localScale.y}");
