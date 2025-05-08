@@ -63,30 +63,33 @@ public class ConfigInformation
     {
         //remember: floor starts in y=-0.532
         public const float minHeight = 1.35f;
+        public const float factorHeight = 0.05f;
+        public const float minimalHeight = factorHeight * 2;
+
         // Updated maxHeight to reflect the new tallest option (N=17)
-        public const float maxHeight = minHeight + (17f * 0.05f); // Now 2.20f
+        public const float maxHeight = minHeight + (17f * factorHeight); // Now 2.20f
         public const float avgHeigh = minHeight + (7f * 0.05f); // 1.35 + 0.35 = 1.70f (remains the same)
 
         public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
           {
               {"Average", 0f}, // Special value, likely means 'use default scale' or applies avgHeigh elsewhere
               {"Pac-man (short)", minHeight},                     // N=0 -> 1.35m
-              {"Sonic", minHeight + (1f * 0.05f)},              // N=1 -> 1.40m
-              {"Pikachu", minHeight + (2f * 0.05f)},            // N=2 -> 1.45m
-              {"Mario", minHeight + (3f * 0.05f)},              // N=3 -> 1.50m
-              {"Luigi", minHeight + (4f * 0.05f)},              // N=4 -> 1.55m
-              {"Final Fantasy", minHeight + (5f * 0.05f)},        // N=5 -> 1.60m
-              {"Megaman", minHeight + (6f * 0.05f)},            // N=6 -> 1.65m
+              {"Sonic", minHeight + (1f * factorHeight)},              // N=1 -> 1.40m
+              {"Pikachu", minHeight + (2f * factorHeight)},            // N=2 -> 1.45m
+              {"Mario", minHeight + (3f * factorHeight)},              // N=3 -> 1.50m
+              {"Luigi", minHeight + (4f * factorHeight)},              // N=4 -> 1.55m
+              {"Final Fantasy", minHeight + (5f * factorHeight)},        // N=5 -> 1.60m
+              {"Megaman", minHeight + (6f * factorHeight)},            // N=6 -> 1.65m
               {"Street Fighter (avg)", avgHeigh },              // N=7 -> 1.70m (Using avgHeigh directly)
-              {"Donkey Kong", minHeight + (8f * 0.05f)},        // N=8 -> 1.75m
-              {"Mega Boss", minHeight + (9f * 0.05f)},          // N=9 -> 1.80m
-              {"NBA Jam", minHeight + (10f * 0.05f)},           // N=10 -> 1.85m
-              {"Mutant Baddie", minHeight + (11f * 0.05f)},     // N=11 -> 1.90m
-              {"Rampage!", minHeight + (12f * 0.05f)},          // N=12 -> 1.95m
-              {"Final Boss", minHeight + (13f * 0.05f)},        // N=13 -> 2.00m
-              {"Giant", minHeight + (14f * 0.05f)},             // N=14 -> 2.05m
-              {"Titan", minHeight + (15f * 0.05f)},             // N=15 -> 2.10m
-              {"Kaiju", minHeight + (16f * 0.05f)},             // N=16 -> 2.15m
+              {"Donkey Kong", minHeight + (8f * factorHeight)},        // N=8 -> 1.75m
+              {"Mega Boss", minHeight + (9f * factorHeight)},          // N=9 -> 1.80m
+              {"NBA Jam", minHeight + (10f * factorHeight)},           // N=10 -> 1.85m
+              {"Mutant Baddie", minHeight + (11f * factorHeight)},     // N=11 -> 1.90m
+              {"Rampage!", minHeight + (12f * factorHeight)},          // N=12 -> 1.95m
+              {"Final Boss", minHeight + (13f * factorHeight)},        // N=13 -> 2.00m
+              {"Giant", minHeight + (14f * factorHeight)},             // N=14 -> 2.05m
+              {"Titan", minHeight + (15f * factorHeight)},             // N=15 -> 2.10m
+              {"Kaiju", minHeight + (16f * factorHeight)},             // N=16 -> 2.15m
               {"Colossus", maxHeight }                          // N=17 -> 2.20m (Using updated maxHeight)
           };
 

@@ -1376,7 +1376,7 @@ public class ConfigurationController : MonoBehaviour
         lightColorR = new GenericOptionsInteger(scr, "lightColorR", "Color: R", 0, 255, numberFormat: "D3");
         lightColorG = new GenericOptionsInteger(scr, "lightColorG", "       G", 0, 255, numberFormat: "D3");
         lightColorB = new GenericOptionsInteger(scr, "lightColorB", "       B", 0, 255, numberFormat: "D3");
-        lightIntensity = new GenericOptionsDecimal(scr, "lightIntensity", "Intensity: ", 0, 5.1, 0.1, numberFormat: "N2");
+        lightIntensity = new GenericOptionsDecimal(scr, "lightIntensity", "Intensity: ", 0, 2.5, 0.1, numberFormat: "N2");
         lightColor = new GenericOptions(scr, "lightColor", "Color: ", ScreenGenerator.ColorMap.Keys.ToList());
         lightContainer = new(scr, "lightContainer");
         lightContainer.Add(new GenericWindow(scr, 2, 2, "lightContainer", 37, 14, " Lights "))
@@ -1425,8 +1425,13 @@ public class ConfigurationController : MonoBehaviour
         }
 
         Vector2Int v = scr.GetCharPixelPosition(25, 4);
-        scr.DrawBox(v.x, v.y, 30, 30, ScreenGenerator.ColorMap["black"], true, 
-                    new Color32((byte)lightColorR.GetSelectedOption(), (byte)lightColorG.GetSelectedOption(), (byte)lightColorB.GetSelectedOption(), 0));
+        RGBColor rgbc = new RGBColor((byte)lightColorR.GetSelectedOption(), 
+                                        (byte)lightColorG.GetSelectedOption(), 
+                                        (byte)lightColorB.GetSelectedOption(), 
+                                        255, 
+                                        (float)lightIntensity.GetSelectedOption()
+                                       );
+        scr.DrawBox(v.x, v.y, 30, 30, ScreenGenerator.ColorMap["black"], true, rgbc.getColor());
     }
 
     private void LightUpdateConfigurationFromWidgets()

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using static OVRHaptics;
 
 class CommandFunctionPLAYERGETHEIGHT : CommandFunctionNoExpressionBase
 {
@@ -15,10 +16,10 @@ class CommandFunctionPLAYERGETHEIGHT : CommandFunctionNoExpressionBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Player == null)
             return new BasicValue(0);
+        float height = config.Player.CameraYOffset;
+        ConfigManager.WriteConsole($"[PLAYERGETHEIGHT] get player height is {height}");
 
-        ConfigManager.WriteConsole($"[PLAYEPLAYERGETHEIGHTRSETHEIGHT] get player height is {config.Player.CameraYOffset}");
-
-        return new BasicValue((double)config.Player.CameraYOffset);
+        return new BasicValue(height);
     }
 }
 
@@ -41,13 +42,13 @@ class CommandFunctionPLAYERSETHEIGHT : CommandFunctionSingleExpressionBase
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(val, "Player height");
         float playerHeight = (float)val.GetValueAsNumber();
-
-        ConfigManager.WriteConsole($"[PLAYERSETHEIGHT] SEt player height to {playerHeight}");
         config.Player.CameraYOffset = playerHeight;
+        ConfigManager.WriteConsole($"[PLAYERSETHEIGHT] SEt player height to {playerHeight}");
+        //config.Player.CameraYOffset = playerHeight;
+        //config.Player.ForceHeight(playerHeight);
 
         return new BasicValue(1);
     }
-
 }
 
 

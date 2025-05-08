@@ -11,9 +11,10 @@ public class DebugConsole : MonoBehaviour
     private static bool? debugEnabled = null;
     private static List<string> debugKeywords = new List<string>();
     private Text console;
-
+    public GameObject canvas;
     void Start()
     {
+        canvas.SetActive(IsDebugEnabled());
         console = GetComponent<Text>();
     }
 

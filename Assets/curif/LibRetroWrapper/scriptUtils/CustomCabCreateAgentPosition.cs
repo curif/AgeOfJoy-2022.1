@@ -25,7 +25,7 @@ public class CreateAgentPosition : Editor
         // Add BoxCollider
         BoxCollider boxCollider = agentPosition.AddComponent<BoxCollider>();
         boxCollider.center = new Vector3(0,0,0);
-        boxCollider.size = new Vector3(1f, 1f, 1f);
+        boxCollider.size = new Vector3(0.5f, 0.5f, 0.5f);
         boxCollider.isTrigger = true;
         // Set Layer Overrides - Include only "player" and "NPC" layers
         int playerLayer = LayerMask.NameToLayer("Player");
