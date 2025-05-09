@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 32968376c638dad4bb1c843f90d03854, type: 3}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0032783952, g: 0.003527169, b: 0.0053292327, a: 1}
+  m_IndirectSpecularColor: {r: 0.003278396, g: 0.0035271808, b: 0.0053292187, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2207,6 +2207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e46819382c05d2409ddb35d5605dd85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  canvas: {fileID: 910450728}
 --- !u!1 &846261023
 GameObject:
   m_ObjectHideFlags: 0
@@ -10722,9 +10723,10 @@ MonoBehaviour:
   globalConfiguration: {fileID: 111584156}
   xrorigin: {fileID: 1836024372}
   characterController: {fileID: 1836024374}
-  cameraOffset: {fileID: 149079754}
   changeControls: {fileID: 0}
   PlayerControllerGameObject: {fileID: 42377657}
+  cameraOffset: {fileID: 149079754}
+  OVRPlayerGameObject: {fileID: 0}
   cameraYOffset: 0
   playerScale: 0
 --- !u!114 &1836024378
@@ -10744,6 +10746,7 @@ MonoBehaviour:
   CameraOffset: {fileID: 149079754}
   xrorigin: {fileID: 1836024372}
   characterController: {fileID: 1836024374}
+  playerController: {fileID: 0}
 --- !u!114 &1836024379
 MonoBehaviour:
   m_ObjectHideFlags: 0
