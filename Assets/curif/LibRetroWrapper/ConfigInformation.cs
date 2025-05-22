@@ -65,10 +65,11 @@ public class ConfigInformation
         public const float minHeight = 1.35f;
         public const float factorHeight = 0.05f;
         public const float minimalHeight = factorHeight * 2;
+        public const float offSet = 0.1f; 
 
         // Updated maxHeight to reflect the new tallest option (N=17)
         public const float maxHeight = minHeight + (17f * factorHeight); // Now 2.20f
-        public const float avgHeigh = minHeight + (7f * 0.05f); // 1.35 + 0.35 = 1.70f (remains the same)
+        public const float avgHeigh = minHeight + (7f * factorHeight); // 1.35 + 0.35 = 1.70f (remains the same)
 
         public static Dictionary<string, float> HeightPlayers = new Dictionary<string, float>
           {
@@ -93,7 +94,10 @@ public class ConfigInformation
               {"Colossus", maxHeight }                          // N=17 -> 2.20m (Using updated maxHeight)
           };
 
-
+        public static float HeightCalculatorPlayerController(float height)
+        {
+            return height - avgHeigh + offSet;
+        }
         public static Dictionary<string, float> Scales = new Dictionary<string, float>
         {
             {"Kid", 0.6f},
