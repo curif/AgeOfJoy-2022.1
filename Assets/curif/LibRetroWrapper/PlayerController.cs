@@ -164,7 +164,6 @@ public class PlayerController : MonoBehaviour
         else if (cameraYOffset < ConfigInformation.Player.minimalHeight)
             cameraYOffset = ConfigInformation.Player.minimalHeight;
 
-
 #if UNITY_EDITOR
         ConfigInformation.Player.ShowHeightPlayers();
         localPosition.y = cameraYOffset;
@@ -175,7 +174,8 @@ public class PlayerController : MonoBehaviour
         adjust the gameobject that controls the player position Y to a position that is the main floor Y (introgallery)
         plus the difference between the average height and the height set by the user.
         */
-        localPosition.y = /*IntroGalleryPFMegaFloorY +*/ cameraYOffset - ConfigInformation.Player.avgHeigh ;
+        //localPosition.y = /*IntroGalleryPFMegaFloorY +*/ cameraYOffset - ConfigInformation.Player.avgHeigh ;
+        localPosition.y = ConfigInformation.Player.HeightCalculatorPlayerController(cameraYOffset);
 #endif
 
         PlayerControllerGameObject.transform.localPosition = localPosition;
