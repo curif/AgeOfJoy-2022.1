@@ -1,4 +1,8 @@
-5 call DebugMode(1)
+
+2 REM --- This program replaces the already assigned cabinets in each room 
+3 REM with randomly selected ones. It will not assign new ones. ---
+
+5 call DebugMode(0)
 10 REM Replace each cabinet in all rooms with a random cabinet
 20 LET totalRooms = RoomCount()
 30 LET totalCabinetsDB = CabDbCount()
@@ -11,23 +15,22 @@
 65     LET countReplaced = 0
 70     gosub 500
 
-80     REM there is no way to know how many cabinets can hold a room, so it assumes 60 max.
+80     REM there is no way to know how many cabinets can hold a room, so it assumes 35 max.
 81     rem obviously it will assing more than the room capacity.
-90     FOR cabinetIndex = 0 TO 59
-95         print 20,3, "#" + str(cabinetIndex)
+90     FOR cabinetIndex = 0 TO 35
 
 100        REM is a cabinet assigned? we need one to proceed to change it.
-110        if CabDBGetAssigned(currentRoomName, cabinetIndex) = "" then goto 170
+110        if CabDBGetAssigned(currentRoomName, cabinetIndex) = "" then LETS newCabinetName, randomIndex = "", 0 : GOSUB 300 : GOTO 170
 
 120        LET randomIndex = INT(RND(1, totalCabinetsDB)) - 1
 121        LET newCabinetName = CabDbGetName(randomIndex)
-122        if newCabinetName = "" then goto 170
+123        GOSUB 300
+125        if newCabinetName = "" then GOTO 170
 
 130        rem change the database by assigning the cabinet to the old position
 140        if CabDBAssign(currentRoomName, cabinetIndex, newCabinetName) = 0 then goto 990
 
 145        LET countReplaced = countReplaced + 1
-146        print 0, 4 + MOD(countReplaced, 10), "#" + str(cabinetIndex) + " by DB #" + str(randomIndex) + ": " + str(newCabinetName) + "        "
 
 149        rem change in current Room if it is the same to see it inmediatly
 150        if playerRoom = currentRoomName then call CabRoomReplace(cabinetIndex, newCabinetName)
@@ -39,6 +42,9 @@
 
 190 CALL CabDBSave()
 200 goto 10000
+
+300 PRINTLN currentRoomName + " #" + str(cabinetIndex) + " by DB #" + str(randomIndex) + ": " + str(newCabinetName)
+310 RETURN
 
 500 REM show main info
 510 CLS
