@@ -104,6 +104,7 @@ public class CabinetsPosition
         //json is deprecated
         // string serializedJson = JsonUtility.ToJson(this);
         // System.IO.File.WriteAllText(JsonFile, serializedJson);
+        ConfigManager.WriteConsole($"[GameRegistry.Persist] {ConfigManager.CabinetsDB}/registry.yaml");
         return SaveAsYaml(ConfigManager.CabinetsDB + "/registry.yaml");
     }
 
