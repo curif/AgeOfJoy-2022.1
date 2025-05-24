@@ -18,9 +18,30 @@ public class ColorSwitchTrigger : MonoBehaviour
     [Tooltip("Assign the Input Action that represents the 'control trigger click' here.")]
     public InputActionReference activateTriggerAction;
 
+    // <<< Drag in the Animation component or GameObject with an Animation component
+    [Tooltip("Drag the GameObject or component that has the Animation you want to play.")]
+    public Animation targetAnimation;
+
     private int colorIdx = 0;
     private bool _isPlayerInTrigger = false; // Tracks if the player's GrabVolumeSmall is currently inside this trigger
     private Collider _playerGrabVolumeCollider = null; // Stores a reference to the specific GrabVolumeSmall that entered
+    private AudioSource _audioSource; // Reference to AudioSource component on this GameObject
+
+    void Awake()
+    {
+        // Cache AudioSource component
+        _audioSource = GetComponent<AudioSource>();
+        if (_audioSource == null)
+        {
+            Debug.LogWarning($"[ColorSwitchTrigger] No AudioSource found on {gameObject.name}. Audio will not play.");
+        }
+
+        // Optional: warn if targetAnimation is not assigned
+        if (targetAnimation == null)
+        {
+            Debug.LogWarning($"[ColorSwitchTrigger] No target Animation assigned on {gameObject.name}. Animation will not play.");
+        }
+    }
 
     void Start()
     {
@@ -38,7 +59,7 @@ public class ColorSwitchTrigger : MonoBehaviour
         }
     }
 
-    // <<< Enable the input action when the script is enabled
+    // Enable the input action when the script is enabled
     void OnEnable()
     {
         if (activateTriggerAction != null && activateTriggerAction.action != null)
@@ -47,7 +68,7 @@ public class ColorSwitchTrigger : MonoBehaviour
         }
     }
 
-    // <<< Disable the input action when the script is disabled or destroyed
+    // Disable the input action when the script is disabled or destroyed
     void OnDisable()
     {
         if (activateTriggerAction != null && activateTriggerAction.action != null)
@@ -58,27 +79,19 @@ public class ColorSwitchTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Check if the entering collider is the player's GrabVolumeSmall
         if (other.name == "GrabVolumeSmall")
         {
             _isPlayerInTrigger = true;
-            _playerGrabVolumeCollider = other; // Store reference to prevent issues if multiple objects could enter
-
-            // Optional: Log when player enters trigger zone
-            // ConfigManager.WriteConsole($"[ColorSwitchTrigger] Player GrabVolumeSmall entered trigger zone.");
+            _playerGrabVolumeCollider = other;
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        // Check if the exiting collider is the one we were tracking
         if (other == _playerGrabVolumeCollider)
         {
             _isPlayerInTrigger = false;
-            _playerGrabVolumeCollider = null; // Clear the reference
-
-            // Optional: Log when player exits trigger zone
-            // ConfigManager.WriteConsole($"[ColorSwitchTrigger] Player GrabVolumeSmall exited trigger zone.");
+            _playerGrabVolumeCollider = null;
         }
     }
 
@@ -87,17 +100,27 @@ public class ColorSwitchTrigger : MonoBehaviour
         // Only allow activation if the player's GrabVolumeSmall is currently within this trigger
         if (_isPlayerInTrigger)
         {
-            // Check if the assigned activateTriggerAction was performed this frame
             if (activateTriggerAction != null && activateTriggerAction.action != null && activateTriggerAction.action.WasPerformedThisFrame())
             {
                 ApplyColorChange();
-                // WasPerformedThisFrame already handles single presses, no need for extra flags
             }
         }
     }
 
     public void ApplyColorChange()
     {
+        // Play audio if available
+        if (_audioSource != null)
+        {
+            _audioSource.Play();
+        }
+
+        // Play target animation if assigned
+        if (targetAnimation != null)
+        {
+            targetAnimation.Play();
+        }
+
         colorIdx++;
         if (colorIdx >= Colors.Length)
         {
@@ -106,30 +129,25 @@ public class ColorSwitchTrigger : MonoBehaviour
         if (userLightManager != null && Colors != null && Colors.Length > 0)
         {
             userLightManager.ApplyUserLightSettings(Colors[colorIdx], transitionDuration: lightTransitionDuration);
-            // Optional: Log the change
-            // ConfigManager.WriteConsole($"[ColorSwitchTrigger] Applying color change to index: {colorIdx}, value: {Colors[colorIdx]}");
         }
         else
         {
-            // Assuming ConfigManager exists in your project. Otherwise, use Debug.LogWarning.
             ConfigManager.WriteConsoleWarning("UserLightManager is not assigned or Colors array is empty.");
         }
     }
 
 #if UNITY_EDITOR
-    // Corrected Custom Editor for ColorSwitchTrigger
-    [CustomEditor(typeof(ColorSwitchTrigger))] // <<< Target this script
-    public class ColorSwitchTriggerEditor : Editor // <<< Renamed class
+    [CustomEditor(typeof(ColorSwitchTrigger))]
+    public class ColorSwitchTriggerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
 
             ColorSwitchTrigger script = (ColorSwitchTrigger)target;
-
-            if (GUILayout.Button("Simulate Color Change")) // <<< Changed button text
+            if (GUILayout.Button("Simulate Color Change"))
             {
-                script.ApplyColorChange(); // <<< Call the correct method
+                script.ApplyColorChange();
             }
         }
     }
