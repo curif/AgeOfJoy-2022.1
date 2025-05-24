@@ -18,6 +18,10 @@ public class ColorSwitchTrigger : MonoBehaviour
     [Tooltip("Assign the Input Action that represents the 'control trigger click' here.")]
     public InputActionReference activateTriggerAction;
 
+    // <<< Drag in the Animation component or GameObject with an Animation component
+    [Tooltip("Drag the GameObject or component that has the Animation you want to play.")]
+    public Animation targetAnimation;
+
     private int colorIdx = 0;
     private bool _isPlayerInTrigger = false; // Tracks if the player's GrabVolumeSmall is currently inside this trigger
     private Collider _playerGrabVolumeCollider = null; // Stores a reference to the specific GrabVolumeSmall that entered
@@ -30,6 +34,12 @@ public class ColorSwitchTrigger : MonoBehaviour
         if (_audioSource == null)
         {
             Debug.LogWarning($"[ColorSwitchTrigger] No AudioSource found on {gameObject.name}. Audio will not play.");
+        }
+
+        // Optional: warn if targetAnimation is not assigned
+        if (targetAnimation == null)
+        {
+            Debug.LogWarning($"[ColorSwitchTrigger] No target Animation assigned on {gameObject.name}. Animation will not play.");
         }
     }
 
@@ -49,7 +59,7 @@ public class ColorSwitchTrigger : MonoBehaviour
         }
     }
 
-    // <<< Enable the input action when the script is enabled
+    // Enable the input action when the script is enabled
     void OnEnable()
     {
         if (activateTriggerAction != null && activateTriggerAction.action != null)
@@ -58,7 +68,7 @@ public class ColorSwitchTrigger : MonoBehaviour
         }
     }
 
-    // <<< Disable the input action when the script is disabled or destroyed
+    // Disable the input action when the script is disabled or destroyed
     void OnDisable()
     {
         if (activateTriggerAction != null && activateTriggerAction.action != null)
@@ -69,21 +79,19 @@ public class ColorSwitchTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Check if the entering collider is the player's GrabVolumeSmall
         if (other.name == "GrabVolumeSmall")
         {
             _isPlayerInTrigger = true;
-            _playerGrabVolumeCollider = other; // Store reference to prevent issues if multiple objects could enter
+            _playerGrabVolumeCollider = other;
         }
     }
 
     private void OnTriggerExit(Collider other)
     {
-        // Check if the exiting collider is the one we were tracking
         if (other == _playerGrabVolumeCollider)
         {
             _isPlayerInTrigger = false;
-            _playerGrabVolumeCollider = null; // Clear the reference
+            _playerGrabVolumeCollider = null;
         }
     }
 
@@ -92,7 +100,6 @@ public class ColorSwitchTrigger : MonoBehaviour
         // Only allow activation if the player's GrabVolumeSmall is currently within this trigger
         if (_isPlayerInTrigger)
         {
-            // Check if the assigned activateTriggerAction was performed this frame
             if (activateTriggerAction != null && activateTriggerAction.action != null && activateTriggerAction.action.WasPerformedThisFrame())
             {
                 ApplyColorChange();
@@ -106,6 +113,12 @@ public class ColorSwitchTrigger : MonoBehaviour
         if (_audioSource != null)
         {
             _audioSource.Play();
+        }
+
+        // Play target animation if assigned
+        if (targetAnimation != null)
+        {
+            targetAnimation.Play();
         }
 
         colorIdx++;
@@ -124,7 +137,6 @@ public class ColorSwitchTrigger : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    // Corrected Custom Editor for ColorSwitchTrigger
     [CustomEditor(typeof(ColorSwitchTrigger))]
     public class ColorSwitchTriggerEditor : Editor
     {
@@ -133,7 +145,6 @@ public class ColorSwitchTrigger : MonoBehaviour
             DrawDefaultInspector();
 
             ColorSwitchTrigger script = (ColorSwitchTrigger)target;
-
             if (GUILayout.Button("Simulate Color Change"))
             {
                 script.ApplyColorChange();

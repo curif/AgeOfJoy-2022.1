@@ -18,6 +18,10 @@ public class LightIntensityTrigger : MonoBehaviour
     [Tooltip("Assign the Input Action that represents the 'control trigger click' here.")]
     public InputActionReference activateTriggerAction;
 
+    // <<< Drag in the Animation component or GameObject with an Animation component
+    [Tooltip("Drag the GameObject or component that has the Animation you want to play.")]
+    public Animation targetAnimation;
+
     private int intensityIdx = 0;
     private bool _isPlayerInTrigger = false;
     private Collider _playerGrabVolumeCollider = null;
@@ -30,6 +34,12 @@ public class LightIntensityTrigger : MonoBehaviour
         if (_audioSource == null)
         {
             Debug.LogWarning($"[LightIntensityTrigger] No AudioSource found on {gameObject.name}. Audio will not play.");
+        }
+
+        // Optional: warn if targetAnimation is not assigned
+        if (targetAnimation == null)
+        {
+            Debug.LogWarning($"[LightIntensityTrigger] No target Animation assigned on {gameObject.name}. Animation will not play.");
         }
     }
 
@@ -104,6 +114,12 @@ public class LightIntensityTrigger : MonoBehaviour
         if (_audioSource != null)
         {
             _audioSource.Play();
+        }
+
+        // Play target animation if assigned
+        if (targetAnimation != null)
+        {
+            targetAnimation.Play();
         }
 
         intensityIdx++;
