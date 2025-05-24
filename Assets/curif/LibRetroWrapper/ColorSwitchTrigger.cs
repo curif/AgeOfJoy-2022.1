@@ -21,6 +21,17 @@ public class ColorSwitchTrigger : MonoBehaviour
     private int colorIdx = 0;
     private bool _isPlayerInTrigger = false; // Tracks if the player's GrabVolumeSmall is currently inside this trigger
     private Collider _playerGrabVolumeCollider = null; // Stores a reference to the specific GrabVolumeSmall that entered
+    private AudioSource _audioSource; // Reference to AudioSource component on this GameObject
+
+    void Awake()
+    {
+        // Cache AudioSource component
+        _audioSource = GetComponent<AudioSource>();
+        if (_audioSource == null)
+        {
+            Debug.LogWarning($"[ColorSwitchTrigger] No AudioSource found on {gameObject.name}. Audio will not play.");
+        }
+    }
 
     void Start()
     {
@@ -63,9 +74,6 @@ public class ColorSwitchTrigger : MonoBehaviour
         {
             _isPlayerInTrigger = true;
             _playerGrabVolumeCollider = other; // Store reference to prevent issues if multiple objects could enter
-
-            // Optional: Log when player enters trigger zone
-            // ConfigManager.WriteConsole($"[ColorSwitchTrigger] Player GrabVolumeSmall entered trigger zone.");
         }
     }
 
@@ -76,9 +84,6 @@ public class ColorSwitchTrigger : MonoBehaviour
         {
             _isPlayerInTrigger = false;
             _playerGrabVolumeCollider = null; // Clear the reference
-
-            // Optional: Log when player exits trigger zone
-            // ConfigManager.WriteConsole($"[ColorSwitchTrigger] Player GrabVolumeSmall exited trigger zone.");
         }
     }
 
@@ -91,13 +96,18 @@ public class ColorSwitchTrigger : MonoBehaviour
             if (activateTriggerAction != null && activateTriggerAction.action != null && activateTriggerAction.action.WasPerformedThisFrame())
             {
                 ApplyColorChange();
-                // WasPerformedThisFrame already handles single presses, no need for extra flags
             }
         }
     }
 
     public void ApplyColorChange()
     {
+        // Play audio if available
+        if (_audioSource != null)
+        {
+            _audioSource.Play();
+        }
+
         colorIdx++;
         if (colorIdx >= Colors.Length)
         {
@@ -106,20 +116,17 @@ public class ColorSwitchTrigger : MonoBehaviour
         if (userLightManager != null && Colors != null && Colors.Length > 0)
         {
             userLightManager.ApplyUserLightSettings(Colors[colorIdx], transitionDuration: lightTransitionDuration);
-            // Optional: Log the change
-            // ConfigManager.WriteConsole($"[ColorSwitchTrigger] Applying color change to index: {colorIdx}, value: {Colors[colorIdx]}");
         }
         else
         {
-            // Assuming ConfigManager exists in your project. Otherwise, use Debug.LogWarning.
             ConfigManager.WriteConsoleWarning("UserLightManager is not assigned or Colors array is empty.");
         }
     }
 
 #if UNITY_EDITOR
     // Corrected Custom Editor for ColorSwitchTrigger
-    [CustomEditor(typeof(ColorSwitchTrigger))] // <<< Target this script
-    public class ColorSwitchTriggerEditor : Editor // <<< Renamed class
+    [CustomEditor(typeof(ColorSwitchTrigger))]
+    public class ColorSwitchTriggerEditor : Editor
     {
         public override void OnInspectorGUI()
         {
@@ -127,9 +134,9 @@ public class ColorSwitchTrigger : MonoBehaviour
 
             ColorSwitchTrigger script = (ColorSwitchTrigger)target;
 
-            if (GUILayout.Button("Simulate Color Change")) // <<< Changed button text
+            if (GUILayout.Button("Simulate Color Change"))
             {
-                script.ApplyColorChange(); // <<< Call the correct method
+                script.ApplyColorChange();
             }
         }
     }
