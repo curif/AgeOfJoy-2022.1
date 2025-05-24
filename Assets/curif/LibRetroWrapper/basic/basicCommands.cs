@@ -32,7 +32,10 @@ public static class Commands
         commands["RESETCOLOR"] = typeof(CommandRESETCOLOR);
         commands["SETCOLORSPACE"] = typeof(CommandSETCOLORSPACE);
         commands["INVERTCOLOR"] = typeof(CommandINVERTCOLOR);
-
+        commands["PRINTCENTERED"] = typeof(CommandPRINTCENTERED);
+        commands["SCROLL"] = typeof(CommandSCROLL);
+        commands["SCROLLRECT"] = typeof(CommandSCROLLRECT);
+        
         //functions ------
 
         //math
@@ -229,6 +232,15 @@ public static class Commands
         //screen
         functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);
         functions["SCREENHEIGHT"] = typeof(CommandFunctionSCREENHEIGHT);
+        functions["DCHARPIXELX"] = typeof(CommandFunctionCHARPIXELX);
+        functions["DCHARPIXELY"] = typeof(CommandFunctionCHARPIXELY);
+        functions["DPSET"] = typeof(CommandPSET);
+        functions["DLINE"] = typeof(CommandLINE);
+        functions["DOVAL"] = typeof(CommandOVAL);
+        functions["DCIRCLE"] = typeof(CommandCIRCLE);
+        functions["DBOX"] = typeof(CommandBOX);
+        functions["DBOX"] = typeof(CommandBOX);
+
 
         // READ DATA RESTORE
         commands["DATA"] = typeof(CommandDATA);

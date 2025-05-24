@@ -1,6 +1,9 @@
-// TextureDrawingUtilities.cs
+﻿// TextureDrawingUtilities.cs
 using UnityEngine;
 using System; // For Array.Fill
+using Unity.Collections; // Required for NativeArray
+using Unity.Burst;      // Required for [BurstCompile]
+using Unity.Jobs;
 
 public static class TextureDrawingUtilities
 {
@@ -344,5 +347,179 @@ public static class TextureDrawingUtilities
         catch (UnityException ex) { Debug.LogError($"[DrawTextureRescaled] Failed to GetPixels32 from '{sourceTexture.name}': {ex.Message}"); return false; }
 
         return DrawImageRescaled(texture, x, y, width, height, sourcePixels, sourceTexture.width, sourceTexture.height, textureWidth, textureHeight);
+    }
+    [BurstCompile(FloatPrecision.Standard, FloatMode.Fast, CompileSynchronously = true)]
+    private struct ScrollRectVerticalJob : IJob
+    {
+        [ReadOnly] public NativeArray<Color32> SourceAllPixels;
+        public NativeArray<Color32> OutputRectPixels; // Size: RectWidth * RectHeight
+
+        public int TextureWidth;    // Full width of SourceAllPixels
+        public int RectXInSource;   // Top-left X of the rectangle in SourceAllPixels
+        public int RectYInSource;   // Top-left Y of the rectangle in SourceAllPixels
+        public int RectWidth;
+        public int RectHeight;
+        public int ScrollAmountPixelsY; // Negative to scroll UP, Positive to scroll DOWN
+        public Color32 FillColor;
+
+        public void Execute()
+        {
+            if (ScrollAmountPixelsY == 0)
+            {
+                // If no scroll, just copy the original rectangle content to output
+                for (int y = 0; y < RectHeight; y++)
+                {
+                    int sourceRowStart = (RectYInSource + y) * TextureWidth + RectXInSource;
+                    int destRowStart = y * RectWidth;
+                    for (int x = 0; x < RectWidth; x++)
+                    {
+                        OutputRectPixels[destRowStart + x] = SourceAllPixels[sourceRowStart + x];
+                    }
+                }
+                return;
+            }
+
+            // Initialize OutputRectPixels with FillColor first.
+            // This simplifies logic as we only need to copy the valid scrolled parts over it.
+            for (int i = 0; i < OutputRectPixels.Length; i++)
+            {
+                OutputRectPixels[i] = FillColor;
+            }
+
+            // --- SCROLL UP (e.g., ScrollAmountPixelsY = -16 pixels) ---
+            // Content moves from lower rows in source to higher rows in destination (output).
+            // New blank space appears at the BOTTOM of the output rectangle.
+            if (ScrollAmountPixelsY < 0)
+            {
+                int pixelsToVisuallyMoveUp = Mathf.Abs(ScrollAmountPixelsY);
+
+                if (pixelsToVisuallyMoveUp >= RectHeight)
+                {
+                    // Already filled with FillColor, nothing more to do.
+                    return;
+                }
+
+                // Iterate through the rows of the *destination* (OutputRectPixels) that will receive scrolled content.
+                // These are rows 0 to (RectHeight - pixelsToVisuallyMoveUp - 1) of OutputRectPixels.
+                for (int yDestInOutput = 0; yDestInOutput < RectHeight - pixelsToVisuallyMoveUp; yDestInOutput++)
+                {
+                    // The corresponding source row in the original rectangle (SourceAllPixels)
+                    // is 'pixelsToVisuallyMoveUp' rows *below* this destination row.
+                    int ySrcInOriginalRect = yDestInOutput + pixelsToVisuallyMoveUp;
+
+                    // Calculate 1D indices
+                    int sourceRowStartIndexInAllPixels = (RectYInSource + ySrcInOriginalRect) * TextureWidth + RectXInSource;
+                    int destRowStartIndexInOutput = yDestInOutput * RectWidth;
+
+                    // Copy the row
+                    for (int x = 0; x < RectWidth; x++)
+                    {
+                        OutputRectPixels[destRowStartIndexInOutput + x] = SourceAllPixels[sourceRowStartIndexInAllPixels + x];
+                    }
+                }
+                // The bottom 'pixelsToVisuallyMoveUp' rows of OutputRectPixels are already FillColor.
+            }
+            // --- SCROLL DOWN (e.g., ScrollAmountPixelsY = 16 pixels) ---
+            // Content moves from higher rows in source to lower rows in destination (output).
+            // New blank space appears at the TOP of the output rectangle.
+            else // ScrollAmountPixelsY > 0
+            {
+                int pixelsToVisuallyMoveDown = ScrollAmountPixelsY;
+
+                if (pixelsToVisuallyMoveDown >= RectHeight)
+                {
+                    // Already filled with FillColor, nothing more to do.
+                    return;
+                }
+
+                // Iterate through the rows of the *destination* (OutputRectPixels) that will receive scrolled content.
+                // These are rows 'pixelsToVisuallyMoveDown' to (RectHeight - 1) of OutputRectPixels.
+                for (int yDestInOutput = pixelsToVisuallyMoveDown; yDestInOutput < RectHeight; yDestInOutput++)
+                {
+                    // The corresponding source row in the original rectangle (SourceAllPixels)
+                    // is 'pixelsToVisuallyMoveDown' rows *above* this destination row.
+                    int ySrcInOriginalRect = yDestInOutput - pixelsToVisuallyMoveDown;
+
+                    // Calculate 1D indices
+                    int sourceRowStartIndexInAllPixels = (RectYInSource + ySrcInOriginalRect) * TextureWidth + RectXInSource;
+                    int destRowStartIndexInOutput = yDestInOutput * RectWidth;
+
+                    // Copy the row
+                    for (int x = 0; x < RectWidth; x++)
+                    {
+                        OutputRectPixels[destRowStartIndexInOutput + x] = SourceAllPixels[sourceRowStartIndexInAllPixels + x];
+                    }
+                }
+                // The top 'pixelsToVisuallyMoveDown' rows of OutputRectPixels are already FillColor.
+            }
+        }
+    }
+
+    // The rest of TextureDrawingUtilities.ScrollRectangleVerticalBurst remains the same:
+    public static bool ScrollRectangleVerticalBurst(
+        Texture2D texture,
+        int rectX, int rectY, int rectWidth, int rectHeight,
+        int scrollAmountPixelsY, Color32 fillColor)
+    {
+        // ... (validation, clamping, GetPixelData, NativeArray setup, Job scheduling, CopyTo managed array, SetPixels32, Dispose) ...
+        // The only change is that the job instance will now use the Execute() logic above.
+        if (texture == null || rectWidth <= 0 || rectHeight <= 0 || scrollAmountPixelsY == 0 && !(rectX == 0 && rectY == 0 && rectWidth == texture.width && rectHeight == texture.height)) // Allow scrollAmount 0 only if copying whole texture (no-op case)
+        {
+            // if scrollAmount is 0, only proceed if we intend to "refresh" the entire texture block from source to output (might be a no-op if source=output)
+            if (scrollAmountPixelsY == 0 && (rectX == 0 && rectY == 0 && rectWidth == texture.width && rectHeight == texture.height))
+            {
+                // This specific case might be used to just get the rect data, let it pass.
+            }
+            else
+            {
+                // For any other scrollAmount 0, or invalid rects, return false early.
+                if (scrollAmountPixelsY == 0) return false; // No actual scroll to perform if rect is sub-part
+            }
+        }
+
+        if (!texture.isReadable)
+        {
+            Debug.LogError("[ScrollRectangleVerticalBurst] Texture is not readable.");
+            return false;
+        }
+
+        int textureWidth = texture.width;
+        int textureHeight = texture.height;
+
+        int clampedRectX = Mathf.Max(0, rectX);
+        int clampedRectY = Mathf.Max(0, rectY);
+        int effectiveRectWidth = Mathf.Max(0, Mathf.Min(rectX + rectWidth, textureWidth) - clampedRectX);
+        int effectiveRectHeight = Mathf.Max(0, Mathf.Min(rectY + rectHeight, textureHeight) - clampedRectY);
+
+        if (effectiveRectWidth <= 0 || effectiveRectHeight <= 0) return false;
+
+        NativeArray<Color32> allPixelsNative = texture.GetPixelData<Color32>(0);
+        NativeArray<Color32> outputRectPixelsNative = new NativeArray<Color32>(effectiveRectWidth * effectiveRectHeight, Allocator.TempJob);
+
+        ScrollRectVerticalJob scrollJob = new ScrollRectVerticalJob
+        {
+            SourceAllPixels = allPixelsNative,
+            OutputRectPixels = outputRectPixelsNative,
+            TextureWidth = textureWidth,
+            RectXInSource = clampedRectX,
+            RectYInSource = clampedRectY,
+            RectWidth = effectiveRectWidth,
+            RectHeight = effectiveRectHeight,
+            ScrollAmountPixelsY = scrollAmountPixelsY,
+            FillColor = fillColor
+        };
+
+        scrollJob.Run();
+
+        Color32[] managedRectPixels = new Color32[effectiveRectWidth * effectiveRectHeight];
+        outputRectPixelsNative.CopyTo(managedRectPixels);
+
+        int unityRectStartY = textureHeight - (clampedRectY + effectiveRectHeight);
+        texture.SetPixels32(clampedRectX, unityRectStartY, effectiveRectWidth, effectiveRectHeight, managedRectPixels);
+
+        allPixelsNative.Dispose();
+        outputRectPixelsNative.Dispose();
+
+        return true;
     }
 }

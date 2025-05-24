@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 class CommandPRINT : ICommandBase
 {
@@ -79,7 +80,6 @@ class CommandPRINT : ICommandBase
 
 }
 
-
 class CommandPRINTLN : ICommandBase
 {
     public string CmdToken { get; } = "PRINTLN";
@@ -101,40 +101,249 @@ class CommandPRINTLN : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        BasicValue str;
-        BasicValue inverted = new BasicValue(false);
-        BasicValue draw = new BasicValue(true);
-
-        // print text/number                   = 1 par
-        // print text/number, inv              = 2 par
-        // print text/number, inv, draw        = 3 par
-
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
         if (config?.ScreenGenerator == null)
             return null;
 
         BasicValue[] vals = exprs.ExecuteList(vars);
         FunctionHelper.ExpectedAtLeast(vals, 1);
-        FunctionHelper.ExpectedNotNull(vals[0], " - content to print.");
+        FunctionHelper.ExpectedNotNull(vals[0], " - content to print."); // Still good for mandatory arg
 
-        str = new BasicValue(vals[0]);
+        BasicValue str = new BasicValue(vals[0]);
 
-        if (vals.Length > 1)
+        bool invertedFlag = false; // Default
+        bool drawFlag = true;     // Default
+
+        if (vals.Length > 1) // Argument for invertedFlag exists
         {
-            inverted = vals[1];
-            if (vals.Length > 2)
-                draw = vals[2];
+            invertedFlag = vals[1].GetBoolean();
+            if (vals.Length > 2) // Argument for drawFlag exists
+            {
+                drawFlag = vals[2].GetBoolean();
+            }
         }
 
         if (str.IsNumber())
             str.CastTo(BasicValue.BasicValueType.String);
 
-        config.ScreenGenerator.Print(str.GetValueAsString(), inverted.GetBoolean());
+        config.ScreenGenerator.Print(str.GetValueAsString(), invertedFlag);
 
-        if (draw.GetBoolean())
+        if (drawFlag)
             config.ScreenGenerator.DrawScreen();
 
         return null;
     }
+}
+public class CommandPRINTCENTERED : ICommandBase
+{
+    public string CmdToken { get; } = "PRINTCENTERED";
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    private readonly ConfigurationCommands _config;
+    private readonly CommandExpressionList _expressions;
 
+    public CommandPRINTCENTERED(ConfigurationCommands config)
+    {
+        this._config = config;
+        this._expressions = new CommandExpressionList(config);
+    }
+
+    public bool Parse(TokenConsumer tokens)
+    {
+        return _expressions.Parse(tokens);
+    }
+
+    public BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
+        if (_config?.ScreenGenerator == null)
+        {
+            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
+            return null;
+        }
+
+        BasicValue[] values = _expressions.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(values, 2);
+
+        FunctionHelper.ExpectedNumber(values[0], $"- Y coordinate for {CmdToken} must be a number.");
+        int y = values[0].GetInt();
+
+        FunctionHelper.ExpectedNotNull(values[1], $"- TEXT$ for {CmdToken} cannot be null."); // Good for mandatory
+        BasicValue textValue = values[1];
+        if (textValue.IsNumber())
+        {
+            textValue.CastTo(BasicValue.BasicValueType.String);
+        }
+        else if (!textValue.IsString())
+        {
+            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] TEXT$ argument must be a string or number.");
+        }
+        string textToPrint = textValue.GetString();
+
+        bool inverted = false; // Default
+        if (values.Length > 2) // Argument for inverted exists
+        {
+            inverted = values[2].GetBoolean();
+        }
+
+        bool drawImmediately = true; // Default
+        if (values.Length > 3) // Argument for drawImmediately exists
+        {
+            drawImmediately = values[3].GetBoolean();
+        }
+
+        if (y < 0 || y >= _config.ScreenGenerator.CharactersYCount)
+        {
+            AGEBasicDebug.WriteConsole($"[{CmdToken} WARNING #{_config.LineNumber}] Y coordinate {y} is out of screen bounds (0-{_config.ScreenGenerator.CharactersYCount - 1}). Text may not be visible.");
+        }
+
+        _config.ScreenGenerator.PrintCentered(y, textToPrint, inverted);
+
+        if (drawImmediately)
+        {
+            _config.ScreenGenerator.DrawScreen();
+        }
+        return null;
+    }
+
+}
+public class CommandSCROLL : ICommandBase
+{
+    public string CmdToken { get; } = "SCROLL";
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    private readonly ConfigurationCommands _config;
+    private readonly CommandExpressionList _expressions;
+
+    public CommandSCROLL(ConfigurationCommands config)
+    {
+        this._config = config;
+        this._expressions = new CommandExpressionList(config);
+    }
+
+    public bool Parse(TokenConsumer tokens)
+    {
+        return _expressions.Parse(tokens);
+    }
+
+    public BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
+        if (_config?.ScreenGenerator == null)
+        {
+            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
+            return null;
+        }
+
+        BasicValue[] values = _expressions.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(values, 1);
+        FunctionHelper.ExpectedNumber(values[0], $"- N_LINES for {CmdToken} must be a number.");
+        int nLines = values[0].GetInt();
+
+        Color32? fillColor = null;
+        bool drawImmediately = true; // Default
+        int currentArgIndex = 1;
+
+        if (currentArgIndex < values.Length) // Potential color argument exists
+        {
+            if (FunctionHelper.TryParseColor(values, currentArgIndex, _config, out Color32 parsedColor, out int consumedColorArgs))
+            {
+                fillColor = parsedColor;
+                currentArgIndex += consumedColorArgs;
+            }
+        }
+
+        if (currentArgIndex < values.Length) // Potential drawFlag argument exists
+        {
+            drawImmediately = values[currentArgIndex].GetBoolean();
+            currentArgIndex++;
+        }
+
+        if (currentArgIndex < values.Length) // Still more arguments than expected
+        {
+            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
+        }
+
+        _config.ScreenGenerator.ScrollCharacterArea(nLines, fillColor);
+
+        if (drawImmediately)
+        {
+            _config.ScreenGenerator.DrawScreen();
+        }
+        return null;
+    }
+}
+public class CommandSCROLLRECT : ICommandBase
+{
+    public string CmdToken { get; } = "SCROLLRECT";
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    private readonly ConfigurationCommands _config;
+    private readonly CommandExpressionList _expressions;
+
+    public CommandSCROLLRECT(ConfigurationCommands config)
+    {
+        this._config = config;
+        this._expressions = new CommandExpressionList(config);
+    }
+
+    public bool Parse(TokenConsumer tokens)
+    {
+        return _expressions.Parse(tokens);
+    }
+
+    public BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
+        if (_config?.ScreenGenerator == null)
+        {
+            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
+            return null;
+        }
+
+        BasicValue[] values = _expressions.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(values, 5);
+
+        FunctionHelper.ExpectedNumber(values[0], $"- CX (char rect X) for {CmdToken}");
+        int charRectX = values[0].GetInt();
+        FunctionHelper.ExpectedNumber(values[1], $"- CY (char rect Y) for {CmdToken}");
+        int charRectY = values[1].GetInt();
+        FunctionHelper.ExpectedNumber(values[2], $"- CW (char rect width) for {CmdToken}");
+        int charRectWidth = values[2].GetInt();
+        if (charRectWidth <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] CW (char rect width) must be greater than 0.");
+        FunctionHelper.ExpectedNumber(values[3], $"- CH (char rect height) for {CmdToken}");
+        int charRectHeight = values[3].GetInt();
+        if (charRectHeight <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] CH (char rect height) must be greater than 0.");
+        FunctionHelper.ExpectedNumber(values[4], $"- N_LINES for {CmdToken}");
+        int nLines = values[4].GetInt();
+
+        Color32? fillColor = null;
+        bool drawImmediately = true; // Default
+        int currentArgIndex = 5;
+
+        if (currentArgIndex < values.Length) // Potential color argument exists
+        {
+            if (FunctionHelper.TryParseColor(values, currentArgIndex, _config, out Color32 parsedColor, out int consumedColorArgs))
+            {
+                fillColor = parsedColor;
+                currentArgIndex += consumedColorArgs;
+            }
+        }
+
+        if (currentArgIndex < values.Length) // Potential drawFlag argument exists
+        {
+            drawImmediately = values[currentArgIndex].GetBoolean();
+            currentArgIndex++;
+        }
+
+        if (currentArgIndex < values.Length) // Still more arguments than expected
+        {
+            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
+        }
+
+        _config.ScreenGenerator.ScrollCharacterSubRectVertical(charRectX, charRectY, charRectWidth, charRectHeight, nLines, fillColor);
+
+        if (drawImmediately)
+        {
+            _config.ScreenGenerator.DrawScreen();
+        }
+        return null;
+    }
 }
