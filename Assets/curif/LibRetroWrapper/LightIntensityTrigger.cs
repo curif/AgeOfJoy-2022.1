@@ -18,9 +18,30 @@ public class LightIntensityTrigger : MonoBehaviour
     [Tooltip("Assign the Input Action that represents the 'control trigger click' here.")]
     public InputActionReference activateTriggerAction;
 
+    // <<< Drag in the Animation component or GameObject with an Animation component
+    [Tooltip("Drag the GameObject or component that has the Animation you want to play.")]
+    public Animation targetAnimation;
+
     private int intensityIdx = 0;
     private bool _isPlayerInTrigger = false;
     private Collider _playerGrabVolumeCollider = null;
+    private AudioSource _audioSource; // Reference to AudioSource on this GameObject
+
+    void Awake()
+    {
+        // Cache AudioSource component
+        _audioSource = GetComponent<AudioSource>();
+        if (_audioSource == null)
+        {
+            Debug.LogWarning($"[LightIntensityTrigger] No AudioSource found on {gameObject.name}. Audio will not play.");
+        }
+
+        // Optional: warn if targetAnimation is not assigned
+        if (targetAnimation == null)
+        {
+            Debug.LogWarning($"[LightIntensityTrigger] No target Animation assigned on {gameObject.name}. Animation will not play.");
+        }
+    }
 
     void Start()
     {
@@ -62,9 +83,6 @@ public class LightIntensityTrigger : MonoBehaviour
         {
             _isPlayerInTrigger = true;
             _playerGrabVolumeCollider = other;
-
-            // Assuming ConfigManager exists. Otherwise, use Debug.Log.
-            // ConfigManager.WriteConsole($"[LightIntensityTrigger] Player GrabVolumeSmall entered trigger zone.");
         }
     }
 
@@ -74,9 +92,6 @@ public class LightIntensityTrigger : MonoBehaviour
         {
             _isPlayerInTrigger = false;
             _playerGrabVolumeCollider = null;
-
-            // Assuming ConfigManager exists. Otherwise, use Debug.Log.
-            // ConfigManager.WriteConsole($"[LightIntensityTrigger] Player GrabVolumeSmall exited trigger zone.");
         }
     }
 
@@ -89,14 +104,24 @@ public class LightIntensityTrigger : MonoBehaviour
             if (activateTriggerAction != null && activateTriggerAction.action != null && activateTriggerAction.action.WasPerformedThisFrame())
             {
                 ApplyIntensityChange();
-                // Optional: Prevent multiple activations if the user holds the trigger
-                // (WasPerformedThisFrame already handles this for single presses)
             }
         }
     }
 
     public void ApplyIntensityChange()
     {
+        // Play audio if available
+        if (_audioSource != null)
+        {
+            _audioSource.Play();
+        }
+
+        // Play target animation if assigned
+        if (targetAnimation != null)
+        {
+            targetAnimation.Play();
+        }
+
         intensityIdx++;
         if (intensityIdx >= Intensity.Length)
         {
@@ -105,12 +130,9 @@ public class LightIntensityTrigger : MonoBehaviour
         if (userLightManager != null && Intensity != null && Intensity.Length > 0)
         {
             userLightManager.ApplyUserLightSettings(null, Intensity[intensityIdx], lightTransitionDuration);
-            // Assuming ConfigManager exists. Otherwise, use Debug.Log.
-            // ConfigManager.WriteConsole($"[LightIntensityTrigger] Applying intensity change to index: {intensityIdx}, value: {Intensity[intensityIdx]}");
         }
         else
         {
-            // Assuming ConfigManager exists. Otherwise, use Debug.LogWarning.
             ConfigManager.WriteConsoleWarning("UserLightManager is not assigned or Intensity array is empty.");
         }
     }
