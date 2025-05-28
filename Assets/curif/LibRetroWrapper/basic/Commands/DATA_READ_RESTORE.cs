@@ -122,7 +122,7 @@ class CommandREAD : ICommandBase
             BasicValue v = l.CurrentValue();
             if (v == null)
                 break;
-            vars.SetValue(var, v);
+            var.BasicValue = v;
 
             l.Next();
         }

@@ -181,12 +181,15 @@ public class AGEProgram
 
             The | character separates these different patterns, allowing the regex to match any of these elements.
         */
-        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|&[0-9A-Fa-f]+|\w+|[,\(\)=/*+\-]|:|!=|<>|>=|<=|==|>|<|'|&&|\|\|)";
-        //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
 
-        //string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<|\s+)";
+        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|&[0-9A-Fa-f]+|\w+|[,\(\)=/*+\-\[\]]|:|!=|<>|>=|<=|==|>|<|'|&&|\|\|)";
 
-        //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+-]|!=|<>|>=|<=|>|<)";
+//        string pattern = @"(?<Text>""[^""]*""|-?\d+(\.\d+)?|&[0-9A-Fa-f]+|\w+|[,\(\)=/*+\-]|:|!=|<>|>=|<=|==|>|<|'|&&|\|\|)";
+    //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<)|\s+";
+
+    //string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+\-]|!=|<>|>=|<=|>|<|\s+)";
+
+    //        string pattern = @"(?<Text>""[^""]*""|\d+(\.\d+)?|\w+|[,\(\)=/*+-]|!=|<>|>=|<=|>|<)";
         MatchCollection matches = Regex.Matches(codeLine, pattern);
 
         string[] tokens = new string[matches.Count];

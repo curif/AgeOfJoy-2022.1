@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -15,10 +16,13 @@ class CommandFunctionLEN : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
         BasicValue val = expr.Execute(vars);
-        FunctionHelper.ExpectedString(val);
+        
+        if (val.IsString())
+            return new BasicValue(val.GetValueAsString().Length);
+        if (val.IsArray())
+            return new BasicValue(val.GetArrayLength());
 
-        double ret = val.GetValueAsString().Length;
-        return new BasicValue(ret);
+        throw new InvalidEnumArgumentException($"LEN() needs a string or array as argument.");
     }
 }
 class CommandFunctionUCASE : CommandFunctionSingleExpressionBase
@@ -162,10 +166,8 @@ class CommandFunctionSTR : CommandFunctionSingleExpressionBase
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
-        BasicValue val = expr.Execute(vars);
-        BasicValue ret = new BasicValue(val);
-        ret.CastTo(BasicValue.BasicValueType.String);
-        return ret;
+        BasicValue val = new(expr.Execute(vars));
+        return val.CastTo(BasicValue.BasicValueType.String);
     }
 }
 

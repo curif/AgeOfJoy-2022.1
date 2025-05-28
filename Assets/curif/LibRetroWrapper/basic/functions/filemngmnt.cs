@@ -19,11 +19,7 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
-
-        BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path");
-        FunctionHelper.ExpectedNonEmptyString(vals[1], " - separator");
-        FunctionHelper.ExpectedNumber(vals[2], " - order");
+        BasicValue[] vals = GetParams(vars);
 
         string path = FunctionHelper.FileTraversalFree(vals[0].GetValueAsString(), ConfigManager.BaseDir);
         string separator = vals[1].GetValueAsString();
@@ -34,29 +30,94 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
         try
         {
             // Get files from the specified path based on order type
-            switch (orderType)
-            {
-                case 0: // Alphabetic order
-                    files = Directory.GetFiles(path).OrderBy(f => f).ToArray();
-                    break;
-                case 1: // Random order
-                    files = Directory.GetFiles(path).OrderBy(f => Guid.NewGuid()).ToArray();
-                    break;
-                case 2: // Creation date from old to new
-                    files = Directory.GetFiles(path).OrderBy(f => new FileInfo(f).CreationTime).ToArray();
-                    break;
-                case 3: // Creation date from new to old
-                    files = Directory.GetFiles(path).OrderByDescending(f => new FileInfo(f).CreationTime).ToArray();
-                    break;
-                default:
-                    // Invalid order type, return an empty string or handle the error accordingly
-                    return new BasicValue("");
-            }
+            files =  GetFiles(path, orderType);
+            if (files == null)
+                return new BasicValue("");
 
             // Extract file names without the path
             string result = string.Join(separator, files.Select(f => Path.GetFileName(f)));
 
             return new BasicValue(result);
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that may occur (e.g., invalid path)
+            AGEBasicDebug.WriteConsole($"Error: {ex.Message}");
+            return new BasicValue("");
+        }
+    }
+
+    protected static string[] GetFiles(string path, int orderType)
+    {
+        string[] files;
+        switch (orderType)
+        {
+            case 0: // Alphabetic order
+                files = Directory.GetFiles(path).OrderBy(f => f).ToArray();
+                break;
+            case 1: // Random order
+                files = Directory.GetFiles(path).OrderBy(f => Guid.NewGuid()).ToArray();
+                break;
+            case 2: // Creation date from old to new
+                files = Directory.GetFiles(path).OrderBy(f => new FileInfo(f).CreationTime).ToArray();
+                break;
+            case 3: // Creation date from new to old
+                files = Directory.GetFiles(path).OrderByDescending(f => new FileInfo(f).CreationTime).ToArray();
+                break;
+            default:
+                files = null;
+                break;
+
+        }
+        return files;
+    }
+
+    private BasicValue[] GetParams(BasicVars vars)
+    {
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - separator");
+        FunctionHelper.ExpectedNumber(vals[2], " - order");
+        return vals;
+    }
+}
+
+
+class CommandFunctionGETFILESARRAY : CommandFunctionGETFILES
+{
+    public CommandFunctionGETFILESARRAY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "GETFILESARRAY";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+    private BasicValue[] GetParams(BasicVars vars)
+    {
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path");
+        FunctionHelper.ExpectedNumber(vals[1], " - order");
+        return vals;
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        BasicValue[] vals = GetParams(vars);
+
+        string path = FunctionHelper.FileTraversalFree(vals[0].GetValueAsString(), ConfigManager.BaseDir);
+        int orderType = (int)vals[1].GetValueAsNumber();
+
+        string[] files;
+        try
+        {
+            // Get files from the specified path based on order type
+            files = GetFiles(path, orderType);
+            if (files == null)
+                return new BasicValue("");
+
+            return new BasicValue(files.Select(f => Path.GetFileName(f)).ToArray());
         }
         catch (Exception ex)
         {
