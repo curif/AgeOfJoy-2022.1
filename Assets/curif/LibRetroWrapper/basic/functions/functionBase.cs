@@ -65,7 +65,7 @@ class CommandFunctionExpressionListBase : CommandFunctionBase
         if (exprs.Count < cantParametersRequired)
             throw new Exception($"{cmdToken}() parameter missing, {cantParametersRequired} expected.");
 
-        AGEBasicDebug.WriteConsole($"[functionBase.Parse] END {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($"[functionBase.Parse] END {tokens}");
         return true;
     }
 

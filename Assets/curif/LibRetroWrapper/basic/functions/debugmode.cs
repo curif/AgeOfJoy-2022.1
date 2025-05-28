@@ -25,28 +25,6 @@ class CommandFunctionDEBUGMODE : CommandFunctionSingleExpressionBase
 }
 
 
-class CommandFunctionTYPE : CommandFunctionSingleExpressionBase
-{
-    public CommandFunctionTYPE(ConfigurationCommands config) : base(config)
-    {
-        cmdToken = "TYPE";
-    }
-
-    public override BasicValue Execute(BasicVars vars)
-    {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
-        BasicValue val = expr.Execute(vars);
-
-        if (val.Type() == BasicValue.BasicValueType.String)
-            return new BasicValue("STRING");
-        else if (val.Type() == BasicValue.BasicValueType.Number)
-            return new BasicValue("NUMBER");
-
-        return new BasicValue("EMPTY");
-    }
-}
-
-
 class CommandFunctionLOG : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionLOG(ConfigurationCommands config) : base(config)

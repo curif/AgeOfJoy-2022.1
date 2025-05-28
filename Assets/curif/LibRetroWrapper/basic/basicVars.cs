@@ -1,6 +1,7 @@
 using Meta.WitAi.Data;
 using System;
 using System.Collections.Generic;
+using static OVRHaptics;
 public class BasicVars
 {
     private readonly Dictionary<string, BasicVar> vars = new(); // Case-sensitive dictionary
@@ -39,9 +40,19 @@ public class BasicVars
         }
         set
         {
-            this[var.Name] = value;
+            if (!var.IsArray())
+            {
+                // This is a simple variable assignment (e.g., A = 10)
+                this[var.Name] = value; //it will be created if not exists
+                return;
+            }
+            if (!Exists(var.Name))
+                throw new Exception($"variable array {var.Name} must be DIMensioned before assignment.");
+            BasicValue[] indexes = var.IndexExpressions.ExecuteList(this);
+            this[var.Name][indexes] = value;
         }
     }
+
     public void Register(BasicVar var)
     {
         if (!Exists(var))

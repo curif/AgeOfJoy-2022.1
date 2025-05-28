@@ -109,17 +109,7 @@ class CommandLET : ICommandBase
 
         // Evaluate the value to be assigned on the right-hand side
         BasicValue valueToAssign = assignmentExpression.Execute(vars);
-
-        if (!var.IsArray())
-        {
-            // This is a simple variable assignment (e.g., A = 10)
-            vars[var.Name] = valueToAssign; //it will be created if not exists
-            return null;
-        }
-        if (!vars.Exists(var.Name))
-            throw new Exception($"[{CmdToken} ERROR #{config.LineNumber}]: variable {var.Name} must be DIMensioned before assignment.");
-        BasicValue[] indexes = var.IndexExpressions.ExecuteList(vars);
-        vars[var.Name][indexes] = valueToAssign;
+        vars[var] = valueToAssign;
 
         return null; // LET is a command, and commands typically return null
     }
@@ -193,7 +183,7 @@ class CommandLETS : ICommandBase
         // Parse the right-hand side (RHS) values
         // It could be a list of expressions (e.g., 10, "string", 0) or a function call that returns a list
         _rhsFunction = Commands.GetNew(tokens.Token, config) as ICommandFunctionList;
-        AGEBasicDebug.WriteConsole($"[AGE BASIC PARSE {CmdToken} #{config.LineNumber}] RHS is function? {_rhsFunction != null} ({tokens.ToString()})");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC PARSE {CmdToken} #{config.LineNumber}] RHS is function? {_rhsFunction != null} ({tokens})");
         if (_rhsFunction != null)
         {
             _rhsFunction.Parse(tokens);
@@ -227,44 +217,13 @@ class CommandLETS : ICommandBase
         {
             throw new Exception($"[{CmdToken} ERROR #{config.LineNumber}] Not enough values provided on the right-hand side ({rhsValues.Length}) for {_assignmentTargets.Count} targets. Missing values for: {string.Join(", ", _assignmentTargets.Skip(rhsValues.Length).Select(t => t.Name + (t.IsArray() ? "[...]" : "")))}.");
         }
-        // Optionally, check for too many values, though some BASICs allow trailing unused RHS values.
-        // if (rhsValues.Length > _assignmentTargets.Count)
-        // {
-        //     AGEBasicDebug.WriteConsole($"[{CmdToken} WARNING #{config.LineNumber}] Too many values provided on the right-hand side ({rhsValues.Length}) for {_assignmentTargets.Count} targets. Excess values will be ignored.");
-        // }
-
 
         // 3. Assign each RHS value to its corresponding LHS target
         for (int i = 0; i < _assignmentTargets.Count; i++)
         {
             BasicVar currentVar = _assignmentTargets[i]; // This BasicVar object now holds the name and potential index expressions
             BasicValue valueToAssign = rhsValues[i];
-
-            if (!currentVar.IsArray())
-            {
-                // This is a simple variable assignment (e.g., A = 10)
-                vars[currentVar.Name] = valueToAssign;
-                AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] Assigned '{valueToAssign}' to '{currentVar.Name}'.");
-            }
-            else
-            {
-                // This is an array element assignment (e.g., MYVAR[10,3] = "string")
-                // First, check if the base array variable exists.
-                if (!vars.Exists(currentVar.Name))
-                {
-                    throw new Exception($"[{CmdToken} ERROR #{config.LineNumber}]: Array variable '{currentVar.Name}' must be DIMensioned before assignment. Did you forget a DIM statement?");
-                }
-
-                // Evaluate the index expressions stored within the BasicVar object
-                // Assumes BasicVar.IndexExpressions is a CommandExpressionList or similar that can execute to BasicValue[].
-                BasicValue[] indexes = currentVar.IndexExpressions.ExecuteList(vars);
-
-                // Use the BasicVars indexer to assign to the specific array element.
-                // This implies BasicVars[string name][BasicValue[] indexes] is correctly implemented
-                // to handle traversal and assignment into nested arrays.
-                vars[currentVar.Name][indexes] = valueToAssign;
-                AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] Assigned '{valueToAssign}' to '{currentVar.Name}[{string.Join(",", indexes.Select(idx => idx.ToString()))}]'.");
-            }
+            vars[currentVar] = valueToAssign;
         }
 
         return null; // LETS is a command, and commands typically return null
