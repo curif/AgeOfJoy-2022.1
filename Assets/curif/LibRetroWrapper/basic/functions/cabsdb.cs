@@ -96,6 +96,28 @@ class CommandFunctionCABDBSEARCH : CommandFunctionExpressionListBase
     }
 }
 
+
+
+class CommandFunctionCABDBSEARCHARRAY : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCABDBSEARCHARRAY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBSEARCHARRAY";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.GameRegistry == null)
+            return new BasicValue("");
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedString(val, " - cab name (part of)");
+        return new BasicValue(config.GameRegistry.GetAllPrefixMatches(val.GetString()).ToArray());
+    }
+}
+
+
 /*
 class CommandFunctionCABDBGET : CommandFunctionExpressionListBase, ICommandFunctionList
 {

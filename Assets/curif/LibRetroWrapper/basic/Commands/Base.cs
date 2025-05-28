@@ -7,7 +7,6 @@ public interface ICommandBase
     string CmdToken { get; }
     CommandType.Type Type { get; }
 
-    //returns how many consumes
     bool Parse(TokenConsumer tokens);
     BasicValue Execute(BasicVars vars);
 }
@@ -23,7 +22,6 @@ public interface ICommandFunctionList
     string CmdToken { get; }
     CommandType.Type Type { get; }
 
-    //returns how many consumes
     bool Parse(TokenConsumer tokens);
     int MaxAllowed { get; }
 

@@ -60,6 +60,72 @@ public class BasicValue : IEnumerable<BasicValue>
     public BasicValue(BasicValue val) => SetValue(val);
     public BasicValue(string[] val) => SetValue(val);
 
+    /// <summary>
+    /// Initializes a new instance of the BasicValue class as a 1-dimensional array
+    /// populated with elements from an enumerable of any supported type.
+    /// Each element from the enumerable will be converted to a BasicValue.
+    /// Supported types include BasicValue, string, double, float, int, bool.
+    /// </summary>
+    /// <param name="values">The IEnumerable of any type whose elements will populate the BasicValue array.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the input IEnumerable is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if an unsupported type is found in the enumerable.</exception>
+    public BasicValue(IEnumerable values)
+    {
+        if (values == null)
+        {
+            throw new ArgumentNullException(nameof(values), "Cannot initialize BasicValue array from a null enumerable.");
+        }
+
+        // First, convert all items from the IEnumerable to BasicValue and collect them in a list.
+        // This is necessary because IEnumerable might not have a reliable Count,
+        // and we need to know the total size before calling Dim().
+        List<BasicValue> convertedValues = new List<BasicValue>();
+
+        foreach (object item in values)
+        {
+            switch (item)
+            {
+                case null:
+                    convertedValues.Add(new BasicValue()); // Represent null/empty with BasicValueType.empty
+                    break;
+                case BasicValue basicValue:
+                    convertedValues.Add(basicValue); // Already a BasicValue, just add it
+                    break;
+                case string s:
+                    convertedValues.Add(new BasicValue(s)); // Convert string to BasicValue
+                    break;
+                case double d:
+                    convertedValues.Add(new BasicValue(d)); // Convert double to BasicValue
+                    break;
+                case float f:
+                    convertedValues.Add(new BasicValue(f)); // Convert float to BasicValue
+                    break;
+                case int i:
+                    convertedValues.Add(new BasicValue(i)); // Convert int to BasicValue
+                    break;
+                case bool b:
+                    convertedValues.Add(new BasicValue(b)); // Convert bool to BasicValue
+                    break;
+                // Add more `case` blocks here if you want to support other primitive types
+                // like long, decimal, short, byte, char etc.
+                default:
+                    // If an unsupported type is found, throw an exception
+                    throw new ArgumentException($"Unsupported type '{item.GetType().Name}' found in enumerable. Cannot convert to BasicValue.");
+            }
+        }
+
+        // Now that we have the count, call the Dim method to set up the internal array structure.
+        // This will set this.type, this.dimensions (as 1D), this.strides (as 1D),
+        // and initialize this.arrayValues to the correct size with default BasicValue(0) elements.
+        this.Dim(convertedValues.Count);
+
+        // Finally, populate the internal arrayValues with the converted BasicValues.
+        for (int i = 0; i < convertedValues.Count; i++)
+        {
+            this.arrayValues[i] = convertedValues[i];
+        }
+    }
+
     // String constructor with optional forced type
     public BasicValue(string str, BasicValueType forceType = BasicValueType.empty)
     {
