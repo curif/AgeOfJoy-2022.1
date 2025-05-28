@@ -18,7 +18,7 @@ class CommandFORTO : ICommandBase
     CommandExpression expr;
     CommandExpression exprTo;
     CommandExpression exprStep;
-    BasicVar var;
+    string varName;
 
     ConfigurationCommands config;
     public CommandFORTO(ConfigurationCommands config)
@@ -34,10 +34,12 @@ class CommandFORTO : ICommandBase
         if (!BasicVar.IsVariable(tokens.Token))
             throw new Exception($"{tokens.Token} isn't a valid variable (FOR)");
 
-        var = new(tokens.Token);
+        varName = tokens.Token;
+        if (tokens.TheNextIs("["))
+            throw new Exception($"malformed FOR/TO: arrays aren't allowed as FOR variables var: {varName.ToString()}");
 
         if (tokens.Next("=") == null)
-            throw new Exception($"malformed FOR/TO missing [=] var: {var.ToString()}");
+            throw new Exception($"malformed FOR/TO missing [=] var: {varName.ToString()}");
 
         tokens++;
         expr.Parse(tokens);
@@ -65,16 +67,15 @@ class CommandFORTO : ICommandBase
 
         BasicValue startVal = new(expr.Execute(vars));
         FunctionHelper.ExpectedNumber(startVal, "- FOR must be an expression or number");
-
-        vars.SetValue(var, startVal);
+        vars.DeclareNewVariable(varName).BasicValue = startVal;
 
         forToStorage ft = new();
         ft.lineNumber = config.LineNumber;
         ft.endExpr = exprTo;
         ft.stepExpr = exprStep;
 
-        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] var:{var.Name} from {startVal.ToString()} expr:({expr.ToString()}) to expr: ({exprTo.ToString()})  lineNumber:{ft.lineNumber}");
-        config.ForToNext[var.Name] = ft;
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] var:{varName} from {startVal.ToString()} expr:({expr.ToString()}) to expr: ({exprTo.ToString()})  lineNumber:{ft.lineNumber}");
+        config.ForToNext[varName] = ft;
 
         return null;
     }

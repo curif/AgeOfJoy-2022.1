@@ -199,6 +199,41 @@ class CommandFunctionMUSICADDLIST : CommandFunctionExpressionListBase
     }
 }
 
+class CommandFunctionMUSICADDLISTARRAY : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionMUSICADDLISTARRAY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "MUSICADDLISTARRAY";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+
+        if (config.MusicPlayerQueue == null)
+            throw new Exception("Music player doesn't exists");
+
+        BasicValue vals = expr.Execute(vars);
+        FunctionHelper.ExpectedNonEmptyArray(vals, "list");
+
+        config.MusicPlayerQueue.ClearQueue();
+
+        foreach (BasicValue file in vals)
+        {
+            if (string.IsNullOrEmpty(file.GetString()))
+                continue;
+
+            string filePath = FunctionHelper.FileTraversalFree(Path.Combine(ConfigManager.MusicDir, file.GetString()),
+                                                                ConfigManager.MusicDir);
+
+            config.MusicPlayerQueue.AddMusic(filePath);
+        }
+
+        return new BasicValue(1);
+    }
+}
+
 class CommandFunctionMUSICNEXT : CommandFunctionNoExpressionBase
 {
     public CommandFunctionMUSICNEXT(ConfigurationCommands config) : base(config)

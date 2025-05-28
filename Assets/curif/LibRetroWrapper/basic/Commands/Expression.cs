@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Unity.VisualScripting;
+using static Siccity.GLTFUtility.GLTFAccessor.Sparse;
 
 
 public class CommandExpression : ICommandBase
@@ -10,12 +11,16 @@ public class CommandExpression : ICommandBase
     public CommandType.Type Type { get; } = CommandType.Type.Expression;
 
     ConfigurationCommands config;
-    HashSet<string> constantStoppers;
-
+    private static readonly HashSet<string> constantStoppers =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) // Or CurrentCultureIgnoreCase, etc.
+        {
+        ")", ",", "'", ":", "THEN", "ELSE", "TO", "STEP", "]"
+        };
     private class Element
     {
         public BasicVar var;
-        public BasicValue val;
+
+        public BasicValue constantValue;
         public CommandExpression expr;
         public ICommandBase func;
         public BasicValue op;
@@ -43,18 +48,32 @@ public class CommandExpression : ICommandBase
         }
         public Element(BasicValue val)
         {
-            this.val = val;
+            this.constantValue = val;
             this.type = CommandType.Type.Constant;
         }
 
+        public BasicValue GetVarValue(BasicVars vars)
+        {
+            BasicValue v = vars[var.Name];
+            if (!v.IsArray())
+                return new(v);
+
+            //if there is not solicited index in array, returns a copy of the actual array.
+            //it could be slow if the array is big.
+            if (var.IndexExpressions == null || var.IndexExpressions.Count == 0)
+                return new(v);
+
+            BasicValue[] indexes = var.IndexExpressions.ExecuteList(vars);
+            return new(v[indexes]);
+        }
         public BasicValue GetValue(BasicVars vars)
         {
             switch (type)
             {
                 case CommandType.Type.Variable:
-                    return vars.GetValue(var);
+                    return GetVarValue(vars);
                 case CommandType.Type.Constant:
-                    return val;
+                    return constantValue;
                 case CommandType.Type.Operation:
                     return op;
                 case CommandType.Type.Expression:
@@ -66,7 +85,6 @@ public class CommandExpression : ICommandBase
             }
         }
 
-
         public override string ToString()
         {
             string tostring = "";
@@ -76,7 +94,7 @@ public class CommandExpression : ICommandBase
                     tostring += var;
                     break;
                 case CommandType.Type.Constant:
-                    tostring += " " + val.ToString();
+                    tostring += " " + constantValue.ToString();
                     break;
                 case CommandType.Type.Operation:
                     tostring += " " + op.ToString();
@@ -95,10 +113,16 @@ public class CommandExpression : ICommandBase
     private List<Element> elements = new();
     public int Count { get { return elements.Count; } }
 
+    public BasicVar GetVariable(int position)
+    {
+        if (elements[position].type != CommandType.Type.Variable)
+            throw new ArgumentException($"Element {position} in expression requires a variable");
+        return elements[position].var;
+    }
+
     public CommandExpression(ConfigurationCommands config)
     {
         this.config = config;
-        this.constantStoppers = new HashSet<string> { ")", ",", "'", ":", "THEN", "ELSE", "TO", "STEP" };
     }
 
     public bool Parse(TokenConsumer tokens)
@@ -114,7 +138,7 @@ public class CommandExpression : ICommandBase
             switch (tokenType)
             {
                 case CommandType.Type.Variable:
-                    elements.Add(new Element(new BasicVar(tokens.Token)));
+                    elements.Add(new Element(BasicVar.Parse(tokens, config)));
                     break;
                 case CommandType.Type.Constant:
                     elements.Add(new Element(new BasicValue(tokens.Token)));
@@ -125,15 +149,15 @@ public class CommandExpression : ICommandBase
                 case CommandType.Type.Function:
                     ICommandBase fnct = Commands.GetNew(tokens.Token, config);
                     if (fnct == null)
-                        throw new Exception($"Syntax error function not found in expression clause: {tokens.ToString()}");
+                        throw new Exception($"Syntax error function not found in expression clause: {tokens}");
 
                     ICommandList exprList = fnct as ICommandList;
                     if (exprList != null)
                         throw new Exception($" fnct list cant be part of an expression {tokens.Token}");
 
-                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens.ToString()}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] FUNCTION parse -  {tokens}");
                     fnct.Parse(tokens);
-                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] FUNCTION parse END -  {tokens.ToString()}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] FUNCTION parse END -  {tokens}");
                     elements.Add(new Element(fnct));
                     break;
                 case CommandType.Type.Expression:
@@ -142,15 +166,15 @@ public class CommandExpression : ICommandBase
                     CommandExpression expr = new(config);
                     expr.Parse(tokens);
                     if (tokens.Token != ")")
-                        throw new Exception($"unbalanced parentesis or function don't recognized: {tokens.ToString()}");
+                        throw new Exception($"unbalanced parentesis or function don't recognized: {tokens}");
                     // tokens++; //consumes )
                     elements.Add(new Element(expr));
-                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] expression parse end -  {tokens.ToString()}");
+                    AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] expression parse end -  {tokens}");
                     break;
                 case CommandType.Type.Unknown:
-                    throw new Exception($"invalid expression {tokens.ToString()}");
+                    throw new Exception($"invalid expression {tokens}");
             }
-        } while (tokens.Next() != null && !constantStoppers.Contains(tokens.Token.ToUpper()));
+        } while (tokens.Next() != null && !CommandExpression.constantStoppers.Contains(tokens.Token));
 
         AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
         return true;
@@ -183,9 +207,11 @@ public class CommandExpression : ICommandBase
         //accelerator
         if (elements.Count == 1)
             if (elements[0].type == CommandType.Type.Constant)
-                return elements[0].val;
+                return new(elements[0].constantValue);
             else if (elements[0].type == CommandType.Type.Variable)
-                return vars.GetValue(elements[0].var);
+            {
+                return elements[0].GetVarValue(vars);
+            }
             else if (elements[0].type == CommandType.Type.Function)
                 return elements[0].func.Execute(vars);
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEngine.Rendering;
 
 
 class CommandNEXT : ICommandBase
@@ -8,7 +9,7 @@ class CommandNEXT : ICommandBase
     public string CmdToken { get; } = "NEXT";
     public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    BasicVar var;
+    string varName;
 
     ConfigurationCommands config;
 
@@ -22,7 +23,7 @@ class CommandNEXT : ICommandBase
         if (!BasicVar.IsVariable(tokens.Token))
             throw new Exception($"{tokens.Token} isn't a valid variable (FOR)");
 
-        var = new(tokens.Token);
+        varName = new(tokens.Token);
 
         return true;
     }
@@ -31,32 +32,35 @@ class CommandNEXT : ICommandBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC  #{config.LineNumber}  {CmdToken}]");
 
-        if (!config.ForToNext.ContainsKey(var.Name))
-            throw new Exception($"NEXT without FOR: {var.Name}");
+        vars.ThrowIfNotExists(varName, $" { CmdToken} #{config.LineNumber}]");
+        
+        if (!config.ForToNext.ContainsKey(varName))
+            throw new Exception($"NEXT without FOR: {varName}");
 
-        forToStorage ft = config.ForToNext[var.Name];
+        forToStorage ft = config.ForToNext[varName];
 
         BasicValue endValue = ft.endExpr.Execute(vars);
         FunctionHelper.ExpectedNumber(endValue, "- TO must compute to expression or number");
 
-        BasicValue actualValue = vars.GetValue(var);
+        BasicValue actualValue = vars.GetValue(varName);
         FunctionHelper.ExpectedNumber(actualValue, "- FOR must compute to expression or number");
 
-        double step = 1;
         if (ft.stepExpr != null)
         {
-            BasicValue stepValue = ft.stepExpr.Execute(vars);
-            FunctionHelper.ExpectedNumber(stepValue, "- STEP must compute to expression or number");
-            step = stepValue.GetNumber();
+            BasicValue step = ft.stepExpr.Execute(vars);
+            FunctionHelper.ExpectedNumber(step, "- STEP must compute to expression or number");
+            actualValue.Add(step);
         }
+        else
+        {
+            actualValue.Increment();
+        }
+        
 
-        //it's faster than create a new instance and assign to the vars dic.
-        actualValue.SetValue(actualValue.GetNumber() + step);
-        // vars.SetValue(var, actualValue);
-        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken} #{config.LineNumber}] var:{var.Name}: {actualValue.ToString()} to {endValue.ToString()} step {step}");
+        AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken} #{config.LineNumber}] var:{varName}: {actualValue} to {endValue} step {ft.stepExpr}");
 
         if (actualValue > endValue)
-            config.ForToNext.Remove(var.Name);
+            config.ForToNext.Remove(varName);
         else
             config.JumpNextTo = ft.lineNumber;
 

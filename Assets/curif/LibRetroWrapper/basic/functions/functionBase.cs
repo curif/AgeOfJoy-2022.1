@@ -153,6 +153,12 @@ public static class FunctionHelper
             throw new Exception("Parameter should be a non empty string " + msg);
         return true;
     }
+    public static bool ExpectedNonEmptyArray(BasicValue val, string msg = "")
+    {
+        if (!val.IsArray() || val.GetArrayLength() == 0)
+            throw new Exception("Parameter should be a non empty array " + msg);
+        return true;
+    }
 
     public static string FileTraversalFree(string path, string allowedBasePath)
     {

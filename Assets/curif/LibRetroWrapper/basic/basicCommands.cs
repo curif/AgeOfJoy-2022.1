@@ -12,6 +12,7 @@ public static class Commands
         commands["'"] = typeof(CommandREM2);
         commands["LET"] = typeof(CommandLET);
         commands["LETS"] = typeof(CommandLETS);
+        commands["DIM"] = typeof(CommandDIM);
         commands["GOTO"] = typeof(CommandGOTO);
         commands["IF"] = typeof(CommandIFTHEN);
         commands["END"] = typeof(CommandEND);
@@ -74,6 +75,7 @@ public static class Commands
         
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
+        functions["GETFILESARRAY"] = typeof(CommandFunctionGETFILESARRAY);
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);
         functions["COMBINEPATH"] = typeof(CommandFunctionCOMBINEPATH);
         functions["CONFIGPATH"] = typeof(CommandFunctionCONFIGPATH);
@@ -223,6 +225,7 @@ public static class Commands
         functions["MUSICLOOP"] = typeof(CommandFunctionMUSICLOOP);
         functions["MUSICLOOPSTATUS"] = typeof(CommandFunctionMUSICLOOPSTATUS);
         functions["MUSICADDLIST"] = typeof(CommandFunctionMUSICADDLIST);
+        functions["MUSICADDLISTARRAY"] = typeof(CommandFunctionMUSICADDLISTARRAY);
         functions["MUSICPREVIOUS"] = typeof(CommandFunctionMUSICPREVIOUS);
         functions["MUSICNEXT"] = typeof(CommandFunctionMUSICNEXT);
         functions["MUSICRESET"] = typeof(CommandFunctionMUSICRESET);
@@ -238,7 +241,6 @@ public static class Commands
         functions["DLINE"] = typeof(CommandLINE);
         functions["DOVAL"] = typeof(CommandOVAL);
         functions["DCIRCLE"] = typeof(CommandCIRCLE);
-        functions["DBOX"] = typeof(CommandBOX);
         functions["DBOX"] = typeof(CommandBOX);
 
 
