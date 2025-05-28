@@ -3,7 +3,7 @@
 20 LET cabRoomPos = 0
 40 LETS cabsCount, cabsDBCount = CabRoomCount(), CabDBCount()
 50 LETS width, height = ScreenWidth(), ScreenHeight()
-60 LET lineEmpty = width * " "
+60 LET lineEmpty = (width - 1) * " "
 70 LETS dicMember, pos, cabToSearch, changed = 0, 0, "", 0
 75 LETS dic, dicMatrix1, dicMatrix2, dicMatrix3, dicMatrix4 = 
      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", "012345678","9ABCDEFGH","IJKLMNOPQ","RSTUVWXYZ"
@@ -98,8 +98,8 @@
 6110   IF col < 4 THEN GOTO 6150 
 6120   LET col = 0
 6130   LET y = y + 1
-6140   IF y > height THEN GOTO 6160
-6150 NEXT idx
+6140   IF y > height - 1 THEN GOTO 6160
+6150 NEXT idx 
 6160 SHOW
 6180 LETS matrixidx, matrixcol, matrixrow = 0,0,0
 6190 LET cursor = 1 : GOSUB 7000
