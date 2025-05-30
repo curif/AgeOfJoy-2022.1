@@ -39,12 +39,18 @@ class CommandFunctionBase : ICommandBase
 class CommandFunctionExpressionListBase : CommandFunctionBase
 {
     protected CommandExpressionList exprs;
+    protected int MinCantParamsRequired = 1;
+
 
     public CommandFunctionExpressionListBase(ConfigurationCommands config) : base(config)
     {
         exprs = new(config);
     }
 
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, MinCantParamsRequired);
+    }
     public bool Parse(TokenConsumer tokens, int cantParametersRequired)
     {
         // FNCT ( expr ,  ... )

@@ -250,7 +250,7 @@ public static class Commands
         functions["DOVAL"] = typeof(CommandOVAL);
         functions["DCIRCLE"] = typeof(CommandCIRCLE);
         functions["DBOX"] = typeof(CommandBOX);
-
+        functions["GETCOLOR"] = typeof(CommandGETCOLOR);
 
         // READ DATA RESTORE
         commands["DATA"] = typeof(CommandDATA);

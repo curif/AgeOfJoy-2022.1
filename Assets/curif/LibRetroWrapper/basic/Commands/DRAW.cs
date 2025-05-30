@@ -1,5 +1,4 @@
 using System;
-
 using UnityEngine;
 
 /// <summary>
@@ -18,21 +17,7 @@ class CommandFunctionDCHARPIXELX : CommandFunctionExpressionListBase
         // (like CommandFunctionBase or CommandFunctionExpressionListBase itself)
         // and used for logging or identification.
         this.cmdToken = "DCHARPIXELX";
-    }
-
-    /// <summary>
-    /// Parses the arguments for the CHARPIXELX function.
-    /// This function expects exactly 2 arguments.
-    /// </summary>
-    /// <param name="tokens">The token consumer.</param>
-    /// <returns>True if parsing was successful, false otherwise.</returns>
-    public override bool Parse(TokenConsumer tokens)
-    {
-        // Call the base class's Parse method, specifying that 2 arguments are expected.
-        // The base class (CommandFunctionExpressionListBase) should handle consuming
-        // the opening '(', parsing the expressions with CommandExpressionList,
-        // and consuming the closing ')'.
-        return base.Parse(tokens, 2);
+        this.MinCantParamsRequired = 2;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config)
@@ -90,17 +75,7 @@ class CommandFunctionDCHARPIXELY : CommandFunctionExpressionListBase
     public CommandFunctionDCHARPIXELY(ConfigurationCommands config) : base(config)
     {
         this.cmdToken = "DCHARPIXELY";
-    }
-
-    /// <summary>
-    /// Parses the arguments for the CHARPIXELY function.
-    /// This function expects exactly 2 arguments.
-    /// </summary>
-    /// <param name="tokens">The token consumer.</param>
-    /// <returns>True if parsing was successful, false otherwise.</returns>
-    public override bool Parse(TokenConsumer tokens)
-    {
-        return base.Parse(tokens, 2);
+        this.MinCantParamsRequired = 2;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config)
@@ -152,21 +127,7 @@ class CommandFunctionDCHARPIXEL : CommandFunctionExpressionListBase
         // (like CommandFunctionBase or CommandFunctionExpressionListBase itself)
         // and used for logging or identification.
         this.cmdToken = "DCHARPIXEL";
-    }
-
-    /// <summary>
-    /// Parses the arguments for the CHARPIXELX function.
-    /// This function expects exactly 2 arguments.
-    /// </summary>
-    /// <param name="tokens">The token consumer.</param>
-    /// <returns>True if parsing was successful, false otherwise.</returns>
-    public override bool Parse(TokenConsumer tokens)
-    {
-        // Call the base class's Parse method, specifying that 2 arguments are expected.
-        // The base class (CommandFunctionExpressionListBase) should handle consuming
-        // the opening '(', parsing the expressions with CommandExpressionList,
-        // and consuming the closing ')'.
-        return base.Parse(tokens, 2);
+        this.MinCantParamsRequired = 2;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config)
@@ -218,11 +179,7 @@ class CommandPSET : CommandExpressionListBase // Changed base class
     public CommandPSET(ConfigurationCommands config) : base(config) // Call base constructor
     {
         this.cmdToken = "DPSET"; // Set CmdToken
-    }
-
-    public override bool Parse(TokenConsumer tokens) // Override Parse method
-    {
-        return base.Parse(tokens, 3); // Call base to parse the list of expressions
+        this.MinCantParamsRequired = 3;
     }
 
 
@@ -274,13 +231,7 @@ class CommandLINE : CommandExpressionListBase // Changed base class
     public CommandLINE(ConfigurationCommands config) : base(config) // Call base constructor
     {
         this.cmdToken = "DLINE"; // Set CmdToken
-    }
-
-    public override bool Parse(TokenConsumer tokens) // Override Parse method
-    {
-        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
-        // It requires at least 3 main parameters (start point, end point, color).
-        return base.Parse(tokens, 3);
+        this.MinCantParamsRequired = 3;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
@@ -330,13 +281,7 @@ class CommandOVAL : CommandExpressionListBase // Changed base class
     public CommandOVAL(ConfigurationCommands config) : base(config) // Call base constructor
     {
         this.cmdToken = "DOVAL"; // Set cmdToken
-    }
-
-    public override bool Parse(TokenConsumer tokens) // Override Parse method
-    {
-        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
-        // Requires at least 4 parameters: CORNER, PRADIUSX, PRADIUSY, BORDER_COLOR_SPEC.
-        return base.Parse(tokens, 4);
+        this.MinCantParamsRequired = 4;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
@@ -400,13 +345,7 @@ class CommandCIRCLE : CommandExpressionListBase // Changed base class
     public CommandCIRCLE(ConfigurationCommands config) : base(config) // Call base constructor
     {
         this.cmdToken = "DCIRCLE"; // Set cmdToken
-    }
-
-    public override bool Parse(TokenConsumer tokens) // Override Parse method
-    {
-        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
-        // Requires at least 3 parameters: CORNER, PRADIUS, BORDER_COLOR_SPEC.
-        return base.Parse(tokens, 3);
+        this.MinCantParamsRequired = 3;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
@@ -464,13 +403,7 @@ class CommandBOX : CommandExpressionListBase // Changed base class
     public CommandBOX(ConfigurationCommands config) : base(config) // Call base constructor
     {
         this.cmdToken = "DBOX"; // Set cmdToken
-    }
-
-    public override bool Parse(TokenConsumer tokens) // Override Parse method
-    {
-        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
-        // Requires at least 3 parameters: CORNER, SIZE, BORDER_COLOR_SPEC.
-        return base.Parse(tokens, 3);
+        this.MinCantParamsRequired = 3;
     }
 
     public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 class ChangeColorsBase : CommandExpressionListBase
@@ -147,5 +145,35 @@ class CommandSETCOLORSPACE : CommandSingleExpressionBase // Changed base class
 
         config.ScreenGenerator.SetColorSpace(colorSpaceName.GetString());
         return null;
+    }
+}
+
+
+class CommandGETCOLOR : CommandFunctionSingleExpressionBase // Changed base class
+{
+    public CommandGETCOLOR(ConfigurationCommands config) : base(config) // Call base constructor
+    {
+        this.cmdToken = "GETCOLOR"; // Set CmdToken
+    }
+
+    public void CheckConfigRequirements(ConfigurationCommands config)
+    {
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+    }
+
+    public override BasicValue Execute(BasicVars vars) // Override Execute
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
+
+        BasicValue colorName = expr.Execute(vars);
+        FunctionHelper.ExpectedString(colorName, "- A valid color name is expected.");
+
+        Color32 color = config.ScreenGenerator.GetColorSpace().GetColorByName(colorName.GetString());
+        BasicValue ret = new BasicValue().Dim(3);
+        ret[0] = new BasicValue(color.r);
+        ret[1] = new BasicValue(color.g);
+        ret[2] = new BasicValue(color.b);
+        return ret;
     }
 }
