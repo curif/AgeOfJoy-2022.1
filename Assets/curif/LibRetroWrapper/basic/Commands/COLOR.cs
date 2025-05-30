@@ -3,26 +3,19 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-class ChangeColorsBase : ICommandBase
+class ChangeColorsBase : CommandExpressionListBase
 {
-    public string CmdToken { get { return cmdToken; } }
-    string cmdToken;
 
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    protected ConfigurationCommands config;
-    protected CommandExpressionList exprs;
-
-    public ChangeColorsBase(ConfigurationCommands config,
-                                            string token)
+    public ChangeColorsBase(ConfigurationCommands config, string token) : base(config)
     {
         cmdToken = token;
         this.config = config;
         exprs = new(config);
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens)
     {
-        exprs.Parse(tokens);
+        base.Parse(tokens, 1);
         return true;
     }
 
@@ -55,13 +48,15 @@ class ChangeColorsBase : ICommandBase
         return color;
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public void CheckConfigRequirements(ConfigurationCommands config)
+    {
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+    }
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}  #{config.LineNumber}] ");
-        if (config?.ScreenGenerator == null)
-        {
-            return null;
-        }
+
         BasicValue[] vals;
 
         vals = exprs.ExecuteList(vars);
@@ -87,89 +82,67 @@ class CommandFGCOLOR : ChangeColorsBase
 
 }
 
-class CommandRESETCOLOR : ICommandBase
+class CommandRESETCOLOR : CommandNoExpressionBase // Changed base class
 {
-    public string CmdToken { get; } = "RESETCOLOR";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    protected ConfigurationCommands config;
-
-    public bool Parse(TokenConsumer tokens)
+    public CommandRESETCOLOR(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        return true;
+        this.cmdToken = "RESETCOLOR"; // Set CmdToken
     }
 
-    public CommandRESETCOLOR(ConfigurationCommands config)
+    public void CheckConfigRequirements(ConfigurationCommands config)
     {
-        this.config = config;
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
     }
-
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars) // Override Execute
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
-        if (config?.ScreenGenerator == null)
-        {
-            return null;
-        }
+
         config.ScreenGenerator.ResetColors();
         return null;
     }
 }
 
-class CommandINVERTCOLOR : ICommandBase
+class CommandINVERTCOLOR : CommandNoExpressionBase // Changed base class
 {
-    public string CmdToken { get; } = "INVERTCOLOR";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    protected ConfigurationCommands config;
-
-    public bool Parse(TokenConsumer tokens)
+    public CommandINVERTCOLOR(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        return true;
+        this.cmdToken = "INVERTCOLOR"; // Set CmdToken
     }
-
-    public CommandINVERTCOLOR(ConfigurationCommands config)
+    public void CheckConfigRequirements(ConfigurationCommands config)
     {
-        this.config = config;
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
     }
-
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars) // Override Execute
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
-        if (config?.ScreenGenerator == null)
-            return null;
 
         config.ScreenGenerator.InvertColors();
         return null;
     }
 }
 
-class CommandSETCOLORSPACE : ICommandBase
+class CommandSETCOLORSPACE : CommandSingleExpressionBase // Changed base class
 {
-    public string CmdToken { get; } = "SETCOLORSPACE";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    protected ConfigurationCommands config;
-    CommandExpression expr;
-
-    public CommandSETCOLORSPACE(ConfigurationCommands config)
+    public CommandSETCOLORSPACE(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this.config = config;
-        expr = new(config);
-
+        this.cmdToken = "SETCOLORSPACE"; // Set CmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public void CheckConfigRequirements(ConfigurationCommands config)
     {
-        expr.Parse(tokens);
-        return true;
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars) // Override Execute
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
-        if (config?.ScreenGenerator == null)
-        {
-            return null;
-        }
+
+        // expr is now a protected member from CommandSingleExpressionBase
         BasicValue colorSpaceName = expr.Execute(vars);
+
         FunctionHelper.ExpectedString(colorSpaceName, "- A valid color space name is expected.");
 
         config.ScreenGenerator.SetColorSpace(colorSpaceName.GetString());

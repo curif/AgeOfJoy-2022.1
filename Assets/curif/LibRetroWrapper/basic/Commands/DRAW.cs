@@ -6,13 +6,13 @@ using UnityEngine;
 /// Implements the CHARPIXELX(CHAR_X, CHAR_Y) function for the BASIC interpreter.
 /// Returns the screen pixel X coordinate of the character cell at (CHAR_X, CHAR_Y).
 /// </summary>
-class CommandFunctionCHARPIXELX : CommandFunctionExpressionListBase
+class CommandFunctionDCHARPIXELX : CommandFunctionExpressionListBase
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandCHARPIXELX"/> class.
     /// </summary>
     /// <param name="config">The command configuration context.</param>
-    public CommandFunctionCHARPIXELX(ConfigurationCommands config) : base(config)
+    public CommandFunctionDCHARPIXELX(ConfigurationCommands config) : base(config)
     {
         // The 'cmdToken' field is assumed to be defined in a base class
         // (like CommandFunctionBase or CommandFunctionExpressionListBase itself)
@@ -35,6 +35,12 @@ class CommandFunctionCHARPIXELX : CommandFunctionExpressionListBase
         return base.Parse(tokens, 2);
     }
 
+    public void CheckConfigRequirements(ConfigurationCommands config)
+    {
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+
+    }
     /// <summary>
     /// Executes the CHARPIXELX function.
     /// </summary>
@@ -43,12 +49,6 @@ class CommandFunctionCHARPIXELX : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {this.cmdToken} #{config.LineNumber}] ");
-
-        if (config?.ScreenGenerator == null)
-        {
-            throw new Exception($"[{this.cmdToken} ERROR #{config.LineNumber}] ScreenGenerator is not available.");
-        }
-
         // The 'exprs' field (CommandExpressionList) is inherited from CommandFunctionExpressionListBase
         // and populated by the base.Parse method.
         BasicValue[] values = exprs.ExecuteList(vars);
@@ -81,13 +81,13 @@ class CommandFunctionCHARPIXELX : CommandFunctionExpressionListBase
 /// Implements the CHARPIXELY(CHAR_X, CHAR_Y) function for the BASIC interpreter.
 /// Returns the screen pixel Y coordinate of the character cell at (CHAR_X, CHAR_Y).
 /// </summary>
-class CommandFunctionCHARPIXELY : CommandFunctionExpressionListBase
+class CommandFunctionDCHARPIXELY : CommandFunctionExpressionListBase
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandCHARPIXELY"/> class.
     /// </summary>
     /// <param name="config">The command configuration context.</param>
-    public CommandFunctionCHARPIXELY(ConfigurationCommands config) : base(config)
+    public CommandFunctionDCHARPIXELY(ConfigurationCommands config) : base(config)
     {
         this.cmdToken = "DCHARPIXELY";
     }
@@ -103,6 +103,12 @@ class CommandFunctionCHARPIXELY : CommandFunctionExpressionListBase
         return base.Parse(tokens, 2);
     }
 
+    public void CheckConfigRequirements(ConfigurationCommands config)
+    {
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+
+    }
     /// <summary>
     /// Executes the CHARPIXELY function.
     /// </summary>
@@ -111,11 +117,6 @@ class CommandFunctionCHARPIXELY : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {this.cmdToken} #{config.LineNumber}] ");
-
-        if (config?.ScreenGenerator == null)
-        {
-            throw new Exception($"[{this.cmdToken} ERROR #{config.LineNumber}] ScreenGenerator is not available.");
-        }
 
         BasicValue[] values = exprs.ExecuteList(vars);
 
@@ -139,431 +140,381 @@ class CommandFunctionCHARPIXELY : CommandFunctionExpressionListBase
     }
 }
 
+class CommandFunctionDCHARPIXEL : CommandFunctionExpressionListBase
+{
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommandCHARPIXELX"/> class.
+    /// </summary>
+    /// <param name="config">The command configuration context.</param>
+    public CommandFunctionDCHARPIXEL(ConfigurationCommands config) : base(config)
+    {
+        // The 'cmdToken' field is assumed to be defined in a base class
+        // (like CommandFunctionBase or CommandFunctionExpressionListBase itself)
+        // and used for logging or identification.
+        this.cmdToken = "DCHARPIXEL";
+    }
+
+    /// <summary>
+    /// Parses the arguments for the CHARPIXELX function.
+    /// This function expects exactly 2 arguments.
+    /// </summary>
+    /// <param name="tokens">The token consumer.</param>
+    /// <returns>True if parsing was successful, false otherwise.</returns>
+    public override bool Parse(TokenConsumer tokens)
+    {
+        // Call the base class's Parse method, specifying that 2 arguments are expected.
+        // The base class (CommandFunctionExpressionListBase) should handle consuming
+        // the opening '(', parsing the expressions with CommandExpressionList,
+        // and consuming the closing ')'.
+        return base.Parse(tokens, 2);
+    }
+
+    public void CheckConfigRequirements(ConfigurationCommands config)
+    {
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+
+    }
+    /// <summary>
+    /// Executes the CHARPIXELX function.
+    /// </summary>
+    /// <param name="vars">The current BASIC variables.</param>
+    /// <returns>A BasicValue containing the pixel X coordinate, or -1 if an error occurs or coords are invalid.</returns>
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {this.cmdToken} #{config.LineNumber}] ");
+
+
+        // The 'exprs' field (CommandExpressionList) is inherited from CommandFunctionExpressionListBase
+        // and populated by the base.Parse method.
+        BasicValue[] values = exprs.ExecuteList(vars);
+
+        // Argument 1: CHAR_X
+        FunctionHelper.ExpectedNumber(values[0], $"- CHAR_X for {this.cmdToken} must be a number.");
+        int charX = values[0].GetInt();
+
+        // Argument 2: CHAR_Y
+        FunctionHelper.ExpectedNumber(values[1], $"- CHAR_Y for {this.cmdToken} must be a number.");
+        int charY = values[1].GetInt();
+
+        Vector2Int pixelPosition = config.ScreenGenerator.GetCharPixelPosition(charX, charY);
+        BasicValue v = new BasicValue().Dim(2);
+        v[0] = new BasicValue(pixelPosition[0]);
+        v[1] = new BasicValue(pixelPosition[1]);
+
+        // pixelPosition.x will be -1 if GetCharPixelPosition indicated an issue
+        return v;
+    }
+}
+
 /// <summary>
 /// Implements the PSET PX, PY, COLOR_SPEC [, DRAW_FLAG] command.
 /// Draws a single pixel at the specified (PX, PY) pixel coordinates.
-/// </summary
-class CommandPSET : ICommandBase
+/// </summary>
+class CommandPSET : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "DPSET";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    private readonly ConfigurationCommands _config;
-    private readonly CommandExpressionList _expressions;
+    // CmdToken, config, and exprs are now inherited from CommandExpressionListBase
 
-    public CommandPSET(ConfigurationCommands config)
+    public CommandPSET(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this._config = config;
-        this._expressions = new CommandExpressionList(config);
+        this.cmdToken = "DPSET"; // Set CmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        return _expressions.Parse(tokens);
+        return base.Parse(tokens, 3); // Call base to parse the list of expressions
     }
 
-    public BasicValue Execute(BasicVars vars)
+
+    public void CheckConfigRequirements(ConfigurationCommands config)
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
-        if (_config?.ScreenGenerator == null)
-        {
-            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+
+    }
+    public override BasicValue Execute(BasicVars vars) // Override Execute
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
+
+        if (config?.ScreenGenerator == null) // Keep null check here
             return null;
-        }
 
-        BasicValue[] values = _expressions.ExecuteList(vars);
-        FunctionHelper.ExpectedAtLeast(values, 3);
+        BasicValue[] values = exprs.ExecuteList(vars); // Use exprs from base class
 
+        // The count check is done in Parse, so values[0], [1], [2] should be safe.
         FunctionHelper.ExpectedNumber(values[0], $"- PX (pixel X) for {CmdToken}");
-        int pixelX = values[0].GetInt();
         FunctionHelper.ExpectedNumber(values[1], $"- PY (pixel Y) for {CmdToken}");
+        int pixelX = values[0].GetInt();
         int pixelY = values[1].GetInt();
 
         Color32 colorToDraw;
-        int colorArgsConsumed;
-        if (!FunctionHelper.TryParseColor(values, 2, _config, out colorToDraw, out colorArgsConsumed))
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Invalid color specification. Expected color name or R,G,B values starting at argument 3.");
-        }
+        FunctionHelper.TryParseColor(values[2], out colorToDraw, $"- Color for {CmdToken}");
 
         bool drawImmediately = true; // Default
-        int drawFlagIndex = 2 + colorArgsConsumed;
-
-        if (values.Length > drawFlagIndex) // Argument for drawImmediately exists
+        if (values.Length > 3) // Argument for drawImmediately exists
         {
-            drawImmediately = values[drawFlagIndex].GetBoolean();
+            drawImmediately = values[3].GetBoolean();
         }
 
-        // Check for too many args: if drawFlag was processed, next index is drawFlagIndex + 1
-        int expectedArgCount = drawFlagIndex + (values.Length > drawFlagIndex ? 1 : 0);
-        if (values.Length > expectedArgCount)
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
-        }
-
-        _config.ScreenGenerator.DrawPoint(pixelX, pixelY, colorToDraw);
+        config.ScreenGenerator.DrawPoint(pixelX, pixelY, colorToDraw);
 
         if (drawImmediately)
         {
-            _config.ScreenGenerator.DrawScreen();
+            config.ScreenGenerator.DrawScreen();
         }
         return null;
     }
 }
-
 /// <summary>
-/// Implements the LINE PX1, PY1, PX2, PY2, COLOR_SPEC [, DRAW_FLAG] command.
+/// Implements the LINE PXY[2], PXY[2], COLOR_SPEC[3] [, DRAW_FLAG] command.
 /// Draws a line between two specified pixel coordinate pairs.
 /// </summary>
-public class CommandLINE : ICommandBase
+class CommandLINE : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "DLINE";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    private readonly ConfigurationCommands _config;
-    private readonly CommandExpressionList _expressions;
-
-    public CommandLINE(ConfigurationCommands config)
+    public CommandLINE(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this._config = config;
-        this._expressions = new CommandExpressionList(config);
+        this.cmdToken = "DLINE"; // Set CmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        return _expressions.Parse(tokens);
+        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
+        // It requires at least 3 main parameters (start point, end point, color).
+        return base.Parse(tokens, 3);
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
-        if (_config?.ScreenGenerator == null)
-        {
-            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
-            return null;
-        }
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+    }
 
-        BasicValue[] values = _expressions.ExecuteList(vars);
-        FunctionHelper.ExpectedAtLeast(values, 5);
+    public override BasicValue Execute(BasicVars vars) // Override Execute
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
 
-        FunctionHelper.ExpectedNumber(values[0], $"- PX1 (pixel X1) for {CmdToken}");
-        int pixelX1 = values[0].GetInt();
-        FunctionHelper.ExpectedNumber(values[1], $"- PY1 (pixel Y1) for {CmdToken}");
-        int pixelY1 = values[1].GetInt();
-        FunctionHelper.ExpectedNumber(values[2], $"- PX2 (pixel X2) for {CmdToken}");
-        int pixelX2 = values[2].GetInt();
-        FunctionHelper.ExpectedNumber(values[3], $"- PY2 (pixel Y2) for {CmdToken}");
-        int pixelY2 = values[3].GetInt();
+        BasicValue[] values = exprs.ExecuteList(vars); // Use exprs from base class
+
+        // Count validation is now handled in Parse by the base class.
+        // The original code uses FunctionHelper.ExpectedAtLeast(values, 3);
+        // We'll keep the `ExpectedArraySize` checks, as they validate the *content* of the expressions.
+        FunctionHelper.ExpectedArraySize(values[0], 2, BasicValue.BasicValueType.Number, $"- Superior corner for {CmdToken}");
+        FunctionHelper.ExpectedArraySize(values[1], 2, BasicValue.BasicValueType.Number, $"- Inferior corner for {CmdToken}");
 
         Color32 colorToDraw;
-        int colorArgsConsumed;
-        if (!FunctionHelper.TryParseColor(values, 4, _config, out colorToDraw, out colorArgsConsumed))
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Invalid color specification. Expected color name or R,G,B values starting at argument 5.");
-        }
+        FunctionHelper.TryParseColor(values[2], out colorToDraw, $"- Color for {CmdToken}");
 
         bool drawImmediately = true; // Default
-        int drawFlagIndex = 4 + colorArgsConsumed;
-
-        if (values.Length > drawFlagIndex) // Argument for drawImmediately exists
+        if (values.Length > 3) // Argument for drawImmediately exists
         {
-            drawImmediately = values[drawFlagIndex].GetBoolean();
+            drawImmediately = values[3].GetBoolean();
         }
 
-        int expectedArgCount = drawFlagIndex + (values.Length > drawFlagIndex ? 1 : 0);
-        if (values.Length > expectedArgCount)
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
-        }
-
-        _config.ScreenGenerator.DrawLine(pixelX1, pixelY1, pixelX2, pixelY2, colorToDraw);
+        config.ScreenGenerator.DrawLine(values[0][0].GetInt(), values[0][1].GetInt(),
+                                            values[1][0].GetInt(), values[1][1].GetInt(),
+                                            colorToDraw);
 
         if (drawImmediately)
         {
-            _config.ScreenGenerator.DrawScreen();
+            config.ScreenGenerator.DrawScreen();
         }
         return null;
     }
 }
-
 /// <summary>
-/// Implements the OVAL PCX, PCY, PRADIUSX, PRADIUSY, BORDER_COLOR_SPEC [, FILL_FLAG [, FILL_COLOR_SPEC [, DRAW_FLAG]]] command.
+/// Implements the OVAL CORNER, PRADIUSX, PRADIUSY, BORDER_COLOR_SPEC [, FILL_FLAG [, FILL_COLOR_SPEC [, DRAW_FLAG]]] command.
 /// Draws an ellipse/oval.
 /// </summary>
-public class CommandOVAL : ICommandBase
+class CommandOVAL : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "DOVAL";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    private readonly ConfigurationCommands _config;
-    private readonly CommandExpressionList _expressions;
-
-    public CommandOVAL(ConfigurationCommands config)
+    public CommandOVAL(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this._config = config;
-        this._expressions = new CommandExpressionList(config);
+        this.cmdToken = "DOVAL"; // Set cmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        return _expressions.Parse(tokens);
+        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
+        // Requires at least 4 parameters: CORNER, PRADIUSX, PRADIUSY, BORDER_COLOR_SPEC.
+        return base.Parse(tokens, 4);
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
-        if (_config?.ScreenGenerator == null)
-        {
-            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
-            return null;
-        }
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+    }
 
-        BasicValue[] values = _expressions.ExecuteList(vars);
-        int argIdx = 0;
-        FunctionHelper.ExpectedAtLeast(values, 5);
+    public override BasicValue Execute(BasicVars vars) // Override Execute
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
 
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PCX for {CmdToken}");
-        int pcx = values[argIdx++].GetInt();
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PCY for {CmdToken}");
-        int pcy = values[argIdx++].GetInt();
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PRADIUSX for {CmdToken}");
-        int pradiusX = values[argIdx++].GetInt();
-        if (pradiusX <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] PRADIUSX must be greater than 0.");
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PRADIUSY for {CmdToken}");
-        int pradiusY = values[argIdx++].GetInt();
-        if (pradiusY <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] PRADIUSY must be greater than 0.");
+        BasicValue[] values = exprs.ExecuteList(vars); // Use exprs from base class
+
+        FunctionHelper.ExpectedArraySize(values[0], 2, BasicValue.BasicValueType.Number, $"- Corner coordinates for {CmdToken}");
+        FunctionHelper.ExpectedNumber(values[1], $"PRADIUSX for {CmdToken}");
+        FunctionHelper.ExpectedNumber(values[2], $"PRADIUSY for {CmdToken}");
+
+        int pradiusX = values[1].GetInt();
+        if (pradiusX <= 0) throw new Exception($"[{CmdToken} ERROR #{config.LineNumber}] PRADIUSX must be greater than 0.");
+        int pradiusY = values[2].GetInt();
+        if (pradiusY <= 0) throw new Exception($"[{CmdToken} ERROR #{config.LineNumber}] PRADIUSY must be greater than 0.");
 
         Color32 borderColor;
-        int borderColorArgsConsumed;
-        if (!FunctionHelper.TryParseColor(values, argIdx, _config, out borderColor, out borderColorArgsConsumed))
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Invalid BORDER_COLOR specification starting at argument {argIdx + 1}.");
-        }
-        argIdx += borderColorArgsConsumed;
+        FunctionHelper.TryParseColor(values[3], out borderColor, $"- Border Color for {CmdToken}"); // Corrected index from 2 to 3
 
         bool fillFlag = false; // Default
-        Color32? fillColor = null;
+        Color32 fillColor = borderColor; // Default fill color to border color
         bool drawImmediately = true; // Default
 
-        if (argIdx < values.Length) // Potential fillFlag argument exists
+        if (values.Length > 4) // Check for FILL_FLAG
         {
-            fillFlag = values[argIdx].GetBoolean();
-            argIdx++;
-
-            if (fillFlag && argIdx < values.Length) // Potential fillColor argument exists
+            fillFlag = values[4].GetBoolean();
+            if (values.Length > 5) // Check for FILL_COLOR_SPEC
             {
-                Color32 parsedFillColor;
-                int fillColorArgsConsumed;
-                if (FunctionHelper.TryParseColor(values, argIdx, _config, out parsedFillColor, out fillColorArgsConsumed))
+                FunctionHelper.TryParseColor(values[5], out fillColor, $"- Fill Color for {CmdToken}"); // Corrected index from 4 to 5
+                if (values.Length > 6) // Check for DRAW_FLAG
                 {
-                    fillColor = parsedFillColor;
-                    argIdx += fillColorArgsConsumed;
+                    drawImmediately = values[6].GetBoolean(); // Corrected index from 3 to 6
                 }
             }
         }
 
-        if (argIdx < values.Length) // Potential drawFlag argument exists
-        {
-            drawImmediately = values[argIdx].GetBoolean();
-            argIdx++;
-        }
-
-        if (argIdx < values.Length) // Still more arguments than expected
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
-        }
-
-        _config.ScreenGenerator.DrawOval(pcx, pcy, pradiusX, pradiusY, borderColor, fillFlag, fillColor);
+        config.ScreenGenerator.DrawOval(values[0][0].GetInt(), values[0][1].GetInt(),
+                                            pradiusX, pradiusY, borderColor, // Changed colorToDraw to borderColor
+                                            fillFlag, fillColor);
 
         if (drawImmediately)
         {
-            _config.ScreenGenerator.DrawScreen();
+            config.ScreenGenerator.DrawScreen();
         }
         return null;
     }
 }
-
 /// <summary>
-/// Implements the CIRCLE PCX, PCY, PRADIUS, BORDER_COLOR_SPEC [, FILL_FLAG [, FILL_COLOR_SPEC [, DRAW_FLAG]]] command.
+/// Implements the CIRCLE CORNER, PRADIUS, BORDER_COLOR_SPEC [, FILL_FLAG [, FILL_COLOR_SPEC [, DRAW_FLAG]]] command.
 /// Draws a circle.
 /// </summary>
-public class CommandCIRCLE : ICommandBase
+class CommandCIRCLE : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "DCIRCLE";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    private readonly ConfigurationCommands _config;
-    private readonly CommandExpressionList _expressions;
-
-    public CommandCIRCLE(ConfigurationCommands config)
+    public CommandCIRCLE(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this._config = config;
-        this._expressions = new CommandExpressionList(config);
+        this.cmdToken = "DCIRCLE"; // Set cmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        return _expressions.Parse(tokens);
+        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
+        // Requires at least 3 parameters: CORNER, PRADIUS, BORDER_COLOR_SPEC.
+        return base.Parse(tokens, 3);
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
-        if (_config?.ScreenGenerator == null)
-        {
-            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
-            return null;
-        }
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+    }
 
-        BasicValue[] values = _expressions.ExecuteList(vars);
-        int argIdx = 0;
-        FunctionHelper.ExpectedAtLeast(values, 4);
+    public override BasicValue Execute(BasicVars vars) // Override Execute
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
 
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PCX for {CmdToken}");
-        int pcx = values[argIdx++].GetInt();
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PCY for {CmdToken}");
-        int pcy = values[argIdx++].GetInt();
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PRADIUS for {CmdToken}");
-        int pradius = values[argIdx++].GetInt();
-        if (pradius <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] PRADIUS must be greater than 0.");
+        BasicValue[] values = exprs.ExecuteList(vars); // Use exprs from base class
 
+        FunctionHelper.ExpectedArraySize(values[0], 2, BasicValue.BasicValueType.Number, $"- Corner coordinates for {CmdToken}");
+        FunctionHelper.ExpectedNumber(values[1], $"PRADIUS for {CmdToken}");
+        int pradius = values[1].GetInt();
+
+        // Parameter 3 (index 2): BORDER_COLOR_SPEC
         Color32 borderColor;
-        int borderColorArgsConsumed;
-        if (!FunctionHelper.TryParseColor(values, argIdx, _config, out borderColor, out borderColorArgsConsumed))
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Invalid BORDER_COLOR specification starting at argument {argIdx + 1}.");
-        }
-        argIdx += borderColorArgsConsumed;
+        FunctionHelper.TryParseColor(values[2], out borderColor, $"- Border Color for {CmdToken}");
 
         bool fillFlag = false; // Default
-        Color32? fillColor = null;
+        Color32 fillColor = borderColor; // Default fill color to border color
         bool drawImmediately = true; // Default
 
-        if (argIdx < values.Length) // Potential fillFlag argument exists
+        if (values.Length > 3) // Check for FILL_FLAG (at index 3)
         {
-            fillFlag = values[argIdx].GetBoolean();
-            argIdx++;
-
-            if (fillFlag && argIdx < values.Length) // Potential fillColor argument exists
+            fillFlag = values[3].GetBoolean();
+            if (values.Length > 4) // Check for FILL_COLOR_SPEC (at index 4)
             {
-                Color32 parsedFillColor;
-                int fillColorArgsConsumed;
-                if (FunctionHelper.TryParseColor(values, argIdx, _config, out parsedFillColor, out fillColorArgsConsumed))
+                FunctionHelper.TryParseColor(values[4], out fillColor, $"- Fill Color for {CmdToken}"); // Assign to fillColor, not overwrite borderColor
+                if (values.Length > 5) // Check for DRAW_FLAG (at index 5)
                 {
-                    fillColor = parsedFillColor;
-                    argIdx += fillColorArgsConsumed;
+                    drawImmediately = values[5].GetBoolean(); // Corrected index for drawImmediately
                 }
             }
         }
 
-        if (argIdx < values.Length) // Potential drawFlag argument exists
-        {
-            drawImmediately = values[argIdx].GetBoolean();
-            argIdx++;
-        }
-
-        if (argIdx < values.Length) // Still more arguments than expected
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
-        }
-
-        _config.ScreenGenerator.DrawCircle(pcx, pcy, pradius, borderColor, fillFlag, fillColor);
+        config.ScreenGenerator.DrawCircle(values[0][0].GetInt(), values[0][1].GetInt(), pradius, borderColor, fillFlag, fillColor);
 
         if (drawImmediately)
         {
-            _config.ScreenGenerator.DrawScreen();
+            config.ScreenGenerator.DrawScreen();
         }
         return null;
     }
 }
-
 /// <summary>
-/// Implements the BOX PX, PY, PWIDTH, PHEIGHT, BORDER_COLOR_SPEC [, FILL_FLAG [, FILL_COLOR_SPEC [, DRAW_FLAG]]] command.
+/// Implements the BOX CORNER, SIZE, BORDER_COLOR_SPEC [, FILL_FLAG [, FILL_COLOR_SPEC [, DRAW_FLAG]]] command.
 /// Draws a rectangle.
 /// </summary>
-class CommandBOX : ICommandBase
+class CommandBOX : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "DBOX";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    private readonly ConfigurationCommands _config;
-    private readonly CommandExpressionList _expressions;
-
-    public CommandBOX(ConfigurationCommands config)
+    public CommandBOX(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this._config = config;
-        this._expressions = new CommandExpressionList(config);
+        this.cmdToken = "DBOX"; // Set cmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        return _expressions.Parse(tokens);
+        // Calls the Parse method in CommandExpressionListBase, passing the required parameter count.
+        // Requires at least 3 parameters: CORNER, SIZE, BORDER_COLOR_SPEC.
+        return base.Parse(tokens, 3);
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
     {
-        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{_config.LineNumber}] ");
-        if (_config?.ScreenGenerator == null)
-        {
-            AGEBasicDebug.WriteConsole($"[{CmdToken} ERROR #{_config.LineNumber}] ScreenGenerator is not available.");
-            return null;
-        }
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
+    }
 
-        BasicValue[] values = _expressions.ExecuteList(vars);
-        int argIdx = 0;
-        FunctionHelper.ExpectedAtLeast(values, 5);
+    public override BasicValue Execute(BasicVars vars) // Override Execute
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
 
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PX for {CmdToken}");
-        int px = values[argIdx++].GetInt();
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PY for {CmdToken}");
-        int py = values[argIdx++].GetInt();
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PWIDTH for {CmdToken}");
-        int pwidth = values[argIdx++].GetInt();
-        if (pwidth <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] PWIDTH must be greater than 0.");
-        FunctionHelper.ExpectedNumber(values[argIdx], $"PHEIGHT for {CmdToken}");
-        int pheight = values[argIdx++].GetInt();
-        if (pheight <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] PHEIGHT must be greater than 0.");
+        BasicValue[] values = exprs.ExecuteList(vars); // Use exprs from base class
 
-        Color32 borderColor;
-        int borderColorArgsConsumed;
-        if (!FunctionHelper.TryParseColor(values, argIdx, _config, out borderColor, out borderColorArgsConsumed))
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Invalid BORDER_COLOR specification starting at argument {argIdx + 1}.");
-        }
-        argIdx += borderColorArgsConsumed;
+        FunctionHelper.ExpectedArraySize(values[0], 2, BasicValue.BasicValueType.Number, $"- Superior corner for {CmdToken}");
+        FunctionHelper.ExpectedArraySize(values[1], 2, BasicValue.BasicValueType.Number, $"- Size for {CmdToken}");
+
+        Color32 borderColor; // Renamed colorToDraw to borderColor for clarity
+        FunctionHelper.TryParseColor(values[2], out borderColor, $"- Color for {CmdToken}");
 
         bool fillFlag = false; // Default
-        Color32? fillColor = null;
+        Color32 fillColor = borderColor; // Default fill color to border color
         bool drawImmediately = true; // Default
 
-        if (argIdx < values.Length) // Potential fillFlag argument exists
+        if (values.Length > 3) // Check for FILL_FLAG (at index 3)
         {
-            fillFlag = values[argIdx].GetBoolean();
-            argIdx++;
-
-            if (fillFlag && argIdx < values.Length) // Potential fillColor argument exists
+            fillFlag = values[3].GetBoolean();
+            if (values.Length > 4) // Check for FILL_COLOR_SPEC (at index 4)
             {
-                Color32 parsedFillColor;
-                int fillColorArgsConsumed;
-                if (FunctionHelper.TryParseColor(values, argIdx, _config, out parsedFillColor, out fillColorArgsConsumed))
+                FunctionHelper.TryParseColor(values[4], out fillColor, $"- Fill color for {CmdToken}");
+                if (values.Length > 5) // Check for DRAW_FLAG (at index 5)
                 {
-                    fillColor = parsedFillColor;
-                    argIdx += fillColorArgsConsumed;
+                    drawImmediately = values[5].GetBoolean(); // Corrected index for drawImmediately
                 }
             }
         }
 
-        if (argIdx < values.Length) // Potential drawFlag argument exists
-        {
-            drawImmediately = values[argIdx].GetBoolean();
-            argIdx++;
-        }
-
-        if (argIdx < values.Length) // Still more arguments than expected
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided. Parsed {argIdx}, total {values.Length}.");
-        }
-
-        _config.ScreenGenerator.DrawBox(px, py, pwidth, pheight, borderColor, fillFlag, fillColor);
+        config.ScreenGenerator.DrawBox(values[0][0].GetInt(), values[0][1].GetInt(),
+                                        values[1][0].GetInt(), values[1][1].GetInt(),
+                                        borderColor, fillFlag, fillColor); // Changed colorToDraw to borderColor
 
         if (drawImmediately)
         {
-            _config.ScreenGenerator.DrawScreen();
+            config.ScreenGenerator.DrawScreen();
         }
         return null;
     }

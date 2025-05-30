@@ -16,7 +16,7 @@ class CommandExpressionList : ICommandBase, ICommandList
     int count = 0;
     public int Count { get { return exprs.Count; }}
 
-    ConfigurationCommands config;
+    ConfigurationCommands config;   
     public CommandExpressionList(ConfigurationCommands config)
     {
         this.config = config;
@@ -28,15 +28,13 @@ class CommandExpressionList : ICommandBase, ICommandList
 
         do
         {
-            tokens.ConsumeIf(",");
-
             AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] parsing  {tokens.ToString()}");
             CommandExpression expr = new(config);
             expr.Parse(tokens);
 
             exprs.Add(expr);
         }
-        while (tokens.Token == ",");
+        while (tokens.ConsumeIf(",") != null);
 
         AGEBasicDebug.WriteConsole($"[ExpressionList.Parse] END members: {this.Count} {tokens.ToString()}");
 

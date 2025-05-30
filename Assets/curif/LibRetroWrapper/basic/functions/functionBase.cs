@@ -1,4 +1,6 @@
+using Meta.XR.Editor.Tags;
 using System;
+using System.Drawing;
 using System.IO;
 using UnityEngine;
 
@@ -109,7 +111,6 @@ class CommandFunctionSingleExpressionBase : CommandFunctionBase
 
 class CommandFunctionNoExpressionBase : CommandFunctionSingleExpressionBase
 {
-
     public CommandFunctionNoExpressionBase(ConfigurationCommands config) : base(config)
     {
     }
@@ -155,8 +156,31 @@ public static class FunctionHelper
     }
     public static bool ExpectedNonEmptyArray(BasicValue val, string msg = "")
     {
-        if (!val.IsArray() || val.GetArrayLength() == 0)
-            throw new Exception("Parameter should be a non empty array " + msg);
+        ExpectedArray(val, msg);
+        if (val.GetArrayLength() == 0)
+            throw new Exception("Array should contain data " + msg);
+        return true;
+    }
+
+    public static bool ExpectedArray(BasicValue val, string msg = "")
+    {
+        if (!val.IsArray())
+            throw new Exception("Parameter should be an array " + msg);
+        return true;
+    }
+    public static bool ExpectedArraySize(BasicValue valArray, int size, BasicValue.BasicValueType type, string msg = "")
+    {
+        if (valArray == null)
+            throw new Exception($"Parameter should be an array[{size}] but it is empty. {msg}");
+
+        if (!valArray.IsArray() || valArray.GetArrayLength() != size)
+            throw new Exception($"Parameter should be an array[{size}] {msg}");
+
+        foreach (BasicValue val2 in valArray)
+        {
+            if (val2.Type() != type)
+                throw new Exception($"Parameter array type value error {msg}");
+        }
         return true;
     }
 
@@ -179,80 +203,29 @@ public static class FunctionHelper
     /// Tries to parse a color from the provided BasicValue arguments, starting at a given index.
     /// The color can be specified as a string name (1 argument) or as R, G, B numeric values (3 arguments).
     /// </summary>
-    /// <param name="args">The array of BasicValue arguments. Assumed that elements are non-null if the array index is valid.</param>
-    /// <param name="startIndex">The index in 'args' from which to start parsing the color.</param>
-    /// <param name="config">The command configuration, used to access ScreenGenerator for color space.</param>
+    /// <param name="args">The BasicValue array of  arguments..</param>
     /// <param name="parsedColor">Output: The parsed Color32 if successful.</param>
     /// <param name="consumedArgs">Output: The number of arguments consumed (1 for name, 3 for R,G,B, or 0 if parsing failed).</param>
     /// <returns>True if a color was successfully parsed, false otherwise.</returns>
-    public static bool TryParseColor(BasicValue[] args, int startIndex, ConfigurationCommands config,
-                                     out Color32 parsedColor, out int consumedArgs)
+    public static bool TryParseColor(BasicValue args, out Color32 parsedColor, string msg)
     {
         parsedColor = default; // Default to transparent black or similar
-        consumedArgs = 0;
 
-        if (args == null || startIndex >= args.Length)
-        {
-            return false; // Not enough arguments to even start
-        }
-
-        // Argument at startIndex is guaranteed non-null if args.Length > startIndex based on our last discussion.
-
-        // Check if the argument at startIndex is a string (potential color name)
-        if (args[startIndex].IsString())
-        {
-            if (config?.ScreenGenerator?.GetColorSpace() != null)
-            {
-                try
-                {
-                    // It's crucial that GetColorByName throws an exception or returns a clear error
-                    // if the name is not found, rather than a default color, so we know it was an invalid name.
-                    parsedColor = config.ScreenGenerator.GetColorSpace().GetColorByName(args[startIndex].GetString());
-                    consumedArgs = 1;
-                    return true;
-                }
-                catch (Exception) // Catches if GetColorByName throws for an unknown name
-                {
-                    // Color name not found in the current color space, or other error from GetColorByName.
-                    // This string was not a valid color name.
-                    return false;
-                }
-            }
-            else
-            {
-                // ScreenGenerator or ColorSpace not available, cannot parse by name.
-                // This is an environmental issue rather than a parsing failure of the value itself.
-                // Depending on desired strictness, could log an error or throw.
-                // For TryParse pattern, returning false is typical.
-                AGEBasicDebug.WriteConsole($"[TryParseColor WARNING] ScreenGenerator or ColorSpace not available for parsing color name '{args[startIndex].GetString()}'.");
-                return false;
-            }
-        }
+        ExpectedArraySize(args, 3, BasicValue.BasicValueType.Number, msg);
+        
         // Check if arguments from startIndex are R, G, B (3 numeric values)
-        else if (args[startIndex].IsNumber() && // First part is a number
-                 args.Length >= startIndex + 3 && // Enough args for R,G,B
-                 args[startIndex + 1].IsNumber() &&
-                 args[startIndex + 2].IsNumber())
+        try
         {
-            try
-            {
-                byte r = (byte)Mathf.Clamp(args[startIndex].GetInt(), 0, 255);
-                byte g = (byte)Mathf.Clamp(args[startIndex + 1].GetInt(), 0, 255);
-                byte b = (byte)Mathf.Clamp(args[startIndex + 2].GetInt(), 0, 255);
-                parsedColor = new Color32(r, g, b, 255); // Assuming full alpha for R,G,B spec
-                consumedArgs = 3;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                // Error during GetInt() or conversion
-                AGEBasicDebug.WriteConsole($"[TryParseColor ERROR] Error converting R,G,B values to color: {ex.Message}");
-                return false;
-            }
+            byte r = (byte)Mathf.Clamp(args[0].GetInt(), 0, 255);
+            byte g = (byte)Mathf.Clamp(args[1].GetInt(), 0, 255);
+            byte b = (byte)Mathf.Clamp(args[2].GetInt(), 0, 255);
+            parsedColor = new Color32(r, g, b, 255); // Assuming full alpha for R,G,B spec
+            return true;
         }
-
-        // If none of the above matched, it's not a recognized color specification starting at startIndex.
-        return false;
+        catch (Exception ex)
+        {
+            throw new ArgumentException($"cannot parse RGB Color array to a color: {ex} -  {msg}");
+        }
     }
 
 

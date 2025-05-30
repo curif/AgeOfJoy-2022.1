@@ -8,12 +8,107 @@ public interface ICommandBase
     CommandType.Type Type { get; }
 
     bool Parse(TokenConsumer tokens);
+    void CheckConfigRequirements(ConfigurationCommands config) { }
     BasicValue Execute(BasicVars vars);
+}
+
+class CommandBase : ICommandBase
+{
+    protected string cmdToken = "UNKNOWN";
+    public string CmdToken { get { return cmdToken; } }
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+
+    protected ConfigurationCommands config;
+
+    public CommandBase(ConfigurationCommands config)
+    {
+        this.config = config;
+    }
+
+    public virtual bool Parse(TokenConsumer tokens)
+    {
+        throw new Exception("function without parse method");
+    }
+
+    public virtual BasicValue Execute(BasicVars vars)
+    {
+        throw new Exception("function without execution method");
+    }
+
+    public override string ToString()
+    {
+        return "Func: " + CmdToken;
+    }
+}
+
+class CommandExpressionListBase : CommandBase
+{
+    protected CommandExpressionList exprs;
+
+    public CommandExpressionListBase(ConfigurationCommands config) : base(config)
+    {
+        exprs = new(config);
+    }
+
+    public bool Parse(TokenConsumer tokens, int cantParametersRequired)
+    {
+        // FNCT ( expr ,  ... )
+        // tokens points to FNCT
+
+        AGEBasicDebug.WriteConsole($" EXPR LIST {tokens.ToString()}");
+        exprs.Parse(tokens);
+
+        if (exprs.Count < cantParametersRequired)
+            throw new Exception($"{cmdToken}() parameter missing, {cantParametersRequired} expected.");
+
+        AGEBasicDebug.WriteConsole($"[functionBase.Parse] END {tokens}");
+        return true;
+    }
+
+}
+
+
+class CommandSingleExpressionBase : CommandBase
+{
+    protected CommandExpression expr;
+
+    public CommandSingleExpressionBase(ConfigurationCommands config) : base(config)
+    {
+        expr = new(config);
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        // FNCT ( expr ,  ... )
+        // tokens points to FNCT
+
+        AGEBasicDebug.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] START  {tokens.ToString()}");
+
+        //AGEBasicDebug.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] EXPR {tokens.ToString()}");
+        expr.Parse(tokens);
+
+        if (expr.Count < 1)
+            throw new Exception($"At least one parameter is required in {CmdToken}");
+
+        //AGEBasicDebug.WriteConsole($"[CommandFunctionSingleExpressionBase.Parse] END {tokens.ToString()}");
+        return true;
+    }
+}
+
+class CommandNoExpressionBase : CommandBase
+{
+    public CommandNoExpressionBase(ConfigurationCommands config) : base(config)
+    {
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return true;
+    }
 }
 
 public interface ICommandList
 {
-
     BasicValue[] ExecuteList(BasicVars vars);
 }
 

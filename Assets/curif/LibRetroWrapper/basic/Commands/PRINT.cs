@@ -206,6 +206,8 @@ public class CommandPRINTCENTERED : ICommandBase
     }
 
 }
+
+//`SCROLL N_LINES [, FILL_COLOR_SPEC [, DRAW_FLAG]]`
 public class CommandSCROLL : ICommandBase
 {
     public string CmdToken { get; } = "SCROLL";
@@ -235,31 +237,22 @@ public class CommandSCROLL : ICommandBase
 
         BasicValue[] values = _expressions.ExecuteList(vars);
         FunctionHelper.ExpectedAtLeast(values, 1);
+
         FunctionHelper.ExpectedNumber(values[0], $"- N_LINES for {CmdToken} must be a number.");
         int nLines = values[0].GetInt();
 
         Color32? fillColor = null;
         bool drawImmediately = true; // Default
-        int currentArgIndex = 1;
 
-        if (currentArgIndex < values.Length) // Potential color argument exists
+        if (values.Length > 1)
         {
-            if (FunctionHelper.TryParseColor(values, currentArgIndex, _config, out Color32 parsedColor, out int consumedColorArgs))
+            Color32 colorToDraw;
+            FunctionHelper.TryParseColor(values[1], out colorToDraw, $"- Color for {CmdToken}");
+            fillColor = colorToDraw;
+            if (values.Length > 2)
             {
-                fillColor = parsedColor;
-                currentArgIndex += consumedColorArgs;
+                drawImmediately = values[2].GetBoolean();
             }
-        }
-
-        if (currentArgIndex < values.Length) // Potential drawFlag argument exists
-        {
-            drawImmediately = values[currentArgIndex].GetBoolean();
-            currentArgIndex++;
-        }
-
-        if (currentArgIndex < values.Length) // Still more arguments than expected
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
         }
 
         _config.ScreenGenerator.ScrollCharacterArea(nLines, fillColor);
@@ -271,6 +264,7 @@ public class CommandSCROLL : ICommandBase
         return null;
     }
 }
+//SCROLLRECT CORNER, SIZE, N_LINES [, FILL_COLOR_SPEC [, DRAW_FLAG]]
 public class CommandSCROLLRECT : ICommandBase
 {
     public string CmdToken { get; } = "SCROLLRECT";
@@ -299,46 +293,37 @@ public class CommandSCROLLRECT : ICommandBase
         }
 
         BasicValue[] values = _expressions.ExecuteList(vars);
-        FunctionHelper.ExpectedAtLeast(values, 5);
+        FunctionHelper.ExpectedAtLeast(values, 3);
 
-        FunctionHelper.ExpectedNumber(values[0], $"- CX (char rect X) for {CmdToken}");
-        int charRectX = values[0].GetInt();
-        FunctionHelper.ExpectedNumber(values[1], $"- CY (char rect Y) for {CmdToken}");
-        int charRectY = values[1].GetInt();
-        FunctionHelper.ExpectedNumber(values[2], $"- CW (char rect width) for {CmdToken}");
-        int charRectWidth = values[2].GetInt();
-        if (charRectWidth <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] CW (char rect width) must be greater than 0.");
-        FunctionHelper.ExpectedNumber(values[3], $"- CH (char rect height) for {CmdToken}");
-        int charRectHeight = values[3].GetInt();
+        FunctionHelper.ExpectedArraySize(values[0], 2, BasicValue.BasicValueType.Number, $"- Superior corner for {CmdToken}");
+        FunctionHelper.ExpectedArraySize(values[1], 2, BasicValue.BasicValueType.Number, $"- Size for {CmdToken}");
+        FunctionHelper.ExpectedNumber(values[2], $"- N_LINES for {CmdToken}");
+
+
+        int charRectWidth = values[1][0].GetInt();
+        if (charRectWidth <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] CW (char rect width) must be greater than 0."); 
+        int charRectHeight = values[1][1].GetInt();
         if (charRectHeight <= 0) throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] CH (char rect height) must be greater than 0.");
-        FunctionHelper.ExpectedNumber(values[4], $"- N_LINES for {CmdToken}");
-        int nLines = values[4].GetInt();
+
+        int nLines = values[2].GetInt();
 
         Color32? fillColor = null;
         bool drawImmediately = true; // Default
-        int currentArgIndex = 5;
 
-        if (currentArgIndex < values.Length) // Potential color argument exists
+        if (values.Length > 3)
         {
-            if (FunctionHelper.TryParseColor(values, currentArgIndex, _config, out Color32 parsedColor, out int consumedColorArgs))
+            Color32 colorToDraw;
+            FunctionHelper.TryParseColor(values[3], out colorToDraw, $"- Color for {CmdToken}");
+            fillColor = colorToDraw;
+            if (values.Length > 4)
             {
-                fillColor = parsedColor;
-                currentArgIndex += consumedColorArgs;
+                drawImmediately = values[4].GetBoolean();
             }
         }
 
-        if (currentArgIndex < values.Length) // Potential drawFlag argument exists
-        {
-            drawImmediately = values[currentArgIndex].GetBoolean();
-            currentArgIndex++;
-        }
-
-        if (currentArgIndex < values.Length) // Still more arguments than expected
-        {
-            throw new Exception($"[{CmdToken} ERROR #{_config.LineNumber}] Too many arguments provided.");
-        }
-
-        _config.ScreenGenerator.ScrollCharacterSubRectVertical(charRectX, charRectY, charRectWidth, charRectHeight, nLines, fillColor);
+        _config.ScreenGenerator.ScrollCharacterSubRectVertical(values[0][0].GetInt(), values[1][1].GetInt(), 
+                                                                charRectWidth, charRectHeight, 
+                                                                nLines, fillColor);
 
         if (drawImmediately)
         {

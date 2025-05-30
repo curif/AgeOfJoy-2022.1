@@ -345,6 +345,10 @@ public static class ColorSpaceManager
         { "atari2600", new Atari2600ColorSpace() },
         { "zx", new ZXColorSpace() },
         { "c64", new C64ColorSpace() },
+        { "msx", new MSXColorSpace() },
+        { "to7", new TO7ColorSpace() },
+        { "msx_mono", new MSXMonoColorSpace() },
+        { "cpc_mono", new CPCMonoColorSpace() },
         { "cpc", new CPCColorSpace() }
     };
 

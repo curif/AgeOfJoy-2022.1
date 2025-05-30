@@ -229,3 +229,129 @@ class CommandLETS : ICommandBase
         return null; // LETS is a command, and commands typically return null
     }
 }
+
+
+class CommandFunctionARRAY : CommandFunctionExpressionListBase
+{
+    public CommandFunctionARRAY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ARRAY";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+
+        if (tokens.Next() != "(")
+            throw new Exception($"function without enclosing (): {tokens}");
+        tokens++; //consumes (
+
+        AGEBasicDebug.WriteConsole($"[FunctionBase.Parse] EXPR LIST {tokens}");
+        exprs.Parse(tokens);
+
+        if (tokens.Token != ")")
+            throw new Exception($"function without enclosing () END is missing: {tokens}");
+
+        return true;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        // Execute the expression list to get the file number and string to write
+        BasicValue[] vals = exprs.ExecuteList(vars);
+
+        BasicValue ret = new BasicValue().Dim(vals.Length);
+        int idx = 0;
+        foreach (BasicValue v in vals)
+        {
+            ret[idx++] = v;
+        }
+        // Return 0 to indicate success
+        return ret;
+    }
+}
+/// <summary>
+/// Implements the SORT function for AGEBasic.
+/// Syntax: SORT(arrayVar, [descendingFlag])
+/// Sorts an array of numbers or strings in ascending or descending order.
+///
+/// Behavior:
+/// - The first argument MUST be a BasicValue of BasicValueType.Array.
+/// - The second argument is optional. If provided, it must be a number;
+///   a non-zero value (or 'true' via GetBoolean) indicates descending order.
+/// - The sort is performed in-place on the provided array BasicValue.
+/// - The actual sorting logic is delegated to the BasicValue.Sort() method.
+/// - Throws exceptions if arguments are invalid or if elements within the array are not comparable.
+/// - Returns the modified BasicValue array for chaining or re-assignment.
+/// </summary>
+class CommandFunctionSORT : CommandFunctionExpressionListBase
+{
+    public CommandFunctionSORT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "SORT";
+    }
+
+    /// <summary>
+    /// Parses the SORT function arguments.
+    /// Expects either one argument (the array) or two arguments (array and descending flag).
+    /// </summary>
+    /// <param name="tokens">The TokenConsumer instance holding the BASIC code tokens.</param>
+    /// <returns>True if parsing is successful.</returns>
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 1);
+    }
+
+    /// <summary>
+    /// Executes the SORT function, sorting the provided array.
+    /// </summary>
+    /// <param name="vars">The BasicVars instance holding program variables.</param>
+    /// <returns>The BasicValue array after it has been sorted in-place.</returns>
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {cmdToken} #{config.LineNumber}] Executing SORT on array.");
+
+        // 1. Get evaluated arguments
+        BasicValue[] args = exprs.ExecuteList(vars);
+
+        // 2. Validate argument count (1 or 2 arguments expected)
+        if (args.Length < 1 || args.Length > 2)
+        {
+            throw new Exception($"[{cmdToken} ERROR #{config.LineNumber}] Expected 1 or 2 arguments: SORT(array_variable, [descending_flag]). Received {args.Length}.");
+        }
+
+        // 3. Validate the first argument: Must be an array
+        BasicValue arrayToSort = args[0];
+        FunctionHelper.ExpectedArray(arrayToSort, "- First argument (array to sort)");
+
+        // 4. Determine sort order (ascending by default, descending if flag is true/1)
+        bool descending = false;
+        if (args.Length == 2)
+        {
+            // Validate the second argument: Must be a number (or convertible to boolean)
+            FunctionHelper.ExpectedNumber(args[1], "- Second argument (descending flag)");
+            // BasicValue's GetBoolean for numbers: true if non-zero
+            descending = args[1].GetBoolean();
+        }
+
+        // 5. Delegate the actual sorting to the BasicValue instance's new Sort method.
+        // The BasicValue.Sort method will handle the internal array sorting and any exceptions.
+        try
+        {
+            arrayToSort.Sort(descending);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Re-throw with added context (line number from ConfigurationCommands)
+            throw new InvalidOperationException($"[{cmdToken} ERROR #{config.LineNumber}] {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"[{cmdToken} ERROR #{config.LineNumber}] An unexpected error occurred during sort: {ex.Message}");
+        }
+
+        // 6. Return the modified BasicValue array (it's sorted in-place)
+        return arrayToSort;
+    }
+}

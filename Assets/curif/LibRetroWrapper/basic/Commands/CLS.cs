@@ -2,32 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-class CommandCLS : ICommandBase
+class CommandCLS : CommandNoExpressionBase
 {
-    public string CmdToken { get; } = "CLS";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    ConfigurationCommands config;
-
-    public CommandCLS(ConfigurationCommands config)
+    public CommandCLS(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
+        this.cmdToken = "CLS";
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public void CheckConfigRequirements(ConfigurationCommands config)
     {
-        return true;
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
-        if (config?.ScreenGenerator != null)
-        {
-            AGEBasicDebug.WriteConsole($"clear and update ");
-            config.ScreenGenerator.Clear();
-            config.ScreenGenerator.DrawScreen();
-        }
+        config.ScreenGenerator.Clear();
+        config.ScreenGenerator.DrawScreen();
         return null;
     }
-
 }
