@@ -497,53 +497,77 @@ public class BasicValue : IEnumerable<BasicValue>
 
     public double GetNumber()
     {
-        // If it's a string that parses to a number, return it as number (implicit conversion)
-        if (type == BasicValueType.String)
+        switch (type)
         {
-            if (double.TryParse(str, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double value))
-            {
-                return value;
-            }
-            throw new InvalidOperationException($"String value '{str}' cannot be implicitly converted to a number.");
-        }
-        if (type == BasicValueType.Number)
-            return number;
-        // If it's an empty value, treat it as 0 for numeric operations
-        if (type == BasicValueType.empty)
-            return 0;
+            case BasicValueType.String:
+                // If it's a string that parses to a number, return it as number (implicit conversion)
+                if (double.TryParse(str, NumberStyles.Float | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out double value))
+                {
+                    return value;
+                }
+                throw new InvalidOperationException($"String value '{str}' cannot be implicitly converted to a number.");
 
-        throw new InvalidOperationException($"Cannot get number from BasicValue of type {type}.");
+            case BasicValueType.Number:
+                // Already a number, return it directly
+                return number;
+
+            case BasicValueType.empty:
+                // If it's an empty value, treat it as 0 for numeric operations
+                return 0;
+
+            case BasicValueType.Array:
+                throw new InvalidOperationException($"Cannot get number from an Array.");
+
+            default:
+                // Defensive programming for any unhandled BasicValueType
+                throw new InvalidOperationException($"Cannot get number from value of type {type}.");
+        }
     }
 
     public int GetInt()
     {
         return (int)GetNumber(); // Reuse GetNumber for implicit conversion logic
     }
-
     public bool GetBoolean()
     {
-        if (type == BasicValueType.String)
-            return str != null && str != BasicValue.EmptyString.str;
-        if (type == BasicValueType.Number)
-            return number != 0;
-        if (type == BasicValueType.Array)
-            return arrayValues != null && arrayValues.Length > 0; // An array is "true" if dimensioned and not empty
-        return false; // For BasicValueType.empty
+        switch (type)
+        {
+            case BasicValueType.String:
+                // Check if the string is not null and not an empty string reference
+                // (assuming BasicValue.EmptyString.str is "" or a distinct empty string)
+                return str != null && str != BasicValue.EmptyString.str;
+            case BasicValueType.Number:
+                // A number is true if it's not zero
+                return number != 0;
+            case BasicValueType.Array:
+                // An array is true if it's dimensioned and not empty
+                return arrayValues != null && arrayValues.Length > 0;
+            case BasicValueType.empty:
+            default: // Handles any unhandled BasicValueType (though unlikely for BasicValueType.empty)
+                return false;
+        }
     }
 
     public string GetString()
     {
-        // If it's a number, return it as string (implicit conversion)
-        if (type == BasicValueType.Number)
+        switch (type)
         {
-            return number.ToString(CultureInfo.InvariantCulture);
+            case BasicValueType.Number:
+                // Convert number to string using invariant culture for consistent formatting
+                return number.ToString(CultureInfo.InvariantCulture);
+            case BasicValueType.String:
+                // Directly return the stored string
+                return str;
+            case BasicValueType.empty:
+                // Return an empty string for an empty value
+                return string.Empty; // Optimized: uses the static empty string instance
+            case BasicValueType.Array:
+                // For arrays, getting a string is an invalid operation.
+                throw new InvalidOperationException($"Cannot get string from BasicValue of type {type}.");
+            default:
+                // Defensive programming for any unhandled BasicValueType
+                throw new InvalidOperationException($"Unhandled BasicValueType: {type} when attempting to get string.");
         }
-        if (type == BasicValueType.String)
-            return str;
-        if (type == BasicValueType.empty)
-            return ""; // Empty string for empty value
-
-        throw new InvalidOperationException($"Cannot get string from BasicValue of type {type}.");
     }
     public string GetValueAsString()
     {
@@ -991,9 +1015,9 @@ public class BasicValue : IEnumerable<BasicValue>
     public override string ToString()
     {
         if (type == BasicValueType.Number)
-            return number.ToString(CultureInfo.InvariantCulture); // Use InvariantCulture for consistent number string representation
+            return GetString(); // Use InvariantCulture for consistent number string representation
         else if (type == BasicValueType.String)
-            return str;
+            return GetString(); // Use InvariantCulture for consistent number string representation
         else if (type == BasicValueType.Array)
         {
             // If the array has defined dimensions, show them. Otherwise, just the flat length.
@@ -1425,6 +1449,83 @@ public class BasicValue : IEnumerable<BasicValue>
         {
             yield return val;
         }
+    }
+
+    /// <summary>
+    /// Sorts the elements of the BasicValue array in-place.
+    /// Elements are compared using BasicValue's overloaded comparison operators.
+    /// </summary>
+    /// <param name="descending">If true, sorts in descending order; otherwise, sorts in ascending order (default).</param>
+    /// <returns>The current BasicValue instance (the sorted array) for method chaining.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the BasicValue is not an Array type, or if elements within the array
+    /// are not comparable (e.g., mixed types that cannot be implicitly converted, or nested arrays).
+    /// </exception>
+    public BasicValue Sort(bool descending = false)
+    {
+        if (type != BasicValueType.Array)
+        {
+            throw new InvalidOperationException("Cannot sort a non-array BasicValue type. Call Sort() only on a BasicValue that represents an Array.");
+        }
+        if (arrayValues == null || arrayValues.Length == 0)
+        {
+            // Nothing to sort for an empty or undimensioned array.
+            return this;
+        }
+
+        try
+        {
+            // Use Array.Sort with a custom comparison delegate.
+            // This performs an in-place sort on the internal arrayValues.
+            Array.Sort(arrayValues, (a, b) =>
+            {
+                // BasicValue's overloaded operators (==, <, >) handle various type comparisons
+                // (Number vs Number, String vs String, Number vs String with parsing).
+                // They will throw InvalidOperationException for non-comparable types (e.g., Array, empty)
+                // or if a string cannot be parsed to a number for comparison.
+
+                // If elements are equal, their relative order doesn't change (return 0).
+                if (a == b) return 0;
+
+                // Perform comparisons. The result needs to be adjusted based on the 'descending' flag.
+                // Comparison<T> delegate expects:
+                //   -1 if a < b (a comes before b)
+                //    1 if a > b (a comes after b)
+                //    0 if a == b
+                if (a < b)
+                {
+                    // If 'a' is truly "less than" 'b':
+                    //   - For ascending sort, 'a' comes before 'b' (-1)
+                    //   - For descending sort, 'a' comes after 'b' (1)
+                    return descending ? 1 : -1;
+                }
+                if (a > b)
+                {
+                    // If 'a' is truly "greater than" 'b':
+                    //   - For ascending sort, 'a' comes after 'b' (1)
+                    //   - For descending sort, 'a' comes before 'b' (-1)
+                    return descending ? -1 : 1;
+                }
+
+                // If this point is reached, it means the comparison operators didn't throw for
+                // non-comparable types (like nested arrays or 'empty'). This should ideally not happen
+                // if the operators are robust. However, this fallback ensures an explicit exception
+                // for unexpected non-comparable states.
+                throw new InvalidOperationException($"Elements '{a}' and '{b}' in array are not comparable. This often occurs with mixed types that cannot be implicitly converted (e.g., number and unparseable string), or if array/empty types are present and cannot be directly compared.");
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Re-throw with a more generic message for the user, indicating the source of the error.
+            throw new InvalidOperationException($"Error during array sort: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            // Catch any other unexpected exceptions during the sort process.
+            throw new Exception($"An unexpected error occurred during array sort: {ex.Message}");
+        }
+
+        return this; // Return the current instance (the sorted array)
     }
 
     /// <summary>

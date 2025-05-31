@@ -2,29 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-class CommandCALL : ICommandBase
+class CommandCALL : CommandSingleExpressionBase
 {
-    public string CmdToken { get; } = "CALL";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    public ConfigurationCommands Config { get; set; }
-
-    CommandExpression expr;
-
-    ConfigurationCommands config;
-
-    public CommandCALL(ConfigurationCommands config)
+    public CommandCALL(ConfigurationCommands config) : base(config) 
     {
-        this.config = config;
-        expr = new(config);
+        this.cmdToken = "CALL";
     }
 
-    public bool Parse(TokenConsumer tokens)
-    {
-        expr.Parse(tokens);
-        return true;
-    }
-
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] [{expr}] ");
 

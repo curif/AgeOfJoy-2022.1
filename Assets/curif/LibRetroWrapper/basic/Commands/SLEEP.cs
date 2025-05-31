@@ -1,26 +1,13 @@
 using System;
 using System.Collections.Generic;
 
-class CommandSLEEP : ICommandBase
-{
-    public string CmdToken { get; } = "SLEEP";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-
-    CommandExpression expr;
-    ConfigurationCommands config;
-    public CommandSLEEP(ConfigurationCommands config)
+class CommandSLEEP : CommandSingleExpressionBase
+{   public CommandSLEEP(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
-        expr = new(config);
+        this.cmdToken = "SLEEP";
     }
 
-    public bool Parse(TokenConsumer tokens)
-    {
-        expr.Parse(tokens);
-        return true;
-    }
-
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] [{expr}] ");
 

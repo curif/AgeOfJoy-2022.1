@@ -210,13 +210,44 @@ public class AGEProgram
 
         return tokens.Take(index).ToArray<string>();
     }
+    // Helper method to detect line numbers
+    private bool TryParseLineNumberAndContent(string line, out int lineNumber, out string content)
+    {
+        lineNumber = -1;
+        content = string.Empty;
 
+        // We expect 'line' here to already be trimmed (no leading/trailing physical line whitespace)
+        // and comments stripped. So, we only need to handle whitespace between number and command.
+
+        int i = 0;
+        // Find the end of the digit sequence (number part)
+        while (i < line.Length && char.IsDigit(line[i]))
+        {
+            i++;
+        }
+
+        if (i == 0) // No digits found at the very beginning of the (already trimmed) line
+        {
+            return false;
+        }
+
+        string numberPart = line.Substring(0, i); // Number is at the very start
+        if (int.TryParse(numberPart, out lineNumber))
+        {
+            // The rest of the line is the content. Trim it thoroughly.
+            content = line.Substring(i).Trim();
+            return true;
+        }
+
+        return false; // Should not be reached if char.IsDigit already succeeded, but for safety
+    }
     public void Parse(string filePath, ConfigurationCommands config)
     {
         this.config = config;
         config.ageProgram = this;
-        string currentCommand = null;
-        int currentLineNumber = 0; //users line numbers must be an INT
+
+        double currentLineNumber = -1;
+        string currentSentence = "";
 
         using (StreamReader reader = new StreamReader(filePath))
         {
@@ -224,51 +255,81 @@ public class AGEProgram
 
             while ((line = reader.ReadLine()) != null)
             {
+
+                // *** NEW: Trim the physical line immediately after reading ***
                 line = line.Trim();
+                // After trimming and stripping comments, if the line is empty, skip it.
                 if (string.IsNullOrWhiteSpace(line))
-                    continue;
-
-                // Check if the line starts with a line number
-                int spaceIndex = line.IndexOf(' ');
-                if (spaceIndex != -1 && int.TryParse(line.Substring(0, spaceIndex), out int lineNumber))
                 {
-                    if (lineNumber <= 0)
-                        throw new Exception($"Line number <= 0 is not allowed, in file: {filePath}");
+                    continue; // Ignore empty lines or lines that were only comments
+                }
 
-                    // Process the previous command if there is one
-                    if (currentCommand != null)
-                        ProcessCommand(currentLineNumber, currentCommand, config, filePath);
+                // 1. Strip comments (everything after a single quote) immediately.
+                // This ensures comments don't interfere with line number detection or command content.
+                int commentIndex = line.IndexOf('\'');
+                if (commentIndex != -1)
+                {
+                    line = line.Substring(0, commentIndex);
+                }
 
-                    lastLineNumberParsed = currentLineNumber;
+                // 2. Attempt to parse a line number at the start of the physical line.
+                int parsedLineNumber;
+                string commandPartAfterNumber;
+                bool startsWithLineNumber = TryParseLineNumberAndContent(line, 
+                                                                        out parsedLineNumber, 
+                                                                        out commandPartAfterNumber);
 
-                    if (lineNumber <= currentLineNumber)
-                        throw new Exception($"Line numbers not in sequence, in file: {filePath}");
+                if (startsWithLineNumber)
+                {
+                    // This physical line starts with a line number, so it signifies a NEW logical program line.
 
-                    // Start a new command
-                    currentLineNumber = lineNumber;
-                    //removes comments, line numbers and spaces
-                    currentCommand = line.Split('\'')[0].Substring(spaceIndex + 1).Trim();
+                    // A. First, process any accumulated command from the PREVIOUS logical line.
+                    if (!string.IsNullOrEmpty(currentSentence)) // If we have a pending logical line
+                        ProcessCommand((int)currentLineNumber, currentSentence, config, filePath);
+
+                    if (parsedLineNumber <= currentLineNumber)
+                        throw new Exception($"Syntax Error: Line numbers must be in strictly ascending order and unique. Duplicate or out-of-order line number {parsedLineNumber}. File: '{filePath}'");
+
+                    // C. Initialize for the new logical line.
+                    currentLineNumber = parsedLineNumber;
+                    if (string.IsNullOrEmpty(commandPartAfterNumber))
+                    {
+                        currentSentence = "";
+                        continue;
+                    }
+                    currentSentence = commandPartAfterNumber;
                 }
                 else
                 {
-                    // This is a continuation of the current command
-                    if (currentCommand != null)
-                        currentCommand += " " + line.Split('\'')[0].Trim(); //removes comments, line numbers and spaces
-                    else
-                        throw new Exception($"Invalid line format or misplaced continuation line: {line} file: {filePath}");
+                    // This physical line does NOT start with a line number. It's a continuation.
+
+                    if (currentLineNumber == -1)
+                    {
+                        throw new Exception($"Syntax Error: First executable line must start with a line number. File: '{filePath}'");
+                    }
+
+                    // Append this line's content to the current accumulated command.
+                    // Add a space as a separator, which is common for multi-line statements.
+                    currentSentence += " " + line; 
                 }
             }
-
-            // Process the last command in the file
-            if (currentCommand != null)
-                ProcessCommand(currentLineNumber, currentCommand, config, filePath);
         }
 
-        //force an END:
-        ProcessCommand(currentLineNumber + 1, "END", config, filePath);
-
+        // After the loop, process the very last accumulated logical line in the file.
+        if (!string.IsNullOrEmpty(currentSentence))
+        {
+            ProcessCommand((int)currentLineNumber, currentSentence, config, filePath);
+        }
+        // If the file was completely empty or only comments, currentLineNumber would still be -1.
+        // Ensure we have a valid line number for the implicit END.
+        if (currentLineNumber == -1)
+        {
+            currentLineNumber = 0; // Use 0 or 1 as a base if no lines were processed
+        }
+        // Force an END command at the very end of the program.
+        ProcessCommand((int)currentLineNumber + 1, "END", config, filePath);
     }
-
+    bool AllowedAtFirst(ICommandBase cmd) => (cmd != null || cmd.Type == CommandType.Type.Command /*|| cmd.Type == CommandType.Type.Function*/);
     private void ProcessCommand(int lineNumber, string command, ConfigurationCommands config, string filePath)
     {
         lastLineNumberParsed = lineNumber;
@@ -293,24 +354,26 @@ public class AGEProgram
         }
 
         ICommandBase cmd = Commands.GetNew(tokens.Token, config);
-        if (cmd == null || cmd.Type != CommandType.Type.Command)
-            throw new Exception($"Syntax error command not found: {tokens.Token} line: {(int)lineNumber} file: {filePath}");
+        if (!AllowedAtFirst(cmd))
+            throw new Exception($"Syntax error command or function not found: {tokens.Token} line: {(int)lineNumber} file: {filePath}");
 
         config.LineNumber = lineNumber; //config.LineNumber could be changed by a parser.
         lines[lineNumber] = cmd;
         cmd.Parse(++tokens);
+        cmd.CheckConfigRequirements(config);
 
         //add next sentences in the same line if any.
         while (tokens.Token == ":")
         {
             tokens++;
             cmd = Commands.GetNew(tokens.Token, config);
-            if (cmd == null || cmd.Type != CommandType.Type.Command)
-                throw new Exception($"Syntax error command not found: {tokens.Token}  line: {(int)lineNumber} file: {filePath}");
+            if (!AllowedAtFirst(cmd))
+                throw new Exception($"Syntax error command or function not found: {tokens.Token}  line: {(int)lineNumber} file: {filePath}");
 
             config.LineNumber += MinJump;
             lines[config.LineNumber] = cmd;
             cmd.Parse(++tokens);
+            cmd.CheckConfigRequirements(config);
         }
     }
 

@@ -1,45 +1,33 @@
 
 using System;
-
-class CommandDATA : ICommandBase
+class CommandDATA : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "DATA";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-
-    CommandExpressionList exprs;
-    ConfigurationCommands config;
-
-    public CommandDATA(ConfigurationCommands config)
+    public CommandDATA(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this.config = config;
-        exprs = new(config);
+        this.cmdToken = "DATA"; // Set CmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        exprs.Parse(tokens);
-        return true;
+        return base.Parse(tokens, 2); // Call base to parse the list of expressions
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
 
-        BasicValue[] vals;
+        // exprs is now a protected member from CommandExpressionListBase
+        BasicValue[] vals = exprs.ExecuteList(vars);
 
-        vals = exprs.ExecuteList(vars);
-
-        if (vals.Length < 2)
-            throw new Exception($"{CmdToken} DATA parameters missing, example DATA 'storage name', 10, 20, 30");
+        // The count check is now handled in Parse, but a runtime check for type/content is still good.
         FunctionHelper.ExpectedString(vals[0], " - storage name");
 
         string storageName = vals[0].GetString();
         if (!this.config.basicValueLists.ContainsKey(storageName))
         {
-            // If it doesn't exist, create a new BasicValueList object and add it to the dictionary.
             this.config.basicValueLists[storageName] = new BasicValueList();
         }
-        for (int i = 1; i < exprs.Count; i++)
+        for (int i = 1; i < exprs.Count; i++) // Use exprs.Count, consistent with vals.Length
         {
             this.config.basicValueLists[storageName].Add(vals[i]);
         }
@@ -47,7 +35,6 @@ class CommandDATA : ICommandBase
         return null;
     }
 }
-
 
 class CommandREAD : ICommandBase
 {
@@ -127,50 +114,43 @@ class CommandREAD : ICommandBase
 }
 
 
-class CommandRESTORE : ICommandBase
+
+class CommandRESTORE : CommandExpressionListBase // Changed base class
 {
-    public string CmdToken { get; } = "RESTORE";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    // config and exprs are now inherited from CommandExpressionListBase
 
-    CommandExpressionList exprs;
-    ConfigurationCommands config;
-
-    public CommandRESTORE(ConfigurationCommands config)
+    public CommandRESTORE(ConfigurationCommands config) : base(config) // Call base constructor
     {
-        this.config = config;
-        exprs = new(config);
+        this.cmdToken = "RESTORE"; // Set CmdToken
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens) // Override Parse method
     {
-        exprs.Parse(tokens);
-        if (exprs.Count < 1)
-            throw new Exception($"{CmdToken} RESTORE parameters missing, example RESTORE 'storage name'[, 10]");
-        return true;
+        return base.Parse(tokens, 1);
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
 
-        BasicValue[] vals;
-
-        vals = exprs.ExecuteList(vars);
+        BasicValue[] vals = exprs.ExecuteList(vars);
         string storageName;
         int offset = 0;
+
+        // The count check is done in Parse, so vals[0] should be safe to access.
         FunctionHelper.ExpectedString(vals[0], " - storage name");
         storageName = vals[0].GetString();
-        if (!this.config.basicValueLists.ContainsKey(storageName))
-            throw new Exception($"{CmdToken} RESTORE 'storage name' doesn't exists");
 
-        if (vals.Length > 1)
+        if (!this.config.basicValueLists.ContainsKey(storageName))
+            throw new Exception($"{CmdToken} RESTORE '{storageName}' storage name doesn't exists"); 
+        if (vals.Length > 1) // Use vals.Length as it reflects the number of evaluated expressions
         {
             FunctionHelper.ExpectedNumber(vals[1], " - offset");
             offset = vals[1].GetInt();
         }
 
         config.basicValueLists[storageName].JumpTo(offset);
-        
+
         return null;
     }
 }

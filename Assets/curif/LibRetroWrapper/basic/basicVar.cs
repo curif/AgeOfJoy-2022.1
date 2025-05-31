@@ -36,7 +36,7 @@ public class BasicVar
         // Check remaining characters are letters or digits
         for (int i = 1; i < name.Length; i++)
         {
-            if (!char.IsLetterOrDigit(name[i]))
+            if (!(name[i] == '_' || char.IsLetterOrDigit(name[i])))
                 return false;
         }
 

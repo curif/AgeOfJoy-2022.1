@@ -2,21 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-class CommandRETURN : ICommandBase
+class CommandRETURN : CommandNoExpressionBase
 {
-    public string CmdToken { get; } = "RETURN";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    ConfigurationCommands config;
-    public CommandRETURN(ConfigurationCommands config)
+    public CommandRETURN(ConfigurationCommands config) : base(config)
     {
         this.config = config;
+        this.cmdToken = "RETURN";
     }
-    public bool Parse(TokenConsumer tokens)
-    {
-        return true;
-    }
-
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
 
         if (config.Gosub.Count == 0)

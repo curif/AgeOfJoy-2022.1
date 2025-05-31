@@ -10,26 +10,27 @@ public class forToStorage
 
 }
 
-class CommandFORTO : ICommandBase
+class CommandFORTO : CommandBase
 {
-    public string CmdToken { get; } = "FOR";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    CommandExpression expr;
-    CommandExpression exprTo;
-    CommandExpression exprStep;
+    CommandExpression expr;      // The initial value expression (e.g., A = 10)
+    CommandExpression exprTo;    // The 'TO' expression (e.g., TO 100)
+    CommandExpression exprStep;  // The 'STEP' expression (e.g., STEP 5), can be null
     string varName;
+    // ConfigurationCommands config is now inherited from CommandBase
 
-    ConfigurationCommands config;
-    public CommandFORTO(ConfigurationCommands config)
+    // Constructor now calls the base constructor
+    public CommandFORTO(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
+        // Set the command token for this specific command via the base class's protected field.
+        this.cmdToken = "FOR";
+
         expr = new(config);
         exprTo = new(config);
-        exprStep = null;
+        exprStep = null; // Initialize as null, will be set if STEP is present
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens)
     {
         if (!BasicVar.IsVariable(tokens.Token))
             throw new Exception($"{tokens.Token} isn't a valid variable (FOR)");
@@ -61,7 +62,7 @@ class CommandFORTO : ICommandBase
     }
 
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC  #{config.LineNumber} {CmdToken}]");
 

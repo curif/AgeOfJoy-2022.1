@@ -2,29 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-class CommandGOSUB : ICommandBase
+class CommandGOSUB : CommandSingleExpressionBase
 {
-    public string CmdToken { get; } = "GOSUB";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    public ConfigurationCommands Config { get; set; }
-
-    CommandExpression expr;
-
-    ConfigurationCommands config;
-
-    public CommandGOSUB(ConfigurationCommands config)
+    public CommandGOSUB(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
-        expr = new(config);
+        this.cmdToken = "GOSUB";
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens)
     {
         expr.Parse(tokens);
         return true;
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN #{config.LineNumber}  {CmdToken}] [{expr}] ");
 

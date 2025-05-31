@@ -2,29 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-class CommandSHOW : ICommandBase
+class CommandSHOW : CommandNoExpressionBase
 {
-    public string CmdToken { get; } = "SHOW";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-    ConfigurationCommands config;
 
-    public CommandSHOW(ConfigurationCommands config)
+    public CommandSHOW(ConfigurationCommands config) : base(config)
     {
         this.config = config;
+        this.cmdToken = "SHOW";
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public void CheckConfigRequirements(ConfigurationCommands config) // Retained as is
     {
-        return true;
+        if (config?.ScreenGenerator == null)
+            throw new ArgumentException($"[{CmdToken} ScreenGenerator is not available.");
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
-        if (config?.ScreenGenerator == null)
-        {
-            return null;
-        }
 
         config.ScreenGenerator.DrawScreen();
 

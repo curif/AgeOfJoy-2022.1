@@ -72,6 +72,8 @@ public static class Commands
         functions["REMOVEMEMBER"] = typeof(CommandFunctionREMOVEMEMBER);
         functions["ADDMEMBER"] = typeof(CommandFunctionADDMEMBER);
         functions["STRINGMATCH"] = typeof(CommandFunctionSTRINGMATCH);
+        functions["ARRAY"] = typeof(CommandFunctionARRAY);
+        functions["SORT"] = typeof(CommandFunctionSORT);
         
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
@@ -236,14 +238,19 @@ public static class Commands
         //screen
         functions["SCREENWIDTH"] = typeof(CommandFunctionSCREENWIDTH);
         functions["SCREENHEIGHT"] = typeof(CommandFunctionSCREENHEIGHT);
-        functions["DCHARPIXELX"] = typeof(CommandFunctionCHARPIXELX);
-        functions["DCHARPIXELY"] = typeof(CommandFunctionCHARPIXELY);
+        functions["SCREENSIZE"] = typeof(CommandFunctionSCREENSIZE);
+        functions["DSCREENWIDTH"] = typeof(CommandFunctionDSCREENWIDTH);
+        functions["DSCREENHEIGHT"] = typeof(CommandFunctionDSCREENHEIGHT);
+        functions["DSCREENSIZE"] = typeof(CommandFunctionDSCREENSIZE);
+        functions["DCHARPIXELX"] = typeof(CommandFunctionDCHARPIXELX);
+        functions["DCHARPIXELY"] = typeof(CommandFunctionDCHARPIXELY);
+        functions["DCHARPIXEL"] = typeof(CommandFunctionDCHARPIXEL);
         functions["DPSET"] = typeof(CommandPSET);
         functions["DLINE"] = typeof(CommandLINE);
         functions["DOVAL"] = typeof(CommandOVAL);
         functions["DCIRCLE"] = typeof(CommandCIRCLE);
         functions["DBOX"] = typeof(CommandBOX);
-
+        functions["GETCOLOR"] = typeof(CommandGETCOLOR);
 
         // READ DATA RESTORE
         commands["DATA"] = typeof(CommandDATA);
