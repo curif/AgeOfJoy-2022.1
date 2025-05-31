@@ -3,27 +3,16 @@ using System.Collections.Generic;
 using System.IO;
 using static OVRHaptics;
 
-class CommandGOTO : ICommandBase
+class CommandGOTO : CommandSingleExpressionBase
 {
-    public string CmdToken { get; } = "GOTO";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
 
-    CommandExpression expr;
-    ConfigurationCommands config;
     BasicValue lineNumber = null;
     bool exactly = true;
-    public CommandGOTO(ConfigurationCommands config)
+    public CommandGOTO(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
-        expr = new(config);
+        this.cmdToken = "GOTO";
     }
-    public bool Parse(TokenConsumer tokens)
-    {
-        expr.Parse(tokens);
-        return true;
-    }
-
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
 
         if (lineNumber == null)
@@ -52,21 +41,19 @@ class CommandGOTO : ICommandBase
 }
 
 
-class CommandInternalGOTO : ICommandBase
+class CommandInternalGOTO : CommandNoExpressionBase
 {
-    public string CmdToken { get; } = "internal-GOTO";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-
     protected double lineNumber;
-    protected ConfigurationCommands config;
     
-    public CommandInternalGOTO(ConfigurationCommands config)
+    public CommandInternalGOTO(ConfigurationCommands config) : base(config)
     {
         this.config = config;
-    }
-    public bool Parse(TokenConsumer tokens) { return true;}
+        this.cmdToken = "Internal-GOTO";
 
-    public virtual BasicValue Execute(BasicVars vars)
+    }
+    public override bool Parse(TokenConsumer tokens) { return true;}
+
+    public override BasicValue Execute(BasicVars vars)
     {
         config.JumpTo = lineNumber;
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN  #{config.LineNumber} {CmdToken}] internal-GOTO next to #{config.JumpTo}");
@@ -80,7 +67,10 @@ class CommandInternalGOTO : ICommandBase
 
 class CommandInternalGOTONextTo : CommandInternalGOTO
 {
-    public CommandInternalGOTONextTo(ConfigurationCommands config) : base(config) { }
+    public CommandInternalGOTONextTo(ConfigurationCommands config) : base(config) 
+    {
+        this.cmdToken = "Internal-NEXT";
+    }
 
     public override BasicValue Execute(BasicVars vars)
     {

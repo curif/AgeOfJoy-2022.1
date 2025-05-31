@@ -1,24 +1,16 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using UnityEngine.Rendering;
-
-
-class CommandNEXT : ICommandBase
+// Changed from implementing ICommandBase to inheriting from CommandBase
+class CommandNEXT : CommandBase
 {
-    public string CmdToken { get; } = "NEXT";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
+    string varName; // The name of the loop variable (e.g., "I" in NEXT I)
 
-    string varName;
-
-    ConfigurationCommands config;
-
-    public CommandNEXT(ConfigurationCommands config)
+    public CommandNEXT(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
+        // Set the command token for this specific command via the base class's protected field.
+        this.cmdToken = "NEXT";
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens)
     {
         if (!BasicVar.IsVariable(tokens.Token))
             throw new Exception($"{tokens.Token} isn't a valid variable (FOR)");
@@ -28,7 +20,7 @@ class CommandNEXT : ICommandBase
         return true;
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC  #{config.LineNumber}  {CmdToken}]");
 

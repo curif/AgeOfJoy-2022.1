@@ -59,7 +59,7 @@ class CommandExpressionListBase : CommandBase
         // FNCT ( expr ,  ... )
         // tokens points to FNCT
 
-        AGEBasicDebug.WriteConsole($" EXPR LIST {tokens.ToString()}");
+        AGEBasicDebug.WriteConsole($" EXPR LIST {tokens}");
         exprs.Parse(tokens);
 
         if (exprs.Count < cantParametersRequired)

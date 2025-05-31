@@ -1015,9 +1015,9 @@ public class BasicValue : IEnumerable<BasicValue>
     public override string ToString()
     {
         if (type == BasicValueType.Number)
-            return number.ToString(CultureInfo.InvariantCulture); // Use InvariantCulture for consistent number string representation
+            return GetString(); // Use InvariantCulture for consistent number string representation
         else if (type == BasicValueType.String)
-            return str;
+            return GetString(); // Use InvariantCulture for consistent number string representation
         else if (type == BasicValueType.Array)
         {
             // If the array has defined dimensions, show them. Otherwise, just the flat length.

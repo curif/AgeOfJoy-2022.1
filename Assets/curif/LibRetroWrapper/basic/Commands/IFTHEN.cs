@@ -3,23 +3,18 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.VisualScripting;
 
-class CommandIFTHEN : ICommandBase
+class CommandIFTHEN : CommandBase
 {
-    public string CmdToken { get; } = "IFTHEN";
-    public CommandType.Type Type { get; } = CommandType.Type.Command;
-
-    CommandExpression expr;
     double lineNoBlockStartThen=0, lineNoBlockStartElse=0, lineNoNextSentence = 0;
-    ConfigurationCommands config;
+    protected CommandExpression expr; // The condition expression for the IF statement
 
-    public CommandIFTHEN(ConfigurationCommands config)
+    public CommandIFTHEN(ConfigurationCommands config) : base(config)
     {
-        this.config = config;
+        this.cmdToken = "IFTHEN"; // Or just "IF" depending on language convention
         expr = new(config);
-
     }
 
-    public bool Parse(TokenConsumer tokens)
+    public override bool Parse(TokenConsumer tokens)
     {
         ICommandBase localCmdThen, localCmdElse;
         List<ICommandBase> commandsThen = new List<ICommandBase>();
@@ -100,7 +95,7 @@ class CommandIFTHEN : ICommandBase
         return config.LineNumber;
     }
 
-    public BasicValue Execute(BasicVars vars)
+    public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN #{config.LineNumber} {CmdToken}] [{expr}] ");
 
