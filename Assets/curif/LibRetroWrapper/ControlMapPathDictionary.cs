@@ -50,6 +50,17 @@ public static class ControlMapPathDictionary
     public const string KEYBOARD_ENTER = "keyboard-enter";
     public const string KEYBOARD_X = "keyboard-x";
     public const string KEYBOARD_Y = "keyboard-y";
+    public const string MOUSE_X = "mouse-x";
+    public const string MOUSE_Y = "mouse-y";
+    public const string MOUSE_LEFT = "mouse-left";
+    public const string MOUSE_RIGHT = "mouse-right";
+    public const string MOUSE_MIDDLE = "mouse-middle";
+    public const string MOUSE_WHEELUP = "mouse-scroll-up";
+    public const string MOUSE_WHEELDOWN = "mouse-scroll-down";
+    public const string MOUSE_HORIZ_WHEELUP = "mouse-scroll-left";
+    public const string MOUSE_HORIZ_WHEELDOWN = "mouse-scroll-right";
+    public const string MOUSE_BUTTON_4 = "mouse-button-4";
+    public const string MOUSE_BUTTON_5 = "mouse-button-5";
 
     static ControlMapPathDictionary()
     {
@@ -103,6 +114,19 @@ public static class ControlMapPathDictionary
             { GAMEPAD_DPAD_DOWN, "<Gamepad>/dpad/down" },
             { GAMEPAD_DPAD_LEFT, "<Gamepad>/dpad/left" },
             { GAMEPAD_DPAD_RIGHT, "<Gamepad>/dpad/right" },
+
+            // Mouse mappings
+            { MOUSE_X, "<Mouse>/delta/x" },
+            { MOUSE_Y, "<Mouse>/delta/y" },
+            { MOUSE_LEFT, "<Mouse>/leftButton" },
+            { MOUSE_RIGHT, "<Mouse>/rightButton" },
+            { MOUSE_MIDDLE, "<Mouse>/middleButton" },
+            { MOUSE_WHEELUP, "<Mouse>/scroll/y" },
+            { MOUSE_WHEELDOWN, "<Mouse>/scroll/y" },
+            { MOUSE_HORIZ_WHEELUP, "<Mouse>/scroll/x" },
+            { MOUSE_HORIZ_WHEELDOWN, "<Mouse>/scroll/x" },
+            { MOUSE_BUTTON_4, "<Mouse>/button4" },
+            { MOUSE_BUTTON_5, "<Mouse>/button5" },
 
             // Keyboard mappings
             { KEYBOARD_A, "<keyboard>/a" },
