@@ -77,7 +77,7 @@ class CommandFunctionCABROOMREPLACE : CommandFunctionExpressionListBase
 
         bool result = config.CabinetsController.ReplaceInRoom((int)vals[0].GetNumber(),
                                                                 roomName,
-                                                                cabinetDBName);
+                                                                cabinetDBName).Result;
 
         return new BasicValue(result ? 1 : 0);
     }

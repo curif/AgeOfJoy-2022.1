@@ -12,6 +12,7 @@ using System.IO;
 using UnityEngine.XR.Interaction.Toolkit;
 using static ConfigInformation;
 using static CabinetInformation;
+using System.Threading.Tasks;
 
 //distribute cabinets games in the room for respawn.
 
@@ -424,7 +425,7 @@ public class CabinetsController : MonoBehaviour
         return spaces;
     }
 
-    public bool ReplaceInRoom(int position, string room, string cabinetDBName)
+    public async Task<bool> ReplaceInRoom(int position, string room, string cabinetDBName)
     {
         //replace in the registry
         CabinetPosition toAdd = new();
@@ -439,7 +440,7 @@ public class CabinetsController : MonoBehaviour
         if (cr != null)
         {
             ConfigManager.WriteConsole($"[CabinetController.ReplaceInRoom] replacing a cabinet by [{toAdd}]");
-            GameObject newCab = cr.ReplaceWith(toAdd);
+            GameObject newCab = await cr.ReplaceWith(toAdd);
             if (newCab != null)
             {
                 cabinet.GameObjectReplacement = newCab;
@@ -462,7 +463,7 @@ public class CabinetsController : MonoBehaviour
         return false;
     }
 
-    public bool Replace(int position, string room, string cabinetDBName)
+    public async Task<bool> Replace(int position, string room, string cabinetDBName)
     {
         //replace in the registry
         CabinetPosition toAdd = new();
@@ -474,10 +475,10 @@ public class CabinetsController : MonoBehaviour
         ConfigManager.WriteConsole($"[CabinetsController.Replace] [{toBeReplaced}] by [{toAdd}] ");
         gameRegistry.Replace(toBeReplaced, toAdd); //persists changes
 
-        return ReplaceInRoom(position, room, cabinetDBName);
+        return await ReplaceInRoom(position, room, cabinetDBName);
     }
 
-    void checkAndLoadCabinet(CabinetControllerInformation cci)
+    async void checkAndLoadCabinet(CabinetControllerInformation cci)
     {
         if (!cci.IsOutOfOrderActive || cci.IsFaulty)
             return;
@@ -532,7 +533,7 @@ public class CabinetsController : MonoBehaviour
         {
             //cabinet inception
             ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {cc.game}");
-            cab = CabinetFactory.fromInformation(cc.game.CabInfo, cc.game.Room, cc.game.Position,
+            cab = await CabinetFactory.fromInformationAsync(cc.game.CabInfo, cc.game.Room, cc.game.Position,
                                                  cci.GameObjectOutOfOrder.transform.position,
                                                  cci.GameObjectOutOfOrder.transform.rotation,
                                                  cci.GameObjectOutOfOrder.transform.parent,

@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 //store Cabinets resources
@@ -38,7 +39,7 @@ public static class CabinetFactory
         CabinetStyles.Add("cocktail", Resources.Load<GameObject>($"Cabinets/PreFab/Cocktail"));
     }
 
-    public static Cabinet Factory(string style, string name, string path, string controlScheme, string modelFilePath,
+    public static async Task<Cabinet> FactoryAsync(string style, string name, string path, string controlScheme, string modelFilePath,
                                     int number, string room, Vector3 position,
                                     Quaternion rotation, Transform parent,
                                     bool cacheGlbModels = true)
@@ -67,7 +68,12 @@ public static class CabinetFactory
             {
                 try
                 {
-                    model = Importer.LoadFromFile(modelFilePath);
+                    TaskCompletionSource<GameObject> tcs = new TaskCompletionSource<GameObject>();
+                    Importer.LoadFromFileAsync(modelFilePath, new ImportSettings(), (loadedGo, animationClips) =>
+                    {
+                        tcs.SetResult(loadedGo);
+                    }, null); // Pass null for onProgress if not needed
+                    model = await tcs.Task;
                     model.SetActive(false);
                 }
                 catch (Exception e)
@@ -332,7 +338,7 @@ public static class CabinetFactory
         return cabinet;
     }
 
-    public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number,
+    public static async Task<Cabinet> fromInformationAsync(CabinetInformation cbinfo, string room, int number,
                                              Vector3 position, Quaternion rotation, Transform parent,
                                             List<AgentScenePosition> agentPlayerPositions,
                                             BackgroundSoundController backgroundSoundController,
@@ -355,7 +361,7 @@ public static class CabinetFactory
 
         CabinetDBAdmin.MoveMameFiles(cbinfo); //and delete sources
 
-        Cabinet cabinet = CabinetFactory.Factory(cbinfo.style, cbinfo.name, cbinfo.pathBase, cbinfo.controlScheme, modelFilePath,
+        Cabinet cabinet = await CabinetFactory.FactoryAsync(cbinfo.style, cbinfo.name, cbinfo.pathBase, cbinfo.controlScheme, modelFilePath,
                                                     number, room, position, rotation, parent,
                                                     cacheGlbModels: cacheGlbModels);
 

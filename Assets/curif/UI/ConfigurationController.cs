@@ -11,6 +11,7 @@ using LC = LibretroControlMapDictionnary;
 using CM = ControlMapPathDictionary;
 using static ConfigInformation;
 using System.Drawing;
+using System.Threading.Tasks;
 
 
 #if UNITY_EDITOR
@@ -895,7 +896,7 @@ public class ConfigurationController : MonoBehaviour
         }
     }
 
-    private void SaveCabinetPositions()
+    private async void SaveCabinetPositions()
     {
         int position;
         string cabinetDBName;
@@ -904,7 +905,7 @@ public class ConfigurationController : MonoBehaviour
         cabinetDBName = cabinetReplaced.GetSelectedOption();
         ConfigManager.WriteConsole($"[SaveCabinetPositions] new replacement in pos:{position} by cabinet: {cabinetDBName} room: {room}");
         // free cabinets dont have a CabinetReplace component but a CabinetController
-        cabinetsController.Replace(position, room, cabinetDBName);
+        await cabinetsController.Replace(position, room, cabinetDBName);
     }
 
     // ---------------------------------------------
@@ -1658,7 +1659,7 @@ public class ConfigurationController : MonoBehaviour
                   scr.PrintCentered(10, "Insert coin to start", true)
                      .PrintCentered(12, GetRoomDescription(), false)
                      .DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
 
@@ -1675,7 +1676,7 @@ public class ConfigurationController : MonoBehaviour
 
                   status = StatusOptions.onBoot;
 
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
 
@@ -1692,7 +1693,7 @@ public class ConfigurationController : MonoBehaviour
                   setupActionMap();
                   status = StatusOptions.onMainMenu;
 
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
 
@@ -1704,7 +1705,7 @@ public class ConfigurationController : MonoBehaviour
                   scr.Clear();
                   mainMenuDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1718,7 +1719,7 @@ public class ConfigurationController : MonoBehaviour
                   if (!mainMenu.IsSelected())
                   {
                       scr.DrawScreen();
-                      return TaskStatus.Continue;
+                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                   }
 
                   ConfigManager.WriteConsole($"[ConfigurationController] option selected: {mainMenu.GetSelectedOption()}");
@@ -1768,7 +1769,7 @@ public class ConfigurationController : MonoBehaviour
 
                   mainMenu.Deselect();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
 
@@ -1780,7 +1781,7 @@ public class ConfigurationController : MonoBehaviour
                   NPCGetStatus();
                   NPCScreenDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1792,19 +1793,19 @@ public class ConfigurationController : MonoBehaviour
                       if (w.name == "exit")
                       {
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                       else if (w.name == "save")
                       {
                           NPCSave();
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                       scr.DrawScreen();
-                      return TaskStatus.Success;
+                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                   }
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -1816,7 +1817,7 @@ public class ConfigurationController : MonoBehaviour
                   audioScreen();
                   audioContainer.Draw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1829,19 +1830,19 @@ public class ConfigurationController : MonoBehaviour
                           if (w.name == "exit")
                           {
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           else if (w.name == "save")
                           {
                               audioSave();
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           w.Action();
                       }
                   }
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -1853,7 +1854,7 @@ public class ConfigurationController : MonoBehaviour
                   PlayerSetWidgetValues();
                   PlayerWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1866,19 +1867,19 @@ public class ConfigurationController : MonoBehaviour
                           if (w.name == "exit")
                           {
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           else if (w.name == "save")
                           {
                               PlayerUpdateConfigurationFromWidgets();
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           w.Action();
                       }
                   }
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -1891,7 +1892,7 @@ public class ConfigurationController : MonoBehaviour
                   LightSetWidgetValues();
                   LightWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1907,19 +1908,19 @@ public class ConfigurationController : MonoBehaviour
                           if (w.name == "exit")
                           {
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           else if (w.name == "save")
                           {
                               LightUpdateConfigurationFromWidgets();
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           w.Action();
                       }
                   }
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -1930,7 +1931,7 @@ public class ConfigurationController : MonoBehaviour
                   SetChangeModeWidgets();
                   changeModeWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1941,12 +1942,12 @@ public class ConfigurationController : MonoBehaviour
                       if (w.name == "exit")
                       {
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                       w.Action();
                   }
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -1957,7 +1958,7 @@ public class ConfigurationController : MonoBehaviour
                   SetResetWidgets();
                   resetWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -1968,17 +1969,17 @@ public class ConfigurationController : MonoBehaviour
                       if (w.name == "exit")
                       {
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                       else if (w.name == "reset")
                       {
                           resetSave();
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                   }
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -1992,7 +1993,7 @@ public class ConfigurationController : MonoBehaviour
                   controllerContainerDraw();
                   scr.DrawScreen();
 
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -2013,7 +2014,7 @@ public class ConfigurationController : MonoBehaviour
                           if (w.name == "exit")
                           {
                               status = StatusOptions.onMainMenu;
-                              return TaskStatus.Success;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                           }
                           else if (w.name == "save")
                           {
@@ -2056,7 +2057,7 @@ public class ConfigurationController : MonoBehaviour
                   controlMapSavedLabel.Draw();
                   scr.DrawScreen();
 
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
 
             .End()
@@ -2069,7 +2070,7 @@ public class ConfigurationController : MonoBehaviour
                   SetCabinetsReplacementWidgets();
                   CabinetsReplacementWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -2080,7 +2081,7 @@ public class ConfigurationController : MonoBehaviour
                       if (w.name == "exit")
                       {
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                       else if (w.name == "save")
                       {
@@ -2091,7 +2092,7 @@ public class ConfigurationController : MonoBehaviour
                   }
                   cabinetReplacementSavedLabel.Draw();
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -2104,7 +2105,7 @@ public class ConfigurationController : MonoBehaviour
                   CabinetConfigurationSetWidgetsValues();
                   CabinetConfigurationWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
               .Do("Process", () =>
               {
@@ -2116,7 +2117,7 @@ public class ConfigurationController : MonoBehaviour
                       if (w.name == "exit")
                       {
                           status = StatusOptions.onMainMenu;
-                          return TaskStatus.Success;
+                          return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                       }
                       else if (w.name == "reset")
                       {
@@ -2137,7 +2138,7 @@ public class ConfigurationController : MonoBehaviour
                   }
                   tlbl.Draw();
                   scr.DrawScreen();
-                  return TaskStatus.Continue;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
             .End()
 
@@ -2150,7 +2151,7 @@ public class ConfigurationController : MonoBehaviour
                   TeleportWindowDraw();
                   scr.DrawScreen();
 
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
                 .Do("Process", () =>
                 {
@@ -2161,7 +2162,7 @@ public class ConfigurationController : MonoBehaviour
                         if (w.name == "exit")
                         {
                             status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
+                            return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                         }
                         else if (w.name == "teleport")
                         {
@@ -2171,13 +2172,13 @@ public class ConfigurationController : MonoBehaviour
                             {
                                 ControllersEnable(false); //free the player
                                 status = StatusOptions.init;
-                                return TaskStatus.Success;
+                                return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                             }
                             teleportResult.Start(5);
                         }
                     }
                     scr.DrawScreen();
-                    return TaskStatus.Continue;
+                    return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                 })
             .End()
 
@@ -2190,7 +2191,7 @@ public class ConfigurationController : MonoBehaviour
                   LocomotionSetWidgetsValues();
                   LocomotionWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
                 .Do("Process", () =>
                 {
@@ -2201,7 +2202,7 @@ public class ConfigurationController : MonoBehaviour
                         if (w.name == "exit")
                         {
                             status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
+                            return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                         }
                         else if (w.name == "teleport")
                         {
@@ -2215,11 +2216,11 @@ public class ConfigurationController : MonoBehaviour
                         {
                             LocomotionUpdateConfigurationFromWidgets();
                             status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
+                            return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                         }
                     }
                     scr.DrawScreen();
-                    return TaskStatus.Continue;
+                    return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                 })
             .End()
 
@@ -2234,10 +2235,10 @@ public class ConfigurationController : MonoBehaviour
                       ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
 
                   if (AGEBasic.IsRunning())
-                      return TaskStatus.Continue;
+                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
 
                   status = StatusOptions.onRunAGEBasic;
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
 
@@ -2248,7 +2249,7 @@ public class ConfigurationController : MonoBehaviour
                   SetAGEBasicWidgets();
                   AGEBasicWindowDraw();
                   scr.DrawScreen();
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
                 .Do("Process", () =>
                 {
@@ -2260,7 +2261,7 @@ public class ConfigurationController : MonoBehaviour
                             AGEBasicWindowDraw();
                             scr.DrawScreen();
                         }
-                        return TaskStatus.Continue;
+                        return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                     }
 
                     changeContainerSelection(AGEBasicContainer);
@@ -2270,14 +2271,14 @@ public class ConfigurationController : MonoBehaviour
                         if (w.name == "exit")
                         {
                             status = StatusOptions.onMainMenu;
-                            return TaskStatus.Success;
+                            return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                         }
                         else if (w.name == "run")
                         {
                             AGEBasicRun();
                             AGEBasicRunTimeout = DateTime.Now.AddSeconds(60 * 30); //if not reach in time abort
                             status = StatusOptions.onRunAGEBasicRunning;
-                            return TaskStatus.Success;
+                            return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                         }
                         else if (w.name == "Compile")
                         {
@@ -2291,14 +2292,14 @@ public class ConfigurationController : MonoBehaviour
                             else
                                 AGEBasicShowLastRuntimeError();
                             scr.DrawScreen();
-                            return TaskStatus.Continue;
+                            return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                         }
                     }
 
                     AGEBasicContainer.GetWidget("CompStatus").Draw();
                     AGEBasicContainer.GetWidget("RuntimeStatus").Draw();
                     scr.DrawScreen();
-                    return TaskStatus.Continue;
+                    return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                 })
             .End()
 
@@ -2315,7 +2316,7 @@ public class ConfigurationController : MonoBehaviour
                   ControllersEnable(false);
 
                   status = StatusOptions.init;
-                  return TaskStatus.Success;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
 

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 public class CabinetReplace : MonoBehaviour
 {
@@ -34,7 +35,7 @@ public class CabinetReplace : MonoBehaviour
         return positions.All(asp => !asp.IsPlayerPresent);
     }
 
-    public GameObject ReplaceWith(CabinetPosition newCabGame)
+    public async Task<GameObject> ReplaceWith(CabinetPosition newCabGame)
     {
         ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] game: {newCabGame}");
 
@@ -76,7 +77,7 @@ public class CabinetReplace : MonoBehaviour
             //note: factory will add this CabinetReplace component (this component) to the new cabinet.
 
             //Vector3 adjustedPosition = transform.position + Vector3.up * 0.5f;
-            cab = CabinetFactory.fromInformation(cbInfo, newCabGame.Room, newCabGame.Position,
+            cab = await CabinetFactory.fromInformationAsync(cbInfo, newCabGame.Room, newCabGame.Position,
                                                          transform.position, transform.rotation,
                                                          transform.parent,
                                                          AgentPlayerPositionComponentsToLoad,

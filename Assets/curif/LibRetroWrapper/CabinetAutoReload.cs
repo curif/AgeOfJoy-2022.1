@@ -9,6 +9,7 @@ using UnityEngine;
 using System.IO;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 public class CabinetAutoReload : MonoBehaviour
 {
@@ -97,8 +98,20 @@ public class CabinetAutoReload : MonoBehaviour
                     File.Delete(testFile); //delete faulty test cabinet
                     continue;
                 }
-                
-                loadedSuccesfully = LoadCabinet();
+
+                Task<bool> loadTask = LoadCabinet();
+                yield return new WaitUntil(() => loadTask.IsCompleted);
+
+                if (loadTask.IsFaulted)
+                {
+                    ConfigManager.WriteConsoleException("[CabinetAutoReload.reload] ERROR loading cabinet", loadTask.Exception);
+                    loadedSuccesfully = false;
+                }
+                else
+                {
+                    loadedSuccesfully = loadTask.Result;
+                }
+
                 if (loadedSuccesfully)
                 {
                     ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} successfully loaded ");
@@ -127,7 +140,7 @@ public class CabinetAutoReload : MonoBehaviour
         return;
     }
 
-    private bool LoadCabinet()
+    private async Task<bool> LoadCabinet()
     {
 
         if (!File.Exists(testDescriptionCabinetFile))
@@ -170,7 +183,7 @@ public class CabinetAutoReload : MonoBehaviour
             ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
             ConfigManager.WriteConsole($"[CabinetAutoReload]AgentPlayerPositions: {string.Join(",", AgentPlayerPositions.Select(x => x.ToString()))}");
 
-            cab = CabinetFactory.fromInformation(cbInfo, "workshop", 0, transform.position,
+            cab = await CabinetFactory.fromInformationAsync(cbInfo, "workshop", 0, transform.position,
                                                          transform.rotation, transform.parent,
                                                          AgentPlayerPositions, backgroundSoundController,
                                                          cacheGlbModels: false);
