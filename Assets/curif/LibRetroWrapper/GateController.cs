@@ -79,6 +79,32 @@ public class GateController : MonoBehaviour
         {
             if (playerIsOnTheGate)
             {
+                bool scenesLoadedOrUnloaded = false;
+                if (ScenesToUnload.Length > 0)
+                {
+                    //ConfigManager.WriteConsole($"[GateController] gate activated, unloading rooms...");
+                    //bool unloadUnusedAssets = false;
+                    foreach (SceneReference controledSceneToUnLoad in ScenesToUnload)
+                    {
+                        if (controledSceneToUnLoad != null &&
+                            !IsSceneToLoad(controledSceneToUnLoad.Name) &&
+                            controledSceneToUnLoad.IsSafeToUse &&
+                            SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
+                        {
+                            AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
+                            while (!asyncLoad.isDone)
+                                yield return null;
+                            // yield return null;
+                            ConfigManager.WriteConsole($"[GateController] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
+                            scenesLoadedOrUnloaded = true;
+                        }
+                    }
+                    // --- AGGRESSIVE CLEANUP ---
+                        
+                    yield return Resources.UnloadUnusedAssets();
+                    System.GC.Collect();
+                    yield return new WaitForSecondsRealtime(0.5f);
+                }
 
                 if (ScenesToLoad.Length > 0)
                 {
@@ -92,45 +118,20 @@ public class GateController : MonoBehaviour
                             AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(controledSceneToLoad.Name, LoadSceneMode.Additive);
                             while (!asyncLoad.isDone)
                                 yield return null;
+                            scenesLoadedOrUnloaded = true;
                             ConfigManager.WriteConsole($"[GateController] LOADED SCENE: {controledSceneToLoad.Name}");
                         }
                     }
+                }
+
+                if (scenesLoadedOrUnloaded)
+                {
+                    // Only call this ONCE at the very end of all operations.
+
                     // time to calculate blend probes teselation
                     // Force Unity to asynchronously regenerate the tetrahedral tesselation for all loaded Scenes
                     // https://docs.unity3d.com/Manual/light-probes-and-scene-loading.html  
                     LightProbes.TetrahedralizeAsync();
-                    //yield return new WaitForSeconds(0.1f);
-                    //LockGate(false); //to close the door ASAP.
-                }
-                if (ScenesToUnload.Length > 0)
-                {
-                    //ConfigManager.WriteConsole($"[GateController] gate activated, unloading rooms...");
-                    bool unloadUnusedAssets = false;
-                    foreach (SceneReference controledSceneToUnLoad in ScenesToUnload)
-                    {
-                        if (controledSceneToUnLoad != null &&
-                            !IsSceneToLoad(controledSceneToUnLoad.Name) &&
-                            controledSceneToUnLoad.IsSafeToUse &&
-                            SceneManager.GetSceneByName(controledSceneToUnLoad.Name).isLoaded)
-                        {
-                            //LockGate(true); //to close the door ASAP.
-
-                            AsyncOperation asyncLoad = SceneManager.UnloadSceneAsync(controledSceneToUnLoad.Name);
-                            while (!asyncLoad.isDone)
-                                yield return null;
-                            // yield return null;
-                            ConfigManager.WriteConsole($"[GateController] UNLOADED SCENE: {controledSceneToUnLoad.Name} ******.");
-                            unloadUnusedAssets = true;
-                            LightProbes.TetrahedralizeAsync();
-                        }
-                    }
-
-                    if (unloadUnusedAssets)
-                    {
-                        AsyncOperation resourceUnloadOp = Resources.UnloadUnusedAssets();
-                        while (!resourceUnloadOp.isDone)
-                            yield return null;
-                    }
                 }
             }
 
