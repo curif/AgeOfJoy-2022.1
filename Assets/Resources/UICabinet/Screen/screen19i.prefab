@@ -270,6 +270,7 @@ MonoBehaviour:
   canChangeNPC: 1
   canChangeControllers: 1
   canChangeCabinets: 1
+  presentationTexture: {fileID: 2800000, guid: a37564c39d3e398429b6c6e5c48043ea, type: 3}
   canTeleport: 1
 --- !u!114 &2304435896953564567
 MonoBehaviour:
@@ -302,12 +303,20 @@ MonoBehaviour:
   GameRegistry: {fileID: 0}
   CabinetsController: {fileID: 0}
   Teleportation: {fileID: 0}
+  DownloadManager: {fileID: 0}
   SceneDatabase: {fileID: 0}
   PostersController: {fileID: 0}
   audioMixer: {fileID: 0}
+  EventManager: {fileID: 0}
   Player: {fileID: 0}
   PlayerOrigin: {fileID: 0}
   PlayerControllerGameObject: {fileID: 0}
+  OnProgramStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  OnProgramEnded:
+    m_PersistentCalls:
+      m_Calls: []
   Status: 0
   nameToExecute: 
   path: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\config
