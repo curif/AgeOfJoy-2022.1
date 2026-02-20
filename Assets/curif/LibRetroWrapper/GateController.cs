@@ -103,6 +103,15 @@ public class GateController : MonoBehaviour
                         
                     yield return Resources.UnloadUnusedAssets();
                     System.GC.Collect();
+                    
+                    // LOG THE MEMORY TO ADB
+                    long mem = System.GC.GetTotalMemory(false) / 1024 / 1024;
+                    ConfigManager.WriteConsole($"[Memory Check] RAM after unload: {mem}MB");
+
+                    if (mem > 2500)
+                    {
+                        ConfigManager.WriteConsole("****WARNING***** Memory still too high! New load will likely crash.");
+                    }
                     yield return new WaitForSecondsRealtime(0.5f);
                 }
 
