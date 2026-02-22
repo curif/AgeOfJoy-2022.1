@@ -14,7 +14,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Networking;  // for UnityWebRequest & DownloadHandlerTexture
-using System.Collections; 
+using System.Collections;
 
 public static class CabinetTextureCache
 {
@@ -27,12 +27,16 @@ public static class CabinetTextureCache
     //convert textures > X mb
     private const float ORIGINAL_SIZE_THRESHOLD = 5f * 1024 * 1024;
     public const float CACHE_SIZE = 1024;
+    //public const float CACHE_SIZE = 50; //forced for testing.
     public const float CACHE_SIZE_Q3 = 1536f;
+    public const bool use_original_uncompressed = false;
 
     public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete)
     {
         if (IsTextureCached(path))
         {
+            ConfigManager.WriteConsole($"[LoadAndCacheAsync] from CACHE: {path}");
+
             onComplete?.Invoke(GetCachedTexture(path));
             yield break;
         }
@@ -47,8 +51,27 @@ public static class CabinetTextureCache
             ConfigManager.WriteConsole($"[LoadAndCacheAsync] created cache textures size: {cacheSize}");
         }
 
-        //load file
-        using (var www = UnityWebRequestTexture.GetTexture("file://" + path, /*nonReadable=*/ true))
+        if (TextureDiskCache.HasValidCache(path))
+        {
+            Texture2D cachedTex = TextureDiskCache.LoadFromDisk(path);
+
+            if (cachedTex != null)
+            {
+                cachedTex.name = "CACHED-COMPRESSED-" + path;
+
+                // Add to LRU Cache
+                float sizeMB = CalculateActualSizeBytes(cachedTex) / (1024f * 1024f);
+                CachedTextures.Add(path, cachedTex, sizeMB);
+
+                ConfigManager.WriteConsole($"[LoadAndCacheAsync] DISK CACHE HIT: {cachedTex.name} ({sizeMB:F2}MB)");
+                onComplete?.Invoke(cachedTex);
+
+                yield break;
+            }
+        }
+
+        //load original file
+        using (var www = UnityWebRequestTexture.GetTexture("file://" + path, /*nonReadable=*/ false))
         {
             yield return www.SendWebRequest();
 
@@ -59,38 +82,101 @@ public static class CabinetTextureCache
                 yield break;
             }
 
+
             // Grab the decoded RGBA32 texture
             Texture2D texTmp = DownloadHandlerTexture.GetContent(www);
-            texTmp.name = path;
             texTmp.filterMode = FilterMode.Trilinear;
             texTmp.mipMapBias = -0.3f;
+            float originalSizeInBytes = CalculateActualSizeBytes(texTmp);
+            texTmp.name = "ORIGINAL-" + path;
 
-            //size check
-            float originalSizeInBytes = CalculateManualSizeBytes(texTmp);
-            //bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
-
-            /*
-             * The conversion to RGB565 wasn't possible for
-             * Meta Quest. Even when the docs
-             * says it suport RGB565 the shader conversion didn't 
-             * work as expected and the GPU was 
-             * blocked
-             */
-            bool useOriginal = true;
-            if (useOriginal)
+            if (use_original_uncompressed)
             {
-                ConfigManager.WriteConsole($"[LoadAndCacheAsync] useOriginal by size {originalSizeInBytes} or player conf {path}");
+                // 1. DIMENSION CHECK (CRITICAL)
+                // If a user provides an 8K texture, resize it immediately or your app will die.
+                if (texTmp.width > 2048 || texTmp.height > 2048)
+                {
+                    // You should implement a simple downscale here if needed
+                    ConfigManager.WriteConsoleWarning($"[LoadAndCacheAsync] {path} is very large ({texTmp.width}x{texTmp.height}). Memory risk!");
+                }
 
-                texTmp.name = "ORIGINALBYSIZE-" + path;
-                Texture2D cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
+                //size check
+                //bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+
+                /*
+                 * The conversion to RGB565 wasn't possible for
+                 * Meta Quest. Even when the docs
+                 * says it suport RGB565 the shader conversion didn't 
+                 * work as expected and the GPU was 
+                 * blocked
+                 */
+                bool useOriginal = true;
+                if (useOriginal)
+                {
+                    ConfigManager.WriteConsole($"[LoadAndCacheAsync] useOriginal by size {originalSizeInBytes} or player conf {path}");
+
+                    texTmp.name = "ORIGINALBYSIZE-" + path;
+                    Texture2D cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
+                    if (cached != texTmp)
+                    {
+                        UnityEngine.Object.Destroy(texTmp);
+                        texTmp = cached;
+                    }
+                    onComplete?.Invoke(texTmp);
+                    yield break;
+                }
+            }
+            else
+            {
+                // DownloadHandlerTexture usually returns RGBA32 or RGB24
+                TextureFormat format = texTmp.format;
+
+                if (format == TextureFormat.RGBA32 ||
+                    format == TextureFormat.RGB24 ||
+                    format == TextureFormat.ARGB32 ||
+                    format == TextureFormat.BGRA32) // Added BGRA32 just in case
+                {
+                    // These are all "Raw" formats and are safe to compress
+                    if (texTmp.width % 4 == 0 && texTmp.height % 4 == 0)
+                    {
+                        texTmp.Compress(false);
+                        texTmp.name = "COMPRESSED-" + path;
+                        //ConfigManager.WriteConsole($"[LoadAndCacheAsync] compressed {texTmp.name} original format: {format} to ETC2.");
+                        
+                        //SAVE CACHE immediately
+                        TextureDiskCache.SaveToDisk(path, texTmp);
+                    }
+                }
+                else
+                {
+                    // The texture is already compressed or in a specialized format
+                    texTmp.name = "ALREADY-COMPRESSED-" + path;
+
+                    //ConfigManager.WriteConsole($"[LoadAndCacheAsync] {texTmp.name} Skipping compression. Format is already {format}");
+                }
+
+                // 3. FREE SYSTEM RAM
+                // This uploads to GPU and DELETES the CPU-side copy.
+                // Once you do this, you can't use GetPixels() anymore, but the GPU memory is halved.
+                texTmp.Apply(false, true);
+                // From this point on, texTmp is NO LONGER READABLE by the CPU,
+
+                // 4. CACHE THE COMPRESSED VERSION
+                float compressedSizeMB = CalculateActualSizeBytes(texTmp) / (1024f * 1024f);
+                ConfigManager.WriteConsole($"[LoadAndCacheAsync] {texTmp.name} Compressed from {originalSizeInBytes / (1024f * 1024f):F2}MB to {compressedSizeMB:F2}MB");
+                
+                Texture2D cached = CachedTextures.Add(path, texTmp, compressedSizeMB);
                 if (cached != texTmp)
                 {
                     UnityEngine.Object.Destroy(texTmp);
                     texTmp = cached;
                 }
+
                 onComplete?.Invoke(texTmp);
                 yield break;
             }
+
+            // this codeblock is the failed attempt to compress on GPU
 
             yield return null;
 
@@ -431,22 +517,42 @@ public static class CabinetTextureCache
     // Helper for fallback (less accurate)
     public static float CalculateManualSizeBytes(Texture2D tex)
     {
-        // This is a rough estimate and doesn't handle compressed formats well
+        if (tex == null) return 0;
+
+        float multiplier = 1.0f;
+        // Account for Mipmaps (Base + 1/4 + 1/16... ≈ 1.33)
+        if (tex.mipmapCount > 1) multiplier = 1.33f;
+
         switch (tex.format)
         {
-            case TextureFormat.RGB24: return tex.width * tex.height * 3;
-            case TextureFormat.RGBA32: return tex.width * tex.height * 4;
-            case TextureFormat.ARGB32: return tex.width * tex.height * 4;
-            case TextureFormat.RGB565: return tex.width * tex.height * 2;
-            case TextureFormat.RGBA4444: return tex.width * tex.height * 2;
-            // Add other formats as needed, but this gets complex for compressed ones
+            // Uncompressed
+            case TextureFormat.RGB24: return tex.width * tex.height * 3 * multiplier;
+            case TextureFormat.RGBA32:
+            case TextureFormat.ARGB32: return tex.width * tex.height * 4 * multiplier;
+            case TextureFormat.RGB565: return tex.width * tex.height * 2 * multiplier;
+
+            // Android Compressed (What tex.Compress() produces)
+            case TextureFormat.ETC2_RGB: return tex.width * tex.height * 0.5f * multiplier;
+            case TextureFormat.ETC2_RGBA8: return tex.width * tex.height * 1.0f * multiplier;
+
+            // Quest 3 native (If you use these in the future)
+            case TextureFormat.ASTC_4x4: return tex.width * tex.height * 1.0f * multiplier;
+            case TextureFormat.ASTC_8x8: return tex.width * tex.height * 0.25f * multiplier;
+
             default:
-                //Debug.LogWarning($"CalculateManualSizeBytes: Unhandled format {tex.format}. Returning rough estimate.");
-                // Very rough guess for others (often 4 bytes uncompressed)
-                return tex.width * tex.height * 4;
+                // Fallback for raw formats
+                return tex.width * tex.height * 4 * multiplier;
         }
     }
+    public static float CalculateActualSizeBytes(UnityEngine.Object obj)
+    {
+        if (obj == null) return 0;
 
+        // This returns the actual memory footprint in bytes
+        // It is much more accurate than manual width*height math
+        long bytes = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(obj);
+        return (float)bytes;
+    }
     public static bool IsAlphaUsed(Color32[] pixels, byte alphaThreshold = 255)
     {
 

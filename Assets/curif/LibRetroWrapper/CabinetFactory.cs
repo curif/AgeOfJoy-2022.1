@@ -52,7 +52,7 @@ public static class CabinetFactory
         if (!String.IsNullOrEmpty(modelFilePath))
         {
             string cacheKey = BuildKey(modelFilePath);
-            ConfigManager.WriteConsole($"[CabinetFactory] cache key:{cacheKey}");
+            ConfigManager.WriteConsole($"[CabinetFactory] cab:{name} BuildKey cache key:{cacheKey}");
 
             if (cacheKey != null && CabinetStyles.ContainsKey(cacheKey))
             {

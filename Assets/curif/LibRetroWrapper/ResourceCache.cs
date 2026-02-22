@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,6 +10,16 @@ public interface IResourceCache
 
 public class ResourceCacheManager
 {
+    private static int mainThreadId;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Initialize()
+    {
+        mainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+    }
+
+    public static bool IsMainThread => System.Threading.Thread.CurrentThread.ManagedThreadId == mainThreadId;
+
     public static List<IResourceCache> caches = new List<IResourceCache>();
     public static ResourceCache<K, V> Create<K, V>(string name, float maxSizeInMB = 512f) // Default to 512MB
     {
@@ -83,67 +94,82 @@ public class ResourceCache<K, V> : IResourceCache
             return currentSizeInMB + sizeInMB > maxSizeInMB && lruList.Count > 0;
         }
     }
-
     public V Add(K key, V value, float sizeInMB, bool replaceIfExists = false)
     {
         if (key == null || value == null || sizeInMB < 0f) return value;
 
         lock (locker)
         {
-            if (cache.ContainsKey(key))
+            if (cache.TryGetValue(key, out V existingValue))
             {
                 if (replaceIfExists)
                 {
-                    DestroyIfUnityObject(cache[key]);
+                    // 1. Clean up the old Unity Object immediately
+                    DestroyIfUnityObject(existingValue);
 
                     float oldSize = sizeMap[key];
                     currentSizeInMB -= oldSize;
 
-                    lruList.Remove(key);
-
+                    // 2. Update with new data
                     currentSizeInMB += sizeInMB;
-                    lruList.AddFirst(key);
                     cache[key] = value;
                     sizeMap[key] = sizeInMB;
 
-                    if (oldSize > sizeInMB)
+                    lruList.Remove(key);
+                    lruList.AddFirst(key);
+
+                    // 3. CORRECT LOGIC: If we grew, we might need to shrink
+                    if (sizeInMB > oldSize)
                     {
-                        makeSpaceFor(oldSize - sizeInMB);
+                        // Pass 0 because currentSizeInMB is already updated
+                        makeSpaceFor(0);
                     }
                 }
+                return cache[key];
             }
             else
             {
-                /* unnecesary message because this is usual*/
-                // if (CacheExceeded(sizeInMB))
-                //  ConfigManager.WriteConsole($"[ResourceCache] {this.Name} Exceeded adding key: {key} \n size: {sizeInMB}MB \n Actual: {currentSizeInMB}\n Max: {maxSizeInMB}MB");
-
-                Status();
-
+                // NEW ITEM
+                // 1. Make space BEFORE adding to prevent a "Peak" that hits 5GB
                 makeSpaceFor(sizeInMB);
 
+                // 2. Add new item
                 cache.Add(key, value);
                 sizeMap.Add(key, sizeInMB);
                 lruList.AddFirst(key);
                 currentSizeInMB += sizeInMB;
+
+                // 3. Optimized Logging: Only log if actually adding 
+                // (Move Status() calls here or make them optional)
+                return value;
             }
         }
-
-        return cache[key];
     }
 
     private void makeSpaceFor(float sizeInMB)
     {
+        bool evictedAny = false;
+
+        // 1. Loop and Evict
         while (CacheExceeded(sizeInMB))
         {
             K lruKey = lruList.Last.Value;
             lruList.RemoveLast();
-            DestroyIfUnityObject(cache[lruKey]);
+
+            V value = cache[lruKey];
+            DestroyIfUnityObject(value);
+
             currentSizeInMB -= sizeMap[lruKey];
-            ConfigManager.WriteConsole($"[ResourceCache] {this.Name} \n removed {lruKey} of size: {sizeMap[lruKey]}MB");
             cache.Remove(lruKey);
             sizeMap.Remove(lruKey);
+            evictedAny = true;
+        }
 
+        // 2. Performance Tip: Only log once, not inside the while loop
+        if (evictedAny)
+        {
+            // Log once at the end to prevent string allocation spam
+            ConfigManager.WriteConsole($"[Cache] Trimmed cache for {sizeInMB}MB. New Total: {currentSizeInMB}MB");
         }
     }
 
@@ -169,7 +195,7 @@ public class ResourceCache<K, V> : IResourceCache
         }
     }
 
-
+    /*
     public void Clear()
     {
         foreach (var pair in cache)
@@ -181,7 +207,50 @@ public class ResourceCache<K, V> : IResourceCache
         lruList.Clear();
         currentSizeInMB = 0f;
     }
+    */
+    public void Clear()
+    {
+        lock (locker)
+        {
+            // 1. Loop through and tell Unity to kill the GPU memory
+            foreach (var pair in cache)
+            {
+                DestroyIfUnityObject(pair.Value);
+            }
 
+            // 2. Clear the collections (Remove the "Managed" references)
+            cache.Clear();
+            sizeMap.Clear();
+            lruList.Clear();
+            currentSizeInMB = 0f;
+        }
+
+        // 3. ONE call to the C# Garbage Collector
+        System.GC.Collect();
+
+        // 4. ONE call to Unity's Native Asset Unloader
+        // This is the most important step for freeing GPU RAM on Quest 3
+        Resources.UnloadUnusedAssets();
+
+        ConfigManager.WriteConsole("[Cache] Full cleanup completed.");
+    }
+    public static IEnumerator CleanupRoutine()
+    {
+        ConfigManager.WriteConsole("[CleanupRoutine] Starting Heavy Memory Cleanup...");
+
+        // 1. Clear managed references
+        System.GC.Collect();
+        yield return null; // Wait 1 frame
+
+        // 2. The Big One: Tell the Quest 3 to actually reclaim the GPU RAM
+        AsyncOperation unloadOp = Resources.UnloadUnusedAssets();
+        while (!unloadOp.isDone)
+        {
+            yield return null;
+        }
+
+        ConfigManager.WriteConsole("[CleanupRoutine] Memory reclaimed successfully.");
+    }
     public bool ContainsKey(K key)
     {
         if (key == null) return false;
@@ -194,12 +263,32 @@ public class ResourceCache<K, V> : IResourceCache
     {
         if (value is UnityEngine.Object unityObj && unityObj != null)
         {
+            if (ResourceCacheManager.IsMainThread)
+            {
+                UnityEngine.Object.DestroyImmediate(unityObj, true);
+            }
+            else
+            {
+                // If we are on a background thread, we CANNOT use DestroyImmediate.
+                // We use Destroy, which Unity internally queues for the next main-thread frame.
+                UnityEngine.Object.Destroy(unityObj);
+
+                // Optional: Log a warning because Destroy is slower than DestroyImmediate
+                // and might cause a tiny memory peak.
+                // ConfigManager.WriteConsoleWarning("[Cache] Background thread destruction detected.");
+            }
+        }
+    }
+
+    /*
+    private void DestroyIfUnityObject(V value)
+    {
+        if (value is UnityEngine.Object unityObj && unityObj != null)
+        {
             if (!unityObj.Equals(null))
             {
-                /*
-                DestroyImmediate is dangerous in play mode and recommended only in Editor scripts.
-                On Meta Quest, you want the safe version(Destroy), which schedules destruction properly for next frame.
-                */
+                // DestroyImmediate is dangerous in play mode and recommended only in Editor scripts.
+                // On Meta Quest, you want the safe version(Destroy), which schedules destruction properly for next frame.
                 ConfigManager.WriteConsole($"[ResourceCache] destroying {unityObj}");
 
                 //UnityEngine.Object.DestroyImmediate(unityObj);
@@ -207,6 +296,7 @@ public class ResourceCache<K, V> : IResourceCache
             }
         }
     }
+    */
     public void FreeHalfResources()
     {
         lock (locker)
