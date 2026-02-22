@@ -62,6 +62,8 @@ public class CabinetsController : MonoBehaviour
         //true: the OutOfOrder cab is active, else is the replacement
         public bool IsOutOfOrderActive = true;
 
+        public bool IsLoading = false;
+
         private bool isFaulty = false;
 
         public bool IsFaulty { get => isFaulty; }
@@ -480,7 +482,7 @@ public class CabinetsController : MonoBehaviour
 
     async void checkAndLoadCabinet(CabinetControllerInformation cci)
     {
-        if (!cci.IsOutOfOrderActive || cci.IsFaulty)
+        if (!cci.IsOutOfOrderActive || cci.IsFaulty || cci.IsLoading)
             return;
 
         //check conditions to load the cabinet.
@@ -505,82 +507,90 @@ public class CabinetsController : MonoBehaviour
         if (!cc.PlayerIsStatic())
             return;
 
-        //never loaded. Load from disk/cache
-        if (cc.game.CabInfo == null)
+        cci.IsLoading = true;
+        try
         {
-            try
+            //never loaded. Load from disk/cache
+            if (cc.game.CabInfo == null)
             {
-                cc.game.CabInfo = CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cc.game.CabinetDBName);
-                if (cc.game.CabInfo == null)
+                try
                 {
+                    cc.game.CabInfo = CabinetInformation.fromYaml(ConfigManager.CabinetsDB + "/" + cc.game.CabinetDBName);
+                    if (cc.game.CabInfo == null)
+                    {
+                        cci.SetAsFaultyCabinet(); //prevent to load it next time.
+                        ConfigManager.WriteConsoleError($"[CabinetsController.load] loading cabinet from description fails {cc.game}");
+                        return;
+                    }
+                }
+                catch (Exception e) 
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetsController.load] loading cabinet fails {cc.game}", e);
                     cci.SetAsFaultyCabinet(); //prevent to load it next time.
-                    ConfigManager.WriteConsoleError($"[CabinetsController.load] loading cabinet from description fails {cc.game}");
                     return;
                 }
             }
-            catch (Exception e) 
+
+            ConfigManager.WriteConsole($"[CabinetsController] Loading cabinet  {cc.game.CabInfo.name} ******");
+
+            Cabinet cab;
+            try
             {
-                ConfigManager.WriteConsoleException($"[CabinetsController.load] loading cabinet fails {cc.game}", e);
+                //cabinet inception
+                ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {cc.game}");
+                cab = await CabinetFactory.fromInformationAsync(cc.game.CabInfo, cc.game.Room, cc.game.Position,
+                                                     cci.GameObjectOutOfOrder.transform.position,
+                                                     cci.GameObjectOutOfOrder.transform.rotation,
+                                                     cci.GameObjectOutOfOrder.transform.parent,
+                                                     cc.AgentPlayerPositionComponents,
+                                                     cc.backgroundSoundController);
+            }
+            catch (Exception ex)
+            {
                 cci.SetAsFaultyCabinet(); //prevent to load it next time.
+                ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {cc.game.CabInfo.name}", ex);
                 return;
             }
-        }
-
-        ConfigManager.WriteConsole($"[CabinetsController] Loading cabinet  {cc.game.CabInfo.name} ******");
-
-        Cabinet cab;
-        try
-        {
-            //cabinet inception
-            ConfigManager.WriteConsole($"[CabinetController] Deploy cabinet {cc.game}");
-            cab = await CabinetFactory.fromInformationAsync(cc.game.CabInfo, cc.game.Room, cc.game.Position,
-                                                 cci.GameObjectOutOfOrder.transform.position,
-                                                 cci.GameObjectOutOfOrder.transform.rotation,
-                                                 cci.GameObjectOutOfOrder.transform.parent,
-                                                 cc.AgentPlayerPositionComponents,
-                                                 cc.backgroundSoundController);
-        }
-        catch (Exception ex)
-        {
-            cci.SetAsFaultyCabinet(); //prevent to load it next time.
-            ConfigManager.WriteConsoleException($"[CabinetController] loading cabinet from description {cc.game.CabInfo.name}", ex);
-            return;
-        }
-        if (cab == null)
-        {
-            ConfigManager.WriteConsoleError($"[CabinetController] loading cabinet from description {cc.game.CabInfo.name}");
-            return;
-        }
-
-        cci.GameObjectReplacement = cab.gameObject;
-
-        if (cc.game.CabInfo.Parts != null)
-        {
-            ConfigManager.WriteConsole($"[CabinetController] {cc.game.CabInfo.name} texture parts coroutine");
-            foreach (CabinetInformation.Part part in cc.game.CabInfo.Parts)
+            if (cab == null)
             {
-                StartCoroutine(skinCabinetPartCoroutine(cab, cc.game.CabInfo, part));
+                ConfigManager.WriteConsoleError($"[CabinetController] loading cabinet from description {cc.game.CabInfo.name}");
+                return;
             }
+
+            cci.GameObjectReplacement = cab.gameObject;
+
+            if (cc.game.CabInfo.Parts != null)
+            {
+                ConfigManager.WriteConsole($"[CabinetController] {cc.game.CabInfo.name} texture parts coroutine");
+                foreach (CabinetInformation.Part part in cc.game.CabInfo.Parts)
+                {
+                    StartCoroutine(skinCabinetPartCoroutine(cab, cc.game.CabInfo, part));
+                }
+            }
+
+            CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
+            cabReplaceComp.AgentPlayerPositionComponents = cc.AgentPlayerPositionComponents;
+            cabReplaceComp.AgentPlayerPositionComponentsToUnload = cc.AgentPlayerPositionComponentsToUnload;
+            cabReplaceComp.AgentPlayerPositionComponentsToLoad = cc.AgentPlayerPositionComponentsToLoad;
+            cabReplaceComp.outOfOrderCabinet = cci.GameObjectOutOfOrder;
+            cabReplaceComp.backgroundSoundController = backgroundSoundController;
+            cabReplaceComp.cabinet = cab;
+            cabReplaceComp.game = cc.game;
+            cci.CabinetReplace = cabReplaceComp;
+
+            //this didn't work:
+            //Coroutines are also stopped when the MonoBehaviour is destroyed or if the GameObject the 
+            // MonoBehaviour is attached to is disabled. Coroutines are not stopped when a MonoBehaviour 
+            // is disabled.
+
+            //activate the new cabinet
+            cci.ActivateReplacement();
+            ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {cc.game.CabInfo.name} ******");
         }
-
-        CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-        cabReplaceComp.AgentPlayerPositionComponents = cc.AgentPlayerPositionComponents;
-        cabReplaceComp.AgentPlayerPositionComponentsToUnload = cc.AgentPlayerPositionComponentsToUnload;
-        cabReplaceComp.AgentPlayerPositionComponentsToLoad = cc.AgentPlayerPositionComponentsToLoad;
-        cabReplaceComp.outOfOrderCabinet = cci.GameObjectOutOfOrder;
-        cabReplaceComp.backgroundSoundController = backgroundSoundController;
-        cabReplaceComp.cabinet = cab;
-        cabReplaceComp.game = cc.game;
-        cci.CabinetReplace = cabReplaceComp;
-
-        //this didn't work:
-        //Coroutines are also stopped when the MonoBehaviour is destroyed or if the GameObject the 
-        // MonoBehaviour is attached to is disabled. Coroutines are not stopped when a MonoBehaviour 
-        // is disabled.
-
-        //activate the new cabinet
-        cci.ActivateReplacement();
-        ConfigManager.WriteConsole($"[CabinetController] Cabinet deployed  {cc.game.CabInfo.name} ******");
+        finally
+        {
+            cci.IsLoading = false;
+        }
 
     }
 
