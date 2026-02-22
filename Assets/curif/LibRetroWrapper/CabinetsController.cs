@@ -637,15 +637,15 @@ public class CabinetsController : MonoBehaviour
 
     IEnumerator run()
     {
+        WaitForSeconds wait = new WaitForSeconds(TimeToWaitBetweenChecks);
         while (true)
         {
             foreach (CabinetControllerInformation cabCtrlInfo in CabinetsCtrlInfo)
             {
                 checkAndLoadCabinet(cabCtrlInfo);
                 checkAndUnloadCabinet(cabCtrlInfo);
-                yield return new WaitForSeconds(0.01f);
             }
-            yield return new WaitForSeconds(TimeToWaitBetweenChecks);
+            yield return wait;
         }
     }
 }
