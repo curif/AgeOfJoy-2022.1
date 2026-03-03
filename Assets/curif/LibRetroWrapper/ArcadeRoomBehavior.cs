@@ -453,7 +453,20 @@ public class ArcadeRoomBehavior : MonoBehaviour
                 animator.SetBool(animatorTriggers[(int)destination.Type], true);
 
             // geometrizer: Set the "Random" parameter to a random float value between 0 and 1
-            animator.SetFloat("Random", UnityEngine.Random.Range(0f, 1f));
+            bool hasRandomParam = false;
+            foreach (AnimatorControllerParameter param in animator.parameters)
+            {
+                if (param.name == "Random")
+                {
+                    hasRandomParam = true;
+                    break;
+                }
+            }
+            
+            if (hasRandomParam)
+            {
+                animator.SetFloat("Random", UnityEngine.Random.Range(0f, 1f));
+            }
 
             // geometrizer: Output the current value of the "Random" parameter to the console
             //UnityEngine.Debug.Log("Random value: " + animator.GetFloat("Random"));
