@@ -59,6 +59,50 @@ public class GateController : MonoBehaviour
     // Cache for SliderDoorController components to avoid GetComponent calls in the loop
     private Dictionary<GameObject, SliderDoorController> doorControllerCache;
 
+    // Cache for scene loaded status to avoid redundant SceneManager.GetSceneByName calls
+    private Dictionary<string, bool> sceneLoadedStateCache;
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+        SceneManager.sceneUnloaded += OnSceneUnloaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneUnloaded -= OnSceneUnloaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (sceneLoadedStateCache != null && sceneLoadedStateCache.ContainsKey(scene.name))
+        {
+            sceneLoadedStateCache[scene.name] = true;
+            RefreshBlockersForScene(scene.name);
+        }
+    }
+
+    private void OnSceneUnloaded(Scene scene)
+    {
+        if (sceneLoadedStateCache != null && sceneLoadedStateCache.ContainsKey(scene.name))
+        {
+            sceneLoadedStateCache[scene.name] = false;
+            RefreshBlockersForScene(scene.name);
+        }
+    }
+
+    private void RefreshBlockersForScene(string sceneName)
+    {
+        foreach (var gate in SceneBlockers)
+        {
+            if (gate.SceneRef != null && gate.SceneRef.Name == sceneName)
+            {
+                UpdateBlockers(gate, !sceneLoadedStateCache[sceneName]);
+            }
+        }
+    }
+
     void Start()
     {
         player = GameObject.Find("OVRPlayerControllerGalery");
@@ -71,10 +115,17 @@ public class GateController : MonoBehaviour
 
         // Initialize and populate the door controller cache
         doorControllerCache = new Dictionary<GameObject, SliderDoorController>();
+        sceneLoadedStateCache = new Dictionary<string, bool>();
+
         if (SceneBlockers != null)
         {
             foreach (SceneGate scn in SceneBlockers)
             {
+                if (scn.SceneRef != null)
+                {
+                    sceneLoadedStateCache[scn.SceneRef.Name] = SceneManager.GetSceneByName(scn.SceneRef.Name).isLoaded;
+                }
+
                 if (scn.Blockers != null)
                 {
                     foreach (GameObject blocker in scn.Blockers)
@@ -87,6 +138,9 @@ public class GateController : MonoBehaviour
                 }
             }
         }
+
+        // Initial sync of all blockers
+        LockGate();
 
         StartCoroutine(gateControlLoop());
     }
@@ -169,8 +223,6 @@ public class GateController : MonoBehaviour
                 }
             }
 
-            LockGate();
-
             yield return new WaitForSeconds(IdleTimeCheck);
         }
     }
@@ -197,16 +249,12 @@ public class GateController : MonoBehaviour
     {
         if (SceneBlockers.Length > 0)
         {
-            int idx;
-            for (idx = 0; idx < SceneBlockers.Length; idx++)
+            foreach (var gate in SceneBlockers)
             {
-                SceneReference controledSceneBlocker = SceneBlockers[idx].SceneRef;
-                if (controledSceneBlocker != null)
+                if (gate.SceneRef != null)
                 {
-                    if (blocked == null)
-                        UpdateBlockers(SceneBlockers[idx], !SceneManager.GetSceneByName(controledSceneBlocker.Name).isLoaded);
-                    else
-                        UpdateBlockers(SceneBlockers[idx], (bool)blocked);
+                    bool isBlocked = (blocked != null) ? (bool)blocked : !sceneLoadedStateCache[gate.SceneRef.Name];
+                    UpdateBlockers(gate, isBlocked);
                 }
             }
         }
