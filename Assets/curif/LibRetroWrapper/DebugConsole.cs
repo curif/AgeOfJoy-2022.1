@@ -12,7 +12,7 @@ public class DebugConsole : MonoBehaviour
     private static List<string> debugKeywords = new List<string>();
     private Text console;
     public GameObject canvas;
-    void Start()
+    void Awake()
     {
         canvas.SetActive(IsDebugEnabled());
         console = GetComponent<Text>();
