@@ -59,30 +59,33 @@ public class CabinetController : MonoBehaviour
 
     void Start()
     {
-        AgentPlayerPositionComponents = AgentPlayerPositions
+        AgentPlayerPositionComponents = AgentPlayerPositions != null ? AgentPlayerPositions
+            .Where(playerPos => playerPos != null)
             .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
             .Where(asp => asp != null)
-            .ToList();
+            .ToList() : new List<AgentScenePosition>();
 
-        if (AgentPlayerPositionsToLoad == null || !AgentPlayerPositionsToLoad.Any())
+        if (AgentPlayerPositionsToLoad == null || !AgentPlayerPositionsToLoad.Any(p => p != null))
         {
             AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponents;
         }
         else
         {
             AgentPlayerPositionComponentsToLoad = AgentPlayerPositionsToLoad
+                .Where(playerPos => playerPos != null)
                 .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
                 .Where(asp => asp != null)
                 .ToList();
         }
 
-        if (AgentPlayerPositionsToUnload == null || !AgentPlayerPositionsToUnload.Any())
+        if (AgentPlayerPositionsToUnload == null || !AgentPlayerPositionsToUnload.Any(p => p != null))
         {
             AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToLoad;
         }
         else
         {
             AgentPlayerPositionComponentsToUnload = AgentPlayerPositionsToUnload
+                .Where(playerPos => playerPos != null)
                 .Select(playerPos => playerPos.GetComponent<AgentScenePosition>())
                 .Where(asp => asp != null)
                 .ToList();

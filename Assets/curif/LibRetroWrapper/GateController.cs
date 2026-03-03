@@ -151,6 +151,7 @@ public class GateController : MonoBehaviour
     }
     IEnumerator gateControlLoop()
     {
+        WaitForSeconds idleWait = new WaitForSeconds(IdleTimeCheck);
         while (true)
         {
             if (playerIsOnTheGate)
@@ -223,7 +224,7 @@ public class GateController : MonoBehaviour
                 }
             }
 
-            yield return new WaitForSeconds(IdleTimeCheck);
+            yield return idleWait;
         }
     }
 
