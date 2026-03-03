@@ -155,108 +155,109 @@ public class CabinetsController : MonoBehaviour
 
         foreach (CabinetControllerInformation cabInfo in CabinetsCtrlInfo)
         {
-            cabInfo.CabinetController.game = new();
-            cabInfo.CabinetController.game.Position = idx;
-
-            cabInfo.CabinetController.backgroundSoundController = backgroundSoundController;
-
-            //MaxAllowedSpace to identify NPC animation
-            AgentScenePosition pos = cabInfo.CabinetController.AgentScenePosition?.GetComponent<AgentScenePosition>();
-            if (pos != null)
-                pos.MaxAllowedSpace = cabInfo.CabinetController.Space.MaxAllowedSpace;
-
-            GameObject agentPlayerTeleportAnchor = cabInfo.CabinetController.AgentPlayerTeleportAnchor;
-            if (agentPlayerTeleportAnchor == null)
-                continue;
-
-            // Assign the cabinet number to the teleport area
-            MeshRenderer renderer = agentPlayerTeleportAnchor.GetComponent<MeshRenderer>();
-            MeshFilter meshFilter = agentPlayerTeleportAnchor.GetComponent<MeshFilter>();
-            
-            if (renderer != null && meshFilter != null)
+            try
             {
-                //geometrizer: If hiding is enabled, disable the renderer and return early
-                if (hideNumberMeshes)
+                cabInfo.CabinetController.game = new();
+                cabInfo.CabinetController.game.Position = idx;
+
+                cabInfo.CabinetController.backgroundSoundController = backgroundSoundController;
+
+                //MaxAllowedSpace to identify NPC animation
+                AgentScenePosition pos = cabInfo.CabinetController.AgentScenePosition?.GetComponent<AgentScenePosition>();
+                if (pos != null)
+                    pos.MaxAllowedSpace = cabInfo.CabinetController.Space.MaxAllowedSpace;
+
+                GameObject agentPlayerTeleportAnchor = cabInfo.CabinetController.AgentPlayerTeleportAnchor;
+                if (agentPlayerTeleportAnchor != null)
                 {
-                    renderer.enabled = false;
-                    continue;
-                }
-                
-                // Construct the mesh file path based on the index (idx), starting at 0
-                string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
-
-                // Load the dynamically chosen mesh
-                Mesh numberMesh = Resources.Load<Mesh>(meshPath);
-
-                if (numberMesh != null && playerNumberMaterial != null)
-                {
-                    // Assign the new mesh to the MeshFilter
-                    meshFilter.mesh = numberMesh;
-
-                    // Assign the loaded material to the renderer
-                    renderer.material = playerNumberMaterial;
-
-                    // Set the scale of the anchor to 1,1,1
-                    cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.localScale = new Vector3(1, 1, 1);
-
-                    // Subtract 90 degrees from the y-axis rotation
-                    Vector3 currentRotation = agentPlayerTeleportAnchor.transform.eulerAngles;
-                    agentPlayerTeleportAnchor.transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y - 180, currentRotation.z);
-
-                    // Set Cast Shadows to OFF; a bunch of stuff under here is to force these guys to batch
-                    renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-
-                    // Set Light Probes to OFF
-                    renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-
-                    // Set Reflection Probes to OFF
-                    renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-
-                    // Set Receive Shadows to OFF
-                    renderer.receiveShadows = false;
-
-                    // Optionally, enable the renderer if needed
-                    renderer.enabled = true;
-
-                    // Remove the original meshcollider if any.
-                    MeshCollider meshCollider = agentPlayerTeleportAnchor.GetComponent<MeshCollider>();
-                    if (meshCollider != null)
-                        Destroy(meshCollider);
-
-                    // assign a new collider to the anchor bcz the mesh has changed.
-                    BoxCollider boxCollider = agentPlayerTeleportAnchor.AddComponent<BoxCollider>();
-                    Vector3 t = boxCollider.size;
-                    boxCollider.size = new Vector3(t.x, 0.01f, t.z);
-
-                    //remove the anchor (will be replaced by a TeleportationArea)
-                    TeleportationAnchor anchor = agentPlayerTeleportAnchor.GetComponent<TeleportationAnchor>();
-                    if (anchor != null)
-                        Destroy(anchor);
+                    // Assign the cabinet number to the teleport area
+                    MeshRenderer renderer = agentPlayerTeleportAnchor.GetComponent<MeshRenderer>();
+                    MeshFilter meshFilter = agentPlayerTeleportAnchor.GetComponent<MeshFilter>();
                     
-                    TeleportationArea area = agentPlayerTeleportAnchor.AddComponent<TeleportationArea>();
-                    area.colliders[0] = boxCollider;
-                    if (area.colliders.Count > 1)
-                        area.colliders.Remove(area.colliders[1]);
-                    area.matchOrientation = MatchOrientation.None;
-                    area.teleporting.AddListener(OnTeleportingMatchOrientation);
+                    if (renderer != null && meshFilter != null)
+                    {
+                        //geometrizer: If hiding is enabled, disable the renderer and return early
+                        if (hideNumberMeshes)
+                        {
+                            renderer.enabled = false;
+                        }
+                        else
+                        {
+                            // Construct the mesh file path based on the index (idx), starting at 0
+                            string meshPath = $"Cabinets/AgentPlayerPositionsNumbers/NumberMeshes/SM_Number_{idx}";
 
+                            // Load the dynamically chosen mesh
+                            Mesh numberMesh = Resources.Load<Mesh>(meshPath);
 
-                    /*//this component rotates the player when teleports.
-                    CustomTeleportOrientation cstTeleport = agentPlayerTeleportAnchor.AddComponent<CustomTeleportOrientation>();
-                    cstTeleport.player = PlayerControllerGameObject.transform;
-                    cstTeleport.area = area;
-                    */
-                }
-                else
-                {
-                    if (numberMesh == null)
-                        ConfigManager.WriteConsoleError($"[CabinetsController.initializeCabinets]  Agent Player Position mesh not found: {meshPath}");
+                            if (numberMesh != null && playerNumberMaterial != null)
+                            {
+                                // Assign the new mesh to the MeshFilter
+                                meshFilter.mesh = numberMesh;
 
+                                // Assign the loaded material to the renderer
+                                renderer.material = playerNumberMaterial;
+
+                                // Set the scale of the anchor to 1,1,1
+                                cabInfo.CabinetController.AgentPlayerTeleportAnchor.transform.localScale = new Vector3(1, 1, 1);
+
+                                // Subtract 90 degrees from the y-axis rotation
+                                Vector3 currentRotation = agentPlayerTeleportAnchor.transform.eulerAngles;
+                                agentPlayerTeleportAnchor.transform.eulerAngles = new Vector3(currentRotation.x, currentRotation.y - 180, currentRotation.z);
+
+                                // Set Cast Shadows to OFF; a bunch of stuff under here is to force these guys to batch
+                                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+                                // Set Light Probes to OFF
+                                renderer.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+
+                                // Set Reflection Probes to OFF
+                                renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+
+                                // Set Receive Shadows to OFF
+                                renderer.receiveShadows = false;
+
+                                // Optionally, enable the renderer if needed
+                                renderer.enabled = true;
+
+                                // Remove the original meshcollider if any.
+                                MeshCollider meshCollider = agentPlayerTeleportAnchor.GetComponent<MeshCollider>();
+                                if (meshCollider != null)
+                                    Destroy(meshCollider);
+
+                                // assign a new collider to the anchor bcz the mesh has changed.
+                                BoxCollider boxCollider = agentPlayerTeleportAnchor.AddComponent<BoxCollider>();
+                                Vector3 t = boxCollider.size;
+                                boxCollider.size = new Vector3(t.x, 0.01f, t.z);
+
+                                //remove the anchor (will be replaced by a TeleportationArea)
+                                TeleportationAnchor anchor = agentPlayerTeleportAnchor.GetComponent<TeleportationAnchor>();
+                                if (anchor != null)
+                                    Destroy(anchor);
+                                
+                                TeleportationArea area = agentPlayerTeleportAnchor.AddComponent<TeleportationArea>();
+                                area.colliders[0] = boxCollider;
+                                if (area.colliders.Count > 1)
+                                    area.colliders.Remove(area.colliders[1]);
+                                area.matchOrientation = MatchOrientation.None;
+                                area.teleporting.AddListener(OnTeleportingMatchOrientation);
+                            }
+                            else
+                            {
+                                if (numberMesh == null)
+                                    ConfigManager.WriteConsoleError($"[CabinetsController.initializeCabinets]  Agent Player Position mesh not found: {meshPath}");
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ConfigManager.WriteConsoleError("[CabinetsController] initializeCabinets MeshRenderer or MeshFilter component missing on Agent Player Teleport Anchor.");
+                    }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                ConfigManager.WriteConsoleError("[CabinetsController] initializeCabinets MeshRenderer or MeshFilter component missing on Agent Player Teleport Anchor.");
+                ConfigManager.WriteConsoleError($"[CabinetsController.initalizeCabinets] Failed to initialize cabinet at position {idx}. Exception: {ex.Message}");
             }
             
             idx++;  // Ensure idx is being incremented elsewhere in your code if this block is within a loop
@@ -266,17 +267,34 @@ public class CabinetsController : MonoBehaviour
         ConfigManager.WriteConsole($"[CabinetsController.load] ==== {Room} ====");
 
         //persist registry with the new assignation if any.
-        List<CabinetPosition> cabsPos = gameRegistry.GetSetCabinetsAssignedToRoom(Room,
-                                                                                transform.childCount);
-        ConfigManager.WriteConsole($"[CabinetsController.load] Assigning {cabsPos.Count} cabinets to room {Room}");
+        List<CabinetPosition> cabsPos = new List<CabinetPosition>();
+        try
+        {
+            cabsPos = gameRegistry.GetSetCabinetsAssignedToRoom(Room, transform.childCount);
+            ConfigManager.WriteConsole($"[CabinetsController.load] Assigning {cabsPos.Count} cabinets to room {Room}");
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed to get/set assigned cabinets from registry. Exception: {ex.Message}");
+        }
 
         //load already assigned games to cabinets
         foreach (CabinetPosition cabPos in cabsPos)
         {
-            CabinetControllerInformation cabInfo = GetCabinetControllerInformationByPosition(cabPos.Position);
-            //CabinetController will load the cabinet once asigned a cabinetName
-            cabInfo.CabinetController.game = cabPos;
-            ConfigManager.WriteConsole($"[CabinetsController.load] Load previously assigned {cabPos}");
+            try
+            {
+                CabinetControllerInformation cabInfo = GetCabinetControllerInformationByPosition(cabPos.Position);
+                if (cabInfo != null)
+                {
+                    //CabinetController will load the cabinet once asigned a cabinetName
+                    cabInfo.CabinetController.game = cabPos;
+                    ConfigManager.WriteConsole($"[CabinetsController.load] Load previously assigned {cabPos}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed to load previously assigned {cabPos}. Exception: {ex.Message}");
+            }
         }
         yield return null;
 
@@ -287,27 +305,45 @@ public class CabinetsController : MonoBehaviour
             ConfigManager.WriteConsole($"[CabinetsController.load] {Room} there are {CabinetsCtrlInfo.Count() - cabsPos.Count()} pending assignments");
 
             List<CabinetControllerInformation> remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
-                        string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName)).ToList();
-            List<string> unnasignedCabNames = gameRegistry.GetUnassignedCabinets().
-                                                           OrderBy(x => UnityEngine.Random.value).ToList();
-            List<string> occupiedSpaces = GetOccupiedSpaces(unnasignedCabNames);
-            ConfigManager.WriteConsole($"[CabinetsController.load] {Room}"
-                                        + $" unnasigned cabinets count: {unnasignedCabNames.Count}");
+                        cab.CabinetController != null && string.IsNullOrEmpty(cab.CabinetController.game?.CabinetDBName)).ToList();
+            List<string> unnasignedCabNames = new List<string>();
+            List<string> occupiedSpaces = new List<string>();
+
+            try
+            {
+                unnasignedCabNames = gameRegistry.GetUnassignedCabinets().OrderBy(x => UnityEngine.Random.value).ToList();
+                occupiedSpaces = GetOccupiedSpaces(unnasignedCabNames);
+                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} unnasigned cabinets count: {unnasignedCabNames.Count}");
+            }
+            catch (Exception ex)
+            {
+                ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed during fetching unassigned cabinets. Exception: {ex.Message}");
+            }
+
             foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
             {
-                int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
-                if (bestFitIndex != -1)
+                try
                 {
-                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
-                                                                            cabCtrl.Position,
-                                                                            unnasignedCabNames[bestFitIndex]);
-                    cabCtrl.CabinetController.game = cabPos;
-                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
-                                                + $" assigned cab: {unnasignedCabNames[bestFitIndex]}"
-                                                + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+                    if (unnasignedCabNames.Count == 0 || occupiedSpaces.Count == 0) break;
 
-                    occupiedSpaces.RemoveAt(bestFitIndex);
-                    unnasignedCabNames.RemoveAt(bestFitIndex);
+                    int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
+                    if (bestFitIndex != -1)
+                    {
+                        CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                                                cabCtrl.Position,
+                                                                                unnasignedCabNames[bestFitIndex]);
+                        cabCtrl.CabinetController.game = cabPos;
+                        ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
+                                                    + $" assigned cab: {unnasignedCabNames[bestFitIndex]}"
+                                                    + $" allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                        occupiedSpaces.RemoveAt(bestFitIndex);
+                        unnasignedCabNames.RemoveAt(bestFitIndex);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed to assign best fit cabinet for position {cabCtrl.Position}. Exception: {ex.Message}");
                 }
             }
 
@@ -317,52 +353,85 @@ public class CabinetsController : MonoBehaviour
             //don't persist in gameRegistry.   
 
             remainingOutOfOrderCabs = CabinetsCtrlInfo.Where(cab =>
-                                                            string.IsNullOrEmpty(cab.CabinetController.game.CabinetDBName))
+                                                            cab.CabinetController != null && string.IsNullOrEmpty(cab.CabinetController.game?.CabinetDBName))
                                                       .ToList();
             if (remainingOutOfOrderCabs.Count() > 0)
             {
                 ConfigManager.WriteConsole($"[CabinetsController.load] {Room} random {remainingOutOfOrderCabs.Count} pending assignments");
 
-                unnasignedCabNames = gameRegistry.GetRandomizedAllCabinetNames();
-                occupiedSpaces = unnasignedCabNames.Select(cabName =>
+                try
                 {
-                    string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
-                    CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
-                    if (cabInfo != null)
-                        return cabInfo.space;
-                    else
-                        return "9x9x9"; //hack
-                }).ToList();
-                ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
+                    unnasignedCabNames = gameRegistry.GetRandomizedAllCabinetNames();
+                    occupiedSpaces = unnasignedCabNames.Select(cabName =>
+                    {
+                        try
+                        {
+                            string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+                            CabinetInformation cabInfo = CabinetInformation.fromYaml(cabPath);
+                            if (cabInfo != null)
+                                return cabInfo.space;
+                            else
+                                return "9x9x9"; //hack
+                        }
+                        catch (Exception ex)
+                        {
+                            ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed to load cabinet info yaml for {cabName}. Exception: {ex.Message}");
+                            return "9x9x9";
+                        }
+                    }).ToList();
+                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room} {occupiedSpaces.Count} occupied spaces found in cabinets");
+                }
+                catch (Exception ex)
+                {
+                    ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed to load random cabinet spaces. Exception: {ex.Message}");
+                    unnasignedCabNames.Clear();
+                    occupiedSpaces.Clear();
+                }
 
                 foreach (CabinetControllerInformation cabCtrl in remainingOutOfOrderCabs)
                 {
-                    int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
-                    if (bestFitIndex == -1)
+                    try
                     {
-                        ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
-                                                + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} "
-                                                + $" not fit found in: {occupiedSpaces.ToString()}");
-                        continue;
-                    }
-                    CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
-                                                                            cabCtrl.Position,
-                                                                            unnasignedCabNames[bestFitIndex]);
-                    cabCtrl.CabinetController.game = cabPos;
-                    ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position} "
-                                                + $" randomly assigned cab: {unnasignedCabNames[bestFitIndex]}"
-                                                + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+                        if (unnasignedCabNames.Count == 0 || occupiedSpaces.Count == 0) continue;
 
-                    occupiedSpaces.RemoveAt(bestFitIndex);
-                    unnasignedCabNames.RemoveAt(bestFitIndex);
+                        int bestFitIndex = cabCtrl.CabinetController.Space.BestFit(occupiedSpaces);
+                        if (bestFitIndex == -1)
+                        {
+                            ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position}"
+                                                    + $" allowed {cabCtrl.CabinetController.Space.MaxAllowedSpace} "
+                                                    + $" not fit found in: {occupiedSpaces.ToString()}");
+                            continue;
+                        }
+                        CabinetPosition cabPos = gameRegistry.AssignOrAddCabinet(Room,
+                                                                                cabCtrl.Position,
+                                                                                unnasignedCabNames[bestFitIndex]);
+                        cabCtrl.CabinetController.game = cabPos;
+                        ConfigManager.WriteConsole($"[CabinetsController.load] {Room}#{cabCtrl.Position} "
+                                                    + $" randomly assigned cab: {unnasignedCabNames[bestFitIndex]}"
+                                                    + $" max allowed: {cabCtrl.CabinetController.Space.MaxAllowedSpace} ");
+
+                        occupiedSpaces.RemoveAt(bestFitIndex);
+                        unnasignedCabNames.RemoveAt(bestFitIndex);
+                    }
+                    catch (Exception ex)
+                    {
+                        ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed randomly assigning cabinet to pos {cabCtrl.Position}. Exception: {ex.Message}");
+                    }
 
                     yield return null;
                 }
             }
         }
         
-        if (gameRegistry.NeedsSave())
-            gameRegistry.Persist();
+        try
+        {
+            if (gameRegistry != null && gameRegistry.NeedsSave())
+                gameRegistry.Persist();
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleError($"[CabinetsController.load] Failed to persist gameRegistry. Exception: {ex.Message}");
+        }
 
         ConfigManager.WriteConsole($"[CabinetsController.load] {Room} END loaded cabinets");
         Loaded = true;
