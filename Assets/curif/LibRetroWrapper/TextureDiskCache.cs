@@ -102,4 +102,23 @@ public static class TextureDiskCache
             ConfigManager.WriteConsoleError($"[DiskCache] Write failed: {e.Message}");
         }
     }
+
+    /// <summary>
+    /// Deletes the cached file from disk if it exists.
+    /// </summary>
+    public static void DeleteCache(string originalPath)
+    {
+        string cachePath = originalPath + EXTENSION;
+        try
+        {
+            if (File.Exists(cachePath))
+            {
+                File.Delete(cachePath);
+            }
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleError($"[DiskCache] Delete failed for {cachePath}: {e.Message}");
+        }
+    }
 }

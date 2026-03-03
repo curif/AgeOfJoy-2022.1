@@ -939,8 +939,8 @@ public class ConfigurationController : MonoBehaviour
             .Add(new GenericOptions(scr, "cabinetGameplayFoveatingLevel", "Foveating Level:", levels, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             
             .Add(new GenericOptions(scr, "glowLevel", "Cabinet screen glow:", glow, 4, cabinetsConfigurationContainer.lastYAdded + 2))
-            //.Add(new GenericBool(scr, "OrigTextures", "Original textures:", false, 4, cabinetsConfigurationContainer.lastYAdded + 1))
-            .Add(new GenericOptions(scr, "forceShader", "Force Shader:", shaders, 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            .Add(new GenericBool(scr, "OrigTextures", "Uncompressed Textures:", false, 4, cabinetsConfigurationContainer.lastYAdded + 2))
+            .Add(new GenericOptions(scr, "forceShader", "Force Shader:", shaders, 4, cabinetsConfigurationContainer.lastYAdded + 1))
             .Add(new GenericBool(scr, "insertCoinStartup", "Insert coin on startup:", false, 4, cabinetsConfigurationContainer.lastYAdded + 2))
             
             .Add(new GenericButton(scr, "save", "save", 4, cabinetsConfigurationContainer.lastYAdded + 2, true))
