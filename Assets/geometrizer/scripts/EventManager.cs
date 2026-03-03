@@ -41,6 +41,7 @@ namespace AOJ.Managers
             if (Instance == null)
             {
                 Instance = this;
+                transform.SetParent(null);
                 DontDestroyOnLoad(gameObject);
                 audioSource = GetComponent<AudioSource>();
             }

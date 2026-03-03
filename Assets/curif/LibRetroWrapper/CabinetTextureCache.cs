@@ -29,7 +29,6 @@ public static class CabinetTextureCache
     public const float CACHE_SIZE = 1024;
     //public const float CACHE_SIZE = 50; //forced for testing.
     public const float CACHE_SIZE_Q3 = 1536f;
-    public const bool use_original_uncompressed = false;
 
     public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete)
     {
@@ -90,8 +89,11 @@ public static class CabinetTextureCache
             float originalSizeInBytes = CalculateActualSizeBytes(texTmp);
             texTmp.name = "ORIGINAL-" + path;
 
-            if (use_original_uncompressed)
+            if (DeviceController.originalTextures)
             {
+                // clean up any previously generated compressed disk cache
+                TextureDiskCache.DeleteCache(path);
+
                 // 1. DIMENSION CHECK (CRITICAL)
                 // If a user provides an 8K texture, resize it immediately or your app will die.
                 if (texTmp.width > 2048 || texTmp.height > 2048)
@@ -127,8 +129,7 @@ public static class CabinetTextureCache
                 }
             }
             else
-            {
-                // DownloadHandlerTexture usually returns RGBA32 or RGB24
+            {                // DownloadHandlerTexture usually returns RGBA32 or RGB24
                 TextureFormat format = texTmp.format;
 
                 if (format == TextureFormat.RGBA32 ||
