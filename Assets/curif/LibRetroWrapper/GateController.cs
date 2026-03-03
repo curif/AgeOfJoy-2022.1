@@ -56,6 +56,9 @@ public class GateController : MonoBehaviour
 
     private HashSet<string> scenesToLoadSet;
 
+    // Cache for SliderDoorController components to avoid GetComponent calls in the loop
+    private Dictionary<GameObject, SliderDoorController> doorControllerCache;
+
     void Start()
     {
         player = GameObject.Find("OVRPlayerControllerGalery");
@@ -64,6 +67,25 @@ public class GateController : MonoBehaviour
         foreach (var sceneReference in ScenesToLoad)
         {
             scenesToLoadSet.Add(sceneReference.Name);
+        }
+
+        // Initialize and populate the door controller cache
+        doorControllerCache = new Dictionary<GameObject, SliderDoorController>();
+        if (SceneBlockers != null)
+        {
+            foreach (SceneGate scn in SceneBlockers)
+            {
+                if (scn.Blockers != null)
+                {
+                    foreach (GameObject blocker in scn.Blockers)
+                    {
+                        if (blocker != null && !doorControllerCache.ContainsKey(blocker))
+                        {
+                            doorControllerCache[blocker] = blocker.GetComponent<SliderDoorController>();
+                        }
+                    }
+                }
+            }
         }
 
         StartCoroutine(gateControlLoop());
@@ -159,8 +181,7 @@ public class GateController : MonoBehaviour
         {
             if (blocker != null)
             {
-                SliderDoorController ctrl = blocker.GetComponent<SliderDoorController>();
-                if (ctrl != null)
+                if (doorControllerCache.TryGetValue(blocker, out SliderDoorController ctrl) && ctrl != null)
                 {
                     ctrl.SetDoorState(!blocked);
                 }
