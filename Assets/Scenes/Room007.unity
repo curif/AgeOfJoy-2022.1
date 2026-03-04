@@ -9,7 +9,7 @@ OcclusionCullingSettings:
     smallestHole: 0.25
     backfaceThreshold: 100
   m_SceneGUID: b9f33fb27c25da916b2fa46fffc6a3cc
-  m_OcclusionCullingData: {fileID: 36300000, guid: 3f604f18e0dbe544984db40577f83637, type: 2}
+  m_OcclusionCullingData: {fileID: 36300000, guid: 7ed41f3a5a429c7438c71ac93187b388, type: 2}
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
@@ -97,7 +97,7 @@ LightmapSettings:
     m_ExportTrainingData: 0
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
-  m_LightingDataAsset: {fileID: 112000000, guid: b47085d6aa7752042bad1f32f0f13141, type: 2}
+  m_LightingDataAsset: {fileID: 112000000, guid: dccf4aa28a0dece45b66c80ef91a627d, type: 2}
   m_LightingSettings: {fileID: 4890085278179872738, guid: f2fffaa1724f600499f26da0444f595d, type: 2}
 --- !u!196 &4
 NavMeshSettings:
@@ -375,11 +375,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
       propertyPath: m_Size.x
-      value: 15.284153
+      value: 16.03816
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Size.z
+      value: 7.8491607
       objectReference: {fileID: 0}
     - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
       propertyPath: m_Center.x
-      value: -3.1576395
+      value: -3.163969
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Center.z
+      value: 0.5839851
       objectReference: {fileID: 0}
     - target: {fileID: 7402869355966646056, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
       propertyPath: roomLightPrefab
@@ -711,19 +719,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 2.028289e+9
+      value: 5.0175476
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: NaN
+      value: 8.37e-43
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: NaN
+      value: -2.9984313e-24
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: -0.14999999
+      value: -7.819128e-35
       objectReference: {fileID: 0}
     - target: {fileID: 4995453295751643000, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_Name
@@ -4139,19 +4147,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: -13.75
+      value: 1997000
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: -8.389999
+      value: 8.37e-43
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: -19.07
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: -0.14999999
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4995453295751643000, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_Name
@@ -7282,6 +7290,7 @@ MonoBehaviour:
   Room: Room007
   yamlPath: 
   fileMonitor: {fileID: 423336115}
+  globalConfiguration: {fileID: 0}
 --- !u!114 &423336115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20284,19 +20293,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.w
-      value: 0.0151475705
+      value: 775786.5
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.x
-      value: 7.44e-43
+      value: 8.37e-43
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.y
-      value: 5.836397e+23
+      value: 833981.5
       objectReference: {fileID: 0}
     - target: {fileID: 4849378359114127347, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_BoundingSphereOverride.z
-      value: 7.44e-43
+      value: 8.35e-43
       objectReference: {fileID: 0}
     - target: {fileID: 4995453295751643000, guid: 082efa75b6b657513a4b93a0c78ba8e2, type: 3}
       propertyPath: m_Name

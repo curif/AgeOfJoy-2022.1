@@ -4292,6 +4292,7 @@ MonoBehaviour:
   Room: Room013
   yamlPath: 
   fileMonitor: {fileID: 423336115}
+  globalConfiguration: {fileID: 0}
 --- !u!114 &423336115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17145,7 +17146,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 5.142788e-39, y: 1.0471758e-38, z: 9.1858e-41, w: 1.4546743e-37}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ShadowRadius: 0
@@ -28148,12 +28149,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Size.x
+      value: 6.48231
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
       propertyPath: m_Size.z
-      value: 10.520196
+      value: 12.042815
+      objectReference: {fileID: 0}
+    - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
+      propertyPath: m_Center.x
+      value: 1.2432821
       objectReference: {fileID: 0}
     - target: {fileID: 2567931027181609668, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
       propertyPath: m_Center.z
-      value: 3.266481
+      value: 3.7960863
       objectReference: {fileID: 0}
     - target: {fileID: 7402869355966646056, guid: 2c390d1c133210c4a867990e574d9957, type: 3}
       propertyPath: roomConfiguration
