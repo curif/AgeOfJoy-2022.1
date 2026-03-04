@@ -68,6 +68,7 @@ public abstract class ShaderScreenBase
         Material[] mats = display.materials;
         mats[position] = material;
         display.materials = mats;
+        material = display.materials[position];
         
         if (texture != null)
             Texture = texture; //child should change it in render material by position

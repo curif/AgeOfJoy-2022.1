@@ -56,17 +56,17 @@ public class ShaderCRT : ShaderScreenBase
     {
         get
         {
-            return display.materials[position].GetTexture("_MainTex");
+            return material.GetTexture("_MainTex");
         }
         set
         {
             Texture t = (Texture)value;
             Vector4 crtParameters = new Vector4(t.width, t.height, 0f, 0f);
 
-            display.materials[position].SetTexture("_MainTex", t);
-            display.materials[position].SetVector("_CRTParameters", crtParameters);
+            material.SetTexture("_MainTex", t);
+            material.SetVector("_CRTParameters", crtParameters);
             if (v4Invert != null)
-                display.materials[position].SetVector("_CRTTiling", (Vector4)v4Invert);
+                material.SetVector("_CRTTiling", (Vector4)v4Invert);
         }
     }
 
@@ -78,7 +78,7 @@ public class ShaderCRT : ShaderScreenBase
     public override ShaderScreenBase Invert(bool invertx, bool inverty)
     {
         v4Invert = new Vector4(invertx ? -1f : 1f, inverty ? -1f : 1f, 0, 0);
-        display.materials[position].SetVector("_CRTTiling", (Vector4)v4Invert);
+        material.SetVector("_CRTTiling", (Vector4)v4Invert);
 
         return this;
     }

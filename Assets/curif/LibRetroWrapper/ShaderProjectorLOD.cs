@@ -54,15 +54,15 @@ public class ShaderProjectorLOD : ShaderScreenBase
     {
         get
         {
-            return display.materials[position].GetTexture("_MainTex");
+            return material.GetTexture("_MainTex");
         }
         set
         {
             Texture t = (Texture)value;
             Vector4 crtParameters = new Vector4(t.width, t.height, 0f, 0f);
 
-            display.materials[position].SetTexture("_MainTex", t);
-            display.materials[position].SetVector("_CRTParameters", crtParameters);
+            material.SetTexture("_MainTex", t);
+            material.SetVector("_CRTParameters", crtParameters);
         }
     }
 
@@ -70,7 +70,7 @@ public class ShaderProjectorLOD : ShaderScreenBase
     {
         Texture = texture;
         Vector4 v4 = new Vector4(actual_invertx ? -1f : 1f, actual_inverty ? -1f : 1f, 0, 0);
-        display.materials[position].SetVector("_CRTTiling", v4);
+        material.SetVector("_CRTTiling", v4);
     }
 
     public override ShaderScreenBase Invert(bool invertx, bool inverty)
@@ -78,7 +78,7 @@ public class ShaderProjectorLOD : ShaderScreenBase
         if (actual_invertx != invertx || actual_inverty != inverty)
         {
             Vector4 v4 = new Vector4(invertx ? -1f : 1f, inverty ? -1f : 1f, 0, 0);
-            display.materials[position].SetVector("_CRTTiling", v4);
+            material.SetVector("_CRTTiling", v4);
             ConfigManager.WriteConsole($"[ShaderProjector.Invert] {invertx}, {inverty} = {v4}");
 
             actual_invertx = invertx;

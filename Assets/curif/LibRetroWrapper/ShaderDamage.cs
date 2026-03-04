@@ -53,13 +53,13 @@ public class ShaderScreenDamage : ShaderScreenBase
     {
         get
         {
-            return display.materials[position].GetTexture("_MainTex");
+            return material.GetTexture("_MainTex");
         }
         set
         {
             ConfigManager.WriteConsole($"[ShaderScreenDamage.Texture] SET tex:{(Texture)value} material: {material}");
 
-            display.materials[position].SetTexture("_MainTex", (Texture)value);
+            material.SetTexture("_MainTex", (Texture)value);
         }
     }
 
@@ -67,13 +67,13 @@ public class ShaderScreenDamage : ShaderScreenBase
     {
         Texture = texture;
         Vector4 v4 = new Vector4(actual_invertx ? -1f : 1f, actual_inverty ? -1f : 1f, 0, 0);
-        display.materials[position].SetFloat("MirrorX", actual_invertx ? 1f : 0f);
-        display.materials[position].SetFloat("MirrorY", actual_inverty ? 1f : 0f);
+        material.SetFloat("MirrorX", actual_invertx ? 1f : 0f);
+        material.SetFloat("MirrorY", actual_inverty ? 1f : 0f);
     }
 
     public override void Update()
     {
-        display.materials[position].SetFloat("u_time", Time.fixedTime);
+        material.SetFloat("u_time", Time.fixedTime);
     }
 
     public override ShaderScreenBase Invert(bool invertx, bool inverty)
@@ -81,8 +81,8 @@ public class ShaderScreenDamage : ShaderScreenBase
         if (actual_invertx != invertx || actual_inverty != inverty)
         {
             ConfigManager.WriteConsole($"[ShaderScreenDamage.Invert] {invertx}, {inverty}");
-            display.materials[position].SetFloat("MirrorX", invertx ? 1f : 0f);
-            display.materials[position].SetFloat("MirrorY", inverty ? 1f : 0f);
+            material.SetFloat("MirrorX", invertx ? 1f : 0f);
+            material.SetFloat("MirrorY", inverty ? 1f : 0f);
             actual_invertx = invertx;
             actual_inverty = inverty;
         }

@@ -63,8 +63,8 @@ public class ShaderScreenClean : ShaderScreenBase
         base.Activate(texture);
 
         //this shader needs white color to show games like Asteroids.
-        display.materials[position].SetColor("_Color", Color.white);
-        display.materials[position].SetColor("_EmissionColor", Color.white);
+        material.SetColor("_Color", Color.white);
+        material.SetColor("_EmissionColor", Color.white);
     }
 
 
@@ -72,30 +72,30 @@ public class ShaderScreenClean : ShaderScreenBase
     {
         get
         {
-            return display.materials[position].GetTexture("_EmissionMap");
+            return material.GetTexture("_EmissionMap");
         }
         set
         {
             ConfigManager.WriteConsole($"[ShaderScreenClean.Texture] {ToString()} SET tex:{(Texture)value} material: {material}");
 
-            display.materials[position].SetTexture("_EmissionMap", (Texture)value);
-            display.materials[position].SetTexture("_MainTex", (Texture)value);
+            material.SetTexture("_EmissionMap", (Texture)value);
+            material.SetTexture("_MainTex", (Texture)value);
         }
     }
     public override void Refresh(Texture texture)
     {
         Texture = texture;
         Vector2 v2 = new Vector2(actual_invertx ? -1f : 1f, actual_inverty ? -1f : 1f);
-        display.materials[position].SetTextureScale("_EmissionMap", v2);
-        display.materials[position].SetTextureScale("_MainTex", v2);
+        material.SetTextureScale("_EmissionMap", v2);
+        material.SetTextureScale("_MainTex", v2);
     }
 
     public override ShaderScreenBase Invert(bool invertx, bool inverty)
     {
         ConfigManager.WriteConsole($"[ShaderScreenClean.Invert] {invertx}, {inverty}");
         Vector2 v2 = new Vector2(invertx ? -1f : 1f, inverty ? -1f : 1f);
-        display.materials[position].SetTextureScale("_EmissionMap", v2);
-        display.materials[position].SetTextureScale("_MainTex", v2);
+        material.SetTextureScale("_EmissionMap", v2);
+        material.SetTextureScale("_MainTex", v2);
         actual_invertx = invertx;
         actual_inverty = inverty;
         return this;
