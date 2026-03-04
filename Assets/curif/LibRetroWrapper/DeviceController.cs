@@ -56,14 +56,30 @@ public class DeviceController : MonoBehaviour
 
     public static void ResetValues()
     {
-        if (deviceName.Contains("Quest 3"))
+        OVRPlugin.SystemHeadset headsetType = OVRPlugin.GetSystemHeadsetType();
+        ConfigManager.WriteConsole("[DeviceController] OVRPlugin.GetSystemHeadsetType: " + headsetType);
+
+        if (headsetType == OVRPlugin.SystemHeadset.Meta_Quest_3 || 
+            headsetType == OVRPlugin.SystemHeadset.Meta_Quest_3S ||
+            deviceName.Contains("Quest 3") || 
+            deviceModel.Contains("Quest 3"))
+        {
             setAsQuest3();
-        else if (deviceModel.Contains("Quest"))
+        }
+        else if (headsetType == OVRPlugin.SystemHeadset.Oculus_Quest_2 ||
+                 headsetType == OVRPlugin.SystemHeadset.Meta_Quest_Pro ||
+                 deviceModel.Contains("Quest"))
+        {
             setAsQuest2();
+        }
         else if (deviceType.Equals(UnityEngine.DeviceType.Desktop))
+        {
             setAsComputer();
+        }
         else
+        {
             setAsComputer();
+        }
     }
 
     static void setAsQuest2()
