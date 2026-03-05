@@ -56,9 +56,9 @@ public class ReflectionChangeTrigger : MonoBehaviour
         ConfigManager.WriteConsole($"[ReflectionChangeTrigger] Triggered in scene: '{triggerScene.name}', path: '{triggerScene.path}'");
 
         // Update reflection if needed
-        if (newReflectionCubemap != null && RenderSettings.customReflection != newReflectionCubemap)
+        if (newReflectionCubemap != null && RenderSettings.customReflectionTexture != newReflectionCubemap)
         {
-            RenderSettings.customReflection = newReflectionCubemap;
+            RenderSettings.customReflectionTexture = newReflectionCubemap;
             DynamicGI.UpdateEnvironment();
         }
 
