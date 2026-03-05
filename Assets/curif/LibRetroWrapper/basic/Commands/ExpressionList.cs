@@ -13,7 +13,7 @@ class CommandExpressionList : ICommandBase, ICommandList
     //CommandExpression[] exprs = new CommandExpression[15];
     List<CommandExpression> exprs = new List<CommandExpression>();
 
-    int count = 0;
+    //int count = 0;
     public int Count { get { return exprs.Count; }}
 
     ConfigurationCommands config;   
