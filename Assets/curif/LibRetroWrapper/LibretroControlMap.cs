@@ -72,9 +72,10 @@ public class LibretroControlMap : MonoBehaviour
     {
         int ret = 0;
 
-        string inputActionMapId = mameControl + "_" + port.ToString();
+        if (!actionMap.enabled)
+            return 0;
 
-        ConfigManager.AssertWriteConsole(actionMap.enabled, $"[LibretroControlMap.Active] {actionMap.name} is not enabled");
+        string inputActionMapId = mameControl + "_" + port.ToString();
 
         InputAction action = actionMap.FindAction(inputActionMapId);
 
@@ -87,7 +88,7 @@ public class LibretroControlMap : MonoBehaviour
         {
             if (!action.enabled)
             {
-                ConfigManager.WriteConsoleWarning($"[LibretroControlMap.Active] {inputActionMapId} is not enabled in the actionMap: {actionMap.name}");
+                // ConfigManager.WriteConsoleWarning($"[LibretroControlMap.Active] {inputActionMapId} is not enabled in the actionMap: {actionMap.name}");
                 action.Enable();
             }
 
