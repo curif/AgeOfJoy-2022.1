@@ -234,7 +234,6 @@ class PathFunctionsBase : CommandFunctionNoExpressionBase
 
                     return new BasicValue(config.Cabinet.FilesPath);
                 }
-                return new BasicValue(ConfigManager.Cabinets);
             case "ROOTPATH":
                 return new BasicValue(ConfigManager.BaseDir);
             case "MUSICPATH":
