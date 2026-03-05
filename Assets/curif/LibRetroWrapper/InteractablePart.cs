@@ -6,7 +6,7 @@ using static CabinetInformation.Physical;
 public class InteractablePart : MonoBehaviour
 {
     public Rigidbody rigidBody;
-    public Collider collider;
+    public Collider partCollider;
     public CollisionDetection collisionDetection;
     public GrabDetection grabDetection;
 
@@ -33,19 +33,19 @@ public class InteractablePart : MonoBehaviour
         switch (physicalInfo.shape)
         {
             case "box":
-                collider = gameObject.AddComponent<BoxCollider>();
+                partCollider = gameObject.AddComponent<BoxCollider>();
                 break;
             case "sphere":
-                collider = gameObject.AddComponent<SphereCollider>();
+                partCollider = gameObject.AddComponent<SphereCollider>();
                 break;
             case "capsule":
-                collider = gameObject.AddComponent<CapsuleCollider>();
+                partCollider = gameObject.AddComponent<CapsuleCollider>();
                 break;
             default:
-                collider = gameObject.AddComponent<BoxCollider>();
+                partCollider = gameObject.AddComponent<BoxCollider>();
                 break;
         }
-        collider.isTrigger = false;
+        partCollider.isTrigger = false;
 
         rigidBody = gameObject.GetComponent<Rigidbody>();
         if (rigidBody == null)
@@ -66,7 +66,7 @@ public class InteractablePart : MonoBehaviour
             pmat.bounciness = physicalInfo.material.bounciness;
             pmat.frictionCombine = CabinetInformation.Physical.Material.CombineFromString(physicalInfo.material.frictionCombine);
             pmat.bounceCombine = CabinetInformation.Physical.Material.CombineFromString(physicalInfo.material.bounceCombine);
-            collider.material = pmat;
+            partCollider.material = pmat;
         }
 
         if (physicalInfo.receiveImpacts != null &&
@@ -93,7 +93,7 @@ public class InteractablePart : MonoBehaviour
 
     public void Activate()
     {
-        collider.enabled = true;
+        partCollider.enabled = true;
         if (grabDetection != null) 
             grabDetection.enabled = true;
         if (collisionDetection != null)
@@ -102,7 +102,7 @@ public class InteractablePart : MonoBehaviour
     }
     public void Deactivate()
     {
-        collider.enabled = false;
+        partCollider.enabled = false;
         if (grabDetection != null)
             grabDetection.enabled = false;
         if (collisionDetection != null)
