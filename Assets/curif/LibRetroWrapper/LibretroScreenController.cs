@@ -65,7 +65,7 @@ public class LibretroScreenController : MonoBehaviour
     public BehaviorTree tree;
 
     [SerializeField]
-    private Light light;
+    private Light screenGlowLight;
 
     //[SerializeField]
     //public GameObject Player;
@@ -251,8 +251,8 @@ public class LibretroScreenController : MonoBehaviour
         }
 
         // glow light
-        light = GetComponentInChildren<Light>(true);
-        screenLightON = light != null && globalConfiguration.Configuration.cabinet.screenGlowIntensity > 0;
+        screenGlowLight = GetComponentInChildren<Light>(true);
+        screenLightON = screenGlowLight != null && globalConfiguration.Configuration.cabinet.screenGlowIntensity > 0;
 
         mainCoroutine = StartCoroutine(runBT());
         initialized = true;
@@ -336,7 +336,7 @@ public class LibretroScreenController : MonoBehaviour
                       audioPlayer.Stop();
                    
                       if (screenLightON)
-                          light.gameObject.SetActive(true);
+                          screenGlowLight.gameObject.SetActive(true);
                   }
 
                   //start mame
@@ -504,7 +504,7 @@ public class LibretroScreenController : MonoBehaviour
                   ExitPlayerFromGame();
                   if (screenLightON)
                   {
-                      light.gameObject.SetActive(false);
+                      screenGlowLight.gameObject.SetActive(false);
                   }
                   return TaskStatus.Success;
               })
@@ -652,9 +652,9 @@ public class LibretroScreenController : MonoBehaviour
 #else
                 r = 255; g = 0; b = 0; //red color
 #endif
-                light.color = new Color(r,g,b);
+                screenGlowLight.color = new Color(r,g,b);
                 float luminance = (r + g + b) / 3f;
-                light.intensity = luminance * globalConfiguration.Configuration.cabinet.screenGlowIntensity;
+                screenGlowLight.intensity = luminance * globalConfiguration.Configuration.cabinet.screenGlowIntensity;
             }
 
             LibretroMameCore.UpdateTexture();
