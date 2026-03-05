@@ -210,7 +210,6 @@ public class CabinetPart : MonoBehaviour
     }
     public float GetCoordinate(string axis)
     {
-        float coordinateValue = 0f;
         switch (axis)
         {
             case "X":
