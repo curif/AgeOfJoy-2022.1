@@ -264,7 +264,7 @@ public static unsafe class LibretroMameCore
     public static Dictionary<uint, LibretroInputDevice> libretroInputDevices;
 
     // Aimed mouse state
-    private static int lastCoordX;
+    //private static int lastCoordX;
     // private static int lastCoordY;
     private static int lastMouseCoordX;
     private static int lastMouseCoordY;
@@ -1333,7 +1333,7 @@ public static unsafe class LibretroMameCore
     public static void resetMouseAim()
     {
         isMouseAim = libretroInputDevices.Values.ToList().Exists(device => device.Name.Equals(LibretroInputDevice.MousePointer.Name));
-        lastCoordX = -0x7fff;   // Assume lightgun starting at top left
+        //lastCoordX = -0x7fff;   // Assume lightgun starting at top left
         // lastCoordY = -0x7fff;
         lastMouseCoordX = 0;    // Assume mouse starting at top left
         lastMouseCoordY = 0;

@@ -21,9 +21,8 @@ public class GameVideoPlayer : MonoBehaviour
     public string videoPath;
     private bool isPreparing = false;
     private bool isReady = false;
-    private bool isFirstTextureProcessed = false;
     public string FirstTexturePath;
-    private Texture2D FirstTexture = null;
+    //private Texture2D FirstTexture = null;
     private TextureCache textureCache;
 
     // Start is called before the first frame update
