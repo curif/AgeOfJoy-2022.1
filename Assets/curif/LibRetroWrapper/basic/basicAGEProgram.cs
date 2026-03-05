@@ -93,6 +93,11 @@ public class AGEProgram
         get { return tracker.GetTotalLinesExecuted(); }
     }
 
+    public float GetLinesPerSecond()
+    {
+        return tracker?.GetAverageLinesPerSecond() ?? 0f;
+    }
+
 
     public bool runNextLine()
     {

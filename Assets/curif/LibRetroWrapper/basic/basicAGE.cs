@@ -115,7 +115,28 @@ public class basicAGE : MonoBehaviour
 
     public ProgramStatus Status;
 
+    [Tooltip("Maximum number of BASIC lines to execute in a single frame when CPU is at 100%.")]
+    [SerializeField]
+    public int MaxLinesPerFrame = 500;
+
 #if UNITY_EDITOR
+    [Tooltip("Displays the current execution speed (Lines Per Second) of the running program.")]
+    [SerializeField]
+    private float linesPerSecond;
+
+    // Update the property in the editor when the program is running
+    void Update()
+    {
+        if (running != null && Status == ProgramStatus.Running)
+        {
+            linesPerSecond = running.GetLinesPerSecond();
+        }
+        else
+        {
+            linesPerSecond = 0;
+        }
+    }
+    
     public string nameToExecute;
     public string path;
 #endif 
@@ -436,7 +457,27 @@ public class basicAGE : MonoBehaviour
         bool moreLines = true;
         while (moreLines)
         {
-            yield return runNextLineCurrentProgram(ref moreLines);
+            // Execute multiple lines per frame based on CPU percentage
+            // If cpu is 100%, run MaxLinesPerFrame lines per frame
+            // If cpu is 10%, run (MaxLinesPerFrame * 0.1) lines per frame.
+            int linesToExecute = (cpuPercentage == 100) ? MaxLinesPerFrame : (int)(MaxLinesPerFrame * (cpuPercentage / 100.0));
+            if (linesToExecute < 1) linesToExecute = 1;
+
+            for (int i = 0; i < linesToExecute && moreLines; i++)
+            {
+                YieldInstruction yieldInstruction = runNextLineCurrentProgram(ref moreLines);
+                
+                // If a command specifically requested a sleep or a hard delay, break the batch and yield
+                if (yieldInstruction != null) 
+                {
+                    yield return yieldInstruction;
+                    break;
+                }
+            }
+
+            // If the batch finished without a specific yield instruction, yield once to let Unity render the frame
+            if (moreLines && configCommands.SleepTime == 0)
+                yield return null;
         }
 
         PostRunTasks();

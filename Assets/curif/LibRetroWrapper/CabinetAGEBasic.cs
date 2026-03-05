@@ -1005,9 +1005,25 @@ public class CabinetAGEBasic : MonoBehaviour
                     bool moreLines = true;
                     while (moreLines)
                     {
-                        // Run the event's program
-                        // excptions are catched internally
-                        yield return evt.RunALine(ref moreLines);
+                        // Run the event's program in batches based on CPU percentage
+                        int linesToExecute = (AGEBasic.ConfigCommands.cpuPercentage == 100) ? AGEBasic.MaxLinesPerFrame : (int)(AGEBasic.MaxLinesPerFrame * (AGEBasic.ConfigCommands.cpuPercentage / 100.0));
+                        if (linesToExecute < 1) linesToExecute = 1;
+
+                        for (int i = 0; i < linesToExecute && moreLines; i++)
+                        {
+                            YieldInstruction yieldInstruction = evt.RunALine(ref moreLines);
+                            
+                            // If a command specifically requested a sleep, break the batch and yield
+                            if (yieldInstruction != null) 
+                            {
+                                yield return yieldInstruction;
+                                break;
+                            }
+                        }
+
+                        // Yield once per batch to let Unity render the frame, unless SleepTime is active
+                        if (moreLines && AGEBasic.ConfigCommands.SleepTime == 0)
+                            yield return null;
                     }
                 }
             }

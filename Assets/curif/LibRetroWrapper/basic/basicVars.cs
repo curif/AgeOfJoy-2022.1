@@ -105,7 +105,12 @@ public class BasicVars
     }
     public BasicValue SetValue(string name, BasicValue val)
     {
-        vars[name.ToUpper()].BasicValue = val;
+        string upperName = name.ToUpper();
+        if (!vars.ContainsKey(upperName))
+        {
+            DeclareNewVariable(upperName);
+        }
+        vars[upperName].BasicValue = val;
         return val;
     }
 
