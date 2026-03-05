@@ -84,7 +84,7 @@ public class CabinetReplace : MonoBehaviour
                                                          backgroundSoundController
                                                          );
 
-            cab.gameObject.SetActive(false);
+            // cab.gameObject.SetActive(false);  // Removed because skinning below needs active gameobjects to start coroutines
         }
         catch (System.Exception ex)
         {
