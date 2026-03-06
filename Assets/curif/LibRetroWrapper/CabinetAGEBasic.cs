@@ -29,6 +29,15 @@ public class CabinetAGEBasicInformation
     [YamlMember(Alias = "system-skin", ApplyNamingConventions = false)]
     public string system_skin = "c64";
 
+    [YamlMember(Alias = "max-execution-lines", ApplyNamingConventions = false)]
+    public int maxExecutionLines = -1;
+
+    [YamlMember(Alias = "max-lines-per-frame", ApplyNamingConventions = false)]
+    public int maxLinesPerFrame = -1;
+
+    [YamlMember(Alias = "max-milliseconds-per-frame", ApplyNamingConventions = false)]
+    public double maxMillisecondsPerFrame = -1;
+
     // Serialize this field to show it in the editor
     [SerializeField]
     private List<AGEBasicVariable> variables;
@@ -999,15 +1008,19 @@ public class CabinetAGEBasic : MonoBehaviour
                     if (evt.eventInformation.Variables != null)
                         IngestVariables(evt.eventInformation.Variables);
 
-                    evt.PrepareToRun(lineNumber: evt.eventInformation.line);
+                    int cabMaxExecLines = AGEInfo.maxExecutionLines == -1 ? AGEBasic.DefaultMaxExecutionLines : AGEInfo.maxExecutionLines;
+                    evt.PrepareToRun(maxExecutionLinesAllowed: cabMaxExecLines, lineNumber: evt.eventInformation.line);
 
                     //run
                     bool moreLines = true;
                     System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
                     while (moreLines)
                     {
+                        int cabMaxLinesPerFrame = AGEInfo.maxLinesPerFrame == -1 ? AGEBasic.MaxLinesPerFrame : AGEInfo.maxLinesPerFrame;
+                        double cabMaxMsPerFrame = AGEInfo.maxMillisecondsPerFrame == -1 ? AGEBasic.MaxMillisecondsPerFrame : AGEInfo.maxMillisecondsPerFrame;
+
                         // Run the event's program in batches based on CPU percentage
-                        int linesToExecute = (AGEBasic.ConfigCommands.cpuPercentage == 100) ? AGEBasic.MaxLinesPerFrame : (int)(AGEBasic.MaxLinesPerFrame * (AGEBasic.ConfigCommands.cpuPercentage / 100.0));
+                        int linesToExecute = (AGEBasic.ConfigCommands.cpuPercentage == 100) ? cabMaxLinesPerFrame : (int)(cabMaxLinesPerFrame * (AGEBasic.ConfigCommands.cpuPercentage / 100.0));
                         if (linesToExecute < 1) linesToExecute = 1;
 
                         stopwatch.Restart();
@@ -1024,7 +1037,7 @@ public class CabinetAGEBasic : MonoBehaviour
                             }
 
                             // TIME BUDGET: Prevent FPS drops in VR.
-                            if (stopwatch.Elapsed.TotalMilliseconds > AGEBasic.MaxMillisecondsPerFrame)
+                            if (stopwatch.Elapsed.TotalMilliseconds > cabMaxMsPerFrame)
                             {
                                 break;
                             }
