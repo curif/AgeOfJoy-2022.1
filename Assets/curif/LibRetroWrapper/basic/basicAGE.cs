@@ -117,7 +117,15 @@ public class basicAGE : MonoBehaviour
 
     [Tooltip("Maximum number of BASIC lines to execute in a single frame when CPU is at 100%.")]
     [SerializeField]
-    public int MaxLinesPerFrame = 500;
+    public int MaxLinesPerFrame = 5;
+
+    [Tooltip("Maximum time in milliseconds to spend executing BASIC code in a single frame to prevent FPS drops.")]
+    [SerializeField]
+    public double MaxMillisecondsPerFrame = 2.0;
+
+    [Tooltip("Total maximum number of lines a program can execute before being forcibly stopped (safety fail-safe).")]
+    [SerializeField]
+    public int DefaultMaxExecutionLines = 5000000;
 
 #if UNITY_EDITOR
     [Tooltip("Displays the current execution speed (Lines Per Second) of the running program.")]
@@ -355,8 +363,11 @@ public class basicAGE : MonoBehaviour
     }
 
     public void Run(string programName, BasicVars pvars = null,
-                        int maxExecutionLinesAllowed = 10000)
+                        int maxExecutionLinesAllowed = -1)
     {
+        if (maxExecutionLinesAllowed == -1)
+            maxExecutionLinesAllowed = DefaultMaxExecutionLines;
+
         PrepareToRun(programName, pvars, maxExecutionLinesAllowed);
 
         runningProgramCoroutine = StartCoroutine(runProgram());
@@ -455,28 +466,36 @@ public class basicAGE : MonoBehaviour
         ConfigManager.WriteConsole($"[BasicAGE.runProgram] START {running.Name}");
 
         bool moreLines = true;
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+
         while (moreLines)
         {
             // Execute multiple lines per frame based on CPU percentage
-            // If cpu is 100%, run MaxLinesPerFrame lines per frame
-            // If cpu is 10%, run (MaxLinesPerFrame * 0.1) lines per frame.
             int linesToExecute = (cpuPercentage == 100) ? MaxLinesPerFrame : (int)(MaxLinesPerFrame * (cpuPercentage / 100.0));
             if (linesToExecute < 1) linesToExecute = 1;
+
+            stopwatch.Restart();
 
             for (int i = 0; i < linesToExecute && moreLines; i++)
             {
                 YieldInstruction yieldInstruction = runNextLineCurrentProgram(ref moreLines);
                 
-                // If a command specifically requested a sleep or a hard delay, break the batch and yield
+                // If a command specifically requested a sleep, break the batch and yield
                 if (yieldInstruction != null) 
                 {
                     yield return yieldInstruction;
                     break;
                 }
+
+                // TIME BUDGET: Prevent FPS drops in VR.
+                if (stopwatch.Elapsed.TotalMilliseconds > MaxMillisecondsPerFrame)
+                {
+                    break;
+                }
             }
 
-            // If the batch finished without a specific yield instruction, yield once to let Unity render the frame
-            if (moreLines && configCommands.SleepTime == 0)
+            // Yield once to let Unity render the frame
+            if (moreLines)
                 yield return null;
         }
 
@@ -544,20 +563,11 @@ public class basicAGE : MonoBehaviour
         {
             //user changes cpu control
             cpuPercentage = configCommands.cpuPercentage;
-            if (cpuPercentage == 100)
-            {
-                calculatedDelay = 0;
-                return null;
-            }
-            else
-            {
-                calculatedDelay = CalculateDelay(cpuPercentage);
-                return new WaitForSeconds(calculatedDelay);
-            }
-            //ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} cpu: {cpuPercentage}% delay: {calculatedDelay} secs");
+            // ConfigManager.WriteConsole($"[BasicAGE.runProgram] {running.Name} cpu: {cpuPercentage}% delay: {calculatedDelay} secs");
         }
 
-        return new WaitForSeconds(calculatedDelay);
+        // Return null instead of WaitForSeconds(0) so the batch loop can continue
+        return null;
     }
 
 

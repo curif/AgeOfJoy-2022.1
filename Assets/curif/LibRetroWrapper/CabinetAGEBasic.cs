@@ -917,7 +917,7 @@ public class CabinetAGEBasic : MonoBehaviour
         }
     }
 
-    private bool execute(string prgName, int maxExecutionLines = 10000)
+    private bool execute(string prgName, int maxExecutionLines = -1)
     {
         if (string.IsNullOrEmpty(prgName))
             return false;
@@ -1003,11 +1003,14 @@ public class CabinetAGEBasic : MonoBehaviour
 
                     //run
                     bool moreLines = true;
+                    System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
                     while (moreLines)
                     {
                         // Run the event's program in batches based on CPU percentage
                         int linesToExecute = (AGEBasic.ConfigCommands.cpuPercentage == 100) ? AGEBasic.MaxLinesPerFrame : (int)(AGEBasic.MaxLinesPerFrame * (AGEBasic.ConfigCommands.cpuPercentage / 100.0));
                         if (linesToExecute < 1) linesToExecute = 1;
+
+                        stopwatch.Restart();
 
                         for (int i = 0; i < linesToExecute && moreLines; i++)
                         {
@@ -1017,6 +1020,12 @@ public class CabinetAGEBasic : MonoBehaviour
                             if (yieldInstruction != null) 
                             {
                                 yield return yieldInstruction;
+                                break;
+                            }
+
+                            // TIME BUDGET: Prevent FPS drops in VR.
+                            if (stopwatch.Elapsed.TotalMilliseconds > AGEBasic.MaxMillisecondsPerFrame)
+                            {
                                 break;
                             }
                         }
