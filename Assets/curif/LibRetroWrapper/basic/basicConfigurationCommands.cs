@@ -64,6 +64,9 @@ public class ConfigurationCommands
     // File pointer array with 256 positions, initialized to null
     public AGEBasicUserFile[] filepointer = new AGEBasicUserFile[256];
 
+    // Track when a control was last reported as active by CONTROLACTIVE for debouncing
+    public Dictionary<string, float> lastControlActiveTime = new();
+
     public void CloseFiles()
     {
         for (int i = 0; i < filepointer.Length; i++)

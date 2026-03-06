@@ -24,10 +24,32 @@ class CommandFunctionCONTROLACTIVE : CommandFunctionExpressionListBase
         if (FunctionHelper.GetValsCount(vals) > 1)
             port = vals[1].GetInt();
 
-        AGEBasicDebug.WriteConsole($"[ControlActive Execute] {mameControl} {port} params count:{vals.Length}");
-        if (config.ControlMap.Active(mameControl, port) == 0)
-            return BasicValue.False;
+        string debounceKey = $"{mameControl}_{port}";
 
+        AGEBasicDebug.WriteConsole($"[ControlActive Execute] {mameControl} {port} params count:{vals.Length}");
+        
+        if (config.ControlMap.Active(mameControl, port) == 0)
+        {
+            // If the button is released, clear the debounce timer so the next press is instant
+            if (config.lastControlActiveTime.ContainsKey(debounceKey))
+                config.lastControlActiveTime.Remove(debounceKey);
+
+            return BasicValue.False;
+        }
+
+        // The button is physically pressed. Check the debounce timer.
+        float currentTime = UnityEngine.Time.time;
+        if (config.lastControlActiveTime.TryGetValue(debounceKey, out float lastTime))
+        {
+            // 0.25 seconds debounce delay (acts like keyboard repeat delay)
+            if (currentTime - lastTime < 0.25f)
+            {
+                return BasicValue.False; // Suppress the input, it's bouncing
+            }
+        }
+
+        // Register the active time and return true
+        config.lastControlActiveTime[debounceKey] = currentTime;
         return BasicValue.True;
     }
 }

@@ -231,10 +231,10 @@ public class Event
         startTime = DateTime.Now;
     }
     
-    public virtual void PrepareToRun(int lineNumber = 0) 
+    public virtual void PrepareToRun(int maxExecutionLinesAllowed = 0, int lineNumber = 0) 
     {
         AGEBasic.PrepareToRun(eventInformation.program, vars, 
-                                maxExecutionLinesAllowed: 0, lineNumber: lineNumber);
+                                maxExecutionLinesAllowed: maxExecutionLinesAllowed, lineNumber: lineNumber);
         AGEBasic.PreRunTasks();
     }
 
