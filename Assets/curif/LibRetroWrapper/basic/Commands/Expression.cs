@@ -16,6 +16,11 @@ public class CommandExpression : ICommandBase
         {
         ")", ",", "'", ":", "THEN", "ELSE", "TO", "STEP", "]"
         };
+
+    // Shared evaluation stack used by ALL expressions to prevent GC allocation.
+    // Safe because AGEBasic execution is single-threaded.
+    private static readonly Stack<BasicValue> sharedEvalStack = new Stack<BasicValue>(64);
+
     private class Element
     {
         public BasicVar var;
@@ -111,6 +116,7 @@ public class CommandExpression : ICommandBase
     }
 
     private List<Element> elements = new();
+    private List<Element> rpnElements = new(); // Stores the compiled Reverse Polish Notation
     public int Count { get { return elements.Count; } }
 
     public BasicVar GetVariable(int position)
@@ -176,8 +182,39 @@ public class CommandExpression : ICommandBase
             }
         } while (tokens.Next() != null && !CommandExpression.constantStoppers.Contains(tokens.Token));
 
+        CompileToRPN(); // Convert infix notation to RPN once during parse
+
         AGEBasicDebug.WriteConsole($"[CommandExpression.Parse] parser expression ended {tokens.ToString()}");
         return true;
+    }
+
+    private void CompileToRPN()
+    {
+        Stack<Element> operatorStack = new Stack<Element>();
+        rpnElements.Clear();
+
+        foreach (Element element in elements)
+        {
+            if (element.type == CommandType.Type.Operation)
+            {
+                while (operatorStack.Count > 0 &&
+                    BasicValue.PrecedenceIsLess(element.op, operatorStack.Peek().op))
+                {
+                    rpnElements.Add(operatorStack.Pop());
+                }
+                operatorStack.Push(element);
+            }
+            else
+            {
+                // Operands (variables, constants, functions, sub-expressions) go straight to output
+                rpnElements.Add(element);
+            }
+        }
+
+        while (operatorStack.Count > 0)
+        {
+            rpnElements.Add(operatorStack.Pop());
+        }
     }
 
     public void ElementsLog()
@@ -201,72 +238,58 @@ public class CommandExpression : ICommandBase
 
     public BasicValue Execute(BasicVars vars)
     {
-        // AGEBasicDebug.WriteConsole($"[AGE BASIC {CmdToken}] [expression execution]");
-        //ElementsLog();
-
-        //accelerator
-        if (elements.Count == 1)
-            if (elements[0].type == CommandType.Type.Constant)
-                return new(elements[0].constantValue);
-            else if (elements[0].type == CommandType.Type.Variable)
-            {
-                return elements[0].GetVarValue(vars);
-            }
-            else if (elements[0].type == CommandType.Type.Function)
-                return elements[0].func.Execute(vars);
-
-        Stack<BasicValue> operands = new Stack<BasicValue>();
-        Stack<BasicValue> operators = new Stack<BasicValue>();
-
-        foreach (Element element in elements)
+        //accelerator for single-element expressions
+        if (rpnElements.Count == 1)
         {
-            if (element.type == CommandType.Type.Operation)
-            {
-                while (operators.Count > 0 &&
-                    BasicValue.PrecedenceIsLess(element.op, operators.Peek()))
-                {
-                    BasicValue right = operands.Pop();
-                    BasicValue left = operands.Pop();
-                    BasicValue val = left.Operate(right, operators.Pop());
-                    operands.Push(val);
-                }
-
-                operators.Push(element.op);
-            }
-            else
-            {
-                operands.Push(element.GetValue(vars));
-            }
+            if (rpnElements[0].type == CommandType.Type.Constant)
+                return new(rpnElements[0].constantValue);
+            else if (rpnElements[0].type == CommandType.Type.Variable)
+                return rpnElements[0].GetVarValue(vars);
+            else if (rpnElements[0].type == CommandType.Type.Function)
+                return rpnElements[0].func.Execute(vars);
+            else if (rpnElements[0].type == CommandType.Type.Expression)
+                return rpnElements[0].expr.Execute(vars);
         }
 
-        while (operators.Count > 0)
-        {
-            BasicValue right, left, val, op;
-            try
-            {
-                right = operands.Pop();
-                left = operands.Pop();
-                op = operators.Pop();
-                val = left.Operate(right, op);
-            }
-            catch (Exception e)
-            {
-                throw new Exception($"Malformed expression {CmdToken} - [{e.Message}]");
-            }
-            operands.Push(val);
-        }
+        // Snapshot stack size to safely restore it later (handles nested expression calls)
+        int initialStackCount = sharedEvalStack.Count;
 
-        //end
-        BasicValue valRet;
         try
         {
-            valRet = operands.Pop();
+            for (int i = 0; i < rpnElements.Count; i++)
+            {
+                Element element = rpnElements[i];
+
+                if (element.type == CommandType.Type.Operation)
+                {
+                    if (sharedEvalStack.Count - initialStackCount < 2)
+                        throw new Exception($"Malformed expression {CmdToken} - Not enough operands for operator {element.op}");
+
+                    BasicValue right = sharedEvalStack.Pop();
+                    BasicValue left = sharedEvalStack.Pop();
+                    BasicValue val = left.Operate(right, element.op);
+                    sharedEvalStack.Push(val);
+                }
+                else
+                {
+                    sharedEvalStack.Push(element.GetValue(vars));
+                }
+            }
+
+            if (sharedEvalStack.Count - initialStackCount != 1)
+                throw new Exception($"Malformed expression {CmdToken} (END) - Stack unbalanced.");
+
+            return sharedEvalStack.Pop();
         }
-        catch
+        finally
         {
-            throw new Exception($"Malformed expression {CmdToken} (END)");
+            // Guaranteed cleanup: if an exception happens (e.g. divide by zero),
+            // clean up any garbage left on the stack by this expression execution.
+            while (sharedEvalStack.Count > initialStackCount)
+            {
+                sharedEvalStack.Pop();
+            }
         }
-        return valRet;
     }
 
 }
