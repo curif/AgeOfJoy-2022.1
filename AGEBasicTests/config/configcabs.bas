@@ -8,7 +8,7 @@
 70 LETS dicMember, pos, cabToSearch, changed = 0, 0, "", 0
 75 LETS dic, dicMatrix[0], dicMatrix[1], dicMatrix[2], dicMatrix[3] = 
      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", "012345678","9ABCDEFGH","IJKLMNOPQ","RSTUVWXYZ"
-80 LETS dicPos, funct, cursor = 0,0,0 '0 = select room pos, 1=select dic letter, 2=select cab, 3=assing
+80 LETS dicPos, funct, cursor, cabListLen = 0,0,0,0 '0 = select room pos, 1=select dic letter, 2=select cab, 3=assing
 90 LETS matrixcol, matrixrow, matrixidx = 0, 0, 0
 100 LET cpuspeed = GetCPU()
 110 LET columnWidth = width / 4
@@ -25,7 +25,7 @@
      ELSE IF ControlActive("JOYPAD_DOWN") THEN GOSUB 9050 : GOTO 2050
      ELSE IF ControlActive("JOYPAD_Y") THEN END
 2010 GOSUB 5200
-2020 REM SLEEP 0.05
+2020 SLEEP 0.1
 2030 GOTO 2000
 
 2050 LETS left, right = ControlActive("JOYPAD_LEFT"), ControlActive("JOYPAD_RIGHT") 
@@ -39,13 +39,13 @@
 
 2055 LETS up, down = ControlActive("JOYPAD_UP"), ControlActive("JOYPAD_DOWN")
 2058 IF dicPos<9 && up THEN LET cursor = 1 : GOSUB 5550 : GOSUB 9000 : GOTO 2000
-     ELSE IF dicPos>26 && down THEN LET cursor = 1 : GOSUB 5550 : GOSUB 9100 : GOTO 2100
+     ELSE IF dicPos>26 && down && cabListLen > 0 THEN LET cursor = 1 : GOSUB 5550 : GOSUB 9100 : GOTO 2100
      ELSE IF up THEN LET dicPos = dicPos - 9
-     ELSE IF down THEN LET dicPos = dicPos + 9
+     ELSE IF down && dicPos <= 26 THEN LET dicPos = dicPos + 9
 
 2060 IF left || right || up || down THEN GOSUB 5500
 2070 LET cursor = 1 - cursor : GOSUB 5550
-2080 REM SLEEP 0.1
+2080 SLEEP 0.1
 2090 GOTO 2050
 
 2100 IF ControlActive("JOYPAD_UP") THEN LET cursor = 1 : GOSUB 7000 : GOSUB 9050 : GOTO 2050
@@ -54,7 +54,7 @@
      ELSE IF ControlActive("JOYPAD_Y") THEN END
      ELSE IF ControlActive("JOYPAD_B") THEN GOSUB 9500
 2110 LET cursor = 1 - cursor: GOSUB 7000
-2120 REM SLEEP 0.1
+2120 SLEEP 0.1
 2130 GOTO 2100
 
 5200 REM SHOW ACTUAL CABINET TO CHANGE
@@ -82,6 +82,7 @@
 
 6000 REM SHOW CABS
 6010 IF cabToSearch != "" THEN GOTO 6040
+6015 LET cabListLen = 0
 6020 GOSUB 6500
 6030 PRINT 11, 3, " " * (width - 11), 0, 0
 6034 SHOW
@@ -89,6 +90,7 @@
 
 6040 CALL SetCPU(100)
 6050 LET cabList = CabDBSearchArray(cabToSearch)
+6055 LET cabListLen = LEN(cabList)
 6060 GOSUB 6500
 6064 PRINT 11, 3, " " * (width - 19 - LEN(cabToSearch)), 0, 0
 6065 PRINT 11, 3, "Search: " + cabToSearch , 0, 0
