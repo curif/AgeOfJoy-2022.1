@@ -210,6 +210,7 @@ public class ConfigurationController : MonoBehaviour
         onRunAGEBasicRunning,
         onCabinet,
         onLights,
+        onDebugMenu,
         exit
     }
     private StatusOptions status;
@@ -260,6 +261,11 @@ public class ConfigurationController : MonoBehaviour
     private GenericOptions lightColor;
     private GenericOptionsDecimal lightIntensity;
     private GenericWidgetContainer lightContainer;
+
+    //debug menu
+    private GenericWidgetContainer debugContainer;
+    private GenericBool debugModeToggle;
+    private GenericTimedLabel debugActionStatusLabel;
 
     // Start is called before the first frame update
     void Start()
@@ -659,6 +665,7 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("configure cabinets", " tweak cabinet's behavior  ");
             mainMenu.AddOption("locomotion", " player movement configuration  ");
             mainMenu.AddOption("player", " player configuration  ");
+            mainMenu.AddOption("debug & bug report", " tools for fixing issues  ");
         }
         mainMenu.AddOption("lights", "  Change color and light intensity ");
         mainMenu.AddOption("change mode (global/room)", "  global or room configuration ");
@@ -1455,6 +1462,61 @@ public class ConfigurationController : MonoBehaviour
 
     }
     
+    //------------ Debug Menu
+    private void DebugMenuWindowDraw()
+    {
+        if (debugContainer == null)
+            return;
+
+        scr.Clear();
+        debugContainer.Draw();
+        scr.Print(2, 23, UDLR_TO_CHANGE);
+        scr.Print(2, 24, B_TO_SELECT);
+    }
+
+    private void SetDebugWidgets()
+    {
+        if (debugContainer != null)
+            return;
+
+        bool isLoggingActive = BugReportManager.Instance != null && BugReportManager.Instance.IsDebugModeActive();
+
+        debugModeToggle = new GenericBool(scr, "debugToggle", "Debug Logging: ", isLoggingActive, 4, 6);
+        debugActionStatusLabel = new GenericTimedLabel(scr, "statusLabel", "", 4, 11, true);
+        
+        debugContainer = new GenericWidgetContainer(scr, "debugContainer");
+        debugContainer.Add(new GenericWindow(scr, 2, 4, "debugContainer", 37, 12, " Debug & Bug Report "))
+                      .Add(debugModeToggle, 4, 6)
+                      .Add(new GenericButton(scr, "generate", "Generate Bug Report ZIP", 4, 8, true))
+                      .Add(new GenericButton(scr, "exit", "exit", 4, 10, true))
+                      .Add(debugActionStatusLabel);
+    }
+
+    private async void GenerateBugReport()
+    {
+        if (BugReportManager.Instance == null)
+        {
+            debugActionStatusLabel.label = "BugReportManager not found!";
+            debugActionStatusLabel.SetSecondsAndDraw(3);
+            return;
+        }
+
+        debugActionStatusLabel.label = "Generating ZIP... Please wait.";
+        debugActionStatusLabel.Draw();
+        scr.DrawScreen();
+
+        string zipPath = await BugReportManager.Instance.GenerateBugReportZipAsync();
+
+        if (zipPath != null)
+        {
+            debugActionStatusLabel.label = "ZIP created in AgeOfJoy dir!";
+        }
+        else
+        {
+            debugActionStatusLabel.label = "Error creating ZIP!";
+        }
+        debugActionStatusLabel.SetSecondsAndDraw(4);
+    }
     // ------------------------------------------------------------------
 
     void initScreen()
@@ -1765,6 +1827,9 @@ public class ConfigurationController : MonoBehaviour
                       case "lights":
                           status = StatusOptions.onLights;
                           break;
+                      case "debug & bug report":
+                          status = StatusOptions.onDebugMenu;
+                          break;
                   }
 
                   mainMenu.Deselect();
@@ -1919,6 +1984,52 @@ public class ConfigurationController : MonoBehaviour
                           w.Action();
                       }
                   }
+                  scr.DrawScreen();
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
+              })
+            .End()
+
+            .Sequence("Debug Configuration")
+              .Condition("On Config", () => status == StatusOptions.onDebugMenu)
+              .Do("Init", () =>
+              {
+                  SetDebugWidgets();
+                  DebugMenuWindowDraw();
+                  scr.DrawScreen();
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+              })
+              .Do("Process", () =>
+              {
+                  changeContainerSelection(debugContainer);
+
+                  if (inputDictionary["action"])
+                  {
+                      GenericWidget w = debugContainer.GetSelectedWidget();
+                      if (w != null)
+                      {
+                          if (w.name == "exit")
+                          {
+                              status = StatusOptions.onMainMenu;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+                          }
+                          else if (w.name == "debugToggle")
+                          {
+                              if (BugReportManager.Instance != null)
+                              {
+                                  debugModeToggle.Action(); // toggles the UI bool
+                                  BugReportManager.Instance.ToggleDebugMode(debugModeToggle.value);
+                                  debugActionStatusLabel.label = debugModeToggle.value ? "Logging started" : "Logging stopped";
+                                  debugActionStatusLabel.SetSecondsAndDraw(3);
+                              }
+                          }
+                          else if (w.name == "generate")
+                          {
+                              GenerateBugReport();
+                          }
+                      }
+                  }
+                  
+                  debugActionStatusLabel.Draw(); // ensures timed label clears correctly
                   scr.DrawScreen();
                   return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
               })
