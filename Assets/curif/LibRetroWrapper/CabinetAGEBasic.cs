@@ -1019,8 +1019,8 @@ public class CabinetAGEBasic : MonoBehaviour
                         int cabMaxLinesPerFrame = AGEInfo.maxLinesPerFrame == -1 ? AGEBasic.MaxLinesPerFrame : AGEInfo.maxLinesPerFrame;
                         double cabMaxMsPerFrame = AGEInfo.maxMillisecondsPerFrame == -1 ? AGEBasic.MaxMillisecondsPerFrame : AGEInfo.maxMillisecondsPerFrame;
 
-                        // Run the event's program in batches based on CPU percentage
-                        int linesToExecute = (AGEBasic.ConfigCommands.cpuPercentage == 100) ? cabMaxLinesPerFrame : (int)(cabMaxLinesPerFrame * (AGEBasic.ConfigCommands.cpuPercentage / 100.0));
+                        // Run the event's program in batches based on CPU multiplier
+                        int linesToExecute = (int)(cabMaxLinesPerFrame * AGEBasic.ConfigCommands.cpuPercentage);
                         if (linesToExecute < 1) linesToExecute = 1;
 
                         stopwatch.Restart();

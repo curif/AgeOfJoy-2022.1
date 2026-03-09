@@ -470,8 +470,11 @@ public class basicAGE : MonoBehaviour
 
         while (moreLines)
         {
-            // Execute multiple lines per frame based on CPU percentage
-            int linesToExecute = (cpuPercentage == 100) ? MaxLinesPerFrame : (int)(MaxLinesPerFrame * (cpuPercentage / 100.0));
+            // Determine lines to execute this frame. 
+            // cpuPercentage acts as a direct multiplier to the Unity Inspector base MaxLinesPerFrame.
+            // Default: MaxLinesPerFrame(1) * cpuPercentage(1) = 1 line per frame (Legacy speed).
+            // Fast script: SETCPU 500 -> 1 * 500 = 500 lines per frame.
+            int linesToExecute = (int)(MaxLinesPerFrame * cpuPercentage);
             if (linesToExecute < 1) linesToExecute = 1;
 
             stopwatch.Restart();

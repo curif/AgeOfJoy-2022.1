@@ -52,9 +52,10 @@ public class ConfigurationCommands
 
     public Dictionary<string, BasicValueList> basicValueLists = new();
 
-    //after some tests 76% executes 100LPS (lines per second)
-    //with a delay max of 0.03f (CalculateDelay function)
-    public double cpuPercentage = 76;
+    // Determines how many lines of BASIC code execute per frame.
+    // Default is 1 for legacy compatibility (approx 72 LPS on Quest).
+    // Can be increased via SETCPU command inside the script.
+    public double cpuPercentage = 1;
 
     //cabinet events
     public List<Event> events;

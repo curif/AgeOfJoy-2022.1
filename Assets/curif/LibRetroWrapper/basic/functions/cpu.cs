@@ -26,7 +26,7 @@ class CommandFunctionSETCPU : CommandFunctionSingleExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}]  ");
         BasicValue val = expr.Execute(vars);
-        FunctionHelper.ExpectedNumber(val, "percentage of cpu must be a number betwee 0 and 100");
+        FunctionHelper.ExpectedNumber(val, "CPU speed multiplier must be a number (e.g., 1 for legacy speed, 500 for fast)");
         config.cpuPercentage = val.GetNumber(); 
         return null;
     }
