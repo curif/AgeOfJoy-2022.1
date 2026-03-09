@@ -8,7 +8,11 @@ public class AGEProgram
 {
     private string name;
     SortedDictionary<double, ICommandBase> lines = new();
-    private IEnumerator<KeyValuePair<double, ICommandBase>> enumerator;
+    
+    // Fast execution arrays
+    private double[] parsedLineNumbers;
+    private ICommandBase[] parsedCommands;
+    private int currentExecutionIndex = 0;
 
     double nextLineToExecute = -1;
     int lastLineNumberParsed = -1;
@@ -29,26 +33,39 @@ public class AGEProgram
 
     private KeyValuePair<double, ICommandBase> getNext()
     {
+        // If a jump was requested (e.g. GOTO, GOSUB, NEXT)
         if (nextLineToExecute >= 0)
         {
-            IEnumerator<KeyValuePair<double, ICommandBase>> etor = lines.GetEnumerator();
-            while (etor.MoveNext())
+            // Binary Search for the target line
+            int index = Array.BinarySearch(parsedLineNumbers, nextLineToExecute);
+            
+            // If it wasn't found exactly, BinarySearch returns the bitwise complement 
+            // of the next largest element (>=). We flip it to get the correct index.
+            if (index < 0) 
             {
-                if (etor.Current.Key >= nextLineToExecute)
-                {
-                    nextLineToExecute = -1; // Reset the flag
-                    enumerator = etor;
-                    return etor.Current;
-                }
+                index = ~index;
             }
-            return default;
+
+            // If the index is past the end of the array, the jump went past the end of the program
+            if (index >= parsedLineNumbers.Length)
+            {
+                return default;
+            }
+
+            // Set our execution pointer to the found index
+            currentExecutionIndex = index;
+            nextLineToExecute = -1; // Reset jump flag
         }
 
-        if (enumerator == null) enumerator = lines.GetEnumerator();
+        // Standard execution: return current and move pointer forward
+        if (currentExecutionIndex < parsedLineNumbers.Length)
+        {
+            double lineNo = parsedLineNumbers[currentExecutionIndex];
+            ICommandBase cmd = parsedCommands[currentExecutionIndex];
+            currentExecutionIndex++;
+            return new KeyValuePair<double, ICommandBase>(lineNo, cmd);
+        }
 
-        if (enumerator.MoveNext())
-            return enumerator.Current;
-        
         // Return an empty KeyValuePair if reach the end.
         return default;
     }
@@ -59,10 +76,31 @@ public class AGEProgram
         tracker = new();
     }
 
+    // Called after parsing is complete to populate the fast execution arrays
+    private void CompileExecutionArrays()
+    {
+        parsedLineNumbers = new double[lines.Count];
+        parsedCommands = new ICommandBase[lines.Count];
+        
+        int i = 0;
+        foreach (KeyValuePair<double, ICommandBase> kvp in lines)
+        {
+            parsedLineNumbers[i] = kvp.Key;
+            parsedCommands[i] = kvp.Value;
+            i++;
+        }
+    }
+
     public void PrepareToRun(BasicVars pvars = null, int lineNumber = 0)
     {
-        this.nextLineToExecute = lineNumber - 1;
-        this.enumerator = null;
+        // Ensure arrays are built if they somehow weren't
+        if (parsedLineNumbers == null || parsedLineNumbers.Length != lines.Count)
+        {
+            CompileExecutionArrays();
+        }
+
+        this.nextLineToExecute = lineNumber - 1; // trigger a jump to the starting line
+        this.currentExecutionIndex = 0;
 
         config.Gosub = new Stack<double>();
         config.LineNumber = 0;
