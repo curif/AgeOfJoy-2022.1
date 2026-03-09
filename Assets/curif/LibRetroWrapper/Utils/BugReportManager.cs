@@ -148,8 +148,8 @@ public class BugReportManager : MonoBehaviour
                 string treePath = Path.Combine(tempDir, "file_tree.txt");
                 GenerateFileTree(ConfigManager.BaseDir, treePath);
 
-                // 4. Copy all YAML configuration files
-                CopyYamlFiles(ConfigManager.BaseDir, tempDir);
+                // 4. Copy all configuration and script files (.yaml, .bas, .debug)
+                CopySupportFiles(ConfigManager.BaseDir, tempDir);
 
                 // 5. Compress to ZIP
                 if (File.Exists(zipFilePath)) File.Delete(zipFilePath);
@@ -228,33 +228,38 @@ public class BugReportManager : MonoBehaviour
         }
     }
 
-    private void CopyYamlFiles(string sourceRoot, string destTempFolder)
+    private void CopySupportFiles(string sourceRoot, string destTempFolder)
     {
-        string yamlDestFolder = Path.Combine(destTempFolder, "Configurations");
-        Directory.CreateDirectory(yamlDestFolder);
+        string supportDestFolder = Path.Combine(destTempFolder, "ConfigurationsAndScripts");
+        Directory.CreateDirectory(supportDestFolder);
 
-        // Find all YAML files in the BaseDir and its subdirectories
-        string[] yamlFiles = Directory.GetFiles(sourceRoot, "*.yaml", SearchOption.AllDirectories);
+        string[] extensions = { "*.yaml", "*.bas", "*.debug" };
 
-        foreach (string file in yamlFiles)
+        foreach (string extension in extensions)
         {
-            try
-            {
-                // Recreate the folder structure inside the zip so it's easy to read
-                string relativePath = file.Substring(sourceRoot.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-                string destinationFile = Path.Combine(yamlDestFolder, relativePath);
-                
-                string destDir = Path.GetDirectoryName(destinationFile);
-                if (!Directory.Exists(destDir))
-                {
-                    Directory.CreateDirectory(destDir);
-                }
+            // Find all matching files in the BaseDir and its subdirectories
+            string[] matchingFiles = Directory.GetFiles(sourceRoot, extension, SearchOption.AllDirectories);
 
-                File.Copy(file, destinationFile, true);
-            }
-            catch (Exception e)
+            foreach (string file in matchingFiles)
             {
-                Debug.LogWarning($"[BugReportManager] Failed to copy yaml file {file}: {e.Message}");
+                try
+                {
+                    // Recreate the folder structure inside the zip so it's easy to read
+                    string relativePath = file.Substring(sourceRoot.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                    string destinationFile = Path.Combine(supportDestFolder, relativePath);
+                    
+                    string destDir = Path.GetDirectoryName(destinationFile);
+                    if (!Directory.Exists(destDir))
+                    {
+                        Directory.CreateDirectory(destDir);
+                    }
+
+                    File.Copy(file, destinationFile, true);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[BugReportManager] Failed to copy support file {file}: {e.Message}");
+                }
             }
         }
     }
