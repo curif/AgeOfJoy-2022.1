@@ -9,6 +9,9 @@ public class AtStart : MonoBehaviour
     {
         SceneManager.LoadSceneAsync("IntroGalleryExterior", LoadSceneMode.Additive);
         SceneManager.LoadSceneAsync("IntroGallery", LoadSceneMode.Additive);
+
+        // Start preloading cabinet descriptions in the background to warm up the cache
+        _ = CabinetInformation.PreloadAllAsync();
     }
 
     /*

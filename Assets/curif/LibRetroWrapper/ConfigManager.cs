@@ -118,7 +118,7 @@ public static class ConfigManager
     // Cabinet information are objects created using the deserealization of the description.yaml file. We cannot know easily the size
     // of the object so we are using a counter to maintain to N elements in the cache.
     public static ResourceCache<string, CabinetInformation> CabinetInformationCache =
-                                       ResourceCacheManager.Create<string, CabinetInformation>("CabinetInformationCache", 100f); //units not MB
+                                       ResourceCacheManager.Create<string, CabinetInformation>("CabinetInformationCache", 5000f); //units not MB
 
     // textures are loaded from image files  and assigned to cabinets parts (no copy).
     // If cache exceed the limit the manager will delete old textures in the cache. 

@@ -253,6 +253,32 @@ public class CabinetInformation
         return cabInfo;
     }
 
+    public static async System.Threading.Tasks.Task PreloadAllAsync()
+    {
+        string[] cabinetDirs = GameRegistry.cabinetDirectories;
+        if (cabinetDirs == null || cabinetDirs.Length == 0)
+            return;
+
+        ConfigManager.WriteConsole($"[CabinetInformation] Background preloading {cabinetDirs.Length} cabinets...");
+
+        await System.Threading.Tasks.Task.Run(() =>
+        {
+            int count = 0;
+            foreach (string cabName in cabinetDirs)
+            {
+                string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+                try 
+                {
+                    // This will read from disk and add to CabinetInformationCache
+                    fromYaml(cabPath, true);
+                    count++;
+                }
+                catch { /* Ignore individual load failures during preload */ }
+            }
+            ConfigManager.WriteConsole($"[CabinetInformation] Background preload finished. {count} cabinets in cache.");
+        });
+    }
+
     private static CabinetInformation parseYaml(string cabPath, string yamlPath, string yaml)
     {
         try
