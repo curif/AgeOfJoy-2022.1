@@ -273,6 +273,10 @@ public class basicAGE : MonoBehaviour
         InitComponents();
 
         string name = Path.GetFileName(filePath);
+        string directory = Path.GetDirectoryName(filePath);
+
+        configCommands.ProgramPath = directory;
+        configCommands.ProgramName = name;
 
         ConfigManager.WriteConsole($"[basicAGE.ParseFile] [{name}] {filePath} ");
 
@@ -335,6 +339,28 @@ public class basicAGE : MonoBehaviour
         return LastRuntimeException != null;
     }
 
+    public class ProgramContext
+    {
+        public AGEProgram Program;
+        public Stack<double> GosubStack;
+        public double LineNumber;
+        public string ProgramPath;
+        public string ProgramName;
+    }
+    private Stack<ProgramContext> programContextStack = new Stack<ProgramContext>();
+
+    // Helper to pop the state
+    private void PopProgramState()
+    {
+        ProgramContext ctx = programContextStack.Pop();
+        running = ctx.Program;
+        configCommands.Gosub = ctx.GosubStack;
+        configCommands.LineNumber = ctx.LineNumber;
+        configCommands.ageProgram = running;
+        configCommands.ProgramPath = ctx.ProgramPath;
+        configCommands.ProgramName = ctx.ProgramName;
+    }
+
     public void Stop()
     {
         if (running == null)
@@ -347,6 +373,8 @@ public class basicAGE : MonoBehaviour
     {
         if (running == null)
             return;
+
+        programContextStack.Clear();
 
         if (runningProgramCoroutine != null)
             StopCoroutine(runningProgramCoroutine);
@@ -535,13 +563,89 @@ public class basicAGE : MonoBehaviour
         catch (Exception e)
         {
             string strerror = errorMessage(running, e);
-            ConfigManager.WriteConsoleError($"[BasicAGE.RunALine] #{configCommands.LineNumber} {strerror} \n {e.StackTrace}");
+            ConfigManager.WriteConsoleException($"[BasicAGE.runNextLineCurrentProgram] #{configCommands.LineNumber} {strerror}",e);
             LastRuntimeException = new(running.Name, (int)configCommands.LineNumber, e.Message, e);
             moreLines = false;
         }
 
+        // --- NEW: INTERCEPT SUB-PROGRAM SIGNAL ---
+        if (configCommands.RunSubProgramPath != null)
+        {
+            if (programContextStack.Count > 20) // Prevent infinite recursion crashing game
+                throw new Exception($"[BasicAGE.runNextLineCurrentProgram] RUN command stack overflow (max depth 20).");
+
+            string path = configCommands.RunSubProgramPath;
+            int line = configCommands.RunSubProgramLine;
+
+            ConfigManager.WriteConsole($"[BasicAGE.runNextLineCurrentProgram] ready to run {path} on line {line} called by {name}");
+
+            configCommands.RunSubProgramPath = null;
+            configCommands.RunSubProgramLine = -1;
+
+            // 1. Save current program state
+            ProgramContext ctx = new ProgramContext {
+                Program = running,
+                GosubStack = configCommands.Gosub,
+                LineNumber = configCommands.LineNumber,
+                ProgramPath = configCommands.ProgramPath,
+                ProgramName = configCommands.ProgramName
+            };
+            programContextStack.Push(ctx);
+
+            try 
+            {6
+                AGEProgram newProg;
+                string progName = Path.GetFileName(path);
+
+                // 2. Resolve and load the program
+                if (!programs.ContainsKey(progName))
+                {
+                    // Resolve absolute path if needed
+                    // C:\Users\curif\desarr\ageofjoy.0.5.1\AgeOfJoy-2022.1\AGEBasicTests\core test_run.bas
+                    string fullPath = Path.Combine(configCommands.ProgramPath, path);
+                    newProg = ParseFile(fullPath);
+                }
+                else
+                {
+                    newProg = programs[progName];
+                }
+
+                // 3. Prepare new program. CRITICAL: Pass running.Vars to share the exact same variable space!
+                newProg.PrepareToRun(running.Vars, line);
+                
+                // 4. Swap execution context
+                running = newProg;
+                configCommands.ageProgram = running;
+                
+                moreLines = true; // Force loop to continue immediately with new program
+                return null;
+            }
+            catch (Exception e)
+            {
+                string strerror = errorMessage(running, e);
+                ConfigManager.WriteConsoleException($"[BasicAGE.runNextLineCurrentProgram] Sub-program chaining failed: {configCommands.LineNumber} {strerror}", e);
+                LastRuntimeException = new(running.Name, (int)configCommands.LineNumber, e.Message, e);
+                moreLines = false;
+                return null;
+            }
+        }
+
         if (!moreLines)
         {
+            // --- NEW: RETURN TO CALLER PROGRAM ---
+            // If no error occurred and there is a caller waiting on the stack
+            if (LastRuntimeException == null && programContextStack.Count > 0)
+            {
+                PopProgramState();
+                
+                // If the sub-program hit an 'END' command, it sets stop=true. 
+                // We must reset it so the parent program doesn't accidentally stop too.
+                configCommands.stop = false; 
+                
+                moreLines = true; // Resume the parent program
+                return null; 
+            }
+
             if (configCommands.DebugMode)
                 SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
 
@@ -618,7 +722,7 @@ public class basicAGE : MonoBehaviour
     }
     public void ProcessTheFile()
     {
-        ParseFile(path + "\\" + nameToExecute);
+        ParseFile(Path.Combine(path, nameToExecute));
     }
     /*
     public void RunTests()

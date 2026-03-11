@@ -1,6 +1,4 @@
-using Meta.XR.Editor.Tags;
 using System;
-using System.Drawing;
 using System.IO;
 using UnityEngine;
 

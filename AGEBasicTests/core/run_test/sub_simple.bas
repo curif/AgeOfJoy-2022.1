@@ -1,0 +1,4 @@
+10 REM Sub-program to test simple RUN
+20 LET SHARED_VAR = 100
+30 LET RUN_TEST_1_OK = 1
+40 END

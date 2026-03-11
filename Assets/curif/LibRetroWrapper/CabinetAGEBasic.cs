@@ -10,6 +10,7 @@ using YamlDotNet.Core;
 using static CabinetInformation;
 using static EventInformation;
 using UnityEngine.UIElements;
+using System.IO;
 
 
 [Serializable]
@@ -946,7 +947,7 @@ public class CabinetAGEBasic : MonoBehaviour
         {
             try
             {
-                AGEBasic.ParseFile(pathBase + "/" + prgName);
+                AGEBasic.ParseFile(Path.Combine(pathBase, prgName));
             }
             catch (CompilationException e)
             {

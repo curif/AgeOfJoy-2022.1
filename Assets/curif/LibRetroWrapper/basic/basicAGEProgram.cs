@@ -295,65 +295,73 @@ public class AGEProgram
         using (StreamReader reader = new StreamReader(filePath))
         {
             string line;
-
+            
+            
             while ((line = reader.ReadLine()) != null)
             {
 
                 // *** NEW: Trim the physical line immediately after reading ***
                 line = line.Trim();
-                // After trimming and stripping comments, if the line is empty, skip it.
-                if (string.IsNullOrWhiteSpace(line))
+                try
                 {
-                    continue; // Ignore empty lines or lines that were only comments
-                }
-
-                // 1. Strip comments (everything after a single quote) immediately.
-                // This ensures comments don't interfere with line number detection or command content.
-                int commentIndex = line.IndexOf('\'');
-                if (commentIndex != -1)
-                {
-                    line = line.Substring(0, commentIndex);
-                }
-
-                // 2. Attempt to parse a line number at the start of the physical line.
-                int parsedLineNumber;
-                string commandPartAfterNumber;
-                bool startsWithLineNumber = TryParseLineNumberAndContent(line, 
-                                                                        out parsedLineNumber, 
-                                                                        out commandPartAfterNumber);
-
-                if (startsWithLineNumber)
-                {
-                    // This physical line starts with a line number, so it signifies a NEW logical program line.
-
-                    // A. First, process any accumulated command from the PREVIOUS logical line.
-                    if (!string.IsNullOrEmpty(currentSentence)) // If we have a pending logical line
-                        ProcessCommand((int)currentLineNumber, currentSentence, config, filePath);
-
-                    if (parsedLineNumber <= currentLineNumber)
-                        throw new Exception($"Syntax Error: Line numbers must be in strictly ascending order and unique. Duplicate or out-of-order line number {parsedLineNumber}. File: '{filePath}'");
-
-                    // C. Initialize for the new logical line.
-                    currentLineNumber = parsedLineNumber;
-                    if (string.IsNullOrEmpty(commandPartAfterNumber))
+                    // After trimming and stripping comments, if the line is empty, skip it.
+                    if (string.IsNullOrWhiteSpace(line))
                     {
-                        currentSentence = "";
-                        continue;
-                    }
-                    currentSentence = commandPartAfterNumber;
-                }
-                else
-                {
-                    // This physical line does NOT start with a line number. It's a continuation.
-
-                    if (currentLineNumber == -1)
-                    {
-                        throw new Exception($"Syntax Error: First executable line must start with a line number. File: '{filePath}'");
+                        continue; // Ignore empty lines or lines that were only comments
                     }
 
-                    // Append this line's content to the current accumulated command.
-                    // Add a space as a separator, which is common for multi-line statements.
-                    currentSentence += " " + line; 
+                    // 1. Strip comments (everything after a single quote) immediately.
+                    // This ensures comments don't interfere with line number detection or command content.
+                    int commentIndex = line.IndexOf('\'');
+                    if (commentIndex != -1)
+                    {
+                        line = line.Substring(0, commentIndex);
+                    }
+
+                    // 2. Attempt to parse a line number at the start of the physical line.
+                    int parsedLineNumber;
+                    string commandPartAfterNumber;
+                    bool startsWithLineNumber = TryParseLineNumberAndContent(line,
+                                                                            out parsedLineNumber,
+                                                                            out commandPartAfterNumber);
+
+                    if (startsWithLineNumber)
+                    {
+                        // This physical line starts with a line number, so it signifies a NEW logical program line.
+
+                        // A. First, process any accumulated command from the PREVIOUS logical line.
+                        if (!string.IsNullOrEmpty(currentSentence)) // If we have a pending logical line
+                            ProcessCommand((int)currentLineNumber, currentSentence, config, filePath);
+
+                        if (parsedLineNumber <= currentLineNumber)
+                            throw new Exception($"Syntax Error: Line numbers must be in strictly ascending order and unique. Duplicate or out-of-order line number {parsedLineNumber}. File: '{filePath}'");
+
+                        // C. Initialize for the new logical line.
+                        currentLineNumber = parsedLineNumber;
+                        if (string.IsNullOrEmpty(commandPartAfterNumber))
+                        {
+                            currentSentence = "";
+                            continue;
+                        }
+                        currentSentence = commandPartAfterNumber;
+                    }
+                    else
+                    {
+                        // This physical line does NOT start with a line number. It's a continuation.
+
+                        if (currentLineNumber == -1)
+                        {
+                            throw new Exception($"Syntax Error: First executable line must start with a line number. File: '{filePath}'");
+                        }
+
+                        // Append this line's content to the current accumulated command.
+                        // Add a space as a separator, which is common for multi-line statements.
+                        currentSentence += " " + line;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"[AGEBasicProgam.Parse] program: '{filePath}', error parsing line `{line}` exception: {ex}");
                 }
             }
         }
@@ -388,7 +396,7 @@ public class AGEProgram
         AGEBasicDebug.WriteConsole($"[basicAGEProgram.ProcessCommand] >>>> line: {lineNumber}  {tokens.ToString()}");
 
         if (tokens.Count() < 1)
-            throw new Exception($"Invalid line format: {command} line: {(int)lineNumber} file: {filePath}");
+            throw new Exception($"[basicAGEProgram.ProcessCommand] Invalid line format: {command} line: {(int)lineNumber} file: {filePath}");
 
         if (tokens.Token == "REM")
         {
@@ -398,7 +406,7 @@ public class AGEProgram
 
         ICommandBase cmd = Commands.GetNew(tokens.Token, config);
         if (!AllowedAtFirst(cmd))
-            throw new Exception($"Syntax error command or function not found: {tokens.Token} line: {(int)lineNumber} file: {filePath}");
+            throw new Exception($"[basicAGEProgram.ProcessCommand] Syntax error command or function not found: {tokens.Token} line: {(int)lineNumber} file: {filePath}");
 
         config.LineNumber = lineNumber; //config.LineNumber could be changed by a parser.
         lines[lineNumber] = cmd;
@@ -411,7 +419,7 @@ public class AGEProgram
             tokens++;
             cmd = Commands.GetNew(tokens.Token, config);
             if (!AllowedAtFirst(cmd))
-                throw new Exception($"Syntax error command or function not found: {tokens.Token}  line: {(int)lineNumber} file: {filePath}");
+                throw new Exception($"[basicAGEProgram.ProcessCommand] Syntax error command or function not found: {tokens.Token}  line: {(int)lineNumber} file: {filePath}");
 
             config.LineNumber += MinJump;
             lines[config.LineNumber] = cmd;

@@ -48,7 +48,13 @@ public class ConfigurationCommands
 
     public MusicPlayer MusicPlayerQueue;
 
+    public string RunSubProgramPath = null;
+    public int RunSubProgramLine = -1;
+
     public float SleepTime;
+
+    public string ProgramPath;
+    public string ProgramName;
 
     public Dictionary<string, BasicValueList> basicValueLists = new();
 

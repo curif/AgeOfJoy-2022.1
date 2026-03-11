@@ -1,0 +1,7 @@
+10 REM Sub-program to test RUN LINE
+20 LET RUN_TEST_2_OK = 0
+30 END
+40 REM Start execution here
+50 LET SHARED_VAR_2 = 200
+60 LET RUN_TEST_2_OK = 1
+70 END

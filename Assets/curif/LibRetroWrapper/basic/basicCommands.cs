@@ -22,6 +22,7 @@ public static class Commands
         commands["FOR"] = typeof(CommandFORTO);
         commands["NEXT"] = typeof(CommandNEXT);
         commands["SLEEP"] = typeof(CommandSLEEP);
+        commands["RUN"] = typeof(CommandRUN);
 
         //screen
         commands["CLS"] = typeof(CommandCLS);
