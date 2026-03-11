@@ -593,7 +593,7 @@ public class basicAGE : MonoBehaviour
             programContextStack.Push(ctx);
 
             try 
-            {6
+            {
                 AGEProgram newProg;
                 string progName = Path.GetFileName(path);
 
