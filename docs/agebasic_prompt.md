@@ -60,7 +60,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 | **DATA** | `DATA "listName", val1, val2...` | Stores static data in a named list. |
 | **READ** | `READ "listName", var1, var2...` | Reads sequential data from a named list into variables. |
 | **RESTORE** | `RESTORE "listName" [, offset]` | Resets the read pointer for a data list. |
-
+| **RUN** | `RUN "path/to/my/myprogram.bas" [LINE 30]` | Execute a program and continue (optionally starting at specified line #). 
 ---
 
 ## 3. Math & Logic Functions
