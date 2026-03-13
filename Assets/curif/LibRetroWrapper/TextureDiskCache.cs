@@ -134,7 +134,7 @@ public static class TextureDiskCache
     }
 
     /// <summary>
-    /// Saves the compressed texture to disk.
+    /// Saves the compressed texture to disk asynchronously.
     /// </summary>
     public static void SaveToDisk(string originalPath, Texture2D tex)
     {
@@ -142,25 +142,39 @@ public static class TextureDiskCache
 
         try
         {
-            // Get the compressed ETC2 bytes
+            // 1. Extract all Unity-specific data on the Main Thread
+            int width = tex.width;
+            int height = tex.height;
+            int format = (int)tex.format;
             byte[] rawData = tex.GetRawTextureData();
 
-            using (FileStream fs = File.Open(cachePath, FileMode.Create, FileAccess.Write))
-            using (BinaryWriter writer = new BinaryWriter(fs))
+            // 2. Fire and forget a background thread for the slow Disk I/O
+            System.Threading.ThreadPool.QueueUserWorkItem(_ =>
             {
-                // 1. Write Header
-                writer.Write(tex.width);
-                writer.Write(tex.height);
-                writer.Write((int)tex.format);
+                try
+                {
+                    using (FileStream fs = File.Open(cachePath, FileMode.Create, FileAccess.Write))
+                    using (BinaryWriter writer = new BinaryWriter(fs))
+                    {
+                        // 1. Write Header
+                        writer.Write(width);
+                        writer.Write(height);
+                        writer.Write(format);
 
-                // 2. Write Data
-                writer.Write(rawData);
-            }
-            // ConfigManager.WriteConsole($"[DiskCache] Cached: {Path.GetFileName(cachePath)}");
+                        // 2. Write Data
+                        writer.Write(rawData);
+                    }
+                    // ConfigManager.WriteConsole($"[DiskCache] Cached Async: {Path.GetFileName(cachePath)}");
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleError($"[DiskCache] Async Write failed: {e.Message}");
+                }
+            });
         }
         catch (Exception e)
         {
-            ConfigManager.WriteConsoleError($"[DiskCache] Write failed: {e.Message}");
+            ConfigManager.WriteConsoleError($"[DiskCache] Setup for Async Write failed: {e.Message}");
         }
     }
 
