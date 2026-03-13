@@ -57,7 +57,8 @@ public static class CabinetTextureCache
             TextureDiskCache.DeleteCache(path);
         else if (TextureDiskCache.HasValidCache(path))
         {
-            Texture2D cachedTex = TextureDiskCache.LoadFromDisk(path);
+            Texture2D cachedTex = null;
+            yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex);
 
             if (cachedTex != null)
             {

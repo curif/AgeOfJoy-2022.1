@@ -73,6 +73,67 @@ public static class TextureDiskCache
     }
 
     /// <summary>
+    /// Asynchronously loads the texture from disk using a background thread for file I/O to prevent VR stutter.
+    /// </summary>
+    public static System.Collections.IEnumerator LoadFromDiskAsync(string originalPath, Action<Texture2D> onComplete)
+    {
+        string cachePath = originalPath + EXTENSION;
+
+        int width = 0;
+        int height = 0;
+        TextureFormat format = TextureFormat.RGBA32;
+        byte[] rawData = null;
+        bool isDone = false;
+        bool hasError = false;
+
+        System.Threading.ThreadPool.QueueUserWorkItem(_ =>
+        {
+            try
+            {
+                using (FileStream fs = File.Open(cachePath, FileMode.Open, FileAccess.Read))
+                using (BinaryReader reader = new BinaryReader(fs))
+                {
+                    width = reader.ReadInt32();
+                    height = reader.ReadInt32();
+                    format = (TextureFormat)reader.ReadInt32();
+
+                    int dataSize = (int)(fs.Length - fs.Position);
+                    rawData = reader.ReadBytes(dataSize);
+                }
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleError($"[DiskCache] Corrupt file {cachePath}: {e.Message}");
+                hasError = true;
+            }
+            finally
+            {
+                isDone = true;
+            }
+        });
+
+        // Yield until the background thread finishes reading the file
+        while (!isDone)
+        {
+            yield return null;
+        }
+
+        if (hasError || rawData == null)
+        {
+            try { File.Delete(cachePath); } catch { }
+            onComplete?.Invoke(null);
+            yield break;
+        }
+
+        // Texture creation MUST happen on the main thread
+        Texture2D tex = new Texture2D(width, height, format, false);
+        tex.LoadRawTextureData(rawData);
+        tex.Apply(false, true); // Upload to GPU
+
+        onComplete?.Invoke(tex);
+    }
+
+    /// <summary>
     /// Saves the compressed texture to disk.
     /// </summary>
     public static void SaveToDisk(string originalPath, Texture2D tex)
