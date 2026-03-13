@@ -32,14 +32,6 @@ public static class CabinetTextureCache
 
     public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete)
     {
-        if (IsTextureCached(path))
-        {
-            ConfigManager.WriteConsole($"[LoadAndCacheAsync] from CACHE: {path}");
-
-            onComplete?.Invoke(GetCachedTexture(path));
-            yield break;
-        }
-
         if (CachedTextures == null)
         {
             // lazy creation:
@@ -50,13 +42,26 @@ public static class CabinetTextureCache
             ConfigManager.WriteConsole($"[LoadAndCacheAsync] created cache textures size: {cacheSize}");
         }
 
-        if (TextureDiskCache.HasValidCache(path))
+        if (IsTextureCached(path))
+        {
+            ConfigManager.WriteConsole($"[LoadAndCacheAsync] from memory CACHE: {path}");
+
+            onComplete?.Invoke(GetCachedTexture(path));
+            yield break;
+        }
+
+        // load disk cached texture
+        if (DeviceController.originalTextures)
+            // clean up any previously generated compressed disk cache when the user
+            // is not compressing textures
+            TextureDiskCache.DeleteCache(path);
+        else if (TextureDiskCache.HasValidCache(path))
         {
             Texture2D cachedTex = TextureDiskCache.LoadFromDisk(path);
 
             if (cachedTex != null)
             {
-                cachedTex.name = "CACHED-COMPRESSED-" + path;
+                cachedTex.name = "DISK-CACHED-COMPRESSED-" + path;
 
                 // Add to LRU Cache
                 float sizeMB = CalculateActualSizeBytes(cachedTex) / (1024f * 1024f);
@@ -76,11 +81,10 @@ public static class CabinetTextureCache
 
             if (www.result != UnityWebRequest.Result.Success)
             {
-                ConfigManager.WriteConsoleError($"Failed to load {path}: {www.error}");
+                ConfigManager.WriteConsoleError($"[LoadAndCacheAsync] Failed to load {path}: {www.error}");
                 onComplete?.Invoke(null);
                 yield break;
             }
-
 
             // Grab the decoded RGBA32 texture
             Texture2D texTmp = DownloadHandlerTexture.GetContent(www);
@@ -88,97 +92,129 @@ public static class CabinetTextureCache
             texTmp.mipMapBias = -0.3f;
             float originalSizeInBytes = CalculateActualSizeBytes(texTmp);
             texTmp.name = "ORIGINAL-" + path;
-
+            Texture2D cached;
             if (DeviceController.originalTextures)
             {
-                // clean up any previously generated compressed disk cache
-                TextureDiskCache.DeleteCache(path);
+                // user wants original uncompressed textures
 
-                // 1. DIMENSION CHECK (CRITICAL)
-                // If a user provides an 8K texture, resize it immediately or your app will die.
+                // DIMENSION CHECK (CRITICAL)
+                // TODO: If a user provides an 8K texture, resize it immediately or your app will die.
                 if (texTmp.width > 2048 || texTmp.height > 2048)
                 {
                     // You should implement a simple downscale here if needed
-                    ConfigManager.WriteConsoleWarning($"[LoadAndCacheAsync] {path} is very large ({texTmp.width}x{texTmp.height}). Memory risk!");
+                    ConfigManager.WriteConsoleWarning($"[LoadAndCacheAsync] texture {path} is very large ({texTmp.width}x{texTmp.height}). Memory risk!");
                 }
 
-                //size check
-                //bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+                ConfigManager.WriteConsole($"[LoadAndCacheAsync] use original texture -  size {originalSizeInBytes} or player conf {path}");
 
-                /*
-                 * The conversion to RGB565 wasn't possible for
-                 * Meta Quest. Even when the docs
-                 * says it suport RGB565 the shader conversion didn't 
-                 * work as expected and the GPU was 
-                 * blocked
-                 */
-                bool useOriginal = true;
-                if (useOriginal)
-                {
-                    ConfigManager.WriteConsole($"[LoadAndCacheAsync] useOriginal by size {originalSizeInBytes} or player conf {path}");
-
-                    texTmp.name = "ORIGINALBYSIZE-" + path;
-                    Texture2D cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
-                    if (cached != texTmp)
-                    {
-                        UnityEngine.Object.Destroy(texTmp);
-                        texTmp = cached;
-                    }
-                    onComplete?.Invoke(texTmp);
-                    yield break;
-                }
-            }
-            else
-            {                // DownloadHandlerTexture usually returns RGBA32 or RGB24
-                TextureFormat format = texTmp.format;
-
-                if (format == TextureFormat.RGBA32 ||
-                    format == TextureFormat.RGB24 ||
-                    format == TextureFormat.ARGB32 ||
-                    format == TextureFormat.BGRA32) // Added BGRA32 just in case
-                {
-                    // These are all "Raw" formats and are safe to compress
-                    if (texTmp.width % 4 == 0 && texTmp.height % 4 == 0)
-                    {
-                        texTmp.Compress(false);
-                        texTmp.name = "COMPRESSED-" + path;
-                        //ConfigManager.WriteConsole($"[LoadAndCacheAsync] compressed {texTmp.name} original format: {format} to ETC2.");
-                        
-                        //SAVE CACHE immediately
-                        TextureDiskCache.SaveToDisk(path, texTmp);
-                    }
-                }
-                else
-                {
-                    // The texture is already compressed or in a specialized format
-                    texTmp.name = "ALREADY-COMPRESSED-" + path;
-
-                    //ConfigManager.WriteConsole($"[LoadAndCacheAsync] {texTmp.name} Skipping compression. Format is already {format}");
-                }
-
-                // 3. FREE SYSTEM RAM
-                // This uploads to GPU and DELETES the CPU-side copy.
-                // Once you do this, you can't use GetPixels() anymore, but the GPU memory is halved.
-                texTmp.Apply(false, true);
-                // From this point on, texTmp is NO LONGER READABLE by the CPU,
-
-                // 4. CACHE THE COMPRESSED VERSION
-                float compressedSizeMB = CalculateActualSizeBytes(texTmp) / (1024f * 1024f);
-                ConfigManager.WriteConsole($"[LoadAndCacheAsync] {texTmp.name} Compressed from {originalSizeInBytes / (1024f * 1024f):F2}MB to {compressedSizeMB:F2}MB");
-                
-                Texture2D cached = CachedTextures.Add(path, texTmp, compressedSizeMB);
+                cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
                 if (cached != texTmp)
                 {
                     UnityEngine.Object.Destroy(texTmp);
                     texTmp = cached;
                 }
-
                 onComplete?.Invoke(texTmp);
                 yield break;
             }
+                
+            // DownloadHandlerTexture usually returns RGBA32 or RGB24
+            TextureFormat format = texTmp.format;
 
-            // this codeblock is the failed attempt to compress on GPU
+            if (format == TextureFormat.RGBA32 ||
+                format == TextureFormat.RGB24 ||
+                format == TextureFormat.ARGB32 ||
+                format == TextureFormat.BGRA32) // Added BGRA32 just in case
+            {
+                int w = texTmp.width;
+                int h = texTmp.height;
 
+                // Hardware compression requires dimensions to be multiples of 4.
+                if (w % 4 != 0 || h % 4 != 0)
+                {
+                    int newWidth = w + (4 - (w % 4)) % 4;
+                    int newHeight = h + (4 - (h % 4)) % 4;
+                    ConfigManager.WriteConsole($"[LoadAndCacheAsync] GPU Resizing {path} from {w}x{h} to {newWidth}x{newHeight} for compression.");
+
+                    RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight, 0, RenderTextureFormat.ARGB32);
+                    
+                    // Blit stretches the image perfectly to the new dimensions
+                    Graphics.Blit(texTmp, rt);
+
+                    var request = UnityEngine.Rendering.AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
+                    
+                    // Wait for the GPU to finish reading back the data without blocking the main thread
+                    while (!request.done)
+                    {
+                        yield return null;
+                    }
+
+                    if (!request.hasError)
+                    {
+                        // Create without mipmaps initially so LoadRawTextureData's expected byte size matches the single mip level read back.
+                        Texture2D resizedTex = new Texture2D(newWidth, newHeight, TextureFormat.RGBA32, false, false);
+                        resizedTex.LoadRawTextureData(request.GetData<byte>());
+                        
+                        // Apply with 'updateMipmaps: true' so Unity generates the mip chain now.
+                        resizedTex.Apply(true, false);
+                        
+                        UnityEngine.Object.Destroy(texTmp);
+                        texTmp = resizedTex;
+                        format = TextureFormat.RGBA32;
+                    }
+                    else
+                    {
+                        ConfigManager.WriteConsoleError($"[LoadAndCacheAsync] GPU Resize failed for {path}");
+                    }
+                    
+                    RenderTexture.ReleaseTemporary(rt);
+                }
+
+                // These are all "Raw" formats and are safe to compress
+                if (texTmp.width % 4 == 0 && texTmp.height % 4 == 0)
+                {
+                    texTmp.Compress(false);
+                    texTmp.name = "COMPRESSED-" + path;
+                    //ConfigManager.WriteConsole($"[LoadAndCacheAsync] compressed {texTmp.name} original format: {format} to ETC2.");
+                        
+                    //SAVE CACHE immediately
+                    TextureDiskCache.SaveToDisk(path, texTmp);
+                }
+                else
+                {
+                    ConfigManager.WriteConsoleWarning($"[LoadAndCacheAsync] Skipping compression for {path} because dimensions ({texTmp.width}x{texTmp.height}) are not a multiple of 4.");
+                }
+            }
+
+            // FREE SYSTEM RAM
+            // This uploads to GPU and DELETES the CPU-side copy.
+            // Once you do this, you can't use GetPixels() anymore, but the GPU memory is halved.
+            texTmp.Apply(false, true);
+            // From this point on, texTmp is NO LONGER READABLE by the CPU,
+
+            // CACHE THE COMPRESSED VERSION
+            float compressedSizeMB = CalculateActualSizeBytes(texTmp) / (1024f * 1024f);
+            ConfigManager.WriteConsole($"[LoadAndCacheAsync] {texTmp.name} original: {originalSizeInBytes / (1024f * 1024f):F2}MB after process it: {compressedSizeMB:F2}MB");
+                
+            cached = CachedTextures.Add(path, texTmp, compressedSizeMB);
+            if (cached != texTmp)
+            {
+                UnityEngine.Object.Destroy(texTmp);
+                texTmp = cached;
+            }
+
+            onComplete?.Invoke(texTmp);
+            yield break;
+            
+            /*
+             * The conversion to RGB565 wasn't possible for
+             * Meta Quest. Even when the docs
+             * says it suport RGB565 the shader conversion didn't 
+             * work as expected and the GPU was 
+             * blocked
+             * this codeblock is the failed attempt to compress on GPU
+             */
+
+            /*
             yield return null;
 
             bool hasAlphaUsed = false; // Default assumption or based on format first?
@@ -194,12 +230,6 @@ public static class CabinetTextureCache
                     //hasAlphaUsed = GpuAlphaCheck.HasAnyTransparencyGpu(texTmp);
                     hasAlphaUsed = GpuAlphaCheckCompute.HasAnyTransparencyComputeSync(texTmp);
 
-                    /* has alpha check
-                    Color32[] pixels = texTmp.GetPixels32();
-                    bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
-                    if (hasAlphaUsed != hasAlphaUsedToCheck)
-                        throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
-                    */
                     ConfigManager.WriteConsole($"[LoadAndCacheAsync] {path}: GPU Alpha Check Result: {hasAlphaUsed}");
                 }
                 catch (System.Exception gpuCheckError)
@@ -254,239 +284,240 @@ public static class CabinetTextureCache
             // And hand it back
             onComplete?.Invoke(finalTex);
         }
-    }
-    /*
-    // Method to load and cache a texture
-    public static Texture2D LoadAndCacheTexture(string path)
-    {
-        Texture2D tex = null;
-        float sizeBytes = 4f;
-
-        if (CachedTextures == null)
-        {
-            // lazy creation:
-           if (DeviceController.IsQ3)
-                CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1536f); 
-           else
-                CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1024f);
-
+        */
         }
-
-        if (gpuRgb565Converter == null)
+        /*
+        // Method to load and cache a texture
+        public static Texture2D LoadAndCacheTexture(string path)
         {
-            GameObject fixedObject = UnityEngine.GameObject.Find("FixedObject");
-            gpuRgb565Converter = fixedObject.GetComponent<GpuRgb565Converter>();
-        }
+            Texture2D tex = null;
+            float sizeBytes = 4f;
 
-        if (!IsTextureCached(path))
-        {
-            try
-                {
-                byte[] fileData;
-                string processedPath = path + ".aoj.jpg";
+            if (CachedTextures == null)
+            {
+                // lazy creation:
+               if (DeviceController.IsQ3)
+                    CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1536f); 
+               else
+                    CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", 1024f);
 
-                // Load the texture from disk
-                if (path.EndsWith(".astc", StringComparison.OrdinalIgnoreCase))
-                {
-                    fileData = File.ReadAllBytes(path);
+            }
 
-                    // Check for 16 bytes header. Skip if needed.  https://github.com/ARM-software/astc-encoder/blob/main/Docs/FileFormat.md
-                    if (!StartsWithMagicNumber(fileData, astcMagicNumber))
+            if (gpuRgb565Converter == null)
+            {
+                GameObject fixedObject = UnityEngine.GameObject.Find("FixedObject");
+                gpuRgb565Converter = fixedObject.GetComponent<GpuRgb565Converter>();
+            }
+
+            if (!IsTextureCached(path))
+            {
+                try
                     {
-                        ConfigManager.WriteConsoleError($"[CabinetTextureCache.LoadAndCacheTexture] {path} is a valid ASTC texture.");
-                        throw new IOException();
-                    }
-                    int width = fileData[7] | (fileData[8] << 8) | (fileData[9] << 16);
-                    int height = fileData[10] | (fileData[11] << 8) | (fileData[12] << 16);
-                    ConfigManager.WriteConsole($"[CabinetTextureCache.LoadAndCacheTexture] {path} texture size:{width}x{height}");
-                    tex = new Texture2D(width, height, TextureFormat.ASTC_6x6, false, true);
-                    tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
-                    tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
-                    tex.LoadRawTextureData(fileData);
-                    tex.Apply(true, true);
-                    sizeBytes = tex.width * tex.height * (16f / 36f); // 16 bytes per 6x6 block (~0.4444 bytes/pixel)
-                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path} is an alread transformed RGB texture:{tex.width}x{tex.height}\n scaled to size: {sizeBytes} bytes.");
-                }
-#if RESCALED_TEXTURE_LOAD 
-                else if (File.Exists(processedPath))
-                {                 
-                    // Load the processed image if it exists
-                    fileData = File.ReadAllBytes(processedPath);
-                    tex = new Texture2D(1, 1, TextureFormat.RGBA4444, true); // Initial size doesn't matter, LoadImage will override
-                    tex.LoadImage(fileData); // Load processed image
-                    tex.filterMode = FilterMode.Trilinear;
-                    tex.mipMapBias = -0.3f;
-                    tex.Apply(true, true);
-                    sizeBytes = tex.width * tex.height * 2f; // RGBA4444: 16 bits (2 bytes) per pixel
-                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] Loaded pre-processed texture from {processedPath}\n size: {sizeBytes} bytes.\n format: {tex.format.ToString()}");
-                }
-#endif
-                else
-                {
+                    byte[] fileData;
+                    string processedPath = path + ".aoj.jpg";
 
-                    // Load and process the original image
-                    fileData = File.ReadAllBytes(path);
-                    
-                    // Create and load texture with original data, ensuring it's readable
-                    Texture2D texTmp = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
-
-                    texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
-                    float originalSizeInBytes = CalculateManualSizeBytes(texTmp);
-                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{originalSizeInBytes}");
-
-                    bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
-                    if (useOriginal)
+                    // Load the texture from disk
+                    if (path.EndsWith(".astc", StringComparison.OrdinalIgnoreCase))
                     {
-                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] useOriginal {path}");
+                        fileData = File.ReadAllBytes(path);
 
-                        tex = texTmp;
-                        keepOriginalForVR(tex, path);
-
-                        CachedTextures.Add(path, tex, originalSizeInBytes / (1024f * 1024f));
-                        return tex;
-                    }
-
-                    bool hasAlphaUsed = false; // Default assumption or based on format first?
-                    if (GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat))
-                    {
-                        // Use the GPU check instead of GetPixels32 + CPU loop or Job
-                        // Note: texTmp MUST be readable for Graphics.Blit to work correctly from it.
-                        // LoadImage already makes it readable, so we should be okay here.
-                        // If texTmp could be non-readable here, you'd need to handle that.
-                        try
+                        // Check for 16 bytes header. Skip if needed.  https://github.com/ARM-software/astc-encoder/blob/main/Docs/FileFormat.md
+                        if (!StartsWithMagicNumber(fileData, astcMagicNumber))
                         {
-                            //hasAlphaUsed = GpuAlphaCheck.HasAnyTransparencyGpu(texTmp);
-                            hasAlphaUsed = GpuAlphaCheckCompute.HasAnyTransparencyComputeSync(texTmp);
-                            
-                            // has alpha check
-                            //Color32[] pixels = texTmp.GetPixels32();
-                            //bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
-                            //if (hasAlphaUsed != hasAlphaUsedToCheck)
-                            //    throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
-                            //
-                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: GPU Alpha Check Result: {hasAlphaUsed}");
+                            ConfigManager.WriteConsoleError($"[CabinetTextureCache.LoadAndCacheTexture] {path} is a valid ASTC texture.");
+                            throw new IOException();
                         }
-                        catch (System.Exception gpuCheckError)
-                        {
-                            ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] {path}: GPU Alpha Check texfailed: {gpuCheckError.Message}. Assuming alpha is used.");
-                            hasAlphaUsed = true; // Fail safe: assume alpha is used if check fails
-                        }
+                        int width = fileData[7] | (fileData[8] << 8) | (fileData[9] << 16);
+                        int height = fileData[10] | (fileData[11] << 8) | (fileData[12] << 16);
+                        ConfigManager.WriteConsole($"[CabinetTextureCache.LoadAndCacheTexture] {path} texture size:{width}x{height}");
+                        tex = new Texture2D(width, height, TextureFormat.ASTC_6x6, false, true);
+                        tex.filterMode = FilterMode.Trilinear; //provides better mip transitions in VR
+                        tex.mipMapBias = -0.3f; // setting mip bias to around -0.7 in Unity is recommended by meta for high-detail textures
+                        tex.LoadRawTextureData(fileData);
+                        tex.Apply(true, true);
+                        sizeBytes = tex.width * tex.height * (16f / 36f); // 16 bytes per 6x6 block (~0.4444 bytes/pixel)
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path} is an alread transformed RGB texture:{tex.width}x{tex.height}\n scaled to size: {sizeBytes} bytes.");
                     }
+    #if RESCALED_TEXTURE_LOAD 
+                    else if (File.Exists(processedPath))
+                    {                 
+                        // Load the processed image if it exists
+                        fileData = File.ReadAllBytes(processedPath);
+                        tex = new Texture2D(1, 1, TextureFormat.RGBA4444, true); // Initial size doesn't matter, LoadImage will override
+                        tex.LoadImage(fileData); // Load processed image
+                        tex.filterMode = FilterMode.Trilinear;
+                        tex.mipMapBias = -0.3f;
+                        tex.Apply(true, true);
+                        sizeBytes = tex.width * tex.height * 2f; // RGBA4444: 16 bits (2 bytes) per pixel
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] Loaded pre-processed texture from {processedPath}\n size: {sizeBytes} bytes.\n format: {tex.format.ToString()}");
+                    }
+    #endif
                     else
                     {
-                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Format {texTmp.graphicsFormat} has no alpha channel.");
-                        hasAlphaUsed = false;
-                    }
 
-                    // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
-                    if (!hasAlphaUsed)
-                    {
-                        //tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
-                        //tex = gpuRgb565Converter.ConvertRgb565ViaCopy(texTmp); //must be supported by the platform. Windows for example can't support this format.
-                        tex = gpuRgb565Converter.ConvertToRgb565(texTmp);
-                        
-                        if (tex == null)
+                        // Load and process the original image
+                        fileData = File.ReadAllBytes(path);
+
+                        // Create and load texture with original data, ensuring it's readable
+                        Texture2D texTmp = new Texture2D(2, 2, TextureFormat.RGBA4444, true, false); // mipmaps = true, linear = false (default sRGB)
+
+                        texTmp.LoadImage(fileData); // Single LoadImage call to load the image (keeps it readable)
+                        float originalSizeInBytes = CalculateManualSizeBytes(texTmp);
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Original format: {texTmp.format.ToString()} - {texTmp.width}x{texTmp.height} size:{originalSizeInBytes}");
+
+                        bool useOriginal = originalSizeInBytes < ORIGINAL_SIZE_THRESHOLD || DeviceController.originalTextures;
+                        if (useOriginal)
                         {
-                            // no RGB565 conversion, no alpha -> delete alpha channel.
-                            //tex = removeAlpha(path, texTmp, pixels);
-                            Texture2D convertedTex = GpuAlphaCheck.RemoveAlphaGpu(texTmp);
-                            if (convertedTex != null)
+                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] useOriginal {path}");
+
+                            tex = texTmp;
+                            keepOriginalForVR(tex, path);
+
+                            CachedTextures.Add(path, tex, originalSizeInBytes / (1024f * 1024f));
+                            return tex;
+                        }
+
+                        bool hasAlphaUsed = false; // Default assumption or based on format first?
+                        if (GraphicsFormatUtility.HasAlphaChannel(texTmp.graphicsFormat))
+                        {
+                            // Use the GPU check instead of GetPixels32 + CPU loop or Job
+                            // Note: texTmp MUST be readable for Graphics.Blit to work correctly from it.
+                            // LoadImage already makes it readable, so we should be okay here.
+                            // If texTmp could be non-readable here, you'd need to handle that.
+                            try
                             {
-                                // Success! Destroy the temporary source texture
-                                UnityEngine.Object.DestroyImmediate(texTmp);
-                                tex = convertedTex; // Assign the result
-                                tex.name = "RGB24-" + path; // Set name
-                                ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] {path}:ConvertTextureToRgb565Texture2DSync texfailed and Removed alpha using GPU.");
+                                //hasAlphaUsed = GpuAlphaCheck.HasAnyTransparencyGpu(texTmp);
+                                hasAlphaUsed = GpuAlphaCheckCompute.HasAnyTransparencyComputeSync(texTmp);
+
+                                // has alpha check
+                                //Color32[] pixels = texTmp.GetPixels32();
+                                //bool hasAlphaUsedToCheck = IsAlphaUsed(pixels);
+                                //if (hasAlphaUsed != hasAlphaUsedToCheck)
+                                //    throw new Exception($">>>>>>>>>>>>>>>> ERROR alpha analysis <<<<<<<<<<<<<<<<<<< format: {texTmp.format} HasAnyTransparencyGpu: {hasAlphaUsed} IsAlphaUsed: {hasAlphaUsedToCheck} {path}");
+                                //
+                                ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: GPU Alpha Check Result: {hasAlphaUsed}");
                             }
-                            else
+                            catch (System.Exception gpuCheckError)
                             {
-                                ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] not originalTextures {path}: ConvertTextureToRgb565Texture2DSync texfailed and GPU removeAlpha texfailed.");
-                                tex = texTmp;
-                                keepOriginalForVR(tex, path, "ERRGPU");
+                                ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] {path}: GPU Alpha Check texfailed: {gpuCheckError.Message}. Assuming alpha is used.");
+                                hasAlphaUsed = true; // Fail safe: assume alpha is used if check fails
                             }
                         }
                         else
                         {
-                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}:ConvertTextureToRgb565Texture2DSync ok.");
-                            tex.name = "RGB565-" + path;
-                            UnityEngine.Object.DestroyImmediate(texTmp);
+                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: Format {texTmp.graphicsFormat} has no alpha channel.");
+                            hasAlphaUsed = false;
                         }
-                    }
-                    else
-                    {
-                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] not originalTextures {path}:  hasAlphaUsed back to original.");
-                        tex = texTmp;
-                        keepOriginalForVR(tex, path, "ALPHA");
-                    }
 
-#if RESCALE
-                    int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
-                    int height = Mathf.FloorToInt(Mathf.Log(tex.height, 2));
-                    int newWidth = (int)Mathf.Pow(2, width);
-                    int newHeight = (int)Mathf.Pow(2, height);
-                    if (tex.width != newWidth || tex.height != newHeight || tex.format != TextureFormat.RGBA4444)
-                    {
-                        // Step 1: Get original pixel data into a NativeArray for Burst
-                        Color[] originalPixelsArray = tex.GetPixels();
-                        using (var originalPixels = new NativeArray<Color>(originalPixelsArray, Allocator.TempJob))
-                        using (var scaledPixels = new NativeArray<Color>(newWidth * newHeight, Allocator.TempJob))
+                        // SystemInfo.SupportsTextureFormat(TextureFormat.RGB565)
+                        if (!hasAlphaUsed)
                         {
-                            // Step 2: Schedule the Burst-compiled job
-                            var scaleJob = new ScalePixelsJob
-                            {
-                                OriginalPixels = originalPixels,
-                                ScaledPixels = scaledPixels,
-                                OldWidth = tex.width,
-                                OldHeight = tex.height,
-                                NewWidth = newWidth,
-                                NewHeight = newHeight
-                            };
-                            JobHandle jobHandle = scaleJob.Schedule();
-                            jobHandle.Complete(); // Wait for the job to finish (synchronous for simplicity)
+                            //tex = gpuRgb565Converter.ConvertTextureToRgb565Texture2DSync(texTmp);
+                            //tex = gpuRgb565Converter.ConvertRgb565ViaCopy(texTmp); //must be supported by the platform. Windows for example can't support this format.
+                            tex = gpuRgb565Converter.ConvertToRgb565(texTmp);
 
-                            // Step 3: Reinitialize and apply scaled pixels
-                            if (tex.Reinitialize(newWidth, newHeight, TextureFormat.RGBA4444, true))
+                            if (tex == null)
                             {
-                                tex.SetPixels(scaledPixels.ToArray());
-                                tex.Apply(true, false); // Update mipmaps, keep readable for now
-                                ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: rescaled to format: {tex.format.ToString()} new size: {tex.width}x{tex.height}");
-#if RESCALED_TEXTURE_SAVE
-
-                                byte[] pngData = tex.EncodeToJPG(95);
-                                File.WriteAllBytes(processedPath, pngData);
-#endif
+                                // no RGB565 conversion, no alpha -> delete alpha channel.
+                                //tex = removeAlpha(path, texTmp, pixels);
+                                Texture2D convertedTex = GpuAlphaCheck.RemoveAlphaGpu(texTmp);
+                                if (convertedTex != null)
+                                {
+                                    // Success! Destroy the temporary source texture
+                                    UnityEngine.Object.DestroyImmediate(texTmp);
+                                    tex = convertedTex; // Assign the result
+                                    tex.name = "RGB24-" + path; // Set name
+                                    ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] {path}:ConvertTextureToRgb565Texture2DSync texfailed and Removed alpha using GPU.");
+                                }
+                                else
+                                {
+                                    ConfigManager.WriteConsoleError($"[LoadAndCacheTexture] not originalTextures {path}: ConvertTextureToRgb565Texture2DSync texfailed and GPU removeAlpha texfailed.");
+                                    tex = texTmp;
+                                    keepOriginalForVR(tex, path, "ERRGPU");
+                                }
                             }
                             else
                             {
-                                ConfigManager.WriteConsoleWarning($"[LoadAndCacheTexture] {path}: reinitialize failed");
+                                ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}:ConvertTextureToRgb565Texture2DSync ok.");
+                                tex.name = "RGB565-" + path;
+                                UnityEngine.Object.DestroyImmediate(texTmp);
                             }
                         }
+                        else
+                        {
+                            ConfigManager.WriteConsole($"[LoadAndCacheTexture] not originalTextures {path}:  hasAlphaUsed back to original.");
+                            tex = texTmp;
+                            keepOriginalForVR(tex, path, "ALPHA");
+                        }
+
+    #if RESCALE
+                        int width = Mathf.FloorToInt(Mathf.Log(tex.width, 2));
+                        int height = Mathf.FloorToInt(Mathf.Log(tex.height, 2));
+                        int newWidth = (int)Mathf.Pow(2, width);
+                        int newHeight = (int)Mathf.Pow(2, height);
+                        if (tex.width != newWidth || tex.height != newHeight || tex.format != TextureFormat.RGBA4444)
+                        {
+                            // Step 1: Get original pixel data into a NativeArray for Burst
+                            Color[] originalPixelsArray = tex.GetPixels();
+                            using (var originalPixels = new NativeArray<Color>(originalPixelsArray, Allocator.TempJob))
+                            using (var scaledPixels = new NativeArray<Color>(newWidth * newHeight, Allocator.TempJob))
+                            {
+                                // Step 2: Schedule the Burst-compiled job
+                                var scaleJob = new ScalePixelsJob
+                                {
+                                    OriginalPixels = originalPixels,
+                                    ScaledPixels = scaledPixels,
+                                    OldWidth = tex.width,
+                                    OldHeight = tex.height,
+                                    NewWidth = newWidth,
+                                    NewHeight = newHeight
+                                };
+                                JobHandle jobHandle = scaleJob.Schedule();
+                                jobHandle.Complete(); // Wait for the job to finish (synchronous for simplicity)
+
+                                // Step 3: Reinitialize and apply scaled pixels
+                                if (tex.Reinitialize(newWidth, newHeight, TextureFormat.RGBA4444, true))
+                                {
+                                    tex.SetPixels(scaledPixels.ToArray());
+                                    tex.Apply(true, false); // Update mipmaps, keep readable for now
+                                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: rescaled to format: {tex.format.ToString()} new size: {tex.width}x{tex.height}");
+    #if RESCALED_TEXTURE_SAVE
+
+                                    byte[] pngData = tex.EncodeToJPG(95);
+                                    File.WriteAllBytes(processedPath, pngData);
+    #endif
+                                }
+                                else
+                                {
+                                    ConfigManager.WriteConsoleWarning($"[LoadAndCacheTexture] {path}: reinitialize failed");
+                                }
+                            }
+                        }
+    #endif
+
+                        // Calculate size based on final format
+                        sizeBytes = CalculateManualSizeBytes(tex);
+
+                        ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: FINAL format: {tex.format.ToString()} - {tex.width}x{tex.height} size: {sizeBytes} Bytes");
+
                     }
-#endif
 
-                    // Calculate size based on final format
-                    sizeBytes = CalculateManualSizeBytes(tex);
-
-                    ConfigManager.WriteConsole($"[LoadAndCacheTexture] {path}: FINAL format: {tex.format.ToString()} - {tex.width}x{tex.height} size: {sizeBytes} Bytes");
-
+    #if TEXTURE_DEBUG
+                    ConfigManager.WriteConsole($"TEXTURESPECS: {path} -> format:{tex.format}  rawTextureDataLength:{tex.GetRawTextureData().Length}  w/h:{tex.width}x{tex.height}");
+    #endif
+                    // Cache the loaded texture
+                    CachedTextures.Add(path, tex, sizeBytes / (1024f * 1024f));
+                    return tex;
                 }
-
-#if TEXTURE_DEBUG
-                ConfigManager.WriteConsole($"TEXTURESPECS: {path} -> format:{tex.format}  rawTextureDataLength:{tex.GetRawTextureData().Length}  w/h:{tex.width}x{tex.height}");
-#endif
-                // Cache the loaded texture
-                CachedTextures.Add(path, tex, sizeBytes / (1024f * 1024f));
-                return tex;
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[CabinetTextureCache.LoadAndCacheTexture] {path}.", e);
+                    return null;
+                }
             }
-            catch (Exception e)
-            {
-                ConfigManager.WriteConsoleException($"[CabinetTextureCache.LoadAndCacheTexture] {path}.", e);
-                return null;
-            }
-        }
-        return GetCachedTexture(path);
+            return GetCachedTexture(path);
+        */
     }
-    */
 
     private static void keepOriginalForVR(Texture2D tex, string path, string prefix = "ORIGINAL")
     {

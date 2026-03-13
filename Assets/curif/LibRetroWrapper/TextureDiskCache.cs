@@ -113,6 +113,7 @@ public static class TextureDiskCache
         {
             if (File.Exists(cachePath))
             {
+                ConfigManager.WriteConsole($"[DiskCache] Delete {cachePath}");
                 File.Delete(cachePath);
             }
         }
