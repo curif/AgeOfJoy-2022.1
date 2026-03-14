@@ -38,7 +38,7 @@ public static class TextureDiskCache
 
         try
         {
-            using (FileStream fs = File.Open(cachePath, FileMode.Open, FileAccess.Read))
+            using (FileStream fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read))
             using (BinaryReader reader = new BinaryReader(fs))
             {
                 // 1. Read Header (12 bytes)
@@ -67,7 +67,7 @@ public static class TextureDiskCache
         {
             ConfigManager.WriteConsoleError($"[DiskCache] Corrupt file {cachePath}: {e.Message}");
             // Delete corrupt cache so we regenerate it next time
-            File.Delete(cachePath);
+            try { File.Delete(cachePath); } catch {}
             return null;
         }
     }
@@ -90,7 +90,7 @@ public static class TextureDiskCache
         {
             try
             {
-                using (FileStream fs = File.Open(cachePath, FileMode.Open, FileAccess.Read))
+                using (FileStream fs = new FileStream(cachePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 using (BinaryReader reader = new BinaryReader(fs))
                 {
                     width = reader.ReadInt32();
@@ -132,7 +132,7 @@ public static class TextureDiskCache
 
         onComplete?.Invoke(tex);
     }
-
+    
     /// <summary>
     /// Saves the compressed texture to disk asynchronously.
     /// </summary>
