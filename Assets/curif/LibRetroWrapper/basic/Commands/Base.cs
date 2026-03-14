@@ -1,4 +1,4 @@
-#define AGEBASIC_DEBUG_ACTIVE
+//#define AGEBASIC_DEBUG_ACTIVE
 
 using System;
 

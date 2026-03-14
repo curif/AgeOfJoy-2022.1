@@ -116,6 +116,13 @@ AGEBasic operates on a virtual CRT screen within the VR cabinet.
 *   `SCREENWIDTH()`, `SCREENHEIGHT()`: Returns character grid dimensions.
 *   `DSCREENWIDTH()`, `DSCREENHEIGHT()`: Returns pixel dimensions.
 
+### Sprites (Software-composited)
+Sprites are drawn over the background and retain their Z-order. Loading is asynchronous.
+*   `SPRITELOAD "name", "path/to/image.png"`: Starts loading a PNG texture into the sprite cache.
+*   `SPRITESTATUS("name")`: Returns 1 if the sprite is fully loaded and ready to use, 0 otherwise.
+*   `SPRITE "name", x, y, z`: Draws/Updates a sprite at the specified pixel coordinates and Z-index layer.
+*   `SPRITEREMOVE "name"`: Removes a sprite from the screen.
+
 ---
 
 ## 6. VR & Cabinet Specific Functions

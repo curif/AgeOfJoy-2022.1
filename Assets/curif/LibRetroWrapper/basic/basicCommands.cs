@@ -38,6 +38,11 @@ public static class Commands
         commands["SCROLL"] = typeof(CommandSCROLL);
         commands["SCROLLRECT"] = typeof(CommandSCROLLRECT);
         
+        //sprites
+        commands["SPRITELOAD"] = typeof(CommandSPRITELOAD);
+        commands["SPRITE"] = typeof(CommandSPRITE);
+        commands["SPRITEREMOVE"] = typeof(CommandSPRITEREMOVE);
+
         //functions ------
 
         //math
@@ -94,7 +99,6 @@ public static class Commands
         functions["FILECLOSE"] = typeof(CommandFunctionFILECLOSE);
         functions["FILEEOF"] = typeof(CommandFunctionFILEEOF);
         functions["FILEWRITE"] = typeof(CommandFunctionFILEWRITE);
-        functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXIST);
         functions["FILEDELETE"] = typeof(CommandFunctionFILEDELETE);
 
         //download manager
@@ -243,6 +247,7 @@ public static class Commands
         functions["DSCREENWIDTH"] = typeof(CommandFunctionDSCREENWIDTH);
         functions["DSCREENHEIGHT"] = typeof(CommandFunctionDSCREENHEIGHT);
         functions["DSCREENSIZE"] = typeof(CommandFunctionDSCREENSIZE);
+        functions["SPRITESTATUS"] = typeof(CommandFunctionSPRITESTATUS);
         functions["DCHARPIXELX"] = typeof(CommandFunctionDCHARPIXELX);
         functions["DCHARPIXELY"] = typeof(CommandFunctionDCHARPIXELY);
         functions["DCHARPIXEL"] = typeof(CommandFunctionDCHARPIXEL);

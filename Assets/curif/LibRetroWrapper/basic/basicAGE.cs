@@ -549,6 +549,7 @@ public class basicAGE : MonoBehaviour
     public void PostRunTasks()
     {
         configCommands.CloseFiles();
+        configCommands.ScreenGenerator?.ClearSprites();
         OnProgramEnded.Invoke(running.Name);
         running = null;
     }

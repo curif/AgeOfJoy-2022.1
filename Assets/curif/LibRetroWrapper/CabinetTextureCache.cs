@@ -30,7 +30,7 @@ public static class CabinetTextureCache
     //public const float CACHE_SIZE = 50; //forced for testing.
     public const float CACHE_SIZE_Q3 = 1536f;
 
-    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete)
+    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete, bool makeNoLongerReadable = true)
     {
         if (CachedTextures == null)
         {
@@ -58,7 +58,7 @@ public static class CabinetTextureCache
         else if (TextureDiskCache.HasValidCache(path))
         {
             Texture2D cachedTex = null;
-            yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex);
+            yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex, makeNoLongerReadable);
 
             if (cachedTex != null)
             {
@@ -189,7 +189,7 @@ public static class CabinetTextureCache
             // FREE SYSTEM RAM
             // This uploads to GPU and DELETES the CPU-side copy.
             // Once you do this, you can't use GetPixels() anymore, but the GPU memory is halved.
-            texTmp.Apply(false, true);
+            texTmp.Apply(false, makeNoLongerReadable);
             // From this point on, texTmp is NO LONGER READABLE by the CPU,
 
             // CACHE THE COMPRESSED VERSION

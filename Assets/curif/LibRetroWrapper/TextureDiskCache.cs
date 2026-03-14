@@ -32,7 +32,7 @@ public static class TextureDiskCache
     /// <summary>
     /// Loads the texture directly from raw compressed bytes (Fast).
     /// </summary>
-    public static Texture2D LoadFromDisk(string originalPath)
+    public static Texture2D LoadFromDisk(string originalPath, bool makeNoLongerReadable = true)
     {
         string cachePath = originalPath + EXTENSION;
 
@@ -57,8 +57,8 @@ public static class TextureDiskCache
                 // 4. Load into Native GPU Memory
                 tex.LoadRawTextureData(rawData);
 
-                // 5. Apply and clear CPU copy immediately
-                tex.Apply(false, true);
+                // 5. Apply and optionally clear CPU copy immediately
+                tex.Apply(false, makeNoLongerReadable);
 
                 return tex;
             }
@@ -75,7 +75,7 @@ public static class TextureDiskCache
     /// <summary>
     /// Asynchronously loads the texture from disk using a background thread for file I/O to prevent VR stutter.
     /// </summary>
-    public static System.Collections.IEnumerator LoadFromDiskAsync(string originalPath, Action<Texture2D> onComplete)
+    public static System.Collections.IEnumerator LoadFromDiskAsync(string originalPath, Action<Texture2D> onComplete, bool makeNoLongerReadable = true)
     {
         string cachePath = originalPath + EXTENSION;
 
@@ -128,7 +128,7 @@ public static class TextureDiskCache
         // Texture creation MUST happen on the main thread
         Texture2D tex = new Texture2D(width, height, format, false);
         tex.LoadRawTextureData(rawData);
-        tex.Apply(false, true); // Upload to GPU
+        tex.Apply(false, makeNoLongerReadable); // Upload to GPU
 
         onComplete?.Invoke(tex);
     }

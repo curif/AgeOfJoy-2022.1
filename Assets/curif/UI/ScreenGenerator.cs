@@ -181,7 +181,163 @@ public class ScreenGenerator : MonoBehaviour
     /// Applies any pending changes to the screen texture if needsDraw is true.
     /// </summary>
     /// <returns>The ScreenGenerator instance.</returns>
-    public ScreenGenerator DrawScreen() { if (needsDraw) { screenTexture.Apply(); needsDraw = false; } return this; }
+    public ScreenGenerator DrawScreen() { 
+        if (needsDraw) { 
+            if (spritesEnabled) {
+                GetWorkingTexture().Apply();
+                Color32[] pixels = baseTexture.GetPixels32();
+                var sortedSprites = System.Linq.Enumerable.OrderBy(System.Linq.Enumerable.Where(activeSprites.Values, s => s.Visible && s.Texture != null), s => s.Z);
+                foreach (var s in sortedSprites) {
+                    DrawSpriteToBuffer(pixels, s.Texture, s.X, s.Y);
+                }
+                screenTexture.SetPixels32(pixels);
+                screenTexture.Apply();
+            } else {
+                screenTexture.Apply(); 
+            }
+            needsDraw = false; 
+        } 
+        return this; 
+    }
+
+    public class ScreenSprite
+    {
+        public string Name;
+        public Texture2D Texture;
+        public int X, Y, Z;
+        public bool Visible = true;
+    }
+
+    private Dictionary<string, Texture2D> spriteCache = new Dictionary<string, Texture2D>();
+    private Dictionary<string, ScreenSprite> activeSprites = new Dictionary<string, ScreenSprite>();
+    private Texture2D baseTexture;
+    private bool spritesEnabled = false;
+
+    public void LoadSprite(string name, string path)
+    {
+        if (System.IO.File.Exists(path))
+        {
+            StartCoroutine(CabinetTextureCache.LoadAndCacheAsync(path, (tex) => {
+                if (tex != null)
+                {
+                    tex.filterMode = FilterMode.Point;
+                    spriteCache[name] = tex;
+                }
+            }, makeNoLongerReadable: false));
+        }
+    }
+
+    public void DrawSprite(string name, int x, int y, int z)
+    {
+        if (!spriteCache.ContainsKey(name)) return;
+        if (!spritesEnabled) EnableSprites();
+        
+        if (!activeSprites.ContainsKey(name)) {
+            activeSprites[name] = new ScreenSprite() { Name = name };
+        }
+        activeSprites[name].Texture = spriteCache[name];
+        activeSprites[name].X = x;
+        activeSprites[name].Y = y;
+        activeSprites[name].Z = z;
+        activeSprites[name].Visible = true;
+        needsDraw = true;
+    }
+    
+    public void RemoveSprite(string name) {
+        if (activeSprites.ContainsKey(name)) {
+            activeSprites.Remove(name);
+            needsDraw = true;
+        }
+    }
+
+    public void ClearSprites()
+    {
+        activeSprites.Clear();
+        spriteCache.Clear();
+        spritesEnabled = false;
+        if (baseTexture != null)
+        {
+            UnityEngine.Object.Destroy(baseTexture);
+            baseTexture = null;
+        }
+        needsDraw = true;
+    }
+
+    public bool IsSpriteLoaded(string name)
+    {
+        return spriteCache.ContainsKey(name) && spriteCache[name] != null;
+    }
+
+    private void EnableSprites()
+    {
+        if (!spritesEnabled) {
+            spritesEnabled = true;
+            if (baseTexture == null) {
+                baseTexture = new Texture2D(TextureWidth, TextureHeight, TextureFormat.RGBA32, false);
+                baseTexture.filterMode = FilterMode.Point;
+                if (screenTexture != null) {
+                    baseTexture.SetPixels32(screenTexture.GetPixels32());
+                    baseTexture.Apply();
+                }
+            }
+        }
+    }
+
+    private Texture2D GetWorkingTexture()
+    {
+        if (spritesEnabled)
+        {
+            if (baseTexture == null) EnableSprites();
+            return baseTexture;
+        }
+        return screenTexture;
+    }
+
+    private void DrawSpriteToBuffer(Color32[] dest, Texture2D src, int destX, int destY)
+    {
+        Color32[] srcPixels = src.GetPixels32();
+        int srcWidth = src.width;
+        int srcHeight = src.height;
+        
+        // Unity textures have origin at bottom-left, but we treat (0,0) as top-left in our screen coordinate system.
+        // Therefore, y goes from 0 (top) down.
+        // TextureDrawingUtilities flips Y like this: int unityY = TextureHeight - 1 - dy;
+        for (int sy = 0; sy < srcHeight; sy++)
+        {
+            // If src is a Unity texture, its row 0 is the bottom row of pixels in the image.
+            // If we want it to draw top-down matching the screen, we must read the src from top to bottom.
+            int srcY = srcHeight - 1 - sy;
+            int dy = destY + sy;
+            if (dy < 0 || dy >= TextureHeight) continue;
+            
+            for (int sx = 0; sx < srcWidth; sx++)
+            {
+                int dx = destX + sx;
+                if (dx < 0 || dx >= TextureWidth) continue;
+                
+                int unityY = TextureHeight - 1 - dy;
+                if (unityY < 0 || unityY >= TextureHeight) continue;
+                
+                int srcIdx = srcY * srcWidth + sx;
+                Color32 srcC = srcPixels[srcIdx];
+                if (srcC.a == 0) continue; // transparent
+                
+                int destIdx = unityY * TextureWidth + dx;
+                if (srcC.a == 255) {
+                    dest[destIdx] = srcC;
+                } else {
+                    Color32 bg = dest[destIdx];
+                    float a = srcC.a / 255f;
+                    dest[destIdx] = new Color32(
+                        (byte)(srcC.r * a + bg.r * (1 - a)),
+                        (byte)(srcC.g * a + bg.g * (1 - a)),
+                        (byte)(srcC.b * a + bg.b * (1 - a)),
+                        255
+                    );
+                }
+            }
+        }
+    }
 
     /// <summary>
     /// Prints a character at the specified (x,y) character coordinates using current colors.
@@ -366,7 +522,7 @@ public class ScreenGenerator : MonoBehaviour
         int utilityScrollAmountPixelsY = -scrollAmountPixelsY;
 
         if (TextureDrawingUtilities.ScrollRectangleVerticalBurst(
-                this.screenTexture,
+                GetWorkingTexture(),
                 this.centerStartX, this.centerStartY,   // Top-left pixel of the character area (in Unity texture coords this is bottom-left of area)
                 this.ScreenWidth, this.ScreenHeight,    // Pixel dimensions of the character area
                 utilityScrollAmountPixelsY, fillColor)) // Pass the corrected scroll amount
@@ -427,7 +583,7 @@ public class ScreenGenerator : MonoBehaviour
         int utilityScrollAmountPixelsY = -scrollAmountPixelsY;
 
         if (TextureDrawingUtilities.ScrollRectangleVerticalBurst(
-                this.screenTexture,
+                GetWorkingTexture(),
                 pixelRectX, pixelRectY,
                 pixelRectWidth, pixelRectHeight,
                 utilityScrollAmountPixelsY, fillColor)) // Pass the corrected scroll amount
@@ -457,13 +613,13 @@ public class ScreenGenerator : MonoBehaviour
     /// <returns>The ScreenGenerator instance.</returns>
     public ScreenGenerator ClearBackground()
     {
-        if (screenTexture != null && Skin != null)
+        if (GetWorkingTexture() != null && Skin != null)
         {
-            Color32[] pixels = screenTexture.GetPixels32(); // Gets all pixels of the texture
+            Color32[] pixels = GetWorkingTexture().GetPixels32(); // Gets all pixels of the texture
             if (pixels.Length > 0) // Check if pixels array is not empty
             {
                 Array.Fill(pixels, Skin.BorderColor);
-                screenTexture.SetPixels32(pixels); // Apply to the whole texture
+                GetWorkingTexture().SetPixels32(pixels); // Apply to the whole texture
                 needsDraw = true;
             }
         }
@@ -493,7 +649,7 @@ public class ScreenGenerator : MonoBehaviour
         // Fill the character screen area with the current background color
         if (colorsBackgroundMatrix != null && colorsBackgroundMatrix.Length > 0)
         {
-            screenTexture.SetPixels32(centerStartX, centerStartY, ScreenWidth, ScreenHeight, colorsBackgroundMatrix);
+            GetWorkingTexture().SetPixels32(centerStartX, centerStartY, ScreenWidth, ScreenHeight, colorsBackgroundMatrix);
         }
 
         needsDraw = true;
@@ -590,43 +746,43 @@ public class ScreenGenerator : MonoBehaviour
     /// <summary>Draws a single point on the screen texture.</summary>
     public ScreenGenerator DrawPoint(int x, int y, Color32 color)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawPoint(this.screenTexture, x, y, color, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawPoint(GetWorkingTexture(), x, y, color, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
     /// <summary>Draws a line on the screen texture.</summary>
     public ScreenGenerator DrawLine(int x1, int y1, int x2, int y2, Color32 color)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawLine(this.screenTexture, x1, y1, x2, y2, color, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawLine(GetWorkingTexture(), x1, y1, x2, y2, color, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
     /// <summary>Draws a box (rectangle) on the screen texture.</summary>
     public ScreenGenerator DrawBox(int x, int y, int width, int height, Color32 borderColor, bool filled, Color32? fillColor = null)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawBox(this.screenTexture, x, y, width, height, borderColor, filled, fillColor, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawBox(GetWorkingTexture(), x, y, width, height, borderColor, filled, fillColor, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
     /// <summary>Draws a circle on the screen texture.</summary>
     public ScreenGenerator DrawCircle(int centerX, int centerY, int radius, Color32 borderColor, bool filled, Color32? fillColor = null)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawCircle(this.screenTexture, centerX, centerY, radius, borderColor, filled, fillColor, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawCircle(GetWorkingTexture(), centerX, centerY, radius, borderColor, filled, fillColor, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
     /// <summary>Draws an oval (ellipse) on the screen texture.</summary>
     public ScreenGenerator DrawOval(int centerX, int centerY, int radiusX, int radiusY, Color32 borderColor, bool filled, Color32? fillColor = null)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawOval(this.screenTexture, centerX, centerY, radiusX, radiusY, borderColor, filled, fillColor, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawOval(GetWorkingTexture(), centerX, centerY, radiusX, radiusY, borderColor, filled, fillColor, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
     /// <summary>Draws an image (from pixel array) rescaled onto the screen texture.</summary>
     public ScreenGenerator DrawImageRescaled(int x, int y, int width, int height, Color32[] pixels, int pixelsWidth, int pixelsHeight)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawImageRescaled(this.screenTexture, x, y, width, height, pixels, pixelsWidth, pixelsHeight, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawImageRescaled(GetWorkingTexture(), x, y, width, height, pixels, pixelsWidth, pixelsHeight, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
     /// <summary>Draws a source texture rescaled onto the screen texture.</summary>
     public ScreenGenerator DrawTextureRescaled(int x, int y, int width, int height, Texture2D sourceTexture)
     {
-        if (screenTexture != null && TextureDrawingUtilities.DrawTextureRescaled(this.screenTexture, x, y, width, height, sourceTexture, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
+        if (GetWorkingTexture() != null && TextureDrawingUtilities.DrawTextureRescaled(GetWorkingTexture(), x, y, width, height, sourceTexture, this.TextureWidth, this.TextureHeight)) { this.needsDraw = true; }
         return this;
     }
 }
