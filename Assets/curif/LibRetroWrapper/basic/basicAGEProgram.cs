@@ -107,6 +107,7 @@ public class AGEProgram
         config.JumpNextTo = 0;
         config.JumpTo = 0;
         config.stop = false;
+        config.stopAllEvents = false;
         if (pvars == null)
             vars = new();
         else

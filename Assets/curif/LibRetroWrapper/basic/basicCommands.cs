@@ -16,6 +16,7 @@ public static class Commands
         commands["GOTO"] = typeof(CommandGOTO);
         commands["IF"] = typeof(CommandIFTHEN);
         commands["END"] = typeof(CommandEND);
+        commands["STOP"] = typeof(CommandSTOP);
         commands["GOSUB"] = typeof(CommandGOSUB);
         commands["RETURN"] = typeof(CommandRETURN);
         commands["CALL"] = typeof(CommandCALL);
@@ -268,7 +269,13 @@ public static class Commands
         functions["GETCPU"] = typeof(CommandFunctionGETCPU);
 
         //EVENTS
+        commands["ONEVENT"] = typeof(CommandONEVENT);
         functions["EVENTTRIGGER"] = typeof(CommandFunctionEVENTTRIGGER);
+        functions["ONTIMER"] = typeof(CommandFunctionONTIMER);
+        functions["ONCONTROL"] = typeof(CommandFunctionONCONTROL);
+        functions["ONTOUCH"] = typeof(CommandFunctionONTOUCH);
+        functions["ONGRAB"] = typeof(CommandFunctionONGRAB);
+        functions["ONCOLLISION"] = typeof(CommandFunctionONCOLLISION);
 
         //lightgun
         functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionCABPARTLIGHTGUNHIT);

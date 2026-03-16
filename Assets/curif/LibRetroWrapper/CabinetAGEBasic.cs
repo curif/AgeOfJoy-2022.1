@@ -231,14 +231,19 @@ public class Event
         triggeredCount = 0;
         startTime = DateTime.Now;
     }
-    
-    public virtual void PrepareToRun(int maxExecutionLinesAllowed = 0, int lineNumber = 0) 
+
+    public virtual void Finish()
     {
-        AGEBasic.PrepareToRun(eventInformation.program, vars, 
+        triggeredCount--;
+        startTime = DateTime.Now;
+    }
+
+    public virtual void PrepareToRun(int maxExecutionLinesAllowed = 0, int lineNumber = 0)
+    {
+        AGEBasic.PrepareToRun(eventInformation.program, vars,
                                 maxExecutionLinesAllowed: maxExecutionLinesAllowed, lineNumber: lineNumber);
         AGEBasic.PreRunTasks();
     }
-
     //run next line
     public virtual YieldInstruction RunALine(ref bool moreLines)
     {
@@ -262,9 +267,15 @@ public class Event
     public virtual void EvaluateTrigger() { 
         if (eventInformation.delay > 0)
         {
-            RegisterTrigger(IsTime());
+            if (!WasTriggered())
+            {
+                RegisterTrigger(IsTime());
+            }
         }
-        RegisterTrigger(false); 
+        else
+        {
+            RegisterTrigger(false); 
+        }
     }
 
     public virtual void Dispose()
@@ -716,11 +727,17 @@ public class OnPlayerBaseEvent : Event
     {
         if (part == null)
         {
+            if (AGEBasic.ConfigCommands.Cabinet == null) {
+                status = Status.error;
+                return false;
+            }
             part = AGEBasic.ConfigCommands.Cabinet.Parts(eventInformation.part);
             if (part == null)
             {
                 status = Status.error;
-                throw new Exception($"AGEBasic event on-touch part {eventInformation.part} not found");
+                return false;
+
+                //throw new Exception($"AGEBasic event part {eventInformation.part} not found");
             }
         }
 
@@ -806,6 +823,74 @@ public class OnPlayerTouchEndEvent : OnPlayerBaseEvent
         base.Dispose();
     }
 }
+
+public class OnPlayerGrabStartEvent : OnPlayerBaseEvent
+{
+    public OnPlayerGrabStartEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+
+        base.Init();
+        if (!loadComponents() || interactablePart.grabDetection.OnGrabEnter == null)
+        {
+            status = Status.error;
+            return;
+        }
+
+        interactablePart.grabDetection.OnGrabEnter.AddListener(OnGrab);
+        status = Status.initialized;
+    }
+
+    void OnGrab()
+    {
+        RegisterTrigger(true);
+    }
+
+    public override void Dispose()
+    {
+        interactablePart.grabDetection.OnGrabEnter?.RemoveListener(OnGrab);
+        base.Dispose();
+    }
+}
+
+public class OnPlayerGrabEndEvent : OnPlayerBaseEvent
+{
+    public OnPlayerGrabEndEvent(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+
+        base.Init();
+
+        if (!loadComponents() || interactablePart.grabDetection.OnGrabExit == null)
+        {
+            status = Status.error;
+            return;
+        }
+        interactablePart.grabDetection.OnGrabExit.AddListener(OnGrab);
+        status = Status.initialized;
+    }
+
+    void OnGrab()
+    {
+        RegisterTrigger(true);
+    }
+
+    public override void Dispose()
+    {
+        interactablePart.grabDetection.OnGrabExit?.RemoveListener(OnGrab);
+        base.Dispose();
+    }
+}
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -842,6 +927,10 @@ public static class EventsFactory
                 return new OnPlayerTouchStartEvent(eventInformation, vars, agebasic);
             case "on-touch-end":
                 return new OnPlayerTouchEndEvent(eventInformation, vars, agebasic);
+            case "on-grab-start":
+                return new OnPlayerGrabStartEvent(eventInformation, vars, agebasic);
+            case "on-grab-end":
+                return new OnPlayerGrabEndEvent(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");
@@ -862,9 +951,6 @@ public class CabinetAGEBasic : MonoBehaviour
     public CabinetAGEBasicInformation AGEInfo = new();
 
     private List<Event> events = new List<Event>();
-
-    private Coroutine eventCoroutine;
-    private bool eventCoroutineIsRunning;
 
     public void SetDebugMode(bool debug)
     {
@@ -962,98 +1048,6 @@ public class CabinetAGEBasic : MonoBehaviour
     {
         return events.Count != 0;
     }
-    private IEnumerator RunEvents()
-    {
-        if (events.Count == 0)
-            yield break;
-        eventCoroutineIsRunning = true;
-        while (true) // Continuous loop to keep checking for triggered events
-        {
-            if (AGEBasic.IsRunning())
-            {
-                yield return null;
-                continue;
-            }
-
-            foreach (Event evt in events)
-            {
-                // Initialize the event if needed
-                // some events needs more than one initialization.
-                if (!evt.Initialized)
-                    evt.Init();
-#if EVENT_LOOP_DEBUG
-                ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] evaluate {evt.eventInformation.eventId}");
-#endif
-                //check and cache the trigger action
-                try
-                {
-                    if (evt.Condition())
-                        evt.EvaluateTrigger();
-                }
-                catch (Exception e)
-                {
-                    ConfigManager.WriteConsoleException($"[CabinetAGEBasic.RunEvents] evaluate exception event:{evt.eventInformation.name} / {evt.eventInformation.eventId}", e);
-                }
-            }
-
-            foreach (Event evt in events)
-            {
-                // Check if the event was triggered
-                if (evt.WasTriggered())
-                {
-                    ConfigManager.WriteConsole($"[CabinetAGEBasic.RunEvents] starting event:{evt.eventInformation.name} prg:{evt.eventInformation.program} goto:{evt.eventInformation.line} ");
-
-                    //prepare
-                    CompileWhenNeeded(evt.eventInformation.program);
-
-                    if (evt.eventInformation.Variables != null)
-                        IngestVariables(evt.eventInformation.Variables);
-
-                    int cabMaxExecLines = AGEInfo.maxExecutionLines == -1 ? AGEBasic.DefaultMaxExecutionLines : AGEInfo.maxExecutionLines;
-                    evt.PrepareToRun(maxExecutionLinesAllowed: cabMaxExecLines, lineNumber: evt.eventInformation.line);
-
-                    //run
-                    bool moreLines = true;
-                    System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-                    while (moreLines)
-                    {
-                        int cabMaxLinesPerFrame = AGEInfo.maxLinesPerFrame == -1 ? AGEBasic.MaxLinesPerFrame : AGEInfo.maxLinesPerFrame;
-                        double cabMaxMsPerFrame = AGEInfo.maxMillisecondsPerFrame == -1 ? AGEBasic.MaxMillisecondsPerFrame : AGEInfo.maxMillisecondsPerFrame;
-
-                        // Run the event's program in batches based on CPU multiplier
-                        int linesToExecute = (int)(cabMaxLinesPerFrame * AGEBasic.ConfigCommands.cpuPercentage);
-                        if (linesToExecute < 1) linesToExecute = 1;
-
-                        stopwatch.Restart();
-
-                        for (int i = 0; i < linesToExecute && moreLines; i++)
-                        {
-                            YieldInstruction yieldInstruction = evt.RunALine(ref moreLines);
-                            
-                            // If a command specifically requested a sleep, break the batch and yield
-                            if (yieldInstruction != null) 
-                            {
-                                yield return yieldInstruction;
-                                break;
-                            }
-
-                            // TIME BUDGET: Prevent FPS drops in VR.
-                            if (stopwatch.Elapsed.TotalMilliseconds > cabMaxMsPerFrame)
-                            {
-                                break;
-                            }
-                        }
-
-                        // Yield once per batch to let Unity render the frame, unless SleepTime is active
-                        if (moreLines && AGEBasic.ConfigCommands.SleepTime == 0)
-                            yield return null;
-                    }
-                }
-            }
-            
-            yield return null;
-        }
-    }
 
     public void ActivateShader(ShaderScreenBase shader)
     {
@@ -1072,7 +1066,7 @@ public class CabinetAGEBasic : MonoBehaviour
     // stop programs and events.
     public void Stop()
     {
-        if (eventCoroutine != null)
+        if (AGEBasic.IsEventCoroutineRunning())
             stopEventCoroutine();
 
         AGEBasic.ForceStop();
@@ -1085,18 +1079,16 @@ public class CabinetAGEBasic : MonoBehaviour
 
     private void stopEventCoroutine()
     {
-        eventCoroutineIsRunning = false;
-        StopCoroutine(eventCoroutine);
+        AGEBasic.stopEventCoroutine();
     }
-    private void startEventCoroutine()
+    public void startEventCoroutine()
     {
         //  game started, time to start the events corroutine.
-        if (events.Count > 0)
-            eventCoroutine = StartCoroutine(RunEvents());
+        AGEBasic.startEventCoroutine();
     }
     public bool IsCoroutineRunning()
     {
-        return eventCoroutineIsRunning;
+        return AGEBasic.IsEventCoroutineRunning();
     }
 
     public void StopInsertCoinBas()

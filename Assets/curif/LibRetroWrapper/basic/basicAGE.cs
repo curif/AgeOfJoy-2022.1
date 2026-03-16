@@ -110,7 +110,8 @@ public class basicAGE : MonoBehaviour
         Running,
         CancelledWithError,
         CompilationError,
-        Finished
+        Finished,
+        Persistent
     }
 
     public ProgramStatus Status;
@@ -153,6 +154,9 @@ public class basicAGE : MonoBehaviour
     double cpuPercentage;
     float calculatedDelay;
     public RuntimeException LastRuntimeException;
+
+    private Coroutine eventCoroutine;
+    public List<Event> events = new();
 
     public bool DebugMode
     {
@@ -225,9 +229,13 @@ public class basicAGE : MonoBehaviour
         configCommands.PlayerOrigin = PlayerOrigin;
         configCommands.EventManager = EventManager;
 
+        configCommands.ageBasic = this;
+
         GameObject musicPlayer = GameObject.Find("JukeBox");
         if (musicPlayer != null)
             configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
+
+        configCommands.events = events;
 
         initialized = true;
     }
@@ -258,6 +266,7 @@ public class basicAGE : MonoBehaviour
 
     public void SetCabinetEvents(List<Event> events)
     {
+        this.events = events;
         configCommands.events = events;
     }
     public void SetLightGunTarget(LightGunTarget lightGunTarget)
@@ -329,6 +338,11 @@ public class basicAGE : MonoBehaviour
     {
         return running != null || Status == ProgramStatus.Running;
     }
+    public bool IsPersistentRunning()
+    {
+        return running != null || Status == ProgramStatus.Persistent;
+    }
+
     public bool IsRunning(string name)
     {
         return (!String.IsNullOrEmpty(running?.Name) && running.Name == name);
@@ -361,8 +375,109 @@ public class basicAGE : MonoBehaviour
         configCommands.ProgramName = ctx.ProgramName;
     }
 
+    public void startEventCoroutine()
+    {
+        if (eventCoroutine == null)
+            eventCoroutine = StartCoroutine(RunEvents());
+    }
+
+    public void stopEventCoroutine()
+    {
+        if (eventCoroutine != null)
+        {
+            StopCoroutine(eventCoroutine);
+            eventCoroutine = null;
+        }
+    }
+
+    public bool IsEventCoroutineRunning()
+    {
+        return eventCoroutine != null;
+    }
+
+    private IEnumerator RunEvents()
+    {
+        while (true)
+        {
+            if (IsRunning())
+            {
+                yield return null;
+                continue;
+            }
+
+            Event[] currentEvents = events.ToArray();
+
+            foreach (Event evt in currentEvents)
+            {
+                if (!evt.Initialized)
+                    evt.Init();
+
+                try
+                {
+                    if (evt.Condition())
+                        evt.EvaluateTrigger();
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[basicAGE.RunEvents] evaluate exception event:{evt.eventInformation.name} / {evt.eventInformation.eventId}", e);
+                }
+            }
+
+            foreach (Event evt in currentEvents)
+            {
+                if (evt.WasTriggered())
+                {
+                    ConfigManager.WriteConsole($"[basicAGE.RunEvents] starting event:{evt.eventInformation.name} prg:{evt.eventInformation.program} goto:{evt.eventInformation.line} ");
+
+                    // Variables logic from CabinetAGEBasic
+                    if (evt.eventInformation.Variables != null && evt.eventInformation.Variables.Count > 0)
+                    {
+                        foreach (AGEBasicVariable var in evt.eventInformation.Variables)
+                        {
+                            BasicValue bv;
+                            if (string.IsNullOrEmpty(var?.type) || var.type.ToUpper() == "STRING")
+                                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
+                            else if (var.type.ToUpper() == "NUMBER")
+                                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
+                            else
+                                throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
+
+                            evt.vars.SetValue(var.name, bv);
+                        }
+                    }
+
+                    int maxExecLines = DefaultMaxExecutionLines;
+                    if (configCommands.Cabinet != null && configCommands.Cabinet.gameObject != null) 
+                    {
+                        CabinetAGEBasic cabAge = configCommands.Cabinet.gameObject.GetComponent<CabinetAGEBasic>();
+                        if (cabAge != null && cabAge.AGEInfo.maxExecutionLines != -1)
+                            maxExecLines = cabAge.AGEInfo.maxExecutionLines;
+                    }
+
+                    PrepareToRun(evt.eventInformation.program, evt.vars, 
+                                    maxExecutionLinesAllowed: maxExecLines, 
+                                    lineNumber: evt.eventInformation.line);
+
+                    runningProgramCoroutine = StartCoroutine(runProgram());
+                    
+                    while (IsRunning())
+                        yield return null;
+
+                    evt.Finish();
+                }
+            }
+            yield return null;
+        }
+    }
+
     public void Stop()
     {
+        if (Status == ProgramStatus.Persistent)
+        {
+            ForceStop();
+            return;
+        }
+
         if (running == null)
             return;
         configCommands.stop = true;
@@ -371,59 +486,54 @@ public class basicAGE : MonoBehaviour
 
     public void ForceStop()
     {
-        if (running == null)
-            return;
-
         programContextStack.Clear();
 
         if (runningProgramCoroutine != null)
             StopCoroutine(runningProgramCoroutine);
 
-        if (configCommands.DebugMode)
-            SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
+        if (running != null)
+        {
+            if (configCommands.DebugMode)
+                SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
 
-        ConfigManager.WriteConsole($"[ForceStop] {running.Name} forced to END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+            ConfigManager.WriteConsole($"[ForceStop] {running.Name} forced to END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+        }
+
+        configCommands.stop = true;
+        configCommands.CloseFiles();
+        configCommands.ScreenGenerator?.ClearSprites();
+        
+        // GLOBAL ENFORCEMENT: Kill ALL registered events when a stop is requested
+        events.Clear();
+        configCommands.events = events;
 
         runningProgramCoroutine = null;
         running = null;
         Status = ProgramStatus.Finished;
-
     }
 
     public void Run(string programName, BasicVars pvars = null,
                         int maxExecutionLinesAllowed = -1)
     {
+        // Ensure only one program context exists. 
+        // If a program was persistent in the background, this kills it.
+        ForceStop();
+
         if (maxExecutionLinesAllowed == -1)
             maxExecutionLinesAllowed = DefaultMaxExecutionLines;
 
         PrepareToRun(programName, pvars, maxExecutionLinesAllowed);
 
         runningProgramCoroutine = StartCoroutine(runProgram());
-        /*
-        OnProgramStarted.Invoke(running.Name);
-        bool moreLines = true;
-        while (moreLines)
-        {
-            moreLines = RunALine();
-        }
-
-        if (configCommands.DebugMode)
-            SaveDebug(running.Name, null, LastRuntimeException);
-        
-        OnProgramEnded.Invoke(running.Name);
-
-        running = null;
-        Status = ProgramStatus.Finished;
-
-        ConfigManager.WriteConsole($"[BasicAGE.Run] {running.Name} ENDED. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
-
-        return;
-        */
     }
 
     public void PrepareToRun(string name, BasicVars pvars, int maxExecutionLinesAllowed = 0, int lineNumber = 0)
     {
         InitComponents();
+
+        // If no events are registered yet, but we have an events list, let's make sure the loop is running
+        if (events.Count > 0 && eventCoroutine == null)
+            startEventCoroutine();
 
         ConfigManager.WriteConsole($"[BasicAGE.PrepareToRun] starting {name} goto line: {lineNumber}.");
 
@@ -548,15 +658,70 @@ public class basicAGE : MonoBehaviour
     // to run inmediatly after a program runs
     public void PostRunTasks()
     {
-        configCommands.CloseFiles();
-        configCommands.ScreenGenerator?.ClearSprites();
-        OnProgramEnded.Invoke(running.Name);
+        bool engineHasEvents = events != null && events.Count > 0;
+        bool currentProgramIsPersistent = IsPersistenceRequired();
+
+        // If a STOP command specifically requested to kill all events
+        if (configCommands.stopAllEvents)
+        {
+            ConfigManager.WriteConsole($"[PostRunTasks] {running?.Name} executed STOP. Clearing all registered events.");
+            events?.Clear();
+            configCommands.events = events;
+            engineHasEvents = false;
+            currentProgramIsPersistent = false;
+        }
+
+        if (!engineHasEvents)
+        {
+            if (running != null)
+                ConfigManager.WriteConsole($"[PostRunTasks] {running.Name} No active events in the engine. Performing full cleanup.");
+            
+            configCommands.CloseFiles();
+            configCommands.ScreenGenerator?.ClearSprites();
+        }
+        else
+        {
+            ConfigManager.WriteConsole($"[PostRunTasks] {running?.Name} Engine remains active due to registered events.");
+        }
+
+        if (running != null)
+        {
+            // Only fire the 'Ended' signal if this specific program isn't waiting for events
+            if (!currentProgramIsPersistent)
+                OnProgramEnded.Invoke(running.Name);
+        }
+
+        // Update the engine status based on what remains
+        if (currentProgramIsPersistent)
+            Status = ProgramStatus.Persistent;
+        else if (engineHasEvents)
+            Status = ProgramStatus.Persistent; // Engine is still persistent for other programs
+        else
+            Status = ProgramStatus.Finished;
+        
         running = null;
+    }
+
+    private bool IsPersistenceRequired()
+    {
+        if (events == null || running == null) return false;
+        foreach (Event evt in events)
+        {
+            if (evt.eventInformation.program == running.Name)
+                return true;
+        }
+        return false;
     }
 
     //run just one line of the current loaded program
     public YieldInstruction runNextLineCurrentProgram(ref bool moreLines)
     {
+        if (running == null || configCommands.stop)
+        {
+            moreLines = false;
+            return null;
+        }
+
         try
         {
             moreLines = running.runNextLine();
@@ -564,7 +729,7 @@ public class basicAGE : MonoBehaviour
         catch (Exception e)
         {
             string strerror = errorMessage(running, e);
-            ConfigManager.WriteConsoleException($"[BasicAGE.runNextLineCurrentProgram] #{configCommands.LineNumber} {strerror}",e);
+            ConfigManager.WriteConsoleException($"[BasicAGE.runNextLineCurrentProgram] {strerror}",e);
             LastRuntimeException = new(running.Name, (int)configCommands.LineNumber, e.Message, e);
             moreLines = false;
         }
@@ -655,7 +820,7 @@ public class basicAGE : MonoBehaviour
             if (LastRuntimeException != null)
                 Status = ProgramStatus.CancelledWithError;
             else
-                Status = ProgramStatus.Finished;
+                Status = ProgramStatus.Finished; // Status will be refined in PostRunTasks
             
             return null;
         }

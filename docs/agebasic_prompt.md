@@ -22,7 +22,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 
 ### Variables
 *   **Typeless Declaration:** Variables do not have strict types upon declaration. They can hold Numbers, Strings, or Arrays.
-*   **Naming:** Must start with a letter, followed by letters, digits, or underscores. They are case-insensitive internally, but conventionally written in uppercase.
+*   **Naming:** Must start with a letter, followed by letters, digits, or underscores. Conventionally written in uppercase. Do NOT use `$` suffix for strings.
 *   **Creation:** Variables are automatically created the first time they are assigned via `LET`.
 *   **Arrays:** Must be declared before use with `DIM`. 
     *   Example: `10 DIM MYARRAY[10, 5]`
@@ -55,15 +55,45 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 | **FOR / TO / STEP** | `FOR var = start TO end [STEP expr]` | Standard loop. |
 | **NEXT** | `NEXT var` | Ends a FOR loop. |
 | **SLEEP** | `SLEEP seconds` | Pauses execution for X seconds. |
-| **END** | `END` | Terminates the program. |
+| **END** | `END` | Terminates the current execution context (the setup or an event). Background events remain active. |
+| **STOP** | `STOP` | Forcibly terminates the entire program, unregisters all events, and clears sprites/files. |
 | **CALL** | `CALL func()` | Executes a function but discards its return value. |
 | **DATA** | `DATA "listName", val1, val2...` | Stores static data in a named list. |
 | **READ** | `READ "listName", var1, var2...` | Reads sequential data from a named list into variables. |
 | **RESTORE** | `RESTORE "listName" [, offset]` | Resets the read pointer for a data list. |
-| **RUN** | `RUN "path/to/my/myprogram.bas" [LINE 30]` | Execute a program and continue (optionally starting at specified line #). 
+| **RUN** | `RUN "path/to/myprogram.bas" [LINE 30]` | Executes another program (switches context). |
+| **ONEVENT** | `ONEVENT configFunc() GOTO line` | Registers a dynamic event handler. |
+
 ---
 
-## 3. Math & Logic Functions
+## 3. Dynamic Events System
+
+AGEBasic supports an event-driven model allowing scripts to respond to VR interactions, timers, and system triggers in the background.
+
+### Event Registration
+Dynamic events are registered using the `ONEVENT` command combined with a configuration function.
+
+*   `ONEVENT ONTIMER(seconds) GOTO line`: Triggers every X seconds.
+*   `ONEVENT ONCONTROL("ID", type, [port]) GOTO line`: Triggers on input. 
+    *   `type`: `"pressed"`, `"held"`, or `"released"`.
+*   `ONEVENT ONTOUCH("partName") GOTO line`: Triggers when a VR hand hovers over a cabinet part.
+*   `ONEVENT ONGRAB("partName") GOTO line`: Triggers when a VR hand selects/grabs a cabinet part.
+*   `ONEVENT ONCOLLISION("part", "impact1", ...) GOTO line`: Triggers on physical collision between specified cabinet parts.
+*   `ONEVENT ONCUSTOM("eventName") GOTO line`: Registers a manually triggerable event.
+
+### Event Execution Rules
+1.  **Isolation**: When an event triggers, it runs as a fresh execution context starting at the specified line.
+2.  **Termination (Local)**: You **MUST** use the `END` command to finish an event's logic block. This stops the event code and returns the interpreter to an idle state, waiting for the next trigger.
+3.  **Termination (Global)**: Use the `STOP` command if you want to kill the entire program, including all registered background events.
+4.  **Persistence**: Registered events remain active in the background even after the main program hits `END`. The main program should set up events and then terminate with `END` to allow the event loop to take over.
+5.  **Idle Execution**: Events only trigger when the interpreter is **idle** (no other sequential script is currently running). Use `SLEEP` in long-running scripts to allow events to process.
+
+### Custom Triggers
+*   `EVENTTRIGGER("eventName")`: Manually forces the execution of an `ONCUSTOM` event. (Used as a function, e.g., `CALL EVENTTRIGGER("Explosion")`).
+
+---
+
+## 4. Math & Logic Functions
 
 *   `ABS(num)`: Absolute value.
 *   `MAX(num1, num2)` / `MIN(num1, num2)`: Maximum/Minimum.
@@ -78,7 +108,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 
 ---
 
-## 4. String & Array Functions
+## 5. String & Array Functions
 
 *   `LEN(str_or_array)`: Length of string or array.
 *   `UCASE(str)` / `LCASE(str)`: Upper/Lower case.
@@ -97,7 +127,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 
 ---
 
-## 5. Screen & Drawing Commands
+## 6. Screen & Drawing Commands
 
 AGEBasic operates on a virtual CRT screen within the VR cabinet.
 
@@ -125,7 +155,7 @@ Sprites are drawn over the background and retain their Z-order. Loading is async
 
 ---
 
-## 6. VR & Cabinet Specific Functions
+## 7. VR & Cabinet Specific Functions
 
 AGEBasic can interact directly with the Age of Joy 3D environment.
 

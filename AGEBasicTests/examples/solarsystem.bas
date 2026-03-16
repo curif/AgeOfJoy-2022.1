@@ -5,6 +5,7 @@
 40 REM --- 1. Constants and Initial Values ---
 50 LET PI = 3.14159265   ' A good approximation for PI
 60 LET TWOPI = PI * 2    ' Full circle in radians (360 degrees)
+65 CALL SETCPU(200)
 
 70 REM Calculate the center of the screen in pixels
 80 LET SCX = DScreenWidth() / 2
@@ -78,7 +79,7 @@
 700   IF PLANET_ANGLE >= TWOPI THEN LET PLANET_ANGLE = PLANET_ANGLE - TWOPI
 710   IF MOON_ANGLE >= TWOPI THEN LET MOON_ANGLE = MOON_ANGLE - TWOPI
 720
-730   SLEEP 1 
+730   SLEEP 0.1
 740
 750 NEXT CURRENT_STEP
 

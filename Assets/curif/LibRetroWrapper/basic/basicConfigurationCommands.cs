@@ -19,6 +19,7 @@ public class ConfigurationCommands
     public double LineNumber; //in execution or parsing
     public AGEProgram ageProgram = null;
     public bool stop; //the program should stop
+    public bool stopAllEvents; //the program should stop and clear all events
 
     public double JumpTo; //line to jump in the next line run
     public double JumpNextTo; //jump to the next line of...
@@ -47,6 +48,8 @@ public class ConfigurationCommands
     public XROrigin PlayerOrigin;
 
     public MusicPlayer MusicPlayerQueue;
+
+    public basicAGE ageBasic;
 
     public string RunSubProgramPath = null;
     public int RunSubProgramLine = -1;

@@ -14,7 +14,7 @@ public class CommandExpression : ICommandBase
     private static readonly HashSet<string> constantStoppers =
         new HashSet<string>(StringComparer.OrdinalIgnoreCase) // Or CurrentCultureIgnoreCase, etc.
         {
-        ")", ",", "'", ":", "THEN", "ELSE", "TO", "STEP", "]", "LINE"
+        ")", ",", "'", ":", "THEN", "ELSE", "TO", "STEP", "]", "LINE", "GOTO"
         };
 
     // Shared evaluation stack used by ALL expressions to prevent GC allocation.
