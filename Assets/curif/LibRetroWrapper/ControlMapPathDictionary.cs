@@ -50,8 +50,7 @@ public static class ControlMapPathDictionary
     public const string KEYBOARD_ENTER = "keyboard-enter";
     public const string KEYBOARD_X = "keyboard-x";
     public const string KEYBOARD_Y = "keyboard-y";
-    public const string MOUSE_X = "mouse-x";
-    public const string MOUSE_Y = "mouse-y";
+    public const string MOUSE = "mouse";
     public const string MOUSE_LEFT = "mouse-left";
     public const string MOUSE_RIGHT = "mouse-right";
     public const string MOUSE_MIDDLE = "mouse-middle";
@@ -116,8 +115,7 @@ public static class ControlMapPathDictionary
             { GAMEPAD_DPAD_RIGHT, "<Gamepad>/dpad/right" },
 
             // Mouse mappings
-            { MOUSE_X, "<Mouse>/delta/x" },
-            { MOUSE_Y, "<Mouse>/delta/y" },
+            { MOUSE, "<Mouse>/delta" },
             { MOUSE_LEFT, "<Mouse>/leftButton" },
             { MOUSE_RIGHT, "<Mouse>/rightButton" },
             { MOUSE_MIDDLE, "<Mouse>/middleButton" },
