@@ -244,20 +244,6 @@ public class Event
                                 maxExecutionLinesAllowed: maxExecutionLinesAllowed, lineNumber: lineNumber);
         AGEBasic.PreRunTasks();
     }
-    //run next line
-    public virtual YieldInstruction RunALine(ref bool moreLines)
-    {
-        YieldInstruction yield;
-        yield = AGEBasic.runNextLineCurrentProgram(ref moreLines);
-        if (!moreLines)
-        {
-            triggeredCount --;
-            startTime = DateTime.Now;
-            AGEBasic.PostRunTasks();
-            return null;
-        }
-        return yield;
-    }
 
     protected virtual bool IsTime()
     {
