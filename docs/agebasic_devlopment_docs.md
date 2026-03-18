@@ -10,7 +10,7 @@ The implementation is structured around several key C# classes that separate the
 This Unity `MonoBehaviour` serves as the execution engine and environment manager.
 - **Context Injection:** It collects references to Unity game objects and Age of Joy systems (e.g., `ScreenGenerator`, `CabinetsController`, `Teleportation`, `PlayerController`) and packages them into a `ConfigurationCommands` object. This object acts as the bridge between the AGEBasic scripts and the Unity world.
 - **Execution Loop:** Execution is handled via a Unity Coroutine (`runProgram`). To maintain high frame rates in VR, it strictly budgets execution time. It limits the number of lines executed per frame based on a CPU multiplier (`MaxLinesPerFrame * cpuPercentage`) and enforcing a hard time limit (`MaxMillisecondsPerFrame`, default 2.0ms).
-- **Safety:** It implements a fail-safe limit on total execution lines (`DefaultMaxExecutionLines`) to prevent infinite loops from locking the application, and catches `RuntimeException`s safely.
+- **Safety & UI Integration:** Programs can be executed natively via cabinets or triggered via UI management systems like the `ConfigurationController`. The `basicAGE` engine publishes UnityEvents (`OnProgramStarted`, `OnProgramEnded`) which are safely invoked (`?.Invoke()`) since non-cabinet UI runners might not instantiate these listeners. The UI behavior tree tracks engine execution state via `IsRunning()` and `IsRunningInBackground()` (detecting if `eventCoroutine` is active).
 - **Sub-program execution (RUN command):** To support running sub-programs via the `RUN` command, `basicAGE` implements a `ProgramContext` stack (`programContextStack`). When a new program is called, the current program's state (variables, call stack, execution line) is pushed to the stack, and execution immediately switches to the new script. If the sub-script doesn't throw an error, execution returns to the parent program once the sub-script finishes.
 
 ### `basicAGEProgram.cs` (The Program Representation)
@@ -32,7 +32,8 @@ The `TokenConsumer` class is a sequential token reader used during the parsing o
 ### `CabinetAGEBasic.cs` (Event Handling and Linking)
 This class manages the lifecycle of AGEBasic scripts attached to a specific arcade cabinet.
 - **Initialization:** Reads configuration from `description.yaml` (via `CabinetAGEBasicInformation`) and pre-loads variables using `IngestVariables`.
-- **Event Coroutine (`RunEvents`):** Manages a continuous background loop that checks conditions and executes mapped scripts based on cabinet interactions. It supports dynamic registration of events at runtime.
+- **Event Coroutine (`RunEvents`):** Manages a continuous background loop that checks conditions and executes mapped scripts based on cabinet interactions. It supports dynamic registration of events at runtime. If an event script is triggered, it invokes a new `runProgram` coroutine and prevents overlapping runs by sequentially yielding (`while (IsRunning()) yield return null;`).
+- **SHUTDOWN vs END:** The engine makes a hard behavioral distinction between `END` and `SHUTDOWN`. Calling `END` sets `config.stop = true`, gracefully exiting the local program context but allowing the `eventCoroutine` loop to persist. Calling `SHUTDOWN` sets `config.shutdown = true` and `config.stop = true`, which forcefully kills the local program context, executes a `StopCoroutine` on the background `eventCoroutine`, and fully clears the registered events queue and file pointers.
 - **Event Types:** Implements an extensible event system through the `Event` base class and its derived forms:
   - `OnTimer`, `OnAlways` (Time-based triggers)
   - `OnControlActivePressed`, `OnControlActiveHeld`, `OnControlActiveReleased` (MAME input mapping)
@@ -49,7 +50,7 @@ This class manages the lifecycle of AGEBasic scripts attached to a specific arca
 Passed to almost every object in the interpreter. Holds the current state of execution.
 - Contains references to global dependencies (`ScreenGenerator`, `CabinetsController`, `ControlMap`, etc.).
 - Maintains the Call Stack (`Gosub`).
-- Controls program flow interrupts (`stop`, `stopAllEvents`, `JumpTo`, `JumpNextTo`, `SleepTime`).
+- Controls program flow interrupts (`stop`, `shutdown`, `JumpTo`, `JumpNextTo`, `SleepTime`).
 - File I/O pointers (`filepointer` array).
 - Signals for sub-program execution (`RunSubProgramPath`, `RunSubProgramLine`).
 - Holds the list of active `Event` instances.
@@ -80,9 +81,10 @@ AGEBasic supports hardware-accelerated, software-composited 2D sprites.
 - **Caching:** Sprite textures (`SPRITELOAD`) integrate with the game's `CabinetTextureCache` and `TextureDiskCache`. They are requested asynchronously and must be kept CPU-readable (`makeNoLongerReadable: false`) for the software compositor to perform Alpha blending.
 
 ## 4. Control Flow Internals
-- `GOTO 100`: Uses `config.JumpTo`. The program searches exactly for line number 100.
-- Internally, a jump can use `config.JumpNextTo`. This is used when a line number might not exist (e.g. exiting a `FOR` loop), telling the engine to find the *first line number greater than or equal to* the requested number.
-- `ONEVENT`: Registers a new `Event` at runtime. The command parses the event type and parameters, creates an `EventInformation` object, and uses `EventsFactory` to instantiate the appropriate `Event` subclass. This instance is added to `config.events` and initialized.
+- **Fractional Jumps (IF/THEN/Multi-commands):** AGEBasic handles inline statement blocks (e.g. `THEN` or `:` separated commands) by leveraging fractional line numbers. Commands appended on the same logical line are inserted into the `SortedDictionary` by incrementing the floating-point line number by a tiny delta (`AGEProgram.MinJump`). This clever hack ensures commands execute sequentially on the same "line" without necessitating complex nested AST structures.
+- **Exact Jumps:** `GOTO 100`: Uses `config.JumpTo`. The program searches exactly for line number 100.
+- **Fuzzy Jumps:** Internally, a jump can use `config.JumpNextTo`. This is used when a line number might not exist (e.g. exiting a `FOR` loop), telling the engine to find the *first line number greater than or equal to* the requested number.
+- **Dynamic Events:** `ONEVENT`: Registers a new `Event` at runtime. The command parses the event type and parameters, creates an `EventInformation` object, and uses `EventsFactory` to instantiate the appropriate `Event` subclass. This instance is added to `config.events` and initialized.
 
 ## 5. Extending AGEBasic
 
@@ -91,7 +93,7 @@ To add new functionality to AGEBasic, developers follow these patterns:
 ### Adding a New Command
 1. Create a new class in `Assets/curif/LibRetroWrapper/basic/Commands/` inheriting from `CommandBase` (or specialized bases like `CommandSingleExpressionBase`).
 2. Implement `Parse(TokenConsumer tokens)` to handle the syntax.
-3. Implement `Execute(BasicVars vars)` to perform the action.
+3. Implement `Execute(BasicVars fractional)` to perform the action.
 4. Register the new command in `Commands` static constructor in `basicCommands.cs`.
 
 ### Adding a New Function
