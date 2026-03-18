@@ -335,8 +335,11 @@ public class basicAGE : MonoBehaviour
     }
     public bool IsRunningInBackground()
     {
-        return eventCoroutine != null;
+        return eventCoroutine != null && events.Count > 0;
     }
+
+    public bool IsEventLoopActive => eventCoroutine != null;
+    public int RegisteredEventsCount => events.Count;
 
     public bool IsRunning(string name)
     {
@@ -374,7 +377,7 @@ public class basicAGE : MonoBehaviour
     {
         while (true)
         {
-            if (IsRunning())
+            if (IsRunning() || events.Count == 0)
             {
                 yield return null;
                 continue;
@@ -457,6 +460,7 @@ public class basicAGE : MonoBehaviour
 
                     while (IsRunning())
                         yield return null;
+
                     evt.Finish();
 
                 }
@@ -470,7 +474,7 @@ public class basicAGE : MonoBehaviour
     {
         if (running != null)
         {
-            OnProgramEnded.Invoke(running.Name);
+            OnProgramEnded?.Invoke(running.Name);
         }
 
         if (runningProgramCoroutine != null)
@@ -487,6 +491,7 @@ public class basicAGE : MonoBehaviour
     {
         ConfigManager.WriteConsole($"[BasicAGE.Shutdown] {running?.Name} SHUTDOWN.");
 
+        AGEProgram lastRunning = running;
         EndRunningProgram();
         programContextStack.Clear();
 
@@ -503,16 +508,13 @@ public class basicAGE : MonoBehaviour
         configCommands.CloseFiles();
         configCommands.ScreenGenerator?.ClearSprites();
 
-        if (running != null)
+        if (lastRunning != null)
         {
             if (configCommands.DebugMode)
-                SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
+                SaveDebug(lastRunning.Name, compEx: null, runEx: LastRuntimeException);
 
-            ConfigManager.WriteConsole($"[ForceStop] {running.Name} forced to END. {running.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
+            ConfigManager.WriteConsole($"[ForceStop] {lastRunning.Name} forced to END. {lastRunning.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
             
-            running = null;
-            Status = ProgramStatus.Finished;
-
         }
 
         configCommands.stop = false;
@@ -547,7 +549,7 @@ public class basicAGE : MonoBehaviour
         InitComponents();
 
         // let's make sure the loop is running
-        if (events.Count > 0 && eventCoroutine == null)
+        if (eventCoroutine == null)
             eventCoroutine = StartCoroutine(RunEvents());
 
         running = programs[name];
@@ -610,7 +612,7 @@ public class basicAGE : MonoBehaviour
         InitComponents(); //only if not initialized previously
 
         Status = ProgramStatus.Running;
-        OnProgramStarted.Invoke(running.Name);
+        OnProgramStarted?.Invoke(running.Name);
 
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
@@ -842,6 +844,11 @@ public class basicAGE : MonoBehaviour
     {
         ParseFile(Path.Combine(path, nameToExecute));
     }
+    public void LogStatus()
+    {
+        ConfigManager.WriteConsole(
+            $"AGEBasic Log Status\n Running: program name: [{running?.Name}] Is running: {IsRunning()} \n Events: {IsRunningInBackground()} cantidad: {events.Count} coroutine: [{eventCoroutine}]");
+    }
     /*
     public void RunTests()
     {
@@ -878,6 +885,14 @@ public class basicAGEEditor : Editor
         DrawDefaultInspector();
 
         basicAGE myScript = (basicAGE)target;
+
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Events Status", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Event Loop Active:", myScript.IsRunningInBackground() ? "YES" : "No");
+        EditorGUILayout.LabelField("Registered Events:", myScript.events.Count.ToString());
+        
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Commands", EditorStyles.boldLabel);
         if(GUILayout.Button("Show Programs"))
         {
           myScript.ListPrograms();
@@ -902,6 +917,10 @@ public class basicAGEEditor : Editor
         if(GUILayout.Button("Stop"))
         {
           myScript.EndRunningProgram();
+        }
+        if (GUILayout.Button("AGEBASIC Engine status"))
+        {
+            myScript.LogStatus();
         }
     }
 }

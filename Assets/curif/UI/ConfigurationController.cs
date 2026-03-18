@@ -2356,7 +2356,7 @@ public class ConfigurationController : MonoBehaviour
 
                   if (AGEBasic.IsRunning())
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
-                  
+
                   if (AGEBasic.IsRunningInBackground())
                   {
                       // The program finished executing its initial pass but is now waiting for events in the background.
@@ -2364,15 +2364,14 @@ public class ConfigurationController : MonoBehaviour
                       inputDictionary["action"] = false; // Prevent instant dismissal from holding the button
                       AGEBasicWaitForPressAKey = true;
                       AGEBasicShowLastRuntimeError(); // Will show "active in background" based on the updated logic
-                      //status = StatusOptions.onRunAGEBasic;
-                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
+                      status = StatusOptions.onRunAGEBasic; // MUST CHANGE STATUS to go to the UI interaction loop!
+                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success; // MUST RETURN SUCCESS to finish this sequence
                   }
-                  
+
                   status = StatusOptions.onRunAGEBasic;
                   return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
-
             .Sequence("AGEBasic")
               .Condition("On AGEBasic", () => status == StatusOptions.onRunAGEBasic)
               .Do("Init", () =>

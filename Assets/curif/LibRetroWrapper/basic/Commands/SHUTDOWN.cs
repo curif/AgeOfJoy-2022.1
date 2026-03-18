@@ -11,6 +11,7 @@ class CommandSHUTDOWN : CommandNoExpressionBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN #{config.LineNumber} {CmdToken}] FORCE STOP ALL");
         this.config.shutdown = true;
+        this.config.stop = true;
         
         return null;
     }

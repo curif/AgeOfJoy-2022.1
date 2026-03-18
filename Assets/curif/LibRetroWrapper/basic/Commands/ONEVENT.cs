@@ -77,40 +77,13 @@ class CommandONEVENT : CommandBase
                 break;
         }
 
-        // Context search logic
-        CabinetAGEBasic cabAgeBasic = null;
-        basicAGE ageBasicInstance = null;
-        
-        if (config.Cabinet != null && config.Cabinet.gameObject != null)
-        {
-             cabAgeBasic = config.Cabinet.gameObject.GetComponent<CabinetAGEBasic>();
-             if (cabAgeBasic != null)
-                ageBasicInstance = cabAgeBasic.AGEBasic;
-        }
-        
-        if (ageBasicInstance == null)
-        {
-            basicAGE[] instances = GameObject.FindObjectsOfType<basicAGE>();
-            foreach (var instance in instances)
-            {
-                if (instance.ConfigCommands == config)
-                {
-                    ageBasicInstance = instance;
-                    break;
-                }
-            }
-            if (ageBasicInstance == null)
-                ageBasicInstance = GameObject.FindObjectOfType<basicAGE>();
-        }
-
-        if (ageBasicInstance == null)
-            throw new Exception($"{CmdToken}: could not find an active basicAGE engine to register the event.");
-
-        Event newEvt = EventsFactory.Factory(info, vars, ageBasicInstance);
+        Event newEvt = EventsFactory.Factory(info, vars, config.ageBasic);
         if (newEvt != null)
         {
             newEvt.Init();
             config.events.Add(newEvt);
+            AGEBasicDebug.WriteConsole($"[AGE BASIC RUN #{config.LineNumber} {CmdToken}] added evemt: {newEvt}");
+
         }
 
         return null;
