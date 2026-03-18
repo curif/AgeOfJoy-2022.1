@@ -19,7 +19,7 @@ public class ConfigurationCommands
     public double LineNumber; //in execution or parsing
     public AGEProgram ageProgram = null;
     public bool stop; //the program should stop
-    public bool stopAllEvents; //the program should stop and clear all events
+    public bool shutdown; //the program should stop and clear all events
 
     public double JumpTo; //line to jump in the next line run
     public double JumpNextTo; //jump to the next line of...

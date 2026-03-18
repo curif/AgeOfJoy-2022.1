@@ -1,17 +1,16 @@
 using System;
 
-class CommandSTOP : CommandNoExpressionBase
+class CommandSHUTDOWN : CommandNoExpressionBase
 {
-    public CommandSTOP(ConfigurationCommands config) : base(config)
+    public CommandSHUTDOWN(ConfigurationCommands config) : base(config)
     {
         this.config = config;
-        this.cmdToken = "STOP";
+        this.cmdToken = "SHUTDOWN";
     }
     public override BasicValue Execute(BasicVars vars)
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN #{config.LineNumber} {CmdToken}] FORCE STOP ALL");
-        this.config.stop = true;
-        this.config.stopAllEvents = true;
+        this.config.shutdown = true;
         
         return null;
     }

@@ -91,7 +91,7 @@ public class AGEProgram
         }
     }
 
-    public void PrepareToRun(BasicVars pvars = null, int lineNumber = 0)
+    public void PrepareProgramToRun(BasicVars pvars = null, int lineNumber = 0)
     {
         // Ensure arrays are built if they somehow weren't
         if (parsedLineNumbers == null || parsedLineNumbers.Length != lines.Count)
@@ -107,7 +107,7 @@ public class AGEProgram
         config.JumpNextTo = 0;
         config.JumpTo = 0;
         config.stop = false;
-        config.stopAllEvents = false;
+        config.shutdown = false;
         if (pvars == null)
             vars = new();
         else
@@ -140,7 +140,7 @@ public class AGEProgram
 
     public bool runNextLine()
     {
-        if (config.stop)
+        if (config.stop || config.shutdown)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop");
             return false;
@@ -163,7 +163,7 @@ public class AGEProgram
         config.LineNumber = cmd.Key;
 
         cmd.Value.Execute(vars);
-        if (config.stop)
+        if (config.stop || config.shutdown)
         {
             ConfigManager.WriteConsole($"[AGEProgram.runNextLine] {name} stopped by config.stop after exec line");
             return false;

@@ -49,7 +49,7 @@ This class manages the lifecycle of AGEBasic scripts attached to a specific arca
 Passed to almost every object in the interpreter. Holds the current state of execution.
 - Contains references to global dependencies (`ScreenGenerator`, `CabinetsController`, `ControlMap`, etc.).
 - Maintains the Call Stack (`Gosub`).
-- Controls program flow interrupts (`stop`, `JumpTo`, `JumpNextTo`, `SleepTime`).
+- Controls program flow interrupts (`stop`, `stopAllEvents`, `JumpTo`, `JumpNextTo`, `SleepTime`).
 - File I/O pointers (`filepointer` array).
 - Signals for sub-program execution (`RunSubProgramPath`, `RunSubProgramLine`).
 - Holds the list of active `Event` instances.

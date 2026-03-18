@@ -1208,7 +1208,7 @@ public class ConfigurationController : MonoBehaviour
             scr.Print(0, 2, "line: " + AGEBasic.LastRuntimeException.LineNumber.ToString());
             scr.Print(0, 3, AGEBasic.LastRuntimeException.Message);
         }
-        else if (AGEBasic.Status == basicAGE.ProgramStatus.Persistent)
+        else if (AGEBasic.IsRunningInBackground())
         {
             scr.Print(0, 0, "active in background", true);
             scr.Print(0, 2, "events are registered");
@@ -1648,7 +1648,7 @@ public class ConfigurationController : MonoBehaviour
                 AGEBasic.DebugMode = ageBasicInformation.debug;
                 AGEBasic.Run(ageBasicInformation.afterLoad);
 
-                while (AGEBasic.IsRunning() || AGEBasic.IsPersistentRunning())
+                while (AGEBasic.IsRunning() || AGEBasic.IsRunningInBackground())
                     yield return new WaitForSeconds(1f / 2f);
 
                 ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] ended. Error: [{AGEBasic.LastRuntimeException}]");
@@ -2345,25 +2345,29 @@ public class ConfigurationController : MonoBehaviour
               .Do("Process", () =>
               {
                   if (DateTime.Now > AGEBasicRunTimeout)
-                      AGEBasic.Stop();
+                  {
+                      AGEBasic.Shutdown();
+                      status = StatusOptions.onRunAGEBasic;
+                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+                  }
 
                   if (AGEBasic.LastRuntimeException != null)
                       ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
 
-                  if (AGEBasic.IsRunning() || AGEBasic.IsPersistentRunning())
+                  if (AGEBasic.IsRunning())
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
-                  /*
-                  if (AGEBasic.IsPersistentRunning())
+                  
+                  if (AGEBasic.IsRunningInBackground())
                   {
                       // The program finished executing its initial pass but is now waiting for events in the background.
                       // Stop the UI from blocking the screen, but let the user know it's active in the background.
                       inputDictionary["action"] = false; // Prevent instant dismissal from holding the button
                       AGEBasicWaitForPressAKey = true;
                       AGEBasicShowLastRuntimeError(); // Will show "active in background" based on the updated logic
-                      status = StatusOptions.onRunAGEBasic;
+                      //status = StatusOptions.onRunAGEBasic;
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
                   }
-                  */
+                  
                   status = StatusOptions.onRunAGEBasic;
                   return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })

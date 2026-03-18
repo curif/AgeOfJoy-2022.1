@@ -249,6 +249,7 @@ public class AGEBasicCabinetController : MonoBehaviour
               .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("Coin inserted?", () => CoinWasInserted)
               .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
+              .Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
               .Do("Run main program", () =>
               {
 

@@ -16,7 +16,7 @@ public static class Commands
         commands["GOTO"] = typeof(CommandGOTO);
         commands["IF"] = typeof(CommandIFTHEN);
         commands["END"] = typeof(CommandEND);
-        commands["STOP"] = typeof(CommandSTOP);
+        commands["SHUTDOWN"] = typeof(CommandSHUTDOWN);
         commands["GOSUB"] = typeof(CommandGOSUB);
         commands["RETURN"] = typeof(CommandRETURN);
         commands["CALL"] = typeof(CommandCALL);

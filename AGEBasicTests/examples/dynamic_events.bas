@@ -24,7 +24,7 @@
 205 CLS
 210 LET ontimercount = ontimercount + 1
 220 PRINTLN "Timer Event: 5 seconds passed! count:" + str(ontimercount)
-230 IF ontimercount > 5 THEN STOP
+230 IF ontimercount > 5 THEN SHUTDOWN
 240 END
 
 300 REM Fire Button Event Logic

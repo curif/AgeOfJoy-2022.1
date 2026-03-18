@@ -56,7 +56,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 | **NEXT** | `NEXT var` | Ends a FOR loop. |
 | **SLEEP** | `SLEEP seconds` | Pauses execution for X seconds. |
 | **END** | `END` | Terminates the current execution context (the setup or an event). Background events remain active. |
-| **STOP** | `STOP` | Forcibly terminates the entire program, unregisters all events, and clears sprites/files. |
+| **SHUTDOWN** | `SHUTDOWN` | Forcibly terminates the entire program, unregisters all events, and clears sprites/files. |
 | **CALL** | `CALL func()` | Executes a function but discards its return value. |
 | **DATA** | `DATA "listName", val1, val2...` | Stores static data in a named list. |
 | **READ** | `READ "listName", var1, var2...` | Reads sequential data from a named list into variables. |

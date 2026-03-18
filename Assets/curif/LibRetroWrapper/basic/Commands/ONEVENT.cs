@@ -109,10 +109,8 @@ class CommandONEVENT : CommandBase
         Event newEvt = EventsFactory.Factory(info, vars, ageBasicInstance);
         if (newEvt != null)
         {
-            config.events.Add(newEvt);
             newEvt.Init();
-            if (cabAgeBasic == null)
-                ageBasicInstance.startEventCoroutine();
+            config.events.Add(newEvt);
         }
 
         return null;

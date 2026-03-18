@@ -332,6 +332,7 @@ public class AGEBasicScreenController : MonoBehaviour
               .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("Coin inserted?", () => CoinWasInserted)
               .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
+              .Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
               .Do("Run main program", () =>
               {
                   //   videoPlayer.Stop();
@@ -450,6 +451,7 @@ public class AGEBasicScreenController : MonoBehaviour
                 .Sequence()
                   .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
                   .Condition("Is Player looking the screen", () => isPlayerLookingAtScreen4())
+                  .Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
                   //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
                   .Do("Play video player", () =>
                   {
