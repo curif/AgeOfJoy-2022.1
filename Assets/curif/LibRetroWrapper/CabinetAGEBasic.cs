@@ -401,44 +401,49 @@ public class CabinetAGEBasic : MonoBehaviour
         AGEBasic.SetCabinet(cabinet);
         AGEBasic.SetLightGunTarget(lightGunTarget);
 
-        if (AGEInfo.Variables != null)
-        {
-            IngestVariables(AGEInfo.Variables);
-        }
+        ResetState(true);
+    }
 
-        //events ---
-        int countEvents = 0;
-        foreach (EventInformation info in AGEInfo.events)
+    public void ResetState(bool reinitializeYamlVariables = true)
+    {
+        Stop(); // Ensure no running programs are active and event loop is safely stopped via Shutdown()
+
+        if (reinitializeYamlVariables)
         {
-            Event evt = EventsFactory.Factory(info, vars, AGEBasic);
-            if (evt != null)
+            // Re-apply initial values for variables defined in the YAML configuration.
+            if (AGEInfo.Variables != null)
             {
-                AGEBasic.events.Add(evt);
-                AGEBasic.ConfigCommands.events = AGEBasic.events;
-                // some events needs more than one initialization.
-                evt.Init();
-                countEvents++;
+                IngestVariables(AGEInfo.Variables);
             }
         }
-        ConfigManager.WriteConsole($"[CabinetAGeBasic.Init] Program {pathBase} registered {countEvents} events correctly");
+    }
+
+    public void RegisterYamlEvents()
+    {
+        //Load cabinet events from YAML
+        int countEvents = 0;
+        if (AGEInfo.events != null)
+        {
+            foreach (EventInformation info in AGEInfo.events)
+            {
+                Event evt = EventsFactory.Factory(info, vars, AGEBasic);
+                if (evt != null)
+                {
+                    AGEBasic.events.Add(evt);
+                    AGEBasic.ConfigCommands.events = AGEBasic.events;
+                    // some events needs more than one initialization.
+                    evt.Init();
+                    countEvents++;
+                }
+            }
+        }
+        ConfigManager.WriteConsole($"[CabinetAGeBasic.RegisterYamlEvents] Program {pathBase} registered {countEvents} YAML events correctly.");
     }
 
     private void IngestVariables(List<AGEBasicVariable> variables)
     {
-        //variable injection
-        foreach (AGEBasicVariable var in variables)
-        {
-            BasicValue bv;
-            if (string.IsNullOrEmpty(var?.type) || var.type.ToUpper() == "STRING")
-                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
-            else if (var.type.ToUpper() == "NUMBER")
-                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
-            else
-                throw new Exception($"[CabinetAGEBasic.init] AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
-
-            vars.SetValue(var.name, bv);
-            ConfigManager.WriteConsole($"[CabinetAGEBasic.Init] inject variable: {var.name}: {bv}");
-        }
+        AGEBasic.IngestVariables(variables, vars);
+        ConfigManager.WriteConsole($"[CabinetAGEBasic.Init] injected {variables.Count} variables");
     }
 
     private bool execute(string prgName, int maxExecutionLines = -1)
@@ -484,7 +489,8 @@ public class CabinetAGEBasic : MonoBehaviour
 
     public void ExecInsertCoinBas()
     {
-
+        ResetState(true);
+        RegisterYamlEvents();
         AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0);
 
@@ -507,6 +513,7 @@ public class CabinetAGEBasic : MonoBehaviour
 
     public void ExecAfterLeaveBas()
     {
+        ResetState(false);
         AGEBasic.DebugMode = AGEInfo.debug;
         execute(AGEInfo.afterLeave);
 

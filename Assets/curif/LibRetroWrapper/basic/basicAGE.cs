@@ -373,8 +373,36 @@ public class basicAGE : MonoBehaviour
         configCommands.ProgramName = ctx.ProgramName;
     }
 
+    public void IngestVariables(List<AGEBasicVariable> variables, BasicVars targetVars)
+    {
+        if (variables == null || variables.Count == 0 || targetVars == null)
+            return;
+
+        foreach (AGEBasicVariable var in variables)
+        {
+            BasicValue bv;
+            if (string.IsNullOrEmpty(var?.type) || var.type.ToUpper() == "STRING")
+                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
+            else if (var.type.ToUpper() == "NUMBER")
+                bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
+            else
+                throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
+
+            targetVars.SetValue(var.name, bv);
+        }
+    }
+
     private IEnumerator RunEvents()
     {
+        CabinetAGEBasic cabinet = null;
+        int maxExecLines = DefaultMaxExecutionLines;
+        if (configCommands.Cabinet != null && configCommands.Cabinet.gameObject != null)
+        {
+            cabinet = configCommands.Cabinet.gameObject.GetComponent<CabinetAGEBasic>();
+            if (cabinet != null && cabinet.AGEInfo.maxExecutionLines != -1)
+                maxExecLines = cabinet.AGEInfo.maxExecutionLines;
+        }
+
         while (true)
         {
             if (IsRunning() || events.Count == 0)
@@ -409,47 +437,27 @@ public class basicAGE : MonoBehaviour
                     {
                         ConfigManager.WriteConsole($"[basicAGE.RunEvents] starting event:{evt.eventInformation.name} prg:{evt.eventInformation.program} goto:{evt.eventInformation.line} ");
                         
-                        int maxExecLines = DefaultMaxExecutionLines;
-                        CabinetAGEBasic cabAge = null;
-                        if (configCommands.Cabinet != null && configCommands.Cabinet.gameObject != null)
-                        {
-                            cabAge = configCommands.Cabinet.gameObject.GetComponent<CabinetAGEBasic>();
-                            // Variables logic from CabinetAGEBasic
-                            if (evt.eventInformation.Variables != null && evt.eventInformation.Variables.Count > 0)
-                            {
-                                foreach (AGEBasicVariable var in evt.eventInformation.Variables)
-                                {
-                                    BasicValue bv;
-                                    if (string.IsNullOrEmpty(var?.type) || var.type.ToUpper() == "STRING")
-                                        bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.String);
-                                    else if (var.type.ToUpper() == "NUMBER")
-                                        bv = new BasicValue(var.value, forceType: BasicValue.BasicValueType.Number);
-                                    else
-                                        throw new Exception($"AGEBasic variable injection error var: {var.name} value type unknown: {var.type}");
+                        // Use unified IngestVariables for event-specific variables
+                        IngestVariables(evt.eventInformation.Variables, evt.vars);
 
-                                    evt.vars.SetValue(var.name, bv);
-                                }
-                            }
-
-                            if (cabAge.AGEInfo.maxExecutionLines != -1)
-                                maxExecLines = cabAge.AGEInfo.maxExecutionLines;
-                        }
-                      
                         // Ensure program is compiled before running
                         if (!Exists(evt.eventInformation.program))
                         {
                             string basePath = configCommands.ProgramPath;
-                            if (string.IsNullOrEmpty(basePath) && cabAge != null)
-                                basePath = cabAge.pathBase;
-                            if (string.IsNullOrEmpty(basePath)) basePath = ConfigManager.AGEBasicDir;
-                            
+                            if (string.IsNullOrEmpty(basePath)) 
+                            {
+                                if (cabinet != null)
+                                    basePath = cabinet.pathBase;
+                                else
+                                    basePath = ConfigManager.AGEBasicDir;
+                            }
+
                             ParseFile(Path.Combine(basePath, evt.eventInformation.program));
                         }
 
-                        PrepareToRun(evt.eventInformation.program, evt.vars,
+                        Run(evt.eventInformation.program, evt.vars,
                                         maxExecutionLinesAllowed: maxExecLines,
                                         lineNumber: evt.eventInformation.line);
-                        runningProgramCoroutine = StartCoroutine(runProgram());
                     }
                     catch (Exception e)
                     {
@@ -477,14 +485,21 @@ public class basicAGE : MonoBehaviour
             OnProgramEnded?.Invoke(running.Name);
         }
 
+        running = null;
+        Status = ProgramStatus.Finished;
+
         if (runningProgramCoroutine != null)
         {
             StopCoroutine(runningProgramCoroutine);
             runningProgramCoroutine = null;
         }
 
-        running = null;
-        Status = ProgramStatus.Finished;
+        //stop event loop when don't needed.
+        if (events != null && events.Count == 0 && eventCoroutine != null)
+        {
+            StopCoroutine(eventCoroutine);
+            eventCoroutine = null;
+        }
     }
 
     public void Shutdown()
@@ -492,19 +507,20 @@ public class basicAGE : MonoBehaviour
         ConfigManager.WriteConsole($"[BasicAGE.Shutdown] {running?.Name} SHUTDOWN.");
 
         AGEProgram lastRunning = running;
-        EndRunningProgram();
         programContextStack.Clear();
 
-        if (events != null && events.Count > 0)
+        //force stop event loop.
+        if (eventCoroutine != null)
         {
-            if (eventCoroutine != null)
-            {
-                StopCoroutine(eventCoroutine);
-                eventCoroutine = null;
-            }
+            StopCoroutine(eventCoroutine);
+            eventCoroutine = null;
+        }
+        if (events != null)
+        {
             events.Clear();
             configCommands.events = events;
         }
+        
         configCommands.CloseFiles();
         configCommands.ScreenGenerator?.ClearSprites();
 
@@ -522,43 +538,36 @@ public class basicAGE : MonoBehaviour
         configCommands.CloseFiles();
         configCommands.ScreenGenerator?.ClearSprites();
 
-        Status = ProgramStatus.Finished;
+        EndRunningProgram();
     }
 
-    public void Run(string programName, BasicVars pvars = null,
-                        int maxExecutionLinesAllowed = -1)
+    public void Run(string progName, BasicVars pvars = null,
+                        int maxExecutionLinesAllowed = -1, 
+                        int lineNumber = 0)
     {
+        ConfigManager.WriteConsole($"[BasicAGE.Run] starting {progName} goto line: {lineNumber}.");
 
-        if (maxExecutionLinesAllowed == -1)
-            maxExecutionLinesAllowed = DefaultMaxExecutionLines;
+        if (!programs.ContainsKey(progName))
+            throw new Exception($"program {progName} doesn't exists or was erroneous");
 
-        PrepareToRun(programName, pvars, maxExecutionLinesAllowed);
-
-        runningProgramCoroutine = StartCoroutine(runProgram());
-    }
-
-    public void PrepareToRun(string name, BasicVars pvars, int maxExecutionLinesAllowed = 0, int lineNumber = 0)
-    {
-        ConfigManager.WriteConsole($"[BasicAGE.PrepareToRun] starting {name} goto line: {lineNumber}.");
-
-        if (!programs.ContainsKey(name))
-            throw new Exception($"program {name} doesn't exists or was erroneous");
         if (running != null)
-            throw new Exception($"you can't run {name}, {running.Name} is runnig");
+            throw new Exception($"you can't run {progName}, {running.Name} is runnig");
 
         InitComponents();
 
-        // let's make sure the loop is running
-        if (eventCoroutine == null)
-            eventCoroutine = StartCoroutine(RunEvents());
-
-        running = programs[name];
+        running = programs[progName];
         Status = ProgramStatus.WaitingForStart;
         LastRuntimeException = null;
-        running.PrepareProgramToRun(pvars, lineNumber: lineNumber);
-        running.MaxExecutionLinesAllowed = maxExecutionLinesAllowed;
+        running.PrepareProgramToRun(pvars, 
+                                    lineNumber: lineNumber, 
+                                    maxExecutionLinesAllowed==-1? DefaultMaxExecutionLines: maxExecutionLinesAllowed);
         cpuPercentage = configCommands.cpuPercentage;
         calculatedDelay = CalculateDelay(cpuPercentage);
+
+        runningProgramCoroutine = StartCoroutine(runProgram());
+
+        if (eventCoroutine == null)
+            eventCoroutine = StartCoroutine(RunEvents());
     }
 
     public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null)

@@ -1208,11 +1208,6 @@ public class ConfigurationController : MonoBehaviour
             scr.Print(0, 2, "line: " + AGEBasic.LastRuntimeException.LineNumber.ToString());
             scr.Print(0, 3, AGEBasic.LastRuntimeException.Message);
         }
-        else if (AGEBasic.IsRunningInBackground())
-        {
-            scr.Print(0, 0, "active in background", true);
-            scr.Print(0, 2, "events are registered");
-        }
         else
         {
             scr.Print(0, 0, "NO error", true);
@@ -2416,25 +2411,18 @@ public class ConfigurationController : MonoBehaviour
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                   }
 
-                  if (AGEBasic.LastRuntimeException != null)
-                      ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
-
                   if (AGEBasic.IsRunning() || AGEBasic.IsRunningInBackground())
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
 
-                  // The program finished executing its initial pass but is now waiting for events in the background.
-                  // Stop the UI from blocking the screen, but let the user know it's active in the background.
-                  //inputDictionary["action"] = false; // Prevent instant dismissal from holding the button
-                  //AGEBasicWaitForPressAKey = true;
-                  AGEBasicShowLastRuntimeError(); // Will show "active in background" based on the updated logic
-                  status = StatusOptions.onRunAGEBasic; // MUST CHANGE STATUS to go to the UI interaction loop!
-                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success; // MUST RETURN SUCCESS to finish this sequence
+                  if (AGEBasic.LastRuntimeException != null)
+                      ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
 
-                  //status = StatusOptions.onRunAGEBasic;
-                  //return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+                  // Both foreground and background (event loop) have finished — return to menu.
+                  AGEBasicShowLastRuntimeError();
+                  status = StatusOptions.onRunAGEBasic;
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
               })
             .End()
-
             .Sequence("EXIT")
               //.Condition("Exit button", () => ControlActive("EXIT"))
               .Condition("Exit", () => status == StatusOptions.exit)

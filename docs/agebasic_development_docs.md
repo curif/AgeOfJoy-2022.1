@@ -31,7 +31,7 @@ The `TokenConsumer` class is a sequential token reader used during the parsing o
 
 ### `CabinetAGEBasic.cs` (Event Handling and Linking)
 This class manages the lifecycle of AGEBasic scripts attached to a specific arcade cabinet.
-- **Initialization:** Reads configuration from `description.yaml` (via `CabinetAGEBasicInformation`) and pre-loads variables using `IngestVariables`.
+- **Initialization:** Reads configuration from `description.yaml` (via `CabinetAGEBasicInformation`). It pre-loads variables using `IngestVariables` and registers all declarative events defined in the YAML by adding them to the `basicAGE` event list.
 - **Event Coroutine (`RunEvents`):** Manages a continuous background loop that checks conditions and executes mapped scripts based on cabinet interactions. It supports dynamic registration of events at runtime. If an event script is triggered, it invokes a new `runProgram` coroutine and prevents overlapping runs by sequentially yielding (`while (IsRunning()) yield return null;`).
 - **SHUTDOWN vs END:** The engine makes a hard behavioral distinction between `END` and `SHUTDOWN`. Calling `END` sets `config.stop = true`, gracefully exiting the local program context but allowing the `eventCoroutine` loop to persist. Calling `SHUTDOWN` sets `config.shutdown = true` and `config.stop = true`, which forcefully kills the local program context, executes a `StopCoroutine` on the background `eventCoroutine`, and fully clears the registered events queue and file pointers.
 - **Event Types:** Implements an extensible event system through the `Event` base class and its derived forms:
@@ -45,6 +45,40 @@ This class manages the lifecycle of AGEBasic scripts attached to a specific arca
   - `OnCustom` (Programmatically triggered events)
 - **Condition Evaluation:** Before an event script runs, its optional `when` clause is evaluated, supporting logical structures (`and`, `or`, and variable comparisons).
 - **Sub-script isolation:** When an event is triggered, it runs its specified script using a dedicated `Event.PrepareToRun()` call, ensuring isolated execution environments based on the cabinet's `BasicVars` state.
+
+### `AGEBasicScreenController.cs` and `AGEBasicCabinetController.cs`
+Both scripts share a lot of DNA, specifically in how they connect the basicAGE engine to Unity's ecosystem. However, they serve two distinct types of arcade cabinets, which leads to several key operational differences.
+
+#### `AGEBasicCabinetController.cs`
+This `MonoBehaviour` binds the AGEBasic engine to standard interactive arcade cabinets. It allows AGEBasic to run alongside or in place of Libretro emulation.
+Usage on `screen19i` gameobjects serie and `noScreen`
+- **Hardware Integration:** Connects the script engine to physical cabinet inputs (`LibretroControlMap`), the coin slot (`CoinSlotController`), and VR peripherals like lightguns (`LightGunTarget`).
+- **Lifecycle Management:** Uses a BehaviorTree (`runBT`, `buildScreenBT`) that ticks continuously. It waits for the player to insert a coin, subsequently executing the `cabinetAGEBasic.ExecInsertCoinBas()` hook, changing VR hands/models (e.g., swapping to a lightgun), and mapping the control scheme.
+- **Execution Monitoring:** Continually evaluates if the script is still running (or running in the background via events) and listens for user interruptions (like pressing the EXIT button). When execution concludes, it cleanly unbinds the controls and calls `cabinetAGEBasic.ExecAfterLeaveBas()`.
+
+#### `AGEBasicScreenController.cs`
+Designed for custom arcade cabinets dedicated *exclusively* to running AGEBasic programs (i.e., non-Libretro cabinets).
+- **Attraction Mode Video:** Integrates a `GameVideoPlayer` to loop a designated attraction video when no script is active. It actively monitors player proximity (`DistanceMinToPlayerToActivate`) and line-of-sight (`isPlayerLookingAtScreen4`) to pause or play the video to conserve VR performance.
+- **Seamless Handoff:** Once a coin is inserted or a program triggered, the controller immediately pauses the video player, configures custom CRT and video shaders, activates the `basicAGE` context, and runs `cabinetAGEBasic.ExecInsertCoinBas()`.
+- **Dedicated Hardware Maps:** Similar to `AGEBasicCabinetController`, it handles the controller mappings pulling from global control maps, the game database, or a cabinet's assigned control scheme to ensure AGEBasic logic correctly maps to physical inputs.
+
+#### `AGEBasicScreenController.cs` versus `AGEBasicCabinetController.cs`
+ Architectural & Operational Focus
+   * AGEBasicScreenController is designed for traditional video-based arcade cabinets (i.e. those with a screen). It actively manages a display
+     (Renderer), video playback (attraction mode), and dynamic shader effects (e.g., CRT, neon). It uses player gaze and proximity to trigger events.
+   * AGEBasicCabinetController is a lightweight version designed for non-video, logic-driven, or mechanical cabinets (e.g., electro-mechanical games,
+     pinball). It completely omits the video rendering pipeline and focuses solely on running the underlying AGEBasic logic and managing physical
+     interactions (coins, lightguns, inputs).
+
+
+### `ConfigurationController.cs`
+Serves as the central user interface (UI) manager inside the virtual configuration room. Crucially, it acts as a standalone runner for AGEBasic programs outside the context of an arcade cabinet.
+- **In-VR Runner:** Provides an interactive UI menu to load, compile (`AGEBasic.ParseFiles`), and execute `.bas` scripts globally.
+- **Diagnostics:** Offers visual widgets to inspect the last thrown compilation error (`CompilationException`) or runtime error (`LastRuntimeException`), making it an essential tool for script developers debugging inside VR.
+- **Autostart:** Automatically executes a designated startup script (defined via `config.agebasic.afterLoad` in the global configuration) as soon as the configuration room is fully initialized.
+- **Global Systems Management:** Maps deeply into the global ecosystem, handling non-scripting tasks such as setting audio levels, configuring NPC behaviors, managing player locomotion, tweaking screen shader attributes, and adjusting environmental lighting.
+
+
 
 ### `basicConfigurationCommands.cs` (The Shared State Object)
 Passed to almost every object in the interpreter. Holds the current state of execution.

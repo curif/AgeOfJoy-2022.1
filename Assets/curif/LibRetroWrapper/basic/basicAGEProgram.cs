@@ -91,7 +91,7 @@ public class AGEProgram
         }
     }
 
-    public void PrepareProgramToRun(BasicVars pvars = null, int lineNumber = 0)
+    public void PrepareProgramToRun(BasicVars pvars = null, int lineNumber = 0, int maxExecutionLinesAllowed = -1)
     {
         // Ensure arrays are built if they somehow weren't
         if (parsedLineNumbers == null || parsedLineNumbers.Length != lines.Count)
@@ -101,6 +101,7 @@ public class AGEProgram
 
         this.nextLineToExecute = lineNumber - 1; // trigger a jump to the starting line
         this.currentExecutionIndex = 0;
+        this.maxExecutionLinesAllowed = maxExecutionLinesAllowed;
 
         config.Gosub = new Stack<double>();
         config.LineNumber = 0;

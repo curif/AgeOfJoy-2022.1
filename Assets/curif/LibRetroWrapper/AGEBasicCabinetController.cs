@@ -248,8 +248,8 @@ public class AGEBasicCabinetController : MonoBehaviour
             .Sequence("AGEBasic running control")
               .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("Coin inserted?", () => CoinWasInserted)
-              .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
-              .Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
+              //.Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
+              //.Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
               .Do("Run main program", () =>
               {
 
@@ -260,27 +260,34 @@ public class AGEBasicCabinetController : MonoBehaviour
                   return TaskStatus.Success;
               })
               .Sequence("AGEBasic Running")
-                .RepeatUntilSuccess("Until player exit")
-                    .Sequence()
-                        .Condition("user EXIT pressed?", () =>
+                .RepeatUntilSuccess("Until player or program exit")
+                    .Selector()
+                        .Condition("not running anymore?", () => 
                         {
-                            if (libretroControlMap.isActive(LC.EXIT))
-                                return true;
+                            return !cabinetAGEBasic.AGEBasic.IsRunning() && 
+                                   !cabinetAGEBasic.AGEBasic.IsRunningInBackground();
+                        })
+                        .Sequence("Manual Exit")
+                            .Condition("user EXIT pressed?", () =>
+                            {
+                                if (libretroControlMap.isActive(LC.EXIT))
+                                    return true;
 #if UNITY_EDITOR
-                            if (SimulateExitGame)
-                                return true;
+                                if (SimulateExitGame)
+                                    return true;
 #endif
-                            timeToExit = DateTime.MinValue;
-                            return false;
-                        })
-                        .Condition("N secs pass with user EXIT pressed", () =>
-                        {
-                            if (timeToExit == DateTime.MinValue)
-                                timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
-                            else if (DateTime.Now > timeToExit)
-                                return true;
-                            return false;
-                        })
+                                timeToExit = DateTime.MinValue;
+                                return false;
+                            })
+                            .Condition("N secs pass with user EXIT pressed", () =>
+                            {
+                                if (timeToExit == DateTime.MinValue)
+                                    timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
+                                else if (DateTime.Now > timeToExit)
+                                    return true;
+                                return false;
+                            })
+                        .End()
                     .End()
                 .End()
               .End()

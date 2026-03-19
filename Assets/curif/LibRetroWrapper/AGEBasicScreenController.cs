@@ -331,8 +331,8 @@ public class AGEBasicScreenController : MonoBehaviour
             .Sequence("AGEBasic running control")
               .Condition("AGEBasic is active?", () => ageBasicInformation.active != false)
               .Condition("Coin inserted?", () => CoinWasInserted)
-              .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
-              .Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
+              //.Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
+              //.Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
               .Do("Run main program", () =>
               {
                   //   videoPlayer.Stop();
@@ -347,77 +347,38 @@ public class AGEBasicScreenController : MonoBehaviour
               })
 
               .Sequence("AGEBasic Running")
-                .RepeatUntilSuccess("Until player exit")
-                    .Sequence()
-                        .Condition("user EXIT pressed?", () =>
+                .RepeatUntilSuccess("Until player or program exit")
+                    .Selector()
+                        .Condition("not running anymore?", () => 
                         {
-                            if (libretroControlMap.isActive(LC.EXIT))
-                                return true;
+                            return !cabinetAGEBasic.AGEBasic.IsRunning() && 
+                                   !cabinetAGEBasic.AGEBasic.IsRunningInBackground();
+                        })
+                        .Sequence("Manual Exit")
+                            .Condition("user EXIT or not running anymore?", () =>
+                            {
+                                if (libretroControlMap.isActive(LC.EXIT))
+                                    return true;
 #if UNITY_EDITOR
-                            if (SimulateExitGame)
-                                return true;
+                                if (SimulateExitGame)
+                                    return true;
 #endif
-                            timeToExit = DateTime.MinValue;
-                            return false;
-                        })
-                        .Condition("N secs pass with user EXIT pressed", () =>
-                        {
-                            if (timeToExit == DateTime.MinValue)
-                                timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
-                            else if (DateTime.Now > timeToExit)
-                                return true;
-                            return false;
-                        })
+                                timeToExit = DateTime.MinValue;
+                                return false;
+                            })
+                            .Condition("N secs pass with user EXIT pressed", () =>
+                            {
+                                if (timeToExit == DateTime.MinValue)
+                                    timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
+                                else if (DateTime.Now > timeToExit)
+                                    return true;
+                                return false;
+                            })
+                        .End()
                     .End()
                 .End()
               .End()
-              /*
-              .Sequence("AGEBasic Running")
-                .RepeatUntilSuccess("Until player exit")
-                    .Sequence()
-                        .Condition("user EXIT pressed or terminated?", () =>
-                        {
-                            if (cabinetAGEBasic.HasEvents())
-                            {
-                                if (cabinetAGEBasic.IsCoroutineRunning())
-                                    return false;
-
-                            }
-                            else
-                            {
-                                basicAGE.ProgramStatus status = cabinetAGEBasic.AGEBasic.Status;
-                                if (status == basicAGE.ProgramStatus.CancelledWithError ||
-                                    status == basicAGE.ProgramStatus.CompilationError)
-                                    return true;
-
-                                if (status == basicAGE.ProgramStatus.WaitingForStart)
-                                    return false;
-
-                                if (!cabinetAGEBasic.AGEBasic.IsRunning())
-                                    return true;
-                            }
-                            if (libretroControlMap.isActive(LC.EXIT))
-                                return true;
-
-#if UNITY_EDITOR
-                            if (SimulateExitGame)
-                                return true;
-#endif
-                            timeToExit = DateTime.MinValue;
-                            return false;
-                        })
-                        .Condition("N secs pass with user EXIT pressed", () =>
-                        {
-                            if (timeToExit == DateTime.MinValue)
-                                timeToExit = DateTime.Now.AddSeconds(SecondsToWaitToExit);
-                            else if (DateTime.Now > timeToExit)
-                                return true;
-                            return false;
-                        })
-                    .End()
-                  .End()
-                    */
-                  .Do("END Program", () =>
+              .Do("END Program", () =>
                   {
                       cabinet.PhyDeactivate();
 
@@ -450,9 +411,8 @@ public class AGEBasicScreenController : MonoBehaviour
                 .End()
                 .Sequence()
                   .Condition("A program is not running?", () => !cabinetAGEBasic.AGEBasic.IsRunning())
-                  .Condition("Is Player looking the screen", () => isPlayerLookingAtScreen4())
                   .Condition("A program is not running (background)?", () => !cabinetAGEBasic.AGEBasic.IsRunningInBackground())
-                  //.Condition("Player looking screen", () => isPlayerLookingAtScreen4())
+                  .Condition("Is Player looking the screen", () => isPlayerLookingAtScreen4())
                   .Do("Play video player", () =>
                   {
                       videoPlayer.Play();
@@ -499,7 +459,7 @@ public class AGEBasicScreenController : MonoBehaviour
 
         //enable-disable inputMap
         ConfigManager.WriteConsole($"[LibRetroMameCore.PreparePlayerToPlayGame] enable game inputs: {isPlaying}");
-
+        libretroControlMap.Enable(isPlaying);
     }
 
     public void Update()
