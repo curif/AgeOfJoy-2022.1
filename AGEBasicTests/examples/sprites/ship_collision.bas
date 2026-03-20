@@ -49,9 +49,7 @@
 400 ONEVENT ONCONTROL("JOYPAD_X", "pressed") GOTO 4000
 410 END
 
-REM ============================================================
-REM ONCONTROL: move SHIP2
-REM ============================================================
+999  REM ONCONTROL: move SHIP2
 1000 LET Y2 = Y2 - STEPMOV
 1010 IF Y2 < 16 THEN LET Y2 = 16
 1020 SPRITE "SHIP2", X2, Y2, 2
@@ -76,24 +74,18 @@ REM ============================================================
 1180 SHOW
 1190 END
 
-REM ============================================================
-REM ONSPRITECOLLISION: ships overlap (pixel-precise cell check)
-REM ============================================================
+1999 REM ONSPRITECOLLISION: ships overlap (pixel-precise cell check)
 2000 LET PAIRS = SPRITECOLLISIONCOUNT("SHIP1", "SHIP2")
 2010 FGCOLOR "red"
 2020 PRINT 0, 0, "  *** COLLISION DETECTED ***            "
 2030 SHOW
 2040 END
 
-REM ============================================================
-REM ONSPRITECOLLISIONEND: ships separated
-REM ============================================================
+2999 REM ONSPRITECOLLISIONEND: ships separated
 3000 FGCOLOR "yellow"
 3010 PRINT 0, 0, "MOVE: DPAD/WASD        START/ESC: QUIT  "
 3020 SHOW
 3030 END
 
-REM ============================================================
-REM Exit
-REM ============================================================
+3999 REM Exit
 4000 SHUTDOWN

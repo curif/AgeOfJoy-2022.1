@@ -12,7 +12,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 ## 1. General Syntax & Rules
 
 ### Line Numbers
-*   **Mandatory:** Every logical line of code MUST start with a line number.
+*   **Mandatory:** Every line of code MUST start with a line number.
 *   **Sequential:** Line numbers must be in strictly ascending order.
 *   **Format:** `10 PRINT 0,0,"HELLO"`
 
@@ -35,8 +35,8 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 *   **String Concatenation:** Uses `+` (e.g., `"HELLO " + "WORLD"`)
 
 ### Comments
-*   Use `REM` or `'` for comments.
-*   Example: `10 ' This is a comment`
+*   Use `REM` for comments.
+*   Example: `10 REM This is a comment`
 
 ---
 
