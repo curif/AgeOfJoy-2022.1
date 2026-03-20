@@ -268,6 +268,17 @@ public class ScreenGenerator : MonoBehaviour
         return spriteCache.ContainsKey(name) && spriteCache[name] != null;
     }
 
+    public bool SpritesCollide(string nameA, string nameB)
+    {
+        if (!activeSprites.TryGetValue(nameA, out ScreenSprite a) || !a.Visible || a.Texture == null)
+            return false;
+        if (!activeSprites.TryGetValue(nameB, out ScreenSprite b) || !b.Visible || b.Texture == null)
+            return false;
+
+        return a.X < b.X + b.Texture.width  && a.X + a.Texture.width  > b.X &&
+               a.Y < b.Y + b.Texture.height && a.Y + a.Texture.height > b.Y;
+    }
+
     private void EnableSprites()
     {
         if (!spritesEnabled) {

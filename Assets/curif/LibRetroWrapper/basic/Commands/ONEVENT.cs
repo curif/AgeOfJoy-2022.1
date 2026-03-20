@@ -75,6 +75,11 @@ class CommandONEVENT : CommandBase
             case "on-grab-end":
                 info.part = configVal[2].GetString();
                 break;
+            case "on-sprite-collision-start":
+            case "on-sprite-collision-end":
+                info.spriteA = configVal[2].GetString();
+                info.spriteB = configVal[3].GetString();
+                break;
         }
 
         Event newEvt = EventsFactory.Factory(info, vars, config.ageBasic);

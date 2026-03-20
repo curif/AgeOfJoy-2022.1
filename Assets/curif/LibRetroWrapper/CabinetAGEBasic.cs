@@ -94,11 +94,12 @@ public class EventInformation
     //event identification
     [YamlMember(Alias = "event", ApplyNamingConventions = false)]
     public string eventId;
-    static string[] validEvents = { "on-timer", "on-always",  "on-insert-coin", "on-custom", 
-                                    "on-collision-start", "on-collision-stay", "on-collision-end", 
+    static string[] validEvents = { "on-timer", "on-always",  "on-insert-coin", "on-custom",
+                                    "on-collision-start", "on-collision-stay", "on-collision-end",
                                     "on-touch-start", "on-grab-start", "on-touch-end",
                                     "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit",
-                                    "on-control-active-pressed", "on-control-active-held", "on-control-active-released"};
+                                    "on-control-active-pressed", "on-control-active-held", "on-control-active-released",
+                                    "on-sprite-collision-start", "on-sprite-collision-end"};
 
     static string[] requirePartName = { "on-collision-start", "on-collision-stay", "on-collision-end", 
                                         "on-touch-start", "on-grab-start", 
@@ -114,6 +115,8 @@ public class EventInformation
     [YamlMember(Alias = "impact-parts", ApplyNamingConventions = false)]
     public List<string> partImpacts; //name of the colliding part.
     //public List<string> parts; //OR parts
+    public string spriteA; // first sprite name for sprite collision events
+    public string spriteB; // second sprite name for sprite collision events
 
     // Serialize this field to show it in the editor
     [SerializeField]

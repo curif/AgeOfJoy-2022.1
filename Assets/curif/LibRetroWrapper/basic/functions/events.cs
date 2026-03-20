@@ -136,11 +136,49 @@ class CommandFunctionONCOLLISION : CommandFunctionExpressionListBase
     public override BasicValue Execute(BasicVars vars)
     {
         BasicValue[] args = exprs.ExecuteList(vars);
-        
+
         List<object> list = new List<object> { "CONFIG-EVENT", "on-collision-start", args[0].GetString() };
         for (int i = 1; i < args.Length; i++)
             list.Add(args[i].GetString());
 
+        return new BasicValue(list);
+    }
+}
+
+class CommandFunctionONSPRITECOLLISION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionONSPRITECOLLISION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ONSPRITECOLLISION";
+        MinCantParamsRequired = 2;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue[] args = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(args[0], $"{cmdToken} - first sprite name must be a string");
+        FunctionHelper.ExpectedString(args[1], $"{cmdToken} - second sprite name must be a string");
+
+        List<object> list = new List<object> { "CONFIG-EVENT", "on-sprite-collision-start", args[0].GetString(), args[1].GetString() };
+        return new BasicValue(list);
+    }
+}
+
+class CommandFunctionONSPRITECOLLISIONEND : CommandFunctionExpressionListBase
+{
+    public CommandFunctionONSPRITECOLLISIONEND(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ONSPRITECOLLISIONEND";
+        MinCantParamsRequired = 2;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue[] args = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(args[0], $"{cmdToken} - first sprite name must be a string");
+        FunctionHelper.ExpectedString(args[1], $"{cmdToken} - second sprite name must be a string");
+
+        List<object> list = new List<object> { "CONFIG-EVENT", "on-sprite-collision-end", args[0].GetString(), args[1].GetString() };
         return new BasicValue(list);
     }
 }

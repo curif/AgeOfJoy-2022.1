@@ -514,6 +514,58 @@ public class OnPlayerGrabEndEvent : OnPlayerBaseEvent
     }
 }
 
+// -------------------- sprite collisions ------------------------
+public class OnSpriteCollisionBase : Event
+{
+    protected readonly string spriteA;
+    protected readonly string spriteB;
+    protected bool wasColliding = false;
+
+    public OnSpriteCollisionBase(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic, 1)
+    {
+        spriteA = eventInformation.spriteA;
+        spriteB = eventInformation.spriteB;
+    }
+
+    protected bool currentCollision()
+    {
+        if (AGEBasic.ConfigCommands.ScreenGenerator == null)
+            return false;
+        return AGEBasic.ConfigCommands.ScreenGenerator.SpritesCollide(spriteA, spriteB);
+    }
+}
+
+public class OnSpriteCollisionStart : OnSpriteCollisionBase
+{
+    public OnSpriteCollisionStart(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void EvaluateTrigger()
+    {
+        bool colliding = currentCollision();
+        if (colliding && !wasColliding)
+            RegisterTrigger(true);
+        wasColliding = colliding;
+    }
+}
+
+public class OnSpriteCollisionEnd : OnSpriteCollisionBase
+{
+    public OnSpriteCollisionEnd(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void EvaluateTrigger()
+    {
+        bool colliding = currentCollision();
+        if (!colliding && wasColliding)
+            RegisterTrigger(true);
+        wasColliding = colliding;
+    }
+}
+
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -554,6 +606,10 @@ public static class EventsFactory
                 return new OnPlayerGrabStartEvent(eventInformation, vars, agebasic);
             case "on-grab-end":
                 return new OnPlayerGrabEndEvent(eventInformation, vars, agebasic);
+            case "on-sprite-collision-start":
+                return new OnSpriteCollisionStart(eventInformation, vars, agebasic);
+            case "on-sprite-collision-end":
+                return new OnSpriteCollisionEnd(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");

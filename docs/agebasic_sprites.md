@@ -81,5 +81,53 @@ When you no longer want a sprite to be drawn on the screen (e.g., an enemy explo
 ```
 The sprite is removed from the screen, but it remains in the rapid memory cache. If you call `SPRITE` again later, it will reappear instantly without needing to use `SPRITELOAD` again.
 
+## 6. Collision Detection Events
+
+AGEBasic can notify your script when two sprites overlap using the `ONEVENT` system. Collision is detected using **axis-aligned bounding boxes (AABB)** — the full rectangular area of each sprite's texture.
+
+### `ONSPRITECOLLISION("spriteA", "spriteB")`
+
+Fires **once** when the two sprites begin overlapping. It will not fire again while they remain in contact — only on the transition from not-overlapping to overlapping.
+
+### `ONSPRITECOLLISIONEND("spriteA", "spriteB")`
+
+Fires **once** when two previously overlapping sprites stop overlapping.
+
+### Rules
+
+*   Both sprites must be visible and fully loaded for a collision to be detected. If either sprite is not on screen, the result is always no collision.
+*   Events only trigger when the interpreter is **idle** (no other script is running). Use `SLEEP` in long-running loops to give the event system time to evaluate.
+*   Use `END` to finish the event handler block, not `SHUTDOWN` (which would kill all events).
+
+### Example: Ball Bouncing off a Wall
+
+```basic
+10 SPRITELOAD "BALL", "ball.png"
+20 SPRITELOAD "WALL", "wall.png"
+30 IF SPRITESTATUS("BALL") = 0 THEN SLEEP 0.05 : GOTO 30
+40 IF SPRITESTATUS("WALL") = 0 THEN SLEEP 0.05 : GOTO 40
+
+50 REM Place the wall and register collision events
+60 SPRITE "WALL", 150, 0, 1
+70 ONEVENT ONSPRITECOLLISION("BALL", "WALL") GOTO 200
+80 ONEVENT ONSPRITECOLLISIONEND("BALL", "WALL") GOTO 300
+90 END
+
+100 REM Main game loop (started elsewhere or via another event)
+110 FOR X = 0 TO 200
+120   SPRITE "BALL", X, 80, 2
+130   SHOW
+140   SLEEP 0.02
+150 NEXT X
+160 END
+
+200 REM Ball hit the wall
+210 CALL CABPARTSAUDIOPLAY("hit-sound")
+220 END
+
+300 REM Ball left the wall
+310 END
+```
+
 ## Memory & Cleanup
 When an AGEBasic script finishes executing or is stopped, the engine automatically clears all active sprites from the screen and memory. You do not need to manually remove them at the end of your program.

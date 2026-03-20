@@ -80,6 +80,8 @@ Dynamic events are registered using the `ONEVENT` command combined with a config
 *   `ONEVENT ONGRAB("partName") GOTO line`: Triggers when a VR hand selects/grabs a cabinet part.
 *   `ONEVENT ONCOLLISION("part", "impact1", ...) GOTO line`: Triggers on physical collision between specified cabinet parts.
 *   `ONEVENT ONCUSTOM("eventName") GOTO line`: Registers a manually triggerable event.
+*   `ONEVENT ONSPRITECOLLISION("spriteA", "spriteB") GOTO line`: Fires once when two sprites begin overlapping (AABB).
+*   `ONEVENT ONSPRITECOLLISIONEND("spriteA", "spriteB") GOTO line`: Fires once when two previously overlapping sprites separate.
 
 ### Event Execution Rules
 1.  **Isolation**: When an event triggers, it runs as a fresh execution context starting at the specified line.
@@ -184,4 +186,4 @@ AGEBasic can interact directly with the Age of Joy 3D environment.
 *   `GAMEISRUNNING()`: True if a ROM is currently loaded.
 *   `PEEK(offset)` / `POKE(offset, val)`: Direct memory access to emulator SRAM.
 *   `CABINSERTCOIN()`: Triggers the coin slot logic.
-*   `SETCPU(multiplier)`: "Overclocks" execution speed (e.g., `SETCPU 500` runs 500 lines per frame. Default is `1`).
+*   `SETCPU(multiplier)`: "Overclocks" execution speed (e.g., `CALL SETCPU(500)` runs 500 lines per frame. Default is `1`).
