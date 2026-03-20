@@ -83,7 +83,12 @@ The sprite is removed from the screen, but it remains in the rapid memory cache.
 
 ## 6. Collision Detection Events
 
-AGEBasic can notify your script when two sprites overlap using the `ONEVENT` system. Collision is detected using **axis-aligned bounding boxes (AABB)** — the full rectangular area of each sprite's texture.
+AGEBasic can notify your script when two sprites overlap using the `ONEVENT` system. Collision uses a **two-phase approach** for precision:
+
+1. **AABB pre-check** — fast rectangular overlap test to reject non-overlapping pairs instantly.
+2. **Cell-map check** — the overlapping region is tested at a 4×4-pixel cell granularity. A cell is only "active" if it contains at least one non-transparent pixel (alpha > 10). Collision is confirmed only when an active cell from sprite A coincides with an active cell from sprite B.
+
+This means a circular ball sprite in a square PNG will **not** trigger a collision when only the transparent corners overlap — only real art pixels count.
 
 ### `ONSPRITECOLLISION("spriteA", "spriteB")`
 
@@ -96,8 +101,20 @@ Fires **once** when two previously overlapping sprites stop overlapping.
 ### Rules
 
 *   Both sprites must be visible and fully loaded for a collision to be detected. If either sprite is not on screen, the result is always no collision.
+*   Cell maps are built automatically (once per sprite texture, on first collision check) and cached — no setup needed.
 *   Events only trigger when the interpreter is **idle** (no other script is running). Use `SLEEP` in long-running loops to give the event system time to evaluate.
 *   Use `END` to finish the event handler block, not `SHUTDOWN` (which would kill all events).
+
+### Querying Collision Details
+
+After a `ONSPRITECOLLISION` event fires, you can inspect exactly which cells collided using two functions:
+
+| Function | Returns | Description |
+| :--- | :--- | :--- |
+| `SPRITECOLLISIONCOUNT("nameA", "nameB")` | number | Count of colliding cell pairs from the last check |
+| `SPRITECOLLISIONDATA("nameA", "nameB")` | array | Flat array `[colA, rowA, colB, rowB, ...]` for every colliding cell pair |
+
+Each entry in `SPRITECOLLISIONDATA` is a pair of **sprite-local cell coordinates** (column and row in the 4×4 grid, where 0,0 is the top-left of the sprite). Multiply by 4 to convert to pixel offset within the sprite.
 
 ### Example: Ball Bouncing off a Wall
 
@@ -121,12 +138,20 @@ Fires **once** when two previously overlapping sprites stop overlapping.
 150 NEXT X
 160 END
 
-200 REM Ball hit the wall
+200 REM Ball hit the wall — inspect which cells collided
 210 CALL CABPARTSAUDIOPLAY("hit-sound")
-220 END
+220 LET PAIRS = SPRITECOLLISIONCOUNT("BALL", "WALL")
+230 LET DATA = SPRITECOLLISIONDATA("BALL", "WALL")
+240 FOR I = 0 TO PAIRS - 1
+250   LET BALL_COL = DATA[I * 4]     : REM cell column of BALL
+260   LET BALL_ROW = DATA[I * 4 + 1] : REM cell row of BALL
+270   LET WALL_COL = DATA[I * 4 + 2] : REM cell column of WALL
+280   LET WALL_ROW = DATA[I * 4 + 3] : REM cell row of WALL
+290 NEXT I
+300 END
 
-300 REM Ball left the wall
-310 END
+400 REM Ball left the wall
+410 END
 ```
 
 ## Memory & Cleanup

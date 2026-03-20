@@ -108,6 +108,58 @@ class CommandSPRITEREMOVE : CommandExpressionListBase
     }
 }
 
+class CommandFunctionSPRITECOLLISIONCOUNT : CommandFunctionExpressionListBase
+{
+    public CommandFunctionSPRITECOLLISIONCOUNT(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "SPRITECOLLISIONCOUNT";
+        MinCantParamsRequired = 2;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue[] args = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(args[0], $"{cmdToken} - first sprite name must be a string");
+        FunctionHelper.ExpectedString(args[1], $"{cmdToken} - second sprite name must be a string");
+
+        if (config.ScreenGenerator == null)
+            return new BasicValue(0);
+
+        var pairs = config.ScreenGenerator.GetLastCollisionPairs(args[0].GetString(), args[1].GetString());
+        return new BasicValue(pairs.Count);
+    }
+}
+
+class CommandFunctionSPRITECOLLISIONDATA : CommandFunctionExpressionListBase
+{
+    public CommandFunctionSPRITECOLLISIONDATA(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "SPRITECOLLISIONDATA";
+        MinCantParamsRequired = 2;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue[] args = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(args[0], $"{cmdToken} - first sprite name must be a string");
+        FunctionHelper.ExpectedString(args[1], $"{cmdToken} - second sprite name must be a string");
+
+        var data = new System.Collections.Generic.List<object>();
+        if (config.ScreenGenerator != null)
+        {
+            var pairs = config.ScreenGenerator.GetLastCollisionPairs(args[0].GetString(), args[1].GetString());
+            foreach (var pair in pairs)
+            {
+                data.Add((double)pair.ColA);
+                data.Add((double)pair.RowA);
+                data.Add((double)pair.ColB);
+                data.Add((double)pair.RowB);
+            }
+        }
+        return new BasicValue(data);
+    }
+}
+
 class CommandFunctionSPRITESTATUS : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionSPRITESTATUS(ConfigurationCommands config) : base(config)

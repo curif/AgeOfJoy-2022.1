@@ -249,6 +249,8 @@ public static class Commands
         functions["DSCREENHEIGHT"] = typeof(CommandFunctionDSCREENHEIGHT);
         functions["DSCREENSIZE"] = typeof(CommandFunctionDSCREENSIZE);
         functions["SPRITESTATUS"] = typeof(CommandFunctionSPRITESTATUS);
+        functions["SPRITECOLLISIONCOUNT"] = typeof(CommandFunctionSPRITECOLLISIONCOUNT);
+        functions["SPRITECOLLISIONDATA"] = typeof(CommandFunctionSPRITECOLLISIONDATA);
         functions["DCHARPIXELX"] = typeof(CommandFunctionDCHARPIXELX);
         functions["DCHARPIXELY"] = typeof(CommandFunctionDCHARPIXELY);
         functions["DCHARPIXEL"] = typeof(CommandFunctionDCHARPIXEL);

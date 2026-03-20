@@ -208,6 +208,69 @@ public class ScreenGenerator : MonoBehaviour
         public bool Visible = true;
     }
 
+    // ---- sprite collision cell-map types ----
+
+    public readonly struct CollisionPair
+    {
+        public readonly int ColA, RowA, ColB, RowB;
+        public CollisionPair(int colA, int rowA, int colB, int rowB)
+        { ColA = colA; RowA = rowA; ColB = colB; RowB = rowB; }
+    }
+
+    public class SpriteCollisionMap
+    {
+        public readonly Texture2D Source;
+        public readonly int cols;
+        public readonly int rows;
+        public readonly int cellSize;
+        private readonly bool[,] active;
+
+        public SpriteCollisionMap(Texture2D tex, int cellSize = 4)
+        {
+            Source   = tex;
+            this.cellSize = cellSize;
+            cols = (tex.width  + cellSize - 1) / cellSize;
+            rows = (tex.height + cellSize - 1) / cellSize;
+            active = new bool[cols, rows];
+
+            Color32[] pixels = tex.GetPixels32();
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    bool hasOpaque = false;
+                    for (int dy = 0; dy < cellSize && !hasOpaque; dy++)
+                    {
+                        int localY = r * cellSize + dy;
+                        if (localY >= tex.height) break;
+                        // Unity texture Y: row 0 = bottom; sprite-local Y: 0 = top
+                        int texY = tex.height - 1 - localY;
+                        for (int dx = 0; dx < cellSize && !hasOpaque; dx++)
+                        {
+                            int localX = c * cellSize + dx;
+                            if (localX >= tex.width) break;
+                            if (pixels[texY * tex.width + localX].a > 10)
+                                hasOpaque = true;
+                        }
+                    }
+                    active[c, r] = hasOpaque;
+                }
+            }
+        }
+
+        public bool IsActive(int col, int row)
+        {
+            if (col < 0 || col >= cols || row < 0 || row >= rows) return false;
+            return active[col, row];
+        }
+    }
+
+    private const int COLLISION_CELL_SIZE = 4;
+    private Dictionary<string, SpriteCollisionMap> collisionMaps = new Dictionary<string, SpriteCollisionMap>();
+    private Dictionary<string, List<CollisionPair>> lastCollisionResults = new Dictionary<string, List<CollisionPair>>();
+
+    // ---- end collision cell-map types ----
+
     private Dictionary<string, Texture2D> spriteCache = new Dictionary<string, Texture2D>();
     private Dictionary<string, ScreenSprite> activeSprites = new Dictionary<string, ScreenSprite>();
     private Texture2D baseTexture;
@@ -268,15 +331,87 @@ public class ScreenGenerator : MonoBehaviour
         return spriteCache.ContainsKey(name) && spriteCache[name] != null;
     }
 
-    public bool SpritesCollide(string nameA, string nameB)
+    private void EnsureCollisionMap(string name, Texture2D texture)
     {
-        if (!activeSprites.TryGetValue(nameA, out ScreenSprite a) || !a.Visible || a.Texture == null)
-            return false;
-        if (!activeSprites.TryGetValue(nameB, out ScreenSprite b) || !b.Visible || b.Texture == null)
-            return false;
+        if (!collisionMaps.TryGetValue(name, out var map) || map == null || map.Source != texture)
+            collisionMaps[name] = new SpriteCollisionMap(texture, COLLISION_CELL_SIZE);
+    }
 
-        return a.X < b.X + b.Texture.width  && a.X + a.Texture.width  > b.X &&
-               a.Y < b.Y + b.Texture.height && a.Y + a.Texture.height > b.Y;
+    private static string CollisionKey(string nameA, string nameB) => nameA + "\0" + nameB;
+
+    public bool CheckSpriteCollision(string nameA, string nameB)
+    {
+        string key = CollisionKey(nameA, nameB);
+
+        if (!activeSprites.TryGetValue(nameA, out ScreenSprite a) || !a.Visible || a.Texture == null ||
+            !activeSprites.TryGetValue(nameB, out ScreenSprite b) || !b.Visible || b.Texture == null)
+        {
+            lastCollisionResults[key] = new List<CollisionPair>();
+            return false;
+        }
+
+        // Phase 1: AABB fast rejection
+        int overlapLeft   = Math.Max(a.X, b.X);
+        int overlapRight  = Math.Min(a.X + a.Texture.width,  b.X + b.Texture.width);
+        int overlapTop    = Math.Max(a.Y, b.Y);
+        int overlapBottom = Math.Min(a.Y + a.Texture.height, b.Y + b.Texture.height);
+
+        if (overlapLeft >= overlapRight || overlapTop >= overlapBottom)
+        {
+            lastCollisionResults[key] = new List<CollisionPair>();
+            return false;
+        }
+
+        // Phase 2: cell-map precise check
+        EnsureCollisionMap(nameA, a.Texture);
+        EnsureCollisionMap(nameB, b.Texture);
+        SpriteCollisionMap mapA = collisionMaps[nameA];
+        SpriteCollisionMap mapB = collisionMaps[nameB];
+
+        int cellAColStart = (overlapLeft   - a.X) / COLLISION_CELL_SIZE;
+        int cellAColEnd   = (overlapRight  - a.X - 1) / COLLISION_CELL_SIZE;
+        int cellARowStart = (overlapTop    - a.Y) / COLLISION_CELL_SIZE;
+        int cellARowEnd   = (overlapBottom - a.Y - 1) / COLLISION_CELL_SIZE;
+
+        var seen  = new HashSet<(int, int, int, int)>();
+        var pairs = new List<CollisionPair>();
+
+        for (int colA = cellAColStart; colA <= cellAColEnd; colA++)
+        {
+            for (int rowA = cellARowStart; rowA <= cellARowEnd; rowA++)
+            {
+                if (!mapA.IsActive(colA, rowA)) continue;
+
+                int cellScreenLeft   = Math.Max(a.X + colA * COLLISION_CELL_SIZE, overlapLeft);
+                int cellScreenRight  = Math.Min(a.X + (colA + 1) * COLLISION_CELL_SIZE, overlapRight);
+                int cellScreenTop    = Math.Max(a.Y + rowA * COLLISION_CELL_SIZE, overlapTop);
+                int cellScreenBottom = Math.Min(a.Y + (rowA + 1) * COLLISION_CELL_SIZE, overlapBottom);
+
+                int colBStart = (cellScreenLeft  - b.X) / COLLISION_CELL_SIZE;
+                int colBEnd   = (cellScreenRight  - b.X - 1) / COLLISION_CELL_SIZE;
+                int rowBStart = (cellScreenTop    - b.Y) / COLLISION_CELL_SIZE;
+                int rowBEnd   = (cellScreenBottom - b.Y - 1) / COLLISION_CELL_SIZE;
+
+                for (int colB = colBStart; colB <= colBEnd; colB++)
+                {
+                    for (int rowB = rowBStart; rowB <= rowBEnd; rowB++)
+                    {
+                        if (!mapB.IsActive(colB, rowB)) continue;
+                        if (seen.Add((colA, rowA, colB, rowB)))
+                            pairs.Add(new CollisionPair(colA, rowA, colB, rowB));
+                    }
+                }
+            }
+        }
+
+        lastCollisionResults[key] = pairs;
+        return pairs.Count > 0;
+    }
+
+    public List<CollisionPair> GetLastCollisionPairs(string nameA, string nameB)
+    {
+        lastCollisionResults.TryGetValue(CollisionKey(nameA, nameB), out var pairs);
+        return pairs ?? new List<CollisionPair>();
     }
 
     private void EnableSprites()
@@ -374,7 +509,7 @@ public class ScreenGenerator : MonoBehaviour
         if (screenTexture == null || Skin?.Font == null) return this;
         if (x < 0 || x >= CharactersXCount || y < 0 || y >= CharactersYCount) { ConfigManager.WriteConsoleError($"[SG.PrintChar] Invalid xy: ({x},{y}), char: {charNum}"); return this; }
 
-        Skin.Font.PrintChar(screenTexture, x, y, charNum, fgColor, bgColor, translate);
+        Skin.Font.PrintChar(GetWorkingTexture(), x, y, charNum, fgColor, bgColor, translate);
         needsDraw = true;
         return this;
     }

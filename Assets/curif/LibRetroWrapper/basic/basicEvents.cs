@@ -532,7 +532,7 @@ public class OnSpriteCollisionBase : Event
     {
         if (AGEBasic.ConfigCommands.ScreenGenerator == null)
             return false;
-        return AGEBasic.ConfigCommands.ScreenGenerator.SpritesCollide(spriteA, spriteB);
+        return AGEBasic.ConfigCommands.ScreenGenerator.CheckSpriteCollision(spriteA, spriteB);
     }
 }
 

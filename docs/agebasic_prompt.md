@@ -133,18 +133,18 @@ Dynamic events are registered using the `ONEVENT` command combined with a config
 
 AGEBasic operates on a virtual CRT screen within the VR cabinet.
 
-*   `CLS()`: Clears the screen.
-*   `SHOW()`: Commits drawing operations to the screen (Double buffering).
-*   `PRINT(x, y, text, [inverted], [draw_immediately])`: Prints text at character coordinates.
-*   `PRINTLN(text, ...)`: Prints line.
-*   `PRINTCENTERED(y, text, ...)`: Prints centered text.
-*   `BGCOLOR(color)` / `FGCOLOR(color)`: Sets background/foreground color. Color can be a name (e.g., "red") or RGB (`R, G, B`).
-*   `RESETCOLOR()` / `INVERTCOLOR()`
-*   `DPSET(x, y, color, [draw])`: Draw pixel.
-*   `DLINE(corner1[2], corner2[2], color, [draw])`: Draw line.
-*   `DOVAL(corner[2], radX, radY, color, [fill], [fillcolor], [draw])`: Draw oval.
-*   `DCIRCLE(corner[2], radius, color...)`: Draw circle.
-*   `DBOX(corner1[2], size[2], color...)`: Draw rectangle.
+*   `CLS`: Clears the screen.
+*   `SHOW`: Commits drawing operations to the screen (Double buffering).
+*   `PRINT x, y, text, [inverted], [draw_immediately]`: Prints text at character coordinates. `draw_immediately`: if you use `0` (false) you must use `SHOW` later to show the screen.
+*   `PRINTLN text, ...`: Prints line.
+*   `PRINTCENTERED y, text, ...`: Prints centered text.
+*   `BGCOLOR color` / `FGCOLOR color `: Sets background/foreground color. Color can be a name (e.g., "red") or RGB (`R, G, B`).
+*   `RESETCOLOR` / `INVERTCOLOR`
+*   `DPSET x, y, color, [draw_immediately] `: Draw pixel.
+*   `DLINE corner1[2], corner2[2], color, [draw_immediately]`: Draw line.
+*   `DOVAL corner[2], radX, radY, color, [fill], [fillcolor], [draw_immediately]`: Draw oval.
+*   `DCIRCLE corner[2], radius, color...`: Draw circle.
+*   `DBOX corner1[2], size[2], color...`: Draw rectangle.
 *   `SCREENWIDTH()`, `SCREENHEIGHT()`: Returns character grid dimensions.
 *   `DSCREENWIDTH()`, `DSCREENHEIGHT()`: Returns pixel dimensions.
 
@@ -154,6 +154,8 @@ Sprites are drawn over the background and retain their Z-order. Loading is async
 *   `SPRITESTATUS("name")`: Returns 1 if the sprite is fully loaded and ready to use, 0 otherwise.
 *   `SPRITE "name", x, y, z`: Draws/Updates a sprite at the specified pixel coordinates and Z-index layer.
 *   `SPRITEREMOVE "name"`: Removes a sprite from the screen.
+*   `SPRITECOLLISIONCOUNT("nameA", "nameB")`: Returns the number of colliding cell pairs from the last collision check between two sprites.
+*   `SPRITECOLLISIONDATA("nameA", "nameB")`: Returns a flat array `[colA, rowA, colB, rowB, ...]` of cell-coordinate pairs for every collision point. Call inside a `ONSPRITECOLLISION` handler. Cell coordinates are sprite-local (4×4 px cells, 0,0 = top-left of sprite).
 
 ---
 
