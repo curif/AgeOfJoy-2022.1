@@ -24,6 +24,7 @@ public class CommandExpression : ICommandBase
     private class Element
     {
         public BasicVar var;
+        public int varId = -1;
 
         public BasicValue constantValue;
         public CommandExpression expr;
@@ -34,6 +35,7 @@ public class CommandExpression : ICommandBase
         public Element(BasicVar var)
         {
             this.var = var;
+            this.varId = var.VarId;
             this.type = CommandType.Type.Variable;
         }
         public Element(string op)
@@ -59,17 +61,22 @@ public class CommandExpression : ICommandBase
 
         public BasicValue GetVarValue(BasicVars vars)
         {
-            BasicValue v = vars[var.Name];
+            BasicValue v;
+            if (varId >= 0 && vars.HasFastSlots)
+                v = vars.GetFast(varId);
+            else
+                v = vars[var.Name];
+
             if (!v.IsArray())
-                return new(v);
+                return BasicValuePool.GetCopy(v);
 
             //if there is not solicited index in array, returns a copy of the actual array.
             //it could be slow if the array is big.
             if (var.IndexExpressions == null || var.IndexExpressions.Count == 0)
-                return new(v);
+                return BasicValuePool.GetCopy(v);
 
             BasicValue[] indexes = var.IndexExpressions.ExecuteList(vars);
-            return new(v[indexes]);
+            return BasicValuePool.GetCopy(v[indexes]);
         }
         public BasicValue GetValue(BasicVars vars)
         {
@@ -78,7 +85,7 @@ public class CommandExpression : ICommandBase
                 case CommandType.Type.Variable:
                     return GetVarValue(vars);
                 case CommandType.Type.Constant:
-                    return constantValue;
+                    return BasicValuePool.GetCopy(constantValue);
                 case CommandType.Type.Operation:
                     return op;
                 case CommandType.Type.Expression:
@@ -242,7 +249,7 @@ public class CommandExpression : ICommandBase
         if (rpnElements.Count == 1)
         {
             if (rpnElements[0].type == CommandType.Type.Constant)
-                return new(rpnElements[0].constantValue);
+                return BasicValuePool.GetCopy(rpnElements[0].constantValue);
             else if (rpnElements[0].type == CommandType.Type.Variable)
                 return rpnElements[0].GetVarValue(vars);
             else if (rpnElements[0].type == CommandType.Type.Function)
@@ -267,7 +274,8 @@ public class CommandExpression : ICommandBase
 
                     BasicValue right = sharedEvalStack.Pop();
                     BasicValue left = sharedEvalStack.Pop();
-                    BasicValue val = left.Operate(right, element.op);
+                    BasicValue val = left.Operate(right, element.op); // mutates left, returns left
+                    BasicValuePool.Return(right);  // right is consumed — recycle it
                     sharedEvalStack.Push(val);
                 }
                 else
@@ -284,11 +292,9 @@ public class CommandExpression : ICommandBase
         finally
         {
             // Guaranteed cleanup: if an exception happens (e.g. divide by zero),
-            // clean up any garbage left on the stack by this expression execution.
+            // return any garbage left on the stack by this expression execution to the pool.
             while (sharedEvalStack.Count > initialStackCount)
-            {
-                sharedEvalStack.Pop();
-            }
+                BasicValuePool.Return(sharedEvalStack.Pop());
         }
     }
 

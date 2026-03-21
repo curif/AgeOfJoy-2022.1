@@ -983,30 +983,30 @@ public class BasicValue : IEnumerable<BasicValue>
         switch (op)
         {
             case "+":
-                return this + bval;
+                return this.Add(bval);
             case "-":
-                return this - bval;
+                return this.Subtract(bval);
             case "*":
-                return this * bval;
+                return this.Multiply(bval);
             case "/":
-                return this / bval;
+                return this.Divide(bval);
             case "=":
-                return new BasicValue(bval == this ? 1 : 0);
+                return this.IsEqualTo(bval);
             case "!=":
             case "<>":
-                return new BasicValue(this != bval ? 1 : 0);
+                return this.IsNotEqualTo(bval);
             case ">":
-                return new BasicValue(this > bval ? 1 : 0);
+                return this.IsGreaterThan(bval);
             case "<":
-                return new BasicValue(this < bval ? 1 : 0);
+                return this.IsLessThan(bval);
             case "<=":
-                return new BasicValue(this <= bval ? 1 : 0);
+                return this.IsLessThanOrEqualTo(bval);
             case ">=":
-                return new BasicValue(this >= bval ? 1 : 0);
+                return this.IsGreaterThanOrEqualTo(bval);
             case "&&":
-                return this & bval;
+                return this.LogicalAnd(bval);
             case "||":
-                return this | bval;
+                return this.LogicalOr(bval);
             default:
                 throw new Exception($"Operator unknown: [{op}], allowed values are [{string.Join(", ", validOperations)}]...");
         }

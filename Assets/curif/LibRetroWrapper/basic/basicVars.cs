@@ -6,6 +6,30 @@ public class BasicVars
 {
     private readonly Dictionary<string, BasicVar> vars = new(); // Case-sensitive dictionary
 
+    // Fast slot array: indexed by VarId (from symbol table). Null means not yet assigned.
+    private BasicValue[] fastSlots = null;
+    private string[] fastSlotNames = null; // reverse of varIdMap: id -> name
+    private Dictionary<string, int> varIdMap = null; // set by InitFastSlots
+    public bool HasFastSlots => fastSlots != null;
+
+    /// <summary>Initializes the fast slot array from a parsed symbol table. Called before execution starts.</summary>
+    public void InitFastSlots(Dictionary<string, int> map)
+    {
+        varIdMap = map;
+        fastSlots = new BasicValue[map.Count];
+        fastSlotNames = new string[map.Count];
+        foreach (var kv in map)
+        {
+            fastSlotNames[kv.Value] = kv.Key;
+            BasicVar bv;
+            if (!vars.TryGetValue(kv.Key, out bv))
+                bv = DeclareNewVariable(kv.Key);
+            fastSlots[kv.Value] = bv.BasicValue;
+        }
+    }
+
+    public BasicValue GetFast(int id) => fastSlots[id];
+
     public BasicValue this[string varName]
     {
         get
@@ -71,6 +95,8 @@ public class BasicVars
     {
         BasicVar basicVar = new BasicVar(name);
         vars[basicVar.Name] = basicVar;
+        if (varIdMap != null && varIdMap.TryGetValue(basicVar.Name, out int id))
+            fastSlots[id] = basicVar.BasicValue;
         return basicVar;
     }
     public void ThrowIfNotExists(BasicVar basicVar, string msg = "")
@@ -111,6 +137,9 @@ public class BasicVars
             DeclareNewVariable(upperName);
         }
         vars[upperName].BasicValue = val;
+        // Keep fast slot in sync
+        if (varIdMap != null && varIdMap.TryGetValue(upperName, out int id))
+            fastSlots[id] = val;
         return val;
     }
 

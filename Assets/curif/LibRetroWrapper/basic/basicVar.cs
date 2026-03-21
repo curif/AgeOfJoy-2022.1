@@ -5,6 +5,7 @@ public class BasicVar
 {
     string name;
     private BasicValue basicValue = null;
+    public int VarId = -1;
 
     //using in LET or Expressions to handle the Index of an array.
     private CommandExpressionList indexExpressions = null;
@@ -65,6 +66,18 @@ public class BasicVar
             if (tokens.Token != "]")
                 throw new Exception($"[Var:{var.Name} ERROR #{config.LineNumber}] Malformed index expression.");
         }
+
+        // Register in the parse-time symbol table if available
+        if (config?.VarIdMap != null)
+        {
+            if (!config.VarIdMap.TryGetValue(var.name, out int existingId))
+            {
+                existingId = config.VarIdMap.Count;
+                config.VarIdMap[var.name] = existingId;
+            }
+            var.VarId = existingId;
+        }
+
         return var;
     }
 
