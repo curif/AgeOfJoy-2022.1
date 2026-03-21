@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using static LibretroMameCore;
+using UnityEngine.InputSystem.LowLevel;
 using static Siccity.GLTFUtility.GLTFAccessor.Sparse;
 
 
@@ -115,6 +117,58 @@ class CommandLET : ICommandBase
     }
 }
 
+/// <summary>
+/// Handles the DECLARE command in AGEBasic, which creates a variable only if it doesn't already exist.
+/// </summary>
+class CommandDECLARE : ICommandBase
+{
+    public string CmdToken { get; } = "DECLARE";
+    public CommandType.Type Type { get; } = CommandType.Type.Command;
+
+    private readonly ConfigurationCommands config;
+    private BasicVar var;
+    CommandExpression assignmentExpression;
+
+    public CommandDECLARE(ConfigurationCommands config)
+    {
+        this.config = config;
+        assignmentExpression = new(config);
+    }
+
+    public bool Parse(TokenConsumer tokens)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC PARSE {CmdToken} #{config.LineNumber}] Parsing DECLARE statement.");
+
+        var = BasicVar.Parse(tokens, config);
+        tokens++; // consume variable name or ']'
+
+        if (tokens.Token != "=")
+        {
+            throw new Exception($"[{CmdToken} ERROR #{config.LineNumber}] Malformed DECLARE statement, missing '=' after variable declaration.");
+        }
+        tokens++; // Consume '='
+
+        assignmentExpression.Parse(tokens);
+
+        return true;
+    }
+
+    public BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] Executing DECLARE for '{var}'.");
+
+        // Evaluate the value to be assigned on the right-hand side
+        BasicValue valueToAssign = assignmentExpression.Execute(vars);
+
+        // Only assign the value if the variable doesn't already exist
+        if (!vars.Exists(var))
+        {
+            vars[var] = valueToAssign;
+        }
+
+        return null; // DECLARE is a command, and commands typically return null
+    }
+}
 /// <summary>
 /// Handles the LETS command, allowing multiple assignments to simple variables
 /// or indexed array elements (e.g., LETS A, MYVAR[10,3], B = 10, "string", 0).

@@ -51,6 +51,12 @@ public class ConfigurationCommands
 
     public basicAGE ageBasic;
 
+    // The AudioSource on the cabinet's GameObject (guaranteed by RequireComponent on screen/cabinet controllers).
+    public AudioSource AudioSource;
+
+    // SID music player — attached to the same GameObject as AudioSource.
+    public SIDPlayer SIDPlayer;
+
     public string RunSubProgramPath = null;
     public int RunSubProgramLine = -1;
 

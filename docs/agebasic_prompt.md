@@ -15,6 +15,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 *   **Mandatory:** Every line of code MUST start with a line number.
 *   **Sequential:** Line numbers must be in strictly ascending order.
 *   **Format:** `10 PRINT 0,0,"HELLO"`
+*   **Blank and comment-only lines are stripped by the parser and do NOT register as valid line numbers.** Never use `GOTO`, `GOSUB`, or `IF … THEN GOTO` targeting a blank line or a line that contains only a comment (`'` or `REM`) — the runtime will throw "Line number not found". Always target a line that contains an executable statement.
 
 ### Statements & Multi-commands
 *   You can put multiple commands on the same line using a colon `:`.
@@ -189,3 +190,77 @@ AGEBasic can interact directly with the Age of Joy 3D environment.
 *   `PEEK(offset)` / `POKE(offset, val)`: Direct memory access to emulator SRAM.
 *   `CABINSERTCOIN()`: Triggers the coin slot logic.
 *   `SETCPU(multiplier)`: "Overclocks" execution speed (e.g., `CALL SETCPU(500)` runs 500 lines per frame. Default is `1`).
+
+---
+
+## 8. Audio
+
+AGEBasic exposes four independent audio systems. See `docs/agebasic_audio.md` for the full reference.
+
+### 8.1 Global Audio Mixer (dB buses)
+
+Controls master volume for three Unity audio buses. Values are decibels: `0` = full, `-80` = silence.
+
+*   `AUDIOGAMEGETVOLUME()` / `AUDIOGAMESETVOLUME(db)`
+*   `AUDIOMUSICGETVOLUME()` / `AUDIOMUSICSETVOLUME(db)`
+*   `AUDIOAMBIENCEGETVOLUME()` / `AUDIOAMBIENCESETVOLUME(db)`
+
+### 8.2 Global Music Player (JukeBox playlist)
+
+Sequential MP3/OGG playlist running across the whole arcade. Files are resolved relative to `<config>/music/`.
+
+*   **Queue:** `MUSICADD(file)`, `MUSICREMOVE(file)`, `MUSICEXIST(file)`, `MUSICCLEAR()`, `MUSICCOUNT()`, `MUSICGETLIST(sep)`, `MUSICADDLIST(list, sep)`, `MUSICADDLISTARRAY(array)`
+*   **Playback:** `MUSICPLAY()`, `MUSICNEXT()`, `MUSICPREVIOUS()`, `MUSICRESET()`, `MUSICLOOP(bool)`, `MUSICLOOPSTATUS()`
+
+### 8.3 Cabinet Parts Audio
+
+Plays spatialized sounds from individual cabinet parts declared with a `speaker` block in `description.yaml`.
+
+*   `CABPARTSAUDIOFILE(part, path)` — assign audio file
+*   `CABPARTSAUDIOPLAY(part)` / `CABPARTSAUDIOSTOP(part)` / `CABPARTSAUDIOPAUSE(part)`
+*   `CABPARTSAUDIOVOLUME(part, 0.0–1.0)`
+*   `CABPARTSAUDIOLOOP(part, bool)`
+*   `CABPARTSAUDIODISTANCE(part, min, max)` — 3D rolloff distances
+
+### 8.4 SID Player (C64 chiptune)
+
+Plays `.sid` files (PSID/RSID v1–v4) through the cabinet's AudioSource. Supports **multiple named instances** simultaneously. Not available in the Configuration Room context.
+
+**Commands (no parentheses, statement form):**
+
+| Command | Syntax | Description |
+| :--- | :--- | :--- |
+| `SIDLOAD` | `SIDLOAD name, path` | Load a `.sid` file. Call during setup, not in the game loop. |
+| `SIDLOADDATA` | `SIDLOADDATA name, storage` | Load SID from a `DATA` list (embedded bytes). |
+| `SIDPLAY` | `SIDPLAY name [, song]` | Start/restart playback. `song` is 1-based. Re-calling restarts — useful for one-shot SFX. |
+| `SIDSTOP` | `SIDSTOP name` | Stop (instance stays loaded). |
+| `SIDPAUSE` | `SIDPAUSE name` | Pause at current position. |
+| `SIDRESUME` | `SIDRESUME name` | Resume from paused position. |
+| `SIDUNLOAD` | `SIDUNLOAD name` | Free the instance. Always unload when done. |
+| `SIDVOLUME` | `SIDVOLUME name, vol` | Set volume 0–100. |
+
+**Functions (require parentheses):**
+
+| Function | Returns | Description |
+| :--- | :--- | :--- |
+| `SIDSTATUS(name)` | number | `0`=not loaded · `1`=loaded/stopped · `2`=playing · `3`=paused |
+| `SIDTITLE(name)` | string | Title from SID header |
+| `SIDAUTHOR(name)` | string | Composer from SID header |
+| `SIDRELEASED(name)` | string | Release/copyright from SID header |
+| `SIDCOUNT(name)` | number | Total sub-songs in the file |
+| `SIDDEFAULTSONG(name)` | number | Default starting sub-song (1-based) |
+
+**Quick example — background music + one-shot SFX:**
+```basic
+10 SIDLOAD "music", COMBINEPATH(AGEBASICPATH(), "music/theme.sid")
+20 SIDLOAD "sfx",   COMBINEPATH(AGEBASICPATH(), "music/zap.sid")
+30 SIDVOLUME "music", 70 : SIDVOLUME "sfx", 60
+40 SIDPLAY "music"
+50 IF CONTROLACTIVE("JOYPAD_B_0") THEN SIDPLAY "sfx", 1
+60 SLEEP 0.05 : GOTO 50
+```
+
+**Notes:**
+- At most 3 active SIDs recommended (CPU budget on Quest).
+- Use `AGEBASICPATH()` + `COMBINEPATH()` to build portable paths to `.sid` files.
+- Place `.sid` files in `<agebasicpath>/music/` or any accessible path.

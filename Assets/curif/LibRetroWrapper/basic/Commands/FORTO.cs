@@ -66,9 +66,10 @@ class CommandFORTO : CommandBase
     {
         AGEBasicDebug.WriteConsole($"[AGE BASIC  #{config.LineNumber} {CmdToken}]");
 
-        BasicValue startVal = new(expr.Execute(vars));
+        BasicValue startVal = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(startVal, "- FOR must be an expression or number");
-        vars.DeclareNewVariable(varName).BasicValue = startVal;
+        vars.DeclareNewVariable(varName);
+        vars.SetValue(varName, startVal);
 
         forToStorage ft = new();
         ft.lineNumber = config.LineNumber;

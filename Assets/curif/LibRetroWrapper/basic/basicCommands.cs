@@ -285,7 +285,23 @@ public static class Commands
 
         //lightgun
         functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionCABPARTLIGHTGUNHIT);
-        
+
+        // SID player
+        commands["SIDLOAD"]     = typeof(CommandSIDLOAD);
+        commands["SIDLOADDATA"] = typeof(CommandSIDLOADDATA);
+        commands["SIDPLAY"]     = typeof(CommandSIDPLAY);
+        commands["SIDSTOP"]     = typeof(CommandSIDSTOP);
+        commands["SIDPAUSE"]    = typeof(CommandSIDPAUSE);
+        commands["SIDRESUME"]   = typeof(CommandSIDRESUME);
+        commands["SIDUNLOAD"]   = typeof(CommandSIDUNLOAD);
+        commands["SIDVOLUME"]   = typeof(CommandSIDVOLUME);
+
+        functions["SIDSTATUS"]      = typeof(CommandFunctionSIDSTATUS);
+        functions["SIDTITLE"]       = typeof(CommandFunctionSIDTITLE);
+        functions["SIDAUTHOR"]      = typeof(CommandFunctionSIDAUTHOR);
+        functions["SIDRELEASED"]    = typeof(CommandFunctionSIDRELEASED);
+        functions["SIDCOUNT"]       = typeof(CommandFunctionSIDCOUNT);
+        functions["SIDDEFAULTSONG"] = typeof(CommandFunctionSIDDEFAULTSONG);
 
     }
 

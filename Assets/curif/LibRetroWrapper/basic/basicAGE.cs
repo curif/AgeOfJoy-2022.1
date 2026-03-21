@@ -231,6 +231,19 @@ public class basicAGE : MonoBehaviour
 
         configCommands.ageBasic = this;
 
+        // Expose the existing AudioSource (guaranteed by [RequireComponent] on screen/cabinet controllers).
+        // Will be null when basicAGE runs in the ConfigurationController context (no cabinet AudioSource).
+        configCommands.AudioSource = GetComponent<AudioSource>();
+
+        // Attach SIDPlayer to this same GameObject so OnAudioFilterRead routes through the cabinet's AudioSource.
+        if (configCommands.AudioSource != null)
+        {
+            SIDPlayer sidPlayer = GetComponent<SIDPlayer>();
+            if (sidPlayer == null)
+                sidPlayer = gameObject.AddComponent<SIDPlayer>();
+            configCommands.SIDPlayer = sidPlayer;
+        }
+
         GameObject musicPlayer = GameObject.Find("JukeBox");
         if (musicPlayer != null)
             configCommands.MusicPlayerQueue = musicPlayer.GetComponent<MusicPlayer>();
