@@ -71,6 +71,9 @@ public class ConfigurationCommands
 
     public LightGunTarget lightGunTarget;
 
+    // Symbol table populated during parse. Maps uppercase variable names to slot indices in BasicVars.
+    public Dictionary<string, int> VarIdMap = new();
+
     // File pointer array with 256 positions, initialized to null
     public AGEBasicUserFile[] filepointer = new AGEBasicUserFile[256];
 

@@ -110,9 +110,18 @@ public class AGEProgram
         config.stop = false;
         config.shutdown = false;
         if (pvars == null)
+        {
             vars = new();
+            // Initialize fast slots from the symbol table built during parse
+            if (config.VarIdMap != null && config.VarIdMap.Count > 0)
+                vars.InitFastSlots(config.VarIdMap);
+        }
         else
+        {
             vars = pvars;
+            // pvars comes from a different program scope — fast slots are NOT initialized
+            // because the IDs in this program's VarIdMap won't match pvars' layout.
+        }
         tracker.Reset();
     }
 

@@ -43,6 +43,8 @@ public static class Commands
         commands["SPRITELOAD"] = typeof(CommandSPRITELOAD);
         commands["SPRITE"] = typeof(CommandSPRITE);
         commands["SPRITEREMOVE"] = typeof(CommandSPRITEREMOVE);
+        commands["SPRITEDISABLE"] = typeof(CommandSPRITEDISABLE);
+        commands["SPRITEENABLE"] = typeof(CommandSPRITEENABLE);
 
         //functions ------
 

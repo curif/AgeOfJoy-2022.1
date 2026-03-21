@@ -339,6 +339,16 @@ public class ScreenGenerator : MonoBehaviour
         }
     }
 
+    public void SetSpriteVisible(string name, bool visible)
+    {
+        if (activeSprites.TryGetValue(name, out ScreenSprite sprite) && sprite.Visible != visible)
+        {
+            sprite.Visible = visible;
+            spritesSortDirty = true;
+            needsDraw = true;
+        }
+    }
+
     public void ClearSprites()
     {
         activeSprites.Clear();

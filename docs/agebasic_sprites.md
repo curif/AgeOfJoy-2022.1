@@ -81,7 +81,51 @@ When you no longer want a sprite to be drawn on the screen (e.g., an enemy explo
 ```
 The sprite is removed from the screen, but it remains in the rapid memory cache. If you call `SPRITE` again later, it will reappear instantly without needing to use `SPRITELOAD` again.
 
-## 6. Collision Detection Events
+## 6. Disabling and Enabling Sprites
+
+`SPRITEDISABLE` and `SPRITEENABLE` toggle a sprite's **active** state without removing it from the screen or its cache.
+
+A **disabled** sprite:
+- Is **not rendered** — it disappears from the composited image.
+- Does **not participate in collision detection** — `ONSPRITECOLLISION` will never fire for it.
+- Remains in the active-sprite set and in the texture cache. Calling `SPRITEENABLE` makes it reappear at its last position instantly, with no reload needed.
+
+**Syntax:**
+```basic
+SPRITEDISABLE "name"   ' hide and deactivate
+SPRITEENABLE  "name"   ' restore to previous position and layer
+```
+
+Always call `SHOW` after either command to update the screen.
+
+### Difference from `SPRITEREMOVE`
+
+| | `SPRITEREMOVE` | `SPRITEDISABLE` |
+|---|---|---|
+| Hidden from screen | Yes | Yes |
+| Excluded from collisions | Yes | Yes |
+| Texture stays in cache | Yes | Yes |
+| Position / Z preserved | No — must re-specify with `SPRITE` | Yes — restored as-is by `SPRITEENABLE` |
+
+Use `SPRITEREMOVE` when you want to place the sprite at a new position later. Use `SPRITEDISABLE` when you only need to temporarily hide it and bring it back in the same spot.
+
+### Example: Temporarily hiding a sprite
+
+```basic
+10 SPRITELOAD "ENEMY", "enemy.png"
+20 IF SPRITESTATUS("ENEMY") = 0 THEN SLEEP 0.1 : GOTO 20
+30 SPRITE "ENEMY", 100, 50, 2
+40 SHOW
+
+50 REM Hide the enemy for 3 seconds, then show it again
+60 SPRITEDISABLE "ENEMY"
+70 SHOW
+80 SLEEP 3
+90 SPRITEENABLE "ENEMY"
+100 SHOW
+```
+
+## 7. Collision Detection Events
 
 AGEBasic can notify your script when two sprites overlap using the `ONEVENT` system. Collision uses a **two-phase approach** for precision:
 
@@ -100,7 +144,7 @@ Fires **once** when two previously overlapping sprites stop overlapping.
 
 ### Rules
 
-*   Both sprites must be visible and fully loaded for a collision to be detected. If either sprite is not on screen, the result is always no collision.
+*   Both sprites must be active (not disabled) and fully loaded for a collision to be detected. A sprite that has been hidden with `SPRITEDISABLE` or removed with `SPRITEREMOVE` never collides.
 *   Cell maps are built automatically (once per sprite texture, on first collision check) and cached — no setup needed.
 *   Events only trigger when the interpreter is **idle** (no other script is running). Use `SLEEP` in long-running loops to give the event system time to evaluate.
 *   Use `END` to finish the event handler block, not `SHUTDOWN` (which would kill all events).
@@ -154,5 +198,5 @@ Each entry in `SPRITECOLLISIONDATA` is a pair of **sprite-local cell coordinates
 410 END
 ```
 
-## Memory & Cleanup
+## 8. Memory & Cleanup
 When an AGEBasic script finishes executing or is stopped, the engine automatically clears all active sprites from the screen and memory. You do not need to manually remove them at the end of your program.

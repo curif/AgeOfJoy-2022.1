@@ -160,6 +160,46 @@ class CommandFunctionSPRITECOLLISIONDATA : CommandFunctionExpressionListBase
     }
 }
 
+class CommandSPRITEDISABLE : CommandExpressionListBase
+{
+    public CommandSPRITEDISABLE(ConfigurationCommands config) : base(config)
+    {
+        this.cmdToken = "SPRITEDISABLE";
+        this.MinCantParamsRequired = 1;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
+
+        BasicValue[] values = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(values[0], $"- Sprite Name for {CmdToken}");
+
+        config.ScreenGenerator.SetSpriteVisible(values[0].GetString(), false);
+        return null;
+    }
+}
+
+class CommandSPRITEENABLE : CommandExpressionListBase
+{
+    public CommandSPRITEENABLE(ConfigurationCommands config) : base(config)
+    {
+        this.cmdToken = "SPRITEENABLE";
+        this.MinCantParamsRequired = 1;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken} #{config.LineNumber}] ");
+
+        BasicValue[] values = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedString(values[0], $"- Sprite Name for {CmdToken}");
+
+        config.ScreenGenerator.SetSpriteVisible(values[0].GetString(), true);
+        return null;
+    }
+}
+
 class CommandFunctionSPRITESTATUS : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionSPRITESTATUS(ConfigurationCommands config) : base(config)
