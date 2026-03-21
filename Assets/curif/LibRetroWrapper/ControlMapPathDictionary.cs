@@ -50,6 +50,29 @@ public static class ControlMapPathDictionary
     public const string KEYBOARD_ENTER = "keyboard-enter";
     public const string KEYBOARD_X = "keyboard-x";
     public const string KEYBOARD_Y = "keyboard-y";
+    //Adding X-Arcade Arcade2TV-XR keyboard mode mappings (works for Gen 1 dongle and 2 dongle in keyboard/"red" mode)
+    public const string KEYBOARD_F = "keyboard-f";
+    public const string KEYBOARD_Q = "keyboard-q";
+    public const string KEYBOARD_E = "keyboard-e";
+    public const string KEYBOARD_R = "keyboard-r";
+    public const string KEYBOARD_T = "keyboard-t";
+    public const string KEYBOARD_U = "keyboard-u";
+    public const string KEYBOARD_I = "keyboard-i";
+    public const string KEYBOARD_O = "keyboard-o";
+    public const string KEYBOARD_P = "keyboard-p";
+    public const string KEYBOARD_Z = "keyboard-z";
+    public const string KEYBOARD_C = "keyboard-c";
+    public const string KEYBOARD_V = "keyboard-v";
+    public const string KEYBOARD_0 = "keyboard-0";
+    public const string KEYBOARD_1 = "keyboard-1";
+    public const string KEYBOARD_2 = "keyboard-2";
+    public const string KEYBOARD_3 = "keyboard-3";
+    public const string KEYBOARD_4 = "keyboard-4";
+    public const string KEYBOARD_5 = "keyboard-5";
+    public const string KEYBOARD_6 = "keyboard-6";
+    public const string KEYBOARD_7 = "keyboard-7";
+    public const string KEYBOARD_8 = "keyboard-8";
+    public const string KEYBOARD_9 = "keyboard-9";
     public const string MOUSE = "mouse";
     public const string MOUSE_LEFT = "mouse-left";
     public const string MOUSE_RIGHT = "mouse-right";
@@ -135,7 +158,29 @@ public static class ControlMapPathDictionary
             { KEYBOARD_ESC, "<keyboard>/escape" },
             { KEYBOARD_ENTER, "<keyboard>/enter" },
             { KEYBOARD_X, "<keyboard>/#(x)" },
-            { KEYBOARD_Y, "<Keyboard>/#(y)" }
+            { KEYBOARD_Y, "<Keyboard>/#(y)" },
+            { KEYBOARD_F, "<Keyboard>/#(f)" },
+            { KEYBOARD_Q, "<Keyboard>/#(q)" },
+            { KEYBOARD_E, "<Keyboard>/#(e)" },
+            { KEYBOARD_R, "<Keyboard>/#(r)" },
+            { KEYBOARD_T, "<Keyboard>/#(t)" },
+            { KEYBOARD_U, "<Keyboard>/#(u)" },
+            { KEYBOARD_I, "<Keyboard>/#(i)" },
+            { KEYBOARD_O, "<Keyboard>/#(o)" },
+            { KEYBOARD_P, "<Keyboard>/#(p)" },
+            { KEYBOARD_Z, "<Keyboard>/#(z)" },
+            { KEYBOARD_C, "<Keyboard>/#(c)" },
+            { KEYBOARD_V, "<Keyboard>/#(v)" },
+            { KEYBOARD_0, "<Keyboard>/#(0)" },
+            { KEYBOARD_1, "<Keyboard>/#(1)" },
+            { KEYBOARD_2, "<Keyboard>/#(2)" },
+            { KEYBOARD_3, "<Keyboard>/#(3)" },
+            { KEYBOARD_4, "<Keyboard>/#(4)" },
+            { KEYBOARD_5, "<Keyboard>/#(5)" },
+            { KEYBOARD_6, "<Keyboard>/#(6)" },
+            { KEYBOARD_7, "<Keyboard>/#(7)" },
+            { KEYBOARD_8, "<Keyboard>/#(8)" },
+            { KEYBOARD_9, "<Keyboard>/#(9)" }
         };
     }
     public static string GetBehavior(string realControl)
