@@ -181,51 +181,63 @@ public class SIDPlayer : MonoBehaviour
 
     void OnAudioFilterRead(float[] data, int channels)
     {
-        float samplesPerPlay = sampleRate / PAL_PLAY_HZ;
-        int   frames         = data.Length / channels;
-
-        // Snapshot playing instances without holding the lock during heavy work
-        List<SIDInstance> playing = null;
-        lock (instances)
+        try
         {
-            foreach (var kvp in instances)
+            float samplesPerPlay = sampleRate / PAL_PLAY_HZ;
+            int   frames         = data.Length / channels;
+
+            // Snapshot playing instances without holding the lock during heavy work
+            List<SIDInstance> playing = null;
+            lock (instances)
             {
-                var inst = kvp.Value;
-                if (inst.Playing && !inst.Paused)
+                foreach (var kvp in instances)
                 {
-                    if (playing == null) playing = new List<SIDInstance>(4);
-                    playing.Add(inst);
+                    var inst = kvp.Value;
+                    if (inst.Playing && !inst.Paused)
+                    {
+                        if (playing == null) playing = new List<SIDInstance>(4);
+                        playing.Add(inst);
+                    }
                 }
+            }
+
+            if (playing == null) return;
+
+            for (int frame = 0; frame < frames; frame++)
+            {
+                float mix = 0f;
+
+                foreach (var inst in playing)
+                {
+                    lock (inst.Lock)
+                    {
+                        if (!inst.Playing || inst.Paused) continue;
+
+                        // Trigger the SID play routine at ~50 Hz
+                        inst.SamplesUntilPlay -= 1f;
+                        if (inst.SamplesUntilPlay <= 0f)
+                        {
+                            // PlayAddress == 0 means the init routine installed an IRQ handler.
+                            // Read the C64 user IRQ vector ($0314-$0315) it wrote during Init().
+                            int playAddr = inst.File.PlayAddress;
+                            if (playAddr == 0)
+                                playAddr = inst.Cpu.Memory[0x0314] | (inst.Cpu.Memory[0x0315] << 8);
+                            inst.Cpu.Play(playAddr);
+                            inst.SamplesUntilPlay += samplesPerPlay;
+                        }
+
+                        mix += inst.Chip.GetSample() * inst.Volume;
+                    }
+                }
+
+                // Add SID audio on top of any existing audio in all channels
+                for (int ch = 0; ch < channels; ch++)
+                    data[frame * channels + ch] += mix;
             }
         }
-
-        if (playing == null) return;
-
-        for (int frame = 0; frame < frames; frame++)
+        catch (Exception e)
         {
-            float mix = 0f;
-
-            foreach (var inst in playing)
-            {
-                lock (inst.Lock)
-                {
-                    if (!inst.Playing || inst.Paused) continue;
-
-                    // Trigger the SID play routine at ~50 Hz
-                    inst.SamplesUntilPlay -= 1f;
-                    if (inst.SamplesUntilPlay <= 0f)
-                    {
-                        inst.Cpu.Play(inst.File.PlayAddress);
-                        inst.SamplesUntilPlay += samplesPerPlay;
-                    }
-
-                    mix += inst.Chip.GetSample() * inst.Volume;
-                }
-            }
-
-            // Add SID audio on top of any existing audio in all channels
-            for (int ch = 0; ch < channels; ch++)
-                data[frame * channels + ch] += mix;
+            UnityEngine.Debug.LogError($"[SIDPlayer] OnAudioFilterRead: {e.Message}");
         }
     }
 

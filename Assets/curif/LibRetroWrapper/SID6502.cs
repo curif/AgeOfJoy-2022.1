@@ -53,11 +53,20 @@ public class SID6502
     /// <summary>Execute the SID play routine (called at ~50 Hz).</summary>
     public void Play(int playAddress)
     {
+        if (playAddress == 0) return;
+
+        // Save stack pointer before pushing sentinel so we can restore it afterward.
+        // Many SID tunes call Kernal ROM addresses (e.g. $FFD2). Our RAM there is 0x00 = BRK,
+        // which sets PC=0xFFFF and exits the loop — but the JSR return address is never popped.
+        // Restoring S prevents that leak from accumulating across 50 Hz calls and corrupting
+        // the stack page, which would eventually silence all voices.
+        byte savedS = S;
         PushWord(0xFFFE);
         PC = (ushort)playAddress;
         int safety = 50000;
         while (PC != 0xFFFF && safety-- > 0)
             Step();
+        S = savedS; // restore: cancels sentinel + any leaked JSR frames
     }
 
     private void PushWord(int value) { Push((byte)(value >> 8)); Push((byte)(value & 0xFF)); }

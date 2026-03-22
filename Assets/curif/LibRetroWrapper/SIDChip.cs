@@ -335,8 +335,16 @@ public class SIDChip
 
         // Chamberlin state-variable filter
         float fc = 30f + filterCutoff / 2047f * 11970f; // 30 Hz – 12 kHz
-        float f  = 2f * Mathf.Sin(Mathf.PI * fc / sampleRate);
         float q  = 0.1f + (1f - filterResonance / 15f) * 1.3f; // damping: 0.1 (high res) – 1.4 (low res)
+        float f  = 2f * Mathf.Sin(Mathf.PI * fc / sampleRate);
+        // Chamberlin SVF is stable only when f < 2 - q.
+        // At 22050 Hz, high-cutoff values produce f ≈ 1.98 which violates this for any resonance,
+        // blowing the state variables to Infinity/NaN and silencing all output permanently.
+        f = Mathf.Min(f, 2f - q - 0.05f);
+
+        // Recover from any NaN/Inf accumulated before this clamp was in place
+        if (!float.IsFinite(filterLP)) filterLP = 0f;
+        if (!float.IsFinite(filterBP)) filterBP = 0f;
 
         filterLP += f * filterBP;
         float hp  = input - filterLP - q * filterBP;
