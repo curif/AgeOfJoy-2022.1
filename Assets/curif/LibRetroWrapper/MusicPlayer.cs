@@ -166,7 +166,7 @@ public class MusicPlayer : MonoBehaviour
                             {
                                 audioClip = DownloadHandlerAudioClip.GetContent(www);
                                 audioSource.clip = audioClip;
-                                audioSource.loop = true; // Ensure continuous playback
+                                audioSource.loop = false;
                                 audioSource.Play();
                             }
                             catch (Exception e)
