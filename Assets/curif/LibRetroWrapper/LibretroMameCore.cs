@@ -734,6 +734,21 @@ public static unsafe class LibretroMameCore
         return ret;
     }
 
+    public static int getMemory(uint region, uint offset)
+    {
+        if (!GameLoaded)
+            throw new Exception($"[getMemory] Can't operate on memory of non loaded games.");
+        uint size = wrapper_get_memory_size(region);
+        if (size == 0)
+            throw new Exception($"[getMemory] Memory region {region} is not available for the current game.");
+        if (offset >= size)
+            throw new Exception($"[getMemory] Offset {offset} is out of bounds for region {region} (size: {size}).");
+        char* data = wrapper_get_memory_data(region);
+        if (data == null)
+            throw new Exception($"[getMemory] Memory region {region} returned a null pointer.");
+        return (byte)data[offset];
+    }
+
     public static void setSram(uint offset, uint value)
     {
         if (!GameLoaded)
