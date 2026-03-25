@@ -17,11 +17,30 @@ public class NPCController : MonoBehaviour
     [Tooltip("List of controlled Characters (NPCs)")]
     public GameObject[] CharacterList;
 
+    [Tooltip("Optional: root transform to auto-discover additional room NPCs by 'NPC' tag. " +
+             "Use when some NPCs live under a different parent and are not in CharacterList.")]
+    public Transform NPCsRoot;
+
+    private List<GameObject> effectiveNPCList = new List<GameObject>();
     private bool isListenerAdded = false;
 
     private void Start()
     {
+        buildEffectiveList();
         addListener();
+    }
+
+    void buildEffectiveList()
+    {
+        effectiveNPCList = new List<GameObject>(CharacterList ?? new GameObject[0]);
+
+        // If NPCsRoot is assigned use it; otherwise fall back to this GameObject's own children.
+        Transform root = NPCsRoot != null ? NPCsRoot : transform;
+        foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+        {
+            if (child.CompareTag("NPC") && !effectiveNPCList.Contains(child.gameObject))
+                effectiveNPCList.Add(child.gameObject);
+        }
     }
 
     void OnRoomConfigChanged()
@@ -33,11 +52,15 @@ public class NPCController : MonoBehaviour
             isActive = roomConfiguration.Configuration.npc.status != "disabled";
             isStatic = roomConfiguration.Configuration.npc.status == "static";
         }
-        foreach (GameObject npc in CharacterList)
+        foreach (GameObject npc in effectiveNPCList)
         {
             npc.SetActive(isActive);
             if (npc.activeSelf)
-                npc.GetComponent<ArcadeRoomBehavior>().IsStatic = isStatic;
+            {
+                ArcadeRoomBehavior behavior = npc.GetComponent<ArcadeRoomBehavior>();
+                if (behavior != null)
+                    behavior.IsStatic = isStatic;
+            }
         }
     }
 
