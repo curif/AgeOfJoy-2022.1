@@ -816,7 +816,7 @@ public class Cabinet
         return this;
     }
 
-    public Cabinet AddCoinSlot(string type, float rotationAngleX, float rotationAngleY, float rotationAngleZ, float scalePercentage)
+    public Cabinet AddCoinSlot(string type, float rotationAngleX, float rotationAngleY, float rotationAngleZ, float scalePercentage, bool soundEnabled = true)
     {
         GameObject coinSlotMock = Parts("coin-slot");
         if (coinSlotMock == null)
@@ -831,6 +831,7 @@ public class Cabinet
             //LibretroScreenController will find the coinslot using this name:
             newCoinSlot.name = "coin-slot-added";
             ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] {Name} added part coin-slot-added");
+            newCoinSlot.GetComponent<CoinSlotController>().SoundEnabled = soundEnabled;
         }
         else
             ConfigManager.WriteConsole($"[Cabinet.AddCoinSlot] ERROR {Name}: can't create the new coin-slot type: {type}");

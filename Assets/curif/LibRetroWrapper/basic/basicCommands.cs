@@ -151,6 +151,7 @@ public static class Commands
         functions["CABDBGETASSIGNED"] = typeof(CommandFunctionCABDBGETASSIGNED);
         functions["CABDBASSIGN"] = typeof(CommandFunctionCABDBASSIGN);
         functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
+        functions["CABCOINSLOTSOUND"] = typeof(CommandFunctionCABCOINSLOTSOUND);
         
 
         //cabinet in AGEBasic for the actual cabinet

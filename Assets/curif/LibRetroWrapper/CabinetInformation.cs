@@ -27,6 +27,8 @@ public class CabinetInformation
     public int year;
     public string coinslot = "coin-slot-double";
     public Geometry coinslotgeometry = new Geometry();
+    [YamlMember(Alias = "coinslot-sound", ApplyNamingConventions = false)]
+    public bool coinslotSound = true;
     public int timetoload = 3;
     public bool enablesavestate = false; //false to fix #34
     public bool? persistent;

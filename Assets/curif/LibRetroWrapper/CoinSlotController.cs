@@ -16,6 +16,9 @@ public class CoinSlotController : MonoBehaviour
 
     public UnityEvent OnInsertCoin;
 
+    [Tooltip("Set to false to suppress the coin-drop sound (e.g. for NES cores where coin-insert acts as select).")]
+    public bool SoundEnabled = true;
+
     // Start is called before the first frame update
     void Start() {
         caChin = GetComponent<AudioSource>();
@@ -23,7 +26,8 @@ public class CoinSlotController : MonoBehaviour
 
     public void insertCoin() {
         coins++;
-        caChin.Play();
+        if (SoundEnabled)
+            caChin.Play();
         OnInsertCoin?.Invoke();
 
         ConfigManager.WriteConsole($"{gameObject.name} has {coins} coins in the bucket.");

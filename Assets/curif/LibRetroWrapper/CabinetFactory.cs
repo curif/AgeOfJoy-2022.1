@@ -421,7 +421,8 @@ public static class CabinetFactory
                 ConfigManager.WriteConsole($"[CabinetFactory.fromInformation] {cbinfo.name} coinslot {cbinfo.coinslot}");
                 cabinet.AddCoinSlot(cbinfo.coinslot,
                         cbinfo.coinslotgeometry.rotation.x, cbinfo.coinslotgeometry.rotation.y, cbinfo.coinslotgeometry.rotation.z,
-                        cbinfo.coinslotgeometry.scalepercentage);
+                        cbinfo.coinslotgeometry.scalepercentage,
+                        cbinfo.coinslotSound);
             }
             catch (Exception e)
             {

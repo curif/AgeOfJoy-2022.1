@@ -338,6 +338,26 @@ class CommandFunctionCABINSERTCOIN : CommandFunctionNoExpressionBase
     }
 }
 
+// CABCOINSLOTSOUND(0|1) — enable (1) or silence (0) the coin-drop sound at runtime.
+class CommandFunctionCABCOINSLOTSOUND : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionCABCOINSLOTSOUND(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABCOINSLOTSOUND";
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+        if (config?.CoinSlot == null)
+            throw new Exception("Cabinet hasn't a coin slot.");
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val, "0 (silent) or 1 (sound enabled)");
+        config.CoinSlot.SoundEnabled = val.IsTrue();
+        return BasicValue.True;
+    }
+}
+
 class CommandFunctionCABPARTSSETROTATION : CommandFunctionExpressionListBase
 {
     public CommandFunctionCABPARTSSETROTATION(ConfigurationCommands config) : base(config)
