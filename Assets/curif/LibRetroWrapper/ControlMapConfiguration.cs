@@ -225,22 +225,24 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap(LC.MODIFIER, new string[] { CM.VR_CONTROLLER_LEFT_GRIP });
 
         //fire with b-button and trigger.
-        AddMap(LC.JOYPAD_B, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.KEYBOARD_ENTER });
-        AddMap(LC.JOYPAD_A, new string[] { CM.GAMEPAD_A, CM.VR_CONTROLLER_A });
-        AddMap(LC.JOYPAD_X, new string[] { CM.GAMEPAD_X, CM.VR_CONTROLLER_X });
-        AddMap(LC.JOYPAD_Y, new string[] { CM.GAMEPAD_Y, CM.VR_CONTROLLER_Y });
-        AddMap(LC.JOYPAD_START, new string[] { CM.GAMEPAD_START, CM.VR_CONTROLLER_START });
-        AddMap(LC.JOYPAD_SELECT, new string[] { CM.GAMEPAD_SELECT, CM.VR_CONTROLLER_SELECT });
+        AddMap(LC.JOYPAD_B, new string[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.KEYBOARD_ENTER, CM.KEYBOARD_W, CM.KEYBOARD_1 });
+        AddMap(LC.JOYPAD_A, new string[] { CM.GAMEPAD_A, CM.VR_CONTROLLER_A, CM.KEYBOARD_Q, CM.KEYBOARD_0 });
+        AddMap(LC.JOYPAD_X, new string[] { CM.GAMEPAD_X, CM.VR_CONTROLLER_X, CM.KEYBOARD_E, CM.KEYBOARD_2 });
+        AddMap(LC.JOYPAD_Y, new string[] { CM.GAMEPAD_Y, CM.VR_CONTROLLER_Y, CM.KEYBOARD_R, CM.KEYBOARD_3 });
+        AddMap(LC.JOYPAD_START, new string[] { CM.GAMEPAD_START, CM.VR_CONTROLLER_START, CM.KEYBOARD_I });
+        //some games (like Ms Pac-Man/Galaga 20th Anniversary) use the Player 2 start button to select a different game
+        AddMap(LC.JOYPAD_START, new string[] { CM.KEYBOARD_7 }, "button", 2);
+        AddMap(LC.JOYPAD_SELECT, new string[] { CM.GAMEPAD_SELECT, CM.VR_CONTROLLER_SELECT,CM.KEYBOARD_U,CM.KEYBOARD_6 });
 
         AddMap(LC.JOYPAD_UP, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
         AddMap(LC.JOYPAD_DOWN, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
         AddMap(LC.JOYPAD_RIGHT, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
         AddMap(LC.JOYPAD_LEFT, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK, CM.GAMEPAD_LEFT_THUMBSTICK }, "axis");
 
-        AddMap(LC.JOYPAD_UP, new string[] { CM.GAMEPAD_DPAD_UP });
-        AddMap(LC.JOYPAD_DOWN, new string[] { CM.GAMEPAD_DPAD_DOWN });
-        AddMap(LC.JOYPAD_RIGHT, new string[] { CM.GAMEPAD_DPAD_RIGHT });
-        AddMap(LC.JOYPAD_LEFT, new string[] { CM.GAMEPAD_DPAD_LEFT });
+        AddMap(LC.JOYPAD_UP, new string[] { CM.GAMEPAD_DPAD_UP, CM.KEYBOARD_A, CM.KEYBOARD_Z });
+        AddMap(LC.JOYPAD_DOWN, new string[] { CM.GAMEPAD_DPAD_DOWN, CM.KEYBOARD_S, CM.KEYBOARD_X });
+        AddMap(LC.JOYPAD_RIGHT, new string[] { CM.GAMEPAD_DPAD_RIGHT, CM.KEYBOARD_F, CM.KEYBOARD_V });
+        AddMap(LC.JOYPAD_LEFT, new string[] { CM.GAMEPAD_DPAD_LEFT, CM.KEYBOARD_D, CM.KEYBOARD_C });
 
         //also map port 1 to the right one (roboton issue #204)
         AddMap(LC.JOYPAD_UP, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK }, "axis", 1);
@@ -251,17 +253,17 @@ public class DefaultControlMap : ControlMapConfiguration
         AddMap(LC.JOYPAD_LEFT_RUMBLE, new string[] { CM.VR_CONTROLLER_LEFT_HAPTIC_DEVICE });
         AddMap(LC.JOYPAD_RIGHT_RUMBLE, new string[] { CM.VR_CONTROLLER_RIGHT_HAPTIC_DEVICE });
 
-        AddMap(LC.JOYPAD_L, new string[] { CM.VR_CONTROLLER_LEFT_TRIGGER, CM.GAMEPAD_LEFT_TRIGGER });
-        AddMap(LC.JOYPAD_R, new string[] { CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.GAMEPAD_RIGHT_TRIGGER });
+        AddMap(LC.JOYPAD_L, new string[] { CM.VR_CONTROLLER_LEFT_TRIGGER, CM.GAMEPAD_LEFT_TRIGGER, CM.KEYBOARD_Y, CM.KEYBOARD_5 });
+        AddMap(LC.JOYPAD_R, new string[] { CM.VR_CONTROLLER_RIGHT_TRIGGER, CM.GAMEPAD_RIGHT_TRIGGER, CM.KEYBOARD_O, CM.KEYBOARD_8 });
 
-        AddMap(LC.JOYPAD_L2, new string[] { CM.VR_CONTROLLER_LEFT_GRIP, CM.GAMEPAD_LEFT_BUMPER });
-        AddMap(LC.JOYPAD_R2, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_RIGHT_BUMPER });
+        AddMap(LC.JOYPAD_L2, new string[] { CM.VR_CONTROLLER_LEFT_GRIP, CM.GAMEPAD_LEFT_BUMPER, CM.KEYBOARD_T, CM.KEYBOARD_4 });
+        AddMap(LC.JOYPAD_R2, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_RIGHT_BUMPER, CM.KEYBOARD_P, CM.KEYBOARD_9 });
 
         AddMap(LC.JOYPAD_L3, new string[] { CM.VR_CONTROLLER_LEFT_THUMBSTICK_PRESS, CM.GAMEPAD_LEFT_THUMBSTICK_PRESS });
         AddMap(LC.JOYPAD_R3, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK_PRESS, CM.GAMEPAD_RIGHT_THUMBSTICK_PRESS });
 
         AddMap(LC.EXIT, new string[] { CM.VR_CONTROLLER_RIGHT_GRIP, CM.GAMEPAD_LEFT_BUMPER, CM.KEYBOARD_ESC });
-        AddMap(LC.INSERT, CM.GAMEPAD_SELECT);
+        AddMap(LC.INSERT, new string[] { CM.GAMEPAD_SELECT, CM.KEYBOARD_U, CM.KEYBOARD_6 });
 
         AddMap(LC.MOUSE_X, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK, CM.MOUSE }, "axis");
         AddMap(LC.MOUSE_Y, new string[] { CM.VR_CONTROLLER_RIGHT_THUMBSTICK, CM.GAMEPAD_RIGHT_THUMBSTICK, CM.MOUSE }, "axis");
