@@ -305,6 +305,12 @@ public static unsafe class LibretroMameCore
     private static extern int wrapper_read_memory_map(uint address);
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_get_led_state(int led);
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_led_reset();
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_set_memory_value(uint id, uint value);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_get_memory_value(uint id);
@@ -739,6 +745,18 @@ public static unsafe class LibretroMameCore
     }
 
     public static uint getMemorySize(uint region) => wrapper_get_memory_size(region);
+
+    public const int MAX_LEDS = 8;
+
+    /// <summary>
+    /// Returns the current state of LED <paramref name="led"/> (0–7).
+    /// Returns 0 (off), 1 (on), or -1 if index is out of range or game not loaded.
+    /// </summary>
+    public static int getLedState(int led)
+    {
+        if (!GameLoaded) return -1;
+        return wrapper_get_led_state(led);
+    }
 
     public static int getMemory(uint region, uint offset)
     {
@@ -1272,6 +1290,7 @@ public static unsafe class LibretroMameCore
         GameFileName = "";
         ScreenName = "";
         GameLoaded = false;
+        wrapper_led_reset();
 
         CoinSlot?.clean();
         CoinSlot = null;

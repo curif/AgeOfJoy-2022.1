@@ -95,6 +95,11 @@ class CommandONEVENT : CommandBase
                     info.varName = configVal[4].GetString();
                 }
                 break;
+            case "on-led-change":
+                // ["CONFIG-EVENT", "on-led-change", ledIndex, varName]
+                info.ledIndex = (int)configVal[2].GetValueAsNumber();
+                info.varName = configVal[3].GetString();
+                break;
         }
 
         Event newEvt = EventsFactory.Factory(info, vars, config.ageBasic);

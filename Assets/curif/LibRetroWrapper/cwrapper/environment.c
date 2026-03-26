@@ -27,6 +27,14 @@ static bool hardware_rendering;
 static struct retro_memory_descriptor memory_descriptors[MAX_MEMORY_DESCRIPTORS];
 static unsigned num_memory_descriptors = 0;
 
+#define MAX_LEDS 8
+static int led_state[MAX_LEDS];
+
+static void wrapper_set_led_state(int led, int state) {
+	if (led >= 0 && led < MAX_LEDS)
+		led_state[led] = state;
+}
+
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
 static enum retro_log_level minLogLevel;
@@ -759,6 +767,16 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 		return true;
 	}
 
+	case RETRO_ENVIRONMENT_GET_LED_INTERFACE: {
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[RETRO_ENVIRONMENT_GET_LED_INTERFACE] registering LED callback\n");
+		if (!data)
+			return false;
+		struct retro_led_interface *led_if = (struct retro_led_interface *)data;
+		led_if->set_led_state = wrapper_set_led_state;
+		return true;
+	}
+
 #ifdef ENVIRONMENT_DEBUG
 	default:
 		wrapper_environment_log(RETRO_LOG_WARN,
@@ -824,6 +842,17 @@ void wrapper_unload_game() {
 		return;
 	handlers.retro_unload_game();
 	wrapper_audio_free();
+	wrapper_led_reset();
+}
+
+int wrapper_get_led_state(int led) {
+	if (led < 0 || led >= MAX_LEDS)
+		return -1;
+	return led_state[led];
+}
+
+void wrapper_led_reset() {
+	memset(led_state, 0, sizeof(led_state));
 }
 
 void wrapper_run() {

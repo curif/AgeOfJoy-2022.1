@@ -100,7 +100,8 @@ public class EventInformation
                                     "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit",
                                     "on-control-active-pressed", "on-control-active-held", "on-control-active-released",
                                     "on-sprite-collision-start", "on-sprite-collision-end",
-                                    "on-memory-change"};
+                                    "on-memory-change",
+                                    "on-led-change"};
 
     static string[] requirePartName = { "on-collision-start", "on-collision-stay", "on-collision-end", 
                                         "on-touch-start", "on-grab-start", 
@@ -125,6 +126,10 @@ public class EventInformation
     [YamlMember(Alias = "var", ApplyNamingConventions = false)]
     public string varName; // AGEBasic variable to inject the new value into
     public string cheat;   // cheat description from XML (alternative to address+region)
+
+    // on-led-change fields
+    [YamlMember(Alias = "led", ApplyNamingConventions = false)]
+    public int ledIndex;   // LED index 0–7
 
     // Serialize this field to show it in the editor
     [SerializeField]

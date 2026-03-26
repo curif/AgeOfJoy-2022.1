@@ -679,6 +679,73 @@ public class OnMemoryChange : Event
     }
 }
 
+// -------------------- on-led-change -------------------
+public class OnLedChange : Event
+{
+    private int previousState = -1;
+    private bool seeded = false;
+    private bool permanentlyFailed = false;
+
+    public override bool Condition()
+    {
+        if (permanentlyFailed) return false;
+        return base.Condition();
+    }
+
+    public OnLedChange(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+        ConfigManager.WriteConsole($"[OnLedChange] Init: led={eventInformation.ledIndex} var='{eventInformation.varName}' program={eventInformation.program} line={eventInformation.line}");
+        base.Init();
+    }
+
+    public override void EvaluateTrigger()
+    {
+        if (!LibretroMameCore.GameLoaded)
+        {
+            RegisterTrigger(false);
+            return;
+        }
+
+        int currentState = LibretroMameCore.getLedState(eventInformation.ledIndex);
+
+        if (currentState < 0)
+        {
+            ConfigManager.WriteConsole($"[OnLedChange] getLedState returned -1 for led={eventInformation.ledIndex}. Disabling event.");
+            permanentlyFailed = true;
+            RegisterTrigger(false);
+            return;
+        }
+
+        if (!seeded)
+        {
+            ConfigManager.WriteConsole($"[OnLedChange] Seeded led={eventInformation.ledIndex} initialState={currentState}");
+            previousState = currentState;
+            seeded = true;
+            RegisterTrigger(false);
+            return;
+        }
+
+        if (currentState != previousState)
+        {
+            ConfigManager.WriteConsole($"[OnLedChange] TRIGGER led={eventInformation.ledIndex} {previousState} → {currentState} → jumping to line {eventInformation.line}");
+            if (!string.IsNullOrEmpty(eventInformation.varName))
+                vars.SetValue(eventInformation.varName, new BasicValue(currentState));
+            previousState = currentState;
+            RegisterTrigger(true);
+        }
+        else
+        {
+            RegisterTrigger(false);
+        }
+    }
+}
+
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -725,6 +792,8 @@ public static class EventsFactory
                 return new OnSpriteCollisionEnd(eventInformation, vars, agebasic);
             case "on-memory-change":
                 return new OnMemoryChange(eventInformation, vars, agebasic);
+            case "on-led-change":
+                return new OnLedChange(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");

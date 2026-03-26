@@ -411,7 +411,7 @@ public class basicAGE : MonoBehaviour
         int maxExecLines = DefaultMaxExecutionLines;
         if (configCommands.Cabinet != null && configCommands.Cabinet.gameObject != null)
         {
-            cabinet = configCommands.Cabinet.gameObject.GetComponent<CabinetAGEBasic>();
+            cabinet = configCommands.Cabinet.gameObject.GetComponentInChildren<CabinetAGEBasic>();
             if (cabinet != null && cabinet.AGEInfo.maxExecutionLines != -1)
                 maxExecLines = cabinet.AGEInfo.maxExecutionLines;
         }
@@ -456,14 +456,13 @@ public class basicAGE : MonoBehaviour
                         // Ensure program is compiled before running
                         if (!Exists(evt.eventInformation.program))
                         {
-                            string basePath = configCommands.ProgramPath;
-                            if (string.IsNullOrEmpty(basePath)) 
-                            {
-                                if (cabinet != null)
-                                    basePath = cabinet.pathBase;
-                                else
-                                    basePath = ConfigManager.AGEBasicDir;
-                            }
+                            string basePath;
+                            if (cabinet != null)
+                                basePath = cabinet.pathBase;
+                            else if (!string.IsNullOrEmpty(configCommands.ProgramPath))
+                                basePath = configCommands.ProgramPath;
+                            else
+                                basePath = ConfigManager.AGEBasicDir;
 
                             ParseFile(Path.Combine(basePath, evt.eventInformation.program));
                         }

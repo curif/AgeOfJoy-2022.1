@@ -80,6 +80,8 @@ void wrapper_modify_memory_section(unsigned offset, unsigned value);
 void wrapper_set_controller_port_device(unsigned port, unsigned device);
 void wrapper_reset();
 int wrapper_read_memory_map(uint32_t address);
+int wrapper_get_led_state(int led);
+void wrapper_led_reset();
 
 #ifdef __cplusplus
 }
