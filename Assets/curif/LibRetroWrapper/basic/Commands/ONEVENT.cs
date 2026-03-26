@@ -80,6 +80,21 @@ class CommandONEVENT : CommandBase
                 info.spriteA = configVal[2].GetString();
                 info.spriteB = configVal[3].GetString();
                 break;
+            case "on-memory-change":
+                if (configVal[2].IsString())
+                {
+                    // Cheat name form: ["CONFIG-EVENT", "on-memory-change", cheatName, varName]
+                    info.cheat = configVal[2].GetString();
+                    info.varName = configVal[3].GetString();
+                }
+                else
+                {
+                    // Raw address form: ["CONFIG-EVENT", "on-memory-change", address, region, varName]
+                    info.address = (uint)configVal[2].GetValueAsNumber();
+                    info.region = (uint)configVal[3].GetValueAsNumber();
+                    info.varName = configVal[4].GetString();
+                }
+                break;
         }
 
         Event newEvt = EventsFactory.Factory(info, vars, config.ageBasic);

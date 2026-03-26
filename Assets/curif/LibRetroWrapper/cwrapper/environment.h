@@ -79,6 +79,7 @@ int wrapper_copy_memory_section(unsigned dest_offset, const void *src, size_t le
 void wrapper_modify_memory_section(unsigned offset, unsigned value);
 void wrapper_set_controller_port_device(unsigned port, unsigned device);
 void wrapper_reset();
+int wrapper_read_memory_map(uint32_t address);
 
 #ifdef __cplusplus
 }

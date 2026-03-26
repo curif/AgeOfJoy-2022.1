@@ -23,6 +23,10 @@ static struct retro_frame_time_callback frame_time_callback;
 static long frame_counter;
 static bool hardware_rendering;
 
+#define MAX_MEMORY_DESCRIPTORS 64
+static struct retro_memory_descriptor memory_descriptors[MAX_MEMORY_DESCRIPTORS];
+static unsigned num_memory_descriptors = 0;
+
 #define LOG_BUFFER_SIZE 4096
 static char log_buffer[LOG_BUFFER_SIZE];
 static enum retro_log_level minLogLevel;
@@ -125,21 +129,14 @@ bool wrapper_get_savestate_data(void* data, size_t size) {
 }
 
 size_t wrapper_get_memory_size(unsigned id) {
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_get_memory_size] id: %d\n", id);
-	if (handlers.handle == NULL) 
-			return (size_t)0;
-	size_t size = handlers.retro_get_memory_size(id);
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[wrapper_get_memory_size] size: %d\n", size);
-	return size;
+	if (handlers.handle == NULL)
+		return (size_t)0;
+	return handlers.retro_get_memory_size(id);
 }
 
 void* wrapper_get_memory_data(unsigned id) {
-	wrapper_environment_log(RETRO_LOG_INFO,
-		"[retro_get_memory_data] id: %d\n", id);
-	if (handlers.handle == NULL) 
-			return NULL;
+	if (handlers.handle == NULL)
+		return NULL;
 	return handlers.retro_get_memory_data(id);
 }
 
@@ -404,6 +401,54 @@ double wrapper_environment_get_sample_rate() {
 		wrapper_environment_get_av_info();
 	}
 	return av_info.timing.sample_rate;
+}
+
+/* Read one byte from the memory map at the given emulated CPU address.
+ * Translation: subtract start, remove disconnect bits, wrap by len, add offset.
+ * Returns the byte value, or -1 if no descriptor covers the address. */
+int wrapper_read_memory_map(uint32_t address) {
+    for (unsigned i = 0; i < num_memory_descriptors; i++) {
+        const struct retro_memory_descriptor *desc = &memory_descriptors[i];
+        if (!desc->ptr) continue;
+
+        /* select mask: when nonzero, descriptor only applies when
+         * (address & select) == (start & select). */
+        if (desc->select && (address & desc->select) != (desc->start & desc->select))
+            continue;
+
+        /* simple range check when select==0 and disconnect==0 */
+        if (!desc->select) {
+            if (address < desc->start) continue;
+            if (desc->len && (address - desc->start) >= desc->len) continue;
+        }
+
+        size_t delta = address - desc->start;
+
+        /* remove disconnect bits: compact address by skipping unconnected bits */
+        if (desc->disconnect) {
+            size_t packed = 0;
+            size_t bit_out = 1;
+            for (size_t bit = 1; bit; bit <<= 1) {
+                if (desc->disconnect & bit) continue; /* skip unconnected bit */
+                if (delta & bit) packed |= bit_out;
+                bit_out <<= 1;
+            }
+            delta = packed;
+        }
+
+        /* apply len wrap */
+        if (desc->len) {
+            size_t mask = desc->len;
+            /* round mask down to power of two */
+            mask |= mask >> 1; mask |= mask >> 2; mask |= mask >> 4;
+            mask |= mask >> 8; mask |= mask >> 16;
+            mask >>= 1;
+            delta &= mask;
+        }
+
+        return ((uint8_t*)desc->ptr)[desc->offset + delta];
+    }
+    return -1;
 }
 
 // https://github.com/libretro/RetroArch/blob/437ed733f5822934e6a422e09cbc9efdacfe7f60/runloop.c#L1408
@@ -686,6 +731,33 @@ bool wrapper_environment_cb(unsigned cmd, void* data) {
 		if (data)
 			*(bool*)data = true;
 		return true;
+
+	case RETRO_ENVIRONMENT_SET_MEMORY_MAPS: {
+		if (!data) return false;
+		const struct retro_memory_map *map = (const struct retro_memory_map*)data;
+		unsigned count = map->num_descriptors;
+		if (count > MAX_MEMORY_DESCRIPTORS)
+			count = MAX_MEMORY_DESCRIPTORS;
+		num_memory_descriptors = 0;
+		for (unsigned i = 0; i < count; i++) {
+			memory_descriptors[i] = map->descriptors[i];
+			wrapper_environment_log(RETRO_LOG_INFO,
+				"[RETRO_ENVIRONMENT_SET_MEMORY_MAPS] desc[%u]: start=0x%zX len=%zu "
+				"offset=%zu select=0x%zX disconnect=0x%zX flags=0x%llX addrspace=%s\n",
+				i,
+				map->descriptors[i].start,
+				map->descriptors[i].len,
+				map->descriptors[i].offset,
+				map->descriptors[i].select,
+				map->descriptors[i].disconnect,
+				(unsigned long long)map->descriptors[i].flags,
+				map->descriptors[i].addrspace ? map->descriptors[i].addrspace : "");
+		}
+		num_memory_descriptors = count;
+		wrapper_environment_log(RETRO_LOG_INFO,
+			"[RETRO_ENVIRONMENT_SET_MEMORY_MAPS] stored %u descriptors\n", count);
+		return true;
+	}
 
 #ifdef ENVIRONMENT_DEBUG
 	default:

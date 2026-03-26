@@ -583,6 +583,21 @@ public class basicAGE : MonoBehaviour
             eventCoroutine = StartCoroutine(RunEvents());
     }
 
+    /// <summary>
+    /// Starts the event loop coroutine if it isn't already running.
+    /// Call this when events are registered but no program will be executed
+    /// (e.g. a cabinet with YAML events but no after-insert-coin script).
+    /// </summary>
+    public void StartEventLoop()
+    {
+        InitComponents();
+        if (eventCoroutine == null)
+        {
+            ConfigManager.WriteConsole("[basicAGE.StartEventLoop] Starting event loop (no program running).");
+            eventCoroutine = StartCoroutine(RunEvents());
+        }
+    }
+
     public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null)
     {
         string filePathDebug = Path.Combine(ConfigManager.AGEBasicDir, prgName + ".debug");

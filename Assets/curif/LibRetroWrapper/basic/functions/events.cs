@@ -182,3 +182,60 @@ class CommandFunctionONSPRITECOLLISIONEND : CommandFunctionExpressionListBase
         return new BasicValue(list);
     }
 }
+
+// ONMEMORY(address, region, varName)          -- raw address form
+// ONMEMORY("cheat description", varName)      -- cheat name form
+// Examples:
+//   ONEVENT ONMEMORY(34944, 2, "lives") GOTO 1000
+//   ONEVENT ONMEMORY("Infinite Lives", "lives") GOTO 1000
+class CommandFunctionONMEMORY : CommandFunctionExpressionListBase
+{
+    public CommandFunctionONMEMORY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ONMEMORY";
+        MinCantParamsRequired = 2;
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue[] args = exprs.ExecuteList(vars);
+
+        List<object> list;
+
+        if (args[0].IsString())
+        {
+            // Cheat name form: ONMEMORY("cheat desc", "varName")
+            if (args.Length < 2)
+                throw new Exception($"{cmdToken} - expected: ONMEMORY(\"cheat name\", \"varName\")");
+            FunctionHelper.ExpectedString(args[1], $"{cmdToken} - variable name must be a string");
+
+            list = new List<object>
+            {
+                "CONFIG-EVENT",
+                "on-memory-change",
+                args[0].GetString(), // cheat name
+                args[1].GetString()  // varName
+            };
+        }
+        else
+        {
+            // Raw address form: ONMEMORY(address, region, "varName")
+            if (args.Length < 3)
+                throw new Exception($"{cmdToken} - expected: ONMEMORY(address, region, \"varName\")");
+            FunctionHelper.ExpectedNumber(args[0], $"{cmdToken} - address must be a number");
+            FunctionHelper.ExpectedNumber(args[1], $"{cmdToken} - region must be a number");
+            FunctionHelper.ExpectedString(args[2], $"{cmdToken} - variable name must be a string");
+
+            list = new List<object>
+            {
+                "CONFIG-EVENT",
+                "on-memory-change",
+                args[0].GetValueAsNumber(), // address
+                args[1].GetValueAsNumber(), // region
+                args[2].GetString()         // varName
+            };
+        }
+
+        return new BasicValue(list);
+    }
+}

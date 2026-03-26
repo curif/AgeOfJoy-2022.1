@@ -300,6 +300,10 @@ public static unsafe class LibretroMameCore
 
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern char* wrapper_get_memory_data(uint id);
+
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int wrapper_read_memory_map(uint address);
+
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern int wrapper_set_memory_value(uint id, uint value);
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
@@ -734,18 +738,34 @@ public static unsafe class LibretroMameCore
         return ret;
     }
 
+    public static uint getMemorySize(uint region) => wrapper_get_memory_size(region);
+
     public static int getMemory(uint region, uint offset)
     {
         if (!GameLoaded)
             throw new Exception($"[getMemory] Can't operate on memory of non loaded games.");
+
         uint size = wrapper_get_memory_size(region);
         if (size == 0)
-            throw new Exception($"[getMemory] Memory region {region} is not available for the current game.");
+        {
+            // Region not available via standard API — fall back to memory map descriptors
+            int mapValue = wrapper_read_memory_map(offset);
+            if (mapValue < 0)
+                throw new Exception($"[getMemory] Address 0x{offset:X} not found in memory map (region {region} also unavailable).");
+            return mapValue;
+        }
+
         if (offset >= size)
+        {
+            ConfigManager.WriteConsole($"[getMemory] Offset 0x{offset:X} ({offset}) is out of bounds for region {region} (size={size}).");
             throw new Exception($"[getMemory] Offset {offset} is out of bounds for region {region} (size: {size}).");
+        }
         char* data = wrapper_get_memory_data(region);
         if (data == null)
+        {
+            ConfigManager.WriteConsole($"[getMemory] Memory region {region} returned a null pointer.");
             throw new Exception($"[getMemory] Memory region {region} returned a null pointer.");
+        }
         return (byte)data[offset];
     }
 

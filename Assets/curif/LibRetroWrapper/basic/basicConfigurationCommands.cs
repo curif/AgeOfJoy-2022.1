@@ -75,6 +75,11 @@ public class ConfigurationCommands
     //cabinet events
     public List<Event> events;
 
+    // Cheat address lookup built from a mamecheat XML file (Pugsy's Cheats).
+    // Maps cheat description (case-insensitive) → (region, offset, byteSize).
+    // Null when no cheat XML was found in the cabinet folder.
+    public Dictionary<string, CheatAddress> CheatAddresses = null;
+
     public LightGunTarget lightGunTarget;
 
     // Symbol table populated during parse. Maps uppercase variable names to slot indices in BasicVars.

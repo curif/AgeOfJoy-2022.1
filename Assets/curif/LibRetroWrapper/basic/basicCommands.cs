@@ -283,6 +283,7 @@ public static class Commands
         functions["ONCOLLISION"] = typeof(CommandFunctionONCOLLISION);
         functions["ONSPRITECOLLISION"] = typeof(CommandFunctionONSPRITECOLLISION);
         functions["ONSPRITECOLLISIONEND"] = typeof(CommandFunctionONSPRITECOLLISIONEND);
+        functions["ONMEMORY"] = typeof(CommandFunctionONMEMORY);
 
         //lightgun
         functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionCABPARTLIGHTGUNHIT);

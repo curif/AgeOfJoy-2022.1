@@ -1,6 +1,7 @@
 
 using System;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class OnTimer : Event
 {
@@ -566,6 +567,118 @@ public class OnSpriteCollisionEnd : OnSpriteCollisionBase
     }
 }
 
+// -------------------- memory change ------------------------
+public class OnMemoryChange : Event
+{
+    private int previousValue = -1;
+    private bool seeded = false;
+    private bool loggedGameNotLoaded = false;
+    private bool permanentlyFailed = false;
+
+    public override bool Condition()
+    {
+        if (permanentlyFailed) return false;
+        return base.Condition();
+    }
+
+    public OnMemoryChange(EventInformation eventInformation, BasicVars vars, basicAGE agebasic) :
+        base(eventInformation, vars, agebasic)
+    { }
+
+    public override void Init()
+    {
+        if (status == Status.initialized)
+            return;
+
+        // Resolve cheat name to address+region if the cheat field is set
+        if (!string.IsNullOrEmpty(eventInformation.cheat))
+        {
+            var lookup = AGEBasic.ConfigCommands.CheatAddresses;
+            if (lookup == null)
+            {
+                ConfigManager.WriteConsole($"[OnMemoryChange] No cheat XML loaded — cannot resolve cheat '{eventInformation.cheat}'.");
+                status = Status.error;
+                return;
+            }
+            if (!lookup.TryGetValue(eventInformation.cheat, out CheatAddress addr))
+            {
+                ConfigManager.WriteConsole($"[OnMemoryChange] Cheat '{eventInformation.cheat}' not found in cheat XML. Available: {string.Join(", ", lookup.Keys)}");
+                status = Status.error;
+                return;
+            }
+            eventInformation.address = addr.Offset;
+            eventInformation.region = addr.Region;
+            ConfigManager.WriteConsole($"[OnMemoryChange] Resolved cheat '{eventInformation.cheat}' → region={addr.Region} offset={addr.Offset} (0x{addr.Offset:X}) byteSize={addr.ByteSize}");
+        }
+        else
+        {
+            ConfigManager.WriteConsole($"[OnMemoryChange] Init: var='{eventInformation.varName}' region={eventInformation.region} offset={eventInformation.address} (0x{eventInformation.address:X}) program={eventInformation.program} line={eventInformation.line}");
+        }
+
+        // Log available memory regions so the developer can see what the core exposes
+        if (LibretroMameCore.GameLoaded)
+        {
+            for (uint r = 0; r <= 3; r++)
+            {
+                uint sz = LibretroMameCore.getMemorySize(r);
+                ConfigManager.WriteConsole($"[OnMemoryChange] Available memory: region={r} size={sz}");
+            }
+        }
+
+        base.Init();
+    }
+
+    public override void EvaluateTrigger()
+    {
+        if (!LibretroMameCore.GameLoaded)
+        {
+            if (!loggedGameNotLoaded)
+            {
+                ConfigManager.WriteConsole($"[OnMemoryChange] Waiting — game not loaded yet (var='{eventInformation.varName}' offset=0x{eventInformation.address:X})");
+                loggedGameNotLoaded = true;
+            }
+            RegisterTrigger(false);
+            return;
+        }
+        loggedGameNotLoaded = false; // reset so we log again if game reloads
+
+        int currentValue;
+        try
+        {
+            currentValue = LibretroMameCore.getMemory(eventInformation.region, eventInformation.address);
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsole($"[OnMemoryChange] getMemory failed for var='{eventInformation.varName}' region={eventInformation.region} offset=0x{eventInformation.address:X}: {ex.Message}. Memory polling disabled for this event.");
+            permanentlyFailed = true;
+            RegisterTrigger(false);
+            return;
+        }
+
+        if (!seeded)
+        {
+            ConfigManager.WriteConsole($"[OnMemoryChange] Seeded var='{eventInformation.varName}' offset=0x{eventInformation.address:X} initialValue={currentValue}");
+            previousValue = currentValue;
+            seeded = true;
+            RegisterTrigger(false);
+            return;
+        }
+
+        if (currentValue != previousValue)
+        {
+            ConfigManager.WriteConsole($"[OnMemoryChange] TRIGGER var='{eventInformation.varName}' offset=0x{eventInformation.address:X} {previousValue} → {currentValue} → jumping to line {eventInformation.line}");
+            if (!string.IsNullOrEmpty(eventInformation.varName))
+                vars.SetValue(eventInformation.varName, new BasicValue(currentValue));
+            previousValue = currentValue;
+            RegisterTrigger(true);
+        }
+        else
+        {
+            RegisterTrigger(false);
+        }
+    }
+}
+
 public static class EventsFactory
 {
     public static Event Factory(EventInformation eventInformation, BasicVars vars, basicAGE agebasic)
@@ -610,6 +723,8 @@ public static class EventsFactory
                 return new OnSpriteCollisionStart(eventInformation, vars, agebasic);
             case "on-sprite-collision-end":
                 return new OnSpriteCollisionEnd(eventInformation, vars, agebasic);
+            case "on-memory-change":
+                return new OnMemoryChange(eventInformation, vars, agebasic);
         }
 
         throw new Exception($"AGEBasic Unknown event: {eventInformation.eventId}");

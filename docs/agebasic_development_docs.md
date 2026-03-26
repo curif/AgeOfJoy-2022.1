@@ -136,9 +136,32 @@ To add new functionality to AGEBasic, developers follow these patterns:
 3. Register the new function in `Commands` static constructor in `basicCommands.cs`.
 
 ### Adding a New Event Type
-1. Define a new `Event` subclass in `CabinetAGEBasic.cs`.
-2. Update `EventsFactory.Factory` to handle the new event ID.
+1. Define a new `Event` subclass in `basicEvents.cs`.
+2. Update `EventsFactory.Factory` in `basicEvents.cs` to handle the new event ID string.
 3. Update `CommandONEVENT.Execute` in `ONEVENT.cs` to correctly map BASIC parameters to the `EventInformation` fields.
+4. Add the new event ID to `validEvents[]` in `CabinetAGEBasic.cs` if it should be declarable in `description.yaml`.
+
+### Memory-change events (`on-memory-change`) — Experimental
+
+> **Status: experimental and untested in production.** The feature is fully implemented and safe to ship — cabinets that do not declare `on-memory-change` events (or `ONMEMORY`) are completely unaffected. However, the happy path (an event actually firing) has not been verified on a real device with a core that exposes memory maps.
+
+The `OnMemoryChange` event class (`basicEvents.cs`) polls a single emulator memory byte each frame and triggers when the value changes. The new value is injected into the named AGEBasic variable before the handler runs.
+
+**Address resolution order:**
+1. If `EventInformation.cheat` is set → look up address/region from `ConfigurationCommands.CheatAddresses` (populated by `MameCheatXmlParser` from `cheat.xml`).
+2. Otherwise use `EventInformation.address` and `EventInformation.region` directly.
+
+**Memory access fallback:** `LibretroMameCore.getMemory(region, offset)` first tries the standard LibRetro 4-region API (`wrapper_get_memory_size`/`wrapper_get_memory_data`). If the region returns size=0 it falls back to `wrapper_read_memory_map()` in the native C layer, which searches the descriptors registered via `RETRO_ENVIRONMENT_SET_MEMORY_MAPS` (cmd 36 | RETRO_ENVIRONMENT_EXPERIMENTAL). This is the same mechanism RetroArch uses for its cheat engine.
+
+**Why MAME cores don't work:** Neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_MEMORY_MAPS`. This is because Pugsy's Cheats are designed for MAME's *internal* native cheat engine, which has direct access to the emulated CPU address space — a completely separate system from the LibRetro memory map API. The MAME LibRetro cores simply do not bridge these two systems.
+
+**When it can work:** The `fbneo` core (Final Burn Neo) may call `RETRO_ENVIRONMENT_SET_MEMORY_MAPS` for some games. If it does, `on-memory-change` events will function correctly for those games. The addresses in Pugsy's Cheats XML are real hardware CPU addresses (e.g. `maincpu.mb@0x8880` means "byte at CPU address 0x8880"), not MAME-internal addresses. Since both MAME and FBNeo emulate the same physical hardware, those addresses are identical in both emulators. A `cheat.xml` from Pugsy's site will therefore work with `fbneo` if the core exposes its memory maps — no address translation needed.
+
+**Failure handling:** If `getMemory()` throws on the first call (memory not available), the event sets a `permanentlyFailed` flag. `Condition()` returns `false` permanently, stopping all polling with zero ongoing CPU overhead. One error message is logged.
+
+**Event loop startup:** `ExecInsertCoinBas()` in `CabinetAGEBasic.cs` calls `AGEBasic.StartEventLoop()` when no `after-insert-coin` program is configured but events are registered, ensuring memory-watch events run for pure-YAML cabinets. `LoadCheatXml()` is also called here (not at cabinet load time) to avoid parsing XML for games the player never inserts a coin into.
+
+**Mamecheat XML (`MameCheatXmlParser.cs`):** Parses Pugsy's Cheats XML format. For each `<cheat>` element, finds the first `state="run"` action whose script matches `chip.size@hexoffset`. Chip names (`maincpu`, `soundcpu`, etc.) map to region 2 (SYSTEM_RAM). Returns a case-insensitive `Dictionary<string, CheatAddress>` keyed by cheat description.
 
 ## Conclusion
 

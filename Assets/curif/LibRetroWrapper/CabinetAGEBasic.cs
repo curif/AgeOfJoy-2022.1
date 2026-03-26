@@ -99,7 +99,8 @@ public class EventInformation
                                     "on-touch-start", "on-grab-start", "on-touch-end",
                                     "on-grab-end",  "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit",
                                     "on-control-active-pressed", "on-control-active-held", "on-control-active-released",
-                                    "on-sprite-collision-start", "on-sprite-collision-end"};
+                                    "on-sprite-collision-start", "on-sprite-collision-end",
+                                    "on-memory-change"};
 
     static string[] requirePartName = { "on-collision-start", "on-collision-stay", "on-collision-end", 
                                         "on-touch-start", "on-grab-start", 
@@ -117,6 +118,13 @@ public class EventInformation
     //public List<string> parts; //OR parts
     public string spriteA; // first sprite name for sprite collision events
     public string spriteB; // second sprite name for sprite collision events
+
+    // on-memory-change fields
+    public uint address;   // memory offset (raw; ignored when cheat is set)
+    public uint region;    // memory region (0=SAVE_RAM, 1=RTC, 2=SYSTEM_RAM, 3=VIDEO_RAM)
+    [YamlMember(Alias = "var", ApplyNamingConventions = false)]
+    public string varName; // AGEBasic variable to inject the new value into
+    public string cheat;   // cheat description from XML (alternative to address+region)
 
     // Serialize this field to show it in the editor
     [SerializeField]
@@ -421,6 +429,27 @@ public class CabinetAGEBasic : MonoBehaviour
         }
     }
 
+    private void LoadCheatXml()
+    {
+        AGEBasic.ConfigCommands.CheatAddresses = null;
+        try
+        {
+            string[] xmlFiles = Directory.GetFiles(pathBase, "*.xml");
+            if (xmlFiles.Length == 0)
+            {
+                ConfigManager.WriteConsole($"[CabinetAGEBasic.LoadCheatXml] No XML file found in {pathBase}");
+                return;
+            }
+
+            AGEBasic.ConfigCommands.CheatAddresses = MameCheatXmlParser.Parse(xmlFiles[0]);
+            ConfigManager.WriteConsole($"[CabinetAGEBasic.LoadCheatXml] Loaded {AGEBasic.ConfigCommands.CheatAddresses.Count} cheat addresses from {Path.GetFileName(xmlFiles[0])}");
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsole($"[CabinetAGEBasic.LoadCheatXml] Failed to parse cheat XML: {e.Message}");
+        }
+    }
+
     public void RegisterYamlEvents()
     {
         //Load cabinet events from YAML
@@ -493,10 +522,12 @@ public class CabinetAGEBasic : MonoBehaviour
     public void ExecInsertCoinBas()
     {
         ResetState(true);
+        LoadCheatXml();
         RegisterYamlEvents();
         AGEBasic.DebugMode = AGEInfo.debug;
-        execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0);
 
+        if (!execute(AGEInfo.afterInsertCoin, maxExecutionLines: 0) && AGEBasic.events.Count > 0)
+            AGEBasic.StartEventLoop();
     }
 
     // stop programs and events.

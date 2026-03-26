@@ -83,6 +83,17 @@ Dynamic events are registered using the `ONEVENT` command combined with a config
 *   `ONEVENT ONCUSTOM("eventName") GOTO line`: Registers a manually triggerable event.
 *   `ONEVENT ONSPRITECOLLISION("spriteA", "spriteB") GOTO line`: Fires once when two sprites begin overlapping (AABB).
 *   `ONEVENT ONSPRITECOLLISIONEND("spriteA", "spriteB") GOTO line`: Fires once when two previously overlapping sprites separate.
+*   `ONEVENT ONMEMORY(address, region, "varName") GOTO line`: *(Experimental — see limitations below)* Triggers when the emulator memory byte at `address` in `region` changes. The new value is injected into `varName` before execution. Region constants: `0`=SAVE_RAM, `1`=RTC, `2`=SYSTEM_RAM (most game state), `3`=VIDEO_RAM.
+*   `ONEVENT ONMEMORY("cheat description", "varName") GOTO line`: *(Experimental — see limitations below)* Same as above but resolves the address by cheat name from a `cheat.xml` file placed in the cabinet folder (Pugsy's Cheats format). Requires the cabinet to have a `cheat.xml` file.
+
+**ONMEMORY limitations (experimental feature, untested in production):**
+Memory access depends entirely on the LibRetro core exposing its internal memory to the host. Two mechanisms are tried in order:
+1. The standard LibRetro 4-region API (`RETRO_MEMORY_SYSTEM_RAM`, etc.) — most cores do not expose game RAM this way.
+2. The `RETRO_ENVIRONMENT_SET_MEMORY_MAPS` callback — RetroArch uses this for its cheat engine. If the core calls it, hardware CPU addresses become readable.
+
+In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_MEMORY_MAPS`, so `ONMEMORY` events **will not fire for any game running on a MAME core**. The `fbneo` core may expose memory maps for some games — this is untested. If the core does not expose memory, the event silently disables itself after the first failed read and causes no further CPU overhead. Cabinets that do not declare any `ONMEMORY` events are completely unaffected.
+
+**About cheat XML addresses:** Pugsy's Cheats XML addresses (e.g. `maincpu.mb@0x8880`) are real hardware CPU addresses, not MAME-internal addresses. If a game runs on `fbneo` and that core exposes `RETRO_ENVIRONMENT_SET_MEMORY_MAPS`, a `cheat.xml` downloaded from Pugsy's site for that game's ROM will work — the hardware addresses are the same regardless of which emulator runs them.
 
 ### Event Execution Rules
 1.  **Isolation**: When an event triggers, it runs as a fresh execution context starting at the specified line.
@@ -187,7 +198,7 @@ AGEBasic can interact directly with the Age of Joy 3D environment.
 
 ### Emulation & System
 *   `GAMEISRUNNING()`: True if a ROM is currently loaded.
-*   `PEEK(offset)` / `POKE(offset, val)`: Direct memory access to emulator SRAM.
+*   `PEEK(offset [, region])` / `POKE(offset, val)`: Direct memory access to emulator memory. `region`: `0`=SAVE_RAM (default, backward-compatible), `1`=RTC, `2`=SYSTEM_RAM, `3`=VIDEO_RAM. Example: `PEEK(0x42, 2)` reads offset 0x42 from SYSTEM_RAM.
 *   `CABINSERTCOIN()`: Triggers the coin slot logic.
 *   `SETCPU(multiplier)`: "Overclocks" execution speed (e.g., `CALL SETCPU(500)` runs 500 lines per frame. Default is `1`).
 
