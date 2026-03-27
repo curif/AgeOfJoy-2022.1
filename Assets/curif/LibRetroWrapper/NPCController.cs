@@ -28,6 +28,7 @@ public class NPCController : MonoBehaviour
     {
         buildEffectiveList();
         addListener();
+        OnRoomConfigChanged();
     }
 
     void buildEffectiveList()
