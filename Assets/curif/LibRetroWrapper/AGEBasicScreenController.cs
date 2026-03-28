@@ -387,6 +387,14 @@ public class AGEBasicScreenController : MonoBehaviour
                       cabinetAGEBasic.Stop(); //force
                       cabinetAGEBasic.ExecAfterLeaveBas();
 
+                      // Restore attraction video so EndPlayerActivities() replays it correctly.
+                      // VIDEOLOAD may have changed videoPath during the session; reset it here.
+                      // If no attraction video is configured, stop the video outright.
+                      if (!string.IsNullOrEmpty(VideoFile))
+                          videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
+                      else
+                          videoPlayer.Stop();
+
                       EndPlayerActivities();
                       if (lightGunTarget != null && lightGunInformation != null)
                            lightGunTarget.enabled = false;
