@@ -149,7 +149,7 @@ AGEBasic operates on a virtual CRT screen within the VR cabinet.
 *   `SHOW`: Commits drawing operations to the screen (Double buffering).
 *   `PRINT x, y, text, [inverted], [draw_immediately]`: Prints text at character coordinates. `draw_immediately`: if you use `0` (false) you must use `SHOW` later to show the screen.
 *   `PRINTLN text, ...`: Prints line.
-*   `PRINTCENTERED y, text, ...`: Prints centered text.
+*   `PRINTCENTERED y, text, inverted [, draw_immediately]`: Prints centered text. **Three arguments are required**: row, text string, and inverted flag (0=normal, 1=inverted colors). `draw_immediately` is optional (default 1). Example: `PRINTCENTERED 5, "HELLO", 0`
 *   `BGCOLOR color` / `FGCOLOR color `: Sets background/foreground color. Color can be a name (e.g., "red") or RGB (`R, G, B`).
 *   `RESETCOLOR` / `INVERTCOLOR`
 *   `DPSET x, y, color, [draw_immediately] `: Draw pixel.
@@ -275,3 +275,70 @@ Plays `.sid` files (PSID/RSID v1–v4) through the cabinet's AudioSource. Suppor
 - At most 3 active SIDs recommended (CPU budget on Quest).
 - Use `AGEBASICPATH()` + `COMBINEPATH()` to build portable paths to `.sid` files.
 - Place `.sid` files in `<agebasicpath>/music/` or any accessible path.
+
+---
+
+## 9. Video Playback
+
+Available **only** in cabinets with `crt: type: 19i-agebasic` in `description.yaml`. These cabinets have a `GameVideoPlayer` component. All video commands are no-ops (with a console warning) in other cabinet types.
+
+Video files are stored in the device video folder, returned by `VIDEOPATH()`. On Quest: `/sdcard/Android/data/com.curif.AgeOfJoy/files/video/`.
+
+### Shader behavior
+
+During playback the video shader is active and fills the screen — `PRINT`/`SHOW` output is not visible. Calling `VIDEOPAUSE` or `VIDEOSTOP` restores the CRT shader so AGEBasic drawing commands work normally again.
+
+### Commands
+
+| Command | Syntax | Description |
+| :--- | :--- | :--- |
+| `VIDEOLOAD` | `VIDEOLOAD path [, invertX [, invertY]]` | Load a video file. `invertX`/`invertY` are 0 or 1 (default 0). Resets playback state. |
+| `VIDEOPLAY` | `VIDEOPLAY` | Start or resume playback. If the clip is not yet prepared, preparation begins asynchronously and playback starts automatically when ready — no retry needed. |
+| `VIDEOPAUSE` | `VIDEOPAUSE` | Pause at current position. Restores the CRT shader so the HUD is visible. |
+| `VIDEOSTOP` | `VIDEOSTOP` | Stop and rewind to position 0. Restores the CRT shader. |
+| `VIDEOSEEK` | `VIDEOSEEK seconds` | Jump to the given position in seconds. No-op if the video is not prepared. |
+| `VIDEOLOOP` | `VIDEOLOOP 1\|0` | Enable (`1`) or disable (`0`) looping. Default is on. |
+
+### Functions
+
+| Function | Returns | Description |
+| :--- | :--- | :--- |
+| `VIDEOPATH()` | string | Path to the video folder on the device. |
+| `VIDEOTIME()` | number | Current playback position in seconds. |
+| `VIDEODURATION()` | number | Total clip duration in seconds. |
+| `VIDEOSTATUS()` | number | `0`=not loaded · `1`=stopped/ready · `2`=playing · `3`=paused |
+| `VIDEOLOOPSTATUS()` | number | `1` if looping is enabled, `0` if not. |
+
+### Typical usage pattern
+
+```basic
+10 REM Load file list on coin insert
+20 LET FILES = GETFILESARRAY(VIDEOPATH(), 0)
+30 LET FILE_COUNT = LEN(FILES)
+40 IF FILE_COUNT = 0 THEN END
+50 LET CURR_FILE = 0
+60 VIDEOLOAD COMBINEPATH(VIDEOPATH(), FILES[CURR_FILE])
+70 VIDEOPLAY
+80 END
+
+100 REM Stop (Y button) — shows HUD
+110 VIDEOSTOP
+120 CLS
+130 PRINT 0, 5, "[ STOPPED ]"
+140 SHOW
+150 END
+
+200 REM Next file (D-pad Down)
+210 LET CURR_FILE = MOD(CURR_FILE + 1, FILE_COUNT)
+220 VIDEOLOAD COMBINEPATH(VIDEOPATH(), FILES[CURR_FILE])
+230 VIDEOPLAY
+240 END
+```
+
+### Notes
+
+- `VIDEOSTATUS()` returns `1` (stopped/ready) both when the video has never played and when `VIDEOSTOP` was called. Use it in timer events to decide whether to draw the HUD.
+- `VIDEOLOOP` takes effect on the next `VIDEOPLAY` call. If the video is already prepared and not paused, it applies immediately.
+- `VIDEOSEEK` only works after the clip is prepared. Call it after `VIDEOPLAY` has had time to prepare, or from a button event after playback has started.
+- Supported formats depend on the platform. `.mp4` (H.264) works reliably on both Windows (editor) and Android (Quest). `.mkv` may work on Quest but is not supported in the Unity editor.
+- See `docs/agebasic_video.md` for the full developer/implementation reference.
