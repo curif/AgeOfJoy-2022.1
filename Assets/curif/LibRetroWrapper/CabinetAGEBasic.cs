@@ -524,6 +524,17 @@ public class CabinetAGEBasic : MonoBehaviour
         AGEBasic.ScreenGenerator.Init(AGEInfo.system_skin).ActivateShader(shader);
     }
 
+    /// <summary>
+    /// Called by AGEBasicScreenController after Init() to wire the video player and game
+    /// shader into ConfigurationCommands so that VIDEOLOAD/VIDEOPLAY/etc. can use them.
+    /// Must not be called on AGEBasicCabinetController cabinets (no video player there).
+    /// </summary>
+    public void SetVideoConfig(GameVideoPlayer videoPlayer, ShaderScreenBase gameShader)
+    {
+        AGEBasic.ConfigCommands.VideoPlayer = videoPlayer;
+        AGEBasic.ConfigCommands.GameShader = gameShader;
+    }
+
     public void ExecInsertCoinBas()
     {
         ResetState(true);

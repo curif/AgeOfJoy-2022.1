@@ -238,6 +238,8 @@ class PathFunctionsBase : CommandFunctionNoExpressionBase
                 return new BasicValue(ConfigManager.BaseDir);
             case "MUSICPATH":
                 return new BasicValue(ConfigManager.MusicDir);
+            case "VIDEOPATH":
+                return new BasicValue(ConfigManager.VideoDir);
             default:
                 return new BasicValue("");
         }
@@ -283,6 +285,11 @@ class CommandFunctionMUSICPATH : PathFunctionsBase
 class CommandFunctionDEBUGPATH : PathFunctionsBase
 {
     public CommandFunctionDEBUGPATH(ConfigurationCommands config) : base(config, "DEBUGPATH") { }
+}
+
+class CommandFunctionVIDEOPATH : PathFunctionsBase
+{
+    public CommandFunctionVIDEOPATH(ConfigurationCommands config) : base(config, "VIDEOPATH") { }
 }
 
 // AGEBasic file management

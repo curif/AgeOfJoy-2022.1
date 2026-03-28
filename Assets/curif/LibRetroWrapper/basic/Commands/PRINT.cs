@@ -126,22 +126,23 @@ class CommandPRINTCENTERED : CommandExpressionListBase
         BasicValue[] vals = exprs.ExecuteList(vars);
 
         FunctionHelper.ExpectedNumber(vals[0], $"- Y coordinate for {CmdToken} must be a number.");
-        FunctionHelper.ExpectedNotNull(vals[1], " - content to print."); // Still good for mandatory arg
+        FunctionHelper.ExpectedNotNull(vals[1], " - content to print.");
         int y = vals[0].GetInt();
+        string text = vals[1].GetValueAsString();
 
         bool invertedFlag = false; // Default
         bool drawFlag = true;     // Default
 
-        if (vals.Length > 1) // Argument for invertedFlag exists
+        if (vals.Length > 2) // Argument for invertedFlag exists
         {
-            invertedFlag = vals[1].GetBoolean();
-            if (vals.Length > 2) // Argument for drawFlag exists
+            invertedFlag = vals[2].GetBoolean();
+            if (vals.Length > 3) // Argument for drawFlag exists
             {
-                drawFlag = vals[2].GetBoolean();
+                drawFlag = vals[3].GetBoolean();
             }
         }
 
-        config.ScreenGenerator.PrintCentered(y, vals[0].GetString(), invertedFlag);
+        config.ScreenGenerator.PrintCentered(y, text, invertedFlag);
 
         if (drawFlag)
             config.ScreenGenerator.DrawScreen();

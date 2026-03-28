@@ -57,6 +57,12 @@ public class ConfigurationCommands
     // SID music player — attached to the same GameObject as AudioSource.
     public SIDPlayer SIDPlayer;
 
+    // Populated by AGEBasicScreenController only. Null on AGEBasicCabinetController cabinets.
+    public GameVideoPlayer VideoPlayer;
+
+    // The game/CRT shader. Used by VIDEOSTOP to restore the game shader after video playback.
+    public ShaderScreenBase GameShader;
+
     public string RunSubProgramPath = null;
     public int RunSubProgramLine = -1;
 

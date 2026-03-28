@@ -56,6 +56,7 @@ public static class ConfigManager
     public static string MameConfigDir = Path.Combine(GameSaveDir, "cfg");
     public static string nvramDir = Path.Combine(GameSaveDir, "nvram");
     public static string MusicDir = Path.Combine(BaseDir, "music");
+    public static string VideoDir = Path.Combine(BaseDir, "video");
     public static string CoresDir = Path.Combine(BaseDir, "cores");
     public static string InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
     public static string ConfigCoresDir = Path.Combine(ConfigDir, "cores");
@@ -172,6 +173,7 @@ public static class ConfigManager
         CreateFolder(AGEBasicDir);
         CreateFolder(DebugDir);
         CreateFolder(MusicDir);
+        CreateFolder(VideoDir);
         CreateFolder(CoresDir);
         CreateFolder(InternalCoresDir);
         CreateFolder(SystemDir);

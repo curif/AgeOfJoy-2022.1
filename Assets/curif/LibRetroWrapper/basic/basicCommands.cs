@@ -290,6 +290,20 @@ public static class Commands
         //lightgun
         functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionCABPARTLIGHTGUNHIT);
 
+        // Video player
+        commands["VIDEOLOAD"]  = typeof(CommandVIDEOLOAD);
+        commands["VIDEOPLAY"]  = typeof(CommandVIDEOPLAY);
+        commands["VIDEOPAUSE"] = typeof(CommandVIDEOPAUSE);
+        commands["VIDEOSTOP"]  = typeof(CommandVIDEOSTOP);
+        commands["VIDEOSEEK"]  = typeof(CommandVIDEOSEEK);
+        commands["VIDEOLOOP"]  = typeof(CommandVIDEOLOOP);
+
+        functions["VIDEOTIME"]       = typeof(CommandFunctionVIDEOTIME);
+        functions["VIDEODURATION"]   = typeof(CommandFunctionVIDEODURATION);
+        functions["VIDEOSTATUS"]     = typeof(CommandFunctionVIDEOSTATUS);
+        functions["VIDEOLOOPSTATUS"] = typeof(CommandFunctionVIDEOLOOPSTATUS);
+        functions["VIDEOPATH"]       = typeof(CommandFunctionVIDEOPATH);
+
         // SID player
         commands["SIDLOAD"]     = typeof(CommandSIDLOAD);
         commands["SIDLOADDATA"] = typeof(CommandSIDLOADDATA);

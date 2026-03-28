@@ -232,6 +232,7 @@ public class AGEBasicScreenController : MonoBehaviour
         videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
         cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);
         cabinetAGEBasic.ActivateShader(shader);
+        cabinetAGEBasic.SetVideoConfig(videoPlayer, shader);
         shader.Invert(InvertX, InvertY);
         // age basic after load
         cabinetAGEBasic.ExecAfterLoadBas();
@@ -444,8 +445,8 @@ public class AGEBasicScreenController : MonoBehaviour
 
     void StartPlayerActivities()
     {
-        PreparePlayerToRunPrograms(true);
         setupActionMap();
+        PreparePlayerToRunPrograms(true);
     }
 
     void PreparePlayerToRunPrograms(bool isPlaying)
