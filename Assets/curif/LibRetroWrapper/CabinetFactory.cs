@@ -68,8 +68,14 @@ public static class CabinetFactory
             {
                 try
                 {
+                    // Cache shaders on the main thread before async load.
+                    // Shader.Find() cannot be called from a background thread — without this,
+                    // GLTFUtility resolves shaders to null and textures never appear.
+                    ImportSettings importSettings = new ImportSettings();
+                    importSettings.shaderOverrides.CacheDefaultShaders();
+
                     TaskCompletionSource<GameObject> tcs = new TaskCompletionSource<GameObject>();
-                    Importer.LoadFromFileAsync(modelFilePath, new ImportSettings(), (loadedGo, animationClips) =>
+                    Importer.LoadFromFileAsync(modelFilePath, importSettings, (loadedGo, animationClips) =>
                     {
                         tcs.SetResult(loadedGo);
                     }, null); // Pass null for onProgress if not needed
