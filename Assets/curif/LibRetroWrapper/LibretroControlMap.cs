@@ -11,6 +11,9 @@ public class LibretroControlMap : MonoBehaviour
     // public InputActionManager inputActionManager;
     private const int wheelDelta = 120;
 
+    public bool InvertX = false;
+    public bool InvertY = false;
+
     /*
     public void LoadConfigurationFromFile(string filename)
     {
@@ -42,6 +45,9 @@ public class LibretroControlMap : MonoBehaviour
         }
 
         // Debug.Log(conf.AsMarkdown());
+
+        InvertX = conf.invertx;
+        InvertY = conf.inverty;
 
         actionMap = ControlMapInputAction.inputActionMapFromConfiguration(conf, name);
     }
@@ -123,6 +129,9 @@ public class LibretroControlMap : MonoBehaviour
             {
                 resultFloat = (float)result;
             }
+
+            if (InvertX) resultVector.x = -resultVector.x;
+            if (InvertY) resultVector.y = -resultVector.y;
 
             switch (mameControl)
             {

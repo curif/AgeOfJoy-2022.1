@@ -12,6 +12,9 @@ public class ControlMapConfiguration
     [YamlMember(Alias = "maps", ApplyNamingConventions = false)]
     public List<Maps> mapList { get; set; }
 
+    public bool invertx = false;
+    public bool inverty = false;
+
     public class ControlMap
     {
         [YamlMember(Alias = "control", ApplyNamingConventions = false)]
@@ -124,6 +127,12 @@ public class ControlMapConfiguration
         {
             return;
         }
+
+        if (other.invertx) invertx = true;
+        if (other.inverty) inverty = true;
+
+        if (other.mapList == null)
+            return;
 
         // Iterate through each map in the other ControlMapConfiguration
         foreach (Maps otherMap in other.mapList)
