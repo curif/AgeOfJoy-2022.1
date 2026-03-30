@@ -87,6 +87,7 @@ public static class Commands
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
         functions["GETFILESARRAY"] = typeof(CommandFunctionGETFILESARRAY);
+        functions["READM3UARRAY"] = typeof(CommandFunctionREADM3UARRAY);
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);
         functions["COMBINEPATH"] = typeof(CommandFunctionCOMBINEPATH);
         functions["CONFIGPATH"] = typeof(CommandFunctionCONFIGPATH);
@@ -180,6 +181,7 @@ public static class Commands
         functions["CABPARTSEMISSION"] = typeof(CommandFunctionCABPARTSEMISSION);
         functions["CABPARTSSETEMISSIONCOLOR"] = typeof(CommandFunctionCABPARTSSETEMISSIONCOLOR);
         functions["CABPARTSSETCOLOR"] = typeof(CommandFunctionCABPARTSSETCOLOR);
+        functions["CABPARTSETTEXTURE"] = typeof(CommandFunctionCABPARTSETTEXTURE);
 
         ////audio
         functions["CABPARTSAUDIOVOLUME"] = typeof(CommandFunctionCABPARTSAUDIOVOLUME);
@@ -291,7 +293,8 @@ public static class Commands
         functions["LIGHTGUNGETPOINTEDPART"] = typeof(CommandFunctionCABPARTLIGHTGUNHIT);
 
         // Video player
-        commands["VIDEOLOAD"]  = typeof(CommandVIDEOLOAD);
+        commands["VIDEOLOAD"]    = typeof(CommandVIDEOLOAD);
+        commands["VIDEOLOADURL"] = typeof(CommandVIDEOLOADURL);
         commands["VIDEOPLAY"]  = typeof(CommandVIDEOPLAY);
         commands["VIDEOPAUSE"] = typeof(CommandVIDEOPAUSE);
         commands["VIDEOSTOP"]  = typeof(CommandVIDEOSTOP);

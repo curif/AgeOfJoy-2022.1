@@ -738,6 +738,53 @@ class CommandFunctionCABPARTSPHYDEACTIVATEGRAVITY : CommandFunctionSingleExpress
     }
 }
 
+// CABPARTSETTEXTURE("partName", "filename.png" [, invertX [, invertY]])
+// Applies a texture from the cabinet folder to a cabinet part's main material.
+// Mirrors the same call used in CabinetFactory.skinCabinetPart().
+// The texture load is async — the surface updates once the file is fetched from cache or disk.
+class CommandFunctionCABPARTSETTEXTURE : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABPARTSETTEXTURE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABPARTSETTEXTURE";
+        MinCantParamsRequired = 2;
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 2);
+        FunctionHelper.ExpectedNonEmptyString(vals[1], $"{cmdToken} - filename must be a non-empty string");
+
+        string filename = vals[1].GetString();
+        string fullPath = FunctionHelper.FileTraversalFree(
+            System.IO.Path.Combine(config.Cabinet.FilesPath, filename),
+            config.Cabinet.FilesPath);
+
+        bool invertX = vals.Length >= 3 && vals[2].IsTrue();
+        bool invertY = vals.Length >= 4 && vals[3].IsTrue();
+
+        CabinetPart part;
+        if (vals[0].IsString())
+            part = config.Cabinet.GetPartController(vals[0].GetString());
+        else
+            part = config.Cabinet.GetPartController(vals[0].GetInt());
+
+        part.SetTextureTo(fullPath, null, invertX: invertX, invertY: invertY);
+
+        return BasicValue.True;
+    }
+}
+
 public static class ColorConverter
 {
     public static Color ConvertToColor(BasicValue bvr, BasicValue bvg, BasicValue bvb)

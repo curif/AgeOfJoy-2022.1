@@ -22,6 +22,11 @@ public class GameVideoPlayer : MonoBehaviour
     private bool isPreparing = false;
     private bool isReady = false;
     private bool loopEnabled = true;
+    private float directVolume = 1f;
+    // Set to true by AGEBasicScreenController to bypass Unity's DSP buffer and
+    // avoid AudioSampleProvider overflow. Leave false (default) for attraction
+    // videos on MAME cabinets so 3D spatial audio and rolloff are preserved.
+    public bool UseDirectAudio = false;
     public string FirstTexturePath;
     //private Texture2D FirstTexture = null;
     private TextureCache textureCache;
@@ -93,6 +98,15 @@ public class GameVideoPlayer : MonoBehaviour
             videoPlayer.playOnAwake = true;
             videoPlayer.isLooping = loopEnabled;
             videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.APIOnly;
+            if (UseDirectAudio)
+            {
+                videoPlayer.audioOutputMode = UnityEngine.Video.VideoAudioOutputMode.Direct;
+                videoPlayer.SetDirectAudioVolume(0, directVolume);
+            }
+            else
+            {
+                videoPlayer.audioOutputMode = UnityEngine.Video.VideoAudioOutputMode.AudioSource;
+            }
         }
 
         // ConfigManager.WriteConsole($"[videoPlayer.Play] isPlaying: {videoPlayer.isPlaying} ====");
@@ -168,6 +182,17 @@ public class GameVideoPlayer : MonoBehaviour
     }
 
     // ── AGEBasic video control additions ──────────────────────────────────────
+
+    /// <summary>
+    /// Set the Direct audio volume (0.0 = silent, 1.0 = full).
+    /// Persisted in directVolume so it is re-applied when the next clip is loaded.
+    /// </summary>
+    public void SetVolume(float zeroToOne)
+    {
+        directVolume = Mathf.Clamp01(zeroToOne);
+        if (videoPlayer != null && videoPlayer.isPrepared)
+            videoPlayer.SetDirectAudioVolume(0, directVolume);
+    }
 
     /// <summary>
     /// Change the video file without replacing the shader reference already set up

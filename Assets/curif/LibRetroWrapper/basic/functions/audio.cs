@@ -89,9 +89,29 @@ class CommandFunctionAudioMixerSetVolBase : CommandFunctionSingleExpressionBase
 
 class CommandFunctionAUDIOGAMESETVOLUME : CommandFunctionAudioMixerSetVolBase
 {
-    public CommandFunctionAUDIOGAMESETVOLUME(ConfigurationCommands config) : 
-        base(config, "AUDIOGAMEGETVOLUME", "Game")
+    public CommandFunctionAUDIOGAMESETVOLUME(ConfigurationCommands config) :
+        base(config, "AUDIOGAMESETVOLUME", "Game")
     {
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config.audioMixer == null)
+            return new BasicValue(0);
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNumber(val, "Volume");
+
+        float db = (float)val.GetValueAsNumber();
+        config.audioMixer.SetFloat(volumeParam, db);
+
+        // Keep Direct-mode video audio in sync with the game mixer volume.
+        // dB to linear: 0 dB = 1.0, -80 dB ≈ 0.0001 (silence).
+        if (config.VideoPlayer != null)
+            config.VideoPlayer.SetVolume(UnityEngine.Mathf.Pow(10f, db / 20f));
+
+        return new BasicValue(1);
     }
 }
 

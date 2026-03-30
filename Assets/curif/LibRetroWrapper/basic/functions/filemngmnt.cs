@@ -589,3 +589,51 @@ class CommandFunctionFILEEXIST : CommandFunctionSingleExpressionBase
         return new BasicValue(fileExists ? 1 : 0);
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// READM3UARRAY(path)
+//   Reads an M3U or M3U8 playlist file and returns its entries as an array.
+//   Lines starting with '#' (comments / directives) and blank lines are skipped.
+//   Each remaining line (URL or file path) becomes one array element.
+//   Returns an empty string on error or if the file has no entries.
+//
+//   Example:
+//     DIM PLAYLIST(100)
+//     PLAYLIST = READM3UARRAY(COMBINEPATH(VIDEOPATH(), "channels.m3u8"))
+//     VIDEOLOADURL PLAYLIST(0)
+// ─────────────────────────────────────────────────────────────────────────────
+class CommandFunctionREADM3UARRAY : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionREADM3UARRAY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "READM3UARRAY";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNonEmptyString(val, " - file path");
+
+        string filePath = FunctionHelper.FileTraversalFree(val.GetValueAsString(), ConfigManager.BaseDir);
+
+        try
+        {
+            string[] entries = File.ReadAllLines(filePath)
+                .Where(line => !string.IsNullOrWhiteSpace(line) && !line.TrimStart().StartsWith("#"))
+                .Select(line => line.Trim())
+                .ToArray();
+
+            if (entries.Length == 0)
+                return new BasicValue("");
+
+            return new BasicValue(entries);
+        }
+        catch (Exception ex)
+        {
+            AGEBasicDebug.WriteConsole($"[{CmdToken}] Error reading file: {ex.Message}");
+            return new BasicValue("");
+        }
+    }
+}

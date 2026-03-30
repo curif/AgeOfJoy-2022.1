@@ -136,6 +136,8 @@ public class AGEBasicScreenController : MonoBehaviour
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
         if (videoPlayer == null)
             ConfigManager.WriteConsoleError($"[AGEBasicScreenController.Start] {name} video player doesn't exists on screen.");
+        else
+            videoPlayer.UseDirectAudio = true; // bypass DSP buffer to prevent AudioSampleProvider overflow
 
         cabinetAGEBasic = GetComponent<CabinetAGEBasic>();
 
