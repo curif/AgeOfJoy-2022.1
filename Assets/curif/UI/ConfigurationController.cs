@@ -1482,13 +1482,18 @@ public class ConfigurationController : MonoBehaviour
         bool isLoggingActive = BugReportManager.Instance != null && BugReportManager.Instance.IsDebugModeActive();
 
         debugModeToggle = new GenericBool(scr, "debugToggle", "Debug Logging: ", isLoggingActive, 4, 6);
-        debugActionStatusLabel = new GenericTimedLabel(scr, "statusLabel", "", 4, 11, true);
-        
+        debugActionStatusLabel = new GenericTimedLabel(scr, "statusLabel", "", 4, 16, true);
+
         debugContainer = new GenericWidgetContainer(scr, "debugContainer");
-        debugContainer.Add(new GenericWindow(scr, 2, 4, "debugContainer", 37, 12, " Debug & Bug Report "))
+        debugContainer.Add(new GenericWindow(scr, 2, 4, "debugContainer", 37, 17, " Debug & Bug Report "))
                       .Add(debugModeToggle, 4, 6)
-                      .Add(new GenericButton(scr, "generate", "Generate Bug Report ZIP", 4, 8, true))
-                      .Add(new GenericButton(scr, "exit", "exit", 4, 10, true))
+                      .Add(new GenericLabel(scr, "step1", "HOW TO REPORT A BUG:", 4, 8))
+                      .Add(new GenericLabel(scr, "step2", "1. Enable Debug Logging above.", 4, 9))
+                      .Add(new GenericLabel(scr, "step3", "2. Exit, reproduce the problem.", 4, 10))
+                      .Add(new GenericLabel(scr, "step4", "3. Return here and generate ZIP.", 4, 11))
+                      .Add(new GenericLabel(scr, "step5", "4. Share ZIP from AgeOfJoy dir.", 4, 12))
+                      .Add(new GenericButton(scr, "generate", "Generate Bug Report ZIP", 4, 14, true))
+                      .Add(new GenericButton(scr, "exit", "exit", 4, 15, true))
                       .Add(debugActionStatusLabel);
     }
 
