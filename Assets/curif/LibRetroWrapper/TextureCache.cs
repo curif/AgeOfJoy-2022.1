@@ -74,6 +74,11 @@ public class TextureCache : MonoBehaviour
 
     private IEnumerator SaveTextureCoroutine()
     {
+        if (string.IsNullOrEmpty(texturePath))
+        {
+            ConfigManager.WriteConsoleError($"[TextureCache] SaveTextureCoroutine: texturePath is empty, skipping save.");
+            yield break;
+        }
         yield return new WaitForSeconds(SavingDelayTime);
 
         byte[] imageData;
