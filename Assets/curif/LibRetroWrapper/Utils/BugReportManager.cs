@@ -89,6 +89,11 @@ public class BugReportManager : MonoBehaviour
         return isDebugMode;
     }
 
+    public bool HasLogFile()
+    {
+        return !string.IsNullOrEmpty(logFilePath) && File.Exists(logFilePath);
+    }
+
     private void HandleUnityLog(string logString, string stackTrace, LogType type)
     {
         if (logWriter == null) return;
