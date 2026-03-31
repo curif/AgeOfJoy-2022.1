@@ -74,25 +74,8 @@ public class Init : MonoBehaviour
  
     private void OnLowMemory()
     {
-        // 1. FAST LOG: Warn that we are in danger
-        // (Use a static string if possible to avoid allocation, but this is fine)
         ConfigManager.WriteConsole("[CRITICAL] OnLowMemory Triggered! Dumping Cache...");
-
-        // 2. IMMEDIATE OBJECT DESTRUCTION
-        // Your cache manager creates "DestroyImmediate" calls. 
-        // This removes the objects from the Scene instantly.
-        ResourceCacheManager.FreeResources();
-
-        // 3. ONE FAST GC PASS
-        // Don't wait for finalizers. Just grab the low-hanging fruit.
-        System.GC.Collect();
-
-        // 4. THE SAVIOR: FORCE GPU FLUSH
-        // This is synchronous and might freeze the frame for 200ms, 
-        // but it's the only thing that will actually stop the crash.
-        Resources.UnloadUnusedAssets();
-
-        ConfigManager.WriteConsole("[CRITICAL] Memory Dumped.");
+        StartCoroutine(ResourceCacheManager.FreeResourcesAsync());
     }
 
     void loadOperations()

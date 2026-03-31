@@ -35,6 +35,17 @@ public class ResourceCacheManager
             cache.FreeResources();
         }
     }
+
+    public static IEnumerator FreeResourcesAsync()
+    {
+        FreeResources();
+        System.GC.Collect();
+        yield return null;
+        AsyncOperation unloadOp = Resources.UnloadUnusedAssets();
+        while (!unloadOp.isDone)
+            yield return null;
+        ConfigManager.WriteConsole("[ResourceCacheManager] Memory reclaimed successfully.");
+    }
 }
 
 public class ResourceCache<K, V> : IResourceCache
@@ -212,45 +223,20 @@ public class ResourceCache<K, V> : IResourceCache
     {
         lock (locker)
         {
-            // 1. Loop through and tell Unity to kill the GPU memory
             foreach (var pair in cache)
             {
                 DestroyIfUnityObject(pair.Value);
             }
 
-            // 2. Clear the collections (Remove the "Managed" references)
             cache.Clear();
             sizeMap.Clear();
             lruList.Clear();
             currentSizeInMB = 0f;
         }
 
-        // 3. ONE call to the C# Garbage Collector
-        System.GC.Collect();
-
-        // 4. ONE call to Unity's Native Asset Unloader
-        // This is the most important step for freeing GPU RAM on Quest 3
-        Resources.UnloadUnusedAssets();
-
-        ConfigManager.WriteConsole("[Cache] Full cleanup completed.");
+        ConfigManager.WriteConsole($"[Cache] {Name} cleared.");
     }
-    public static IEnumerator CleanupRoutine()
-    {
-        ConfigManager.WriteConsole("[CleanupRoutine] Starting Heavy Memory Cleanup...");
 
-        // 1. Clear managed references
-        System.GC.Collect();
-        yield return null; // Wait 1 frame
-
-        // 2. The Big One: Tell the Quest 3 to actually reclaim the GPU RAM
-        AsyncOperation unloadOp = Resources.UnloadUnusedAssets();
-        while (!unloadOp.isDone)
-        {
-            yield return null;
-        }
-
-        ConfigManager.WriteConsole("[CleanupRoutine] Memory reclaimed successfully.");
-    }
     public bool ContainsKey(K key)
     {
         if (key == null) return false;
