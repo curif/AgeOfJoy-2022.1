@@ -74,7 +74,7 @@ public class Init : MonoBehaviour
  
     private void OnLowMemory()
     {
-        ConfigManager.WriteConsole("[CRITICAL] OnLowMemory Triggered! Dumping Cache...");
+        ConfigManager.WriteConsole("[OnLowMemory] CRITICAL Triggered! Dumping Cache...");
         StartCoroutine(ResourceCacheManager.FreeResourcesAsync());
     }
 
