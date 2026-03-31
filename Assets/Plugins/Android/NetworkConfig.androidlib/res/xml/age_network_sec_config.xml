@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Overrides Meta XR SDK's network_sec_config.xml (which blocks all cleartext).
+    Allows http:// connections to any host so VIDEOLOADURL can stream from any
+    media server (local or internet).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
