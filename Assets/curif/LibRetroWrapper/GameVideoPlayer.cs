@@ -181,6 +181,24 @@ public class GameVideoPlayer : MonoBehaviour
         return this;
     }
 
+    /// <summary>
+    /// Stop playback and clear all state so that a subsequent Play() call is
+    /// a no-op.  Use this when leaving a cabinet that has no attraction video,
+    /// so the last AGEBasic-loaded clip cannot restart via the BT video loop.
+    /// </summary>
+    public GameVideoPlayer StopAndReset()
+    {
+#if !DISABLE_VIDEO
+        if (videoPlayer != null)
+            videoPlayer.Stop();
+        videoPath = string.Empty;
+        isPreparing = false;
+        isReady = false;
+        loopEnabled = true; // restore default for next session
+#endif
+        return this;
+    }
+
     // ── AGEBasic video control additions ──────────────────────────────────────
 
     /// <summary>
@@ -288,7 +306,7 @@ public class GameVideoPlayer : MonoBehaviour
 
     void ErrorReceived(VideoPlayer vp, string message)
     {
-        ConfigManager.WriteConsoleWarning($"[videoPlayer] ERROR {videoPath} - {message}");
+        ConfigManager.WriteConsoleWarningAGEBasic($"[videoPlayer] ERROR {videoPath} - {message}");
         showCachedImage();
     }
 }

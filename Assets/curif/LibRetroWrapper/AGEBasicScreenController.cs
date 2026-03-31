@@ -391,11 +391,12 @@ public class AGEBasicScreenController : MonoBehaviour
 
                       // Restore attraction video so EndPlayerActivities() replays it correctly.
                       // VIDEOLOAD may have changed videoPath during the session; reset it here.
-                      // If no attraction video is configured, stop the video outright.
+                      // If no attraction video is configured, reset completely so Play() is a
+                      // no-op and the BT video loop cannot restart the last AGEBasic-loaded clip.
                       if (!string.IsNullOrEmpty(VideoFile))
                           videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
                       else
-                          videoPlayer.Stop();
+                          videoPlayer.StopAndReset();
 
                       EndPlayerActivities();
                       if (lightGunTarget != null && lightGunInformation != null)
