@@ -547,8 +547,20 @@ public static class CabinetTextureCache
         return rgbTexture;
     }
 
-    // Helper for fallback (less accurate)
-    public static float CalculateManualSizeBytes(Texture2D tex)
+    // ████████████████████████████████████████████████████████████████████████████
+    // !! DO NOT USE Profiler.GetRuntimeMemorySizeLong() HERE — EVER AGAIN !!
+    //
+    // HISTORY: This was tried twice and both times caused silent failures.
+    // REASON:  Textures loaded via TextureDiskCache use Apply(false, makeNoLongerReadable:true)
+    //          which destroys the CPU copy and keeps only the GPU copy.
+    //          GetRuntimeMemorySizeLong() cannot see GPU memory — it returns 0 for
+    //          every disk-cached texture, making them all appear as 0 MB in the LRU.
+    //          Result: disk-cached textures are never evicted and memory grows unbounded.
+    //          Confirmed broken on release Meta Quest APK (2026-03-31).
+    //
+    // SOLUTION: Use width × height × bpp — correct regardless of where the CPU copy lives.
+    // ████████████████████████████████████████████████████████████████████████████
+    public static float CalculateActualSizeBytes(Texture2D tex)
     {
         if (tex == null) return 0;
 
@@ -559,32 +571,22 @@ public static class CabinetTextureCache
         switch (tex.format)
         {
             // Uncompressed
-            case TextureFormat.RGB24: return tex.width * tex.height * 3 * multiplier;
+            case TextureFormat.RGB24:   return tex.width * tex.height * 3 * multiplier;
             case TextureFormat.RGBA32:
-            case TextureFormat.ARGB32: return tex.width * tex.height * 4 * multiplier;
-            case TextureFormat.RGB565: return tex.width * tex.height * 2 * multiplier;
+            case TextureFormat.ARGB32:  return tex.width * tex.height * 4 * multiplier;
+            case TextureFormat.RGB565:  return tex.width * tex.height * 2 * multiplier;
 
             // Android Compressed (What tex.Compress() produces)
-            case TextureFormat.ETC2_RGB: return tex.width * tex.height * 0.5f * multiplier;
+            case TextureFormat.ETC2_RGB:   return tex.width * tex.height * 0.5f * multiplier;
             case TextureFormat.ETC2_RGBA8: return tex.width * tex.height * 1.0f * multiplier;
 
-            // Quest 3 native (If you use these in the future)
+            // Quest 3 native
             case TextureFormat.ASTC_4x4: return tex.width * tex.height * 1.0f * multiplier;
             case TextureFormat.ASTC_8x8: return tex.width * tex.height * 0.25f * multiplier;
 
             default:
-                // Fallback for raw formats
                 return tex.width * tex.height * 4 * multiplier;
         }
-    }
-    public static float CalculateActualSizeBytes(UnityEngine.Object obj)
-    {
-        if (obj == null) return 0;
-
-        // This returns the actual memory footprint in bytes
-        // It is much more accurate than manual width*height math
-        long bytes = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(obj);
-        return (float)bytes;
     }
     public static bool IsAlphaUsed(Color32[] pixels, byte alphaThreshold = 255)
     {
