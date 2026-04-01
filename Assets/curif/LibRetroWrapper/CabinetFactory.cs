@@ -13,6 +13,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 
 //store Cabinets resources
 public static class CabinetFactory
@@ -51,8 +53,14 @@ public static class CabinetFactory
         GameObject model;
         if (!String.IsNullOrEmpty(modelFilePath))
         {
-            string cacheKey = BuildKey(modelFilePath);
-            ConfigManager.WriteConsole($"[CabinetFactory] cab:{name} BuildKey cache key:{cacheKey}");
+            // Derive cabinet path and filename for metadata-backed hash + size tracking.
+            string modelDirectory = Path.GetFileName(Path.GetDirectoryName(modelFilePath));
+            string modelFileName = Path.GetFileName(modelFilePath);
+            string cabPath = Path.Combine(ConfigManager.CabinetsDB, modelDirectory);
+            CabinetMetadata cabinetMetadata = CabinetMetadata.fromName(modelDirectory);
+            cabinetMetadata.verifyAndRefreshHash(cabPath, modelFileName);
+            string cacheKey = cabinetMetadata.getHash(modelFileName);
+            ConfigManager.WriteConsole($"[CabinetFactory] cab:{name} cache key:{cacheKey}");
 
             if (cacheKey != null && CabinetStyles.ContainsKey(cacheKey))
             {
@@ -74,13 +82,61 @@ public static class CabinetFactory
                     ImportSettings importSettings = new ImportSettings();
                     importSettings.shaderOverrides.CacheDefaultShaders();
 
+                    // Snapshot scene roots before load to detect GLTFUtility leaked GameObjects.
+                    // GLTFUtility's Importer.LoadAsync() calls GetRoot() twice for multi-root GLBs
+                    // (Blender exports with 2+ top-level nodes), creating a second empty wrapper that
+                    // is never returned and leaks into the scene. Snapshot lets us find and destroy it.
+                    // GLB loads happen in FixedScene — query that scene directly instead of the active scene.
+                    var fixedScene = SceneManager.GetSceneByName("FixedScene");
+                    var rootsBefore = new HashSet<int>(
+                        fixedScene.GetRootGameObjects()
+                            .Select(go => go.GetInstanceID())
+                    );
+
                     TaskCompletionSource<GameObject> tcs = new TaskCompletionSource<GameObject>();
                     Importer.LoadFromFileAsync(modelFilePath, importSettings, (loadedGo, animationClips) =>
                     {
                         tcs.SetResult(loadedGo);
-                    }, null); // Pass null for onProgress if not needed
+                    }, null);
                     model = await tcs.Task;
                     model.SetActive(false);
+
+                    // Destroy any GameObjects leaked by GLTFUtility during load.
+                    // Between the snapshot and now, only our model and leaked wrappers can appear
+                    // at scene root — so anything new that isn't model is safe to destroy.
+                    foreach (var go in fixedScene.GetRootGameObjects())
+                    {
+                        if (!rootsBefore.Contains(go.GetInstanceID()) && go != model)
+                        {
+                            ConfigManager.WriteConsole($"[CabinetFactory] Destroying leaked GLTFUtility root: {go.name}");
+                            GameObject.DestroyImmediate(go);
+                        }
+                    }
+
+                    // Compress GLB embedded textures — same pipeline as cabinet art.
+                    // Gated on DeviceController.originalTextures (same flag as CabinetTextureCache).
+                    // tex.Apply(false, true) frees the CPU copy after GPU upload, halving per-texture memory.
+                    if (!DeviceController.originalTextures)
+                    {
+                        var seen = new HashSet<int>();
+                        foreach (Renderer r in model.GetComponentsInChildren<Renderer>(true))
+                        {
+                            if (r.sharedMaterials == null) continue;
+                            foreach (Material mat in r.sharedMaterials)
+                            {
+                                if (mat == null) continue;
+                                foreach (string prop in mat.GetTexturePropertyNames())
+                                    if (mat.GetTexture(prop) is Texture2D tex
+                                        && tex.isReadable
+                                        && seen.Add(tex.GetInstanceID())
+                                        && tex.width % 4 == 0 && tex.height % 4 == 0)
+                                    {
+                                        tex.Compress(false);
+                                        tex.Apply(false, true);
+                                    }
+                            }
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -96,9 +152,16 @@ public static class CabinetFactory
                 {
                     if (cacheGlbModels && cacheKey != null)
                     {
-                        ConfigManager.WriteConsole($"[CabinetFactory] add model to cache: {modelFilePath}");
-                        FileInfo fileInfo = new FileInfo(modelFilePath);
-                        ConfigManager.CabinetCache.Add(cacheKey, model, fileInfo.Length / (1024f * 1024f)); //dont know correct size in memory, in disk is used.
+                        // Use persisted in-memory size; calculate and persist on first load of this GLB version.
+                        float actualMB = cabinetMetadata.getSize(cacheKey);
+                        if (actualMB <= 0f)
+                        {
+                            actualMB = CalculateGameObjectSizeBytes(model) / (1024f * 1024f);
+                            cabinetMetadata.setSize(cacheKey, actualMB);
+                            cabinetMetadata.save(cabPath);
+                        }
+                        ConfigManager.WriteConsole($"[CabinetFactory] model {modelFilePath} memory: {actualMB:F2}MB");
+                        ConfigManager.CabinetCache.Add(cacheKey, model, actualMB);
                     }
                 }
             }
@@ -116,6 +179,51 @@ public static class CabinetFactory
 
 
         return new Cabinet(cabinetName, path, controlScheme, position, rotation, parent, go: model);
+    }
+
+    // ████████████████████████████████████████████████████████████████████████████
+    // !! DO NOT USE Profiler.GetRuntimeMemorySizeLong() HERE — EVER AGAIN !!
+    //
+    // REASON: After GPU upload (tex.Apply(false, true) or Mesh.UploadMeshData(true)),
+    //         the CPU copy is destroyed. GetRuntimeMemorySizeLong() cannot see GPU
+    //         memory and returns 0, making the LRU cache believe the model uses 0 MB.
+    //         Result: eviction never fires and memory grows unbounded.
+    //         Same confirmed failure as textures in CabinetTextureCache (2026-03-31).
+    //
+    // SOLUTION: Manually sum vertex/index buffer sizes for meshes (these metadata fields
+    //           stay valid after GPU upload) and delegate to
+    //           CabinetTextureCache.CalculateActualSizeBytes() for textures.
+    // ████████████████████████████████████████████████████████████████████████████
+    private static long CalculateGameObjectSizeBytes(GameObject go)
+    {
+        long total = 0;
+        var seenMeshes = new HashSet<int>();
+        var seenTextures = new HashSet<int>();
+
+        foreach (MeshFilter mf in go.GetComponentsInChildren<MeshFilter>(true))
+        {
+            Mesh m = mf.sharedMesh;
+            if (m == null || !seenMeshes.Add(m.GetInstanceID())) continue;
+            // Vertex buffer — stride × count (CPU + GPU copies both exist until UploadMeshData(true))
+            total += (long)m.vertexCount * m.GetVertexBufferStride(0);
+            // Index buffer — 2 or 4 bytes per index
+            total += (long)m.GetIndexCount(0) * (m.indexFormat == IndexFormat.UInt16 ? 2 : 4);
+        }
+
+        foreach (Renderer r in go.GetComponentsInChildren<Renderer>(true))
+        {
+            if (r.sharedMaterials == null) continue;
+            foreach (Material mat in r.sharedMaterials)
+            {
+                if (mat == null) continue;
+                foreach (string prop in mat.GetTexturePropertyNames())
+                    if (mat.GetTexture(prop) is Texture2D tex
+                        && seenTextures.Add(tex.GetInstanceID()))
+                        total += (long)CabinetTextureCache.CalculateActualSizeBytes(tex);
+            }
+        }
+
+        return total;
     }
 
     public static string BuildKey(string modelFilePath)

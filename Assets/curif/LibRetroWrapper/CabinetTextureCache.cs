@@ -21,7 +21,7 @@ public static class CabinetTextureCache
 
     private static byte[] astcMagicNumber = new byte[] { 0x13, 0xAB, 0xA1, 0x5C };
 
-    private static ResourceCache<string, Texture2D> CachedTextures = null;
+    public static ResourceCache<string, Texture2D> CachedTextures = null;
     private static GpuRgb565Converter gpuRgb565Converter = null;
 
     //convert textures > X mb

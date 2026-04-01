@@ -109,7 +109,10 @@ public static class ConfigManager
 
 #region Cache
 
-// deserealization of glb files. We maintain it in the tree and are copied any time we need to create a new cabinet.
+    // GLB model LRU cache. Budget is 512 MB (Quest 2 baseline).
+    // Now that CabinetFactory reports accurate in-memory sizes (mesh + texture buffers),
+    // this budget is meaningful. Consider a larger constant (e.g. 1024f) for Quest 3
+    // after collecting real-device logs — same pattern as CACHE_SIZE_Q3 in CabinetTextureCache.
     public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>("CabinetCache", 512f);
     
     // Cabinet information are objects created using the deserealization of the description.yaml file. We cannot know easily the size

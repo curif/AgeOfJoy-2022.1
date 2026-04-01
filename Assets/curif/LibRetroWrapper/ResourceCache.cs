@@ -65,6 +65,11 @@ public class ResourceCache<K, V> : IResourceCache
         this.Name = name;
     }
 
+    public string CacheName => Name;
+    public float CurrentSizeInMB => currentSizeInMB;
+    public float MaxSizeInMB => maxSizeInMB;
+    public int Count => lruList.Count;
+
     public void FreeResources()
     {
         lock (locker)
@@ -180,13 +185,13 @@ public class ResourceCache<K, V> : IResourceCache
         if (evictedAny)
         {
             // Log once at the end to prevent string allocation spam
-            ConfigManager.WriteConsole($"[Cache] Trimmed cache for {sizeInMB}MB. New Total: {currentSizeInMB}MB");
+            ConfigManager.WriteConsole($"[ResourceCacheManager] Trimmed cache for {sizeInMB}MB. New Total: {currentSizeInMB}MB");
         }
     }
 
     public void Status()
     {
-        ConfigManager.WriteConsole($"[ResourceCache] {this.Name} \n size: {currentSizeInMB}MB \n Count: {lruList.Count}");
+        ConfigManager.WriteConsole($"[ResourceCacheManager] {this.Name} \n size: {currentSizeInMB}MB \n Count: {lruList.Count}");
     }
 
     public void Remove(K key)
@@ -234,7 +239,7 @@ public class ResourceCache<K, V> : IResourceCache
             currentSizeInMB = 0f;
         }
 
-        ConfigManager.WriteConsole($"[Cache] {Name} cleared.");
+        ConfigManager.WriteConsole($"[ResourceCacheManager] {Name} cleared.");
     }
 
     public bool ContainsKey(K key)

@@ -17,6 +17,16 @@ public class CabinetMetadata
     [YamlMember(Alias = "hashes", ApplyNamingConventions = false)]
     public Dictionary<string, string> Hashes { get; private set; }
 
+    // ISO-8601 UTC last-write time of each GLB file at the time the hash was computed.
+    // Cheap staleness check: if the timestamp matches, skip re-hashing.
+    [YamlMember(Alias = "modified_at", ApplyNamingConventions = false)]
+    public Dictionary<string, string> ModifiedAt { get; private set; }
+
+    // Actual in-memory size (MB) of each loaded GLB, keyed by the file's MD5 hash.
+    // Keyed by hash so a GLB upgrade automatically invalidates the entry.
+    [YamlMember(Alias = "sizes_mb", ApplyNamingConventions = false)]
+    public Dictionary<string, float> SizesMb { get; private set; }
+
     private static IDeserializer deserializer = new DeserializerBuilder()
                 .WithNamingConvention(CamelCaseNamingConvention.Instance)
                 .IgnoreUnmatchedProperties()
@@ -30,7 +40,69 @@ public class CabinetMetadata
     public string getHash(string file)
     {
         var hashedFile = file.ToLower();
-        return Hashes.ContainsKey(hashedFile) ? Hashes[hashedFile] : null;
+        return Hashes != null && Hashes.ContainsKey(hashedFile) ? Hashes[hashedFile] : null;
+    }
+
+    public string getModifiedAt(string filename)
+    {
+        if (ModifiedAt == null) return null;
+        string key = filename.ToLower();
+        return ModifiedAt.ContainsKey(key) ? ModifiedAt[key] : null;
+    }
+
+    public void setModifiedAt(string filename, DateTime utc)
+    {
+        if (ModifiedAt == null) ModifiedAt = new Dictionary<string, string>();
+        ModifiedAt[filename.ToLower()] = utc.ToString("yyyy-MM-ddTHH:mm:ssZ");
+    }
+
+    public float getSize(string hash)
+    {
+        if (SizesMb == null || !SizesMb.ContainsKey(hash)) return -1f;
+        return SizesMb[hash];
+    }
+
+    public void setSize(string hash, float mb)
+    {
+        if (SizesMb == null) SizesMb = new Dictionary<string, float>();
+        SizesMb[hash] = mb;
+    }
+
+    public void save(string cabPath)
+    {
+        toYaml(cabPath, this);
+    }
+
+    // Verifies the stored hash is still valid by comparing file modification timestamps.
+    // Only re-hashes when the file has actually changed, keeping MD5 computation rare.
+    // Returns true if the hash was valid (timestamps matched), false if it was refreshed.
+    public bool verifyAndRefreshHash(string cabPath, string filename)
+    {
+        string lowerFilename = filename.ToLower();
+        string filePath = Path.Combine(cabPath, filename);
+
+        DateTime currentModTime = File.GetLastWriteTimeUtc(filePath);
+        string currentModTimeStr = currentModTime.ToString("yyyy-MM-ddTHH:mm:ssZ");
+        string storedModTime = getModifiedAt(lowerFilename);
+
+        if (storedModTime != null && currentModTimeStr == storedModTime)
+            return true; // Timestamps match — hash presumed valid
+
+        // File changed or no stored timestamp — re-compute MD5
+        string oldHash = getHash(lowerFilename);
+        string newHash = computeHash(filePath);
+
+        if (Hashes == null) Hashes = new Dictionary<string, string>();
+        Hashes[lowerFilename] = newHash;
+        setModifiedAt(lowerFilename, currentModTime);
+
+        // Clear stale size entry so it will be recalculated on next load
+        if (oldHash != null && oldHash != newHash)
+            SizesMb?.Remove(oldHash);
+
+        save(cabPath);
+        ConfigManager.WriteConsole($"[CabinetMetadata.verifyAndRefreshHash] {filename}: hash refreshed (old:{oldHash} new:{newHash})");
+        return false;
     }
 
     public static CabinetMetadata fromName(string cabName)
@@ -42,17 +114,20 @@ public class CabinetMetadata
     private static CabinetMetadata init(string cabName)
     {
         CabinetMetadata metadata = new CabinetMetadata();
-        Dictionary<string, string> hashes = new Dictionary<string, string>();
-        metadata.Hashes = hashes;
+        metadata.Hashes = new Dictionary<string, string>();
+        metadata.ModifiedAt = new Dictionary<string, string>();
+        metadata.SizesMb = new Dictionary<string, float>();
 
         string cabPath = ConfigManager.CabinetsDB + "/" + cabName;
         string[] files = Directory.GetFiles(cabPath, "*.glb");
         foreach (string file in files)
         {
             string hash = computeHash(file);
-            string glbFile = Path.GetFileName(file);
+            string glbFile = Path.GetFileName(file).ToLower();
+            DateTime modifiedAt = File.GetLastWriteTimeUtc(file);
             ConfigManager.WriteConsole($"[CabinetMetadata.init]: {glbFile}:{hash}");
-            hashes.Add(glbFile.ToLower(), hash);
+            metadata.Hashes.Add(glbFile, hash);
+            metadata.ModifiedAt.Add(glbFile, modifiedAt.ToString("yyyy-MM-ddTHH:mm:ssZ"));
         }
 
         toYaml(cabPath, metadata);
