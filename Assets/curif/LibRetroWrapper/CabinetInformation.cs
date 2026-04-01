@@ -240,6 +240,10 @@ public class CabinetInformation
     /// <returns>null on fail or the cabinet information</returns>
     public static CabinetInformation fromYaml(string cabPath, bool cache = true)
     {
+        // Normalize path separators so the cache key is consistent regardless of how callers
+        // construct the path (Path.Combine vs string + "/" + vs backslash on Windows).
+        cabPath = Path.GetFullPath(cabPath);
+
         if (cache && ConfigManager.CabinetInformationCache.ContainsKey(cabPath))
         {
             // ConfigManager.WriteConsole($"[CabinetInformation]: cached: {cabPath}");
