@@ -82,17 +82,6 @@ public static class CabinetFactory
                     ImportSettings importSettings = new ImportSettings();
                     importSettings.shaderOverrides.CacheDefaultShaders();
 
-                    // Snapshot scene roots before load to detect GLTFUtility leaked GameObjects.
-                    // GLTFUtility's Importer.LoadAsync() calls GetRoot() twice for multi-root GLBs
-                    // (Blender exports with 2+ top-level nodes), creating a second empty wrapper that
-                    // is never returned and leaks into the scene. Snapshot lets us find and destroy it.
-                    // GLB loads happen in FixedScene — query that scene directly instead of the active scene.
-                    var fixedScene = SceneManager.GetSceneByName("FixedScene");
-                    var rootsBefore = new HashSet<int>(
-                        fixedScene.GetRootGameObjects()
-                            .Select(go => go.GetInstanceID())
-                    );
-
                     TaskCompletionSource<GameObject> tcs = new TaskCompletionSource<GameObject>();
                     Importer.LoadFromFileAsync(modelFilePath, importSettings, (loadedGo, animationClips) =>
                     {
@@ -101,18 +90,22 @@ public static class CabinetFactory
                     model = await tcs.Task;
                     model.SetActive(false);
 
-                    // Destroy any GameObjects leaked by GLTFUtility during load.
-                    // Between the snapshot and now, only our model and leaked wrappers can appear
-                    // at scene root — so anything new that isn't model is safe to destroy.
-                    foreach (var go in fixedScene.GetRootGameObjects())
+                    // GLTFUtility's Importer.LoadAsync() calls GetRoot() twice for GLBs with 2+
+                    // top-level nodes, leaking an empty "Root" wrapper at scene root. Detect it by
+                    // name + structure (only a Transform, no children) — safe even under concurrent
+                    // loads because a legitimate model always has children.
+                    foreach (var go in SceneManager.GetActiveScene().GetRootGameObjects())
                     {
-                        if (!rootsBefore.Contains(go.GetInstanceID()) && go != model)
+                        if (go.name == "Root"
+                            && go != model
+                            && go.transform.childCount == 0
+                            && go.GetComponents<Component>().Length == 1)
                         {
                             ConfigManager.WriteConsole($"[CabinetFactory] Destroying leaked GLTFUtility root: {go.name}");
                             GameObject.DestroyImmediate(go);
                         }
                     }
-
+                    
                     // Compress GLB embedded textures — same pipeline as cabinet art.
                     // Gated on DeviceController.originalTextures (same flag as CabinetTextureCache).
                     // tex.Apply(false, true) frees the CPU copy after GPU upload, halving per-texture memory.
@@ -161,7 +154,18 @@ public static class CabinetFactory
                             cabinetMetadata.save(cabPath);
                         }
                         ConfigManager.WriteConsole($"[CabinetFactory] model {modelFilePath} memory: {actualMB:F2}MB");
-                        ConfigManager.CabinetCache.Add(cacheKey, model, actualMB);
+
+                        // Add returns the existing value if the key is already present.
+                        // A concurrent FactoryAsync call for the same GLB may have won the race
+                        // and already populated the cache while we were loading. In that case,
+                        // destroy our orphaned copy and use the cached one.
+                        GameObject accepted = ConfigManager.CabinetCache.Add(cacheKey, model, actualMB);
+                        if (accepted != model)
+                        {
+                            ConfigManager.WriteConsole($"[CabinetFactory] concurrent load race: destroying orphaned model {modelFilePath}");
+                            GameObject.Destroy(model);
+                            model = accepted;
+                        }
                     }
                 }
             }
