@@ -40,6 +40,9 @@ public class ChangeControls : MonoBehaviour
     public GameObject RightJoystick { get { return rightJoystickModel; } }
 
     bool isPlaying = false;
+    bool mrLocomotionSuspended;
+    bool mrSavedTeleportEnabled;
+    bool mrSavedSnapTurnActive;
     GameObject alternativeRightJoystick = null;
     string alternativeModelFilePath;
 
@@ -211,6 +214,65 @@ public class ChangeControls : MonoBehaviour
         ConfigManager.WriteConsole($"[ChangeControls.Playermode] modePlaying: {modePlaying} actual status playing: {isPlaying}");
         changeMode(modePlaying);
     }
+
+
+      public void SetMrLocomotionSuspended(bool suspended)
+    {
+        if (mrLocomotionSuspended == suspended)
+            return;
+
+        mrLocomotionSuspended = suspended;
+        ConfigManager.WriteConsole($"[ChangeControls] MR locomotion suspended={suspended} isPlaying={isPlaying}");
+
+        if (isPlaying && !suspended)
+            PlayerMode(false);
+
+        if (isPlaying)
+            return;
+
+        if (suspended)
+            DisableLocomotionForMr();
+        else
+            RestoreLocomotionAfterMr();
+    }
+
+    void DisableLocomotionForMr()
+    {
+        mrSavedTeleportEnabled = beamController != null && beamController.enabled;
+        mrSavedSnapTurnActive = SnapTurnActive;
+
+        leftHandMoveAction.action?.Disable();
+        rightHandContinuousTurnAction.action?.Disable();
+        rightHandSnapTurnAction.action?.Disable();
+
+        if (actionBasedContinuousMoveProvider != null)
+            actionBasedContinuousMoveProvider.enabled = false;
+        if (actionBasedContinuousTurnProvider != null)
+            actionBasedContinuousTurnProvider.enabled = false;
+        if (actionBasedSnapTurnProvider != null)
+            actionBasedSnapTurnProvider.enabled = false;
+        if (beamController != null)
+            beamController.enabled = false;
+    }
+
+    void RestoreLocomotionAfterMr()
+    {
+        if (actionBasedContinuousMoveProvider != null)
+            actionBasedContinuousMoveProvider.enabled = true;
+        if (actionBasedSnapTurnProvider != null)
+            actionBasedSnapTurnProvider.enabled = true;
+
+        leftHandMoveAction.action?.Enable();
+        rightHandContinuousTurnAction.action?.Enable();
+        rightHandSnapTurnAction.action?.Enable();
+
+        SnapTurnActive = mrSavedSnapTurnActive;
+
+        if (beamController != null)
+            beamController.enabled = mrSavedTeleportEnabled;
+    }
+
+
 
     private void activateDeactivateControls(bool playing)
     {

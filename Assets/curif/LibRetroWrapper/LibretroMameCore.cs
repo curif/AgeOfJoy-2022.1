@@ -1262,6 +1262,23 @@ public static unsafe class LibretroMameCore
         WriteConsole("[LibRetroMameCore.End] END  *************************************************");
     }
 
+     /// <summary>Unload when the owning screen was destroyed before End() (e.g. MR DespawnAllAsync).</summary>
+    public static void ForceEndActiveGame()
+    {
+        if (!GameLoaded && string.IsNullOrEmpty(GameFileName))
+            return;
+
+        if (!string.IsNullOrEmpty(GameFileName) && !string.IsNullOrEmpty(ScreenName))
+        {
+            WriteConsole($"[LibRetroMameCore.ForceEndActiveGame] {GameFileName} on {ScreenName}");
+            End(ScreenName, GameFileName);
+            return;
+        }
+
+        WriteConsole("[LibRetroMameCore.ForceEndActiveGame] clearing stale GameLoaded flag");
+        ClearAll();
+    }
+
     private static void ClearAll()
     {
         WriteConsole("[LibRetroMameCore.ClearAll]");

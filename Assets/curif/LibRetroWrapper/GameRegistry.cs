@@ -141,6 +141,12 @@ public class GameRegistry : MonoBehaviour
     public List<string> UnassignedCabinets = new List<string>();
     public static string[] cabinetDirectories = Array.Empty<string>();
 
+    // MR: rescan cabinetsdb after zip extract / catalog bootstrap (MRCatalogBootstrap, MRLayoutRegistry).
+    public static void ReloadCabinetDirectoriesFromDisk()
+    {
+        loadCabinetsFromDirectory();
+    }
+
     static GameRegistry()
     {
         loadCabinetsFromDirectory();
@@ -177,6 +183,7 @@ public class GameRegistry : MonoBehaviour
                                                 .Select(path => System.IO.Path.GetFileName(path))
                                                 .ToArray();
     }
+
     public void AddNewCabinetDirectory(string newDirectory)
     {
         if (string.IsNullOrWhiteSpace(newDirectory))
