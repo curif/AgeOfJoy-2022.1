@@ -308,9 +308,14 @@ public class ChangeControls : MonoBehaviour
             activateDeactivateControls(false);
             setControllers(false);
 
-            rightHandContinuousTurnAction.action.Enable();
-            rightHandSnapTurnAction.action.Enable();
-            leftHandMoveAction.action.Enable();
+            if (mrLocomotionSuspended)
+                DisableLocomotionForMr();
+            else
+            {
+                rightHandContinuousTurnAction.action.Enable();
+                rightHandSnapTurnAction.action.Enable();
+                leftHandMoveAction.action.Enable();
+            }
         }
     }
 

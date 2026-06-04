@@ -15,7 +15,7 @@ public class AgentScenePosition : MonoBehaviour
     public float BoxColliderHeight = 5f;
     public BoxCollider boxCollider;
     public float playerStayDurationTimeSecs = 0f;
-    //private float playerTimer = 0f;
+    private float playerTimer = 0f;
 
     void Start()
     {
@@ -32,7 +32,7 @@ public class AgentScenePosition : MonoBehaviour
         Vector3 size = boxCollider.size;
         size.y = BoxColliderHeight;
         boxCollider.size = size;
-        //playerTimer = 0f;
+        playerTimer = 0f;
     }
 
     public bool ItsMe(string name)
@@ -52,10 +52,15 @@ public class AgentScenePosition : MonoBehaviour
 
     private bool colliderIsPlayer(Collider collision)
     {
-        return collision.gameObject.name == "OVRPlayerControllerGalery"
-        /* ||
-                collision.gameObject.name == "GrabVolumeSmall" ||
-                collision.gameObject.name == "GrabVolumeBig"*/;
+        Transform node = collision.transform;
+        while (node != null)
+        {
+            if (node.CompareTag("Player") || node.name == "OVRPlayerControllerGalery")
+                return true;
+            node = node.parent;
+        }
+
+        return false;
     }
 
     private void OnTriggerEnter(Collider collision)
@@ -65,7 +70,7 @@ public class AgentScenePosition : MonoBehaviour
         {
             // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerEnter] {name}: {collision.gameObject.name}");
             IsPlayerColliding = true;
-            //playerTimer = 0f;
+            playerTimer = 0f;
             IsNPCPresent = false;
             NPCPresentName = "";
             if (playerStayDurationTimeSecs > 0)
@@ -99,7 +104,7 @@ public class AgentScenePosition : MonoBehaviour
             // ConfigManager.WriteConsole($"[AgentScenePosition.OnTriggerExit] {name}: {collision.gameObject.name}");
             IsPlayerColliding = false;
             IsPlayerPresent = false;
-            //playerTimer = 0f;
+            playerTimer = 0f;
         }
         else
         {

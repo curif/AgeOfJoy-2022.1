@@ -47,6 +47,12 @@ public class PassthroughTriggerHandler : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            if (MixedRealityManager.Instance != null
+                && MixedRealityManager.Instance.CurrentMode != ExperienceMode.VR)
+            {
+                return;
+            }
+
             // Set the EventManager's boolean to true indicating passthrough is active.
             if (EventManager.Instance != null)
             {
@@ -54,9 +60,13 @@ public class PassthroughTriggerHandler : MonoBehaviour
             }
 
             UnityEngine.Debug.LogWarning("Turning OVRPassthroughLayer ON!");
-            if (passthroughLayer != null)
+            OVRPassthroughLayer layer = ResolvePassthroughLayer();
+            if (layer != null)
             {
-                passthroughLayer.enabled = true;
+                if (OVRManager.instance != null)
+                    OVRManager.instance.isInsightPassthroughEnabled = true;
+                layer.hidden = false;
+                layer.enabled = true;
             }
 
             Camera triggerCamera = other.GetComponentInChildren<Camera>();
@@ -107,10 +117,9 @@ public class PassthroughTriggerHandler : MonoBehaviour
             }
 
             UnityEngine.Debug.LogWarning("Turning OVRPassthroughLayer OFF!");
-            if (passthroughLayer != null)
-            {
-                passthroughLayer.enabled = false;
-            }
+            OVRPassthroughLayer layer = ResolvePassthroughLayer();
+            if (layer != null)
+                layer.enabled = false;
 
             Camera triggerCamera = other.GetComponentInChildren<Camera>();
             if (triggerCamera != null)
@@ -134,5 +143,21 @@ public class PassthroughTriggerHandler : MonoBehaviour
                 UnityEngine.Debug.LogWarning("No Camera component found on the triggering object.");
             }
         }
+    }
+
+    OVRPassthroughLayer ResolvePassthroughLayer()
+    {
+        if (passthroughLayer != null)
+            return passthroughLayer;
+
+        GameObject mainCamera = GameObject.FindWithTag("MainCamera");
+        if (mainCamera == null)
+            return null;
+
+        passthroughLayer = mainCamera.GetComponent<OVRPassthroughLayer>();
+        if (passthroughLayer == null)
+            passthroughLayer = mainCamera.AddComponent<OVRPassthroughLayer>();
+
+        return passthroughLayer;
     }
 }
