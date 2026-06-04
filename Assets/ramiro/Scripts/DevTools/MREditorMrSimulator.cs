@@ -3,9 +3,6 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
-#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -157,19 +154,8 @@ public class MREditorMrSimulator : MonoBehaviour
             $"{LogPrefix} P — immersive phone booth travel (mode={manager.CurrentMode}, portal={portal.name})");
     }
 
-    static bool EditorPhoneBoothTravelKeyPressed()
-    {
-        if (Input.GetKeyDown(KeyCode.P))
-            return true;
-
-#if ENABLE_INPUT_SYSTEM
-        Keyboard keyboard = Keyboard.current;
-        if (keyboard != null && keyboard.pKey.wasPressedThisFrame)
-            return true;
-#endif
-
-        return false;
-    }
+    static bool EditorPhoneBoothTravelKeyPressed() =>
+        MREditorInput.WasPressed(KeyCode.P);
 
     static MRPhoneBoothPortal ResolvePhoneBoothPortalForEditor(MixedRealityManager manager)
     {

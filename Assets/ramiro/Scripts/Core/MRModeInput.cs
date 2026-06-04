@@ -77,9 +77,7 @@ public class MRModeInput : MonoBehaviour
     static bool IsToggleButtonPressed()
     {
 #if UNITY_EDITOR
-        return Input.GetKey(KeyCode.JoystickButton0)
-            || Input.GetKey(KeyCode.Return)
-            || Input.GetKey(KeyCode.KeypadEnter);
+        return MREditorInput.MrModeToggleHeld();
 #else
         return OVRInput.Get(OVRInput.Button.One, OVRInput.Controller.RTouch)
             || OVRInput.Get(OVRInput.Button.One, OVRInput.Controller.LTouch)

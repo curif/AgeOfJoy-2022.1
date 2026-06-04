@@ -407,11 +407,11 @@ public class MRPlacementRayController : MonoBehaviour
     static float ReadRightStickX()
     {
 #if UNITY_EDITOR
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        if (MREditorInput.IsHeld(KeyCode.A) || MREditorInput.IsHeld(KeyCode.LeftArrow))
             return -1f;
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        if (MREditorInput.IsHeld(KeyCode.D) || MREditorInput.IsHeld(KeyCode.RightArrow))
             return 1f;
-        return Input.GetAxisRaw("Horizontal");
+        return MREditorInput.GamepadStickX();
 #else
         return OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, OVRInput.Controller.RTouch).x;
 #endif
@@ -449,7 +449,8 @@ public class MRPlacementRayController : MonoBehaviour
     static bool WasConfirmPressed()
     {
 #if UNITY_EDITOR
-        return Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0);
+        return MREditorInput.WasAnyPressed(KeyCode.Return, KeyCode.KeypadEnter)
+            || MREditorInput.WasMouseLeftPressed();
 #else
         return OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch);
 #endif
@@ -458,7 +459,7 @@ public class MRPlacementRayController : MonoBehaviour
     static bool WasCancelPressed()
     {
 #if UNITY_EDITOR
-        return Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Backspace);
+        return MREditorInput.WasAnyPressed(KeyCode.Escape, KeyCode.Backspace);
 #else
         return OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.RTouch)
             || OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);

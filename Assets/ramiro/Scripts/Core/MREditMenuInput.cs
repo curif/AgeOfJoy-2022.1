@@ -24,7 +24,7 @@ public class MREditMenuInput : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(editorToggleKey))
+        if (MREditorInput.WasPressed(editorToggleKey))
         {
             MRConfigurationCabinetController.Instance?.ToggleEdit();
             ConfigManager.WriteConsole($"{LogPrefix} editor toggle ({editorToggleKey})");
@@ -70,7 +70,7 @@ public class MREditMenuInput : MonoBehaviour
     static bool IsYButtonPressed()
     {
 #if UNITY_EDITOR
-        return Input.GetKey(KeyCode.JoystickButton3) || Input.GetKey(KeyCode.Y);
+        return MREditorInput.YButtonHeld();
 #else
         return OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.LTouch);
 #endif

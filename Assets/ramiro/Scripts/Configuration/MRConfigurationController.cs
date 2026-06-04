@@ -629,10 +629,8 @@ public class MRConfigurationController : MonoBehaviour
     {
         bool active = ControlActive(LC.JOYPAD_B) || ControlActive(LC.JOYPAD_X);
 #if UNITY_EDITOR
-        if (Input.GetKey(KeyCode.Backspace)
-            || Input.GetKey(KeyCode.B)
-            || Input.GetKey(KeyCode.Escape)
-            || Input.GetKey(KeyCode.JoystickButton1))
+        if (MREditorInput.IsAnyHeld(
+                KeyCode.Backspace, KeyCode.B, KeyCode.Escape, KeyCode.JoystickButton1))
             active = true;
 #else
         if (OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.RTouch))
@@ -1158,11 +1156,11 @@ public class MRConfigurationController : MonoBehaviour
     float ReadStickY()
     {
 #if UNITY_EDITOR
-        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
+        if (MREditorInput.IsHeld(KeyCode.UpArrow) || MREditorInput.IsHeld(KeyCode.W))
             return 1f;
-        if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
+        if (MREditorInput.IsHeld(KeyCode.DownArrow) || MREditorInput.IsHeld(KeyCode.S))
             return -1f;
-        return Input.GetAxisRaw("Vertical");
+        return MREditorInput.GamepadStickY();
 #else
         Vector2 stick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, OVRInput.Controller.RTouch);
         return stick.y;
@@ -1172,11 +1170,11 @@ public class MRConfigurationController : MonoBehaviour
     float ReadStickX()
     {
 #if UNITY_EDITOR
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        if (MREditorInput.IsHeld(KeyCode.D) || MREditorInput.IsHeld(KeyCode.RightArrow))
             return 1f;
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        if (MREditorInput.IsHeld(KeyCode.A) || MREditorInput.IsHeld(KeyCode.LeftArrow))
             return -1f;
-        return Input.GetAxisRaw("Horizontal");
+        return MREditorInput.GamepadStickX();
 #else
         Vector2 stick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, OVRInput.Controller.RTouch);
         return stick.x;
@@ -1185,28 +1183,28 @@ public class MRConfigurationController : MonoBehaviour
 
     bool WasMoveUp() =>
 #if UNITY_EDITOR
-        Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W);
+        MREditorInput.WasAnyPressed(KeyCode.UpArrow, KeyCode.W);
 #else
         false;
 #endif
 
     bool WasMoveDown() =>
 #if UNITY_EDITOR
-        Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S);
+        MREditorInput.WasAnyPressed(KeyCode.DownArrow, KeyCode.S);
 #else
         false;
 #endif
 
     bool WasMoveLeft() =>
 #if UNITY_EDITOR
-        Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A);
+        MREditorInput.WasAnyPressed(KeyCode.LeftArrow, KeyCode.A);
 #else
         false;
 #endif
 
     bool WasMoveRight() =>
 #if UNITY_EDITOR
-        Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D);
+        MREditorInput.WasAnyPressed(KeyCode.RightArrow, KeyCode.D);
 #else
         false;
 #endif
@@ -1215,7 +1213,7 @@ public class MRConfigurationController : MonoBehaviour
     {
         bool active = ControlActive(LC.JOYPAD_Y);
 #if UNITY_EDITOR
-        if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.JoystickButton3))
+        if (MREditorInput.IsHeld(KeyCode.Space) || MREditorInput.IsHeld(KeyCode.JoystickButton3))
             active = true;
 #else
         if (OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.LTouch))
@@ -1231,7 +1229,7 @@ public class MRConfigurationController : MonoBehaviour
     {
         bool active = ControlActive(LC.JOYPAD_A);
 #if UNITY_EDITOR
-        if (Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.JoystickButton0))
+        if (MREditorInput.IsAnyHeld(KeyCode.Return, KeyCode.JoystickButton0))
             active = true;
 #else
         if (OVRInput.Get(OVRInput.Button.One, OVRInput.Controller.RTouch))

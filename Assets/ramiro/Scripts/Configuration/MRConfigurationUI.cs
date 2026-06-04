@@ -1652,48 +1652,80 @@ public class MRConfigurationUI : MonoBehaviour
 
     bool WasMoveUp()
     {
-        return navCooldown <= 0f && (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W));
+#if UNITY_EDITOR
+        return navCooldown <= 0f && MREditorInput.WasAnyPressed(KeyCode.UpArrow, KeyCode.W);
+#else
+        return false;
+#endif
     }
 
     bool WasMoveDown()
     {
-        return navCooldown <= 0f && (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S));
+#if UNITY_EDITOR
+        return navCooldown <= 0f && MREditorInput.WasAnyPressed(KeyCode.DownArrow, KeyCode.S);
+#else
+        return false;
+#endif
     }
 
     bool WasMoveLeft()
     {
-        return navCooldown <= 0f && (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A));
+#if UNITY_EDITOR
+        return navCooldown <= 0f && MREditorInput.WasAnyPressed(KeyCode.LeftArrow, KeyCode.A);
+#else
+        return false;
+#endif
     }
 
     bool WasMoveRight()
     {
-        return navCooldown <= 0f && (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D));
+#if UNITY_EDITOR
+        return navCooldown <= 0f && MREditorInput.WasAnyPressed(KeyCode.RightArrow, KeyCode.D);
+#else
+        return false;
+#endif
     }
 
     bool IsMoveUpHeld()
     {
-        return Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W) || ReadStickY() > 0.55f;
+#if UNITY_EDITOR
+        return MREditorInput.IsAnyHeld(KeyCode.UpArrow, KeyCode.W) || ReadStickY() > 0.55f;
+#else
+        return ReadStickY() > 0.55f;
+#endif
     }
 
     bool IsMoveDownHeld()
     {
-        return Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S) || ReadStickY() < -0.55f;
+#if UNITY_EDITOR
+        return MREditorInput.IsAnyHeld(KeyCode.DownArrow, KeyCode.S) || ReadStickY() < -0.55f;
+#else
+        return ReadStickY() < -0.55f;
+#endif
     }
 
     bool IsMoveLeftHeld()
     {
-        return Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A) || ReadStickX() < -0.55f;
+#if UNITY_EDITOR
+        return MREditorInput.IsAnyHeld(KeyCode.LeftArrow, KeyCode.A) || ReadStickX() < -0.55f;
+#else
+        return ReadStickX() < -0.55f;
+#endif
     }
 
     bool IsMoveRightHeld()
     {
-        return Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D) || ReadStickX() > 0.55f;
+#if UNITY_EDITOR
+        return MREditorInput.IsAnyHeld(KeyCode.RightArrow, KeyCode.D) || ReadStickX() > 0.55f;
+#else
+        return ReadStickX() > 0.55f;
+#endif
     }
 
     static float ReadStickX()
     {
 #if UNITY_EDITOR
-        return Input.GetAxisRaw("Horizontal");
+        return MREditorInput.GamepadStickX();
 #else
         Vector2 stick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, OVRInput.Controller.RTouch);
         return stick.x;
@@ -1703,7 +1735,7 @@ public class MRConfigurationUI : MonoBehaviour
     static float ReadStickY()
     {
 #if UNITY_EDITOR
-        return Input.GetAxisRaw("Vertical");
+        return MREditorInput.GamepadStickY();
 #else
         Vector2 stick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, OVRInput.Controller.RTouch);
         return stick.y;
@@ -1713,7 +1745,7 @@ public class MRConfigurationUI : MonoBehaviour
     static bool WasConfirmPressed()
     {
 #if UNITY_EDITOR
-        return Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter) || Input.GetKeyDown(KeyCode.JoystickButton0);
+        return MREditorInput.WasAnyPressed(KeyCode.Return, KeyCode.KeypadEnter, KeyCode.JoystickButton0);
 #else
         return OVRInput.GetDown(OVRInput.Button.One, OVRInput.Controller.RTouch);
 #endif
