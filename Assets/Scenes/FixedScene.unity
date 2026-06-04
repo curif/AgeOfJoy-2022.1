@@ -11927,6 +11927,74 @@ MonoBehaviour:
   m_GazeAssistanceDistanceScaling: 0
   m_ClampGazeAssistanceDistanceScaling: 0
   m_GazeAssistanceDistanceScalingClampValue: 0
+--- !u!1 &1178415248
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1178415250}
+  - component: {fileID: 1178415249}
+  m_Layer: 0
+  m_Name: MRRuntimeSettings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1178415249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1178415248}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e3d9a3bc09f3b84c8d6f8eeec9040e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fixedSceneName: FixedScene
+  exteriorSceneName: IntroGalleryExterior
+  introGallerySceneName: IntroGallery
+  phoneBoothObjectName: PF_Payphone
+  showRoomAnchorInfoCanvas: 0
+  rememberVrPoseOnPhoneBoothTravelToMr: 1
+  rememberVrPoseOnStandardEnterMr: 1
+  restoreVrPoseOnPhoneBoothReturn: 1
+  refreshCameraOffsetAfterPhoneBoothReturn: 1
+  fallbackTravelStateIfRestoreFails: 1
+  secondsBeforeResumeVrControlsOnPhoneBoothReturn: 0
+  restoreVrPoseOnStandardEnterVr: 1
+  immersiveHandsetCueStepDurationSeconds: 5.5
+  immersiveSpaceshipEngineStepDurationSeconds: 5
+  immersiveBeginJourneyStepDurationSeconds: 0
+  immersiveFadeSphereStepDurationSeconds: 0
+  immersiveEndJourneyStepDurationSeconds: 0
+  secondsBeforeArrivalExplosion: 0.05
+  arrivalExplosionStepDurationSeconds: 1.5
+  secondsAfterArrivalExplosionBeforeGlassAndDoor: 1.5
+  arrivalExplosionVolume: 1
+  immersiveTravelSteps: 0000000001000000020000000300000004000000
+  mrToVrReturnSteps: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a000000
+  logWarningWhenInstanceMissing: 1
+--- !u!4 &1178415250
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1178415248}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.014189, y: -3.7997112, z: 23.297482}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -11937,3 +12005,4 @@ SceneRoots:
   - {fileID: 744134405}
   - {fileID: 782809692}
   - {fileID: 2053454539}
+  - {fileID: 1178415250}
