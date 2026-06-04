@@ -348,17 +348,20 @@ public class MRConfigurationCabinetController : MonoBehaviour
         if (cabinetInstance == null)
             return;
 
-        if (placementRay != null && placementRay.IsActive)
+        if (MRPlacementRayController.AnyActive
+            || (placementRay != null && placementRay.IsActive))
             return;
 
         if (HasValidSavedPose() && TryLoadSavedPose(out Vector3 savedPos, out Quaternion savedRot))
         {
-            if (Vector3.Distance(cabinetInstance.transform.position, savedPos) > 0.02f
+            Vector3 targetPos = savedPos;
+            ApplyFloorPivotOffset(cabinetInstance, ref targetPos, savedRot);
+            if (Vector3.Distance(cabinetInstance.transform.position, targetPos) > 0.02f
                 || Quaternion.Angle(cabinetInstance.transform.rotation, savedRot) > 0.5f)
             {
-                cabinetInstance.transform.SetPositionAndRotation(savedPos, savedRot);
-                ConfigManager.WriteConsole($"{LogPrefix} pose (saved) pos={savedPos} rot={savedRot.eulerAngles}");
-                MRTransitionLog.Log($"config cabinet pose (saved) pos={savedPos} rotY={savedRot.eulerAngles.y:F1}");
+                cabinetInstance.transform.SetPositionAndRotation(targetPos, savedRot);
+                ConfigManager.WriteConsole($"{LogPrefix} pose (saved) pos={targetPos} rot={savedRot.eulerAngles}");
+                MRTransitionLog.Log($"config cabinet pose (saved) pos={targetPos} rotY={savedRot.eulerAngles.y:F1}");
             }
 
             return;
@@ -484,7 +487,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     IEnumerator InitialPlacementRayWhenReadyCoroutine()
     {
-        const int maxAttempts = 90;
+        const int maxAttempts = 180;
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
@@ -499,6 +502,12 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
             MixedRealityManager mgr = MixedRealityManager.Instance;
             if (mgr == null)
+            {
+                yield return null;
+                continue;
+            }
+
+            if (mgr.TransitionInProgress)
             {
                 yield return null;
                 continue;
@@ -779,36 +788,78 @@ public class MRConfigurationCabinetController : MonoBehaviour
                 * Quaternion.Euler(0f, spawnYawOffsetDegrees, 0f);
         }
 
-        root.transform.SetPositionAndRotation(worldPos, worldRot);
-
-        BoxCollider box = root.GetComponentInChildren<BoxCollider>();
-        if (box != null)
-        {
-            float bottomY = PlaceOnFloorFromBoxCollider.CalculateLowerPointY(root.transform, box);
-            float pivotToBottom = root.transform.position.y - bottomY;
-            root.transform.position = new Vector3(worldPos.x, worldPos.y + pivotToBottom, worldPos.z);
-        }
+        ApplyFloorPivotOffset(root, ref worldPos, worldRot);
 
         ConfigManager.WriteConsole(
             $"{LogPrefix} floor pose ({poseSource}) pos={root.transform.position} rot={root.transform.eulerAngles}");
     }
 
+    static void ApplyFloorPivotOffset(GameObject root, ref Vector3 worldPos, Quaternion worldRot)
+    {
+        if (root == null)
+            return;
+
+        root.transform.SetPositionAndRotation(worldPos, worldRot);
+
+        BoxCollider box = root.GetComponentInChildren<BoxCollider>();
+        if (box == null)
+            return;
+
+        float bottomY = PlaceOnFloorFromBoxCollider.CalculateLowerPointY(root.transform, box);
+        float pivotToBottom = root.transform.position.y - bottomY;
+        worldPos = new Vector3(worldPos.x, worldPos.y + pivotToBottom, worldPos.z);
+        root.transform.position = worldPos;
+    }
+
     public bool BeginRepositionWithRay(bool isInitialPlacement = false)
     {
         if (cabinetInstance == null)
-            return false;
-
-        placementRay = EnsurePlacementRayController();
-        if (placementRay == null || placementRay.IsActive)
         {
-            if (placementRay != null && placementRay.IsActive)
-                ConfigManager.WriteConsole($"{LogPrefix} placement ray busy — skipped");
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} reposition failed — no cabinet instance");
+            MRTransitionLog.LogWarning("ConfigCabinetPlacement failed — no cabinet");
             return false;
         }
 
-        bool reopenEdit = isEditOpen;
-        ForceCloseEdit();
+        if (!cabinetInstance.activeInHierarchy)
+            cabinetInstance.SetActive(true);
 
+        if (initialPlacementRayCoroutine != null)
+        {
+            StopCoroutine(initialPlacementRayCoroutine);
+            initialPlacementRayCoroutine = null;
+        }
+
+        if (!isInitialPlacement)
+            initialPlacementRequested = true;
+
+        placementRay = EnsurePlacementRayController();
+        if (placementRay == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} reposition failed — no MRPlacementRayController");
+            MRTransitionLog.LogWarning("ConfigCabinetPlacement failed — no placement ray");
+            return false;
+        }
+
+        if (placementRay.IsActive
+            && placementRay.MovingTarget != null
+            && placementRay.MovingTarget != cabinetInstance)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} clearing stale placement ray before config reposition");
+            MRTransitionLog.LogWarning("ConfigCabinetPlacement clearing stale placement ray");
+            placementRay.CancelActive();
+        }
+
+        bool reopenEdit = isEditOpen || (crtController != null && crtController.IsSessionActive);
+        if (crtController != null)
+            crtController.SuspendForExternalPlacement();
+        else
+            ForceCloseEdit();
+
+        // Suspend keeps CRT off but must clear this flag (0.5.0 used ForceCloseEdit). Otherwise
+        // OpenEdit() and coin insert both no-op after MOVE CONFIG confirm/cancel.
+        isEditOpen = false;
+
+        MRTransitionLog.LogStep("ConfigCabinetPlacement", isInitialPlacement ? "initial ray" : "reposition ray");
         placementRay.BeginMove(
             cabinetInstance,
             GetPlacementSurfaceType(),
@@ -822,8 +873,8 @@ public class MRConfigurationCabinetController : MonoBehaviour
             },
             cancelCallback: () =>
             {
-                if (isInitialPlacement)
-                    initialPlacementRequested = false;
+                // Treat skip/cancel as done — do not auto-restart initial ray during MR entry.
+                initialPlacementRequested = true;
                 if (reopenEdit)
                     OpenEdit();
             });

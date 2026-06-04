@@ -19,7 +19,7 @@ using UnityEditor;
 public class MRSceneBootstrap : MonoBehaviour
 {
     const string LogPrefix = "[MRSceneBootstrap]";
-    const string MrukResourcesPath = "MR/MRUK";
+    const string MrukResourcesPath = "ramiro/MRUK";
 
     [SerializeField] float deviceLoadTimeoutSeconds = 180f;
     [SerializeField] float ovrReadyTimeoutSeconds = 20f;
@@ -50,7 +50,7 @@ public class MRSceneBootstrap : MonoBehaviour
         if (mruk == null)
         {
             MRSceneLoadState.LastLoadResult = MRUK.LoadDeviceResult.FailureDataIsInvalid;
-            MRSceneLoadState.LastFaultDetail = "MRUK prefab ausente — gere Resources/MR/MRUK.prefab";
+            MRSceneLoadState.LastFaultDetail = "MRUK prefab ausente — gere Resources/ramiro/MRUK.prefab";
             MRSceneLoadState.LastLoadMessage = MRSceneLoadState.Describe(MRSceneLoadState.LastLoadResult);
             ConfigManager.WriteConsoleError($"{LogPrefix} {MRSceneLoadState.LastFaultDetail}");
             yield break;
@@ -91,6 +91,12 @@ public class MRSceneBootstrap : MonoBehaviour
         }
 
         ConfigManager.WriteConsole($"{LogPrefix} loading editor test room '{roomPrefab.name}'");
+        if (!MRCameraRigShim.EnsureAttachedTo(MRUK.Instance))
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} editor test room aborted — MRUK camera rig shim failed");
+            yield break;
+        }
+
         MRUK.Instance.LoadSceneFromPrefab(roomPrefab);
 
         yield return WaitForRoomReady(5f);

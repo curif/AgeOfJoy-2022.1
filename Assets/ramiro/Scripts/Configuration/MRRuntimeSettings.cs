@@ -104,6 +104,14 @@ public class MRRuntimeSettings : MonoBehaviour
     [Header("Debug")]
     public bool logWarningWhenInstanceMissing = true;
 
+#if UNITY_EDITOR
+    [Header("Editor only")]
+    [Tooltip(
+        "Play Mode: force full UnloadSceneAsync for IntroGallery (slow; can freeze Editor). " +
+        "Leave OFF — IntroGallery is hidden by default in Editor.")]
+    public bool editorForceFullVrSceneUnloadOnMrEnter;
+#endif
+
     static bool loggedMissingInstance;
 
     void Awake()
@@ -158,6 +166,14 @@ public class MRRuntimeSettings : MonoBehaviour
 
     public static string PhoneBoothObject =>
         Instance != null ? Instance.phoneBoothObjectName : DefaultPhoneBoothObjectName;
+
+#if UNITY_EDITOR
+    /// <summary>Editor hides IntroGallery by default (missing YAML field must not disable this).</summary>
+    public static bool EditorHideIntroGalleryInsteadOfUnload =>
+        Instance == null || !Instance.editorForceFullVrSceneUnloadOnMrEnter;
+#else
+    public static bool EditorHideIntroGalleryInsteadOfUnload => false;
+#endif
 
     public static bool ShowRoomAnchorInfoCanvas =>
         Instance == null || Instance.showRoomAnchorInfoCanvas;

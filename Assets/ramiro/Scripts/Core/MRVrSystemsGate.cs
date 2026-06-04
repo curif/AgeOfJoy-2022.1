@@ -2,6 +2,7 @@
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 */
 
+using System.Collections;
 using AOJ.Managers;
 using UnityEngine;
 
@@ -22,6 +23,15 @@ public static class MRVrSystemsGate
         EnsureHandModelsVisible();
         SuspendPlayerLocomotion();
         ResetLegacyPassthroughState();
+    }
+
+    /// <summary>Let Libretro/audio threads finish before unloading VR scenes (avoids editor freezes).</summary>
+    public static IEnumerator WaitForShutdownBeforeSceneUnload()
+    {
+        yield return null;
+        yield return new WaitForEndOfFrame();
+        yield return null;
+        MRTransitionLog.LogStep("MRVrSystemsGate", "WaitForShutdownBeforeSceneUnload done");
     }
 
     public static void ResumeForVR()

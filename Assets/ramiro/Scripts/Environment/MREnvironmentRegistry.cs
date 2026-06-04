@@ -151,17 +151,24 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (!string.IsNullOrEmpty(placement.AnchorUuid))
                 Guid.TryParse(placement.AnchorUuid, out anchorUuid);
 
+            Vector3 displayPos = entry.Value.transform.position;
+            Quaternion rot = entry.Value.transform.rotation;
             WriteStoredPose(
                 placement,
                 placement.SurfaceType,
-                entry.Value.transform.position,
-                entry.Value.transform.rotation,
+                displayPos,
+                rot,
                 anchorUuid);
             changed = true;
+            MRTransitionLog.Log(
+                $"SnapshotWorldPose {placement.DisplayLabel} pos={displayPos} rotY={rot.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
         }
 
         if (changed)
+        {
             layout.Save(LayoutFilePath);
+            MRTransitionLog.Log($"SnapshotSpawnedWorldPosesToLayout env count={spawnedById.Count}");
+        }
     }
 
     public MREnvironmentPlacement FindPlacementByPrefabName(string prefabName)
@@ -279,6 +286,8 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         spawnedById[placement.Id] = root;
         ConfigManager.WriteConsole($"{LogPrefix} added {prefabName} ({placement.Id})");
+        MRTransitionLog.Log(
+            $"Finalize env {prefabName} pos={worldPosition} rotY={worldRotation.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
         return true;
     }
 

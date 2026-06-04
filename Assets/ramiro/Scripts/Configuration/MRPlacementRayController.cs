@@ -21,6 +21,9 @@ public class MRPlacementRayController : MonoBehaviour
     [SerializeField] float stickDeadZone = 0.15f;
     [SerializeField] Color validColor = new Color(0.2f, 1f, 0.35f, 1f);
     [SerializeField] Color invalidColor = new Color(1f, 0.25f, 0.25f, 1f);
+    [Tooltip("Ignore cancel/confirm briefly after begin (phone-booth explosion / menu confirm edges).")]
+    [SerializeField] float inputGraceSeconds = 1.5f;
+    [SerializeField] float confirmGraceSeconds = 0.35f;
 
     GameObject movingTarget;
     PlacementSurfaceType surfaceType;
@@ -35,14 +38,24 @@ public class MRPlacementRayController : MonoBehaviour
 
     LineRenderer line;
     bool isActive;
+    static int s_activeCount;
+
+    /// <summary>True while any placement ray is moving an object (shared singleton instance).</summary>
+    public static bool AnyActive => s_activeCount > 0;
+
     Vector3 startPosition;
     Quaternion startRotation;
     Vector3 previewPosition;
     Quaternion previewRotation;
     bool hasValidPreview;
     Guid previewAnchorUuid = Guid.Empty;
+    float ignoreCancelUntilUnscaledTime;
+    float ignoreConfirmUntilUnscaledTime;
+    float nextInvalidPreviewLogTime;
+    bool hadValidPreviewThisSession;
 
     public bool IsActive => isActive;
+    public GameObject MovingTarget => movingTarget;
 
     public void BeginMove(
         GameObject target,
@@ -71,14 +84,23 @@ public class MRPlacementRayController : MonoBehaviour
         previewAnchorUuid = Guid.Empty;
         initialYawDegrees = NormalizeYaw(startRotation.eulerAngles.y);
         userYawOffsetDegrees = 0f;
+        hadValidPreviewThisSession = false;
+        nextInvalidPreviewLogTime = 0f;
+        float now = Time.unscaledTime;
+        ignoreCancelUntilUnscaledTime = now + inputGraceSeconds;
+        ignoreConfirmUntilUnscaledTime = now + confirmGraceSeconds;
 
         EnsureLineRenderer();
         SetLineVisible(true);
         isActive = true;
+        s_activeCount++;
 
+        MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
+        MRTransitionLog.LogStep("PlacementRay", $"begin {target.name} surface={surfaceType}");
         ConfigManager.WriteConsole(
             $"{LogPrefix} begin move target={target.name} surface={surfaceType} facing={facingAxis} " +
-            $"stickRot={allowStickRotation} stickAxis={stickRotationAxis}");
+            $"stickRot={allowStickRotation} stickAxis={stickRotationAxis} " +
+            $"mrukReady={(surfaces != null && surfaces.IsReady)} mrukAnchors={(surfaces != null && surfaces.UsesMrukAnchors)}");
     }
 
     public bool AllowsStickRotation => isActive && allowStickRotation;
@@ -91,7 +113,7 @@ public class MRPlacementRayController : MonoBehaviour
         if (movingTarget != null)
             movingTarget.transform.SetPositionAndRotation(startPosition, startRotation);
 
-        StopMove(cancelled: true);
+        StopMove(cancelled: true, reason: "external");
     }
 
     /// <summary>
@@ -140,24 +162,38 @@ public class MRPlacementRayController : MonoBehaviour
         UpdatePreviewPose();
         DrawRay();
 
-        if (WasCancelPressed())
+        if (Time.unscaledTime >= ignoreCancelUntilUnscaledTime && WasCancelPressed())
         {
             movingTarget.transform.SetPositionAndRotation(startPosition, startRotation);
-            StopMove(cancelled: true);
+            StopMove(cancelled: true, reason: "grip");
             return;
         }
 
-        if (WasConfirmPressed() && hasValidPreview)
+        if (!hasValidPreview && Time.unscaledTime >= nextInvalidPreviewLogTime)
+        {
+            nextInvalidPreviewLogTime = Time.unscaledTime + 3f;
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} no {surfaceType} hit — aim right controller at MRUK wall (or look at wall); confirm=trigger cancel=grip");
+            MRTransitionLog.LogWarning($"PlacementRay no {surfaceType} preview for {movingTarget.name}");
+        }
+
+        if (Time.unscaledTime >= ignoreConfirmUntilUnscaledTime
+            && WasConfirmPressed()
+            && hasValidPreview)
         {
             movingTarget.transform.SetPositionAndRotation(previewPosition, previewRotation);
+            MRTransitionLog.LogStep(
+                "PlacementRay",
+                $"confirm {movingTarget.name} pos={previewPosition} rotY={previewRotation.eulerAngles.y:F1} anchor={previewAnchorUuid}");
             onConfirmPose?.Invoke(previewPosition, previewRotation, previewAnchorUuid);
-            StopMove(cancelled: false);
+            StopMove(cancelled: false, reason: "confirm");
         }
     }
 
     void UpdatePreviewPose()
     {
         ResolvePointer(out Vector3 rayOrigin, out Vector3 rayDir, out Vector3 viewerPosition);
+        Transform viewpoint = Camera.main != null ? Camera.main.transform : null;
 
         bool ok = false;
         Guid hitAnchorUuid = Guid.Empty;
@@ -171,9 +207,10 @@ public class MRPlacementRayController : MonoBehaviour
                 if (surfaces != null)
                 {
                     Meta.XR.MRUtilityKit.MRUKAnchor wallAnchor = null;
-                    ok = surfaces.TryGetWallMountedFramePoseFromRay(
+                    ok = surfaces.TryGetWallMountedFramePoseForPlacementRay(
                         rayOrigin,
                         rayDir,
+                        viewpoint,
                         maxDistanceMeters,
                         0.25f,
                         out worldPos,
@@ -253,6 +290,8 @@ public class MRPlacementRayController : MonoBehaviour
         }
 
         hasValidPreview = ok;
+        if (ok)
+            hadValidPreviewThisSession = true;
         previewAnchorUuid = hitAnchorUuid;
         previewPosition = worldPos;
         previewRotation = worldRot;
@@ -334,8 +373,11 @@ public class MRPlacementRayController : MonoBehaviour
         return null;
     }
 
-    void StopMove(bool cancelled)
+    void StopMove(bool cancelled, string reason)
     {
+        if (isActive && s_activeCount > 0)
+            s_activeCount--;
+
         if (cancelled)
             onCancel?.Invoke();
 
@@ -347,7 +389,11 @@ public class MRPlacementRayController : MonoBehaviour
         hasValidPreview = false;
         previewAnchorUuid = Guid.Empty;
 
-        ConfigManager.WriteConsole($"{LogPrefix} end move cancelled={cancelled}");
+        MRTransitionLog.LogStep(
+            "PlacementRay",
+            $"end cancelled={cancelled} reason={reason} hadPreview={hadValidPreviewThisSession}");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} end move cancelled={cancelled} reason={reason} hadPreview={hadValidPreviewThisSession}");
     }
 
     static void ApplyFloorPivotOffset(GameObject target, ref Vector3 floorPoint, Quaternion worldRotation)
@@ -461,8 +507,8 @@ public class MRPlacementRayController : MonoBehaviour
 #if UNITY_EDITOR
         return MREditorInput.WasAnyPressed(KeyCode.Escape, KeyCode.Backspace);
 #else
-        return OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.RTouch)
-            || OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
+        // Right Y (Button.Two) is CRT back / menu — grip only avoids accidental cancel.
+        return OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
 #endif
     }
 }

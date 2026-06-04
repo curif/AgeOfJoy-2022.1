@@ -153,6 +153,50 @@ public class MRLayoutRegistry : MonoBehaviour
         ConfigManager.WriteConsole($"{LogPrefix} SpawnAll done ({spawnedById.Count} cabinets)");
     }
 
+    /// <summary>One cabinet per frame — avoids Quest main-thread freeze during phone booth / Enter MR.</summary>
+    public IEnumerator SpawnAllAsync(Transform mrSpaceOrigin)
+    {
+        DespawnAll();
+        EnsureLayoutLoaded();
+
+        if (mrSpaceOrigin == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} SpawnAllAsync skipped — MRSpaceOrigin is null");
+            yield break;
+        }
+
+        if (layout.Cabinets.Count == 0)
+        {
+            ConfigManager.WriteConsole($"{LogPrefix} SpawnAllAsync: layout empty ({LayoutFilePath})");
+            MRTransitionLog.LogStep("SpawnAllAsync", "layout empty");
+            yield break;
+        }
+
+        EnsureWorldSpaceLayout(mrSpaceOrigin);
+        MRTransitionLog.LogStep("SpawnAllAsync", $"begin count={layout.Cabinets.Count}");
+
+        int index = 0;
+        foreach (MRCabinetPlacement placement in layout.GetCabinets())
+        {
+            if (placement == null || string.IsNullOrEmpty(placement.Id))
+                continue;
+
+            string label = placement.DisplayLabel ?? placement.Id;
+            MRTransitionLog.LogStep("SpawnAllAsync", $"spawning {label}");
+            ConfigManager.WriteConsole($"{LogPrefix} SpawnAllAsync: {label}");
+
+            var spawnResult = new CabinetSpawnYieldResult();
+            yield return TrySpawnPlacementAsync(placement, mrSpaceOrigin, index, spawnResult);
+            if (spawnResult.Success)
+                index++;
+
+            yield return null;
+        }
+
+        ConfigManager.WriteConsole($"{LogPrefix} SpawnAllAsync done ({spawnedById.Count} cabinets)");
+        MRTransitionLog.LogStep("SpawnAllAsync", $"done spawned={spawnedById.Count}");
+    }
+
     public void DespawnAll(bool stopLibretroFirst = true)
     {
         foreach (GameObject root in CollectAllMrCabinetRoots())
@@ -467,6 +511,44 @@ public class MRLayoutRegistry : MonoBehaviour
         return true;
     }
 
+    /// <summary>Async transient spawn — GLB/Libretro load spreads across frames (Quest placement add).</summary>
+    public IEnumerator TrySpawnTransientCabinetAsync(
+        string cabinetDBName,
+        Transform mrSpaceOrigin,
+        Vector3 worldPosition,
+        Quaternion worldRotation,
+        CabinetSpawnYieldResult result)
+    {
+        result.Success = false;
+        result.Root = null;
+
+        if (string.IsNullOrEmpty(cabinetDBName) || mrSpaceOrigin == null)
+            yield break;
+
+        if (FindPlacementByCabinetDBName(cabinetDBName) != null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} already in layout: {cabinetDBName}");
+            yield break;
+        }
+
+        int index = spawnedById.Count;
+        yield return TrySpawnCabinetAtWorldPoseAsync(
+            cabinetDBName,
+            mrSpaceOrigin,
+            worldPosition,
+            worldRotation,
+            index,
+            registerSpawned: false,
+            result,
+            PlacementFacingAxis.PositiveZ);
+
+        if (!result.Success)
+            yield break;
+
+        ConfigManager.WriteConsole($"{LogPrefix} transient spawn {cabinetDBName} for placement ray");
+        MRTransitionLog.LogStep("TransientSpawn", $"ready {cabinetDBName}");
+    }
+
     /// <summary>TestMRmanager / editor: spawn without mr-layout entry or duplicate check.</summary>
     public bool TrySpawnValidationCabinet(
         string cabinetDBName,
@@ -537,6 +619,8 @@ public class MRLayoutRegistry : MonoBehaviour
 
         spawnedById[placement.Id] = root;
         ConfigManager.WriteConsole($"{LogPrefix} added {cabinetDBName} ({placement.Id}) after placement ray");
+        MRTransitionLog.Log(
+            $"Finalize {cabinetDBName} storage={placement.WorldPosition?.ToVector3()} rotY={worldRotation.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
         return true;
     }
 
@@ -641,6 +725,66 @@ public class MRLayoutRegistry : MonoBehaviour
         return true;
     }
 
+    IEnumerator TrySpawnPlacementAsync(
+        MRCabinetPlacement placement,
+        Transform mrSpaceOrigin,
+        int index,
+        CabinetSpawnYieldResult result)
+    {
+        result.Success = false;
+        result.Root = null;
+
+        if (placement == null || string.IsNullOrEmpty(placement.CabinetDBName))
+        {
+            if (placement != null)
+                ConfigManager.WriteConsoleWarning($"{LogPrefix} skip entry {placement.Id}: missing cabinetDBName");
+            yield break;
+        }
+
+        if (!TryReadWorldPose(placement, out Vector3 worldPos, out Quaternion worldRot))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} defer spawn {placement.DisplayLabel} — anchor pose not ready yet");
+            yield break;
+        }
+
+        ApplyFloorCabinetDisplayOffset(placement.SurfaceType, ref worldPos);
+
+        yield return TrySpawnCabinetAtWorldPoseAsync(
+            placement.CabinetDBName,
+            mrSpaceOrigin,
+            worldPos,
+            worldRot,
+            index,
+            registerSpawned: true,
+            result,
+            placement.FacingAxis);
+
+        if (!result.Success || result.Root == null)
+            yield break;
+
+        GameObject root = result.Root;
+        root.transform.localScale = Vector3.one * GetEffectiveCabinetScale(placement);
+
+        MRPlacedCabinet marker = root.GetComponent<MRPlacedCabinet>();
+        if (marker == null)
+            marker = root.AddComponent<MRPlacedCabinet>();
+        marker.Initialize(placement.Id, placement.CabinetDBName);
+
+        spawnedById[placement.Id] = root;
+        BackfillWorldPoseCache(placement, worldPos, worldRot);
+        result.Success = true;
+        ConfigManager.WriteConsole($"{LogPrefix} spawned {placement.DisplayLabel} at {worldPos}");
+        MRTransitionLog.Log(
+            $"Spawn {placement.DisplayLabel} pos={worldPos} rotY={worldRot.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
+    }
+
+    public sealed class CabinetSpawnYieldResult
+    {
+        public bool Success;
+        public GameObject Root;
+    }
+
     static void BackfillWorldPoseCache(MRCabinetPlacement placement, Vector3 displayWorldPos, Quaternion worldRot)
     {
         if (placement == null || placement.WorldPosition != null)
@@ -718,6 +862,88 @@ public class MRLayoutRegistry : MonoBehaviour
             ConfigManager.WriteConsole($"{LogPrefix} spawned transient {cabinetDBName} at {worldPos}");
 
         return true;
+    }
+
+    IEnumerator TrySpawnCabinetAtWorldPoseAsync(
+        string cabinetDBName,
+        Transform mrSpaceOrigin,
+        Vector3 worldPos,
+        Quaternion worldRot,
+        int index,
+        bool registerSpawned,
+        CabinetSpawnYieldResult result,
+        PlacementFacingAxis facingAxis = PlacementFacingAxis.PositiveZ)
+    {
+        result.Success = false;
+        result.Root = null;
+
+        if (string.IsNullOrEmpty(cabinetDBName) || mrSpaceOrigin == null)
+            yield break;
+
+        MRTransitionLog.LogStep("CabinetSpawn", $"begin {cabinetDBName}");
+        yield return null;
+
+        CabinetInformation cabInfo;
+        try
+        {
+            cabInfo = CabinetInformation.fromYaml(Path.Combine(ConfigManager.CabinetsDB, cabinetDBName));
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"{LogPrefix} yaml load failed for {cabinetDBName}", e);
+            yield break;
+        }
+
+        if (cabInfo == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} no description for {cabinetDBName}");
+            yield break;
+        }
+
+        yield return null;
+        MRLibretroWarmup.EnsureOnMainThread();
+
+        MRTransitionLog.LogStep("CabinetSpawn", $"factory {cabinetDBName}");
+        System.Threading.Tasks.Task<Cabinet> factoryTask = CabinetFactory.fromInformationAsync(
+            cabInfo,
+            MixedRealityManager.MrRoomName,
+            index,
+            worldPos,
+            worldRot,
+            null,
+            agentPlayerPositions: new List<AgentScenePosition>(),
+            backgroundSoundController: null);
+
+        while (!factoryTask.IsCompleted)
+            yield return null;
+
+        Cabinet cabinet;
+        if (factoryTask.IsFaulted)
+        {
+            ConfigManager.WriteConsoleException(
+                $"{LogPrefix} spawn failed {cabinetDBName}",
+                factoryTask.Exception?.GetBaseException());
+            yield break;
+        }
+
+        cabinet = factoryTask.Result;
+        if (cabinet == null)
+            yield break;
+
+        yield return null;
+        ApplyCabinetSkinning(cabinet, cabInfo);
+
+        result.Root = cabinet.gameObject;
+        DisableAutoFloorSnap(result.Root);
+        result.Root.transform.localScale = Vector3.one * MRAdjustmentsSettings.CabinetScale;
+        MRGameCabinetAttractSetup.AttachAttractZone(
+            result.Root, cabinet, cabInfo, cabinetDBName, index, facingAxis);
+
+        result.Success = true;
+        if (!registerSpawned)
+            ConfigManager.WriteConsole($"{LogPrefix} spawned transient {cabinetDBName} at {worldPos}");
+
+        MRTransitionLog.LogStep("CabinetSpawn", $"done {cabinetDBName}");
     }
 
     static void ApplyCabinetSkinning(Cabinet cabinet, CabinetInformation cabInfo)

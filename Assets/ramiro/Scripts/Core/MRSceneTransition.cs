@@ -14,6 +14,9 @@ public class MRSceneTransition : MonoBehaviour
     static string FixedSceneName => MRRuntimeSettings.FixedScene;
 
     readonly List<string> unloadedSceneNames = new List<string>();
+#if UNITY_EDITOR
+    readonly List<string> editorHiddenSceneNames = new List<string>();
+#endif
     bool transitionRunning;
 
     public bool IsTransitionRunning => transitionRunning;
@@ -45,29 +48,166 @@ public class MRSceneTransition : MonoBehaviour
             scenesToUnload.Add(scene);
         }
 
+        scenesToUnload.Sort((a, b) => CompareUnloadOrder(a.name, b.name));
+
+        MRTransitionLog.LogStep("UnloadVrScenes", $"begin count={scenesToUnload.Count}");
+        MRTransitionLog.LogScenes("UnloadVrScenes-begin");
+
+        const float perSceneTimeoutSeconds = 45f;
+        bool anySceneFullyUnloaded = false;
+
         foreach (Scene scene in scenesToUnload)
         {
-            ConfigManager.WriteConsole($"{LogPrefix} unloading {scene.name}");
-            unloadedSceneNames.Add(scene.name);
+            string sceneName = scene.name;
+
+#if UNITY_EDITOR
+            if (ShouldEditorHideInsteadOfUnload(sceneName))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"{LogPrefix} editor: hiding {sceneName} (skip UnloadSceneAsync — set MRRuntimeSettings.editorForceFullVrSceneUnloadOnMrEnter to test full unload)");
+                MRTransitionLog.LogStep("UnloadVrScenes", $"editor hide roots {sceneName}");
+                yield return SetSceneRootsActive(scene, false);
+                if (!editorHiddenSceneNames.Contains(sceneName))
+                    editorHiddenSceneNames.Add(sceneName);
+                MRTransitionLog.LogScenes($"UnloadVrScenes-after-hide-{sceneName}");
+                continue;
+            }
+#endif
+
+            ConfigManager.WriteConsole($"{LogPrefix} unloading {sceneName}");
+            MRTransitionLog.LogStep("UnloadVrScenes", $"UnloadSceneAsync start {sceneName}");
+            unloadedSceneNames.Add(sceneName);
+
             AsyncOperation unloadOp = SceneManager.UnloadSceneAsync(scene);
             if (unloadOp == null)
             {
-                ConfigManager.WriteConsoleError($"{LogPrefix} failed to unload {scene.name}");
+                MRTransitionLog.LogError($"UnloadVrScenes failed to start unload for {sceneName}");
+                ConfigManager.WriteConsoleError($"{LogPrefix} failed to unload {sceneName}");
                 continue;
             }
 
-            while (!unloadOp.isDone)
+            float elapsed = 0f;
+            float lastProgressLog = 0f;
+            while (!unloadOp.isDone && elapsed < perSceneTimeoutSeconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                if (elapsed - lastProgressLog >= 1f)
+                {
+                    lastProgressLog = elapsed;
+                    MRTransitionLog.Log($"UnloadVrScenes {sceneName} progress={unloadOp.progress:F2} elapsed={elapsed:F1}s");
+                }
+
                 yield return null;
+            }
+
+            if (!unloadOp.isDone)
+            {
+                MRTransitionLog.LogError(
+                    $"UnloadVrScenes timeout {sceneName} after {perSceneTimeoutSeconds}s progress={unloadOp.progress:F2}");
+                ConfigManager.WriteConsoleError(
+                    $"{LogPrefix} unload timeout for {sceneName} after {perSceneTimeoutSeconds}s — continuing");
+            }
+            else
+            {
+                MRTransitionLog.LogStep("UnloadVrScenes", $"unloaded {sceneName} in {elapsed:F1}s");
+                anySceneFullyUnloaded = true;
+            }
+
+            MRTransitionLog.LogScenes($"UnloadVrScenes-after-{sceneName}");
         }
 
+#if UNITY_EDITOR
+        if (anySceneFullyUnloaded)
+        {
+            AsyncOperation gcOp = Resources.UnloadUnusedAssets();
+            if (gcOp != null)
+            {
+                float gcElapsed = 0f;
+                while (!gcOp.isDone && gcElapsed < 15f)
+                {
+                    gcElapsed += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+            }
+        }
+
+        yield return null;
+#endif
+
+        MRTransitionLog.LogScenes("UnloadVrScenes-done");
         transitionRunning = false;
     }
+
+    static int CompareUnloadOrder(string a, string b)
+    {
+        int orderA = GetUnloadOrder(a);
+        int orderB = GetUnloadOrder(b);
+        int cmp = orderA.CompareTo(orderB);
+        return cmp != 0 ? cmp : string.CompareOrdinal(a, b);
+    }
+
+    /// <summary>Exterior before IntroGallery — booth is already DDOL before unload.</summary>
+    static int GetUnloadOrder(string sceneName)
+    {
+        if (sceneName == MRRuntimeSettings.ExteriorScene)
+            return 0;
+        if (sceneName == MRRuntimeSettings.IntroGalleryScene)
+            return 1;
+        return 2;
+    }
+
+#if UNITY_EDITOR
+    static bool ShouldEditorHideInsteadOfUnload(string sceneName) =>
+        Application.isEditor
+        && MRRuntimeSettings.EditorHideIntroGalleryInsteadOfUnload
+        && sceneName == MRRuntimeSettings.IntroGalleryScene;
+
+    IEnumerator ReactivateEditorHiddenVrScenes()
+    {
+        if (editorHiddenSceneNames.Count == 0)
+            yield break;
+
+        var names = new List<string>(editorHiddenSceneNames);
+        editorHiddenSceneNames.Clear();
+
+        foreach (string sceneName in names)
+        {
+            Scene scene = SceneManager.GetSceneByName(sceneName);
+            if (!scene.isLoaded)
+                continue;
+
+            ConfigManager.WriteConsole($"{LogPrefix} editor: reactivating hidden scene {sceneName}");
+            MRTransitionLog.LogStep("ReloadVrScenes", $"editor show roots {sceneName}");
+            yield return SetSceneRootsActive(scene, true);
+        }
+    }
+
+    static IEnumerator SetSceneRootsActive(Scene scene, bool active)
+    {
+        if (!scene.isLoaded)
+            yield break;
+
+        GameObject[] roots = scene.GetRootGameObjects();
+        for (int i = 0; i < roots.Length; i++)
+        {
+            if (roots[i] != null)
+                roots[i].SetActive(active);
+
+            if ((i & 7) == 7)
+                yield return null;
+        }
+    }
+#endif
 
     public IEnumerator ReloadVrScenes()
     {
         transitionRunning = true;
         MRTransitionLog.LogStep("ReloadVrScenes", "begin");
         MRTransitionLog.LogScenes("ReloadVrScenes-begin");
+
+#if UNITY_EDITOR
+        yield return ReactivateEditorHiddenVrScenes();
+#endif
 
         var scenesToLoad = BuildReloadSceneList();
         MRTransitionLog.Log($"ReloadVrScenes queue=[{string.Join(", ", scenesToLoad)}] unloadedHistory=[{string.Join(", ", unloadedSceneNames)}] fixedScene={IsFixedSceneLoaded()}");

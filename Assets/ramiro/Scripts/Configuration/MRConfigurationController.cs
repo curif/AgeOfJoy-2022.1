@@ -2,6 +2,7 @@
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 */
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using LC = LibretroControlMapDictionnary;
@@ -581,7 +582,16 @@ public class MRConfigurationController : MonoBehaviour
                 currentScreen = Screen.Help;
                 break;
             case "MOVE CONFIG":
-                MRConfigurationCabinetController.Instance?.BeginRepositionWithRay();
+                if (MRConfigurationCabinetController.Instance == null
+                    || !MRConfigurationCabinetController.Instance.BeginRepositionWithRay())
+                {
+                    ConfigManager.WriteConsoleWarning(
+                        $"{LogPrefix} MOVE CONFIG failed (cabinet missing or placement ray blocked)");
+                    MRTransitionLog.LogWarning("MOVE CONFIG failed");
+                    navCooldown = navRepeatDelay;
+                    SyncConfirmControlEdgeState();
+                    DrawCurrentScreen();
+                }
                 return;
             case "EXIT":
                 MRConfigurationCabinetController.Instance?.CloseEdit();
@@ -844,21 +854,37 @@ public class MRConfigurationController : MonoBehaviour
         if (placementRay.IsActive)
             return;
 
-        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+        StartCoroutine(BeginAddCabinetWithRayCoroutine(cabinetName));
+    }
 
-        ComputeInitialFloorPose(out Vector3 worldPos, out Quaternion worldRot);
-
-        if (!registry.TrySpawnTransientCabinet(cabinetName, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
-        {
-            ConfigManager.WriteConsoleWarning($"{LogPrefix} add ray spawn failed for {cabinetName}");
-            return;
-        }
-
+    IEnumerator BeginAddCabinetWithRayCoroutine(string cabinetName)
+    {
         placementAddActive = true;
         pendingAddIsEnvironment = false;
         pendingAddCabinetName = cabinetName;
         pendingAddEnvPrefabName = null;
+        pendingAddRoot = null;
+
+        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+
+        ComputeInitialFloorPose(out Vector3 worldPos, out Quaternion worldRot);
+
+        MRTransitionLog.LogStep("PlacementAdd", $"spawn begin {cabinetName}");
+        var spawnResult = new MRLayoutRegistry.CabinetSpawnYieldResult();
+        yield return registry.TrySpawnTransientCabinetAsync(
+            cabinetName, mrSpaceOrigin, worldPos, worldRot, spawnResult);
+
+        if (!spawnResult.Success || spawnResult.Root == null)
+        {
+            CancelPendingAdd(destroyProp: false);
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} add ray spawn failed for {cabinetName}");
+            ShowIdleAfterExternalPlacement();
+            yield break;
+        }
+
+        GameObject root = spawnResult.Root;
         pendingAddRoot = root;
+        MRTransitionLog.LogStep("PlacementAdd", $"spawn done {cabinetName} — placement ray");
 
         MRPlacementProfile profile = MRPlacementProfile.Resolve(root);
         PlacementSurfaceType surfaceType = profile != null

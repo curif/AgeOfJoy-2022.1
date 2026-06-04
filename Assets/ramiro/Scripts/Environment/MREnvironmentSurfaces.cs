@@ -348,26 +348,185 @@ public class MREnvironmentSurfaces : MonoBehaviour
         worldPosition = Vector3.zero;
         worldRotation = Quaternion.identity;
 
-        Vector3 direction = HorizontalForward(rayDirection);
-        if (direction.sqrMagnitude < 0.001f)
+        if (rayDirection.sqrMagnitude < 0.001f)
             return false;
 
-        if (TryFindWallHitAtEye(rayOrigin, direction, maxDistanceMeters, out Vector3 wallPoint, out Vector3 wallNormal, out hitAnchor))
-        {
-            Vector3 intoRoom = HorizontalNormal(wallNormal);
-            if (intoRoom.sqrMagnitude < 0.001f)
-                intoRoom = HorizontalForward(direction);
-            intoRoom = EnsureHorizontalNormalTowardViewpoint(wallPoint, intoRoom, rayOrigin);
-
-            float halfDepth = Mathf.Max(0f, frameDepthMeters) * 0.5f;
-            float depthOffset = wallSurfaceOffsetMeters + halfDepth;
-            worldPosition = wallPoint + intoRoom * depthOffset;
-            worldPosition.y = wallPoint.y;
-            worldRotation = PlacementOrientation.LookRotationWithFacing(intoRoom, facingAxis, Vector3.up);
+        if (TryResolveWallMountedFramePoseFromRay(
+                rayOrigin,
+                rayDirection,
+                maxDistanceMeters,
+                frameDepthMeters,
+                facingAxis,
+                out worldPosition,
+                out worldRotation,
+                out hitAnchor))
             return true;
+
+        Vector3 horizontal = HorizontalForward(rayDirection);
+        if (horizontal.sqrMagnitude < 0.001f)
+            return false;
+
+        float spread = wallMountHorizontalSpreadDegrees;
+        if (spread > 0.01f)
+        {
+            if (TryResolveWallMountedFramePoseFromRay(
+                    rayOrigin,
+                    Quaternion.Euler(0f, spread, 0f) * horizontal,
+                    maxDistanceMeters,
+                    frameDepthMeters,
+                    facingAxis,
+                    out worldPosition,
+                    out worldRotation,
+                    out hitAnchor)
+                || TryResolveWallMountedFramePoseFromRay(
+                    rayOrigin,
+                    Quaternion.Euler(0f, -spread, 0f) * horizontal,
+                    maxDistanceMeters,
+                    frameDepthMeters,
+                    facingAxis,
+                    out worldPosition,
+                    out worldRotation,
+                    out hitAnchor))
+                return true;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Placement ray: controller pointer first, then head/camera spread (same strategy as auto wall mount).
+    /// Only returns true on a real MRUK/physics wall hit (no air fallback).
+    /// </summary>
+    public bool TryGetWallMountedFramePoseForPlacementRay(
+        Vector3 rayOrigin,
+        Vector3 rayDirection,
+        Transform viewpointFallback,
+        float maxDistanceMeters,
+        float frameDepthMeters,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation,
+        out MRUKAnchor hitAnchor,
+        PlacementFacingAxis facingAxis = PlacementFacingAxis.NegativeX)
+    {
+        if (TryGetWallMountedFramePoseFromRay(
+                rayOrigin,
+                rayDirection,
+                maxDistanceMeters,
+                frameDepthMeters,
+                out worldPosition,
+                out worldRotation,
+                out hitAnchor,
+                facingAxis))
+            return true;
+
+        if (viewpointFallback == null)
+            return false;
+
+        ResolveViewpoint(viewpointFallback, out Vector3 eye, out Vector3 viewForward);
+        float mountY = eye.y + wallMountEyeHeightOffsetMeters;
+        eye.y = mountY;
+
+        if (TryFindWallHitAtEye(eye, viewForward, maxDistanceMeters, out Vector3 wallPoint, out Vector3 wallNormal, out hitAnchor)
+            || TryFindWallHitAtEye(
+                eye,
+                Quaternion.Euler(0f, wallMountHorizontalSpreadDegrees, 0f) * viewForward,
+                maxDistanceMeters,
+                out wallPoint,
+                out wallNormal,
+                out hitAnchor)
+            || TryFindWallHitAtEye(
+                eye,
+                Quaternion.Euler(0f, -wallMountHorizontalSpreadDegrees, 0f) * viewForward,
+                maxDistanceMeters,
+                out wallPoint,
+                out wallNormal,
+                out hitAnchor))
+        {
+            return TryComposeWallMountedFramePose(
+                eye,
+                wallPoint,
+                wallNormal,
+                frameDepthMeters,
+                facingAxis,
+                mountY,
+                out worldPosition,
+                out worldRotation);
+        }
+
+        hitAnchor = null;
+        worldPosition = Vector3.zero;
+        worldRotation = Quaternion.identity;
+        return false;
+    }
+
+    bool TryResolveWallMountedFramePoseFromRay(
+        Vector3 rayOrigin,
+        Vector3 rayDirection,
+        float maxDistanceMeters,
+        float frameDepthMeters,
+        PlacementFacingAxis facingAxis,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation,
+        out MRUKAnchor hitAnchor)
+    {
+        hitAnchor = null;
+        worldPosition = Vector3.zero;
+        worldRotation = Quaternion.identity;
+
+        Vector3 direction = rayDirection.sqrMagnitude > 0.001f ? rayDirection.normalized : Vector3.zero;
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
+        if (!TryFindWallHitAtEye(
+                rayOrigin,
+                direction,
+                maxDistanceMeters,
+                out Vector3 wallPoint,
+                out Vector3 wallNormal,
+                out hitAnchor,
+                flattenLookDirection: false)
+            && !TryFindWallHitAtEye(
+                rayOrigin,
+                direction,
+                maxDistanceMeters,
+                out wallPoint,
+                out wallNormal,
+                out hitAnchor,
+                flattenLookDirection: true))
+            return false;
+
+        return TryComposeWallMountedFramePose(
+            rayOrigin,
+            wallPoint,
+            wallNormal,
+            frameDepthMeters,
+            facingAxis,
+            wallPoint.y,
+            out worldPosition,
+            out worldRotation);
+    }
+
+    bool TryComposeWallMountedFramePose(
+        Vector3 viewpoint,
+        Vector3 wallPoint,
+        Vector3 wallNormal,
+        float frameDepthMeters,
+        PlacementFacingAxis facingAxis,
+        float mountY,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation)
+    {
+        Vector3 intoRoom = HorizontalNormal(wallNormal);
+        if (intoRoom.sqrMagnitude < 0.001f)
+            intoRoom = Vector3.forward;
+        intoRoom = EnsureHorizontalNormalTowardViewpoint(wallPoint, intoRoom, viewpoint);
+
+        float halfDepth = Mathf.Max(0f, frameDepthMeters) * 0.5f;
+        float depthOffset = wallSurfaceOffsetMeters + halfDepth;
+        worldPosition = wallPoint + intoRoom * depthOffset;
+        worldPosition.y = mountY;
+        worldRotation = PlacementOrientation.LookRotationWithFacing(intoRoom, facingAxis, Vector3.up);
+        return true;
     }
 
     public bool TryGetWallMountedFramePoseFromRay(
@@ -396,13 +555,21 @@ public class MREnvironmentSurfaces : MonoBehaviour
         float maxDistanceMeters,
         out Vector3 wallPoint,
         out Vector3 wallNormal,
-        out MRUKAnchor hitAnchor)
+        out MRUKAnchor hitAnchor,
+        bool flattenLookDirection = true)
     {
         hitAnchor = null;
         wallPoint = default;
         wallNormal = default;
 
-        Vector3 direction = HorizontalForward(lookDirection);
+        Vector3 direction = flattenLookDirection
+            ? HorizontalForward(lookDirection)
+            : lookDirection.sqrMagnitude > 0.001f
+                ? lookDirection.normalized
+                : Vector3.zero;
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+
         float rayDistance = Mathf.Max(0.5f, Mathf.Min(maxDistanceMeters, wallMountMaxRayDistanceMeters));
         Ray ray = new Ray(eye, direction);
 

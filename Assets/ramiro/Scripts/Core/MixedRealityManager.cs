@@ -102,6 +102,28 @@ public class MixedRealityManager : MonoBehaviour
             Instance = null;
     }
 
+    void OnApplicationPause(bool paused)
+    {
+        if (paused)
+            PersistMrLayoutPoses("OnApplicationPause");
+    }
+
+    void OnApplicationQuit()
+    {
+        PersistMrLayoutPoses("OnApplicationQuit");
+    }
+
+    /// <summary>Write live transforms to mr-layout / mr-environment-layout (MR exit, app pause, or quit).</summary>
+    public void PersistMrLayoutPoses(string reason)
+    {
+        if (CurrentMode != ExperienceMode.MR && CurrentMode != ExperienceMode.MR_EDIT)
+            return;
+
+        MRTransitionLog.LogStep("PersistMrLayoutPoses", reason);
+        ActiveRegistry()?.SnapshotSpawnedWorldPosesToLayout();
+        ActiveEnvironmentRegistry()?.SnapshotSpawnedWorldPosesToLayout();
+    }
+
     public bool CanToggleMode() => !transitionInProgress && (sceneTransition == null || !sceneTransition.IsTransitionRunning);
 
     public bool TransitionInProgress => transitionInProgress;
@@ -262,8 +284,7 @@ public class MixedRealityManager : MonoBehaviour
         RememberMrPlayerPose();
         MRConfigurationCabinetController.Instance?.ForceCloseEdit();
         MRVrSystemsGate.SilenceAllCabinetScreensForPhoneBoothTravelToVr();
-        ActiveRegistry()?.SnapshotSpawnedWorldPosesToLayout();
-        ActiveEnvironmentRegistry()?.SnapshotSpawnedWorldPosesToLayout();
+        PersistMrLayoutPoses("BeginMrExitImmediateSync");
         MRConfigurationCabinetController.Instance?.HideForMrExit();
         mrLighting?.Despawn();
         int hidden = ActiveRegistry()?.HideAllMrCabinetsImmediateCount() ?? 0;
@@ -417,6 +438,9 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTransitionLog.LogStep("EnterMRCoroutine", "before SuspendForMR");
         MRVrSystemsGate.SuspendForMR();
+        yield return MRVrSystemsGate.WaitForShutdownBeforeSceneUnload();
+        if (!IsTransitionCurrent(generation))
+            yield break;
 
         yield return UnloadVrScenesUnderBlackoutThenPassthrough(generation);
         if (!IsTransitionCurrent(generation))
@@ -441,12 +465,17 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogStep("EnterMRCoroutine", "after SetMode MR");
 
         mrLighting?.Spawn(MRSpaceOrigin);
-        ActiveRegistry()?.SpawnAll(MRSpaceOrigin);
+        MRLayoutRegistry layoutRegistry = ActiveRegistry();
+        if (layoutRegistry != null)
+            yield return layoutRegistry.SpawnAllAsync(MRSpaceOrigin);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
         ActiveEnvironmentRegistry()?.SpawnAll(MRSpaceOrigin);
         MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
 
         yield return null;
-        ActiveRegistry()?.EnsureAttractPlaybackOnSpawned();
+        layoutRegistry?.EnsureAttractPlaybackOnSpawned();
 
         yield return RefreshMrPosesWhenReady(generation, player);
 
@@ -472,6 +501,9 @@ public class MixedRealityManager : MonoBehaviour
 
         MRRoomInfoUI.Instance?.RefreshContent();
         MRVrSystemsGate.SuspendForMR();
+        yield return MRVrSystemsGate.WaitForShutdownBeforeSceneUnload();
+        if (!IsTransitionCurrent(generation))
+            yield break;
 
         yield return EnablePassthroughAdoptBoothThenUnload(portal, generation);
         if (!IsTransitionCurrent(generation))
@@ -495,21 +527,41 @@ public class MixedRealityManager : MonoBehaviour
 
         passthrough.RefreshPassthroughAfterSceneUnload();
 
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before SetMode MR");
         SetMode(ExperienceMode.MR);
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "after SetMode MR");
+
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before mrLighting.Spawn");
         mrLighting?.Spawn(MRSpaceOrigin);
-        ActiveRegistry()?.SpawnAll(MRSpaceOrigin);
+
+        // Match 0.5.0 order: spawn MR layout + config cabinet and refresh poses *before*
+        // phone-booth explosion. Spawning config first then exploding caused the initial
+        // placement ray to cancel (~1s) and confused MOVE CONFIG on device.
+        MRLayoutRegistry layoutRegistry = ActiveRegistry();
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before layout SpawnAllAsync");
+        if (layoutRegistry != null)
+            yield return layoutRegistry.SpawnAllAsync(MRSpaceOrigin);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before env SpawnAll");
         ActiveEnvironmentRegistry()?.SpawnAll(MRSpaceOrigin);
+
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before config cabinet SpawnAtMrOrigin");
         MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
 
         yield return null;
-        ActiveRegistry()?.EnsureAttractPlaybackOnSpawned();
+        layoutRegistry?.EnsureAttractPlaybackOnSpawned();
         yield return RefreshMrPosesWhenReady(generation, player);
+        if (!IsTransitionCurrent(generation))
+            yield break;
 
         portal.PlaceOnMrFloor(environmentSurfaces, player);
         ApplyPhoneBoothTravelState(portal, travelState);
         MRPhoneBoothSettings.SetVisible(true);
         portal.SetVisible(true);
 
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before arrival explosion");
         yield return portal.PlayTravelArrivalExplosionAndRestoreGlassDoor();
         if (!IsTransitionCurrent(generation))
             yield break;
@@ -710,7 +762,8 @@ public class MixedRealityManager : MonoBehaviour
                 yield return environmentSurfaces.ProbeWhenReady(player);
 
             ActiveRegistry()?.RefreshAllSpawnedPosesFromLayout();
-            MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
+            if (!MRPlacementRayController.AnyActive)
+                MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
 
             if (attempt == 0 || attempt == maxAttempts - 1)
                 MRTransitionLog.LogManagerState($"EnterMRCoroutine-refresh-{attempt}");

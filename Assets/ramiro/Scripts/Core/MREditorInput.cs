@@ -89,14 +89,22 @@ public static class MREditorInput
 
     public static bool MrModeToggleHeld()
     {
+#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
         return IsAnyHeld(KeyCode.Return, KeyCode.KeypadEnter)
             || IsGamepadButtonHeld(0)
             || IsGamepadStartHeld();
+#else
+        return false;
+#endif
     }
 
     public static bool YButtonHeld()
     {
+#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
         return IsHeld(KeyCode.Y) || IsGamepadButtonHeld(3);
+#else
+        return false;
+#endif
     }
 
 #if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
