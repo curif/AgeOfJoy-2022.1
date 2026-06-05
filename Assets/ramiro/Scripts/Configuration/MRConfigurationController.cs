@@ -16,6 +16,7 @@ public class MRConfigurationController : MonoBehaviour
     const string LogPrefix = "[MRConfigurationController]";
     const string DefaultSkin = "c64";
     const int VisibleCabinetRows = 11;
+    const int MeshOptionCount = 2;
 
     enum Screen
     {
@@ -25,6 +26,7 @@ public class MRConfigurationController : MonoBehaviour
         Adjustments,
         PhoneBooth,
         Environment,
+        Mesh,
         Help
     }
 
@@ -111,6 +113,7 @@ public class MRConfigurationController : MonoBehaviour
         placementRay = EnsurePlacementRayController();
         MRAdjustmentsSettings.EnsureLoaded();
         MRPhoneBoothSettings.EnsureLoaded();
+        MREffectMeshSettings.EnsureLoaded();
         registry.EnsureLayoutLoaded();
         envRegistry.EnsureLayoutLoaded();
         registry.SpawnAll(mrSpaceOrigin);
@@ -247,6 +250,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu = new GenericMenu(screen, "MR CONFIGURATION");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("ENVIRONMENT", "Props from PrefabsEnvironment");
+        navMenu.AddOption("MESH", "EffectMesh layers (occluder walls)");
         navMenu.AddOption("MOVE CONFIG", "Reposition ConfigurationCabinetMiniMR");
         navMenu.AddOption("ADJUSTMENTS", "Scale and floor position for game cabinets");
         navMenu.AddOption("PHONE BOOTH", "Show or hide phone booth in MR");
@@ -288,6 +292,9 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Environment:
                 DrawEnvironmentPage();
+                break;
+            case Screen.Mesh:
+                DrawMeshPage();
                 break;
             case Screen.Help:
                 DrawHelpPage();
@@ -400,6 +407,44 @@ public class MRConfigurationController : MonoBehaviour
         DrawFooter(selectedInScene ? "A: Rem   Y: move   B: back" : "A: Add   B: back");
     }
 
+    void DrawMeshPage()
+    {
+        screen.PrintCentered(0, "MESH", true);
+        screen.PrintLine(1, false, '-');
+
+        screen.Print(1, 2, "Name", false);
+        screen.Print(22, 2, "On", false);
+        screen.Print(28, 2, "Act", false);
+        screen.PrintLine(3, false, '-');
+
+        DrawMeshRow(
+            4,
+            MREffectMeshVisibility.AnchorMeshLabel,
+            MREffectMeshSettings.AnchorMeshEnabled,
+            MREffectMeshVisibility.GetAnchorStatusLabel(),
+            selectedListIndex == 0);
+        DrawMeshRow(
+            6,
+            MREffectMeshVisibility.GlobalMeshLabel,
+            MREffectMeshSettings.GlobalMeshEnabled,
+            MREffectMeshVisibility.GetGlobalStatusLabel(),
+            selectedListIndex == 1);
+
+        screen.Print(1, 12, "Occluder walls in MR", false);
+        screen.Print(1, 13, "OFF saves GPU / room scan", false);
+        DrawFooter("A: toggle On/Off   B: back");
+    }
+
+    void DrawMeshRow(int row, string label, bool enabled, string status, bool selected)
+    {
+        string line = PadRight(Truncate(label, 18), 20)
+            + (enabled ? "Yes" : " No")
+            + " "
+            + (enabled ? "Off" : " On");
+        screen.Print(1, row, selected ? "> " + line : "  " + line, selected);
+        screen.Print(1, row + 1, $"   {Truncate(status, 34)}", false);
+    }
+
     void DrawPhoneBoothPage()
     {
         screen.PrintCentered(0, "PHONE BOOTH", true);
@@ -426,13 +471,14 @@ public class MRConfigurationController : MonoBehaviour
         screen.Print(2, 9, "Add/Move: floor ray", false);
         screen.Print(2, 10, "Adjustments: scale/floor", false);
         screen.Print(2, 11, "Environment: props", false);
-        screen.Print(2, 12, "Phone booth: show/hide", false);
-        screen.Print(2, 13, "R stick L/R: adjust +/-0.01", false);
-        screen.Print(2, 14, "R stick L/R: rotate Y*", false);
-        screen.Print(2, 15, "* floor/ceiling/wall prefab", false);
-        screen.Print(2, 16, "Catalog = cabinetsdb/", false);
-        screen.Print(2, 17, "Env = PrefabsEnvironment/", false);
-        screen.Print(2, 18, "In Scene = mr-layout.yaml", false);
+        screen.Print(2, 12, "Mesh: EffectMesh on/off", false);
+        screen.Print(2, 13, "Phone booth: show/hide", false);
+        screen.Print(2, 14, "R stick L/R: adjust +/-0.01", false);
+        screen.Print(2, 15, "R stick L/R: rotate Y*", false);
+        screen.Print(2, 16, "* floor/ceiling/wall prefab", false);
+        screen.Print(2, 17, "Catalog = cabinetsdb/", false);
+        screen.Print(2, 18, "Env = PrefabsEnvironment/", false);
+        screen.Print(2, 19, "In Scene = mr-layout.yaml", false);
         DrawFooter("B: back");
     }
 
@@ -459,6 +505,7 @@ public class MRConfigurationController : MonoBehaviour
         {
             Screen.Cabinets => catalogNames.Count,
             Screen.Environment => envCatalogNames.Count,
+            Screen.Mesh => MeshOptionCount,
             _ => 0
         };
     }
@@ -477,6 +524,7 @@ public class MRConfigurationController : MonoBehaviour
 
             case Screen.Cabinets:
             case Screen.Environment:
+            case Screen.Mesh:
                 int count = GetListCount();
                 if (count == 0)
                     return;
@@ -554,6 +602,10 @@ public class MRConfigurationController : MonoBehaviour
                 MRPhoneBoothVisibility.Toggle();
                 DrawCurrentScreen();
                 break;
+            case Screen.Mesh:
+                ExecuteMeshToggle(selectedListIndex);
+                DrawCurrentScreen();
+                break;
         }
     }
 
@@ -577,6 +629,11 @@ public class MRConfigurationController : MonoBehaviour
                 selectedListIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.Environment;
+                break;
+            case "MESH":
+                selectedListIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.Mesh;
                 break;
             case "HELP":
                 currentScreen = Screen.Help;
@@ -679,6 +736,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Cabinets:
             case Screen.Adjustments:
             case Screen.PhoneBooth:
+            case Screen.Mesh:
             case Screen.Environment:
             case Screen.Help:
                 currentScreen = Screen.NavMain;
@@ -690,6 +748,19 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.NavMain:
                 MRConfigurationCabinetController.Instance?.CloseEdit();
+                break;
+        }
+    }
+
+    void ExecuteMeshToggle(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                MREffectMeshVisibility.ToggleAnchorMesh();
+                break;
+            case 1:
+                MREffectMeshVisibility.ToggleGlobalMesh();
                 break;
         }
     }

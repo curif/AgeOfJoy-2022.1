@@ -23,6 +23,7 @@ public class MixedRealityManager : MonoBehaviour
     MRLayoutRegistry layoutRegistry;
     MREnvironmentRegistry environmentRegistry;
     MRMrEnvironmentLighting mrLighting;
+    MREffectMeshController mrEffectMesh;
     MREnvironmentSurfaces environmentSurfaces;
     bool transitionInProgress;
     Coroutine runningTransition;
@@ -68,6 +69,10 @@ public class MixedRealityManager : MonoBehaviour
         mrLighting = GetComponent<MRMrEnvironmentLighting>();
         if (mrLighting == null)
             mrLighting = gameObject.AddComponent<MRMrEnvironmentLighting>();
+
+        mrEffectMesh = GetComponent<MREffectMeshController>();
+        if (mrEffectMesh == null)
+            mrEffectMesh = gameObject.AddComponent<MREffectMeshController>();
 
         environmentSurfaces = GetComponent<MREnvironmentSurfaces>();
         if (environmentSurfaces == null)
@@ -287,6 +292,7 @@ public class MixedRealityManager : MonoBehaviour
         PersistMrLayoutPoses("BeginMrExitImmediateSync");
         MRConfigurationCabinetController.Instance?.HideForMrExit();
         mrLighting?.Despawn();
+        mrEffectMesh?.Despawn();
         int hidden = ActiveRegistry()?.HideAllMrCabinetsImmediateCount() ?? 0;
         int hiddenEnv = ActiveEnvironmentRegistry()?.HideAllImmediateCount() ?? 0;
         MRTransitionLog.Log($"sync hide done mrCabinetsHidden={hidden} envPropsHidden={hiddenEnv}");
@@ -465,6 +471,7 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogStep("EnterMRCoroutine", "after SetMode MR");
 
         mrLighting?.Spawn(MRSpaceOrigin);
+        mrEffectMesh?.Spawn();
         MRLayoutRegistry layoutRegistry = ActiveRegistry();
         if (layoutRegistry != null)
             yield return layoutRegistry.SpawnAllAsync(MRSpaceOrigin);
@@ -533,6 +540,7 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before mrLighting.Spawn");
         mrLighting?.Spawn(MRSpaceOrigin);
+        mrEffectMesh?.Spawn();
 
         // Match 0.5.0 order: spawn MR layout + config cabinet and refresh poses *before*
         // phone-booth explosion. Spawning config first then exploding caused the initial
