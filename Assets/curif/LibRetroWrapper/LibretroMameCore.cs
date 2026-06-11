@@ -1307,7 +1307,9 @@ public static unsafe class LibretroMameCore
         GameFileName = "";
         ScreenName = "";
         GameLoaded = false;
+#if !UNITY_EDITOR
         wrapper_led_reset();
+#endif
 
         CoinSlot?.clean();
         CoinSlot = null;

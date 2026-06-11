@@ -52,6 +52,8 @@ public static class MRAnchorPoseResolver
                     : null;
             case PlacementSurfaceType.Ceiling:
                 return room.CeilingAnchor;
+            case PlacementSurfaceType.Table:
+                return null;
             case PlacementSurfaceType.Floor:
             default:
                 return room.FloorAnchor;
@@ -81,6 +83,29 @@ public static class MRAnchorPoseResolver
         return best;
     }
 
+    public static MRUKAnchor FindClosestTableAnchor(MRUKRoom room, Vector3 worldPosition)
+    {
+        if (room?.Anchors == null)
+            return null;
+
+        MRUKAnchor best = null;
+        float bestDistance = float.MaxValue;
+        foreach (MRUKAnchor anchor in room.Anchors)
+        {
+            if (anchor == null || !anchor.HasAnyLabel(MRUKAnchor.SceneLabels.TABLE))
+                continue;
+
+            float distance = Vector3.Distance(anchor.GetAnchorCenter(), worldPosition);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = anchor;
+            }
+        }
+
+        return best;
+    }
+
     public static Guid ResolveAnchorUuid(
         MRUKRoom room,
         PlacementSurfaceType surface,
@@ -90,9 +115,13 @@ public static class MRAnchorPoseResolver
         if (hitUuid != Guid.Empty)
             return hitUuid;
 
-        MRUKAnchor fallback = surface == PlacementSurfaceType.Wall
-            ? FindClosestWallAnchor(room, worldPosition)
-            : GetDefaultAnchor(room, surface);
+        MRUKAnchor fallback;
+        if (surface == PlacementSurfaceType.Wall)
+            fallback = FindClosestWallAnchor(room, worldPosition);
+        else if (surface == PlacementSurfaceType.Table)
+            fallback = FindClosestTableAnchor(room, worldPosition);
+        else
+            fallback = GetDefaultAnchor(room, surface);
 
         return TryGetUuid(fallback, out Guid uuid) ? uuid : Guid.Empty;
     }

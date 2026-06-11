@@ -1105,6 +1105,13 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
+        if (surfaceType == PlacementSurfaceType.Table)
+        {
+            if (surfaces.TryGetTablePointAt(worldPos, out Vector3 tablePoint))
+                worldPos = tablePoint;
+            return;
+        }
+
         if (surfaces.TryGetFloorPointAt(worldPos, out Vector3 floorPoint))
             worldPos = floorPoint;
     }

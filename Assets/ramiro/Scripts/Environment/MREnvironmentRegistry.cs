@@ -319,6 +319,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         {
             root.transform.SetPositionAndRotation(worldPosition, worldRotation);
             root.transform.localScale = Vector3.one * placement.Scale;
+            NotifyPortableGamesPlacementUpdated(root);
         }
 
         ConfigManager.WriteConsole($"{LogPrefix} updated pose {placement.DisplayLabel} ({placementId})");
@@ -337,6 +338,7 @@ public class MREnvironmentRegistry : MonoBehaviour
             return false;
 
         root.transform.localScale = Vector3.one * (placement.Scale > 0f ? placement.Scale : 1f);
+        NotifyPortableGamesPlacementUpdated(root);
 
         MRPlacedEnvironment marker = root.GetComponent<MRPlacedEnvironment>();
         if (marker == null)
@@ -367,7 +369,17 @@ public class MREnvironmentRegistry : MonoBehaviour
         spawnedRoot = Instantiate(prefab, worldPos, worldRot);
         spawnedRoot.name = prefabName;
         spawnedRoot.transform.SetParent(null, worldPositionStays: true);
+        NotifyPortableGamesPlacementUpdated(spawnedRoot);
         return true;
+    }
+
+    static void NotifyPortableGamesPlacementUpdated(GameObject root)
+    {
+        if (root == null)
+            return;
+
+        PortableGamesTwoHandGrab grab = root.GetComponentInChildren<PortableGamesTwoHandGrab>(true);
+        grab?.NotifyPlacementPoseUpdated();
     }
 
     void DestroySpawnedInstance(string placementId)

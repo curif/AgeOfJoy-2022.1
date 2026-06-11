@@ -54,6 +54,7 @@ public class MREnvironmentSurfaces : MonoBehaviour
     static readonly LabelFilter FloorLabelFilter = new LabelFilter(MRUKAnchor.SceneLabels.FLOOR);
     static readonly LabelFilter CeilingLabelFilter = new LabelFilter(MRUKAnchor.SceneLabels.CEILING);
     static readonly LabelFilter WallLabelFilter = new LabelFilter(MRUKAnchor.SceneLabels.WALL_FACE);
+    static readonly LabelFilter TableLabelFilter = new LabelFilter(MRUKAnchor.SceneLabels.TABLE);
 
     MRSceneBootstrap sceneBootstrap;
     MRUKRoom room;
@@ -744,6 +745,90 @@ public class MREnvironmentSurfaces : MonoBehaviour
         out Vector3 floorPoint)
     {
         return TryGetFloorPointFromRay(rayOrigin, rayDirection, maxDistanceMeters, out floorPoint, out _);
+    }
+
+    /// <summary>Tabletop hit along a controller ray (MRUK TABLE label), fallback to vertical probe at ray end.</summary>
+    public bool TryGetTablePointFromRay(
+        Vector3 rayOrigin,
+        Vector3 rayDirection,
+        float maxDistanceMeters,
+        out Vector3 tablePoint,
+        out MRUKAnchor hitAnchor)
+    {
+        hitAnchor = null;
+        tablePoint = default;
+
+        Vector3 direction = rayDirection;
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+        direction.Normalize();
+
+        float rayDistance = Mathf.Max(0.5f, maxDistanceMeters);
+        Ray ray = new Ray(rayOrigin, direction);
+
+        if (room != null)
+        {
+            Pose pose = room.GetBestPoseFromRaycast(
+                ray,
+                rayDistance,
+                TableLabelFilter,
+                out hitAnchor,
+                out _,
+                MRUK.PositioningMethod.DEFAULT);
+
+            if (hitAnchor != null)
+            {
+                tablePoint = pose.position;
+                return true;
+            }
+        }
+
+        Vector3 probe = rayOrigin + direction * rayDistance;
+        if (TryGetTablePointAt(probe, out tablePoint))
+            return true;
+
+        return false;
+    }
+
+    /// <summary>Project a horizontal point onto the nearest MRUK table surface in the current room.</summary>
+    public bool TryGetTablePointAt(Vector3 worldNear, out Vector3 tablePoint)
+    {
+        tablePoint = default;
+
+        if (room != null)
+        {
+            float startY = worldNear.y + floorRayStartAboveMeters;
+            Vector3 origin = new Vector3(worldNear.x, startY, worldNear.z);
+            Ray downRay = new Ray(origin, Vector3.down);
+
+            Pose pose = room.GetBestPoseFromRaycast(
+                downRay,
+                floorRayMaxDistanceMeters + floorRayStartAboveMeters,
+                TableLabelFilter,
+                out MRUKAnchor hitAnchor,
+                out _,
+                MRUK.PositioningMethod.DEFAULT);
+
+            if (hitAnchor != null)
+            {
+                tablePoint = pose.position;
+                return true;
+            }
+
+            float dist = room.TryGetClosestSurfacePosition(
+                new Vector3(worldNear.x, worldNear.y + 0.35f, worldNear.z),
+                out Vector3 closest,
+                out _,
+                out Vector3 normal,
+                TableLabelFilter);
+            if (FoundSurface(dist) && IsFloorNormal(normal))
+            {
+                tablePoint = new Vector3(worldNear.x, closest.y, worldNear.z);
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>Ceiling hit along a controller ray (MRUK ceiling filter), fallback to vertical probe at ray end.</summary>

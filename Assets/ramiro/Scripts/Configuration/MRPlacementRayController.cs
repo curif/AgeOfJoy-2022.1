@@ -7,7 +7,7 @@ using UnityEngine;
 
 /// <summary>
 /// Runtime placement ray used to reposition placed MR objects.
-/// Supports Floor, Wall, and Ceiling surfaces.
+/// Supports Floor, Wall, Ceiling, and Table surfaces.
 /// </summary>
 public class MRPlacementRayController : MonoBehaviour
 {
@@ -138,7 +138,8 @@ public class MRPlacementRayController : MonoBehaviour
 
         // Game cabinets are not prefabs — floor/ceiling placement defaults to yaw on world Y.
         stickEnabled = placementSurface == PlacementSurfaceType.Floor
-            || placementSurface == PlacementSurfaceType.Ceiling;
+            || placementSurface == PlacementSurfaceType.Ceiling
+            || placementSurface == PlacementSurfaceType.Table;
         rotationAxis = PlacementStickRotationAxis.WorldYaw;
         rotationSpeed = defaultStickRotationSpeed;
     }
@@ -148,7 +149,8 @@ public class MRPlacementRayController : MonoBehaviour
         if (profile != null)
             return profile.allowStickRotation;
         return placementSurface == PlacementSurfaceType.Floor
-            || placementSurface == PlacementSurfaceType.Ceiling;
+            || placementSurface == PlacementSurfaceType.Ceiling
+            || placementSurface == PlacementSurfaceType.Table;
     }
 
     void Update()
@@ -254,6 +256,34 @@ public class MRPlacementRayController : MonoBehaviour
                     }
 
                     ApplyCeilingPivotOffset(movingTarget, ref worldPos, worldRot);
+                    ok = true;
+                }
+                break;
+
+            case PlacementSurfaceType.Table:
+                if (surfaces != null && surfaces.TryGetTablePointFromRay(
+                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 tablePoint, out Meta.XR.MRUtilityKit.MRUKAnchor tableAnchor))
+                {
+                    MRAnchorPoseResolver.TryGetUuid(tableAnchor, out hitAnchorUuid);
+                    worldPos = tablePoint;
+                    if (allowStickRotation)
+                    {
+                        Quaternion baseYaw = Quaternion.Euler(0f, initialYawDegrees, 0f);
+                        worldRot = PlacementOrientation.ApplyStickRotationOffset(
+                            baseYaw, stickRotationAxis, userYawOffsetDegrees);
+                    }
+                    else
+                    {
+                        Vector3 look = viewerPosition - worldPos;
+                        look.y = 0f;
+                        if (look.sqrMagnitude < 0.001f)
+                            look = Vector3.forward;
+                        worldRot = PlacementOrientation.LookRotationWithFacing(look, facingAxis, Vector3.up);
+                        worldRot = PlacementOrientation.EnsureFacingViewer(
+                            worldRot, facingAxis, worldPos, viewerPosition);
+                    }
+
+                    ApplyFloorPivotOffset(movingTarget, ref worldPos, worldRot);
                     ok = true;
                 }
                 break;

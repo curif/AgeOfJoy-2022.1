@@ -40,7 +40,8 @@ public enum PlacementSurfaceType
     Floor = 0,
     Wall = 1,
     Ceiling = 2,
-    Free3D = 3
+    Free3D = 3,
+    Table = 4
 }
 
 [Serializable]

@@ -31,18 +31,27 @@ public class GameVideoPlayer : MonoBehaviour
     //private Texture2D FirstTexture = null;
     private TextureCache textureCache;
 
+    void EnsureInitialized()
+    {
+        if (videoPlayer == null)
+            videoPlayer = GetComponent<UnityEngine.Video.VideoPlayer>();
+        if (textureCache == null)
+            textureCache = GetComponent<TextureCache>();
+        if (display == null)
+            display = GetComponent<Renderer>();
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        display = GetComponent<Renderer>();
-        videoPlayer = GetComponent<UnityEngine.Video.VideoPlayer>();
+        EnsureInitialized();
         isPreparing = false;
-        textureCache = GetComponent<TextureCache>();
     }
 
     public GameVideoPlayer setVideo(string path, ShaderScreenBase shader, bool invertx, bool inverty)
     {
 #if !DISABLE_VIDEO
+        EnsureInitialized();
         this.shader = shader;
 
         if (string.IsNullOrEmpty(path))
@@ -88,6 +97,7 @@ public class GameVideoPlayer : MonoBehaviour
     public GameVideoPlayer Play()
     {
 #if !DISABLE_VIDEO
+        EnsureInitialized();
         // ConfigManager.WriteConsole($"[videoPlayer.Play] prepared: {videoPlayer.isPrepared} playing: {videoPlayer.isPlaying} {videoPath}  ====");
         if (videoPlayer == null || string.IsNullOrEmpty(videoPath) || isPreparing)
             return this;

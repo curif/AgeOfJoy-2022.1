@@ -21,13 +21,11 @@ namespace Assets.curif.LibRetroWrapper
         private static string ARCH = "android";
 
         private static Dictionary<string, Core> Cores = new Dictionary<string, Core>();
+        static bool coresInitialized;
 
         private void Start()
         {
-            SyncCores();
-            ScanForUserCores();
-            AddEmbeddedCores();
-            CreateCoreDirs();
+            LoadCores();
 
 #if DEBUG_CONFIG
                 foreach (var core in Cores)
@@ -85,10 +83,47 @@ namespace Assets.curif.LibRetroWrapper
             return coreEnvironment;
         }
 
+        public static void EnsureLoaded()
+        {
+            if (coresInitialized && Cores.Count > 0)
+                return;
+
+            CoresController controller = UnityEngine.Object.FindObjectOfType<CoresController>();
+            if (controller == null)
+            {
+                GameObject go = new GameObject("CoresController");
+                controller = go.AddComponent<CoresController>();
+            }
+
+            controller.LoadCores();
+        }
+
+        void LoadCores()
+        {
+            if (coresInitialized)
+                return;
+
+            ConfigManager.InitFolders();
+            SyncCores();
+            ScanForUserCores();
+            AddEmbeddedCores();
+            CreateCoreDirs();
+            coresInitialized = true;
+            ConfigManager.WriteConsole($"[CoresController] loaded {Cores.Count} core(s): {string.Join(", ", GetCoreNames())}");
+        }
+
         private void SyncCores()
         {
-            var sourceFiles = new DirectoryInfo(ConfigManager.CoresDir).GetFiles();
-            var targetFiles = new DirectoryInfo(ConfigManager.InternalCoresDir).GetFiles();
+            ConfigManager.CreateFolder(ConfigManager.CoresDir);
+            ConfigManager.CreateFolder(ConfigManager.InternalCoresDir);
+
+            if (!Directory.Exists(ConfigManager.CoresDir))
+                return;
+
+            FileInfo[] sourceFiles = new DirectoryInfo(ConfigManager.CoresDir).GetFiles();
+            FileInfo[] targetFiles = Directory.Exists(ConfigManager.InternalCoresDir)
+                ? new DirectoryInfo(ConfigManager.InternalCoresDir).GetFiles()
+                : Array.Empty<FileInfo>();
             
             var targetFilesDict = new Dictionary<string, FileInfo>(StringComparer.OrdinalIgnoreCase);
             foreach (var file in targetFiles)
@@ -179,6 +214,11 @@ namespace Assets.curif.LibRetroWrapper
         public static bool CoreExists(string core)
         {
             return Cores.ContainsKey(core);
+        }
+
+        public static List<string> GetCoreNames()
+        {
+            return Cores.Keys.OrderBy(name => name).ToList();
         }
     }
 }
