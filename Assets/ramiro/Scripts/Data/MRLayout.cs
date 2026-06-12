@@ -205,7 +205,11 @@ public class MRLayout
 public class MREnvironmentPlacement
 {
     public string Id;
+    /// <summary>build (default) or custom.</summary>
+    public string Source;
     public string PrefabName;
+    /// <summary>Custom Objects package folder name when Source is custom.</summary>
+    public string PackageName;
     public MRVector3 Position;
     public MRQuaternion Rotation;
     public float Scale = 1f;
@@ -215,10 +219,37 @@ public class MREnvironmentPlacement
     public PlacementSurfaceType SurfaceType = PlacementSurfaceType.Floor;
     public PlacementFacingAxis FacingAxis = PlacementFacingAxis.PositiveZ;
 
+    public bool IsCustomSource =>
+        string.Equals(Source, "custom", StringComparison.OrdinalIgnoreCase);
+
+    public void NormalizeLegacySource()
+    {
+        if (!string.IsNullOrEmpty(Source))
+            return;
+
+        if (!string.IsNullOrEmpty(PackageName) && string.IsNullOrEmpty(PrefabName))
+            Source = "custom";
+        else if (!string.IsNullOrEmpty(PrefabName))
+            Source = "build";
+    }
+
+    public bool HasValidCatalogReference()
+    {
+        NormalizeLegacySource();
+        if (IsCustomSource)
+            return !string.IsNullOrEmpty(PackageName);
+        return !string.IsNullOrEmpty(PrefabName);
+    }
+
+    public bool MatchesCatalogEntry(MREnvironmentCatalogEntry entry) => entry.MatchesPlacement(this);
+
     public string DisplayLabel
     {
         get
         {
+            NormalizeLegacySource();
+            if (IsCustomSource && !string.IsNullOrEmpty(PackageName))
+                return PackageName;
             if (!string.IsNullOrEmpty(PrefabName))
                 return PrefabName;
             return string.IsNullOrEmpty(Id) ? "(prop)" : Id;
@@ -229,7 +260,7 @@ public class MREnvironmentPlacement
 [Serializable]
 public class MREnvironmentLayout
 {
-    public int Version = 1;
+    public int Version = 2;
     public List<MREnvironmentPlacement> Props = new();
 
     readonly object propsLock = new object();
@@ -266,8 +297,26 @@ public class MREnvironmentLayout
         {
             foreach (MREnvironmentPlacement placement in Props)
             {
-                if (placement != null
+                if (placement == null)
+                    continue;
+
+                placement.NormalizeLegacySource();
+                if (!placement.IsCustomSource
                     && string.Equals(placement.PrefabName, prefabName, StringComparison.OrdinalIgnoreCase))
+                    return placement;
+            }
+        }
+
+        return null;
+    }
+
+    public MREnvironmentPlacement FindByCatalogEntry(MREnvironmentCatalogEntry entry)
+    {
+        lock (propsLock)
+        {
+            foreach (MREnvironmentPlacement placement in Props)
+            {
+                if (placement != null && entry.MatchesPlacement(placement))
                     return placement;
             }
         }
@@ -297,9 +346,10 @@ public class MREnvironmentLayout
 
     public MREnvironmentPlacement AddPlacement(MREnvironmentPlacement placement)
     {
-        if (placement == null || string.IsNullOrEmpty(placement.PrefabName))
+        if (placement == null || !placement.HasValidCatalogReference())
             return null;
 
+        placement.NormalizeLegacySource();
         lock (propsLock)
             Props.Add(placement);
 
@@ -332,6 +382,13 @@ public class MREnvironmentLayout
             layout = new MREnvironmentLayout();
         if (layout.Props == null)
             layout.Props = new List<MREnvironmentPlacement>();
+
+        foreach (MREnvironmentPlacement placement in layout.Props)
+            placement?.NormalizeLegacySource();
+
+        if (layout.Version < 2)
+            layout.Version = 2;
+
         return layout;
     }
 
@@ -343,7 +400,11 @@ public class MREnvironmentLayout
 
         string yaml;
         lock (propsLock)
+        {
+            foreach (MREnvironmentPlacement placement in Props)
+                placement?.NormalizeLegacySource();
             yaml = serializer.Serialize(this);
+        }
 
         File.WriteAllText(filePath, yaml);
         ConfigManager.WriteConsole($"[MREnvironmentLayout] saved {filePath} ({Props.Count} props)");

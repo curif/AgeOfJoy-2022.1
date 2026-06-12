@@ -9,19 +9,19 @@ using System.IO;
 using UnityEngine;
 
 /// <summary>
-/// MR environment props layout (mr-environment-layout.yaml). Prefabs from Resources/ramiro/PrefabsEnvironment.
+/// MR environment props layout (MR/objects-layout.yaml). Build prefabs + Custom Objects packages.
 /// </summary>
 public class MREnvironmentRegistry : MonoBehaviour
 {
     const string LogPrefix = "[MREnvironmentRegistry]";
-    public const string LayoutFileName = "mr-environment-layout.yaml";
+    public const string LayoutFileName = "objects-layout.yaml";
 
     public static MREnvironmentRegistry Instance { get; private set; }
 
     readonly Dictionary<string, GameObject> spawnedById = new Dictionary<string, GameObject>();
     MREnvironmentLayout layout;
 
-    public string LayoutFilePath => Path.Combine(ConfigManager.CabinetsDB, LayoutFileName);
+    public string LayoutFilePath => MRPaths.ResolveObjectsLayoutPath();
 
     public IReadOnlyList<MREnvironmentPlacement> Placements =>
         layout != null ? layout.GetProps() : Array.Empty<MREnvironmentPlacement>();
@@ -48,20 +48,28 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (layout != null)
             return;
 
-        ConfigManager.CreateFolder(ConfigManager.CabinetsDB);
+        MRPaths.EnsureFolders();
         layout = MREnvironmentLayout.LoadOrCreate(LayoutFilePath);
         ConfigManager.WriteConsole($"{LogPrefix} layout loaded ({layout.Props.Count} entries)");
     }
 
     public void SpawnAll(Transform mrSpaceOrigin)
     {
+        if (!isActiveAndEnabled)
+            return;
+
+        StartCoroutine(SpawnAllAsync(mrSpaceOrigin));
+    }
+
+    public IEnumerator SpawnAllAsync(Transform mrSpaceOrigin)
+    {
         DespawnAll();
         EnsureLayoutLoaded();
 
         if (mrSpaceOrigin == null)
         {
-            ConfigManager.WriteConsoleError($"{LogPrefix} SpawnAll skipped — MRSpaceOrigin is null");
-            return;
+            ConfigManager.WriteConsoleError($"{LogPrefix} SpawnAllAsync skipped — MRSpaceOrigin is null");
+            yield break;
         }
 
         int index = 0;
@@ -70,11 +78,17 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (placement == null || string.IsNullOrEmpty(placement.Id))
                 continue;
 
-            if (TrySpawnPlacement(placement, mrSpaceOrigin, index))
-                index++;
+            if (!placement.HasValidCatalogReference())
+                continue;
+
+            yield return TrySpawnPlacementAsync(placement, mrSpaceOrigin, index, spawned =>
+            {
+                if (spawned)
+                    index++;
+            });
         }
 
-        ConfigManager.WriteConsole($"{LogPrefix} SpawnAll done ({spawnedById.Count} props)");
+        ConfigManager.WriteConsole($"{LogPrefix} SpawnAllAsync done ({spawnedById.Count} props)");
     }
 
     public void DespawnAll()
@@ -177,10 +191,19 @@ public class MREnvironmentRegistry : MonoBehaviour
         return layout?.FindByPrefabName(prefabName);
     }
 
-    public bool IsPrefabInScene(string prefabName)
+    public MREnvironmentPlacement FindPlacementByCatalogEntry(MREnvironmentCatalogEntry entry)
     {
         EnsureLayoutLoaded();
-        return layout?.FindByPrefabName(prefabName) != null;
+        return layout?.FindByCatalogEntry(entry);
+    }
+
+    public bool IsPrefabInScene(string prefabName) =>
+        IsCatalogEntryInScene(MREnvironmentCatalogEntry.FromBuild(prefabName, prefabName));
+
+    public bool IsCatalogEntryInScene(MREnvironmentCatalogEntry entry)
+    {
+        EnsureLayoutLoaded();
+        return layout?.FindByCatalogEntry(entry) != null;
     }
 
     public bool TryGetSpawnedRoot(string placementId, out GameObject root)
@@ -194,10 +217,13 @@ public class MREnvironmentRegistry : MonoBehaviour
         return spawnedById.TryGetValue(placementId, out root) && root != null;
     }
 
-    public bool TryRemovePrefabFromScene(string prefabName)
+    public bool TryRemovePrefabFromScene(string prefabName) =>
+        TryRemoveCatalogEntryFromScene(MREnvironmentCatalogEntry.FromBuild(prefabName, prefabName));
+
+    public bool TryRemoveCatalogEntryFromScene(MREnvironmentCatalogEntry entry)
     {
         EnsureLayoutLoaded();
-        MREnvironmentPlacement placement = layout?.FindByPrefabName(prefabName);
+        MREnvironmentPlacement placement = layout?.FindByCatalogEntry(entry);
         if (placement == null || string.IsNullOrEmpty(placement.Id))
             return false;
 
@@ -226,16 +252,65 @@ public class MREnvironmentRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
+        out GameObject spawnedRoot) =>
+        TrySpawnTransientCatalogEntry(
+            MREnvironmentCatalogEntry.FromBuild(prefabName, prefabName),
+            mrSpaceOrigin,
+            worldPosition,
+            worldRotation,
+            out spawnedRoot);
+
+    public bool TrySpawnTransientCatalogEntry(
+        MREnvironmentCatalogEntry entry,
+        Transform mrSpaceOrigin,
+        Vector3 worldPosition,
+        Quaternion worldRotation,
         out GameObject spawnedRoot)
     {
         spawnedRoot = null;
-        if (string.IsNullOrEmpty(prefabName) || mrSpaceOrigin == null)
+        if (mrSpaceOrigin == null || string.IsNullOrEmpty(entry.Key))
             return false;
 
-        if (IsPrefabInScene(prefabName))
+        if (IsCatalogEntryInScene(entry))
             return false;
 
-        return TrySpawnPrefabAtWorldPose(prefabName, mrSpaceOrigin, worldPosition, worldRotation, out spawnedRoot);
+        if (entry.Source == MREnvironmentObjectSource.Custom)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} custom transient spawn requires async ({entry.Key})");
+            return false;
+        }
+
+        return TrySpawnBuildPrefabAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
+    }
+
+    public IEnumerator TrySpawnTransientCatalogEntryAsync(
+        MREnvironmentCatalogEntry entry,
+        Transform mrSpaceOrigin,
+        Vector3 worldPosition,
+        Quaternion worldRotation,
+        CustomObjectSpawnResult result)
+    {
+        result.Success = false;
+        result.Root = null;
+
+        if (mrSpaceOrigin == null || string.IsNullOrEmpty(entry.Key))
+            yield break;
+
+        if (IsCatalogEntryInScene(entry))
+            yield break;
+
+        if (entry.Source == MREnvironmentObjectSource.Build)
+        {
+            if (TrySpawnBuildPrefabAtWorldPose(entry.Key, worldPosition, worldRotation, out GameObject buildRoot))
+            {
+                result.Root = buildRoot;
+                result.Success = true;
+            }
+
+            yield break;
+        }
+
+        yield return MRCustomObjectLoader.InstantiateAtWorldPose(entry.Key, worldPosition, worldRotation, result);
     }
 
     public bool TryFinalizeTransientAdd(
@@ -244,13 +319,28 @@ public class MREnvironmentRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
+        Guid anchorUuid = default) =>
+        TryFinalizeTransientCatalogEntry(
+            MREnvironmentCatalogEntry.FromBuild(prefabName, prefabName),
+            root,
+            mrSpaceOrigin,
+            worldPosition,
+            worldRotation,
+            anchorUuid);
+
+    public bool TryFinalizeTransientCatalogEntry(
+        MREnvironmentCatalogEntry entry,
+        GameObject root,
+        Transform mrSpaceOrigin,
+        Vector3 worldPosition,
+        Quaternion worldRotation,
         Guid anchorUuid = default)
     {
         EnsureLayoutLoaded();
-        if (layout == null || string.IsNullOrEmpty(prefabName) || root == null || mrSpaceOrigin == null)
+        if (layout == null || string.IsNullOrEmpty(entry.Key) || root == null || mrSpaceOrigin == null)
             return false;
 
-        if (layout.FindByPrefabName(prefabName) != null)
+        if (layout.FindByCatalogEntry(entry) != null)
         {
             DestroyTransientProp(root);
             return false;
@@ -264,14 +354,21 @@ public class MREnvironmentRegistry : MonoBehaviour
             ? profile.facingAxis
             : PlacementFacingAxis.PositiveZ;
 
+        string idSeed = entry.Key;
         var placement = new MREnvironmentPlacement
         {
-            Id = $"{prefabName}-{Guid.NewGuid():N}".Substring(0, Mathf.Min(48, prefabName.Length + 33)),
-            PrefabName = prefabName,
-            Scale = 1f,
+            Id = $"{idSeed}-{Guid.NewGuid():N}".Substring(0, Mathf.Min(48, idSeed.Length + 33)),
+            Source = entry.Source == MREnvironmentObjectSource.Custom ? "custom" : "build",
+            Scale = ResolveScaleFromRoot(root),
             SurfaceType = surfaceType,
             FacingAxis = facingAxis
         };
+
+        if (entry.Source == MREnvironmentObjectSource.Custom)
+            placement.PackageName = entry.Key;
+        else
+            placement.PrefabName = entry.Key;
+
         WriteStoredPose(placement, surfaceType, worldPosition, worldRotation, anchorUuid);
 
         layout.AddPlacement(placement);
@@ -282,12 +379,12 @@ public class MREnvironmentRegistry : MonoBehaviour
         MRPlacedEnvironment marker = root.GetComponent<MRPlacedEnvironment>();
         if (marker == null)
             marker = root.AddComponent<MRPlacedEnvironment>();
-        marker.Initialize(placement.Id, prefabName);
+        marker.Initialize(placement.Id, entry);
 
         spawnedById[placement.Id] = root;
-        ConfigManager.WriteConsole($"{LogPrefix} added {prefabName} ({placement.Id})");
+        ConfigManager.WriteConsole($"{LogPrefix} added {entry} ({placement.Id})");
         MRTransitionLog.Log(
-            $"Finalize env {prefabName} pos={worldPosition} rotY={worldRotation.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
+            $"Finalize env {entry} pos={worldPosition} rotY={worldRotation.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
         return true;
     }
 
@@ -318,7 +415,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (TryGetSpawnedRoot(placementId, out GameObject root))
         {
             root.transform.SetPositionAndRotation(worldPosition, worldRotation);
-            root.transform.localScale = Vector3.one * placement.Scale;
+            root.transform.localScale = Vector3.one * ResolveSpawnScale(placement);
             NotifyPortableGamesPlacementUpdated(root);
         }
 
@@ -326,34 +423,73 @@ public class MREnvironmentRegistry : MonoBehaviour
         return true;
     }
 
-    bool TrySpawnPlacement(MREnvironmentPlacement placement, Transform mrSpaceOrigin, int index)
+    IEnumerator TrySpawnPlacementAsync(
+        MREnvironmentPlacement placement,
+        Transform mrSpaceOrigin,
+        int index,
+        Action<bool> onComplete)
     {
-        if (string.IsNullOrEmpty(placement.PrefabName))
-            return false;
+        bool spawned = false;
+        if (placement == null || !placement.HasValidCatalogReference())
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
 
         if (!TryReadWorldPose(placement, out Vector3 worldPos, out Quaternion worldRot))
-            return false;
+        {
+            onComplete?.Invoke(false);
+            yield break;
+        }
 
-        if (!TrySpawnPrefabAtWorldPose(placement.PrefabName, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
-            return false;
+        placement.NormalizeLegacySource();
+        GameObject root = null;
 
-        root.transform.localScale = Vector3.one * (placement.Scale > 0f ? placement.Scale : 1f);
+        if (placement.IsCustomSource)
+        {
+            var result = new CustomObjectSpawnResult();
+            yield return MRCustomObjectLoader.InstantiateAtWorldPose(
+                placement.PackageName,
+                worldPos,
+                worldRot,
+                result);
+            if (!result.Success)
+            {
+                MRDebugLog.LogError($"Environment spawn failed: custom '{placement.PackageName}' ({placement.Id})");
+                onComplete?.Invoke(false);
+                yield break;
+            }
+
+            root = result.Root;
+        }
+        else if (!TrySpawnBuildPrefabAtWorldPose(placement.PrefabName, worldPos, worldRot, out root))
+        {
+            MRDebugLog.LogError($"Environment spawn failed: build '{placement.PrefabName}' ({placement.Id})");
+            onComplete?.Invoke(false);
+            yield break;
+        }
+
+        root.transform.localScale = Vector3.one * ResolveSpawnScale(placement);
         NotifyPortableGamesPlacementUpdated(root);
 
         MRPlacedEnvironment marker = root.GetComponent<MRPlacedEnvironment>();
         if (marker == null)
             marker = root.AddComponent<MRPlacedEnvironment>();
-        marker.Initialize(placement.Id, placement.PrefabName);
+
+        MREnvironmentCatalogEntry entry = placement.IsCustomSource
+            ? MREnvironmentCatalogEntry.FromCustom(placement.PackageName, placement.DisplayLabel)
+            : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
+        marker.Initialize(placement.Id, entry);
 
         spawnedById[placement.Id] = root;
         BackfillWorldPoseCache(placement, worldPos, worldRot);
         ConfigManager.WriteConsole($"{LogPrefix} spawned {placement.DisplayLabel} at {worldPos}");
-        return true;
+        spawned = true;
+        onComplete?.Invoke(spawned);
     }
 
-    bool TrySpawnPrefabAtWorldPose(
+    bool TrySpawnBuildPrefabAtWorldPose(
         string prefabName,
-        Transform mrSpaceOrigin,
         Vector3 worldPos,
         Quaternion worldRot,
         out GameObject spawnedRoot)
@@ -363,6 +499,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (prefab == null)
         {
             ConfigManager.WriteConsoleError($"{LogPrefix} prefab missing: {prefabName}");
+            MRDebugLog.LogError($"Environment prefab missing: {prefabName}");
             return false;
         }
 
@@ -378,8 +515,11 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (root == null)
             return;
 
-        PortableGamesTwoHandGrab grab = root.GetComponentInChildren<PortableGamesTwoHandGrab>(true);
-        grab?.NotifyPlacementPoseUpdated();
+        PortableGamesTwoHandGrab portableGrab = root.GetComponentInChildren<PortableGamesTwoHandGrab>(true);
+        portableGrab?.NotifyPlacementPoseUpdated();
+
+        MRCustomObjectGrab customGrab = root.GetComponentInChildren<MRCustomObjectGrab>(true);
+        customGrab?.NotifyPlacementPoseUpdated();
     }
 
     void DestroySpawnedInstance(string placementId)
@@ -485,5 +625,31 @@ public class MREnvironmentRegistry : MonoBehaviour
         worldPosition = placement.WorldPosition.ToVector3();
         worldRotation = placement.WorldRotation.ToQuaternion();
         return true;
+    }
+
+    static float ResolveScaleFromRoot(GameObject root)
+    {
+        float scale = root != null ? root.transform.localScale.x : 1f;
+        return scale > 0f ? scale : 1f;
+    }
+
+    static float ResolveSpawnScale(MREnvironmentPlacement placement)
+    {
+        if (placement == null)
+            return 1f;
+
+        placement.NormalizeLegacySource();
+        float layoutScale = placement.Scale > 0f ? placement.Scale : 1f;
+
+        if (placement.IsCustomSource
+            && MRCustomObjectDefinition.TryLoad(placement.PackageName, out MRCustomObjectDefinition definition))
+        {
+            float yamlScale = definition.GetModelScale();
+            if (!Mathf.Approximately(layoutScale, 1f))
+                return layoutScale;
+            return yamlScale;
+        }
+
+        return layoutScale;
     }
 }

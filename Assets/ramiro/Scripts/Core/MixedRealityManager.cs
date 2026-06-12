@@ -118,7 +118,7 @@ public class MixedRealityManager : MonoBehaviour
         PersistMrLayoutPoses("OnApplicationQuit");
     }
 
-    /// <summary>Write live transforms to mr-layout / mr-environment-layout (MR exit, app pause, or quit).</summary>
+    /// <summary>Write live transforms to MR/cabinets-layout.yaml and MR/objects-layout.yaml (MR exit, app pause, or quit).</summary>
     public void PersistMrLayoutPoses(string reason)
     {
         if (CurrentMode != ExperienceMode.MR && CurrentMode != ExperienceMode.MR_EDIT)
@@ -478,7 +478,12 @@ public class MixedRealityManager : MonoBehaviour
         if (!IsTransitionCurrent(generation))
             yield break;
 
-        ActiveEnvironmentRegistry()?.SpawnAll(MRSpaceOrigin);
+        MREnvironmentRegistry environmentRegistry = ActiveEnvironmentRegistry();
+        if (environmentRegistry != null)
+            yield return environmentRegistry.SpawnAllAsync(MRSpaceOrigin);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
         MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
 
         yield return null;
@@ -552,8 +557,12 @@ public class MixedRealityManager : MonoBehaviour
         if (!IsTransitionCurrent(generation))
             yield break;
 
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before env SpawnAll");
-        ActiveEnvironmentRegistry()?.SpawnAll(MRSpaceOrigin);
+        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before env SpawnAllAsync");
+        MREnvironmentRegistry environmentRegistry = ActiveEnvironmentRegistry();
+        if (environmentRegistry != null)
+            yield return environmentRegistry.SpawnAllAsync(MRSpaceOrigin);
+        if (!IsTransitionCurrent(generation))
+            yield break;
 
         MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before config cabinet SpawnAtMrOrigin");
         MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();

@@ -16,6 +16,9 @@ public class MRConfigurationController : MonoBehaviour
     const string LogPrefix = "[MRConfigurationController]";
     const string DefaultSkin = "c64";
     const int VisibleCabinetRows = 11;
+    const int VisibleDebugRows = 10;
+    const int VisibleDebugDetailRows = 16;
+    const int DebugDetailWrapWidth = 38;
     const int MeshOptionCount = 2;
 
     enum Screen
@@ -27,6 +30,8 @@ public class MRConfigurationController : MonoBehaviour
         PhoneBooth,
         Environment,
         Mesh,
+        Debug,
+        DebugDetail,
         Help
     }
 
@@ -45,7 +50,11 @@ public class MRConfigurationController : MonoBehaviour
 
     GenericMenu navMenu;
     readonly List<string> catalogNames = new List<string>();
-    readonly List<string> envCatalogNames = new List<string>();
+    readonly List<MREnvironmentCatalogEntry> envCatalogEntries = new List<MREnvironmentCatalogEntry>();
+    readonly List<MRDebugLog.DisplayLine> debugDisplayLines = new List<MRDebugLog.DisplayLine>();
+    readonly List<string> debugDetailWrappedLines = new List<string>();
+    MRDebugLog.Entry debugDetailEntry;
+    int debugDetailScrollOffset;
 
     MRLayoutRegistry registry;
     MREnvironmentRegistry envRegistry;
@@ -68,7 +77,7 @@ public class MRConfigurationController : MonoBehaviour
     string movingPlacementId;
     string movingEnvPlacementId;
     string pendingAddCabinetName;
-    string pendingAddEnvPrefabName;
+    MREnvironmentCatalogEntry pendingAddEnvEntry;
     GameObject pendingAddRoot;
 
     public bool IsSessionActive => sessionActive;
@@ -122,6 +131,7 @@ public class MRConfigurationController : MonoBehaviour
         MRCatalogBootstrap.PrepareCatalog(seedExampleCabinetInEditor);
         RefreshCatalog();
         MREnvironmentCatalog.RefreshCache();
+        MRCustomObjectCatalog.RefreshCache();
         RefreshEnvironmentCatalog();
 
         setupActionMap();
@@ -249,11 +259,12 @@ public class MRConfigurationController : MonoBehaviour
     {
         navMenu = new GenericMenu(screen, "MR CONFIGURATION");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
-        navMenu.AddOption("ENVIRONMENT", "Props from PrefabsEnvironment");
+        navMenu.AddOption("ENVIRONMENT", "Build + Custom Objects");
         navMenu.AddOption("MESH", "EffectMesh layers (occluder walls)");
         navMenu.AddOption("MOVE CONFIG", "Reposition ConfigurationCabinetMiniMR");
         navMenu.AddOption("ADJUSTMENTS", "Scale and floor position for game cabinets");
         navMenu.AddOption("PHONE BOOTH", "Show or hide phone booth in MR");
+        navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls");
         navMenu.AddOption("EXIT", "Close panel");
     }
@@ -267,8 +278,8 @@ public class MRConfigurationController : MonoBehaviour
 
     void RefreshEnvironmentCatalog()
     {
-        envCatalogNames.Clear();
-        envCatalogNames.AddRange(MREnvironmentCatalog.GetPlaceablePrefabNames());
+        envCatalogEntries.Clear();
+        envCatalogEntries.AddRange(MREnvironmentUnifiedCatalog.GetCatalogEntries());
     }
 
     void DrawCurrentScreen()
@@ -295,6 +306,12 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Mesh:
                 DrawMeshPage();
+                break;
+            case Screen.Debug:
+                DrawDebugPage();
+                break;
+            case Screen.DebugDetail:
+                DrawDebugDetailPage();
                 break;
             case Screen.Help:
                 DrawHelpPage();
@@ -369,10 +386,11 @@ public class MRConfigurationController : MonoBehaviour
         screen.PrintCentered(0, "ENVIRONMENT", true);
         screen.PrintLine(1, false, '-');
 
-        if (envCatalogNames.Count == 0)
+        if (envCatalogEntries.Count == 0)
         {
             screen.PrintCentered(8, "No props found", true);
-            screen.PrintCentered(10, "PrefabsEnvironment/", false);
+            screen.PrintCentered(10, "PrefabsEnvironment/ or", false);
+            screen.PrintCentered(11, "MR/Custom Objects/", false);
             DrawFooter("B: back");
             return;
         }
@@ -386,12 +404,12 @@ public class MRConfigurationController : MonoBehaviour
         for (int i = 0; i < VisibleCabinetRows; i++)
         {
             int idx = listScrollOffset + i;
-            if (idx >= envCatalogNames.Count)
+            if (idx >= envCatalogEntries.Count)
                 break;
 
-            string prefabName = envCatalogNames[idx];
-            string label = Truncate(MREnvironmentCatalog.GetDisplayLabel(prefabName), 18);
-            bool inScene = envRegistry != null && envRegistry.IsPrefabInScene(prefabName);
+            MREnvironmentCatalogEntry entry = envCatalogEntries[idx];
+            string label = Truncate(entry.MenuLabel, 20);
+            bool inScene = envRegistry != null && envRegistry.IsCatalogEntryInScene(entry);
             bool selected = idx == selectedListIndex;
 
             string line = PadRight(label, 20) + (inScene ? "Yes" : " No") + " " + (inScene ? "Rem" : "Add");
@@ -399,11 +417,11 @@ public class MRConfigurationController : MonoBehaviour
             row++;
         }
 
-        if (selectedListIndex >= 0 && selectedListIndex < envCatalogNames.Count)
-            screen.Print(1, 20, Truncate(envCatalogNames[selectedListIndex], 36), false);
+        if (selectedListIndex >= 0 && selectedListIndex < envCatalogEntries.Count)
+            screen.Print(1, 20, Truncate(envCatalogEntries[selectedListIndex].ToString(), 36), false);
 
-        bool selectedInScene = selectedListIndex >= 0 && selectedListIndex < envCatalogNames.Count
-            && envRegistry != null && envRegistry.IsPrefabInScene(envCatalogNames[selectedListIndex]);
+        bool selectedInScene = selectedListIndex >= 0 && selectedListIndex < envCatalogEntries.Count
+            && envRegistry != null && envRegistry.IsCatalogEntryInScene(envCatalogEntries[selectedListIndex]);
         DrawFooter(selectedInScene ? "A: Rem   Y: move   B: back" : "A: Add   B: back");
     }
 
@@ -462,6 +480,81 @@ public class MRConfigurationController : MonoBehaviour
         DrawFooter("A: toggle show/hide   B: back");
     }
 
+    void DrawDebugPage()
+    {
+        screen.PrintCentered(0, "DEBUG", true);
+        screen.PrintLine(1, false, '-');
+
+        debugDisplayLines.Clear();
+        debugDisplayLines.AddRange(MRDebugLog.BuildDisplayLines());
+
+        if (debugDisplayLines.Count == 0)
+        {
+            screen.PrintCentered(8, "No errors logged", true);
+            screen.PrintCentered(10, "Add failures appear here", false);
+            DrawFooter("B: back");
+            return;
+        }
+
+        screen.Print(1, 2, $"{debugDisplayLines.Count} lines (newest first)", false);
+        screen.PrintLine(3, false, '-');
+
+        int row = 4;
+        for (int i = 0; i < VisibleDebugRows; i++)
+        {
+            int idx = listScrollOffset + i;
+            if (idx >= debugDisplayLines.Count)
+                break;
+
+            MRDebugLog.DisplayLine line = debugDisplayLines[idx];
+            bool selected = idx == selectedListIndex;
+
+            if (line.IsDateHeader)
+            {
+                screen.Print(1, row, line.Text, true);
+            }
+            else
+            {
+                string text = Truncate(line.Text, 34);
+                screen.Print(1, row, selected ? "> " + text : "  " + text, selected);
+            }
+
+            row++;
+        }
+
+        DrawFooter("A: open full   Up/Down: scroll   B: back");
+    }
+
+    void DrawDebugDetailPage()
+    {
+        screen.PrintCentered(0, "ERROR DETAIL", true);
+        screen.PrintLine(1, false, '-');
+
+        string level = string.IsNullOrEmpty(debugDetailEntry.Level) ? "INFO" : debugDetailEntry.Level;
+        screen.Print(1, 2, $"{debugDetailEntry.Timestamp:yyyy-MM-dd HH:mm:ss} {level}", false);
+        screen.PrintLine(3, false, '-');
+
+        int row = 4;
+        for (int i = 0; i < VisibleDebugDetailRows; i++)
+        {
+            int idx = debugDetailScrollOffset + i;
+            if (idx >= debugDetailWrappedLines.Count)
+                break;
+
+            screen.Print(1, row, debugDetailWrappedLines[idx], false);
+            row++;
+        }
+
+        if (debugDetailWrappedLines.Count > VisibleDebugDetailRows)
+        {
+            int page = debugDetailScrollOffset / VisibleDebugDetailRows + 1;
+            int pages = (debugDetailWrappedLines.Count + VisibleDebugDetailRows - 1) / VisibleDebugDetailRows;
+            screen.Print(1, screen.CharactersYCount - 3, $"Lines {debugDetailScrollOffset + 1}-{Mathf.Min(debugDetailScrollOffset + VisibleDebugDetailRows, debugDetailWrappedLines.Count)} / {debugDetailWrappedLines.Count}  page {page}/{pages}", false);
+        }
+
+        DrawFooter("Up/Down: scroll   B: back");
+    }
+
     void DrawHelpPage()
     {
         screen.PrintCentered(0, "HELP", true);
@@ -473,12 +566,13 @@ public class MRConfigurationController : MonoBehaviour
         screen.Print(2, 11, "Environment: props", false);
         screen.Print(2, 12, "Mesh: EffectMesh on/off", false);
         screen.Print(2, 13, "Phone booth: show/hide", false);
-        screen.Print(2, 14, "R stick L/R: adjust +/-0.01", false);
-        screen.Print(2, 15, "R stick L/R: rotate Y*", false);
-        screen.Print(2, 16, "* floor/ceiling/wall prefab", false);
-        screen.Print(2, 17, "Catalog = cabinetsdb/", false);
-        screen.Print(2, 18, "Env = PrefabsEnvironment/", false);
-        screen.Print(2, 19, "In Scene = mr-layout.yaml", false);
+        screen.Print(2, 14, "Debug: errors, A=full text", false);
+        screen.Print(2, 15, "R stick L/R: adjust +/-0.01", false);
+        screen.Print(2, 16, "R stick L/R: rotate Y*", false);
+        screen.Print(2, 17, "* floor/ceiling/wall prefab", false);
+        screen.Print(2, 18, "Catalog = cabinetsdb/", false);
+        screen.Print(2, 19, "Env = build + Custom Objects", false);
+        screen.Print(2, 20, "Layout = MR/*.yaml", false);
         DrawFooter("B: back");
     }
 
@@ -504,8 +598,9 @@ public class MRConfigurationController : MonoBehaviour
         return currentScreen switch
         {
             Screen.Cabinets => catalogNames.Count,
-            Screen.Environment => envCatalogNames.Count,
+            Screen.Environment => envCatalogEntries.Count,
             Screen.Mesh => MeshOptionCount,
+            Screen.Debug => debugDisplayLines.Count,
             _ => 0
         };
     }
@@ -536,6 +631,30 @@ public class MRConfigurationController : MonoBehaviour
                     selectedListIndex = 0;
 
                 ClampListScroll();
+                DrawCurrentScreen();
+                break;
+
+            case Screen.Debug:
+                debugDisplayLines.Clear();
+                debugDisplayLines.AddRange(MRDebugLog.BuildDisplayLines());
+                if (debugDisplayLines.Count == 0)
+                    return;
+
+                selectedListIndex = MoveDebugSelection(delta);
+                ClampListScroll();
+                DrawCurrentScreen();
+                break;
+
+            case Screen.DebugDetail:
+                if (debugDetailWrappedLines.Count == 0)
+                    return;
+
+                debugDetailScrollOffset += delta;
+                if (debugDetailScrollOffset < 0)
+                    debugDetailScrollOffset = 0;
+                else if (debugDetailScrollOffset > Mathf.Max(0, debugDetailWrappedLines.Count - VisibleDebugDetailRows))
+                    debugDetailScrollOffset = Mathf.Max(0, debugDetailWrappedLines.Count - VisibleDebugDetailRows);
+
                 DrawCurrentScreen();
                 break;
 
@@ -606,6 +725,16 @@ public class MRConfigurationController : MonoBehaviour
                 ExecuteMeshToggle(selectedListIndex);
                 DrawCurrentScreen();
                 break;
+            case Screen.Debug:
+                debugDisplayLines.Clear();
+                debugDisplayLines.AddRange(MRDebugLog.BuildDisplayLines());
+                if (TryOpenDebugDetailFromSelection())
+                {
+                    navCooldown = navRepeatDelay;
+                    SyncConfirmControlEdgeState();
+                    DrawCurrentScreen();
+                }
+                break;
         }
     }
 
@@ -635,6 +764,13 @@ public class MRConfigurationController : MonoBehaviour
                 listScrollOffset = 0;
                 currentScreen = Screen.Mesh;
                 break;
+            case "DEBUG":
+                listScrollOffset = 0;
+                debugDisplayLines.Clear();
+                debugDisplayLines.AddRange(MRDebugLog.BuildDisplayLines());
+                selectedListIndex = FindFirstDebugErrorLineIndex();
+                currentScreen = Screen.Debug;
+                break;
             case "HELP":
                 currentScreen = Screen.Help;
                 break;
@@ -644,6 +780,7 @@ public class MRConfigurationController : MonoBehaviour
                 {
                     ConfigManager.WriteConsoleWarning(
                         $"{LogPrefix} MOVE CONFIG failed (cabinet missing or placement ray blocked)");
+                    MRDebugLog.LogWarning("MOVE CONFIG failed (cabinet missing or placement ray blocked)");
                     MRTransitionLog.LogWarning("MOVE CONFIG failed");
                     navCooldown = navRepeatDelay;
                     SyncConfirmControlEdgeState();
@@ -719,11 +856,11 @@ public class MRConfigurationController : MonoBehaviour
                 }
                 break;
             case Screen.Environment:
-                if (selectedListIndex >= 0 && selectedListIndex < envCatalogNames.Count)
+                if (selectedListIndex >= 0 && selectedListIndex < envCatalogEntries.Count)
                 {
-                    string prefabName = envCatalogNames[selectedListIndex];
-                    if (envRegistry != null && envRegistry.IsPrefabInScene(prefabName))
-                        BeginMoveEnvByPrefabName(prefabName);
+                    MREnvironmentCatalogEntry entry = envCatalogEntries[selectedListIndex];
+                    if (envRegistry != null && envRegistry.IsCatalogEntryInScene(entry))
+                        BeginMoveEnvByCatalogEntry(entry);
                 }
                 break;
         }
@@ -733,11 +870,19 @@ public class MRConfigurationController : MonoBehaviour
     {
         switch (currentScreen)
         {
+            case Screen.DebugDetail:
+                currentScreen = Screen.Debug;
+                navCooldown = navRepeatDelay;
+                SyncConfirmControlEdgeState();
+                SyncBackControlEdgeState();
+                DrawCurrentScreen();
+                break;
             case Screen.Cabinets:
             case Screen.Adjustments:
             case Screen.PhoneBooth:
             case Screen.Mesh:
             case Screen.Environment:
+            case Screen.Debug:
             case Screen.Help:
                 currentScreen = Screen.NavMain;
                 navMenu.selectedIndex = 0;
@@ -767,24 +912,24 @@ public class MRConfigurationController : MonoBehaviour
 
     bool ExecuteEnvironmentToggle(int index)
     {
-        if (envRegistry == null || index < 0 || index >= envCatalogNames.Count)
+        if (envRegistry == null || index < 0 || index >= envCatalogEntries.Count)
             return false;
 
-        string prefabName = envCatalogNames[index];
-        bool inScene = envRegistry.IsPrefabInScene(prefabName);
+        MREnvironmentCatalogEntry entry = envCatalogEntries[index];
+        bool inScene = envRegistry.IsCatalogEntryInScene(entry);
 
         if (inScene)
         {
-            if (envRegistry.TryRemovePrefabFromScene(prefabName))
-                ConfigManager.WriteConsole($"{LogPrefix} removed env prop {prefabName}");
+            if (envRegistry.TryRemoveCatalogEntryFromScene(entry))
+                ConfigManager.WriteConsole($"{LogPrefix} removed env prop {entry}");
             return true;
         }
 
-        BeginAddEnvironmentWithRay(prefabName);
+        BeginAddEnvironmentWithRay(entry);
         return false;
     }
 
-    void BeginAddEnvironmentWithRay(string prefabName)
+    void BeginAddEnvironmentWithRay(MREnvironmentCatalogEntry entry)
     {
         if (envRegistry == null || placementRay == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
             return;
@@ -792,6 +937,18 @@ public class MRConfigurationController : MonoBehaviour
         if (placementRay.IsActive)
             return;
 
+        if (entry.Source == MREnvironmentObjectSource.Custom)
+        {
+            StartCoroutine(BeginAddCustomEnvironmentWithRayCoroutine(entry));
+            return;
+        }
+
+        BeginAddBuildEnvironmentWithRay(entry);
+    }
+
+    void BeginAddBuildEnvironmentWithRay(MREnvironmentCatalogEntry entry)
+    {
+        string prefabName = entry.Key;
         MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
 
         GameObject prefab = MREnvironmentCatalog.LoadPrefab(prefabName);
@@ -801,15 +958,50 @@ public class MRConfigurationController : MonoBehaviour
             : PlacementSurfaceType.Floor;
         ComputeInitialPlacementPose(initialSurface, out Vector3 worldPos, out Quaternion worldRot);
 
-        if (!envRegistry.TrySpawnTransientProp(prefabName, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
+        if (!envRegistry.TrySpawnTransientCatalogEntry(entry, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
         {
-            ConfigManager.WriteConsoleWarning($"{LogPrefix} env add ray spawn failed for {prefabName}");
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} env add ray spawn failed for {entry}");
+            MRDebugLog.LogError($"Environment add failed: {entry} (spawn)");
             return;
         }
 
+        BeginEnvironmentPlacementRay(entry, root);
+        ConfigManager.WriteConsole($"{LogPrefix} env add ray begin {entry}");
+    }
+
+    IEnumerator BeginAddCustomEnvironmentWithRayCoroutine(MREnvironmentCatalogEntry entry)
+    {
+        if (envRegistry == null || placementRay == null || placementRay.IsActive)
+            yield break;
+
+        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+
+        PlacementSurfaceType initialSurface = PlacementSurfaceType.Floor;
+        if (MRCustomObjectDefinition.TryLoad(entry.Key, out MRCustomObjectDefinition definition))
+            initialSurface = definition.GetSurfaceType();
+
+        ComputeInitialPlacementPose(initialSurface, out Vector3 worldPos, out Quaternion worldRot);
+
+        var spawnResult = new CustomObjectSpawnResult();
+        yield return envRegistry.TrySpawnTransientCatalogEntryAsync(
+            entry, mrSpaceOrigin, worldPos, worldRot, spawnResult);
+
+        if (!spawnResult.Success || spawnResult.Root == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} custom env spawn failed for {entry}");
+            MRDebugLog.LogError($"Custom object add failed: {entry} (spawn)");
+            yield break;
+        }
+
+        BeginEnvironmentPlacementRay(entry, spawnResult.Root);
+        ConfigManager.WriteConsole($"{LogPrefix} custom env add ray begin {entry}");
+    }
+
+    void BeginEnvironmentPlacementRay(MREnvironmentCatalogEntry entry, GameObject root)
+    {
         placementAddActive = true;
         pendingAddIsEnvironment = true;
-        pendingAddEnvPrefabName = prefabName;
+        pendingAddEnvEntry = entry;
         pendingAddCabinetName = null;
         pendingAddRoot = root;
 
@@ -828,20 +1020,23 @@ public class MRConfigurationController : MonoBehaviour
             confirmCallback: (finalPos, finalRot, anchorUuid) =>
             {
                 placementAddActive = false;
-                string name = pendingAddEnvPrefabName;
+                MREnvironmentCatalogEntry catalogEntry = pendingAddEnvEntry;
                 GameObject spawned = pendingAddRoot;
-                pendingAddEnvPrefabName = null;
+                pendingAddEnvEntry = default;
                 pendingAddIsEnvironment = false;
                 pendingAddRoot = null;
 
                 if (spawned != null)
                     spawned.transform.SetPositionAndRotation(finalPos, finalRot);
 
-                bool saved = envRegistry.TryFinalizeTransientAdd(
-                    name, spawned, mrSpaceOrigin, finalPos, finalRot, anchorUuid);
+                bool saved = envRegistry.TryFinalizeTransientCatalogEntry(
+                    catalogEntry, spawned, mrSpaceOrigin, finalPos, finalRot, anchorUuid);
 
                 if (!saved)
-                    ConfigManager.WriteConsoleWarning($"{LogPrefix} env add confirm but save failed ({name})");
+                {
+                    ConfigManager.WriteConsoleWarning($"{LogPrefix} env add confirm but save failed ({catalogEntry})");
+                    MRDebugLog.LogError($"Environment add failed: {catalogEntry} (save layout)");
+                }
 
                 ShowIdleAfterExternalPlacement();
             },
@@ -850,22 +1045,21 @@ public class MRConfigurationController : MonoBehaviour
                 CancelPendingAdd(destroyProp: true);
                 ShowIdleAfterExternalPlacement();
             });
-
-        ConfigManager.WriteConsole($"{LogPrefix} env add ray begin {prefabName}");
     }
 
-    void BeginMoveEnvByPrefabName(string prefabName)
+    void BeginMoveEnvByCatalogEntry(MREnvironmentCatalogEntry entry)
     {
         if (envRegistry == null || placementRay == null || placementEnvMoveActive || placementMoveActive)
             return;
 
-        MREnvironmentPlacement placement = envRegistry.FindPlacementByPrefabName(prefabName);
+        MREnvironmentPlacement placement = envRegistry.FindPlacementByCatalogEntry(entry);
         if (placement == null || string.IsNullOrEmpty(placement.Id))
             return;
 
         if (!envRegistry.TryGetSpawnedRoot(placement.Id, out GameObject spawnedRoot) || spawnedRoot == null)
         {
             ConfigManager.WriteConsoleWarning($"{LogPrefix} env move skipped, spawned root missing for {placement.Id}");
+            MRDebugLog.LogWarning($"Environment move skipped: root missing ({placement.Id})");
             return;
         }
 
@@ -884,7 +1078,11 @@ public class MRConfigurationController : MonoBehaviour
                 bool saved = envRegistry.TryUpdatePlacementPose(
                     movingEnvPlacementId, mrSpaceOrigin, worldPos, worldRot, anchorUuid);
                 if (!saved)
+                {
                     ConfigManager.WriteConsoleWarning($"{LogPrefix} env move confirm but save failed ({movingEnvPlacementId})");
+                    MRDebugLog.LogError($"Environment move failed: save layout ({movingEnvPlacementId})");
+                }
+
                 movingEnvPlacementId = null;
                 ShowIdleAfterExternalPlacement();
             },
@@ -933,7 +1131,7 @@ public class MRConfigurationController : MonoBehaviour
         placementAddActive = true;
         pendingAddIsEnvironment = false;
         pendingAddCabinetName = cabinetName;
-        pendingAddEnvPrefabName = null;
+        pendingAddEnvEntry = default;
         pendingAddRoot = null;
 
         MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
@@ -949,6 +1147,7 @@ public class MRConfigurationController : MonoBehaviour
         {
             CancelPendingAdd(destroyProp: false);
             ConfigManager.WriteConsoleWarning($"{LogPrefix} add ray spawn failed for {cabinetName}");
+            MRDebugLog.LogError($"Cabinet add failed: {cabinetName} (spawn)");
             ShowIdleAfterExternalPlacement();
             yield break;
         }
@@ -984,7 +1183,10 @@ public class MRConfigurationController : MonoBehaviour
                     name, spawned, mrSpaceOrigin, finalPos, finalRot, anchorUuid);
 
                 if (!saved)
+                {
                     ConfigManager.WriteConsoleWarning($"{LogPrefix} add confirm but save failed ({name})");
+                    MRDebugLog.LogError($"Cabinet add failed: {name} (save layout)");
+                }
 
                 ShowIdleAfterExternalPlacement();
             },
@@ -1017,7 +1219,7 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         pendingAddCabinetName = null;
-        pendingAddEnvPrefabName = null;
+        pendingAddEnvEntry = default;
         pendingAddIsEnvironment = false;
         pendingAddRoot = null;
     }
@@ -1034,6 +1236,7 @@ public class MRConfigurationController : MonoBehaviour
         if (!registry.TryGetSpawnedRoot(placement.Id, out GameObject spawnedRoot) || spawnedRoot == null)
         {
             ConfigManager.WriteConsoleWarning($"{LogPrefix} move skipped, spawned root missing for {placement.Id}");
+            MRDebugLog.LogWarning($"Cabinet move skipped: root missing ({placement.Id})");
             return;
         }
 
@@ -1052,7 +1255,11 @@ public class MRConfigurationController : MonoBehaviour
                 bool saved = registry.TryUpdatePlacementPose(
                     movingPlacementId, mrSpaceOrigin, worldPos, worldRot, anchorUuid);
                 if (!saved)
+                {
                     ConfigManager.WriteConsoleWarning($"{LogPrefix} move confirm but save failed ({movingPlacementId})");
+                    MRDebugLog.LogError($"Cabinet move failed: save layout ({movingPlacementId})");
+                }
+
                 movingPlacementId = null;
                 ShowIdleAfterExternalPlacement();
             },
@@ -1239,6 +1446,105 @@ public class MRConfigurationController : MonoBehaviour
 
         GameObject host = new GameObject("MRPlacementRayController");
         return host.AddComponent<MRPlacementRayController>();
+    }
+
+    int FindFirstDebugErrorLineIndex()
+    {
+        for (int i = 0; i < debugDisplayLines.Count; i++)
+        {
+            if (!debugDisplayLines[i].IsDateHeader)
+                return i;
+        }
+
+        return 0;
+    }
+
+    int MoveDebugSelection(int delta)
+    {
+        if (debugDisplayLines.Count == 0)
+            return 0;
+
+        int index = selectedListIndex;
+        for (int attempt = 0; attempt < debugDisplayLines.Count; attempt++)
+        {
+            index += delta;
+            if (index < 0)
+                index = debugDisplayLines.Count - 1;
+            else if (index >= debugDisplayLines.Count)
+                index = 0;
+
+            if (!debugDisplayLines[index].IsDateHeader)
+                return index;
+        }
+
+        return selectedListIndex;
+    }
+
+    bool TryOpenDebugDetailFromSelection()
+    {
+        if (selectedListIndex < 0 || selectedListIndex >= debugDisplayLines.Count)
+            return false;
+
+        MRDebugLog.DisplayLine line = debugDisplayLines[selectedListIndex];
+        if (line.IsDateHeader || line.EntryIndex < 0)
+            return false;
+
+        if (!MRDebugLog.TryGetEntry(line.EntryIndex, out MRDebugLog.Entry entry))
+            return false;
+
+        debugDetailEntry = entry;
+        debugDetailScrollOffset = 0;
+        BuildDebugDetailWrappedLines();
+        currentScreen = Screen.DebugDetail;
+        return true;
+    }
+
+    void BuildDebugDetailWrappedLines()
+    {
+        debugDetailWrappedLines.Clear();
+        if (string.IsNullOrEmpty(debugDetailEntry.Message))
+            return;
+
+        debugDetailWrappedLines.AddRange(WrapDebugText(debugDetailEntry.Message, DebugDetailWrapWidth));
+    }
+
+    static List<string> WrapDebugText(string text, int maxWidth)
+    {
+        var lines = new List<string>();
+        if (string.IsNullOrEmpty(text) || maxWidth <= 0)
+            return lines;
+
+        int pos = 0;
+        while (pos < text.Length)
+        {
+            int remaining = text.Length - pos;
+            int len = Mathf.Min(maxWidth, remaining);
+
+            if (len < remaining)
+            {
+                int breakAt = text.LastIndexOf(' ', pos + len - 1, len);
+                if (breakAt > pos)
+                    len = breakAt - pos;
+                else if (len < maxWidth)
+                    len = Mathf.Min(maxWidth, remaining);
+            }
+
+            if (len <= 0)
+                len = Mathf.Min(maxWidth, remaining);
+
+            string chunk = text.Substring(pos, len).Trim();
+            if (!string.IsNullOrEmpty(chunk))
+                lines.Add(chunk);
+
+            pos += len;
+            while (pos < text.Length && text[pos] == ' ')
+                pos++;
+
+            if (len <= 0)
+                break;
+        }
+
+        return lines;
     }
 
     static string Truncate(string value, int maxLen)

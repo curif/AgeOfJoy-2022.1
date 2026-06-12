@@ -10,14 +10,14 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// MR cabinet layout (mr-layout.yaml). Phase 2b: load/save, spawn, delete.
+/// MR cabinet layout (MR/cabinets-layout.yaml). Phase 2b: load/save, spawn, delete.
 /// Placement Position/Rotation are anchor-local when AnchorUuid is set (v3+), otherwise world space (v2).
 /// VR registry.yaml is never modified by this class.
 /// </summary>
 public class MRLayoutRegistry : MonoBehaviour
 {
     const string LogPrefix = "[MRLayoutRegistry]";
-    public const string LayoutFileName = "mr-layout.yaml";
+    public const string LayoutFileName = "cabinets-layout.yaml";
     public const int WorldSpaceLayoutVersion = 2;
     public const int AnchorRelativeLayoutVersion = 3;
 
@@ -26,7 +26,7 @@ public class MRLayoutRegistry : MonoBehaviour
     readonly Dictionary<string, GameObject> spawnedById = new Dictionary<string, GameObject>();
     MRLayout layout;
 
-    public string LayoutFilePath => Path.Combine(ConfigManager.CabinetsDB, LayoutFileName);
+    public string LayoutFilePath => MRPaths.ResolveCabinetsLayoutPath();
 
     public int SpawnedCount => spawnedById.Count;
 

@@ -1,0 +1,32 @@
+# MR Custom Object v1 — copy folder to: {BaseDir}/MR/Custom Objects/TV/
+# Requires: tv.glb
+# Future: video block for screen content (not v1)
+
+version: 1
+
+name: TV
+displayName: Televisão
+
+model:
+  file: tv.glb
+  scale: 1.0
+  rotation: { x: 0, y: 180, z: 0 }
+
+placement:
+  surfaceType: 0
+  facingAxis: 0
+  allowStickRotation: true
+  stickRotationAxis: 0
+  stickRotationSpeed: 90
+
+collision:
+  mode: mesh
+  convex: true
+
+components:
+  - grab
+
+grab:
+  twoHands: false
+  returnOnRelease: true
+  hideHands: true
