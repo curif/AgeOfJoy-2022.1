@@ -25,6 +25,9 @@ public static class MRCustomObjectComponentApplier
             if (string.Equals(componentId, "grab", System.StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            if (string.Equals(componentId, "video", System.StringComparison.OrdinalIgnoreCase))
+                continue;
+
             ConfigManager.WriteConsoleWarning(
                 $"{LogPrefix} {definition.PackageName}: unknown component '{componentId}'");
         }
@@ -34,6 +37,9 @@ public static class MRCustomObjectComponentApplier
 
         if (definition.HasGrabComponent())
             ApplyGrab(root, definition);
+
+        if (definition.HasVideoComponent())
+            ApplyVideo(root, definition);
     }
 
     static void ApplyGrab(GameObject root, MRCustomObjectDefinition definition)
@@ -47,6 +53,34 @@ public static class MRCustomObjectComponentApplier
         grab.Configure(config, root.transform);
         ConfigManager.WriteConsole(
             $"{LogPrefix} {definition.PackageName}: grab twoHands={config.TwoHands} returnOnRelease={config.ReturnOnRelease}");
+    }
+
+    static void ApplyVideo(GameObject root, MRCustomObjectDefinition definition)
+    {
+        MRCustomObjectVideoYaml config = definition.Video;
+        if (config == null || string.IsNullOrEmpty(config.File) || string.IsNullOrEmpty(config.Target))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {definition.PackageName}: components includes video but video.file or video.target is missing");
+            return;
+        }
+
+        Transform target = FindChildByName(root.transform, config.Target);
+        if (target == null)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {definition.PackageName}: video target not found '{config.Target}'");
+            MRDebugLog.LogError($"Custom object '{definition.PackageName}': video target not found '{config.Target}'");
+            return;
+        }
+
+        MRCustomObjectVideo video = root.GetComponent<MRCustomObjectVideo>();
+        if (video == null)
+            video = root.AddComponent<MRCustomObjectVideo>();
+
+        video.Configure(definition.PackageName, config, target, definition.PackageDir);
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} {definition.PackageName}: video on '{config.Target}' file={config.File} loop={config.Loop}");
     }
 
     static void ApplyRotator(GameObject root, MRCustomObjectDefinition definition)

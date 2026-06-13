@@ -29,6 +29,7 @@ public class MRCustomObjectDefinition
     public List<string> Components;
     public MRCustomObjectRotatorYaml Rotator;
     public MRCustomObjectGrabYaml Grab;
+    public MRCustomObjectVideoYaml Video;
 
     public string PackageName { get; private set; }
     public string PackageDir { get; private set; }
@@ -96,6 +97,8 @@ public class MRCustomObjectDefinition
     }
 
     public bool HasGrabComponent() => HasComponent("grab");
+
+    public bool HasVideoComponent() => HasComponent("video");
 
     public static bool TryLoad(string packageName, out MRCustomObjectDefinition definition)
     {
@@ -178,6 +181,32 @@ public class MRCustomObjectDefinition
                     $"[MRCustomObjectDefinition] {packageName}: components lists grab but grab: block is missing — using defaults");
             }
 
+            if (definition.HasVideoComponent())
+            {
+                if (definition.Video == null || string.IsNullOrEmpty(definition.Video.File))
+                {
+                    ConfigManager.WriteConsoleWarning(
+                        $"[MRCustomObjectDefinition] {packageName}: components lists video but video.file is missing");
+                    MRDebugLog.LogError($"Custom object '{packageName}': video.file missing in object.yaml");
+                }
+                else if (string.IsNullOrEmpty(definition.Video.Target))
+                {
+                    ConfigManager.WriteConsoleWarning(
+                        $"[MRCustomObjectDefinition] {packageName}: components lists video but video.target is missing");
+                    MRDebugLog.LogError($"Custom object '{packageName}': video.target missing (screen mesh name)");
+                }
+                else
+                {
+                    string videoPath = Path.Combine(packageDir, definition.Video.File);
+                    if (!File.Exists(videoPath))
+                    {
+                        ConfigManager.WriteConsoleWarning(
+                            $"[MRCustomObjectDefinition] {packageName}: video file missing ({definition.Video.File})");
+                        MRDebugLog.LogError($"Custom object '{packageName}': video file missing ({definition.Video.File})");
+                    }
+                }
+            }
+
             return true;
         }
         catch (Exception e)
@@ -249,6 +278,20 @@ public class MRCustomObjectGrabYaml
     /// <summary>Optional child name to attach grab; default = package root.</summary>
     public string Target;
     public float ReturnDurationSeconds = 0.15f;
+}
+
+[Serializable]
+public class MRCustomObjectVideoYaml
+{
+    /// <summary>Video file relative to package folder (.mp4, .webm, .mov).</summary>
+    public string File;
+    /// <summary>Child mesh name in the GLB hierarchy (e.g. Screen).</summary>
+    public string Target;
+    public bool Loop = true;
+    public bool PlayOnAwake = true;
+    public float Volume = 1f;
+    public bool InvertX;
+    public bool InvertY;
 }
 
 [Serializable]

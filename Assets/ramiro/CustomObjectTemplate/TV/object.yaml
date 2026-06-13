@@ -1,6 +1,6 @@
 # MR Custom Object v1 — copy folder to: {BaseDir}/MR/Custom Objects/TV/
-# Requires: tv.glb
-# Future: video block for screen content (not v1)
+# Requires: tv.glb, screen.mp4
+# GLB must contain a child mesh named "Screen" (case-insensitive).
 
 version: 1
 
@@ -24,7 +24,15 @@ collision:
   convex: true
 
 components:
+  - video
   - grab
+
+video:
+  file: screen.mp4
+  target: Screen
+  loop: true
+  playOnAwake: true
+  volume: 0.8
 
 grab:
   twoHands: false

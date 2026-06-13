@@ -73,11 +73,19 @@ audio:
 # --- Runtime behaviours (optional) ---
 components:
   - rotator
+  # - video
+  # - grab
 
 rotator:
   target: Blades
   axis: y
   speed: 180
+
+# video:
+#   file: screen.mp4
+#   target: Screen
+#   loop: true
+#   volume: 0.8
 ```
 
 ---
@@ -90,6 +98,7 @@ List of behaviour ids to attach when the object spawns. Each id has a **root-lev
 |----|-------|---------|
 | `rotator` | `rotator:` | Spin a child mesh continuously |
 | `grab` | `grab:` | XR grab — one hand or two hands |
+| `video` | `video:` | Play a video file on a child screen mesh |
 
 Unknown ids in `components` log a warning.
 
@@ -153,6 +162,76 @@ grab:
 ```
 
 With `twoHands: true`, invisible `HandleLeft` / `HandleRight` colliders are created on the grab root; **both** must be held. Releasing either hand ends the grab and returns the object if `returnOnRelease` is true.
+
+### `video`
+
+Plays a video file on a **child mesh** from the GLB (e.g. TV screen). Uses Unity `VideoPlayer` + `RenderTexture` on the target `Renderer`.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `file` | string | — | Video in package folder (`.mp4`, `.webm`, `.mov`) |
+| `target` | string | — | Child mesh name (e.g. `Screen`). Required. |
+| `loop` | bool | `true` | Loop playback |
+| `playOnAwake` | bool | `true` | Start when object spawns |
+| `volume` | float | `1` | Spatial audio volume; `0` = silent |
+| `invertX` | bool | `false` | Flip texture horizontally |
+| `invertY` | bool | `false` | Flip texture vertically |
+
+Example (TV):
+
+```yaml
+components:
+  - video
+
+video:
+  file: screen.mp4
+  target: Screen
+  loop: true
+  playOnAwake: true
+  volume: 0.8
+```
+
+The GLB must contain a node named `Screen` (case-insensitive) with a `Renderer`. Place `screen.mp4` beside `object.yaml` in the package folder.
+
+#### Recommended video format (Quest + Windows Editor)
+
+Use this profile for custom object TVs — same stack as Unity `VideoPlayer` (Media Foundation on Windows, MediaPlayer on Quest):
+
+| Setting | Recommended |
+|---------|-------------|
+| Container | **`.mp4`** only |
+| Video codec | **H.264 / AVC** (`libx264`) |
+| Profile | **Baseline** or **Main** |
+| Pixel format | **`yuv420p`** (required) |
+| Resolution | **1280×720** or **1920×1080** (avoid 4K on Quest) |
+| Frame rate | **30 fps** constant |
+| Audio | **AAC-LC**, 48 kHz, stereo — or **no audio** (safest for TV props) |
+| Mux | **`faststart`** (`moov` atom at start of file) |
+
+**Avoid:** H.265/HEVC, VP9, AV1, `.webm`, `.mkv`, `.mov` from random exporters, variable frame rate, downloads with odd audio mux (often causes Windows error **`0xc00d36e6`** / *Getting duration*).
+
+**TV props (recommended):** export **video only** and set `volume: 0` — simplest and most reliable.
+
+**FFmpeg — full re-encode (video + AAC audio):**
+
+```bash
+ffmpeg -i input.mp4 -c:v libx264 -profile:v baseline -level 3.1 -pix_fmt yuv420p -r 30 -vf "scale=1280:720" -c:a aac -b:a 128k -ar 48000 -ac 2 -movflags +faststart screen.mp4
+```
+
+**FFmpeg — video only (best for TV, no audio issues):**
+
+```bash
+ffmpeg -i input.mp4 -c:v libx264 -profile:v baseline -pix_fmt yuv420p -r 30 -vf "scale=1280:720" -an -movflags +faststart screen.mp4
+```
+
+```yaml
+video:
+  file: screen.mp4
+  target: Screen
+  volume: 0
+```
+
+**Windows note:** Films & TV / Media Player may play an MP4 fine while Unity `VideoPlayer` logs `0xc00d36e6` (*Getting duration*) — different APIs. The MR player uses **APIOnly** mode (same idea as cabinet `GameVideoPlayer`) and treats that duration warning as non-fatal if frames arrive. Re-encode only if playback still fails.
 
 ---
 
@@ -229,7 +308,7 @@ props:
 |--------|----------|
 | `Assets/ramiro/CustomObjectTemplate/Fan/` | Wall + loop audio |
 | `Assets/ramiro/CustomObjectTemplate/Lamp/` | Ceiling, no audio |
-| `Assets/ramiro/CustomObjectTemplate/TV/` | Floor, one-hand grab |
+| `Assets/ramiro/CustomObjectTemplate/TV/` | Floor, video on `Screen`, one-hand grab |
 
 Copy a template folder into `MR/Custom Objects/` and add the `.glb` (and `.wav` if used).
 
