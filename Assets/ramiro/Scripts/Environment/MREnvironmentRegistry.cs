@@ -23,6 +23,8 @@ public class MREnvironmentRegistry : MonoBehaviour
 
     public string LayoutFilePath => MRPaths.ResolveObjectsLayoutPath();
 
+    public int SpawnedCount => spawnedById.Count;
+
     public IReadOnlyList<MREnvironmentPlacement> Placements =>
         layout != null ? layout.GetProps() : Array.Empty<MREnvironmentPlacement>();
 

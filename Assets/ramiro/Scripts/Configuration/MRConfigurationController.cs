@@ -125,8 +125,12 @@ public class MRConfigurationController : MonoBehaviour
         MREffectMeshSettings.EnsureLoaded();
         registry.EnsureLayoutLoaded();
         envRegistry.EnsureLayoutLoaded();
-        registry.SpawnAll(mrSpaceOrigin);
-        envRegistry.SpawnAll(mrSpaceOrigin);
+        // MR entry already spawned layout + props; respawning here destroys and recreates everything
+        // (TV video restarts, visible flicker) when the user reopens the CRT after placement.
+        if (registry.SpawnedCount == 0)
+            registry.SpawnAll(mrSpaceOrigin);
+        if (envRegistry.SpawnedCount == 0)
+            envRegistry.SpawnAll(mrSpaceOrigin);
 
         MRCatalogBootstrap.PrepareCatalog(seedExampleCabinetInEditor);
         RefreshCatalog();
