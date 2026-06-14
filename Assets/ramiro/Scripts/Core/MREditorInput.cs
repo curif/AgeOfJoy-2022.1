@@ -67,6 +67,48 @@ public static class MREditorInput
 #endif
     }
 
+    public static bool WasMouseRightPressed()
+    {
+#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
+        return Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;
+#else
+        return false;
+#endif
+    }
+
+    public static bool IsMouseRightHeld()
+    {
+#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
+        return Mouse.current != null && Mouse.current.rightButton.isPressed;
+#else
+        return false;
+#endif
+    }
+
+    public static Vector2 ReadMouseDelta()
+    {
+#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
+        return Mouse.current != null ? Mouse.current.delta.ReadValue() : Vector2.zero;
+#else
+        return Vector2.zero;
+#endif
+    }
+
+    public static bool TryGetMouseScreenRay(Camera camera, out Ray ray)
+    {
+        ray = default;
+#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
+        if (camera == null || Mouse.current == null)
+            return false;
+
+        Vector2 screen = Mouse.current.position.ReadValue();
+        ray = camera.ScreenPointToRay(screen);
+        return true;
+#else
+        return false;
+#endif
+    }
+
     public static float GamepadStickX()
     {
 #if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
@@ -149,6 +191,8 @@ public static class MREditorInput
             case KeyCode.DownArrow: return keyboard.downArrowKey;
             case KeyCode.LeftArrow: return keyboard.leftArrowKey;
             case KeyCode.RightArrow: return keyboard.rightArrowKey;
+            case KeyCode.LeftShift: return keyboard.leftShiftKey;
+            case KeyCode.RightShift: return keyboard.rightShiftKey;
         }
 
         if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)

@@ -128,6 +128,63 @@ public class MREnvironmentSurfaces : MonoBehaviour
         yield break;
     }
 
+    /// <summary>TestConfig: floor/ceiling from SimulateRoom geometry — no MRUK load.</summary>
+    public void ProbeSimulateRoom(Transform floor, Transform ceiling, Transform viewpoint)
+    {
+        IsReady = false;
+        HasFloor = false;
+        HasCeiling = false;
+        room = null;
+        probeSource = "SimulateRoom";
+
+        if (floor == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} ProbeSimulateRoom — floor null");
+            return;
+        }
+
+        Bounds floorBounds = GetTransformWorldBounds(floor);
+        HasFloor = true;
+        FloorHeight = floorBounds.max.y;
+        PlayerFloorPoint = new Vector3(floorBounds.center.x, FloorHeight, floorBounds.center.z);
+
+        if (ceiling != null)
+        {
+            Bounds ceilingBounds = GetTransformWorldBounds(ceiling);
+            HasCeiling = true;
+            CeilingHeight = ceilingBounds.min.y;
+        }
+        else
+        {
+            HasCeiling = true;
+            CeilingHeight = FloorHeight + editorDefaultCeilingHeight;
+        }
+
+        IsReady = true;
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} ready source={probeSource} floor={HasFloor} y={FloorHeight:F2} " +
+            $"ceiling={HasCeiling} y={CeilingHeight:F2} eye={(viewpoint != null ? viewpoint.position.ToString() : "null")}");
+    }
+
+    public IEnumerator ProbeSimulateRoomWhenReady(Transform floor, Transform ceiling, Transform viewpoint)
+    {
+        ProbeSimulateRoom(floor, ceiling, viewpoint);
+        yield break;
+    }
+
+    static Bounds GetTransformWorldBounds(Transform target)
+    {
+        Renderer renderer = target.GetComponent<Renderer>();
+        if (renderer != null)
+            return renderer.bounds;
+
+        Collider collider = target.GetComponent<Collider>();
+        if (collider != null)
+            return collider.bounds;
+
+        return new Bounds(target.position, Vector3.one * 0.15f);
+    }
+
     void ShowRoomInfoUI()
     {
         if (!MRRuntimeSettings.ShowRoomAnchorInfoCanvas)
@@ -786,6 +843,12 @@ public class MREnvironmentSurfaces : MonoBehaviour
         Vector3 probe = rayOrigin + direction * rayDistance;
         if (TryGetTablePointAt(probe, out tablePoint))
             return true;
+
+        if (TryCast(ray, rayDistance, out MRSurfaceHit physicsHit) && IsFloorNormal(physicsHit.normal))
+        {
+            tablePoint = physicsHit.point;
+            return true;
+        }
 
         return false;
     }

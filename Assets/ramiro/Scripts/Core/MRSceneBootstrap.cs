@@ -83,10 +83,14 @@ public class MRSceneBootstrap : MonoBehaviour
 #if UNITY_EDITOR
     IEnumerator LoadEditorTestRoom()
     {
+        ConfigureMrukForEditorTestRoom(MRUK.Instance);
+
         GameObject roomPrefab = ResolveEditorTestRoomPrefab();
         if (roomPrefab == null)
         {
-            ConfigManager.WriteConsoleError($"{LogPrefix} editor test room prefab not found");
+            ConfigManager.WriteConsoleError(
+                $"{LogPrefix} editor test room prefab not found (name={editorTestRoomPrefabName}) — " +
+                "assign RoomPrefabs on Resources/ramiro/MRUK or set editorTestRoomPrefab");
             yield break;
         }
 
@@ -99,7 +103,7 @@ public class MRSceneBootstrap : MonoBehaviour
 
         MRUK.Instance.LoadSceneFromPrefab(roomPrefab);
 
-        yield return WaitForRoomReady(5f);
+        yield return WaitForRoomReady(anchorsReadyTimeoutSeconds);
 
         if (HasRoomWithAnchors())
         {
@@ -108,8 +112,11 @@ public class MRSceneBootstrap : MonoBehaviour
         }
         else
         {
+            int roomCount = MRUK.Instance != null ? MRUK.Instance.Rooms.Count : 0;
             MRSceneLoadState.LastLoadResult = MRUK.LoadDeviceResult.NoRoomsFound;
             MRSceneLoadState.LastLoadMessage = MRSceneLoadState.Describe(MRSceneLoadState.LastLoadResult);
+            ConfigManager.WriteConsoleError(
+                $"{LogPrefix} editor room load failed — rooms={roomCount} prefab={roomPrefab.name}");
         }
     }
 #endif
@@ -426,13 +433,36 @@ public class MRSceneBootstrap : MonoBehaviour
         if (target.SceneSettings == null)
             target.SceneSettings = new MRUK.MRUKSettings();
 
+#if UNITY_EDITOR
+        if (Application.isEditor)
+        {
+            // Editor/TestConfig: keep Prefab data source + RoomPrefabs from scene/Resources MRUK.
+            // Forcing Device here prevented LoadSceneFromPrefab from creating a room (SDK 76).
+            target.SceneSettings.LoadSceneOnStartup = false;
+            target.EnableWorldLock = false;
+            return;
+        }
+#endif
+
         target.SceneSettings.DataSource = MRUK.SceneDataSource.Device;
         target.SceneSettings.LoadSceneOnStartup = false;
-        // World Lock disabled: we use a custom OVRCameraRig shim (XROrigin-driven),
-        // so MRUK.Update should NOT try to mutate its trackingSpace (would do nothing useful
-        // and could re-introduce a NullReferenceException on disabled GameObjects).
         target.EnableWorldLock = false;
     }
+
+#if UNITY_EDITOR
+    static void ConfigureMrukForEditorTestRoom(MRUK target)
+    {
+        if (target == null)
+            return;
+
+        if (target.SceneSettings == null)
+            target.SceneSettings = new MRUK.MRUKSettings();
+
+        target.SceneSettings.DataSource = MRUK.SceneDataSource.Prefab;
+        target.SceneSettings.LoadSceneOnStartup = false;
+        target.EnableWorldLock = false;
+    }
+#endif
 
 #if UNITY_EDITOR
     static GameObject LoadMrukPrefabFromPackage()
@@ -469,6 +499,18 @@ public class MRSceneBootstrap : MonoBehaviour
         if (editorTestRoomPrefab != null)
             return editorTestRoomPrefab;
 
+        GameObject fromInstance = ResolveRoomPrefabFromMrukSettings(MRUK.Instance);
+        if (fromInstance != null)
+            return fromInstance;
+
+        GameObject mrukResources = Resources.Load<GameObject>(MrukResourcesPath);
+        if (mrukResources != null)
+        {
+            GameObject fromResources = ResolveRoomPrefabFromMrukSettings(mrukResources.GetComponent<MRUK>());
+            if (fromResources != null)
+                return fromResources;
+        }
+
         string[] candidatePaths =
         {
             $"Packages/com.meta.xr.mrutilitykit/Core/Rooms/Prefabs/{editorTestRoomPrefabName}.prefab",
@@ -485,15 +527,45 @@ public class MRSceneBootstrap : MonoBehaviour
         foreach (string guid in AssetDatabase.FindAssets($"{editorTestRoomPrefabName} t:Prefab"))
         {
             string path = AssetDatabase.GUIDToAssetPath(guid);
-            if (!path.Contains("mrutilitykit", StringComparison.OrdinalIgnoreCase))
-                continue;
-
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
             if (prefab != null)
                 return prefab;
         }
 
         return null;
+    }
+
+    GameObject ResolveRoomPrefabFromMrukSettings(MRUK mruk)
+    {
+        if (mruk?.SceneSettings?.RoomPrefabs == null || mruk.SceneSettings.RoomPrefabs.Length == 0)
+            return null;
+
+        GameObject preferred = null;
+        GameObject first = null;
+        foreach (GameObject roomPrefab in mruk.SceneSettings.RoomPrefabs)
+        {
+            if (roomPrefab == null)
+                continue;
+
+            if (first == null)
+                first = roomPrefab;
+
+            if (!string.IsNullOrEmpty(editorTestRoomPrefabName)
+                && roomPrefab.name.IndexOf(editorTestRoomPrefabName, StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                preferred = roomPrefab;
+                break;
+            }
+        }
+
+        GameObject resolved = preferred ?? first;
+        if (resolved != null)
+        {
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} resolved room from MRUK RoomPrefabs: {resolved.name} (count={mruk.SceneSettings.RoomPrefabs.Length})");
+        }
+
+        return resolved;
     }
 #endif
 }

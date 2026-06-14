@@ -28,8 +28,17 @@ public class MRMrEnvironmentLighting : MonoBehaviour
     float savedAmbientIntensity;
     bool ambientSaved;
 
+    public bool IsSpawned => lightingRoot != null;
+
     public void Spawn(Transform mrSpaceOrigin)
     {
+        MRAutoLightingSettings.EnsureLoaded();
+        if (!MRAutoLightingSettings.Enabled)
+        {
+            Despawn(restoreAmbient: false);
+            return;
+        }
+
         if (mrSpaceOrigin == null)
         {
             ConfigManager.WriteConsoleWarning($"{LogPrefix} spawn skipped — origin null");
@@ -71,13 +80,20 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         ConfigManager.WriteConsole($"{LogPrefix} spawned lights only localY={lampLocalY:F2}");
     }
 
-    public void Despawn()
+    public void Despawn(bool restoreAmbient = false)
     {
-        RestoreAmbientFill();
+        if (restoreAmbient)
+            RestoreAmbientFill();
 
         if (lightingRoot != null)
             Destroy(lightingRoot);
         lightingRoot = null;
+    }
+
+    /// <summary>Called when leaving MR — remove runtime lights and undo ambient fill.</summary>
+    public void DespawnForMrExit()
+    {
+        Despawn(restoreAmbient: true);
     }
 
     void ApplyAmbientFill()

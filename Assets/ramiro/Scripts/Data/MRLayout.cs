@@ -218,9 +218,15 @@ public class MREnvironmentPlacement
     public MRQuaternion WorldRotation;
     public PlacementSurfaceType SurfaceType = PlacementSurfaceType.Floor;
     public PlacementFacingAxis FacingAxis = PlacementFacingAxis.PositiveZ;
+    public float LightIntensity;
+    public float LightRange;
+    public float LightTemperature;
 
     public bool IsCustomSource =>
         string.Equals(Source, "custom", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsLightSource =>
+        string.Equals(Source, "light", StringComparison.OrdinalIgnoreCase);
 
     public void NormalizeLegacySource()
     {
@@ -323,6 +329,27 @@ public class MREnvironmentLayout
 
         return null;
     }
+
+    public List<MREnvironmentPlacement> FindAllByCatalogEntry(MREnvironmentCatalogEntry entry)
+    {
+        var results = new List<MREnvironmentPlacement>();
+        if (entry.Key == null)
+            return results;
+
+        lock (propsLock)
+        {
+            foreach (MREnvironmentPlacement placement in Props)
+            {
+                if (placement != null && entry.MatchesPlacement(placement))
+                    results.Add(placement);
+            }
+        }
+
+        return results;
+    }
+
+    public int CountByCatalogEntry(MREnvironmentCatalogEntry entry) =>
+        FindAllByCatalogEntry(entry).Count;
 
     public bool RemoveById(string id)
     {

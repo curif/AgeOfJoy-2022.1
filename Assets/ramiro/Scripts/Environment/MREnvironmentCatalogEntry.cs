@@ -24,9 +24,15 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
     public static MREnvironmentCatalogEntry FromCustom(string packageName, string displayLabel) =>
         new MREnvironmentCatalogEntry(MREnvironmentObjectSource.Custom, packageName, displayLabel);
 
+    public static MREnvironmentCatalogEntry FromLight(string prefabName, string displayLabel) =>
+        new MREnvironmentCatalogEntry(MREnvironmentObjectSource.Light, prefabName, displayLabel);
+
     public string MenuPrefix => Source == MREnvironmentObjectSource.Custom ? "[C] " : string.Empty;
 
-    public string MenuLabel => MenuPrefix + Truncate(DisplayLabel, 18);
+    public string MenuLabel => MenuPrefix + Truncate(DisplayLabel, 10);
+
+    /// <summary>All environment/light catalog rows allow unlimited instances. Game cabinets use <see cref="MRLayoutRegistry"/> (one per game).</summary>
+    public bool AllowsMultipleInstances => true;
 
     public bool MatchesPlacement(MREnvironmentPlacement placement)
     {
@@ -36,6 +42,10 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
         placement.NormalizeLegacySource();
         if (Source == MREnvironmentObjectSource.Custom)
             return string.Equals(placement.PackageName, Key, StringComparison.OrdinalIgnoreCase);
+
+        if (Source == MREnvironmentObjectSource.Light)
+            return placement.IsLightSource
+                && string.Equals(placement.PrefabName, Key, StringComparison.OrdinalIgnoreCase);
 
         return string.Equals(placement.PrefabName, Key, StringComparison.OrdinalIgnoreCase);
     }
@@ -61,5 +71,6 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
 public enum MREnvironmentObjectSource
 {
     Build = 0,
-    Custom = 1
+    Custom = 1,
+    Light = 2
 }

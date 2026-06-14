@@ -12,6 +12,7 @@ public static class MixedRealityBootstrap
     static bool ShouldInstallForScene(string sceneName) =>
         sceneName == MRRuntimeSettings.FixedScene
         || sceneName == "TestMRmanager"
+        || sceneName == MRTestConfigSceneLoader.TestSceneName
         || sceneName == MRRuntimeSettings.ExteriorScene;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -58,6 +59,8 @@ public static class MixedRealityBootstrap
         Scene active = SceneManager.GetActiveScene();
         if (active.name == "TestMRmanager")
             root.AddComponent<MRTestGameCabinetSpawn>();
+        else if (active.name == MRTestConfigSceneLoader.TestSceneName)
+            root.AddComponent<MRTestConfigSceneLoader>();
 
         Object.DontDestroyOnLoad(root);
         ConfigManager.WriteConsole("[MixedRealityBootstrap] MixedRealitySystem installed");

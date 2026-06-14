@@ -175,7 +175,7 @@ public class MRPlacementRayController : MonoBehaviour
         {
             nextInvalidPreviewLogTime = Time.unscaledTime + 3f;
             ConfigManager.WriteConsoleWarning(
-                $"{LogPrefix} no {surfaceType} hit — aim right controller at MRUK wall (or look at wall); confirm=trigger cancel=grip");
+                $"{LogPrefix} no {surfaceType} hit — aim mouse at surface; confirm=RMB cancel=Esc");
             MRTransitionLog.LogWarning($"PlacementRay no {surfaceType} preview for {movingTarget.name}");
         }
 
@@ -345,6 +345,11 @@ public class MRPlacementRayController : MonoBehaviour
 
     void ResolvePointer(out Vector3 rayOrigin, out Vector3 rayDirection, out Vector3 viewerPosition)
     {
+#if UNITY_EDITOR
+        if (Application.isEditor && TryResolveEditorMousePointer(out rayOrigin, out rayDirection, out viewerPosition))
+            return;
+#endif
+
         Transform pointer = ResolveRightControllerTransform();
         Transform viewer = Camera.main != null ? Camera.main.transform : pointer;
 
@@ -369,6 +374,38 @@ public class MRPlacementRayController : MonoBehaviour
             rayDirection = Vector3.forward;
         rayDirection.Normalize();
     }
+
+#if UNITY_EDITOR
+    static bool TryResolveEditorMousePointer(
+        out Vector3 rayOrigin,
+        out Vector3 rayDirection,
+        out Vector3 viewerPosition)
+    {
+        rayOrigin = default;
+        rayDirection = default;
+        viewerPosition = default;
+
+        if (ResolveRightControllerTransform() != null)
+            return false;
+
+        Camera cam = Camera.main;
+        if (cam == null)
+            return false;
+
+        viewerPosition = cam.transform.position;
+
+        if (MREditorInput.TryGetMouseScreenRay(cam, out Ray mouseRay))
+        {
+            rayOrigin = mouseRay.origin;
+            rayDirection = mouseRay.direction.normalized;
+            return true;
+        }
+
+        rayOrigin = cam.transform.position;
+        rayDirection = cam.transform.forward;
+        return true;
+    }
+#endif
 
     static Transform ResolveRightControllerTransform()
     {
@@ -525,8 +562,7 @@ public class MRPlacementRayController : MonoBehaviour
     static bool WasConfirmPressed()
     {
 #if UNITY_EDITOR
-        return MREditorInput.WasAnyPressed(KeyCode.Return, KeyCode.KeypadEnter)
-            || MREditorInput.WasMouseLeftPressed();
+        return MREditorInput.WasMouseRightPressed();
 #else
         return OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, OVRInput.Controller.RTouch);
 #endif

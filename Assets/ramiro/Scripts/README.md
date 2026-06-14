@@ -102,6 +102,8 @@ Scripts used only during development and QA. **Not shipped in release builds**
 |--------|------|
 | `MREditorMrSimulator` | Simulates MR environment in the Unity Editor (no headset required) |
 | `MRTestGameCabinetSpawn` | Spawns a test cabinet in the `TestMRmanager` scene at runtime |
+| `MRTestConfigSceneLoader` | `TestConfig`: MRUK editor room (default) + load cabinets/props from MR YAML |
+| `MRTestConfigEditorCamera` | Editor fly camera in `TestConfig` (RMB look, WASD move) for placement ray aim |
 | `MRExampleCabinetSeed` | Seeds the layout registry with example cabinet data for quick tests |
 
 ---

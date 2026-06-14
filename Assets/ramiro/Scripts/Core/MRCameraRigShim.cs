@@ -126,19 +126,30 @@ public class MRUKCameraRigStub : OVRCameraRig
         if (cachedOrigin == null)
             cachedOrigin = Object.FindObjectOfType<XROrigin>();
 
-        if (cachedOrigin == null)
+        if (cachedOrigin != null)
+        {
+            Transform originTracking = ResolveTrackingTransform(cachedOrigin);
+            if (originTracking != null && trackingSpace != null)
+                trackingSpace.SetPositionAndRotation(originTracking.position, originTracking.rotation);
+
+            if (cachedOrigin.Camera != null && centerEyeAnchor != null)
+            {
+                centerEyeAnchor.SetPositionAndRotation(
+                    cachedOrigin.Camera.transform.position,
+                    cachedOrigin.Camera.transform.rotation);
+            }
+
+            return;
+        }
+
+        Camera main = Camera.main;
+        if (main == null || centerEyeAnchor == null)
             return;
 
-        Transform originTracking = ResolveTrackingTransform(cachedOrigin);
-        if (originTracking != null && trackingSpace != null)
-            trackingSpace.SetPositionAndRotation(originTracking.position, originTracking.rotation);
+        if (trackingSpace != null)
+            trackingSpace.SetPositionAndRotation(main.transform.position, main.transform.rotation);
 
-        if (cachedOrigin.Camera != null && centerEyeAnchor != null)
-        {
-            centerEyeAnchor.SetPositionAndRotation(
-                cachedOrigin.Camera.transform.position,
-                cachedOrigin.Camera.transform.rotation);
-        }
+        centerEyeAnchor.SetPositionAndRotation(main.transform.position, main.transform.rotation);
     }
 
     static Transform ResolveTrackingTransform(XROrigin origin)

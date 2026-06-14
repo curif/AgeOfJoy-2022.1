@@ -184,6 +184,24 @@ public class MixedRealityManager : MonoBehaviour
         BeginTransition(EnterMRCoroutine());
     }
 
+    /// <summary>
+    /// TestConfig / editor room: skip VR unload and passthrough; probe MRUK (or SimulateRoom fallback) and spawn YAML layouts.
+    /// </summary>
+    public void EnterTestSceneMr(Vector3 originPosition, Quaternion originRotation)
+    {
+        if (CurrentMode == ExperienceMode.MR || CurrentMode == ExperienceMode.MR_EDIT)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} EnterTestSceneMr ignored — already in MR mode");
+            return;
+        }
+
+        if (transitionInProgress)
+            return;
+
+        MRTransitionLog.EnsureSession("EnterTestSceneMr");
+        BeginTransition(EnterTestSceneMrCoroutine(originPosition, originRotation));
+    }
+
     /// <summary>Immersive VR→MR via phone booth — player stays inside the rescued booth.</summary>
     public void EnterMRFromPhoneBooth(MRPhoneBoothPortal portal)
     {
@@ -291,7 +309,7 @@ public class MixedRealityManager : MonoBehaviour
         MRVrSystemsGate.SilenceAllCabinetScreensForPhoneBoothTravelToVr();
         PersistMrLayoutPoses("BeginMrExitImmediateSync");
         MRConfigurationCabinetController.Instance?.HideForMrExit();
-        mrLighting?.Despawn();
+        mrLighting?.DespawnForMrExit();
         mrEffectMesh?.Despawn();
         int hidden = ActiveRegistry()?.HideAllMrCabinetsImmediateCount() ?? 0;
         int hiddenEnv = ActiveEnvironmentRegistry()?.HideAllImmediateCount() ?? 0;
@@ -497,6 +515,58 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogManagerState("EnterMRCoroutine-final");
         ConfigManager.WriteConsole($"{LogPrefix} EnterMR done");
         MRTransitionLog.LogStep("EnterMRCoroutine", "DONE");
+    }
+
+    IEnumerator EnterTestSceneMrCoroutine(Vector3 originPosition, Quaternion originRotation)
+    {
+        int generation = transitionGeneration;
+        MRTransitionLog.LogStep("EnterTestSceneMrCoroutine", $"start generation={generation}");
+        ConfigManager.WriteConsole($"{LogPrefix} EnterTestSceneMr coroutine");
+
+        DestroyMRSpaceOrigin();
+
+        var originGo = new GameObject("MRSpaceOrigin");
+        originGo.transform.SetPositionAndRotation(originPosition, originRotation);
+        MRSpaceOrigin = originGo.transform;
+
+        Transform player = Camera.main != null ? Camera.main.transform : FindPlayerTransform();
+        if (environmentSurfaces != null)
+        {
+            if (MRTestConfigSceneLoader.TryGetSimulateRoomSurfaces(out Transform floor, out Transform ceiling))
+                yield return environmentSurfaces.ProbeSimulateRoomWhenReady(floor, ceiling, player);
+            else
+                yield return environmentSurfaces.ProbeWhenReady(player);
+        }
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        MRTestConfigSceneLoader.PositionViewCameraFromSurfaces(environmentSurfaces);
+
+        if (environmentSurfaces != null && MRSpaceOrigin != null)
+            environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
+
+        SetMode(ExperienceMode.MR);
+
+        MRLayoutRegistry layout = ActiveRegistry();
+        if (layout != null)
+            yield return layout.SpawnAllAsync(MRSpaceOrigin);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        MREnvironmentRegistry environment = ActiveEnvironmentRegistry();
+        if (environment != null)
+            yield return environment.SpawnAllAsync(MRSpaceOrigin);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        layout?.EnsureAttractPlaybackOnSpawned();
+
+        MRConfigurationCabinetController configCabinet = MRConfigurationCabinetController.Instance;
+        if (configCabinet != null && !configCabinet.HasCabinet)
+            configCabinet.SpawnAtMrOrigin();
+
+        ConfigManager.WriteConsole($"{LogPrefix} EnterTestSceneMr done");
+        MRTransitionLog.LogStep("EnterTestSceneMrCoroutine", "DONE");
     }
 
     IEnumerator EnterMRFromPhoneBoothCoroutine(MRPhoneBoothPortal portal)

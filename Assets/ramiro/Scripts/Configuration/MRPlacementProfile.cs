@@ -6,7 +6,8 @@ using UnityEngine;
 
 /// <summary>
 /// Declares how an MR prefab/object is placed (surface, facing, optional stick rotation).
-/// Attach to the root of prefabs under Resources/ramiro/PrefabsEnvironment (or any MR placeable).
+/// Attach to the root of prefabs under Resources/ramiro/PrefabsEnvironment,
+/// Resources/ramiro/Lights, or any MR placeable.
 /// </summary>
 public class MRPlacementProfile : MonoBehaviour
 {

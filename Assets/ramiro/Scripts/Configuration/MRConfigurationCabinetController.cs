@@ -65,6 +65,11 @@ public class MRConfigurationCabinetController : MonoBehaviour
     public bool IsEditOpen => isEditOpen;
     public bool HasCabinet => cabinetInstance != null;
 
+#if UNITY_EDITOR
+    public bool IsUsingCabinetCamera { get; private set; }
+    Camera testConfigSceneMainCamera;
+#endif
+
     /// <summary>True when the config cabinet is visible (hidden instances kept for re-entry do not count).</summary>
     public bool HasVisibleCabinet => cabinetInstance != null && cabinetInstance.activeInHierarchy;
 
@@ -89,7 +94,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
     {
         DestroyStrayWallUi();
 
-        if (IsTestScene())
+        if (IsCabinetAutoSpawnTestScene())
             StartCoroutine(PlaceCabinetOnFloorWhenReady());
 
         TrySpawnIfMrActive();
@@ -208,6 +213,11 @@ public class MRConfigurationCabinetController : MonoBehaviour
         if (mode == ExperienceMode.MR)
             MixedRealityManager.Instance.EnterMREdit();
 
+#if UNITY_EDITOR
+        if (IsTestConfigScene())
+            EnableTestConfigCabinetCamera();
+#endif
+
         isEditOpen = true;
         ConfigManager.WriteConsole($"{LogPrefix} CRT configuration open");
     }
@@ -224,6 +234,11 @@ public class MRConfigurationCabinetController : MonoBehaviour
         if (MixedRealityManager.Instance != null
             && MixedRealityManager.Instance.CurrentMode == ExperienceMode.MR_EDIT)
             MixedRealityManager.Instance.ExitMREdit();
+
+#if UNITY_EDITOR
+        if (IsTestConfigScene())
+            RestoreTestConfigSceneCamera();
+#endif
 
         ConfigManager.WriteConsole($"{LogPrefix} CRT configuration closed");
     }
@@ -242,6 +257,11 @@ public class MRConfigurationCabinetController : MonoBehaviour
         if (MixedRealityManager.Instance != null
             && MixedRealityManager.Instance.CurrentMode == ExperienceMode.MR_EDIT)
             MixedRealityManager.Instance.ExitMREdit();
+
+#if UNITY_EDITOR
+        if (IsTestConfigScene())
+            RestoreTestConfigSceneCamera();
+#endif
 
         ConfigManager.WriteConsole(
             $"{LogPrefix} suspended for cabinet placement — insert coin to reopen CRT");
@@ -459,7 +479,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
     }
 
     bool NeedsInitialPlacementRay() =>
-        !EnableSavedPoseLoad || !HasValidSavedPose();
+        !IsTestConfigScene() && (!EnableSavedPoseLoad || !HasValidSavedPose());
 
     bool HasValidSavedPose()
     {
@@ -524,7 +544,15 @@ public class MRConfigurationCabinetController : MonoBehaviour
             if (surfaces != null && !surfaces.IsReady)
             {
                 Transform player = FindPlayerTransform();
+                if (IsTestConfigScene() && EnsureSurfacesReadyForTestScene(player))
+                {
+                    yield return null;
+                    continue;
+                }
+
                 yield return surfaces.ProbeWhenReady(player);
+                if (IsTestConfigScene())
+                    MRTestConfigSceneLoader.PositionViewCameraFromSurfaces(surfaces);
                 yield return null;
                 continue;
             }
@@ -584,10 +612,29 @@ public class MRConfigurationCabinetController : MonoBehaviour
             Object.Destroy(named);
     }
 
-    static bool IsTestScene()
+    static bool IsCabinetAutoSpawnTestScene()
     {
         string scene = SceneManager.GetActiveScene().name;
         return scene == "TestMRmanager" || scene == "TestUI";
+    }
+
+    static bool IsTestConfigScene() =>
+        SceneManager.GetActiveScene().name == MRTestConfigSceneLoader.TestSceneName;
+
+    static bool EnsureSurfacesReadyForTestScene(Transform viewpoint)
+    {
+        MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
+        if (surfaces == null || surfaces.IsReady)
+            return surfaces != null && surfaces.IsReady;
+
+        if (!MRTestConfigSceneLoader.UseMrukEditorRoom
+            && MRTestConfigSceneLoader.TryGetSimulateRoomSurfaces(out Transform floor, out Transform ceiling))
+        {
+            surfaces.ProbeSimulateRoom(floor, ceiling, viewpoint);
+            return surfaces.IsReady;
+        }
+
+        return false;
     }
 
     IEnumerator PlaceCabinetOnFloorWhenReady()
@@ -1115,7 +1162,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     void TryAlignEditorCameraToScreen()
     {
-        if (!Application.isEditor || !IsTestScene() || !editorAlignCameraAfterInstantiate)
+        if (!Application.isEditor || !IsCabinetAutoSpawnTestScene() || !editorAlignCameraAfterInstantiate)
             return;
         if (cabinetInstance == null)
             return;
@@ -1142,6 +1189,8 @@ public class MRConfigurationCabinetController : MonoBehaviour
     void TryAutoInsertCoinForEditor()
     {
         if (!Application.isEditor || !editorAutoInsertCoinOnSpawn || cabinetInstance == null)
+            return;
+        if (!IsTestConfigScene() && !IsCabinetAutoSpawnTestScene())
             return;
 
         CoinSlotController coinSlot = FindCoinSlot(cabinetInstance);
@@ -1221,6 +1270,50 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
         ConfigManager.WriteConsoleWarning($"{LogPrefix} editor auto-open failed (timed out)");
     }
+
+    void EnableTestConfigCabinetCamera()
+    {
+        if (!Application.isEditor || cabinetInstance == null)
+            return;
+
+        Camera sceneMain = Camera.main;
+        Camera cabinetCamera = cabinetInstance.GetComponentInChildren<Camera>(true);
+        if (cabinetCamera == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} TestConfig CRT camera missing on cabinet prefab");
+            return;
+        }
+
+        if (testConfigSceneMainCamera == null && sceneMain != null && sceneMain != cabinetCamera)
+            testConfigSceneMainCamera = sceneMain;
+
+        if (!cabinetCamera.gameObject.activeSelf)
+            cabinetCamera.gameObject.SetActive(true);
+        cabinetCamera.enabled = true;
+
+        if (testConfigSceneMainCamera != null && testConfigSceneMainCamera != cabinetCamera)
+            testConfigSceneMainCamera.enabled = false;
+
+        IsUsingCabinetCamera = true;
+        ConfigManager.WriteConsole($"{LogPrefix} TestConfig CRT camera active ({cabinetCamera.name})");
+    }
+
+    void RestoreTestConfigSceneCamera()
+    {
+        if (!Application.isEditor)
+            return;
+
+        if (cabinetInstance != null)
+        {
+            foreach (Camera cam in cabinetInstance.GetComponentsInChildren<Camera>(true))
+                cam.enabled = false;
+        }
+
+        if (testConfigSceneMainCamera != null)
+            testConfigSceneMainCamera.enabled = true;
+
+        IsUsingCabinetCamera = false;
+    }
 #endif
 
     static Transform FindPlayerTransform()
@@ -1232,7 +1325,10 @@ public class MRConfigurationCabinetController : MonoBehaviour
             return pc.transform;
 
         var tagged = GameObject.FindGameObjectWithTag("Player");
-        return tagged != null ? tagged.transform : null;
+        if (tagged != null)
+            return tagged.transform;
+
+        return Camera.main != null ? Camera.main.transform : null;
     }
 
     static Vector3 ResolveEyePosition(Transform player)
