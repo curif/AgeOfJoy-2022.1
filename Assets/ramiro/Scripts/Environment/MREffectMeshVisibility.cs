@@ -13,6 +13,7 @@ public static class MREffectMeshVisibility
 
     public const string AnchorMeshLabel = "EffectMesh";
     public const string GlobalMeshLabel = "EffectMeshGlobalMesh";
+    public const string ScanDebugColorsLabel = "SCAN COLORS";
 
     public static void ToggleAnchorMesh()
     {
@@ -36,6 +37,12 @@ public static class MREffectMeshVisibility
         ApplyInMrWorld();
     }
 
+    public static void SetScanDebugColorsEnabled(bool enabled)
+    {
+        MREffectMeshSettings.SetScanDebugColorsEnabled(enabled);
+        ApplyColorTintInMrWorld();
+    }
+
     public static void ApplySavedSettings()
     {
         if (!IsMrWorldActive())
@@ -55,6 +62,18 @@ public static class MREffectMeshVisibility
         return GetStatusLabel(MREffectMeshSettings.GlobalMeshEnabled, IsGlobalLive());
     }
 
+    public static string GetScanDebugColorsStatusLabel()
+    {
+        MREffectMeshSettings.EnsureLoaded();
+        if (!MREffectMeshSettings.ScanDebugColorsEnabled)
+            return "OFF";
+
+        if (!IsMrWorldActive())
+            return "ON (pref)";
+
+        return IsAnyMeshLive() ? "ON per surface" : "ON (wait mesh)";
+    }
+
     static void ApplyInMrWorld()
     {
         if (!IsMrWorldActive())
@@ -70,6 +89,23 @@ public static class MREffectMeshVisibility
         controller.ApplySettings();
         ConfigManager.WriteConsole(
             $"{LogPrefix} anchor={MREffectMeshSettings.AnchorMeshEnabled} global={MREffectMeshSettings.GlobalMeshEnabled}");
+    }
+
+    static void ApplyColorTintInMrWorld()
+    {
+        if (!IsMrWorldActive())
+            return;
+
+        MREffectMeshController controller = GetController();
+        if (controller == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} scan colors saved but controller missing");
+            return;
+        }
+
+        controller.ApplyColorTint();
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} scanColors={MREffectMeshSettings.ScanDebugColorsEnabled}");
     }
 
     static string GetStatusLabel(bool prefEnabled, bool live)
@@ -95,6 +131,12 @@ public static class MREffectMeshVisibility
     {
         MREffectMeshController controller = GetController();
         return controller != null && controller.IsGlobalMeshSpawned;
+    }
+
+    static bool IsAnyMeshLive()
+    {
+        MREffectMeshController controller = GetController();
+        return controller != null && controller.IsSpawned;
     }
 
     static MREffectMeshController GetController()

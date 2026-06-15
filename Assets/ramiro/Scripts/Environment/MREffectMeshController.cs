@@ -23,6 +23,10 @@ public class MREffectMeshController : MonoBehaviour
     EffectMesh anchorEffectMesh;
     EffectMesh globalEffectMesh;
     Coroutine spawnRoutine;
+    MaterialPropertyBlock tintPropertyBlock;
+
+    static readonly int TintEnabledId = Shader.PropertyToID("_TintEnabled");
+    static readonly int TintColorId = Shader.PropertyToID("_TintColor");
 
     public bool IsSpawned => anchorMeshRoot != null || globalMeshRoot != null;
     public bool IsAnchorMeshSpawned => anchorMeshRoot != null;
@@ -40,6 +44,13 @@ public class MREffectMeshController : MonoBehaviour
             StopCoroutine(spawnRoutine);
 
         spawnRoutine = StartCoroutine(SpawnRoutine());
+    }
+
+    /// <summary>Refresh mesh tint color without respawning EffectMesh instances.</summary>
+    public void ApplyColorTint()
+    {
+        ConfigureOccluderRenderers(anchorEffectMesh);
+        ConfigureOccluderRenderers(globalEffectMesh);
     }
 
     public void Despawn()
@@ -162,19 +173,31 @@ public class MREffectMeshController : MonoBehaviour
         float remaining = timeoutSeconds;
         while (remaining > 0f)
         {
-            if (HasEffectMeshGeometry(anchorEffectMesh) || HasEffectMeshGeometry(globalEffectMesh))
+            if (AreEnabledMeshLayersReady())
                 break;
 
             remaining -= Time.unscaledDeltaTime;
             yield return null;
         }
 
-        ConfigureOccluderRenderers(anchorEffectMesh);
-        ConfigureOccluderRenderers(globalEffectMesh);
+        ApplyColorTint();
 
         yield return null;
-        ConfigureOccluderRenderers(anchorEffectMesh);
-        ConfigureOccluderRenderers(globalEffectMesh);
+        ApplyColorTint();
+    }
+
+    bool AreEnabledMeshLayersReady()
+    {
+        MREffectMeshSettings.EnsureLoaded();
+
+        bool anchorReady = !MREffectMeshSettings.AnchorMeshEnabled
+            || anchorEffectMesh == null
+            || HasEffectMeshGeometry(anchorEffectMesh);
+        bool globalReady = !MREffectMeshSettings.GlobalMeshEnabled
+            || globalEffectMesh == null
+            || HasEffectMeshGeometry(globalEffectMesh);
+
+        return anchorReady && globalReady;
     }
 
     static bool HasEffectMeshGeometry(EffectMesh effectMesh)
@@ -182,16 +205,23 @@ public class MREffectMeshController : MonoBehaviour
         return effectMesh != null && effectMesh.EffectMeshObjects.Count > 0;
     }
 
-    static void ConfigureOccluderRenderers(EffectMesh effectMesh)
+    void ConfigureOccluderRenderers(EffectMesh effectMesh)
     {
         if (effectMesh == null)
             return;
 
         effectMesh.CastShadow = false;
+        MREffectMeshSettings.EnsureLoaded();
+        bool scanColorsEnabled = MREffectMeshSettings.ScanDebugColorsEnabled;
         int configured = 0;
 
-        foreach (EffectMesh.EffectMeshObject meshObject in effectMesh.EffectMeshObjects.Values)
+        if (tintPropertyBlock == null)
+            tintPropertyBlock = new MaterialPropertyBlock();
+
+        foreach (var pair in effectMesh.EffectMeshObjects)
         {
+            MRUKAnchor anchor = pair.Key;
+            EffectMesh.EffectMeshObject meshObject = pair.Value;
             if (meshObject?.effectMeshGO == null)
                 continue;
 
@@ -201,11 +231,19 @@ public class MREffectMeshController : MonoBehaviour
 
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             renderer.receiveShadows = true;
+
+            Color tintColor = Color.clear;
+            bool tintEnabled = scanColorsEnabled
+                && MREffectMeshScanColors.TryGetColor(anchor, out tintColor);
+            tintPropertyBlock.SetFloat(TintEnabledId, tintEnabled ? 1f : 0f);
+            tintPropertyBlock.SetColor(TintColorId, tintColor);
+            renderer.SetPropertyBlock(tintPropertyBlock);
             configured++;
         }
 
         if (configured > 0)
-            ConfigManager.WriteConsole($"{LogPrefix} {effectMesh.name}: {configured} occluder renderer(s)");
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} {effectMesh.name}: {configured} renderer(s) scanColors={scanColorsEnabled}");
     }
 
     void TrySpawnGlobalMesh()
@@ -223,6 +261,7 @@ public class MREffectMeshController : MonoBehaviour
 
         globalEffectMesh.CreateMesh(room);
         ConfigManager.WriteConsole($"{LogPrefix} global mesh created for room '{room.name}'");
+        ApplyColorTint();
     }
 
     static void TearDown(ref GameObject root, ref EffectMesh effect)

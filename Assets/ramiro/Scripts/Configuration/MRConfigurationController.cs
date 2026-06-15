@@ -19,7 +19,8 @@ public class MRConfigurationController : MonoBehaviour
     const int VisibleDebugRows = 10;
     const int VisibleDebugDetailRows = 16;
     const int DebugDetailWrapWidth = 38;
-    const int MeshOptionCount = 2;
+    const int MeshOptionCount = 3;
+    const int MeshScanColorsRowIndex = 2;
     const int LightsAutoRowIndex = 0;
     const int ListRowNameWidth = 10;
 
@@ -53,7 +54,8 @@ public class MRConfigurationController : MonoBehaviour
         LightTune,
         Debug,
         DebugDetail,
-        Help
+        Help,
+        ScanInProgress
     }
 
     [SerializeField] string systemSkin = DefaultSkin;
@@ -108,6 +110,8 @@ public class MRConfigurationController : MonoBehaviour
     string lightTunePlacementId;
     bool pendingReturnToPlacedInstances;
     GameObject pendingAddRoot;
+    bool scanRequestInProgress;
+    Coroutine scanRoomCoroutine;
 
     public bool IsSessionActive => sessionActive;
 
@@ -169,6 +173,7 @@ public class MRConfigurationController : MonoBehaviour
         RefreshEnvironmentCatalog();
         RefreshLightsCatalog();
 
+        BuildNavMenu();
         setupActionMap();
         sessionActive = true;
         confirmControlWasActive = false;
@@ -196,6 +201,12 @@ public class MRConfigurationController : MonoBehaviour
         confirmControlWasActive = false;
         secondaryControlWasActive = false;
         backControlWasActive = false;
+        if (scanRoomCoroutine != null)
+        {
+            StopCoroutine(scanRoomCoroutine);
+            scanRoomCoroutine = null;
+        }
+        scanRequestInProgress = false;
         placementMoveActive = false;
         placementEnvMoveActive = false;
         placementAddActive = false;
@@ -233,6 +244,9 @@ public class MRConfigurationController : MonoBehaviour
     void Update()
     {
         if (!sessionActive || screen == null)
+            return;
+
+        if (scanRequestInProgress)
             return;
 
         if (placementMoveActive || placementEnvMoveActive || placementAddActive)
@@ -285,10 +299,28 @@ public class MRConfigurationController : MonoBehaviour
 
     void BuildNavMenu()
     {
+        if (RequiresRoomScanMenu())
+            BuildScanRequiredNavMenu();
+        else
+            BuildFullNavMenu();
+    }
+
+    static bool RequiresRoomScanMenu() => !MRSceneScanState.IsRoomScanned();
+
+    void BuildScanRequiredNavMenu()
+    {
+        navMenu = new GenericMenu(screen, "SCAN REQUIRED");
+        navMenu.AddOption(
+            MRSceneScanState.ScanRoomMenuOption,
+            "Open Quest Space Setup to map your room");
+    }
+
+    void BuildFullNavMenu()
+    {
         navMenu = new GenericMenu(screen, "MR CONFIGURATION");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("ENVIRONMENT", "Build + Custom Objects");
-        navMenu.AddOption("MESH", "EffectMesh layers (occluder walls)");
+        navMenu.AddOption("MESH", "EffectMesh + scan debug colors");
         navMenu.AddOption("LIGHTS", "Light prefabs from ramiro/Lights");
         navMenu.AddOption("MOVE CONFIG", "Reposition ConfigurationCabinetMiniMR");
         navMenu.AddOption("ADJUSTMENTS", "Scale and floor position for game cabinets");
@@ -326,7 +358,13 @@ public class MRConfigurationController : MonoBehaviour
         {
             case Screen.NavMain:
                 navMenu.DrawMenu();
-                DrawFooter("STICK: move   A: select   B: back");
+                if (RequiresRoomScanMenu())
+                    DrawFooter("A: scan room");
+                else
+                    DrawFooter("STICK: move   A: select   B: back");
+                break;
+            case Screen.ScanInProgress:
+                DrawScanInProgressPage();
                 break;
             case Screen.Cabinets:
                 DrawCabinetsPage();
@@ -364,6 +402,15 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         screen.DrawScreen();
+    }
+
+    void DrawScanInProgressPage()
+    {
+        screen.PrintCentered(0, "SCAN ROOM", true);
+        screen.PrintLine(1, false, '-');
+        screen.PrintCentered(8, "Quest scanner open", true);
+        screen.PrintCentered(10, "Walk around your room", false);
+        screen.PrintCentered(12, "Finish setup to continue", false);
     }
 
     void DrawCabinetsPage()
@@ -615,23 +662,32 @@ public class MRConfigurationController : MonoBehaviour
         screen.PrintLine(1, false, '-');
 
         DrawListRow(
-            4,
+            3,
             0,
             selectedListIndex,
             Truncate(MREffectMeshVisibility.AnchorMeshLabel, ListRowNameWidth),
             GetMeshRowActions(0));
-        screen.Print(1, 5, $"   {Truncate(MREffectMeshVisibility.GetAnchorStatusLabel(), 34)}", false);
+        screen.Print(1, 4, $"   {Truncate(MREffectMeshVisibility.GetAnchorStatusLabel(), 34)}", false);
 
         DrawListRow(
-            7,
+            5,
             1,
             selectedListIndex,
             Truncate(MREffectMeshVisibility.GlobalMeshLabel, ListRowNameWidth),
             GetMeshRowActions(1));
-        screen.Print(1, 8, $"   {Truncate(MREffectMeshVisibility.GetGlobalStatusLabel(), 34)}", false);
+        screen.Print(1, 6, $"   {Truncate(MREffectMeshVisibility.GetGlobalStatusLabel(), 34)}", false);
 
-        screen.Print(1, 12, "Occluder walls in MR", false);
-        screen.Print(1, 13, "OFF saves GPU / room scan", false);
+        DrawListRow(
+            8,
+            MeshScanColorsRowIndex,
+            selectedListIndex,
+            Truncate(MREffectMeshVisibility.ScanDebugColorsLabel, ListRowNameWidth),
+            GetMeshRowActions(MeshScanColorsRowIndex));
+        screen.Print(1, 9, $"   {Truncate(MREffectMeshVisibility.GetScanDebugColorsStatusLabel(), 34)}", false);
+
+        screen.Print(1, 12, "Floor=green Wall=orange", false);
+        screen.Print(1, 13, "Table=yellow Ceiling=blue", false);
+        screen.Print(1, 14, "Turn EffectMesh ON first", false);
         DrawFooter(RowColumnFooter);
     }
 
@@ -955,9 +1011,13 @@ public class MRConfigurationController : MonoBehaviour
         if (index < 0 || index >= MeshOptionCount)
             return actions;
 
-        bool enabled = index == 0
-            ? MREffectMeshSettings.AnchorMeshEnabled
-            : MREffectMeshSettings.GlobalMeshEnabled;
+        bool enabled = index switch
+        {
+            0 => MREffectMeshSettings.AnchorMeshEnabled,
+            1 => MREffectMeshSettings.GlobalMeshEnabled,
+            MeshScanColorsRowIndex => MREffectMeshSettings.ScanDebugColorsEnabled,
+            _ => false
+        };
 
         if (enabled)
             actions.Add(RowActionKind.ToggleOff);
@@ -1165,6 +1225,12 @@ public class MRConfigurationController : MonoBehaviour
                     MREffectMeshVisibility.SetGlobalMeshEnabled(true);
                 else if (action == RowActionKind.ToggleOff)
                     MREffectMeshVisibility.SetGlobalMeshEnabled(false);
+                break;
+            case MeshScanColorsRowIndex:
+                if (action == RowActionKind.ToggleOn)
+                    MREffectMeshVisibility.SetScanDebugColorsEnabled(true);
+                else if (action == RowActionKind.ToggleOff)
+                    MREffectMeshVisibility.SetScanDebugColorsEnabled(false);
                 break;
         }
     }
@@ -1403,8 +1469,14 @@ public class MRConfigurationController : MonoBehaviour
 
     void HandleNavChoice(string choice)
     {
+        if (RequiresRoomScanMenu() && choice != MRSceneScanState.ScanRoomMenuOption)
+            return;
+
         switch (choice)
         {
+            case MRSceneScanState.ScanRoomMenuOption:
+                BeginRoomScanFromMenu();
+                return;
             case "CABINETS":
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
@@ -1472,6 +1544,61 @@ public class MRConfigurationController : MonoBehaviour
         SyncConfirmControlEdgeState();
         SyncBackControlEdgeState();
         DrawCurrentScreen();
+    }
+
+    void BeginRoomScanFromMenu()
+    {
+        if (scanRequestInProgress)
+            return;
+
+        if (scanRoomCoroutine != null)
+            StopCoroutine(scanRoomCoroutine);
+
+        scanRoomCoroutine = StartCoroutine(RunRoomScanFromMenu());
+    }
+
+    IEnumerator RunRoomScanFromMenu()
+    {
+        scanRequestInProgress = true;
+        currentScreen = Screen.ScanInProgress;
+        DrawCurrentScreen();
+
+        Transform player = ResolvePlayerTransform();
+        yield return MRSceneScanRequest.RunSpaceSetupAndReload(player);
+
+        scanRequestInProgress = false;
+        scanRoomCoroutine = null;
+        BuildNavMenu();
+        currentScreen = Screen.NavMain;
+        navMenu.selectedIndex = 0;
+        navMenu.Deselect();
+        navCooldown = navRepeatDelay;
+        SyncConfirmControlEdgeState();
+        SyncBackControlEdgeState();
+        DrawCurrentScreen();
+
+        if (MRSceneScanState.IsRoomScanned())
+            ConfigManager.WriteConsole($"{LogPrefix} room scan complete — full menu unlocked");
+        else
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} room scan finished without MRUK room");
+    }
+
+    static Transform ResolvePlayerTransform()
+    {
+        var pc = Object.FindObjectOfType<PlayerController>();
+        if (pc != null && pc.PlayerControllerGameObject != null)
+            return pc.PlayerControllerGameObject.transform;
+        if (pc != null)
+            return pc.transform;
+
+        var tagged = GameObject.FindGameObjectWithTag("Player");
+        if (tagged != null)
+            return tagged.transform;
+
+        if (Camera.main != null)
+            return Camera.main.transform;
+
+        return null;
     }
 
     void SyncConfirmControlEdgeState()

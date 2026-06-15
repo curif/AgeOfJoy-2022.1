@@ -36,6 +36,10 @@ public class MRRuntimeSettings : MonoBehaviour
     [Tooltip("World-space canvas (MRRoomInfoUI) listing scanned room and anchor counts.")]
     public bool showRoomAnchorInfoCanvas = true;
 
+    [Header("FixedScene boot")]
+    [Tooltip("Skip IntroGallery load and enter MR immediately (no fade/blackout transition).")]
+    public bool autoEnterMrOnFixedSceneBoot;
+
     [Header("VR → MR (phone booth)")]
     public bool rememberVrPoseOnPhoneBoothTravelToMr = true;
 
@@ -177,6 +181,9 @@ public class MRRuntimeSettings : MonoBehaviour
 
     public static bool ShowRoomAnchorInfoCanvas =>
         Instance == null || Instance.showRoomAnchorInfoCanvas;
+
+    public static bool AutoEnterMrOnFixedSceneBoot =>
+        Instance != null && Instance.autoEnterMrOnFixedSceneBoot;
 
     public static bool RememberVrPoseOnPhoneBoothTravelToMr =>
         Instance == null || Instance.rememberVrPoseOnPhoneBoothTravelToMr;

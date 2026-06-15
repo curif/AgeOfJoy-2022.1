@@ -101,6 +101,34 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.Log($"MixedRealityManager ready logFile={MRTransitionLog.LogFilePath}");
     }
 
+    void Start()
+    {
+        if (ShouldAutoEnterMrOnFixedSceneBoot())
+            StartCoroutine(AutoEnterMrOnFixedSceneBootRoutine());
+    }
+
+    static bool ShouldAutoEnterMrOnFixedSceneBoot()
+    {
+        if (!MRRuntimeSettings.AutoEnterMrOnFixedSceneBoot)
+            return false;
+
+        return UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == MRRuntimeSettings.FixedScene;
+    }
+
+    IEnumerator AutoEnterMrOnFixedSceneBootRoutine()
+    {
+        yield return null;
+
+        if (CurrentMode == ExperienceMode.MR || CurrentMode == ExperienceMode.MR_EDIT)
+            yield break;
+
+        if (transitionInProgress)
+            yield break;
+
+        ConfigManager.WriteConsole($"{LogPrefix} auto EnterMR from FixedScene boot");
+        EnterMRDirectFromBoot();
+    }
+
     void OnDestroy()
     {
         if (Instance == this)
@@ -181,7 +209,29 @@ public class MixedRealityManager : MonoBehaviour
         }
 
         MRTransitionLog.EnsureSession("EnterMR");
-        BeginTransition(EnterMRCoroutine());
+        BeginTransition(EnterMRCoroutine(directBoot: false));
+    }
+
+    void EnterMRDirectFromBoot()
+    {
+        MRTransitionLog.LogStep("EnterMRDirectFromBoot", "requested");
+        MRTransitionLog.LogManagerState("EnterMRDirectFromBoot-begin");
+        MRTransitionLog.LogScenes("EnterMRDirectFromBoot-begin");
+
+        if (CurrentMode == ExperienceMode.MR || CurrentMode == ExperienceMode.MR_EDIT)
+        {
+            MRTransitionLog.LogWarning("EnterMRDirectFromBoot ignored — already in MR mode");
+            return;
+        }
+
+        if (transitionInProgress)
+        {
+            MRTransitionLog.LogWarning("EnterMRDirectFromBoot ignored — transition already in progress");
+            return;
+        }
+
+        MRTransitionLog.EnsureSession("EnterMRDirectFromBoot");
+        BeginTransition(EnterMRCoroutine(directBoot: true));
     }
 
     /// <summary>
@@ -442,12 +492,43 @@ public class MixedRealityManager : MonoBehaviour
         yield return null;
     }
 
-    IEnumerator EnterMRCoroutine()
+    /// <summary>Enable passthrough and unload VR scenes without fade/blackout (FixedScene auto boot).</summary>
+    IEnumerator EnablePassthroughAndUnloadVrDirect(int generation)
+    {
+        MRTransitionLog.LogStep("DirectBootMR", "begin");
+        passthrough.PrepareDirectMrBoot();
+
+        MRTransitionLog.LogStep("DirectBootMR", "before EnablePassthroughWhenReady");
+        yield return passthrough.EnablePassthroughWhenReady();
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        if (!passthrough.PassthroughSystemReady)
+        {
+            MRTransitionLog.LogError("EnterMR direct boot aborted — passthrough system not ready");
+            ConfigManager.WriteConsoleError($"{LogPrefix} EnterMR direct boot aborted — passthrough system not ready");
+            yield break;
+        }
+
+        MRTransitionLog.LogStep("DirectBootMR", "before UnloadVrScenes");
+        yield return sceneTransition.UnloadVrScenes();
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        yield return null;
+        yield return new WaitForEndOfFrame();
+
+        MRTransitionLog.LogScenes("DirectBootMR-after-unload");
+        passthrough.RefreshPassthroughAfterSceneUnload();
+        yield return null;
+    }
+
+    IEnumerator EnterMRCoroutine(bool directBoot)
     {
         int generation = transitionGeneration;
-        MRTransitionLog.LogStep("EnterMRCoroutine", $"start generation={generation} mode={CurrentMode}");
+        MRTransitionLog.LogStep("EnterMRCoroutine", $"start generation={generation} mode={CurrentMode} directBoot={directBoot}");
         MRTransitionLog.LogManagerState("EnterMRCoroutine-start");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterMR coroutine (mode={CurrentMode})");
+        ConfigManager.WriteConsole($"{LogPrefix} EnterMR coroutine (mode={CurrentMode}, directBoot={directBoot})");
 
         MRScenePermissions.Reset();
         MRTransitionLog.LogStep("EnterMRCoroutine", "before EnsureGranted");
@@ -457,7 +538,7 @@ public class MixedRealityManager : MonoBehaviour
 
         MRRoomInfoUI.Instance?.RefreshContent();
 
-        if (MRRuntimeSettings.RememberVrPoseOnStandardEnterMr)
+        if (!directBoot && MRRuntimeSettings.RememberVrPoseOnStandardEnterMr)
             RememberVrPlayerPose();
 
         MRTransitionLog.LogStep("EnterMRCoroutine", "before SuspendForMR");
@@ -466,7 +547,10 @@ public class MixedRealityManager : MonoBehaviour
         if (!IsTransitionCurrent(generation))
             yield break;
 
-        yield return UnloadVrScenesUnderBlackoutThenPassthrough(generation);
+        if (directBoot)
+            yield return EnablePassthroughAndUnloadVrDirect(generation);
+        else
+            yield return UnloadVrScenesUnderBlackoutThenPassthrough(generation);
         if (!IsTransitionCurrent(generation))
             yield break;
 
@@ -1099,5 +1183,28 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.Log($"SetMode {mode}");
         ConfigManager.WriteConsole($"{LogPrefix} mode={mode}");
         OnModeChanged?.Invoke(mode);
+    }
+
+    /// <summary>After Quest Space Setup — re-probe MRUK, refresh meshes and spawned poses.</summary>
+    public IEnumerator RefreshEnvironmentAfterRoomScan(Transform player)
+    {
+        if (player == null)
+            player = FindPlayerTransform();
+
+        if (environmentSurfaces != null && player != null)
+            yield return environmentSurfaces.ProbeWhenReady(player);
+
+        if (environmentSurfaces != null && MRSpaceOrigin != null && player != null)
+            environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
+
+        mrEffectMesh?.ApplySettings();
+        MREffectMeshVisibility.ApplySavedSettings();
+
+        ActiveRegistry()?.RefreshAllSpawnedPosesFromLayout();
+        if (!MRPlacementRayController.AnyActive)
+            MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
+
+        MRRoomInfoUI.Instance?.RefreshContent();
+        ConfigManager.WriteConsole($"{LogPrefix} environment refreshed after room scan");
     }
 }

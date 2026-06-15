@@ -109,6 +109,19 @@ public class MRPassthroughController : MonoBehaviour
         ConfigManager.WriteConsole($"{LogPrefix} transition blackout ON");
     }
 
+    /// <summary>Boot straight into MR — hide fade sphere without FadeIn animation.</summary>
+    public void PrepareDirectMrBoot()
+    {
+        if (!initialized)
+            Initialize();
+
+        RebindXRCamera(createPassthroughLayerIfMissing: false);
+        ClearFadeSphereForPassthrough();
+        EnsureInsightPassthroughEnabled();
+        MRTransitionLog.LogStep("MRPassthroughController", "PrepareDirectMrBoot");
+        ConfigManager.WriteConsole($"{LogPrefix} direct MR boot (no transition blackout)");
+    }
+
     public IEnumerator EnablePassthroughWhenReady()
     {
         if (!initialized)

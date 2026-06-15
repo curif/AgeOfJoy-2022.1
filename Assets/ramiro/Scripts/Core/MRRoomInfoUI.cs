@@ -106,7 +106,7 @@ public class MRRoomInfoUI : MonoBehaviour
         MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
         MRUKRoom room = surfaces != null ? surfaces.CurrentRoom : null;
 
-        if (!IsRoomFound(room, surfaces))
+        if (!MRSceneScanState.IsScannedRoom(room, surfaces))
         {
             string extra = "";
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -143,19 +143,8 @@ public class MRRoomInfoUI : MonoBehaviour
             $"Fonte: {source}";
     }
 
-    static bool IsRoomFound(MRUKRoom room, MREnvironmentSurfaces surfaces)
-    {
-        if (room == null)
-            return false;
-
-        if (room.Anchors == null || room.Anchors.Count == 0)
-            return false;
-
-        if (surfaces != null && surfaces.UsesMrukAnchors)
-            return true;
-
-        return room.FloorAnchor != null || room.CeilingAnchor != null || room.WallAnchors.Count > 0;
-    }
+    static bool IsRoomFound(MRUKRoom room, MREnvironmentSurfaces surfaces) =>
+        MRSceneScanState.IsScannedRoom(room, surfaces);
 
     static string GetRoomDisplayName(MRUKRoom room)
     {

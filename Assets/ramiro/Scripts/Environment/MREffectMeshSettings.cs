@@ -5,17 +5,20 @@ This program is free software: you can redistribute it and/or modify it under th
 using UnityEngine;
 
 /// <summary>
-/// PlayerPrefs for MRUK EffectMesh layers (anchor mesh + global mesh).
+/// PlayerPrefs for MRUK EffectMesh layers (anchor mesh + global mesh) and scan debug colors.
 /// </summary>
 public static class MREffectMeshSettings
 {
     const string LogPrefix = "[MREffectMeshSettings]";
     const string AnchorEnabledKey = "MR.EffectMesh.AnchorEnabled";
     const string GlobalEnabledKey = "MR.EffectMesh.GlobalEnabled";
+    const string ScanDebugColorsEnabledKey = "MR.EffectMesh.ScanDebugColorsEnabled";
+    const string LegacyColorTintEnabledKey = "MR.EffectMesh.ColorTintEnabled";
 
     static bool loaded;
     static bool anchorMeshEnabled = true;
     static bool globalMeshEnabled = false;
+    static bool scanDebugColorsEnabled;
 
     public static bool AnchorMeshEnabled
     {
@@ -35,6 +38,16 @@ public static class MREffectMeshSettings
         }
     }
 
+    /// <summary>Per-label scan overlay (floor green, wall orange, table yellow, …).</summary>
+    public static bool ScanDebugColorsEnabled
+    {
+        get
+        {
+            EnsureLoaded();
+            return scanDebugColorsEnabled;
+        }
+    }
+
     public static void EnsureLoaded()
     {
         if (loaded)
@@ -42,6 +55,10 @@ public static class MREffectMeshSettings
 
         anchorMeshEnabled = PlayerPrefs.GetInt(AnchorEnabledKey, 1) != 0;
         globalMeshEnabled = PlayerPrefs.GetInt(GlobalEnabledKey, 0) != 0;
+        if (PlayerPrefs.HasKey(ScanDebugColorsEnabledKey))
+            scanDebugColorsEnabled = PlayerPrefs.GetInt(ScanDebugColorsEnabledKey, 0) != 0;
+        else
+            scanDebugColorsEnabled = PlayerPrefs.GetInt(LegacyColorTintEnabledKey, 0) != 0;
         loaded = true;
     }
 
@@ -61,5 +78,14 @@ public static class MREffectMeshSettings
         PlayerPrefs.SetInt(GlobalEnabledKey, value ? 1 : 0);
         PlayerPrefs.Save();
         ConfigManager.WriteConsole($"{LogPrefix} EffectMeshGlobalMesh={(value ? "on" : "off")}");
+    }
+
+    public static void SetScanDebugColorsEnabled(bool value)
+    {
+        EnsureLoaded();
+        scanDebugColorsEnabled = value;
+        PlayerPrefs.SetInt(ScanDebugColorsEnabledKey, value ? 1 : 0);
+        PlayerPrefs.Save();
+        ConfigManager.WriteConsole($"{LogPrefix} scan debug colors={(value ? "on" : "off")}");
     }
 }
