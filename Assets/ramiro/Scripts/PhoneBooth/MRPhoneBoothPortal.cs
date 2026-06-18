@@ -37,6 +37,7 @@ public class MRPhoneBoothPortal : MonoBehaviour
     PhoneBoothJourneyDirection currentJourneyDirection;
     Coroutine travelCoroutine;
     MRPhoneBoothTravelVfx travelVfx;
+    MRPhoneBoothTravelHeadFade travelHeadFade;
 
     public static MRPhoneBoothPortal ActiveTraveler => activeTraveler;
 
@@ -50,9 +51,14 @@ public class MRPhoneBoothPortal : MonoBehaviour
     public bool TravelPastHandsetCue => travelPastHandsetCue;
     public bool PlayerInside => playersInside > 0;
 
+    public const string ZoneBlackoutObjectName = "ZoneBlackout";
+
+    /// <summary>Authoring BoxCollider child named ZoneBlackout on PF_Payphone.</summary>
+    public BoxCollider FadeZoneCollider => FindZoneBlackoutCollider();
+
     void Awake()
     {
-        EnsureInteriorTrigger();
+        EnsureZoneBlackoutTrigger();
         EnsureHandsetAudioCue();
         EnsureSpaceshipEngineAudio();
         EnsureExplosionAudio();
@@ -458,22 +464,49 @@ public class MRPhoneBoothPortal : MonoBehaviour
     }
 #endif
 
-    void EnsureInteriorTrigger()
+    public BoxCollider FindZoneBlackoutCollider() => FindZoneBlackoutOn(transform);
+
+    public static BoxCollider FindZoneBlackoutOn(Transform boothRoot)
+    {
+        if (boothRoot == null)
+            return null;
+
+        foreach (Transform child in boothRoot.GetComponentsInChildren<Transform>(true))
+        {
+            if (!string.Equals(child.name, ZoneBlackoutObjectName, System.StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            BoxCollider box = child.GetComponent<BoxCollider>();
+            if (box != null)
+                return box;
+        }
+
+        return null;
+    }
+
+    void EnsureZoneBlackoutTrigger()
     {
         if (interiorTrigger != null)
             return;
 
-        var volumeGo = new GameObject("InteriorVolume");
-        volumeGo.transform.SetParent(transform, false);
-        volumeGo.transform.localPosition = new Vector3(0f, 1f, -0.15f);
-        volumeGo.transform.localRotation = Quaternion.identity;
+        BoxCollider zoneBlackout = FindZoneBlackoutCollider();
+        if (zoneBlackout == null)
+        {
+            ConfigManager.WriteConsoleError(
+                $"{LogPrefix} ZoneBlackout BoxCollider missing on {name} — add child '{ZoneBlackoutObjectName}'");
+            return;
+        }
 
-        interiorTrigger = volumeGo.AddComponent<BoxCollider>();
+        interiorTrigger = zoneBlackout;
         interiorTrigger.isTrigger = true;
-        interiorTrigger.size = new Vector3(1.1f, 2.2f, 1.1f);
-        interiorTrigger.center = Vector3.zero;
+        EnsureInteriorRelay(zoneBlackout.gameObject);
+    }
 
-        var relay = volumeGo.AddComponent<MRPhoneBoothInteriorRelay>();
+    void EnsureInteriorRelay(GameObject zoneObject)
+    {
+        var relay = zoneObject.GetComponent<MRPhoneBoothInteriorRelay>();
+        if (relay == null)
+            relay = zoneObject.AddComponent<MRPhoneBoothInteriorRelay>();
         relay.Portal = this;
     }
 
@@ -543,22 +576,30 @@ public class MRPhoneBoothPortal : MonoBehaviour
         travelPastHandsetCue = false;
         travelCancelRequested = false;
         EnsureTravelVfx();
-        MRTransitionLog.LogStep("MRPhoneBoothPortal", "PlayTravelEffect start");
+        EnsureTravelHeadFade();
+        travelHeadFade?.BeginMonitoring(FadeZoneCollider);
 
-        foreach (MRPhoneBoothTransitionSequence.ImmersiveTravelStep step in
-                 MRRuntimeSettings.ImmersiveTravelSteps)
+        try
         {
-            if (travelCancelRequested)
-                yield break;
+            foreach (MRPhoneBoothTransitionSequence.ImmersiveTravelStep step in
+                     MRRuntimeSettings.ImmersiveTravelSteps)
+            {
+                if (travelCancelRequested)
+                    yield break;
 
-            yield return RunImmersiveTravelStep(step);
-            if (travelCancelRequested)
-                yield break;
+                yield return RunImmersiveTravelStep(step);
+                if (travelCancelRequested)
+                    yield break;
+            }
+
+            CompleteTravelSequence();
+            MRTransitionLog.LogStep("MRPhoneBoothPortal", "PlayTravelEffect end");
+            onComplete?.Invoke();
         }
-
-        CompleteTravelSequence();
-        MRTransitionLog.LogStep("MRPhoneBoothPortal", "PlayTravelEffect end");
-        onComplete?.Invoke();
+        finally
+        {
+            StopTravelHeadFade(force: false);
+        }
     }
 
     IEnumerator RunImmersiveTravelStep(MRPhoneBoothTransitionSequence.ImmersiveTravelStep step)
@@ -580,10 +621,6 @@ public class MRPhoneBoothPortal : MonoBehaviour
                 break;
 
             case MRPhoneBoothTransitionSequence.ImmersiveTravelStep.FadeSphereIn:
-                var fadeSphere = GameObject.Find("SM_FadeSphere");
-                Animator fadeAnimator = fadeSphere != null ? fadeSphere.GetComponent<Animator>() : null;
-                if (fadeAnimator != null)
-                    fadeAnimator.SetTrigger("FadeInTrigger");
                 yield return WaitOptionalImmersiveStep(
                     MRRuntimeSettings.ImmersiveFadeSphereStepDurationSeconds);
                 break;
@@ -620,6 +657,8 @@ public class MRPhoneBoothPortal : MonoBehaviour
         if (travelVfx != null && travelVfx.IsJourneyActive)
             travelVfx.EndJourneyVisuals(currentJourneyDirection);
 
+        StopTravelHeadFade(force: true);
+
         travelInProgress = false;
         travelPastHandsetCue = false;
         handsetGrabbed = false;
@@ -645,6 +684,38 @@ public class MRPhoneBoothPortal : MonoBehaviour
         travelVfx = GetComponent<MRPhoneBoothTravelVfx>();
         if (travelVfx == null)
             travelVfx = gameObject.AddComponent<MRPhoneBoothTravelVfx>();
+    }
+
+    void EnsureTravelHeadFade()
+    {
+        if (travelHeadFade != null)
+            return;
+
+        travelHeadFade = GetComponent<MRPhoneBoothTravelHeadFade>();
+        if (travelHeadFade == null)
+            travelHeadFade = gameObject.AddComponent<MRPhoneBoothTravelHeadFade>();
+    }
+
+    void StopTravelHeadFade(bool force = false)
+    {
+        if (travelHeadFade == null)
+            return;
+
+        if (!force && !travelHeadFade.IsMonitoring && !travelHeadFade.IsForcedTravelBlackout)
+            return;
+
+        travelHeadFade.EndMonitoring();
+    }
+
+    /// <summary>End travel blackout after arrival — safe to call even if fade is already off.</summary>
+    public void EndTravelBlackout()
+    {
+        StopTravelHeadFade(force: true);
+    }
+
+    public static void EndTravelBlackoutEverywhere()
+    {
+        MRPhoneBoothTravelHeadFade.EndActiveTravelFade();
     }
 
     void EnsureHandsetAudioCue()
@@ -839,6 +910,7 @@ public class MRPhoneBoothPortal : MonoBehaviour
         yield return PlayTravelArrivalExplosionAndWait();
         yield return WaitAfterArrivalExplosionBeforeGlassDoor();
         RestoreTravelGlassAndDoor();
+        EndTravelBlackout();
     }
 
     public void RestoreTravelGlassAndDoor()
@@ -894,15 +966,20 @@ public class MRPhoneBoothPortal : MonoBehaviour
             yield return scenePortal.PlayArrivalExplosionAndWait(clip, preferSpatialExplosionAudio: true);
             yield return scenePortal.WaitAfterArrivalExplosionBeforeGlassDoor();
             scenePortal.RestoreTravelGlassAndDoor();
+            EndTravelBlackoutEverywhere();
             yield break;
         }
 
         if (clip == null)
+        {
+            EndTravelBlackoutEverywhere();
             yield break;
+        }
 
         yield return PlayArrivalExplosionClipForFixedDuration(clip);
         yield return WaitStepDurationSeconds(
             MRRuntimeSettings.SecondsAfterArrivalExplosionBeforeGlassAndDoor);
+        EndTravelBlackoutEverywhere();
     }
 
     /// <summary>Arrival burst on a scene/traveler booth; audio falls back to 2D one-shot if needed.</summary>

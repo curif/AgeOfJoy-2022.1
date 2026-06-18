@@ -43,9 +43,10 @@ public class MREditorMrSimulator : MonoBehaviour
 #if UNITY_EDITOR
         if (logControlsOnStart && Application.isEditor)
         {
-            ConfigManager.WriteConsole($"{LogPrefix} VR mode — hold Enter 3s → MR genérico (sem cabine)");
-            ConfigManager.WriteConsole($"{LogPrefix} VR/MR cabine — tecla P = gancho levantado + viagem imersiva (phone booth)");
-            ConfigManager.WriteConsole($"{LogPrefix} In MR: Y 3s or M = ConfigurationCabinet panel");
+            ConfigManager.WriteConsole($"{LogPrefix} FixedScene editor — P = viagem cabine (VR→MR se em VR, MR→VR se em MR)");
+            ConfigManager.WriteConsole($"{LogPrefix} Shift+P = forçar VR→MR (precisa modo VR + PF_Payphone na exterior)");
+            ConfigManager.WriteConsole($"{LogPrefix} B = toggle blackout imediato (camera cull teste)");
+            ConfigManager.WriteConsole($"{LogPrefix} VR genérico — Enter 3s | MR cabine: ver acima");
         }
 #endif
     }
@@ -53,10 +54,23 @@ public class MREditorMrSimulator : MonoBehaviour
     void Update()
     {
 #if UNITY_EDITOR
-        if (!Application.isEditor || !EditorPhoneBoothTravelKeyPressed())
+        if (!Application.isEditor)
             return;
 
-        TrySimulatePhoneBoothTravel();
+        if (EditorBlackoutToggleKeyPressed())
+        {
+            TryToggleEditorTravelBlackout();
+            return;
+        }
+
+        if (EditorVrToMrTravelKeyPressed())
+        {
+            TrySimulateVrToMrTravel();
+            return;
+        }
+
+        if (EditorPhoneBoothTravelKeyPressed())
+            TrySimulatePhoneBoothTravel();
 #endif
     }
 
@@ -70,6 +84,9 @@ public class MREditorMrSimulator : MonoBehaviour
     {
 #if UNITY_EDITOR
         if (!Application.isEditor || camera == null || backdropActive)
+            return;
+
+        if (MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive)
             return;
 
         simulatedCamera = camera;
@@ -154,8 +171,85 @@ public class MREditorMrSimulator : MonoBehaviour
             $"{LogPrefix} P — immersive phone booth travel (mode={manager.CurrentMode}, portal={portal.name})");
     }
 
+    void TrySimulateVrToMrTravel()
+    {
+        MixedRealityManager manager = MixedRealityManager.Instance;
+        if (manager == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} Shift+P — MixedRealityManager missing (play FixedScene?)");
+            return;
+        }
+
+        if (manager.CurrentMode != ExperienceMode.VR)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} Shift+P — precisa modo VR (Enter VR ou desliga auto-boot MR no MRRuntimeSettings)");
+            return;
+        }
+
+        if (manager.TransitionInProgress || !manager.CanToggleMode())
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} Shift+P — transição ocupada");
+            return;
+        }
+
+        MRPhoneBoothPortal portal = MRPhoneBoothPortal.FindSceneBoothPortal();
+        if (portal == null)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} Shift+P — PF_Payphone não encontrado (espera IntroGalleryExterior carregar?)");
+            return;
+        }
+
+        portal.EditorMarkReadyForSimulatedTravel();
+        SnapPlayerInsideBoothForEditor(portal);
+        portal.BeginTravelToMR();
+
+        if (!portal.TravelInProgress)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} Shift+P — viagem VR→MR não arrancou (ver consola [MRPhoneBoothPortal])");
+            return;
+        }
+
+        ConfigManager.WriteConsole($"{LogPrefix} Shift+P — viagem imersiva VR→MR (blackout no BeginJourneyVisuals)");
+    }
+
+    void TryToggleEditorTravelBlackout()
+    {
+        MRPhoneBoothTravelHeadFade active = Object.FindObjectOfType<MRPhoneBoothTravelHeadFade>();
+        if (active != null && MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive)
+        {
+            MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
+            ConfigManager.WriteConsole($"{LogPrefix} B — blackout OFF");
+            return;
+        }
+
+        MRPhoneBoothPortal portal = ResolvePhoneBoothPortalForEditor(MixedRealityManager.Instance)
+            ?? MRPhoneBoothPortal.FindSceneBoothPortal();
+        if (portal == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} B — nenhuma cabine encontrada");
+            return;
+        }
+
+        var headFade = portal.GetComponent<MRPhoneBoothTravelHeadFade>();
+        if (headFade == null)
+            headFade = portal.gameObject.AddComponent<MRPhoneBoothTravelHeadFade>();
+
+        headFade.EngageForcedTravelBlackout();
+        ConfigManager.WriteConsole($"{LogPrefix} B — blackout ON (camera cull teste)");
+    }
+
+    static bool EditorVrToMrTravelKeyPressed() =>
+        MREditorInput.IsAnyHeld(KeyCode.LeftShift, KeyCode.RightShift)
+        && MREditorInput.WasPressed(KeyCode.P);
+
+    static bool EditorBlackoutToggleKeyPressed() =>
+        MREditorInput.WasPressed(KeyCode.B);
+
     static bool EditorPhoneBoothTravelKeyPressed() =>
-        MREditorInput.WasPressed(KeyCode.P);
+        !MREditorInput.IsAnyHeld(KeyCode.LeftShift, KeyCode.RightShift)
+        && MREditorInput.WasPressed(KeyCode.P);
 
     static MRPhoneBoothPortal ResolvePhoneBoothPortalForEditor(MixedRealityManager manager)
     {

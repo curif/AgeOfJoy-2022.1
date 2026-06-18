@@ -175,6 +175,13 @@ public class MixedRealityManager : MonoBehaviour
         passthrough?.DisablePassthrough(playFadeOut: false);
     }
 
+    /// <summary>Keep HMD black during phone-booth travel (camera cull + solid clear).</summary>
+    public void HoldPhoneBoothTravelBlackout()
+    {
+        passthrough?.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
+        MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();
+    }
+
     /// <summary>True when MR visuals/content are active (uses runtime state, not only CurrentMode).</summary>
     public bool IsMrEnvironmentActive()
     {
@@ -551,6 +558,7 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTransitionLog.LogStep("BoothEnterMR", "before EnablePassthroughWhenReady");
         yield return passthrough.EnablePassthroughWhenReady();
+        MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();
         if (!IsTransitionCurrent(generation))
             yield break;
 
@@ -746,96 +754,106 @@ public class MixedRealityManager : MonoBehaviour
     IEnumerator EnterMRFromPhoneBoothCoroutine(MRPhoneBoothPortal portal)
     {
         int generation = transitionGeneration;
-        PhoneBoothTravelState travelState = portal.ConsumePendingTravelState();
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", $"start generation={generation}");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth coroutine");
+        bool travelBlackoutCleared = false;
+        try
+        {
+            PhoneBoothTravelState travelState = portal.ConsumePendingTravelState();
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", $"start generation={generation}");
+            ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth coroutine");
 
-        MRScenePermissions.Reset();
-        yield return MRScenePermissions.EnsureGranted();
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            MRScenePermissions.Reset();
+            yield return MRScenePermissions.EnsureGranted();
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        MRRoomInfoUI.Instance?.RefreshContent();
-        MRVrSystemsGate.SuspendForMR();
-        yield return MRVrSystemsGate.WaitForShutdownBeforeSceneUnload();
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            MRRoomInfoUI.Instance?.RefreshContent();
+            MRVrSystemsGate.SuspendForMR();
+            yield return MRVrSystemsGate.WaitForShutdownBeforeSceneUnload();
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        yield return EnablePassthroughAdoptBoothThenUnload(portal, generation);
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            yield return EnablePassthroughAdoptBoothThenUnload(portal, generation);
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        portal.NotifyHandsetsTravelComplete();
+            portal.NotifyHandsetsTravelComplete();
 
-        passthrough.RefreshPassthroughAfterSceneUnload();
+            passthrough.RefreshPassthroughAfterSceneUnload();
 
-        DestroyMRSpaceOrigin();
-        EnsureMRSpaceOrigin();
+            DestroyMRSpaceOrigin();
+            EnsureMRSpaceOrigin();
 
-        Transform player = FindPlayerTransform();
-        if (environmentSurfaces != null)
-            yield return environmentSurfaces.ProbeWhenReady(player);
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            Transform player = FindPlayerTransform();
+            if (environmentSurfaces != null)
+                yield return environmentSurfaces.ProbeWhenReady(player);
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        if (environmentSurfaces != null && MRSpaceOrigin != null)
-            environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
+            if (environmentSurfaces != null && MRSpaceOrigin != null)
+                environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
 
-        passthrough.RefreshPassthroughAfterSceneUnload();
+            passthrough.RefreshPassthroughAfterSceneUnload();
 
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before SetMode MR");
-        SetMode(ExperienceMode.MR);
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "after SetMode MR");
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before SetMode MR");
+            SetMode(ExperienceMode.MR);
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "after SetMode MR");
 
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before mrLighting.Spawn");
-        mrLighting?.Spawn(MRSpaceOrigin);
-        mrEffectMesh?.Spawn();
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before mrLighting.Spawn");
+            mrLighting?.Spawn(MRSpaceOrigin);
+            mrEffectMesh?.Spawn();
 
-        // Match 0.5.0 order: spawn MR layout + config cabinet and refresh poses *before*
-        // phone-booth explosion. Spawning config first then exploding caused the initial
-        // placement ray to cancel (~1s) and confused MOVE CONFIG on device.
-        MRLayoutRegistry layoutRegistry = ActiveRegistry();
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before layout SpawnAllAsync");
-        if (layoutRegistry != null)
-            yield return layoutRegistry.SpawnAllAsync(MRSpaceOrigin);
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            // Match 0.5.0 order: spawn MR layout + config cabinet and refresh poses *before*
+            // phone-booth explosion. Spawning config first then exploding caused the initial
+            // placement ray to cancel (~1s) and confused MOVE CONFIG on device.
+            MRLayoutRegistry layoutRegistry = ActiveRegistry();
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before layout SpawnAllAsync");
+            if (layoutRegistry != null)
+                yield return layoutRegistry.SpawnAllAsync(MRSpaceOrigin);
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before env SpawnAllAsync");
-        MREnvironmentRegistry environmentRegistry = ActiveEnvironmentRegistry();
-        if (environmentRegistry != null)
-            yield return environmentRegistry.SpawnAllAsync(MRSpaceOrigin);
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before env SpawnAllAsync");
+            MREnvironmentRegistry environmentRegistry = ActiveEnvironmentRegistry();
+            if (environmentRegistry != null)
+                yield return environmentRegistry.SpawnAllAsync(MRSpaceOrigin);
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before config cabinet SpawnAtMrOrigin");
-        MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before config cabinet SpawnAtMrOrigin");
+            MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
 
-        yield return null;
-        layoutRegistry?.EnsureAttractPlaybackOnSpawned();
-        yield return RefreshMrPosesWhenReady(generation, player);
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            yield return null;
+            layoutRegistry?.EnsureAttractPlaybackOnSpawned();
+            yield return RefreshMrPosesWhenReady(generation, player);
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        yield return FinalizeEnvironmentAfterEnterMr(generation, player);
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            yield return FinalizeEnvironmentAfterEnterMr(generation, player);
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        portal.PlaceOnMrFloor(environmentSurfaces, player);
-        ApplyPhoneBoothTravelState(portal, travelState);
-        MRPhoneBoothSettings.SetVisible(true);
-        portal.SetVisible(true);
+            portal.PlaceOnMrFloor(environmentSurfaces, player);
+            ApplyPhoneBoothTravelState(portal, travelState);
+            MRPhoneBoothSettings.SetVisible(true);
+            portal.SetVisible(true);
 
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before arrival explosion");
-        yield return portal.PlayTravelArrivalExplosionAndRestoreGlassDoor();
-        if (!IsTransitionCurrent(generation))
-            yield break;
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before arrival explosion");
+            yield return portal.PlayTravelArrivalExplosionAndRestoreGlassDoor();
+            travelBlackoutCleared = true;
+            if (!IsTransitionCurrent(generation))
+                yield break;
 
-        portal.NotifyHandsetsTravelComplete();
+            portal.NotifyHandsetsTravelComplete();
 
-        MRTransitionLog.LogManagerState("EnterMRFromPhoneBoothCoroutine-final");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth done");
-        MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "DONE");
+            MRTransitionLog.LogManagerState("EnterMRFromPhoneBoothCoroutine-final");
+            ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth done");
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "DONE");
+        }
+        finally
+        {
+            if (!travelBlackoutCleared)
+                MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
+        }
     }
 
     sealed class PhoneBoothMrToVrContext
@@ -851,36 +869,47 @@ public class MixedRealityManager : MonoBehaviour
     IEnumerator EnterVRFromPhoneBoothCoroutine(MRPhoneBoothPortal travelerPortal)
     {
         int generation = transitionGeneration;
-        PhoneBoothTravelState travelState = travelerPortal != null
-            ? travelerPortal.ConsumePendingTravelState()
-            : null;
-        MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", $"start generation={generation}");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterVRFromPhoneBooth coroutine");
-
-        if (CurrentMode == ExperienceMode.MR_EDIT)
-            SetMode(ExperienceMode.MR);
-
-        if (travelerPortal != null && travelerPortal.IsTravelerInstance)
-            MRPhoneBoothSettings.SaveMrPose(travelerPortal.transform.position, travelerPortal.transform.rotation);
-
-        var ctx = new PhoneBoothMrToVrContext
+        bool travelBlackoutCleared = false;
+        try
         {
-            travelerPortal = travelerPortal,
-            travelState = travelState,
-            handsetPlan = PayphoneHandsetGrab.CaptureVrReturnPlan(travelerPortal, travelState),
-        };
+            PhoneBoothTravelState travelState = travelerPortal != null
+                ? travelerPortal.ConsumePendingTravelState()
+                : null;
+            MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", $"start generation={generation}");
+            ConfigManager.WriteConsole($"{LogPrefix} EnterVRFromPhoneBooth coroutine");
 
-        foreach (MRPhoneBoothTransitionSequence.MrToVrReturnStep step in MRRuntimeSettings.MrToVrReturnSteps)
-        {
-            if (!IsTransitionCurrent(generation))
-                yield break;
+            if (CurrentMode == ExperienceMode.MR_EDIT)
+                SetMode(ExperienceMode.MR);
 
-            yield return RunPhoneBoothMrToVrStep(step, generation, ctx);
+            if (travelerPortal != null && travelerPortal.IsTravelerInstance)
+                MRPhoneBoothSettings.SaveMrPose(travelerPortal.transform.position, travelerPortal.transform.rotation);
+
+            var ctx = new PhoneBoothMrToVrContext
+            {
+                travelerPortal = travelerPortal,
+                travelState = travelState,
+                handsetPlan = PayphoneHandsetGrab.CaptureVrReturnPlan(travelerPortal, travelState),
+            };
+
+            foreach (MRPhoneBoothTransitionSequence.MrToVrReturnStep step in MRRuntimeSettings.MrToVrReturnSteps)
+            {
+                if (!IsTransitionCurrent(generation))
+                    yield break;
+
+                yield return RunPhoneBoothMrToVrStep(step, generation, ctx);
+                if (step == MRPhoneBoothTransitionSequence.MrToVrReturnStep.ArrivalExplosionAndSmoke)
+                    travelBlackoutCleared = true;
+            }
+
+            MRTransitionLog.LogManagerState("EnterVRFromPhoneBoothCoroutine-final");
+            ConfigManager.WriteConsole($"{LogPrefix} EnterVRFromPhoneBooth done");
+            MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", "DONE");
         }
-
-        MRTransitionLog.LogManagerState("EnterVRFromPhoneBoothCoroutine-final");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterVRFromPhoneBooth done");
-        MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", "DONE");
+        finally
+        {
+            if (!travelBlackoutCleared)
+                MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
+        }
     }
 
     IEnumerator RunPhoneBoothMrToVrStep(

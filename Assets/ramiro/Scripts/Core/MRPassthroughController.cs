@@ -158,6 +158,12 @@ public class MRPassthroughController : MonoBehaviour
         ApplyPassthroughRendering();
         yield return WaitUntilPassthroughLayerVisible();
 
+        MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();
+#if UNITY_EDITOR
+        if (MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive)
+            MREditorMrSimulator.Instance?.ClearPassthroughBackdrop();
+#endif
+
         LogPassthroughDiagnostics("after enable");
     }
 
@@ -245,7 +251,11 @@ public class MRPassthroughController : MonoBehaviour
             passthroughLayer = xrCamera.gameObject.AddComponent<OVRPassthroughLayer>();
 
         EnsureInsightPassthroughEnabled();
-        ClearFadeSphereForPassthrough();
+        bool travelBlackout = MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive;
+        if (!travelBlackout)
+            ClearFadeSphereForPassthrough();
+        else
+            MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();
 
         if (OVRManager.instance != null)
             insightPassthroughEnabledBeforeMr = OVRManager.instance.isInsightPassthroughEnabled;
@@ -263,7 +273,7 @@ public class MRPassthroughController : MonoBehaviour
         passthroughLayer.enabled = true;
 
         xrCamera.clearFlags = CameraClearFlags.SolidColor;
-        xrCamera.backgroundColor = Color.clear;
+        xrCamera.backgroundColor = travelBlackout ? Color.black : Color.clear;
 
         savedFog = RenderSettings.fog;
         RenderSettings.fog = false;
@@ -352,6 +362,9 @@ public class MRPassthroughController : MonoBehaviour
     /// </summary>
     void ClearFadeSphereForPassthrough()
     {
+        if (MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive)
+            return;
+
         disabledFadeRenderers.Clear();
         var fadeSphere = GameObject.Find(FadeSphereName);
         if (fadeSphere == null)
@@ -370,7 +383,12 @@ public class MRPassthroughController : MonoBehaviour
             for (int i = 0; i < materials.Length; i++)
             {
                 Material material = materials[i];
-                if (material != null && material.HasProperty("_FadeAmount"))
+                if (material == null)
+                    continue;
+
+                if (material.HasProperty("_Visibility"))
+                    material.SetFloat("_Visibility", 1f);
+                else if (material.HasProperty("_FadeAmount"))
                     material.SetFloat("_FadeAmount", 0f);
             }
 
