@@ -19,19 +19,23 @@ public static class MRSceneScanState
         return IsScannedRoom(room, surfaces);
     }
 
+    /// <summary>Floor + at least one wall — enough for placement and EffectMesh.</summary>
+    public static bool HasUsableRoom(MRUKRoom room)
+    {
+        if (room == null || room.Anchors == null || room.Anchors.Count == 0)
+            return false;
+
+        if (room.FloorAnchor == null)
+            return false;
+
+        return room.WallAnchors != null && room.WallAnchors.Count > 0;
+    }
+
     public static bool IsScannedRoom(MRUKRoom room, MREnvironmentSurfaces surfaces)
     {
-        if (room == null)
+        if (!HasUsableRoom(room))
             return false;
 
-        if (room.Anchors == null || room.Anchors.Count == 0)
-            return false;
-
-        if (surfaces != null && surfaces.UsesMrukAnchors)
-            return true;
-
-        return room.FloorAnchor != null
-            || room.CeilingAnchor != null
-            || (room.WallAnchors != null && room.WallAnchors.Count > 0);
+        return surfaces == null || surfaces.UsesMrukAnchors;
     }
 }

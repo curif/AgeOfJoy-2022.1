@@ -23,7 +23,7 @@ public class MRSceneBootstrap : MonoBehaviour
 
     [SerializeField] float deviceLoadTimeoutSeconds = 180f;
     [SerializeField] float ovrReadyTimeoutSeconds = 20f;
-    [SerializeField] float anchorsReadyTimeoutSeconds = 12f;
+    [SerializeField] float anchorsReadyTimeoutSeconds = 30f;
     [SerializeField] GameObject runtimeMrukPrefab;
 #if UNITY_EDITOR
     [SerializeField] GameObject editorTestRoomPrefab;
@@ -40,7 +40,7 @@ public class MRSceneBootstrap : MonoBehaviour
     public bool HasScene => sceneLoaded && MRUK.Instance != null && MRUK.Instance.GetCurrentRoom() != null;
     public MRUKRoom CurrentRoom => HasScene ? MRUK.Instance.GetCurrentRoom() : null;
 
-    public IEnumerator EnsureSceneLoaded()
+    public IEnumerator EnsureSceneLoaded(bool requestSceneCaptureIfMissing = true)
     {
         sceneLoaded = false;
         sceneLoadedEventFired = false;
@@ -58,9 +58,9 @@ public class MRSceneBootstrap : MonoBehaviour
 
         HookEvents();
 
-        if (HasRoomWithAnchors())
+        if (HasCachedUsableRoom())
         {
-            ConfigManager.WriteConsole($"{LogPrefix} MRUK already has a current room; reusing");
+            ConfigManager.WriteConsole($"{LogPrefix} MRUK already has a usable room; reusing");
             MarkLoaded();
             LogRoomDetails(MRUK.Instance.GetCurrentRoom());
             yield break;
@@ -77,7 +77,7 @@ public class MRSceneBootstrap : MonoBehaviour
         if (!MRScenePermissions.IsGranted)
             ConfigManager.WriteConsoleWarning($"{LogPrefix} USE_SCENE not granted before device load");
 
-        yield return LoadFromDevice();
+        yield return LoadFromDevice(requestSceneCaptureIfMissing);
     }
 
 #if UNITY_EDITOR
@@ -121,7 +121,7 @@ public class MRSceneBootstrap : MonoBehaviour
     }
 #endif
 
-    IEnumerator LoadFromDevice()
+    IEnumerator LoadFromDevice(bool requestSceneCaptureIfMissing = true)
     {
         yield return WaitForOvrReady();
 
@@ -150,7 +150,7 @@ public class MRSceneBootstrap : MonoBehaviour
             $"{LogPrefix} LoadSceneFromDevice begin (rooms_before={MRUK.Instance.Rooms.Count}, anchors={MRUK.Instance.GetCurrentRoom()?.Anchors.Count ?? 0})");
 
         Task<MRUK.LoadDeviceResult> loadTask = MRUK.Instance.LoadSceneFromDevice(
-            requestSceneCaptureIfNoDataFound: true,
+            requestSceneCaptureIfNoDataFound: requestSceneCaptureIfMissing,
             removeMissingRooms: true);
 
         float remaining = deviceLoadTimeoutSeconds;
@@ -168,14 +168,20 @@ public class MRSceneBootstrap : MonoBehaviour
             $"{LogPrefix} LoadSceneFromDevice result={result} rooms={MRUK.Instance.Rooms.Count} currentRoom={(MRUK.Instance.GetCurrentRoom() != null ? "yes" : "no")}");
 
         if (result == MRUK.LoadDeviceResult.Success || HasRoomWithAnchors())
-        {
-            yield return WaitForRoomReady(anchorsReadyTimeoutSeconds);
-        }
+            yield return WaitForUsableRoomReady(anchorsReadyTimeoutSeconds);
 
-        if (HasRoomWithAnchors())
+        MRUKRoom currentRoom = MRUK.Instance.GetCurrentRoom();
+        if (MRSceneScanState.HasUsableRoom(currentRoom))
         {
             MarkLoaded();
-            LogRoomDetails(MRUK.Instance.GetCurrentRoom());
+            LogRoomDetails(currentRoom);
+        }
+        else if (HasRoomWithAnchors())
+        {
+            MarkLoaded();
+            LogRoomDetails(currentRoom);
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} room loaded but missing floor or walls (walls={currentRoom?.WallAnchors?.Count ?? 0})");
         }
         else
         {
@@ -217,13 +223,27 @@ public class MRSceneBootstrap : MonoBehaviour
 
     IEnumerator WaitForRoomReady(float timeoutSeconds)
     {
+        yield return WaitForUsableRoomReady(timeoutSeconds);
+    }
+
+    IEnumerator WaitForUsableRoomReady(float timeoutSeconds)
+    {
         float remaining = timeoutSeconds;
         while (remaining > 0f)
         {
-            if (HasRoomWithAnchors())
+            MRUKRoom room = MRUK.Instance != null ? MRUK.Instance.GetCurrentRoom() : null;
+            if (MRSceneScanState.HasUsableRoom(room))
                 yield break;
             remaining -= Time.unscaledDeltaTime;
             yield return null;
+        }
+
+        MRUKRoom partial = MRUK.Instance != null ? MRUK.Instance.GetCurrentRoom() : null;
+        if (partial != null && HasRoomWithAnchors() && !MRSceneScanState.HasUsableRoom(partial))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} usable-room wait timed out — floor={(partial.FloorAnchor != null)} " +
+                $"walls={partial.WallAnchors?.Count ?? 0} anchors={partial.Anchors.Count}");
         }
     }
 
@@ -249,6 +269,12 @@ public class MRSceneBootstrap : MonoBehaviour
     {
         MRUKRoom room = MRUK.Instance != null ? MRUK.Instance.GetCurrentRoom() : null;
         return room != null && room.Anchors != null && room.Anchors.Count > 0;
+    }
+
+    static bool HasCachedUsableRoom()
+    {
+        MRUKRoom room = MRUK.Instance != null ? MRUK.Instance.GetCurrentRoom() : null;
+        return MRSceneScanState.HasUsableRoom(room);
     }
 
     void MarkLoaded()
@@ -334,7 +360,9 @@ public class MRSceneBootstrap : MonoBehaviour
             MarkLoaded();
             LogRoomDetails(room);
         }
+
         RefreshSurfaceDebug();
+        NotifyMrEnvironmentRoomUpdated();
     }
 
     void HandleSceneLoadedEvent()
@@ -348,7 +376,14 @@ public class MRSceneBootstrap : MonoBehaviour
             MarkLoaded();
             LogRoomDetails(MRUK.Instance.GetCurrentRoom());
         }
+
         RefreshSurfaceDebug();
+        NotifyMrEnvironmentRoomUpdated();
+    }
+
+    static void NotifyMrEnvironmentRoomUpdated()
+    {
+        MixedRealityManager.Instance?.ScheduleEnvironmentRefreshFromMrukEvent();
     }
 
     static void RefreshSurfaceDebug()

@@ -5,6 +5,7 @@ This program is free software: you can redistribute it and/or modify it under th
 using System;
 using System.Collections;
 using AOJ.Managers;
+using Meta.XR.MRUtilityKit;
 using UnityEngine;
 
 public class MixedRealityManager : MonoBehaviour
@@ -27,7 +28,11 @@ public class MixedRealityManager : MonoBehaviour
     MREnvironmentSurfaces environmentSurfaces;
     bool transitionInProgress;
     Coroutine runningTransition;
+    Coroutine mrukEnvironmentRefreshRoutine;
+    Coroutine phoneBoothVrToMrScanRoutine;
     int transitionGeneration;
+
+    const float MrukEnvironmentRefreshDebounceSeconds = 0.75f;
 
     Vector3? savedVrPlayerPosition;
     Quaternion? savedVrPlayerRotation;
@@ -278,6 +283,87 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTransitionLog.EnsureSession("EnterMRFromPhoneBooth");
         BeginTransition(EnterMRFromPhoneBoothCoroutine(portal));
+    }
+
+    /// <summary>
+    /// VR→MR phone booth: verify Quest room scan before immersive travel (runs on DontDestroyOnLoad).
+    /// If Space Setup runs, reloads VR and waits — player grabs the handset again to travel.
+    /// </summary>
+    public void StartPhoneBoothVrToMrTravel(MRPhoneBoothPortal portal, PhoneBoothTravelState travelState)
+    {
+        if (portal == null)
+            return;
+
+        if (phoneBoothVrToMrScanRoutine != null)
+        {
+            StopCoroutine(phoneBoothVrToMrScanRoutine);
+            phoneBoothVrToMrScanRoutine = null;
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} phone booth VR→MR scan gate restarted");
+        }
+
+        phoneBoothVrToMrScanRoutine = StartCoroutine(PhoneBoothVrToMrTravelWithScanGateRoutine(portal, travelState));
+    }
+
+    IEnumerator PhoneBoothVrToMrTravelWithScanGateRoutine(
+        MRPhoneBoothPortal portal,
+        PhoneBoothTravelState travelState)
+    {
+#if UNITY_EDITOR
+        phoneBoothVrToMrScanRoutine = null;
+        portal.StartImmersiveTravelToMrAfterScanGate();
+        yield break;
+#else
+        try
+        {
+            MRTransitionLog.LogStep("PhoneBoothVrToMr", "scan gate begin");
+            Transform player = FindPlayerTransform();
+
+            MREnvironmentSurfaces.Instance?.InvalidateProbe();
+
+            if (environmentSurfaces != null && player != null)
+                yield return environmentSurfaces.ProbeWhenReady(player, requestSceneCaptureIfMissing: false);
+
+            if (MRSceneScanState.IsRoomScanned())
+            {
+                MRTransitionLog.LogStep("PhoneBoothVrToMr", "room ready — immersive travel");
+                portal.StartImmersiveTravelToMrAfterScanGate();
+                yield break;
+            }
+
+            MRTransitionLog.LogStep("PhoneBoothVrToMr", "no usable room — opening Space Setup");
+            yield return MRSceneScanRequest.EnsureScannedRoomForTravel(player);
+
+            if (!MRSceneScanState.IsRoomScanned())
+            {
+                portal.AbortPendingVrToMrTravel("VR→MR travel cancelled — room scan required");
+                yield break;
+            }
+
+            MRTransitionLog.LogStep("PhoneBoothVrToMr", "reload VR scenes after Space Setup");
+            yield return sceneTransition.ReloadVrScenes();
+
+            portal = MRPhoneBoothPortal.FindSceneBoothPortal();
+            if (portal == null)
+            {
+                ConfigManager.WriteConsoleError($"{LogPrefix} scan gate done but scene booth missing");
+                yield break;
+            }
+
+            player = FindPlayerTransform();
+            if (travelState != null && player != null)
+                travelState.ApplyToPlayer(portal.transform, player);
+
+            if (MRRuntimeSettings.RefreshCameraOffsetAfterPhoneBoothReturn)
+                RefreshPlayerControllerCameraOffset();
+
+            portal.FinishScanGateWaitForHandsetGrab();
+            MRTransitionLog.LogStep("PhoneBoothVrToMr", "scan gate done — grab handset to travel");
+        }
+        finally
+        {
+            phoneBoothVrToMrScanRoutine = null;
+        }
+#endif
     }
 
     /// <summary>Saves gallery player pose before phone booth VR→MR travel (restored on booth return).</summary>
@@ -593,6 +679,10 @@ public class MixedRealityManager : MonoBehaviour
 
         yield return RefreshMrPosesWhenReady(generation, player);
 
+        yield return FinalizeEnvironmentAfterEnterMr(generation, player);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
         MRPhoneBoothVisibility.EnsureMrInstance();
         MRPhoneBoothVisibility.ApplySavedVisibility();
 
@@ -724,6 +814,10 @@ public class MixedRealityManager : MonoBehaviour
         yield return null;
         layoutRegistry?.EnsureAttractPlaybackOnSpawned();
         yield return RefreshMrPosesWhenReady(generation, player);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        yield return FinalizeEnvironmentAfterEnterMr(generation, player);
         if (!IsTransitionCurrent(generation))
             yield break;
 
@@ -929,8 +1023,12 @@ public class MixedRealityManager : MonoBehaviour
             if (!IsTransitionCurrent(generation))
                 yield break;
 
-            if (environmentSurfaces != null && player != null && !environmentSurfaces.IsReady)
-                yield return environmentSurfaces.ProbeWhenReady(player);
+            if (environmentSurfaces != null && player != null)
+            {
+                MRUKRoom room = MRUK.Instance != null ? MRUK.Instance.GetCurrentRoom() : null;
+                if (!environmentSurfaces.IsReady || !MRSceneScanState.HasUsableRoom(room))
+                    yield return environmentSurfaces.ProbeWhenReady(player);
+            }
 
             ActiveRegistry()?.RefreshAllSpawnedPosesFromLayout();
             if (!MRPlacementRayController.AnyActive)
@@ -943,6 +1041,53 @@ public class MixedRealityManager : MonoBehaviour
         }
 
         MRTransitionLog.LogStep("EnterMRCoroutine", "RefreshMrPoses end");
+    }
+
+    /// <summary>MRUK RoomCreated/SceneLoaded while already in MR — debounced full environment refresh.</summary>
+    public void ScheduleEnvironmentRefreshFromMrukEvent()
+    {
+        if (transitionInProgress)
+            return;
+
+        if (CurrentMode != ExperienceMode.MR && CurrentMode != ExperienceMode.MR_EDIT)
+            return;
+
+        if (mrukEnvironmentRefreshRoutine != null)
+            StopCoroutine(mrukEnvironmentRefreshRoutine);
+
+        mrukEnvironmentRefreshRoutine = StartCoroutine(DebouncedEnvironmentRefreshFromMrukEvent());
+    }
+
+    IEnumerator DebouncedEnvironmentRefreshFromMrukEvent()
+    {
+        yield return new WaitForSeconds(MrukEnvironmentRefreshDebounceSeconds);
+        yield return WaitForUsableRoom(10f);
+        yield return RefreshEnvironmentAfterRoomScan(FindPlayerTransform());
+        mrukEnvironmentRefreshRoutine = null;
+    }
+
+    IEnumerator FinalizeEnvironmentAfterEnterMr(int generation, Transform player)
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        yield return WaitForUsableRoom(15f);
+#endif
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        yield return RefreshEnvironmentAfterRoomScan(player);
+    }
+
+    static IEnumerator WaitForUsableRoom(float timeoutSeconds)
+    {
+        float remaining = timeoutSeconds;
+        while (remaining > 0f)
+        {
+            MRUKRoom room = MRUK.Instance != null ? MRUK.Instance.GetCurrentRoom() : null;
+            if (MRSceneScanState.HasUsableRoom(room))
+                yield break;
+            remaining -= Time.unscaledDeltaTime;
+            yield return null;
+        }
     }
 
     IEnumerator EnterVRCoroutine()

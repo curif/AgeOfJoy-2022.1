@@ -139,11 +139,66 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
         MixedRealityManager.Instance.RememberVrPlayerPoseForPhoneBoothTravel();
 
-        MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR");
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR — scan gate");
+        MixedRealityManager.Instance.StartPhoneBoothVrToMrTravel(this, pendingTravelState);
+    }
+
+    /// <summary>Called by MixedRealityManager after room scan + optional VR reload.</summary>
+    public void StartImmersiveTravelToMrAfterScanGate()
+    {
+        if (travelInProgress || MixedRealityManager.Instance == null)
+            return;
+
+        if (MixedRealityManager.Instance.CurrentMode != ExperienceMode.VR)
+            return;
+
+        if (pendingTravelState == null)
+            pendingTravelState = CaptureTravelState();
+
+        if (pendingTravelState == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} immersive travel failed — no travel state");
+            return;
+        }
+
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR immersive");
         currentJourneyDirection = PhoneBoothJourneyDirection.ToMR;
         travelCoroutine = StartCoroutine(PlayTravelThen(() =>
             MixedRealityManager.Instance.EnterMRFromPhoneBooth(this)));
     }
+
+    public void AbortPendingVrToMrTravel(string reason)
+    {
+        ResetAfterScanGate();
+        ConfigManager.WriteConsoleWarning($"{LogPrefix} {reason}");
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", $"AbortPendingVrToMrTravel: {reason}");
+    }
+
+    /// <summary>After Space Setup + VR reload — release handset; player grabs again to travel.</summary>
+    public void FinishScanGateWaitForHandsetGrab()
+    {
+        ResetAfterScanGate();
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} room scan complete — grab the handset again to travel to MR");
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "FinishScanGateWaitForHandsetGrab");
+    }
+
+    void ResetAfterScanGate()
+    {
+        pendingTravelState = null;
+        handsetGrabbed = false;
+
+        PayphoneHandsetGrab grab = PayphoneHandsetGrab.FindOnPortal(this);
+        grab?.ForceReleaseAndReturnToCradleAfterTravel();
+
+        MREnvironmentSurfaces.Instance?.InvalidateProbe();
+    }
+
+    public PhoneBoothTravelState PeekPendingTravelState() => pendingTravelState;
+
+    public void SetPendingTravelState(PhoneBoothTravelState state) => pendingTravelState = state;
+
+    public void RefreshPendingTravelState() => pendingTravelState = CaptureTravelState();
 
     public void BeginTravelToVR()
     {

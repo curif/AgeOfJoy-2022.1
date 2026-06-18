@@ -96,7 +96,17 @@ public class MREnvironmentSurfaces : MonoBehaviour
             Instance = null;
     }
 
-    public IEnumerator ProbeWhenReady(Transform player)
+    public void InvalidateProbe()
+    {
+        IsReady = false;
+        HasFloor = false;
+        HasCeiling = false;
+        room = null;
+        probeSource = "none";
+        sceneBootstrap?.ClearScene();
+    }
+
+    public IEnumerator ProbeWhenReady(Transform player, bool requestSceneCaptureIfMissing = true)
     {
         IsReady = false;
         HasFloor = false;
@@ -105,7 +115,7 @@ public class MREnvironmentSurfaces : MonoBehaviour
         probeSource = "none";
 
         if (sceneBootstrap != null)
-            yield return sceneBootstrap.EnsureSceneLoaded();
+            yield return sceneBootstrap.EnsureSceneLoaded(requestSceneCaptureIfMissing);
 
         room = sceneBootstrap != null ? sceneBootstrap.CurrentRoom : null;
         if (room == null && MRUK.Instance != null)
