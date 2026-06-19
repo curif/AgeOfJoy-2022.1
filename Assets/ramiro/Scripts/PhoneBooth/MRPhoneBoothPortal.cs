@@ -169,6 +169,7 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
         MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR immersive");
         currentJourneyDirection = PhoneBoothJourneyDirection.ToMR;
+        MRVrSystemsGate.SuspendPlayerLocomotionForPhoneBoothVrToMrTravel();
         travelCoroutine = StartCoroutine(PlayTravelThen(() =>
             MixedRealityManager.Instance.EnterMRFromPhoneBooth(this)));
     }
@@ -594,11 +595,15 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
             CompleteTravelSequence();
             MRTransitionLog.LogStep("MRPhoneBoothPortal", "PlayTravelEffect end");
+            if (currentJourneyDirection == PhoneBoothJourneyDirection.ToMR)
+                MRVrSystemsGate.ClearPhoneBoothVrToMrTravelLocomotionHold();
             onComplete?.Invoke();
         }
         finally
         {
             StopTravelHeadFade(force: false);
+            if (currentJourneyDirection == PhoneBoothJourneyDirection.ToMR && travelCancelRequested)
+                MRVrSystemsGate.ResumePlayerLocomotionAfterPhoneBoothVrToMrTravelCancelled();
         }
     }
 

@@ -309,6 +309,9 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (entry.Source == MREnvironmentObjectSource.Light)
             return TrySpawnLightPrefabAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
 
+        if (entry.Source == MREnvironmentObjectSource.Poster)
+            return TrySpawnPosterAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
+
         return TrySpawnBuildPrefabAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
     }
 
@@ -344,6 +347,17 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (TrySpawnLightPrefabAtWorldPose(entry.Key, worldPosition, worldRotation, out GameObject lightRoot))
             {
                 result.Root = lightRoot;
+                result.Success = true;
+            }
+
+            yield break;
+        }
+
+        if (entry.Source == MREnvironmentObjectSource.Poster)
+        {
+            if (TrySpawnPosterAtWorldPose(entry.Key, worldPosition, worldRotation, out GameObject posterRoot))
+            {
+                result.Root = posterRoot;
                 result.Success = true;
             }
 
@@ -402,6 +416,7 @@ public class MREnvironmentRegistry : MonoBehaviour
             {
                 MREnvironmentObjectSource.Custom => "custom",
                 MREnvironmentObjectSource.Light => "light",
+                MREnvironmentObjectSource.Poster => "poster",
                 _ => "build"
             },
             Scale = ResolveScaleFromRoot(root),
@@ -411,6 +426,11 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         if (entry.Source == MREnvironmentObjectSource.Custom)
             placement.PackageName = entry.Key;
+        else if (entry.Source == MREnvironmentObjectSource.Poster)
+        {
+            placement.TextureFile = entry.Key;
+            placement.PrefabName = MRPosterFactory.PosterPrefabId;
+        }
         else
             placement.PrefabName = entry.Key;
 
@@ -422,7 +442,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         layout.AddPlacement(placement);
         layout.Save(LayoutFilePath);
 
-        root.transform.localScale = Vector3.one * placement.Scale;
+        ApplyRootScaleAfterFinalize(root, placement);
 
         MRPlacedEnvironment marker = root.GetComponent<MRPlacedEnvironment>();
         if (marker == null)
@@ -463,7 +483,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (TryGetSpawnedRoot(placementId, out GameObject root))
         {
             root.transform.SetPositionAndRotation(worldPosition, worldRotation);
-            root.transform.localScale = Vector3.one * ResolveSpawnScale(placement);
+            ApplyRootScaleAfterSpawn(root, placement);
             NotifyPortableGamesPlacementUpdated(root);
         }
 
@@ -519,6 +539,15 @@ public class MREnvironmentRegistry : MonoBehaviour
                 yield break;
             }
         }
+        else if (placement.IsPosterSource)
+        {
+            if (!TrySpawnPosterAtWorldPose(placement.TextureFile, worldPos, worldRot, out root))
+            {
+                MRDebugLog.LogError($"Environment spawn failed: poster '{placement.TextureFile}' ({placement.Id})");
+                onComplete?.Invoke(false);
+                yield break;
+            }
+        }
         else if (!TrySpawnBuildPrefabAtWorldPose(placement.PrefabName, worldPos, worldRot, out root))
         {
             MRDebugLog.LogError($"Environment spawn failed: build '{placement.PrefabName}' ({placement.Id})");
@@ -526,7 +555,7 @@ public class MREnvironmentRegistry : MonoBehaviour
             yield break;
         }
 
-        root.transform.localScale = Vector3.one * ResolveSpawnScale(placement);
+        ApplyRootScaleAfterSpawn(root, placement);
         ApplyStoredLightSettings(root, placement);
         NotifyPortableGamesPlacementUpdated(root);
 
@@ -538,7 +567,9 @@ public class MREnvironmentRegistry : MonoBehaviour
             ? MREnvironmentCatalogEntry.FromCustom(placement.PackageName, placement.DisplayLabel)
             : placement.IsLightSource
                 ? MREnvironmentCatalogEntry.FromLight(placement.PrefabName, placement.DisplayLabel)
-                : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
+                : placement.IsPosterSource
+                    ? MREnvironmentCatalogEntry.FromPoster(placement.TextureFile, placement.DisplayLabel)
+                    : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
         marker.Initialize(placement.Id, entry);
 
         spawnedById[placement.Id] = root;
@@ -546,6 +577,23 @@ public class MREnvironmentRegistry : MonoBehaviour
         ConfigManager.WriteConsole($"{LogPrefix} spawned {placement.DisplayLabel} at {worldPos}");
         spawned = true;
         onComplete?.Invoke(spawned);
+    }
+
+    bool TrySpawnPosterAtWorldPose(
+        string textureRelativePath,
+        Vector3 worldPos,
+        Quaternion worldRot,
+        out GameObject spawnedRoot)
+    {
+        spawnedRoot = null;
+        if (!MRPosterFactory.TryInstantiate(textureRelativePath, worldPos, worldRot, out spawnedRoot))
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} poster missing or failed: {textureRelativePath}");
+            MRDebugLog.LogError($"Poster missing or failed: {textureRelativePath}");
+            return false;
+        }
+
+        return true;
     }
 
     bool TrySpawnBuildPrefabAtWorldPose(
@@ -851,6 +899,42 @@ public class MREnvironmentRegistry : MonoBehaviour
     {
         float scale = root != null ? root.transform.localScale.x : 1f;
         return scale > 0f ? scale : 1f;
+    }
+
+    static void ApplyRootScaleAfterFinalize(GameObject root, MREnvironmentPlacement placement)
+    {
+        if (root == null || placement == null)
+            return;
+
+        if (placement.IsPosterSource)
+        {
+            MRWallPoster poster = root.GetComponent<MRWallPoster>();
+            if (poster != null)
+            {
+                poster.ApplyTextureAndScale();
+                return;
+            }
+        }
+
+        root.transform.localScale = Vector3.one * placement.Scale;
+    }
+
+    static void ApplyRootScaleAfterSpawn(GameObject root, MREnvironmentPlacement placement)
+    {
+        if (root == null || placement == null)
+            return;
+
+        if (placement.IsPosterSource)
+        {
+            MRWallPoster poster = root.GetComponent<MRWallPoster>();
+            if (poster != null)
+            {
+                poster.ApplyTextureAndScale();
+                return;
+            }
+        }
+
+        root.transform.localScale = Vector3.one * ResolveSpawnScale(placement);
     }
 
     static float ResolveSpawnScale(MREnvironmentPlacement placement)

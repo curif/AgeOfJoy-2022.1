@@ -50,6 +50,7 @@ public class MRConfigurationController : MonoBehaviour
         Environment,
         Mesh,
         Lights,
+        Posters,
         PlacedInstances,
         LightTune,
         Debug,
@@ -75,6 +76,7 @@ public class MRConfigurationController : MonoBehaviour
     readonly List<string> catalogNames = new List<string>();
     readonly List<MREnvironmentCatalogEntry> envCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> lightsCatalogEntries = new List<MREnvironmentCatalogEntry>();
+    readonly List<MREnvironmentCatalogEntry> postersCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentPlacement> placedInstances = new List<MREnvironmentPlacement>();
     readonly List<MRDebugLog.DisplayLine> debugDisplayLines = new List<MRDebugLog.DisplayLine>();
     readonly List<string> debugDetailWrappedLines = new List<string>();
@@ -172,6 +174,7 @@ public class MRConfigurationController : MonoBehaviour
         MRCustomObjectCatalog.RefreshCache();
         RefreshEnvironmentCatalog();
         RefreshLightsCatalog();
+        RefreshPostersCatalog();
 
         BuildNavMenu();
         setupActionMap();
@@ -322,6 +325,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("ENVIRONMENT", "Build + Custom Objects");
         navMenu.AddOption("MESH", "EffectMesh + scan debug colors");
         navMenu.AddOption("LIGHTS", "Light prefabs from ramiro/Lights");
+        navMenu.AddOption("POSTERS", "Wall posters; stick L/R = rotate");
         navMenu.AddOption("MOVE CONFIG", "Reposition ConfigurationCabinetMiniMR");
         navMenu.AddOption("ADJUSTMENTS", "Scale and floor position for game cabinets");
         navMenu.AddOption("PHONE BOOTH", "Show or hide phone booth in MR");
@@ -348,6 +352,13 @@ public class MRConfigurationController : MonoBehaviour
         lightsCatalogEntries.Clear();
         MRLightsCatalog.RefreshCache();
         lightsCatalogEntries.AddRange(MRLightsCatalog.GetCatalogEntries());
+    }
+
+    void RefreshPostersCatalog()
+    {
+        postersCatalogEntries.Clear();
+        MRPostersCatalog.RefreshCache();
+        postersCatalogEntries.AddRange(MRPostersCatalog.GetCatalogEntries());
     }
 
     void DrawCurrentScreen()
@@ -383,6 +394,9 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Lights:
                 DrawLightsPage();
+                break;
+            case Screen.Posters:
+                DrawPostersPage();
                 break;
             case Screen.PlacedInstances:
                 DrawPlacedInstancesPage();
@@ -547,6 +561,41 @@ public class MRConfigurationController : MonoBehaviour
                 Truncate(lightsCatalogEntries[selectedListIndex - 1].ToString(), 36),
                 false);
         }
+
+        DrawFooter(RowColumnFooter);
+    }
+
+    void DrawPostersPage()
+    {
+        screen.PrintCentered(0, "POSTERS", true);
+        screen.PrintLine(1, false, '-');
+
+        if (postersCatalogEntries.Count == 0)
+        {
+            screen.PrintCentered(8, "No posters found", true);
+            screen.PrintCentered(10, "Add images to", false);
+            screen.PrintCentered(11, "MR/Posters/", false);
+            DrawFooter("B: back");
+            return;
+        }
+
+        int row = 4;
+        for (int i = 0; i < VisibleCabinetRows; i++)
+        {
+            int idx = listScrollOffset + i;
+            if (idx >= postersCatalogEntries.Count)
+                break;
+
+            MREnvironmentCatalogEntry entry = postersCatalogEntries[idx];
+            string label = Truncate(entry.MenuLabel, ListRowNameWidth);
+            int count = envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0;
+            string suffix = PadLeft(count.ToString(), 2) + " ";
+            DrawListRow(row, idx, selectedListIndex, label, GetPostersRowActions(idx), suffix);
+            row++;
+        }
+
+        if (selectedListIndex >= 0 && selectedListIndex < postersCatalogEntries.Count)
+            screen.Print(1, 20, Truncate(postersCatalogEntries[selectedListIndex].ToString(), 36), false);
 
         DrawFooter(RowColumnFooter);
     }
@@ -760,8 +809,10 @@ public class MRConfigurationController : MonoBehaviour
         screen.Print(2, 12, "MR Auto: EnterMR lights only", false);
         screen.Print(2, 13, "Cabinets: 1 per game only", false);
         screen.Print(2, 14, "Environment/Lights: unlimited", false);
-        screen.Print(2, 16, "Placement ray after Add/Move", false);
-        screen.Print(2, 18, "Layout = MR/objects-layout.yaml", false);
+        screen.Print(2, 15, "Posters: MR/Posters/ images", false);
+        screen.Print(2, 16, "Poster place: stick L/R = spin Y", false);
+        screen.Print(2, 17, "Placement ray after Add/Move", false);
+        screen.Print(2, 19, "Layout = MR/objects-layout.yaml", false);
         DrawFooter("B: back");
     }
 
@@ -818,6 +869,7 @@ public class MRConfigurationController : MonoBehaviour
         screen == Screen.Cabinets
         || screen == Screen.Environment
         || screen == Screen.Lights
+        || screen == Screen.Posters
         || screen == Screen.PlacedInstances
         || screen == Screen.Mesh
         || screen == Screen.Adjustments
@@ -912,6 +964,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Cabinets => GetCabinetRowActions(selectedListIndex),
             Screen.Environment => GetEnvironmentRowActions(selectedListIndex),
             Screen.Lights => GetLightsRowActions(selectedListIndex),
+            Screen.Posters => GetPostersRowActions(selectedListIndex),
             Screen.PlacedInstances => GetPlacedInstanceRowActions(selectedListIndex),
             Screen.Mesh => GetMeshRowActions(selectedListIndex),
             Screen.Adjustments => AdjustmentValueActions,
@@ -969,6 +1022,20 @@ public class MRConfigurationController : MonoBehaviour
             return actions;
 
         MREnvironmentCatalogEntry entry = lightsCatalogEntries[catalogIdx];
+        int count = envRegistry.GetInstanceCount(entry);
+        if (count > 0)
+            actions.Add(RowActionKind.Options);
+        actions.Add(RowActionKind.Add);
+        return actions;
+    }
+
+    List<RowActionKind> GetPostersRowActions(int index)
+    {
+        var actions = new List<RowActionKind>();
+        if (index < 0 || index >= postersCatalogEntries.Count || envRegistry == null)
+            return actions;
+
+        MREnvironmentCatalogEntry entry = postersCatalogEntries[index];
         int count = envRegistry.GetInstanceCount(entry);
         if (count > 0)
             actions.Add(RowActionKind.Options);
@@ -1068,6 +1135,8 @@ public class MRConfigurationController : MonoBehaviour
                 return ExecuteEnvironmentRowAction(action);
             case Screen.Lights:
                 return ExecuteLightsRowAction(action);
+            case Screen.Posters:
+                return ExecutePostersRowAction(action);
             case Screen.PlacedInstances:
                 return ExecutePlacedInstanceRowAction(action);
             case Screen.Mesh:
@@ -1159,6 +1228,26 @@ public class MRConfigurationController : MonoBehaviour
                 return false;
             case RowActionKind.Options:
                 OpenPlacedInstances(entry, Screen.Lights);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool ExecutePostersRowAction(RowActionKind action)
+    {
+        if (selectedListIndex < 0 || selectedListIndex >= postersCatalogEntries.Count)
+            return false;
+
+        MREnvironmentCatalogEntry entry = postersCatalogEntries[selectedListIndex];
+        switch (action)
+        {
+            case RowActionKind.Add:
+                QueueReturnToPlacedInstances(entry, Screen.Posters);
+                BeginAddEnvironmentWithRay(entry);
+                return false;
+            case RowActionKind.Options:
+                OpenPlacedInstances(entry, Screen.Posters);
                 return true;
             default:
                 return false;
@@ -1340,6 +1429,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Cabinets => catalogNames.Count,
             Screen.Environment => envCatalogEntries.Count,
             Screen.Lights => Mathf.Max(1, 1 + lightsCatalogEntries.Count),
+            Screen.Posters => postersCatalogEntries.Count,
             Screen.PlacedInstances => placedInstances.Count + 1,
             Screen.Mesh => MeshOptionCount,
             Screen.Debug => debugDisplayLines.Count,
@@ -1361,6 +1451,7 @@ public class MRConfigurationController : MonoBehaviour
 
             case Screen.Cabinets:
             case Screen.Environment:
+            case Screen.Posters:
             case Screen.PlacedInstances:
             case Screen.Mesh:
                 int count = GetListCount();
@@ -1455,6 +1546,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Cabinets:
             case Screen.Environment:
             case Screen.Lights:
+            case Screen.Posters:
             case Screen.PlacedInstances:
             case Screen.Mesh:
             case Screen.Adjustments:
@@ -1509,6 +1601,13 @@ public class MRConfigurationController : MonoBehaviour
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.Lights;
+                break;
+            case "POSTERS":
+                RefreshPostersCatalog();
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.Posters;
                 break;
             case "DEBUG":
                 listScrollOffset = 0;
@@ -1674,6 +1773,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.PhoneBooth:
             case Screen.Mesh:
             case Screen.Lights:
+            case Screen.Posters:
             case Screen.Environment:
             case Screen.Debug:
             case Screen.Help:
@@ -1717,7 +1817,36 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
+        if (entry.Source == MREnvironmentObjectSource.Poster)
+        {
+            BeginAddPosterWithRay(entry);
+            return;
+        }
+
         BeginAddBuildEnvironmentWithRay(entry);
+    }
+
+    void BeginAddPosterWithRay(MREnvironmentCatalogEntry entry)
+    {
+        if (envRegistry == null || placementRay == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
+            return;
+
+        if (placementRay.IsActive)
+            return;
+
+        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+
+        ComputeInitialPlacementPose(PlacementSurfaceType.Wall, out Vector3 worldPos, out Quaternion worldRot);
+
+        if (!envRegistry.TrySpawnTransientCatalogEntry(entry, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} poster add ray spawn failed for {entry}");
+            MRDebugLog.LogError($"Poster add failed: {entry} (spawn)");
+            return;
+        }
+
+        BeginEnvironmentPlacementRay(entry, root);
+        ConfigManager.WriteConsole($"{LogPrefix} poster add ray begin {entry}");
     }
 
     void BeginAddLightWithRay(MREnvironmentCatalogEntry entry)

@@ -210,6 +210,8 @@ public class MREnvironmentPlacement
     public string PrefabName;
     /// <summary>Custom Objects package folder name when Source is custom.</summary>
     public string PackageName;
+    /// <summary>Image path relative to MR/Posters when Source is poster.</summary>
+    public string TextureFile;
     public MRVector3 Position;
     public MRQuaternion Rotation;
     public float Scale = 1f;
@@ -228,6 +230,9 @@ public class MREnvironmentPlacement
     public bool IsLightSource =>
         string.Equals(Source, "light", StringComparison.OrdinalIgnoreCase);
 
+    public bool IsPosterSource =>
+        string.Equals(Source, "poster", StringComparison.OrdinalIgnoreCase);
+
     public void NormalizeLegacySource()
     {
         if (!string.IsNullOrEmpty(Source))
@@ -244,6 +249,8 @@ public class MREnvironmentPlacement
         NormalizeLegacySource();
         if (IsCustomSource)
             return !string.IsNullOrEmpty(PackageName);
+        if (IsPosterSource)
+            return !string.IsNullOrEmpty(TextureFile);
         return !string.IsNullOrEmpty(PrefabName);
     }
 
@@ -256,6 +263,8 @@ public class MREnvironmentPlacement
             NormalizeLegacySource();
             if (IsCustomSource && !string.IsNullOrEmpty(PackageName))
                 return PackageName;
+            if (IsPosterSource && !string.IsNullOrEmpty(TextureFile))
+                return MRPostersCatalog.GetDisplayLabel(TextureFile);
             if (!string.IsNullOrEmpty(PrefabName))
                 return PrefabName;
             return string.IsNullOrEmpty(Id) ? "(prop)" : Id;

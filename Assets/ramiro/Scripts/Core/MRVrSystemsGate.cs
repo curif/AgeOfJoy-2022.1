@@ -13,10 +13,12 @@ using UnityEngine;
 public static class MRVrSystemsGate
 {
     const string LogPrefix = "[MRVrSystemsGate]";
+    static bool phoneBoothVrToMrTravelLocomotionHeld;
 
     public static void SuspendForMR()
     {
         ConfigManager.WriteConsole($"{LogPrefix} SuspendForMR");
+        phoneBoothVrToMrTravelLocomotionHeld = false;
         StopActiveLibretroGames();
         TeardownDeployedVrCabinets();
         DisableVrCabinetControllers();
@@ -55,7 +57,42 @@ public static class MRVrSystemsGate
     public static void ResumePlayerLocomotionForVr()
     {
         MRTransitionLog.LogStep("MRVrSystemsGate.ResumePlayerLocomotionForVr");
+        phoneBoothVrToMrTravelLocomotionHeld = false;
         ResumePlayerLocomotion();
+    }
+
+    /// <summary>VR→MR phone booth: block analog locomotion for the immersive travel sequence.</summary>
+    public static void SuspendPlayerLocomotionForPhoneBoothVrToMrTravel()
+    {
+        MRTransitionLog.LogStep("MRVrSystemsGate", "SuspendPlayerLocomotionForPhoneBoothVrToMrTravel");
+        phoneBoothVrToMrTravelLocomotionHeld = true;
+        SuspendPlayerLocomotion();
+    }
+
+    /// <summary>Restore VR locomotion when phone booth VR→MR travel is cancelled before MR loads.</summary>
+    public static void ResumePlayerLocomotionAfterPhoneBoothVrToMrTravelCancelled()
+    {
+        if (!phoneBoothVrToMrTravelLocomotionHeld)
+            return;
+
+        phoneBoothVrToMrTravelLocomotionHeld = false;
+        if (!IsVrExperienceMode())
+            return;
+
+        MRTransitionLog.LogStep("MRVrSystemsGate", "ResumePlayerLocomotionAfterPhoneBoothVrToMrTravelCancelled");
+        ResumePlayerLocomotion();
+    }
+
+    /// <summary>Hand off to full MR suspend — locomotion stays off.</summary>
+    public static void ClearPhoneBoothVrToMrTravelLocomotionHold()
+    {
+        phoneBoothVrToMrTravelLocomotionHeld = false;
+    }
+
+    static bool IsVrExperienceMode()
+    {
+        MixedRealityManager manager = MixedRealityManager.Instance;
+        return manager == null || manager.CurrentMode == ExperienceMode.VR;
     }
 
     /// <summary>MR→VR phone booth: silence running cores and attract loops before/during immersive travel.</summary>

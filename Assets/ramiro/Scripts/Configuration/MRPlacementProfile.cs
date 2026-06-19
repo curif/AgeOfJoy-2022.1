@@ -29,6 +29,12 @@ public class MRPlacementProfile : MonoBehaviour
     [Tooltip("Optional label for MR menus.")]
     public string displayName;
 
+    [Tooltip("Wall placement ray depth (meters). Posters use ~0.002; cabinets ~0.25.")]
+    public float wallMountDepthMeters = 0.25f;
+
+    public float GetWallMountDepthMeters() =>
+        wallMountDepthMeters > 0.0001f ? wallMountDepthMeters : 0.25f;
+
     public string GetDisplayName() =>
         string.IsNullOrEmpty(displayName) ? gameObject.name : displayName;
 

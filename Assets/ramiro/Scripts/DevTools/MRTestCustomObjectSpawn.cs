@@ -8,8 +8,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// TestCustomObjects scene: spawn every package under {BaseDir}/MR/Custom Objects/ in a grid.
-/// Editor: %UserProfile%/cabs/MR/Custom Objects/
+/// TestCustomObjects scene: spawn custom object packages and MR/Posters images for local testing.
+/// Editor paths: %UserProfile%/cabs/MR/Custom Objects/ and %UserProfile%/cabs/MR/Posters/
 /// </summary>
 public class MRTestCustomObjectSpawn : MonoBehaviour
 {

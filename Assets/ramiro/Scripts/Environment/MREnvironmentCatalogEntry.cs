@@ -27,7 +27,17 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
     public static MREnvironmentCatalogEntry FromLight(string prefabName, string displayLabel) =>
         new MREnvironmentCatalogEntry(MREnvironmentObjectSource.Light, prefabName, displayLabel);
 
-    public string MenuPrefix => Source == MREnvironmentObjectSource.Custom ? "[C] " : string.Empty;
+    public static MREnvironmentCatalogEntry FromPoster(string textureRelativePath, string displayLabel) =>
+        new MREnvironmentCatalogEntry(
+            MREnvironmentObjectSource.Poster,
+            MRPostersCatalog.NormalizeRelativePath(textureRelativePath),
+            displayLabel);
+
+    public string MenuPrefix => Source switch
+    {
+        MREnvironmentObjectSource.Custom => "[C] ",
+        _ => string.Empty
+    };
 
     public string MenuLabel => MenuPrefix + Truncate(DisplayLabel, 10);
 
@@ -46,6 +56,10 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
         if (Source == MREnvironmentObjectSource.Light)
             return placement.IsLightSource
                 && string.Equals(placement.PrefabName, Key, StringComparison.OrdinalIgnoreCase);
+
+        if (Source == MREnvironmentObjectSource.Poster)
+            return placement.IsPosterSource
+                && string.Equals(placement.TextureFile, Key, StringComparison.OrdinalIgnoreCase);
 
         return string.Equals(placement.PrefabName, Key, StringComparison.OrdinalIgnoreCase);
     }
@@ -72,5 +86,6 @@ public enum MREnvironmentObjectSource
 {
     Build = 0,
     Custom = 1,
-    Light = 2
+    Light = 2,
+    Poster = 3
 }
