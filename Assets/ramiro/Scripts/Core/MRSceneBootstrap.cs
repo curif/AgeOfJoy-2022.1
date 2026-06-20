@@ -175,6 +175,8 @@ public class MRSceneBootstrap : MonoBehaviour
         {
             MarkLoaded();
             LogRoomDetails(currentRoom);
+            MRCameraRigShim.Align();
+            MRCameraRigAlignLog.LogEvent("MRUK-scene-loaded");
         }
         else if (HasRoomWithAnchors())
         {

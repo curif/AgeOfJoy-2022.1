@@ -662,6 +662,8 @@ public class MixedRealityManager : MonoBehaviour
         if (environmentSurfaces != null && MRSpaceOrigin != null)
             environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
 
+        SnapTrackingOriginToMrukFloor("EnterMR");
+
         MRTransitionLog.LogStep("EnterMRCoroutine", "before SetMode MR");
         SetMode(ExperienceMode.MR);
         MRTransitionLog.LogStep("EnterMRCoroutine", "after SetMode MR");
@@ -696,6 +698,8 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTransitionLog.LogManagerState("EnterMRCoroutine-final");
         ConfigManager.WriteConsole($"{LogPrefix} EnterMR done");
+        MRCameraRigAlignLog.LogEvent("EnterMR-done");
+        ConfigManager.WriteConsole($"[MRCameraRigAlignLog] paste log from: {MRCameraRigAlignLog.LogFilePath}");
         MRTransitionLog.LogStep("EnterMRCoroutine", "DONE");
     }
 
@@ -792,6 +796,8 @@ public class MixedRealityManager : MonoBehaviour
             if (environmentSurfaces != null && MRSpaceOrigin != null)
                 environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
 
+            SnapTrackingOriginToMrukFloor("EnterMRFromPhoneBooth");
+
             passthrough.RefreshPassthroughAfterSceneUnload();
 
             MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before SetMode MR");
@@ -847,6 +853,8 @@ public class MixedRealityManager : MonoBehaviour
 
             MRTransitionLog.LogManagerState("EnterMRFromPhoneBoothCoroutine-final");
             ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth done");
+            MRCameraRigAlignLog.LogEvent("EnterMRFromPhoneBooth-done");
+            ConfigManager.WriteConsole($"[MRCameraRigAlignLog] paste log from: {MRCameraRigAlignLog.LogFilePath}");
             MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "DONE");
         }
         finally
@@ -1233,6 +1241,21 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogStep("MixedRealityManager", "RefreshPlayerControllerCameraOffset");
     }
 
+    void SnapTrackingOriginToMrukFloor(string reason)
+    {
+        if (environmentSurfaces == null || !environmentSurfaces.HasFloor)
+            return;
+
+        float floorY = environmentSurfaces.FloorHeight;
+        if (!MRCameraRigShim.TrySnapTrackingOriginY(floorY, out float deltaY))
+            return;
+
+        MRTransitionLog.LogStep("MixedRealityManager", $"{reason} SnapTrackingOriginY deltaY={deltaY:F3} floorY={floorY:F3}");
+        ConfigManager.WriteConsole($"{LogPrefix} {reason} snap tracking Y by {deltaY:F3}m to MRUK floor {floorY:F3}");
+        MRCameraRigAlignLog.LogEvent($"{reason}-SnapTrackingY delta={deltaY:F3}");
+        MRCameraRigAlignLog.LogSnapshot($"{reason}-SnapTrackingY", force: true);
+    }
+
     void RestoreVrPlayerPose()
     {
         TryRestoreVrPlayerPose();
@@ -1370,6 +1393,8 @@ public class MixedRealityManager : MonoBehaviour
 
         if (environmentSurfaces != null && MRSpaceOrigin != null && player != null)
             environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
+
+        SnapTrackingOriginToMrukFloor("RefreshEnvironmentAfterRoomScan");
 
         mrEffectMesh?.ApplySettings();
         MREffectMeshVisibility.ApplySavedSettings();

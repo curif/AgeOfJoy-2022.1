@@ -22,15 +22,29 @@ public static class MRCameraRigShim
 
     static MRUKCameraRigStub shimRig;
 
+    public static Transform ResolveXrTrackingOrigin(XROrigin origin)
+    {
+        if (origin == null)
+            return null;
+        if (origin.CameraFloorOffsetObject != null)
+            return origin.CameraFloorOffsetObject.transform;
+        if (origin.Camera != null && origin.Camera.transform.parent != null)
+            return origin.Camera.transform.parent;
+        return origin.transform;
+    }
+
     public static bool EnsureAttachedTo(MRUK target)
     {
         if (target == null)
             return false;
 
+        MRCameraRigAlignLog.EnsureSession("EnsureAttachedTo");
+
         OVRCameraRig existing = Object.FindObjectOfType<OVRCameraRig>();
         if (existing != null && !(existing is MRUKCameraRigStub))
         {
             AssignCameraRig(target, existing);
+            MRCameraRigAlignLog.LogEvent("attached-existing-ovr-rig");
             return true;
         }
 
@@ -42,6 +56,7 @@ public static class MRCameraRigShim
 
         shimRig.SyncWithXrOrigin();
         AssignCameraRig(target, shimRig);
+        MRCameraRigAlignLog.LogEvent("attached-shim");
         return true;
     }
 
@@ -51,6 +66,35 @@ public static class MRCameraRigShim
             shimRig.SyncWithXrOrigin();
     }
 
+    const float MinSnapDeltaMeters = 0.002f;
+
+    /// <summary>
+    /// Moves XROrigin so CameraFloorOffsetObject Y matches MRUK floor after VR scene unload
+    /// recentering (phone booth → MR).
+    /// </summary>
+    public static bool TrySnapTrackingOriginY(float targetFloorWorldY, out float appliedDeltaY)
+    {
+        appliedDeltaY = 0f;
+        XROrigin origin = Object.FindObjectOfType<XROrigin>();
+        if (origin == null)
+            return false;
+
+        Transform tracking = ResolveXrTrackingOrigin(origin);
+        if (tracking == null)
+            return false;
+
+        float deltaY = targetFloorWorldY - tracking.position.y;
+        if (Mathf.Abs(deltaY) < MinSnapDeltaMeters)
+            return false;
+
+        origin.transform.position += Vector3.up * deltaY;
+        appliedDeltaY = deltaY;
+        Align();
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} snapped tracking origin Y by {deltaY:F3}m (target floor Y={targetFloorWorldY:F3})");
+        return true;
+    }
+
     static void CreateShim()
     {
         GameObject rigGo = new GameObject(ShimRootName);
@@ -58,6 +102,7 @@ public static class MRCameraRigShim
         shimRig = rigGo.AddComponent<MRUKCameraRigStub>();
         shimRig.BuildAnchors();
         ConfigManager.WriteConsole($"{LogPrefix} stub created (overrides OVRCameraRig lifecycle)");
+        MRCameraRigAlignLog.LogEvent("shim-created");
     }
 
     static void AssignCameraRig(MRUK target, OVRCameraRig rig)
@@ -139,6 +184,7 @@ public class MRUKCameraRigStub : OVRCameraRig
                     cachedOrigin.Camera.transform.rotation);
             }
 
+            MRCameraRigAlignLog.LogSnapshot("SyncWithXrOrigin", cachedOrigin, this);
             return;
         }
 
@@ -150,6 +196,7 @@ public class MRUKCameraRigStub : OVRCameraRig
             trackingSpace.SetPositionAndRotation(main.transform.position, main.transform.rotation);
 
         centerEyeAnchor.SetPositionAndRotation(main.transform.position, main.transform.rotation);
+        MRCameraRigAlignLog.LogSnapshot("SyncWithXrOrigin-fallback", null, this, force: true);
     }
 
     static Transform ResolveTrackingTransform(XROrigin origin)
