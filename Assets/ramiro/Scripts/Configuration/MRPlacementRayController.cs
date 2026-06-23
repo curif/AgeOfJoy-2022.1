@@ -47,6 +47,9 @@ public class MRPlacementRayController : MonoBehaviour
     GameObject movingTarget;
     PlacementSurfaceType surfaceType;
     PlacementFacingAxis facingAxis = PlacementFacingAxis.PositiveZ;
+    // Custom prefabs (those carrying an MRPlacementProfile) are placed by their authored pivot.
+    // Game cabinets (no profile) keep the legacy collider-based base/top snap.
+    bool placeByPivot;
     bool allowStickRotation;
     PlacementStickRotationAxis stickRotationAxis = PlacementStickRotationAxis.WorldYaw;
     float stickRotationSpeed;
@@ -97,6 +100,7 @@ public class MRPlacementRayController : MonoBehaviour
         movingTarget = target;
         surfaceType = placementSurfaceType;
         facingAxis = objectFacingAxis;
+        placeByPivot = profile != null;
         ResolveStickRotation(profile, placementSurfaceType, out allowStickRotation, out stickRotationAxis, out stickRotationSpeed);
         onConfirmPose = confirmCallback;
         onCancel = cancelCallback;
@@ -286,7 +290,8 @@ public class MRPlacementRayController : MonoBehaviour
                             worldRot, facingAxis, worldPos, viewerPosition);
                     }
 
-                    ApplyCeilingPivotOffset(movingTarget, ref worldPos, worldRot);
+                    if (!placeByPivot)
+                        ApplyCeilingPivotOffset(movingTarget, ref worldPos, worldRot);
                     ok = true;
                 }
                 break;
@@ -314,7 +319,8 @@ public class MRPlacementRayController : MonoBehaviour
                             worldRot, facingAxis, worldPos, viewerPosition);
                     }
 
-                    ApplyFloorPivotOffset(movingTarget, ref worldPos, worldRot);
+                    if (!placeByPivot)
+                        ApplyFloorPivotOffset(movingTarget, ref worldPos, worldRot);
                     ok = true;
                 }
                 break;
@@ -343,7 +349,8 @@ public class MRPlacementRayController : MonoBehaviour
                             worldRot, facingAxis, worldPos, viewerPosition);
                     }
 
-                    ApplyFloorPivotOffset(movingTarget, ref worldPos, worldRot);
+                    if (!placeByPivot)
+                        ApplyFloorPivotOffset(movingTarget, ref worldPos, worldRot);
                     MRLayoutRegistry.ApplyFloorCabinetDisplayOffset(PlacementSurfaceType.Floor, ref worldPos);
                     ok = true;
                 }

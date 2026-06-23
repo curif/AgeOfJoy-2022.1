@@ -62,6 +62,7 @@ MonoBehaviour:
   stickRotationAxis: 0
   stickRotationSpeed: 90
   displayName: Configuration MR
+  wallMountDepthMeters: 0
 --- !u!1 &605558834873445400
 GameObject:
   m_ObjectHideFlags: 0
@@ -1402,6 +1403,10 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   Status: 0
+  MaxLinesPerFrame: 5
+  MaxMillisecondsPerFrame: 2
+  DefaultMaxExecutionLines: 5000000
+  linesPerSecond: 0
   nameToExecute: 
   path: C:\Users\curif\desarr\AgeOfJoy-2022.1\AGEBasicTests\config
 --- !u!114 &518505032655555995
@@ -1422,6 +1427,8 @@ MonoBehaviour:
     m_Asset: {fileID: 0}
     m_Actions: []
     m_Bindings: []
+  InvertX: 0
+  InvertY: 0
 --- !u!1 &6950815298399542955
 GameObject:
   m_ObjectHideFlags: 0
@@ -1760,6 +1767,7 @@ MonoBehaviour:
   OnInsertCoin:
     m_PersistentCalls:
       m_Calls: []
+  SoundEnabled: 1
 --- !u!65 &1452323916810981420
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -374,8 +374,8 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
         if (HasValidSavedPose() && TryLoadSavedPose(out Vector3 savedPos, out Quaternion savedRot))
         {
+            // Respect the authored pivot: restore the saved pose verbatim (no collider re-snap).
             Vector3 targetPos = savedPos;
-            ApplyFloorPivotOffset(cabinetInstance, ref targetPos, savedRot);
             if (Vector3.Distance(cabinetInstance.transform.position, targetPos) > 0.02f
                 || Quaternion.Angle(cabinetInstance.transform.rotation, savedRot) > 0.5f)
             {
@@ -806,7 +806,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
         if (useWallMount && surfaces != null && player != null
             && surfaces.TryGetWallMountedFramePose(
-                player, spawnDistanceMeters, CabinetFootprint.z, out worldPos, out worldRot, GetPlacementFacingAxis()))
+                player, spawnDistanceMeters, 0f, out worldPos, out worldRot, GetPlacementFacingAxis()))
         {
             poseSource = "wall mount";
             worldRot *= Quaternion.Euler(0f, spawnYawOffsetDegrees + wallMountYawOffsetDegrees, 0f);
@@ -835,27 +835,11 @@ public class MRConfigurationCabinetController : MonoBehaviour
                 * Quaternion.Euler(0f, spawnYawOffsetDegrees, 0f);
         }
 
-        ApplyFloorPivotOffset(root, ref worldPos, worldRot);
+        // Respect the authored pivot: place the cabinet exactly at the resolved pose (no snap).
+        root.transform.SetPositionAndRotation(worldPos, worldRot);
 
         ConfigManager.WriteConsole(
             $"{LogPrefix} floor pose ({poseSource}) pos={root.transform.position} rot={root.transform.eulerAngles}");
-    }
-
-    static void ApplyFloorPivotOffset(GameObject root, ref Vector3 worldPos, Quaternion worldRot)
-    {
-        if (root == null)
-            return;
-
-        root.transform.SetPositionAndRotation(worldPos, worldRot);
-
-        BoxCollider box = root.GetComponentInChildren<BoxCollider>();
-        if (box == null)
-            return;
-
-        float bottomY = PlaceOnFloorFromBoxCollider.CalculateLowerPointY(root.transform, box);
-        float pivotToBottom = root.transform.position.y - bottomY;
-        worldPos = new Vector3(worldPos.x, worldPos.y + pivotToBottom, worldPos.z);
-        root.transform.position = worldPos;
     }
 
     public bool BeginRepositionWithRay(bool isInitialPlacement = false)

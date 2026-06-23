@@ -29,11 +29,13 @@ public class MRPlacementProfile : MonoBehaviour
     [Tooltip("Optional label for MR menus.")]
     public string displayName;
 
-    [Tooltip("Wall placement ray depth (meters). Posters use ~0.002; cabinets ~0.25.")]
-    public float wallMountDepthMeters = 0.25f;
+    [Tooltip("Wall placement ray push off the wall (meters). 0 = sit by the authored pivot " +
+        "(object's back face is the contact point). >0 pushes half the depth into the room for " +
+        "center-pivot objects (e.g. thin posters ~0.002).")]
+    public float wallMountDepthMeters = 0f;
 
-    public float GetWallMountDepthMeters() =>
-        wallMountDepthMeters > 0.0001f ? wallMountDepthMeters : 0.25f;
+    // No coercion to a default here: an explicit 0 means "respect the pivot" (flush mount).
+    public float GetWallMountDepthMeters() => Mathf.Max(0f, wallMountDepthMeters);
 
     public string GetDisplayName() =>
         string.IsNullOrEmpty(displayName) ? gameObject.name : displayName;
