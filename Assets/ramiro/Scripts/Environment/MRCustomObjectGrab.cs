@@ -240,13 +240,17 @@ public class MRCustomObjectGrab : MonoBehaviour
 
     void BeginDualGrab()
     {
+        // Skip re-capturing the dock pose during a quick release+re-grab while still returning,
+        // otherwise "home" gets locked to a mid-air spot and the object never returns to base.
+        bool stillReturning = returnHomeCoroutine != null;
         if (returnHomeCoroutine != null)
         {
             StopCoroutine(returnHomeCoroutine);
             returnHomeCoroutine = null;
         }
 
-        CaptureHomePose();
+        if (!stillReturning)
+            CaptureHomePose();
         lockedWorldScale = grabRoot.lossyScale;
         lastStableForward = grabRoot.forward;
         lastStableRightDir = grabRoot.right;

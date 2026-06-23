@@ -259,13 +259,22 @@ public class PortableGamesTwoHandGrab : MonoBehaviour
 
     void BeginDualGrab()
     {
+        // A quick release+re-grab (controller/hand jitter, or releasing one hand and re-gripping
+        // while the other stays held) can re-enter here while the device is still lifted or mid
+        // return to its dock. Re-capturing the home pose then would lock "home" to a mid-air spot
+        // and the device would never return to the table (only the device floats — the stand is
+        // already detached on the table). Only re-dock bookkeeping when the device is truly docked.
+        bool stillLifted = returnHomeCoroutine != null || deviceLiftedOffStand || standDetachedFromDevice;
+
         if (returnHomeCoroutine != null)
         {
             StopCoroutine(returnHomeCoroutine);
             returnHomeCoroutine = null;
         }
 
-        CaptureHomePose();
+        if (!stillLifted)
+            CaptureHomePose();
+
         lockedWorldScale = transform.lossyScale;
         lastStableForward = transform.forward;
         lastStableRightDir = transform.right;
@@ -276,7 +285,8 @@ public class PortableGamesTwoHandGrab : MonoBehaviour
             body.WakeUp();
         }
 
-        DetachFromStandForGrab();
+        if (!stillLifted)
+            DetachFromStandForGrab();
 
         portable?.BeginSession();
         Log("dual grab — menu session started");
