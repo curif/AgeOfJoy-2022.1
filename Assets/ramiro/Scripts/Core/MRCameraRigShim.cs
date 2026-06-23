@@ -13,7 +13,7 @@ using UnityEngine;
 ///   - resolve the current room via _cameraRig.centerEyeAnchor.position.
 /// Age of Joy uses XROrigin (XRI), not OVRCameraRig. We subclass OVRCameraRig and disable
 /// its lifecycle so no MainCamera is spawned, then keep trackingSpace + centerEyeAnchor
-/// aligned with the XROrigin every frame.
+/// aligned with the XROrigin. When MRUK WorldLock is active, trackingSpace is owned by MRUK.
 /// </summary>
 public static class MRCameraRigShim
 {
@@ -64,35 +64,6 @@ public static class MRCameraRigShim
     {
         if (shimRig != null)
             shimRig.SyncWithXrOrigin();
-    }
-
-    const float MinSnapDeltaMeters = 0.002f;
-
-    /// <summary>
-    /// Moves XROrigin so CameraFloorOffsetObject Y matches MRUK floor after VR scene unload
-    /// recentering (phone booth → MR).
-    /// </summary>
-    public static bool TrySnapTrackingOriginY(float targetFloorWorldY, out float appliedDeltaY)
-    {
-        appliedDeltaY = 0f;
-        XROrigin origin = Object.FindObjectOfType<XROrigin>();
-        if (origin == null)
-            return false;
-
-        Transform tracking = ResolveXrTrackingOrigin(origin);
-        if (tracking == null)
-            return false;
-
-        float deltaY = targetFloorWorldY - tracking.position.y;
-        if (Mathf.Abs(deltaY) < MinSnapDeltaMeters)
-            return false;
-
-        origin.transform.position += Vector3.up * deltaY;
-        appliedDeltaY = deltaY;
-        Align();
-        ConfigManager.WriteConsole(
-            $"{LogPrefix} snapped tracking origin Y by {deltaY:F3}m (target floor Y={targetFloorWorldY:F3})");
-        return true;
     }
 
     static void CreateShim()
@@ -148,7 +119,9 @@ public class MRUKCameraRigStub : OVRCameraRig
     protected override void OnDestroy() { /* no-op */ }
     public override void EnsureGameObjectIntegrity() { /* no-op */ }
 
-    protected override void Update()
+    protected override void Update() { /* sync in LateUpdate — after MRUK WorldLock */ }
+
+    void LateUpdate()
     {
         SyncWithXrOrigin();
     }
@@ -171,11 +144,16 @@ public class MRUKCameraRigStub : OVRCameraRig
         if (cachedOrigin == null)
             cachedOrigin = Object.FindObjectOfType<XROrigin>();
 
+        bool worldLockActive = MRUK.Instance != null && MRUK.Instance.IsWorldLockActive;
+
         if (cachedOrigin != null)
         {
-            Transform originTracking = ResolveTrackingTransform(cachedOrigin);
-            if (originTracking != null && trackingSpace != null)
-                trackingSpace.SetPositionAndRotation(originTracking.position, originTracking.rotation);
+            if (!worldLockActive)
+            {
+                Transform originTracking = ResolveTrackingTransform(cachedOrigin);
+                if (originTracking != null && trackingSpace != null)
+                    trackingSpace.SetPositionAndRotation(originTracking.position, originTracking.rotation);
+            }
 
             if (cachedOrigin.Camera != null && centerEyeAnchor != null)
             {
@@ -184,7 +162,10 @@ public class MRUKCameraRigStub : OVRCameraRig
                     cachedOrigin.Camera.transform.rotation);
             }
 
-            MRCameraRigAlignLog.LogSnapshot("SyncWithXrOrigin", cachedOrigin, this);
+            MRCameraRigAlignLog.LogSnapshot(
+                worldLockActive ? "SyncWithXrOrigin-worldLock" : "SyncWithXrOrigin",
+                cachedOrigin,
+                this);
             return;
         }
 
@@ -192,7 +173,7 @@ public class MRUKCameraRigStub : OVRCameraRig
         if (main == null || centerEyeAnchor == null)
             return;
 
-        if (trackingSpace != null)
+        if (!worldLockActive && trackingSpace != null)
             trackingSpace.SetPositionAndRotation(main.transform.position, main.transform.rotation);
 
         centerEyeAnchor.SetPositionAndRotation(main.transform.position, main.transform.rotation);

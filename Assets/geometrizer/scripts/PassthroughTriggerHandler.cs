@@ -60,6 +60,7 @@ public class PassthroughTriggerHandler : MonoBehaviour
             }
 
             UnityEngine.Debug.LogWarning("Turning OVRPassthroughLayer ON!");
+            MRSceneHost.EnsureOvrManagerActive();
             OVRPassthroughLayer layer = ResolvePassthroughLayer();
             if (layer != null)
             {

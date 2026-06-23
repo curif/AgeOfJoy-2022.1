@@ -243,6 +243,34 @@ public class PlayerController : MonoBehaviour
         characterController.center = center;
     }
 
+    // In colocated Mixed Reality the camera offset scale (0.9 in VR) must be 1:1 with the
+    // physical room: it scales the headset's tracked motion, while MRUK anchors live at
+    // scale 1, so any scale != 1 makes virtual surfaces drift relative to passthrough as
+    // the player moves. We force scale 1 on MR entry and restore the VR scale on exit.
+    private float? mrSavedScale;
+
+    public bool IsMrScaleActive => mrSavedScale.HasValue;
+
+    public void EnterMrColocatedScale()
+    {
+        if (cameraOffset == null)
+            return;
+        if (mrSavedScale == null)
+            mrSavedScale = playerScale;
+        PlayerScale = 1f;
+        ConfigManager.WriteConsole($"[PlayerController] MR colocated scale 1:1 (VR scale saved={mrSavedScale})");
+    }
+
+    public void RestoreScaleFromMr()
+    {
+        if (mrSavedScale == null)
+            return;
+        float restore = mrSavedScale.Value;
+        mrSavedScale = null;
+        PlayerScale = restore;
+        ConfigManager.WriteConsole($"[PlayerController] restored VR player scale {restore}");
+    }
+
 
     void changeWithPlayerData(ConfigInformation.Player player)
     {

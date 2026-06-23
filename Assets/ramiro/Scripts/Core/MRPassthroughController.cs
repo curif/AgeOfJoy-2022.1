@@ -18,6 +18,7 @@ public class MRPassthroughController : MonoBehaviour
     const string FadeOutTrigger = "FadeOutTrigger";
 
     OVRPassthroughLayer passthroughLayer;
+    OVRPassthroughLayer scenePassthroughTemplate;
     Camera xrCamera;
     Animator fadeSphereAnimator;
     readonly System.Collections.Generic.List<Renderer> disabledFadeRenderers = new System.Collections.Generic.List<Renderer>();
@@ -65,9 +66,10 @@ public class MRPassthroughController : MonoBehaviour
             return;
         }
 
+        scenePassthroughTemplate = MRSceneHost.GetPassthroughLayerTemplate();
         passthroughLayer = xrCamera.GetComponent<OVRPassthroughLayer>();
         if (passthroughLayer == null)
-            passthroughLayer = xrCamera.gameObject.AddComponent<OVRPassthroughLayer>();
+            passthroughLayer = CreatePassthroughLayerOnCamera();
 
         var fadeSphere = GameObject.Find(FadeSphereName);
         if (fadeSphere != null)
@@ -239,7 +241,28 @@ public class MRPassthroughController : MonoBehaviour
         if (passthroughLayer == null && xrCamera != null)
             passthroughLayer = xrCamera.GetComponent<OVRPassthroughLayer>();
         if (createPassthroughLayerIfMissing && passthroughLayer == null && xrCamera != null)
-            passthroughLayer = xrCamera.gameObject.AddComponent<OVRPassthroughLayer>();
+            passthroughLayer = CreatePassthroughLayerOnCamera();
+    }
+
+    OVRPassthroughLayer CreatePassthroughLayerOnCamera()
+    {
+        if (xrCamera == null)
+            return null;
+
+        OVRPassthroughLayer layer = xrCamera.gameObject.AddComponent<OVRPassthroughLayer>();
+        if (scenePassthroughTemplate == null)
+            scenePassthroughTemplate = MRSceneHost.GetPassthroughLayerTemplate();
+
+        if (scenePassthroughTemplate != null)
+        {
+            layer.overlayType = scenePassthroughTemplate.overlayType;
+            layer.projectionSurfaceType = scenePassthroughTemplate.projectionSurfaceType;
+            layer.compositionDepth = scenePassthroughTemplate.compositionDepth;
+            layer.textureOpacity = scenePassthroughTemplate.textureOpacity;
+            ConfigManager.WriteConsole($"{LogPrefix} passthrough layer created on {xrCamera.name} from scene template");
+        }
+
+        return layer;
     }
 
     void ApplyPassthroughRendering()
@@ -248,7 +271,7 @@ public class MRPassthroughController : MonoBehaviour
             return;
 
         if (passthroughLayer == null && xrCamera != null)
-            passthroughLayer = xrCamera.gameObject.AddComponent<OVRPassthroughLayer>();
+            passthroughLayer = CreatePassthroughLayerOnCamera();
 
         EnsureInsightPassthroughEnabled();
         bool travelBlackout = MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive;
@@ -451,6 +474,8 @@ public class MRPassthroughController : MonoBehaviour
     {
         if (!IsPassthroughRuntimeAvailable())
             return;
+
+        MRSceneHost.EnsureOvrManagerActive();
 
         if (OVRManager.instance == null)
             return;

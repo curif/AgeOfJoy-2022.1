@@ -40,7 +40,11 @@ public static class MREffectMeshVisibility
     public static void SetScanDebugColorsEnabled(bool enabled)
     {
         MREffectMeshSettings.SetScanDebugColorsEnabled(enabled);
-        ApplyColorTintInMrWorld();
+
+        if (enabled && MREffectMeshSettings.AnchorMeshEnabled && !IsAnyMeshLive())
+            ApplyInMrWorld();
+        else
+            ApplyColorTintInMrWorld();
     }
 
     public static void ApplySavedSettings()
@@ -71,7 +75,7 @@ public static class MREffectMeshVisibility
         if (!IsMrWorldActive())
             return "ON (pref)";
 
-        return IsAnyMeshLive() ? "ON per surface" : "ON (wait mesh)";
+        return IsAnyMeshLive() ? "ON RoomBoxEffects" : "ON (wait mesh)";
     }
 
     static void ApplyInMrWorld()

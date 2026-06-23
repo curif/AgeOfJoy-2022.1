@@ -48,7 +48,9 @@ public class MRRuntimeSettings : MonoBehaviour
 
     [Header("MR → VR (phone booth)")]
     public bool restoreVrPoseOnPhoneBoothReturn = true;
-    public bool refreshCameraOffsetAfterPhoneBoothReturn = true;
+    // Desligado: o ajuste de altura do player (AdjustCameraYOffset) deslocava o
+    // rig em Y (~6 cm) nas transições phone booth, conflitando com o WorldLock MRUK.
+    public bool refreshCameraOffsetAfterPhoneBoothReturn = false;
     public bool fallbackTravelStateIfRestoreFails = true;
 
     [Tooltip("After explosion/glass — wait before player locomotion (walk/teleport) returns.")]
@@ -195,7 +197,7 @@ public class MRRuntimeSettings : MonoBehaviour
         Instance == null || Instance.restoreVrPoseOnPhoneBoothReturn;
 
     public static bool RefreshCameraOffsetAfterPhoneBoothReturn =>
-        Instance == null || Instance.refreshCameraOffsetAfterPhoneBoothReturn;
+        Instance != null && Instance.refreshCameraOffsetAfterPhoneBoothReturn;
 
     public static bool FallbackTravelStateIfRestoreFails =>
         Instance == null || Instance.fallbackTravelStateIfRestoreFails;

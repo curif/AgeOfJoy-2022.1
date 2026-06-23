@@ -322,6 +322,7 @@ public class MixedRealityManager : MonoBehaviour
 #else
         try
         {
+            MRSceneHost.PrepareForPhoneBoothTravel();
             MRTransitionLog.LogStep("PhoneBoothVrToMr", "scan gate begin");
             Transform player = FindPlayerTransform();
 
@@ -357,8 +358,10 @@ public class MixedRealityManager : MonoBehaviour
             }
 
             player = FindPlayerTransform();
-            if (travelState != null && player != null)
-                travelState.ApplyToPlayer(portal.transform, player);
+            // MR colocado: não reposicionar o rig na chegada. A cabine é colocada junto
+            // ao player via PlaceOnMrFloor (ancorada ao chão real); mover o rig aqui
+            // deslocaria todas as âncoras/cabinets face ao passthrough.
+            // travelState.ApplyToPlayer(...) desativado — ver revisão de alinhamento MR.
 
             if (MRRuntimeSettings.RefreshCameraOffsetAfterPhoneBoothReturn)
                 RefreshPlayerControllerCameraOffset();
@@ -626,6 +629,7 @@ public class MixedRealityManager : MonoBehaviour
 
         MRScenePermissions.Reset();
         MRTransitionLog.LogStep("EnterMRCoroutine", "before EnsureGranted");
+        MRSceneHost.PrepareForMr();
         yield return MRScenePermissions.EnsureGranted();
         if (!IsTransitionCurrent(generation))
             yield break;
@@ -649,8 +653,11 @@ public class MixedRealityManager : MonoBehaviour
             yield break;
 
         DestroyMRSpaceOrigin();
-        RestoreMrPlayerPose();
-        MRTransitionLog.LogStep("EnterMRCoroutine", "after RestoreMrPlayerPose");
+        // MR colocado: o rig NÃO é reposicionado. As âncoras MRUK são world-locked
+        // ao quarto físico (MRUK.Update sobrescreve trackingSpace), por isso teleportar
+        // o rig deslocaria todo o conteúdo virtual de forma uniforme face ao passthrough.
+        // RestoreMrPlayerPose() desativado — ver revisão de alinhamento MR.
+        MRTransitionLog.LogStep("EnterMRCoroutine", "RestoreMrPlayerPose skipped (colocated MR)");
 
         EnsureMRSpaceOrigin();
         Transform player = FindPlayerTransform();
@@ -658,11 +665,6 @@ public class MixedRealityManager : MonoBehaviour
             yield return environmentSurfaces.ProbeWhenReady(player);
         if (!IsTransitionCurrent(generation))
             yield break;
-
-        if (environmentSurfaces != null && MRSpaceOrigin != null)
-            environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
-
-        SnapTrackingOriginToMrukFloor("EnterMR");
 
         MRTransitionLog.LogStep("EnterMRCoroutine", "before SetMode MR");
         SetMode(ExperienceMode.MR);
@@ -728,9 +730,6 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTestConfigSceneLoader.PositionViewCameraFromSurfaces(environmentSurfaces);
 
-        if (environmentSurfaces != null && MRSpaceOrigin != null)
-            environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
-
         SetMode(ExperienceMode.MR);
 
         MRLayoutRegistry layout = ActiveRegistry();
@@ -766,6 +765,7 @@ public class MixedRealityManager : MonoBehaviour
             ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth coroutine");
 
             MRScenePermissions.Reset();
+            MRSceneHost.PrepareForMr();
             yield return MRScenePermissions.EnsureGranted();
             if (!IsTransitionCurrent(generation))
                 yield break;
@@ -792,11 +792,6 @@ public class MixedRealityManager : MonoBehaviour
                 yield return environmentSurfaces.ProbeWhenReady(player);
             if (!IsTransitionCurrent(generation))
                 yield break;
-
-            if (environmentSurfaces != null && MRSpaceOrigin != null)
-                environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
-
-            SnapTrackingOriginToMrukFloor("EnterMRFromPhoneBooth");
 
             passthrough.RefreshPassthroughAfterSceneUnload();
 
@@ -839,7 +834,9 @@ public class MixedRealityManager : MonoBehaviour
                 yield break;
 
             portal.PlaceOnMrFloor(environmentSurfaces, player);
-            ApplyPhoneBoothTravelState(portal, travelState);
+            // MR colocado: não aplicar travel state ao rig (ApplyPhoneBoothTravelState
+            // desativado). A cabine já foi colocada no chão real via PlaceOnMrFloor;
+            // mover o rig deslocaria todo o conteúdo virtual face ao passthrough.
             MRPhoneBoothSettings.SetVisible(true);
             portal.SetVisible(true);
 
@@ -1160,6 +1157,7 @@ public class MixedRealityManager : MonoBehaviour
 
         passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
         ResetLegacyPassthroughFlags();
+        MRSceneHost.SuspendForVr();
         MRTransitionLog.LogPassthrough("EnterVRCoroutine-after-rebind", passthrough);
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "before SetMode VR");
@@ -1241,19 +1239,33 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogStep("MixedRealityManager", "RefreshPlayerControllerCameraOffset");
     }
 
-    void SnapTrackingOriginToMrukFloor(string reason)
+    // The VR rig applies a 0.9 camera-offset scale (player scale). That scale compresses the
+    // headset's tracked motion, while MRUK anchors are placed at scale 1 — so in MR the virtual
+    // room drifts relative to passthrough (the root cause of the "anchors deslocadas" report).
+    // Force 1:1 scale while in MR and restore the VR scale on exit.
+    static void ApplyMrColocatedScale()
     {
-        if (environmentSurfaces == null || !environmentSurfaces.HasFloor)
+        PlayerController playerController = FindObjectOfType<PlayerController>();
+        if (playerController == null)
+        {
+            MRTransitionLog.LogWarning("ApplyMrColocatedScale skipped — PlayerController not found");
+            return;
+        }
+
+        playerController.EnterMrColocatedScale();
+        MRCameraRigAlignLog.LogCalibration("MR colocated player scale forced to 1:1");
+        MRTransitionLog.LogStep("MixedRealityManager", "ApplyMrColocatedScale");
+    }
+
+    static void RestoreVrScale()
+    {
+        PlayerController playerController = FindObjectOfType<PlayerController>();
+        if (playerController == null || !playerController.IsMrScaleActive)
             return;
 
-        float floorY = environmentSurfaces.FloorHeight;
-        if (!MRCameraRigShim.TrySnapTrackingOriginY(floorY, out float deltaY))
-            return;
-
-        MRTransitionLog.LogStep("MixedRealityManager", $"{reason} SnapTrackingOriginY deltaY={deltaY:F3} floorY={floorY:F3}");
-        ConfigManager.WriteConsole($"{LogPrefix} {reason} snap tracking Y by {deltaY:F3}m to MRUK floor {floorY:F3}");
-        MRCameraRigAlignLog.LogEvent($"{reason}-SnapTrackingY delta={deltaY:F3}");
-        MRCameraRigAlignLog.LogSnapshot($"{reason}-SnapTrackingY", force: true);
+        playerController.RestoreScaleFromMr();
+        MRCameraRigAlignLog.LogCalibration("VR player scale restored");
+        MRTransitionLog.LogStep("MixedRealityManager", "RestoreVrScale");
     }
 
     void RestoreVrPlayerPose()
@@ -1379,6 +1391,14 @@ public class MixedRealityManager : MonoBehaviour
         CurrentMode = mode;
         MRTransitionLog.Log($"SetMode {mode}");
         ConfigManager.WriteConsole($"{LogPrefix} mode={mode}");
+
+        // Colocated MR needs a 1:1 camera-offset scale; VR uses the 0.9 player scale.
+        // MR_EDIT stays colocated, so it keeps the MR scale untouched.
+        if (mode == ExperienceMode.MR)
+            ApplyMrColocatedScale();
+        else if (mode == ExperienceMode.VR)
+            RestoreVrScale();
+
         OnModeChanged?.Invoke(mode);
     }
 
@@ -1390,11 +1410,6 @@ public class MixedRealityManager : MonoBehaviour
 
         if (environmentSurfaces != null && player != null)
             yield return environmentSurfaces.ProbeWhenReady(player);
-
-        if (environmentSurfaces != null && MRSpaceOrigin != null && player != null)
-            environmentSurfaces.AlignOriginToFloor(MRSpaceOrigin, player);
-
-        SnapTrackingOriginToMrukFloor("RefreshEnvironmentAfterRoomScan");
 
         mrEffectMesh?.ApplySettings();
         MREffectMeshVisibility.ApplySavedSettings();

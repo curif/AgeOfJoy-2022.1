@@ -136,6 +136,8 @@ public class MRPhoneBoothPortal : MonoBehaviour
         if (!MixedRealityManager.Instance.CanToggleMode())
             return;
 
+        MRSceneHost.PrepareForPhoneBoothTravel();
+
         pendingTravelState = CaptureTravelState();
         if (pendingTravelState == null)
         {

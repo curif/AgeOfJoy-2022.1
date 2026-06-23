@@ -8,8 +8,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// Spawns MRUK EffectMesh prefabs from Resources/ramiro after the scene is loaded.
-/// Uses transparent occluder shader: depth hides props behind walls; receives shadows only (no cast).
+/// Enables MRUK EffectMesh objects placed under FixedScene/MR (disabled by default).
+/// Uses Meta MR Utility Kit package prefabs in scene; Resources/ramiro is runtime fallback only.
 /// </summary>
 public class MREffectMeshController : MonoBehaviour
 {
@@ -17,20 +17,22 @@ public class MREffectMeshController : MonoBehaviour
     const string AnchorMeshResourcesPath = "ramiro/EffectMesh";
     const string GlobalMeshResourcesPath = "ramiro/EffectMeshGlobalMesh";
     const string OccluderAndShadowMaterialFallbackPath = "ramiro/Materials/MROccluderAndShadow";
+    const string RoomBoxEffectsMaterialPath = "ramiro/Materials/RoomBoxEffects";
 
     GameObject anchorMeshRoot;
     GameObject globalMeshRoot;
     EffectMesh anchorEffectMesh;
     EffectMesh globalEffectMesh;
     Coroutine spawnRoutine;
-    MaterialPropertyBlock tintPropertyBlock;
+    bool anchorMeshFromScene;
+    bool globalMeshFromScene;
 
-    static readonly int TintEnabledId = Shader.PropertyToID("_TintEnabled");
-    static readonly int TintColorId = Shader.PropertyToID("_TintColor");
+    static Material cachedOccluderMaterial;
+    static Material cachedRoomBoxEffectsMaterial;
 
     public bool IsSpawned => anchorMeshRoot != null || globalMeshRoot != null;
-    public bool IsAnchorMeshSpawned => anchorMeshRoot != null;
-    public bool IsGlobalMeshSpawned => globalMeshRoot != null;
+    public bool IsAnchorMeshSpawned => anchorMeshRoot != null && anchorMeshRoot.activeSelf;
+    public bool IsGlobalMeshSpawned => globalMeshRoot != null && globalMeshRoot.activeSelf;
 
     public void Spawn()
     {
@@ -46,11 +48,18 @@ public class MREffectMeshController : MonoBehaviour
         spawnRoutine = StartCoroutine(SpawnRoutine());
     }
 
-    /// <summary>Refresh mesh tint color without respawning EffectMesh instances.</summary>
+    /// <summary>Refresh EffectMesh materials (RoomBoxEffects vs occluder) without respawning.</summary>
     public void ApplyColorTint()
     {
-        ConfigureOccluderRenderers(anchorEffectMesh);
-        ConfigureOccluderRenderers(globalEffectMesh);
+        if (MREffectMeshSettings.AnchorMeshEnabled
+            && anchorEffectMesh != null
+            && !HasEffectMeshGeometry(anchorEffectMesh))
+        {
+            TrySpawnAnchorMesh();
+        }
+
+        ApplyMeshMaterials(anchorEffectMesh);
+        ApplyMeshMaterials(globalEffectMesh);
     }
 
     public void Despawn()
@@ -61,8 +70,8 @@ public class MREffectMeshController : MonoBehaviour
             spawnRoutine = null;
         }
 
-        TearDown(ref anchorMeshRoot, ref anchorEffectMesh);
-        TearDown(ref globalMeshRoot, ref globalEffectMesh);
+        TearDown(ref anchorMeshRoot, ref anchorEffectMesh, ref anchorMeshFromScene);
+        TearDown(ref globalMeshRoot, ref globalEffectMesh, ref globalMeshFromScene);
         MRTransitionLog.LogStep("MREffectMeshController", "despawned");
     }
 
@@ -82,60 +91,96 @@ public class MREffectMeshController : MonoBehaviour
         if (MREffectMeshSettings.AnchorMeshEnabled)
         {
             if (anchorMeshRoot == null)
-            {
-                GameObject anchorPrefab = Resources.Load<GameObject>(AnchorMeshResourcesPath);
-                if (anchorPrefab == null)
-                {
-                    ConfigManager.WriteConsoleError(
-                        $"{LogPrefix} missing prefab Resources/{AnchorMeshResourcesPath}");
-                }
-                else
-                {
-                    anchorMeshRoot = SpawnEffectMeshInstance(anchorPrefab, parent, "MREffectMesh_Anchors");
-                    anchorEffectMesh = anchorMeshRoot != null
-                        ? anchorMeshRoot.GetComponent<EffectMesh>()
-                        : null;
-                }
-            }
+                ResolveAnchorMesh(parent);
+
+            TrySpawnAnchorMesh();
         }
         else
         {
-            TearDown(ref anchorMeshRoot, ref anchorEffectMesh);
+            TearDown(ref anchorMeshRoot, ref anchorEffectMesh, ref anchorMeshFromScene);
         }
 
         if (MREffectMeshSettings.GlobalMeshEnabled)
         {
             if (globalMeshRoot == null)
-            {
-                GameObject globalPrefab = Resources.Load<GameObject>(GlobalMeshResourcesPath);
-                if (globalPrefab == null)
-                {
-                    ConfigManager.WriteConsoleWarning(
-                        $"{LogPrefix} missing prefab Resources/{GlobalMeshResourcesPath}");
-                }
-                else
-                {
-                    globalMeshRoot = SpawnEffectMeshInstance(globalPrefab, parent, "MREffectMesh_Global");
-                    globalEffectMesh = globalMeshRoot != null
-                        ? globalMeshRoot.GetComponent<EffectMesh>()
-                        : null;
-                }
-            }
+                ResolveGlobalMesh(parent);
 
             TrySpawnGlobalMesh();
         }
         else
         {
-            TearDown(ref globalMeshRoot, ref globalEffectMesh);
+            TearDown(ref globalMeshRoot, ref globalEffectMesh, ref globalMeshFromScene);
         }
 
         yield return ApplyOccluderRenderers();
 
         MRTransitionLog.LogStep("MREffectMeshController",
             $"layers anchor={(anchorEffectMesh != null)} global={(globalEffectMesh != null)} " +
+            $"scene anchor={anchorMeshFromScene} scene global={globalMeshFromScene} " +
             $"prefs anchor={MREffectMeshSettings.AnchorMeshEnabled} global={MREffectMeshSettings.GlobalMeshEnabled}");
-        ConfigManager.WriteConsole($"{LogPrefix} applied settings (transparent occluder, receive shadow)");
+        ConfigManager.WriteConsole($"{LogPrefix} applied settings (mesh material per scan colors pref)");
         spawnRoutine = null;
+    }
+
+    void ResolveAnchorMesh(Transform parent)
+    {
+        EffectMesh sceneMesh = MRSceneHost.GetSceneEffectMesh(MRSceneHost.EffectMeshChildName);
+        if (sceneMesh != null)
+        {
+            anchorMeshRoot = sceneMesh.gameObject;
+            anchorEffectMesh = sceneMesh;
+            anchorMeshFromScene = true;
+            PrepareSceneMeshInstance(anchorMeshRoot, parent);
+            ConfigManager.WriteConsole($"{LogPrefix} anchor mesh from FixedScene/{MRSceneHost.RootObjectName}");
+            return;
+        }
+
+        GameObject anchorPrefab = Resources.Load<GameObject>(AnchorMeshResourcesPath);
+        if (anchorPrefab == null)
+        {
+            ConfigManager.WriteConsoleError(
+                $"{LogPrefix} missing prefab Resources/{AnchorMeshResourcesPath}");
+            return;
+        }
+
+        anchorMeshRoot = SpawnEffectMeshInstance(anchorPrefab, parent, "MREffectMesh_Anchors");
+        anchorEffectMesh = anchorMeshRoot != null ? anchorMeshRoot.GetComponent<EffectMesh>() : null;
+        anchorMeshFromScene = false;
+    }
+
+    void ResolveGlobalMesh(Transform parent)
+    {
+        EffectMesh sceneMesh = MRSceneHost.GetSceneEffectMesh(MRSceneHost.EffectMeshGlobalChildName);
+        if (sceneMesh != null)
+        {
+            globalMeshRoot = sceneMesh.gameObject;
+            globalEffectMesh = sceneMesh;
+            globalMeshFromScene = true;
+            PrepareSceneMeshInstance(globalMeshRoot, parent);
+            ConfigManager.WriteConsole($"{LogPrefix} global mesh from FixedScene/{MRSceneHost.RootObjectName}");
+            return;
+        }
+
+        GameObject globalPrefab = Resources.Load<GameObject>(GlobalMeshResourcesPath);
+        if (globalPrefab == null)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} missing prefab Resources/{GlobalMeshResourcesPath}");
+            return;
+        }
+
+        globalMeshRoot = SpawnEffectMeshInstance(globalPrefab, parent, "MREffectMesh_Global");
+        globalEffectMesh = globalMeshRoot != null ? globalMeshRoot.GetComponent<EffectMesh>() : null;
+        globalMeshFromScene = false;
+    }
+
+    static void PrepareSceneMeshInstance(GameObject instance, Transform parent)
+    {
+        instance.transform.SetParent(parent, false);
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = Quaternion.identity;
+        ConfigureEffectMeshComponent(instance.GetComponent<EffectMesh>(), instance.name);
+        instance.SetActive(true);
     }
 
     static GameObject SpawnEffectMeshInstance(
@@ -146,25 +191,51 @@ public class MREffectMeshController : MonoBehaviour
         GameObject instance = Instantiate(prefab, parent);
         instance.name = instanceName;
         instance.SetActive(false);
-
-        EffectMesh effectMesh = instance.GetComponent<EffectMesh>();
-        if (effectMesh != null)
-        {
-            if (effectMesh.MeshMaterial == null)
-            {
-                Material fallback = Resources.Load<Material>(OccluderAndShadowMaterialFallbackPath);
-                if (fallback != null)
-                    effectMesh.MeshMaterial = fallback;
-                else
-                    ConfigManager.WriteConsoleWarning(
-                        $"{LogPrefix} {instanceName} has no MeshMaterial and fallback missing");
-            }
-
-            effectMesh.CastShadow = false;
-        }
-
+        ConfigureEffectMeshComponent(instance.GetComponent<EffectMesh>(), instanceName);
         instance.SetActive(true);
         return instance;
+    }
+
+    static void ConfigureEffectMeshComponent(EffectMesh effectMesh, string instanceName)
+    {
+        if (effectMesh == null)
+            return;
+
+        Material material = ResolveMeshMaterial(out string materialName);
+        if (material != null)
+            effectMesh.MeshMaterial = material;
+        else
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {instanceName} has no MeshMaterial ({materialName} missing)");
+
+        effectMesh.CastShadow = false;
+    }
+
+    static Material ResolveMeshMaterial(out string materialName)
+    {
+        MREffectMeshSettings.EnsureLoaded();
+        if (MREffectMeshSettings.ScanDebugColorsEnabled)
+        {
+            materialName = "RoomBoxEffects";
+            return LoadRoomBoxEffectsMaterial();
+        }
+
+        materialName = "MROccluderAndShadow";
+        return LoadOccluderMaterial();
+    }
+
+    static Material LoadOccluderMaterial()
+    {
+        if (cachedOccluderMaterial == null)
+            cachedOccluderMaterial = Resources.Load<Material>(OccluderAndShadowMaterialFallbackPath);
+        return cachedOccluderMaterial;
+    }
+
+    static Material LoadRoomBoxEffectsMaterial()
+    {
+        if (cachedRoomBoxEffectsMaterial == null)
+            cachedRoomBoxEffectsMaterial = Resources.Load<Material>(RoomBoxEffectsMaterialPath);
+        return cachedRoomBoxEffectsMaterial;
     }
 
     IEnumerator ApplyOccluderRenderers()
@@ -205,22 +276,32 @@ public class MREffectMeshController : MonoBehaviour
         return effectMesh != null && effectMesh.EffectMeshObjects.Count > 0;
     }
 
-    void ConfigureOccluderRenderers(EffectMesh effectMesh)
+    void ApplyMeshMaterials(EffectMesh effectMesh)
     {
         if (effectMesh == null)
             return;
 
-        effectMesh.CastShadow = false;
         MREffectMeshSettings.EnsureLoaded();
-        bool scanColorsEnabled = MREffectMeshSettings.ScanDebugColorsEnabled;
+        Material material = ResolveMeshMaterial(out string materialName);
+        if (material == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} ApplyMeshMaterials skipped — {materialName} missing");
+            return;
+        }
+
+        effectMesh.CastShadow = false;
+
+        if (effectMesh.MeshMaterial != material)
+            effectMesh.MeshMaterial = material;
+
+        if (!HasEffectMeshGeometry(effectMesh))
+            return;
+
+        effectMesh.OverrideEffectMaterial(material);
+
         int configured = 0;
-
-        if (tintPropertyBlock == null)
-            tintPropertyBlock = new MaterialPropertyBlock();
-
         foreach (var pair in effectMesh.EffectMeshObjects)
         {
-            MRUKAnchor anchor = pair.Key;
             EffectMesh.EffectMeshObject meshObject = pair.Value;
             if (meshObject?.effectMeshGO == null)
                 continue;
@@ -229,21 +310,42 @@ public class MREffectMeshController : MonoBehaviour
             if (renderer == null)
                 continue;
 
+            renderer.SetPropertyBlock(null);
             renderer.shadowCastingMode = ShadowCastingMode.Off;
-            renderer.receiveShadows = true;
-
-            Color tintColor = Color.clear;
-            bool tintEnabled = scanColorsEnabled
-                && MREffectMeshScanColors.TryGetColor(anchor, out tintColor);
-            tintPropertyBlock.SetFloat(TintEnabledId, tintEnabled ? 1f : 0f);
-            tintPropertyBlock.SetColor(TintColorId, tintColor);
-            renderer.SetPropertyBlock(tintPropertyBlock);
+            renderer.receiveShadows = !MREffectMeshSettings.ScanDebugColorsEnabled;
             configured++;
         }
 
         if (configured > 0)
+        {
             ConfigManager.WriteConsole(
-                $"{LogPrefix} {effectMesh.name}: {configured} renderer(s) scanColors={scanColorsEnabled}");
+                $"{LogPrefix} {effectMesh.name}: {configured} renderer(s) material={materialName} " +
+                $"scanColors={MREffectMeshSettings.ScanDebugColorsEnabled}");
+        }
+    }
+
+    void TrySpawnAnchorMesh()
+    {
+        if (anchorEffectMesh == null || MRUK.Instance == null)
+            return;
+
+        if (HasEffectMeshGeometry(anchorEffectMesh))
+            return;
+
+        MRUKRoom room = MRUK.Instance.GetCurrentRoom();
+        if (room == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} anchor mesh skipped — no current room");
+            return;
+        }
+
+        Material material = ResolveMeshMaterial(out _);
+        if (material != null)
+            anchorEffectMesh.MeshMaterial = material;
+
+        anchorEffectMesh.CreateMesh(room);
+        ConfigManager.WriteConsole($"{LogPrefix} anchor mesh created for room '{room.name}'");
+        ApplyColorTint();
     }
 
     void TrySpawnGlobalMesh()
@@ -259,20 +361,30 @@ public class MREffectMeshController : MonoBehaviour
             return;
         }
 
+        Material material = ResolveMeshMaterial(out _);
+        if (material != null)
+            globalEffectMesh.MeshMaterial = material;
+
         globalEffectMesh.CreateMesh(room);
         ConfigManager.WriteConsole($"{LogPrefix} global mesh created for room '{room.name}'");
         ApplyColorTint();
     }
 
-    static void TearDown(ref GameObject root, ref EffectMesh effect)
+    static void TearDown(ref GameObject root, ref EffectMesh effect, ref bool fromScene)
     {
         if (effect != null)
             effect.DestroyMesh();
 
         if (root != null)
-            Destroy(root);
+        {
+            if (fromScene)
+                MRSceneHost.StashEffectMeshUnderRoot(root);
+            else
+                Destroy(root);
+        }
 
         root = null;
         effect = null;
+        fromScene = false;
     }
 }

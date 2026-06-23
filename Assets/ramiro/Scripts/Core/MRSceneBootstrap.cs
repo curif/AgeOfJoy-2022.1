@@ -251,6 +251,9 @@ public class MRSceneBootstrap : MonoBehaviour
 
     IEnumerator WaitForOvrReady()
     {
+        MRSceneHost.EnsureOvrManagerActive();
+        MRSceneHost.GetSceneMruk(activate: true);
+
         float remaining = ovrReadyTimeoutSeconds;
         while (remaining > 0f)
         {
@@ -417,11 +420,23 @@ public class MRSceneBootstrap : MonoBehaviour
 
     MRUK EnsureMrukComponent()
     {
+        MRSceneHost.EnsureOvrManagerActive();
+
         if (MRUK.Instance != null)
         {
             mruk = MRUK.Instance;
             mrukObject = mruk.gameObject;
             ConfigureMrukForManualLoad(mruk);
+            return mruk;
+        }
+
+        MRUK sceneMruk = MRSceneHost.GetSceneMruk(activate: true);
+        if (sceneMruk != null)
+        {
+            mruk = sceneMruk;
+            mrukObject = sceneMruk.gameObject;
+            ConfigureMrukForManualLoad(mruk);
+            ConfigManager.WriteConsole($"{LogPrefix} MRUK enabled from FixedScene/{MRSceneHost.RootObjectName}");
             return mruk;
         }
 
@@ -451,15 +466,17 @@ public class MRSceneBootstrap : MonoBehaviour
         if (runtimeMrukPrefab != null)
             return runtimeMrukPrefab;
 
+#if UNITY_EDITOR
+        GameObject fromPackage = LoadMrukPrefabFromPackage();
+        if (fromPackage != null)
+            return fromPackage;
+#endif
+
         GameObject fromResources = Resources.Load<GameObject>(MrukResourcesPath);
         if (fromResources != null)
             return fromResources;
 
-#if UNITY_EDITOR
-        return LoadMrukPrefabFromPackage();
-#else
         return null;
-#endif
     }
 
     static void ConfigureMrukForManualLoad(MRUK target)
@@ -483,7 +500,9 @@ public class MRSceneBootstrap : MonoBehaviour
 
         target.SceneSettings.DataSource = MRUK.SceneDataSource.Device;
         target.SceneSettings.LoadSceneOnStartup = false;
-        target.EnableWorldLock = false;
+        // Quest: WorldLock keeps scene anchors aligned with passthrough (table, walls, …).
+        // Disable only when using XROrigin shim without WorldLock breaks colocation.
+        target.EnableWorldLock = true;
     }
 
 #if UNITY_EDITOR

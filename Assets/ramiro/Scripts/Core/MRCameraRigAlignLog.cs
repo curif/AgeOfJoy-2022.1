@@ -68,6 +68,15 @@ public static class MRCameraRigAlignLog
         LogSnapshot(reason, force: true);
     }
 
+    /// <summary>
+    /// Logs a single diagnostic line (no full snapshot). Used by MR transitions to record
+    /// one-off state changes (e.g. the MR player-scale override applied/restored).
+    /// </summary>
+    public static void LogCalibration(string message)
+    {
+        WriteLine("CALIB", message);
+    }
+
     public static void LogSnapshot(string reason, XROrigin xr = null, MRUKCameraRigStub shim = null, bool force = false)
     {
         if (!force && Time.unscaledTime - lastSnapshotTime < PeriodicLogIntervalSeconds)
@@ -106,6 +115,7 @@ public static class MRCameraRigAlignLog
         AppendXrOrigin(sb, xr);
         AppendShim(sb, shim);
         AppendDeltas(sb, xr, shim);
+        AppendOvrHead(sb, shim);
         AppendMrukRoom(sb);
 
         WriteLine("SNAP", sb.ToString());
@@ -188,6 +198,37 @@ public static class MRCameraRigAlignLog
             Vector3 actualLocal = shim.centerEyeAnchor != null ? shim.centerEyeAnchor.localPosition : Vector3.zero;
             Vector3 localErr = actualLocal - expectedLocal;
             sb.Append($" | centerEyeLocalErr=({localErr.x:F4},{localErr.y:F4},{localErr.z:F4})");
+        }
+    }
+
+    /// <summary>
+    /// Logs the RAW OVRPlugin head pose (what MRUK/WorldLock uses to place anchors) and compares it
+    /// against the render head (Unity XR camera) in trackingSpace-local coords. If ovrVsRenderHead is
+    /// non-zero, the OVRPlugin tracking space and the Oculus XR render tracking space disagree — that
+    /// constant offset is what shifts all anchors/EffectMesh relative to passthrough.
+    /// </summary>
+    static void AppendOvrHead(StringBuilder sb, MRUKCameraRigStub shim)
+    {
+        try
+        {
+            OVRPose ovr = OVRPlugin.GetNodePose(OVRPlugin.Node.EyeCenter, OVRPlugin.Step.Render).ToOVRPose();
+            Vector3 op = ovr.position;
+            Vector3 orot = ovr.orientation.eulerAngles;
+            sb.Append($" | ovrHeadLocal=({op.x:F3},{op.y:F3},{op.z:F3}) rot({orot.x:F1},{orot.y:F1},{orot.z:F1})");
+
+            if (shim != null && shim.centerEyeAnchor != null)
+            {
+                // centerEyeAnchor is a child of trackingSpace, so localPosition == render head in
+                // trackingSpace-local — directly comparable to the OVRPlugin head (also tracking-local).
+                Vector3 renderLocal = shim.centerEyeAnchor.localPosition;
+                Vector3 d = op - renderLocal;
+                float yawDelta = Mathf.DeltaAngle(shim.centerEyeAnchor.localRotation.eulerAngles.y, orot.y);
+                sb.Append($" ovrVsRenderHead=({d.x:F4},{d.y:F4},{d.z:F4}) yaw={yawDelta:F2}");
+            }
+        }
+        catch (Exception ex)
+        {
+            sb.Append($" | ovrHead=err:{ex.Message}");
         }
     }
 

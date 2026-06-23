@@ -994,18 +994,6 @@ public class MREnvironmentSurfaces : MonoBehaviour
         return TryGetCeilingPointAt(horizontalPoint, out ceilingPoint);
     }
 
-    public void AlignOriginToFloor(Transform mrSpaceOrigin, Transform player)
-    {
-        if (mrSpaceOrigin == null)
-            return;
-
-        Vector3 pos = player != null ? player.position : mrSpaceOrigin.position;
-        pos.y = HasFloor ? FloorHeight : 0f;
-
-        mrSpaceOrigin.position = pos;
-        mrSpaceOrigin.rotation = Quaternion.identity;
-    }
-
     Vector3 ClampInsideRoom(Vector3 point, Vector3 cabinetFootprint)
     {
         if (room == null)
