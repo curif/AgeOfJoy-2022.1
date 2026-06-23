@@ -136,8 +136,6 @@ public class MRPhoneBoothPortal : MonoBehaviour
         if (!MixedRealityManager.Instance.CanToggleMode())
             return;
 
-        MRSceneHost.PrepareForPhoneBoothTravel();
-
         pendingTravelState = CaptureTravelState();
         if (pendingTravelState == null)
         {
@@ -147,7 +145,7 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
         MixedRealityManager.Instance.RememberVrPlayerPoseForPhoneBoothTravel();
 
-        MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR — scan gate");
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR — immersive travel");
         MixedRealityManager.Instance.StartPhoneBoothVrToMrTravel(this, pendingTravelState);
     }
 
@@ -171,7 +169,6 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
         MRTransitionLog.LogStep("MRPhoneBoothPortal", "BeginTravelToMR immersive");
         currentJourneyDirection = PhoneBoothJourneyDirection.ToMR;
-        MRVrSystemsGate.SuspendPlayerLocomotionForPhoneBoothVrToMrTravel();
         travelCoroutine = StartCoroutine(PlayTravelThen(() =>
             MixedRealityManager.Instance.EnterMRFromPhoneBooth(this)));
     }
@@ -201,6 +198,78 @@ public class MRPhoneBoothPortal : MonoBehaviour
         grab?.ForceReleaseAndReturnToCradleAfterTravel();
 
         MREnvironmentSurfaces.Instance?.InvalidateProbe();
+    }
+
+    /// <summary>VR→MR: enable MRUK + load room after travel door, before locomotion suspend.</summary>
+    IEnumerator EnsureMrukReadyAtJourneyStart()
+    {
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "MRUK at journey start (after door)");
+        yield return MRScenePermissions.EnsureGranted();
+        MRSceneHost.PrepareForPhoneBoothTravel();
+
+        Transform player = FindPlayerTransform();
+        MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
+        if (surfaces != null && player != null)
+            yield return surfaces.ProbeWhenReady(player, requestSceneCaptureIfMissing: false);
+
+        if (MRSceneScanState.IsRoomScanned())
+            yield break;
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "no room — opening Space Setup");
+        yield return MRSceneScanRequest.EnsureScannedRoomForTravel(player);
+
+        if (!MRSceneScanState.IsRoomScanned())
+        {
+            AbortImmersiveTravelForRoomScan("VR→MR travel cancelled — room scan required");
+            yield break;
+        }
+
+        yield return AbortImmersiveTravelForRoomScanAndReloadVr();
+#else
+        AbortImmersiveTravelForRoomScan("VR→MR travel cancelled — room scan required");
+#endif
+    }
+
+    void AbortImmersiveTravelForRoomScan(string reason)
+    {
+        AbortImmersiveTravelCore(reason);
+        ResetAfterScanGate();
+    }
+
+    IEnumerator AbortImmersiveTravelForRoomScanAndReloadVr()
+    {
+        AbortImmersiveTravelCore("room scan complete — grab the handset again to travel to MR");
+
+        MixedRealityManager manager = MixedRealityManager.Instance;
+        if (manager != null)
+            yield return manager.ReloadVrScenesForPhoneBoothScanGate();
+
+        MRPhoneBoothPortal scenePortal = FindSceneBoothPortal();
+        if (scenePortal != null)
+            scenePortal.FinishScanGateWaitForHandsetGrab();
+        else
+            FinishScanGateWaitForHandsetGrab();
+
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", "AbortImmersiveTravelForRoomScanAndReloadVr");
+    }
+
+    void AbortImmersiveTravelCore(string reason)
+    {
+        travelCancelRequested = true;
+
+        if (travelVfx != null && travelVfx.IsJourneyActive)
+            travelVfx.EndJourneyVisuals(currentJourneyDirection);
+
+        StopTravelHeadFade(force: true);
+
+        travelInProgress = false;
+        travelPastHandsetCue = false;
+        travelCoroutine = null;
+        handsetGrabbed = false;
+
+        ConfigManager.WriteConsoleWarning($"{LogPrefix} {reason}");
+        MRTransitionLog.LogStep("MRPhoneBoothPortal", $"AbortImmersiveTravelCore: {reason}");
     }
 
     public PhoneBoothTravelState PeekPendingTravelState() => pendingTravelState;
@@ -623,6 +692,13 @@ public class MRPhoneBoothPortal : MonoBehaviour
             case MRPhoneBoothTransitionSequence.ImmersiveTravelStep.BeginJourneyVisuals:
                 MRTransitionLog.LogStep("MRPhoneBoothPortal", "Travel journey start (spaceship engine)");
                 travelVfx?.BeginJourneyVisuals(currentJourneyDirection);
+                if (currentJourneyDirection == PhoneBoothJourneyDirection.ToMR)
+                {
+                    yield return EnsureMrukReadyAtJourneyStart();
+                    if (travelCancelRequested)
+                        yield break;
+                    MRVrSystemsGate.SuspendPlayerLocomotionForPhoneBoothVrToMrTravel();
+                }
                 yield return WaitOptionalImmersiveStep(
                     MRRuntimeSettings.ImmersiveBeginJourneyStepDurationSeconds);
                 break;

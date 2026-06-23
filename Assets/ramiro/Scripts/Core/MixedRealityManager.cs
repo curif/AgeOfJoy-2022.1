@@ -315,65 +315,27 @@ public class MixedRealityManager : MonoBehaviour
         MRPhoneBoothPortal portal,
         PhoneBoothTravelState travelState)
     {
-#if UNITY_EDITOR
-        phoneBoothVrToMrScanRoutine = null;
-        portal.StartImmersiveTravelToMrAfterScanGate();
-        yield break;
-#else
         try
         {
-            MRSceneHost.PrepareForPhoneBoothTravel();
-            MRTransitionLog.LogStep("PhoneBoothVrToMr", "scan gate begin");
-            Transform player = FindPlayerTransform();
-
-            MREnvironmentSurfaces.Instance?.InvalidateProbe();
-
-            if (environmentSurfaces != null && player != null)
-                yield return environmentSurfaces.ProbeWhenReady(player, requestSceneCaptureIfMissing: false);
-
-            if (MRSceneScanState.IsRoomScanned())
-            {
-                MRTransitionLog.LogStep("PhoneBoothVrToMr", "room ready — immersive travel");
-                portal.StartImmersiveTravelToMrAfterScanGate();
-                yield break;
-            }
-
-            MRTransitionLog.LogStep("PhoneBoothVrToMr", "no usable room — opening Space Setup");
-            yield return MRSceneScanRequest.EnsureScannedRoomForTravel(player);
-
-            if (!MRSceneScanState.IsRoomScanned())
-            {
-                portal.AbortPendingVrToMrTravel("VR→MR travel cancelled — room scan required");
-                yield break;
-            }
-
-            MRTransitionLog.LogStep("PhoneBoothVrToMr", "reload VR scenes after Space Setup");
-            yield return sceneTransition.ReloadVrScenes();
-
-            portal = MRPhoneBoothPortal.FindSceneBoothPortal();
-            if (portal == null)
-            {
-                ConfigManager.WriteConsoleError($"{LogPrefix} scan gate done but scene booth missing");
-                yield break;
-            }
-
-            player = FindPlayerTransform();
-            // MR colocado: não reposicionar o rig na chegada. A cabine é colocada junto
-            // ao player via PlaceOnMrFloor (ancorada ao chão real); mover o rig aqui
-            // deslocaria todas as âncoras/cabinets face ao passthrough.
-            // travelState.ApplyToPlayer(...) desativado — ver revisão de alinhamento MR.
-
-            if (MRRuntimeSettings.RefreshCameraOffsetAfterPhoneBoothReturn)
-                RefreshPlayerControllerCameraOffset();
-
-            portal.FinishScanGateWaitForHandsetGrab();
-            MRTransitionLog.LogStep("PhoneBoothVrToMr", "scan gate done — grab handset to travel");
+            MRTransitionLog.LogStep("PhoneBoothVrToMr", "MRUK deferred to BeginJourneyVisuals");
+            portal.StartImmersiveTravelToMrAfterScanGate();
         }
         finally
         {
             phoneBoothVrToMrScanRoutine = null;
         }
-#endif
+
+        yield break;
+    }
+
+    /// <summary>Reload gallery after Space Setup during phone booth VR→MR travel.</summary>
+    public IEnumerator ReloadVrScenesForPhoneBoothScanGate()
+    {
+        MRTransitionLog.LogStep("PhoneBoothVrToMr", "reload VR scenes after Space Setup");
+        yield return sceneTransition.ReloadVrScenes();
+
+        if (MRRuntimeSettings.RefreshCameraOffsetAfterPhoneBoothReturn)
+            RefreshPlayerControllerCameraOffset();
     }
 
     /// <summary>Saves gallery player pose before phone booth VR→MR travel (restored on booth return).</summary>
