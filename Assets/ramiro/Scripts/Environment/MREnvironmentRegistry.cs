@@ -854,6 +854,42 @@ public class MREnvironmentRegistry : MonoBehaviour
         return true;
     }
 
+    public bool TryGetPosterScale(string placementId, out float scale)
+    {
+        EnsureLayoutLoaded();
+        scale = MRPosterPlacement.DefaultScale;
+        if (layout == null || string.IsNullOrEmpty(placementId))
+            return false;
+
+        MREnvironmentPlacement placement = layout.FindById(placementId);
+        if (placement == null || !placement.IsPosterSource)
+            return false;
+
+        scale = placement.Scale > 0f ? placement.Scale : MRPosterPlacement.DefaultScale;
+        return true;
+    }
+
+    public bool TryUpdatePosterScale(string placementId, float scale)
+    {
+        EnsureLayoutLoaded();
+        if (layout == null || string.IsNullOrEmpty(placementId))
+            return false;
+
+        MREnvironmentPlacement placement = layout.FindById(placementId);
+        if (placement == null || !placement.IsPosterSource)
+            return false;
+
+        placement.Scale = MRPosterPlacement.SnapScale(scale);
+        layout.Save(LayoutFilePath);
+
+        if (TryGetSpawnedRoot(placement.Id, out GameObject root))
+            MRPosterPlacement.ApplyUserScale(root, placement.Scale);
+
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} poster scale {placement.DisplayLabel} yz={placement.Scale:F2}");
+        return true;
+    }
+
     static void CaptureLightSettingsFromRoot(MREnvironmentPlacement placement, GameObject root)
     {
         if (placement == null || root == null)
@@ -1068,6 +1104,13 @@ public class MREnvironmentRegistry : MonoBehaviour
 
     static float ResolveScaleFromRoot(GameObject root)
     {
+        if (root != null)
+        {
+            MRWallPoster poster = root.GetComponent<MRWallPoster>();
+            if (poster != null)
+                return poster.UserScale;
+        }
+
         float scale = root != null ? root.transform.localScale.x : 1f;
         return scale > 0f ? scale : 1f;
     }
@@ -1082,7 +1125,7 @@ public class MREnvironmentRegistry : MonoBehaviour
             MRWallPoster poster = root.GetComponent<MRWallPoster>();
             if (poster != null)
             {
-                poster.ApplyTextureAndScale();
+                poster.SetUserScale(placement.Scale > 0f ? placement.Scale : MRPosterPlacement.DefaultScale);
                 return;
             }
         }
@@ -1100,7 +1143,7 @@ public class MREnvironmentRegistry : MonoBehaviour
             MRWallPoster poster = root.GetComponent<MRWallPoster>();
             if (poster != null)
             {
-                poster.ApplyTextureAndScale();
+                poster.SetUserScale(ResolveSpawnScale(placement));
                 return;
             }
         }

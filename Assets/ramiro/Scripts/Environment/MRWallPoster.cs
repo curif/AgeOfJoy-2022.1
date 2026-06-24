@@ -12,6 +12,8 @@ public class MRWallPoster : MonoBehaviour
     const float LandscapeScaleZ = 2f;
     const float PortraitScaleZ = 2f;
 
+    [SerializeField] float userScale = 1f;
+
     static readonly string[] PreferredRendererNames =
     {
         "picture",
@@ -30,6 +32,13 @@ public class MRWallPoster : MonoBehaviour
     Texture2D ownedTexture;
 
     public string TextureRelativePath => textureRelativePath;
+    public float UserScale => userScale > 0f ? userScale : 1f;
+
+    public void SetUserScale(float scale)
+    {
+        userScale = MRPosterPlacement.SnapScale(scale);
+        ApplyTextureAndScale();
+    }
 
     void Awake()
     {
@@ -189,10 +198,12 @@ public class MRWallPoster : MonoBehaviour
 
     void ApplyPosterScale(Texture2D texture)
     {
-        float scaleZ = PortraitScaleZ;
+        float baseY = 1f;
+        float baseZ = PortraitScaleZ;
         if (texture != null && texture.width >= texture.height)
-            scaleZ = LandscapeScaleZ;
+            baseZ = LandscapeScaleZ;
 
-        transform.localScale = new Vector3(1f, 1f, scaleZ);
+        float scale = UserScale;
+        transform.localScale = new Vector3(1f, baseY * scale, baseZ * scale);
     }
 }
