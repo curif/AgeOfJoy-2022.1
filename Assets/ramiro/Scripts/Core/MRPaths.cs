@@ -157,7 +157,7 @@ Placed posters are saved in MR/objects-layout.yaml.
 #
 # 1. Copy or rename this folder under MR/Custom Objects/
 # 2. Add your mesh as example.glb (or change model.file below)
-# 3. Place via MR CRT menu → ENVIRONMENT → [C] Example
+# 3. Place via MR CRT menu → CUSTOM OBJECTS → Example
 
 version: 1
 
