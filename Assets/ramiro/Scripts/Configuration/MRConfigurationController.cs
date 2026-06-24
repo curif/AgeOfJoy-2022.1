@@ -645,7 +645,7 @@ public class MRConfigurationController : MonoBehaviour
         if (selectedListIndex >= 0 && selectedListIndex < roomSkinsCatalogEntries.Count)
             screen.Print(1, 20, Truncate(roomSkinsCatalogEntries[selectedListIndex].DisplayLabel, 36), false);
 
-        screen.Print(1, 22, "A=apply now (no ray)", false);
+        screen.Print(1, 22, "A=Add/Rem (no ray)", false);
         DrawFooter(RowColumnFooter);
     }
 
@@ -1097,10 +1097,14 @@ public class MRConfigurationController : MonoBehaviour
     List<RowActionKind> GetRoomSkinsRowActions(int index)
     {
         var actions = new List<RowActionKind>();
-        if (index < 0 || index >= roomSkinsCatalogEntries.Count)
+        if (index < 0 || index >= roomSkinsCatalogEntries.Count || envRegistry == null)
             return actions;
 
-        actions.Add(RowActionKind.Add);
+        MREnvironmentCatalogEntry entry = roomSkinsCatalogEntries[index];
+        if (envRegistry.GetInstanceCount(entry) > 0)
+            actions.Add(RowActionKind.Remove);
+        else
+            actions.Add(RowActionKind.Add);
         return actions;
     }
 
@@ -1273,7 +1277,7 @@ public class MRConfigurationController : MonoBehaviour
 
     bool ExecuteRoomSkinsRowAction(RowActionKind action)
     {
-        if (selectedListIndex < 0 || selectedListIndex >= roomSkinsCatalogEntries.Count)
+        if (selectedListIndex < 0 || selectedListIndex >= roomSkinsCatalogEntries.Count || envRegistry == null)
             return false;
 
         MREnvironmentCatalogEntry entry = roomSkinsCatalogEntries[selectedListIndex];
@@ -1282,6 +1286,20 @@ public class MRConfigurationController : MonoBehaviour
             case RowActionKind.Add:
                 BeginAddRoomSkinInstant(entry);
                 return false;
+            case RowActionKind.Remove:
+            {
+                IReadOnlyList<MREnvironmentPlacement> placements =
+                    envRegistry.FindAllPlacementsByCatalogEntry(entry);
+                if (placements.Count == 0)
+                    return false;
+                if (envRegistry.RemovePlacement(placements[0].Id))
+                {
+                    ConfigManager.WriteConsole($"{LogPrefix} removed room skin {entry}");
+                    ClampColumnIndexForCurrentRow();
+                    return true;
+                }
+                return false;
+            }
             default:
                 return false;
         }
