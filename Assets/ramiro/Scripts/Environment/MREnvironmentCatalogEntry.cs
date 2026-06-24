@@ -33,9 +33,13 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
             MRPostersCatalog.NormalizeRelativePath(textureRelativePath),
             displayLabel);
 
+    public static MREnvironmentCatalogEntry FromRoomSkin(string packageName, string displayLabel) =>
+        new MREnvironmentCatalogEntry(MREnvironmentObjectSource.RoomSkin, packageName, displayLabel);
+
     public string MenuPrefix => Source switch
     {
         MREnvironmentObjectSource.Custom => "[C] ",
+        MREnvironmentObjectSource.RoomSkin => "[R] ",
         _ => string.Empty
     };
 
@@ -60,6 +64,10 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
         if (Source == MREnvironmentObjectSource.Poster)
             return placement.IsPosterSource
                 && string.Equals(placement.TextureFile, Key, StringComparison.OrdinalIgnoreCase);
+
+        if (Source == MREnvironmentObjectSource.RoomSkin)
+            return placement.IsRoomSkinSource
+                && string.Equals(placement.PackageName, Key, StringComparison.OrdinalIgnoreCase);
 
         return string.Equals(placement.PrefabName, Key, StringComparison.OrdinalIgnoreCase);
     }
@@ -87,5 +95,6 @@ public enum MREnvironmentObjectSource
     Build = 0,
     Custom = 1,
     Light = 2,
-    Poster = 3
+    Poster = 3,
+    RoomSkin = 4
 }

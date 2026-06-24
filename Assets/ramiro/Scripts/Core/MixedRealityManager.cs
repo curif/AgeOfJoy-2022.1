@@ -55,6 +55,8 @@ public class MixedRealityManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        MRPaths.EnsureFolders();
+
         passthrough = GetComponent<MRPassthroughController>();
         if (passthrough == null)
             passthrough = gameObject.AddComponent<MRPassthroughController>();
@@ -1071,6 +1073,12 @@ public class MixedRealityManager : MonoBehaviour
             yield break;
 
         yield return RefreshEnvironmentAfterRoomScan(player);
+        if (!IsTransitionCurrent(generation))
+            yield break;
+
+        MREnvironmentRegistry environmentRegistry = ActiveEnvironmentRegistry();
+        if (environmentRegistry != null)
+            yield return environmentRegistry.ReapplyRoomSkinsWhenReady();
     }
 
     static IEnumerator WaitForUsableRoom(float timeoutSeconds)

@@ -12,9 +12,13 @@ public static class MRPaths
     public const string MrFolderName = "MR";
     public const string CustomObjectsFolderName = "Custom Objects";
     public const string PostersFolderName = "Posters";
+    public const string RoomSkinsFolderName = "Room Skins";
     public const string CabinetsLayoutFileName = "cabinets-layout.yaml";
     public const string ObjectsLayoutFileName = "objects-layout.yaml";
     public const string CustomObjectYamlFileName = "object.yaml";
+    public const string RoomSkinYamlFileName = "roomskin.yaml";
+    /// <summary>Default image filename when <c>texture</c> is omitted in roomskin.yaml.</summary>
+    public const string RoomSkinDefaultTextureFileName = "texture.png";
 
     public const string LegacyCabinetsLayoutFileName = "mr-layout.yaml";
     public const string LegacyObjectsLayoutFileName = "mr-environment-layout.yaml";
@@ -22,18 +26,28 @@ public static class MRPaths
     public static string MrDir => Path.Combine(ConfigManager.BaseDir, MrFolderName);
     public static string CustomObjectsDir => Path.Combine(MrDir, CustomObjectsFolderName);
     public static string PostersDir => Path.Combine(MrDir, PostersFolderName);
+    public static string RoomSkinsDir => Path.Combine(MrDir, RoomSkinsFolderName);
     public static string CabinetsLayoutPath => Path.Combine(MrDir, CabinetsLayoutFileName);
     public static string ObjectsLayoutPath => Path.Combine(MrDir, ObjectsLayoutFileName);
 
     public const string ExamplePackageName = "Example";
 
+    static bool foldersEnsured;
+
+    /// <summary>Creates MR/ subfolders and one-time seeds. Safe to call repeatedly (no-op after first run).</summary>
     public static void EnsureFolders()
     {
+        if (foldersEnsured)
+            return;
+
+        foldersEnsured = true;
         ConfigManager.CreateFolder(MrDir);
         ConfigManager.CreateFolder(CustomObjectsDir);
         ConfigManager.CreateFolder(PostersDir);
+        ConfigManager.CreateFolder(RoomSkinsDir);
         SeedExampleCustomObjectIfNeeded();
         SeedPostersReadmeIfNeeded();
+        MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
     }
 
     /// <summary>Writes MR/Posters/README.txt when the folder is new or empty.</summary>
@@ -217,6 +231,13 @@ collision:
         if (string.IsNullOrEmpty(packageName))
             return null;
         return Path.Combine(CustomObjectsDir, packageName);
+    }
+
+    public static string GetRoomSkinPackageDir(string packageName)
+    {
+        if (string.IsNullOrEmpty(packageName))
+            return null;
+        return Path.Combine(RoomSkinsDir, packageName);
     }
 
     static void MigrateLegacyLayoutIfNeeded(string legacyPath, string newPath)

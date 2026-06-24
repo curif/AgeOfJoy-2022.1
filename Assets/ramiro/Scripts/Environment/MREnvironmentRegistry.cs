@@ -93,6 +93,11 @@ public class MREnvironmentRegistry : MonoBehaviour
         ConfigManager.WriteConsole($"{LogPrefix} SpawnAllAsync done ({spawnedById.Count} props)");
     }
 
+    public IEnumerator ReapplyRoomSkinsWhenReady()
+    {
+        yield return ReapplyActiveRoomSkinsFromLayout();
+    }
+
     public void DespawnAll()
     {
         foreach (GameObject root in spawnedById.Values)
@@ -108,6 +113,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         }
 
         spawnedById.Clear();
+        MRRoomSurfaceSkin.Clear();
     }
 
     public int HideAllImmediateCount()
@@ -144,6 +150,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         }
 
         spawnedById.Clear();
+        MRRoomSurfaceSkin.Clear();
         ConfigManager.WriteConsole($"{LogPrefix} DespawnAllAsync done ({roots.Count} props)");
     }
 
@@ -266,11 +273,146 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (placement == null)
             return false;
 
+        bool wasRoomSkin = placement.IsRoomSkinSource;
         DestroySpawnedInstance(placementId);
         layout.RemoveById(placementId);
         layout.Save(LayoutFilePath);
+        if (wasRoomSkin)
+            ReapplyActiveRoomSkinsFromLayoutSync();
+
         ConfigManager.WriteConsole($"{LogPrefix} removed {placement.DisplayLabel} ({placementId})");
         return true;
+    }
+
+    public bool TryFinalizeRoomSkinInstant(MREnvironmentCatalogEntry entry)
+    {
+        EnsureLayoutLoaded();
+        if (layout == null || string.IsNullOrEmpty(entry.Key))
+            return false;
+
+        if (!MRRoomSkinDefinition.TryLoad(entry.Key, out MRRoomSkinDefinition newDefinition))
+            return false;
+
+        RemoveOverlappingRoomSkinPlacements(newDefinition);
+
+        string idSeed = entry.Key;
+        var placement = new MREnvironmentPlacement
+        {
+            Id = $"{idSeed}-{Guid.NewGuid():N}".Substring(0, Mathf.Min(48, idSeed.Length + 33)),
+            Source = "roomSkin",
+            PackageName = entry.Key,
+            Scale = 1f,
+            Position = MRVector3.From(Vector3.zero),
+            Rotation = MRQuaternion.From(Quaternion.identity),
+            WorldPosition = MRVector3.From(Vector3.zero),
+            WorldRotation = MRQuaternion.From(Quaternion.identity)
+        };
+
+        layout.AddPlacement(placement);
+        layout.Save(LayoutFilePath);
+
+        GameObject marker = new GameObject($"RoomSkin_{placement.Id}");
+        marker.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        MRPlacedEnvironment placedMarker = marker.AddComponent<MRPlacedEnvironment>();
+        placedMarker.Initialize(placement.Id, entry);
+        spawnedById[placement.Id] = marker;
+
+        ReapplyActiveRoomSkinsFromLayoutSync();
+
+        ConfigManager.WriteConsole($"{LogPrefix} room skin applied {entry} ({placement.Id})");
+        return true;
+    }
+
+    void RemoveOverlappingRoomSkinPlacements(MRRoomSkinDefinition newDefinition)
+    {
+        if (layout == null || newDefinition == null)
+            return;
+
+        var idsToRemove = new List<string>();
+        foreach (MREnvironmentPlacement existing in layout.GetProps())
+        {
+            if (existing == null || !existing.IsRoomSkinSource)
+                continue;
+
+            if (!MRRoomSkinDefinition.TryLoad(existing.PackageName, out MRRoomSkinDefinition existingDefinition))
+                continue;
+
+            if (newDefinition.SharesAnySurfaceWith(existingDefinition))
+                idsToRemove.Add(existing.Id);
+        }
+
+        foreach (string id in idsToRemove)
+        {
+            DestroySpawnedInstance(id);
+            layout.RemoveById(id);
+        }
+    }
+
+    public IEnumerator ReapplyActiveRoomSkinsFromLayout()
+    {
+        EnsureLayoutLoaded();
+        if (layout == null)
+            yield break;
+
+        List<string> packageNames = CollectActiveRoomSkinPackageNames();
+        if (packageNames.Count == 0)
+        {
+            if (MRRoomSurfaceSkin.IsActive)
+                MRRoomSurfaceSkin.Clear();
+            yield break;
+        }
+
+        MRRoomSurfaceSkin.Clear();
+
+        MREffectMeshController controller = MixedRealityManager.Instance != null
+            ? MixedRealityManager.Instance.GetComponent<MREffectMeshController>()
+            : null;
+        if (controller != null)
+            yield return controller.WaitForAnchorMeshReady();
+        else
+            yield return null;
+
+        foreach (string packageName in packageNames)
+            MRRoomSurfaceSkin.TryApplyPackage(packageName);
+    }
+
+    void ReapplyActiveRoomSkinsFromLayoutSync()
+    {
+        EnsureLayoutLoaded();
+        if (layout == null)
+            return;
+
+        List<string> packageNames = CollectActiveRoomSkinPackageNames();
+        if (packageNames.Count == 0)
+        {
+            if (MRRoomSurfaceSkin.IsActive)
+                MRRoomSurfaceSkin.Clear();
+            return;
+        }
+
+        MRRoomSurfaceSkin.Clear();
+        foreach (string packageName in packageNames)
+            MRRoomSurfaceSkin.TryApplyPackage(packageName);
+    }
+
+    List<string> CollectActiveRoomSkinPackageNames()
+    {
+        var packageNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (layout == null)
+            return new List<string>();
+
+        foreach (MREnvironmentPlacement placement in layout.GetProps())
+        {
+            if (placement == null || !placement.IsRoomSkinSource)
+                continue;
+
+            if (string.IsNullOrEmpty(placement.PackageName))
+                continue;
+
+            packageNames.Add(placement.PackageName);
+        }
+
+        return new List<string>(packageNames);
     }
 
     public bool TrySpawnTransientProp(
@@ -417,6 +559,7 @@ public class MREnvironmentRegistry : MonoBehaviour
                 MREnvironmentObjectSource.Custom => "custom",
                 MREnvironmentObjectSource.Light => "light",
                 MREnvironmentObjectSource.Poster => "poster",
+                MREnvironmentObjectSource.RoomSkin => "roomSkin",
                 _ => "build"
             },
             Scale = ResolveScaleFromRoot(root),
@@ -425,6 +568,8 @@ public class MREnvironmentRegistry : MonoBehaviour
         };
 
         if (entry.Source == MREnvironmentObjectSource.Custom)
+            placement.PackageName = entry.Key;
+        else if (entry.Source == MREnvironmentObjectSource.RoomSkin)
             placement.PackageName = entry.Key;
         else if (entry.Source == MREnvironmentObjectSource.Poster)
         {
@@ -548,6 +693,17 @@ public class MREnvironmentRegistry : MonoBehaviour
                 yield break;
             }
         }
+        else if (placement.IsRoomSkinSource)
+        {
+            if (!TrySpawnRoomSkinMarker(placement, entry: MREnvironmentCatalogEntry.FromRoomSkin(
+                    placement.PackageName,
+                    placement.DisplayLabel),
+                out root))
+            {
+                onComplete?.Invoke(false);
+                yield break;
+            }
+        }
         else if (!TrySpawnBuildPrefabAtWorldPose(placement.PrefabName, worldPos, worldRot, out root))
         {
             MRDebugLog.LogError($"Environment spawn failed: build '{placement.PrefabName}' ({placement.Id})");
@@ -569,7 +725,9 @@ public class MREnvironmentRegistry : MonoBehaviour
                 ? MREnvironmentCatalogEntry.FromLight(placement.PrefabName, placement.DisplayLabel)
                 : placement.IsPosterSource
                     ? MREnvironmentCatalogEntry.FromPoster(placement.TextureFile, placement.DisplayLabel)
-                    : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
+                    : placement.IsRoomSkinSource
+                        ? MREnvironmentCatalogEntry.FromRoomSkin(placement.PackageName, placement.DisplayLabel)
+                        : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
         marker.Initialize(placement.Id, entry);
 
         spawnedById[placement.Id] = root;
@@ -788,6 +946,19 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         MRCustomObjectGrab customGrab = root.GetComponentInChildren<MRCustomObjectGrab>(true);
         customGrab?.NotifyPlacementPoseUpdated();
+    }
+
+    static bool TrySpawnRoomSkinMarker(MREnvironmentPlacement placement, MREnvironmentCatalogEntry entry, out GameObject root)
+    {
+        root = null;
+        if (placement == null || string.IsNullOrEmpty(placement.PackageName))
+            return false;
+
+        root = new GameObject($"RoomSkin_{placement.Id}");
+        root.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        MRPlacedEnvironment marker = root.AddComponent<MRPlacedEnvironment>();
+        marker.Initialize(placement.Id, entry);
+        return true;
     }
 
     void DestroySpawnedInstance(string placementId)

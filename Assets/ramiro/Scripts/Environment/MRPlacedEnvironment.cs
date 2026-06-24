@@ -24,7 +24,8 @@ public class MRPlacedEnvironment : MonoBehaviour
     {
         PlacementId = placementId;
         Source = entry.Source;
-        if (entry.Source == MREnvironmentObjectSource.Custom)
+        if (entry.Source == MREnvironmentObjectSource.Custom
+            || entry.Source == MREnvironmentObjectSource.RoomSkin)
         {
             PackageName = entry.Key;
             PrefabName = null;

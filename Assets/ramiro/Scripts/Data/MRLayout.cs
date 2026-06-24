@@ -233,6 +233,9 @@ public class MREnvironmentPlacement
     public bool IsPosterSource =>
         string.Equals(Source, "poster", StringComparison.OrdinalIgnoreCase);
 
+    public bool IsRoomSkinSource =>
+        string.Equals(Source, "roomSkin", StringComparison.OrdinalIgnoreCase);
+
     public void NormalizeLegacySource()
     {
         if (!string.IsNullOrEmpty(Source))
@@ -251,6 +254,8 @@ public class MREnvironmentPlacement
             return !string.IsNullOrEmpty(PackageName);
         if (IsPosterSource)
             return !string.IsNullOrEmpty(TextureFile);
+        if (IsRoomSkinSource)
+            return !string.IsNullOrEmpty(PackageName);
         return !string.IsNullOrEmpty(PrefabName);
     }
 
@@ -263,6 +268,8 @@ public class MREnvironmentPlacement
             NormalizeLegacySource();
             if (IsCustomSource && !string.IsNullOrEmpty(PackageName))
                 return PackageName;
+            if (IsRoomSkinSource && !string.IsNullOrEmpty(PackageName))
+                return MRRoomSkinCatalog.GetDisplayLabel(PackageName);
             if (IsPosterSource && !string.IsNullOrEmpty(TextureFile))
                 return MRPostersCatalog.GetDisplayLabel(TextureFile);
             if (!string.IsNullOrEmpty(PrefabName))

@@ -23,6 +23,7 @@ public class MRConfigurationController : MonoBehaviour
     const int MeshScanColorsRowIndex = 2;
     const int LightsAutoRowIndex = 0;
     const int ListRowNameWidth = 10;
+    const int RoomSkinListRowNameWidth = 22;
 
     enum RowActionKind
     {
@@ -51,6 +52,7 @@ public class MRConfigurationController : MonoBehaviour
         Mesh,
         Lights,
         Posters,
+        RoomSkins,
         PlacedInstances,
         LightTune,
         Debug,
@@ -77,6 +79,7 @@ public class MRConfigurationController : MonoBehaviour
     readonly List<MREnvironmentCatalogEntry> envCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> lightsCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> postersCatalogEntries = new List<MREnvironmentCatalogEntry>();
+    readonly List<MREnvironmentCatalogEntry> roomSkinsCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentPlacement> placedInstances = new List<MREnvironmentPlacement>();
     readonly List<MRDebugLog.DisplayLine> debugDisplayLines = new List<MRDebugLog.DisplayLine>();
     readonly List<string> debugDetailWrappedLines = new List<string>();
@@ -175,6 +178,7 @@ public class MRConfigurationController : MonoBehaviour
         RefreshEnvironmentCatalog();
         RefreshLightsCatalog();
         RefreshPostersCatalog();
+        RefreshRoomSkinsCatalog();
 
         BuildNavMenu();
         setupActionMap();
@@ -326,6 +330,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("MESH", "EffectMesh + scan debug colors");
         navMenu.AddOption("LIGHTS", "Light prefabs from ramiro/Lights");
         navMenu.AddOption("POSTERS", "Wall posters; stick L/R = rotate");
+        navMenu.AddOption("ROOM SKIN", "Floor / walls / ceiling textures");
         navMenu.AddOption("MOVE CONFIG", "Reposition ConfigurationCabinetMiniMR");
         navMenu.AddOption("ADJUSTMENTS", "Scale and floor position for game cabinets");
         navMenu.AddOption("PHONE BOOTH", "Show or hide phone booth in MR");
@@ -359,6 +364,13 @@ public class MRConfigurationController : MonoBehaviour
         postersCatalogEntries.Clear();
         MRPostersCatalog.RefreshCache();
         postersCatalogEntries.AddRange(MRPostersCatalog.GetCatalogEntries());
+    }
+
+    void RefreshRoomSkinsCatalog()
+    {
+        roomSkinsCatalogEntries.Clear();
+        MRRoomSkinCatalog.RefreshCache();
+        roomSkinsCatalogEntries.AddRange(MRRoomSkinCatalog.GetCatalogEntries());
     }
 
     void DrawCurrentScreen()
@@ -397,6 +409,9 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Posters:
                 DrawPostersPage();
+                break;
+            case Screen.RoomSkins:
+                DrawRoomSkinsPage();
                 break;
             case Screen.PlacedInstances:
                 DrawPlacedInstancesPage();
@@ -597,6 +612,40 @@ public class MRConfigurationController : MonoBehaviour
         if (selectedListIndex >= 0 && selectedListIndex < postersCatalogEntries.Count)
             screen.Print(1, 20, Truncate(postersCatalogEntries[selectedListIndex].ToString(), 36), false);
 
+        DrawFooter(RowColumnFooter);
+    }
+
+    void DrawRoomSkinsPage()
+    {
+        screen.PrintCentered(0, "ROOM SKIN", true);
+        screen.PrintLine(1, false, '-');
+
+        if (roomSkinsCatalogEntries.Count == 0)
+        {
+            screen.PrintCentered(8, "No room skins found", true);
+            screen.PrintCentered(10, "Resources/ramiro/roomskin/", false);
+            screen.PrintCentered(11, "or MR/Room Skins/", false);
+            DrawFooter("B: back");
+            return;
+        }
+
+        int row = 4;
+        for (int i = 0; i < VisibleCabinetRows; i++)
+        {
+            int idx = listScrollOffset + i;
+            if (idx >= roomSkinsCatalogEntries.Count)
+                break;
+
+            MREnvironmentCatalogEntry entry = roomSkinsCatalogEntries[idx];
+            string label = Truncate(entry.DisplayLabel, RoomSkinListRowNameWidth);
+            DrawListRow(row, idx, selectedListIndex, label, GetRoomSkinsRowActions(idx), nameWidth: RoomSkinListRowNameWidth);
+            row++;
+        }
+
+        if (selectedListIndex >= 0 && selectedListIndex < roomSkinsCatalogEntries.Count)
+            screen.Print(1, 20, Truncate(roomSkinsCatalogEntries[selectedListIndex].DisplayLabel, 36), false);
+
+        screen.Print(1, 22, "A=apply now (no ray)", false);
         DrawFooter(RowColumnFooter);
     }
 
@@ -870,6 +919,7 @@ public class MRConfigurationController : MonoBehaviour
         || screen == Screen.Environment
         || screen == Screen.Lights
         || screen == Screen.Posters
+        || screen == Screen.RoomSkins
         || screen == Screen.PlacedInstances
         || screen == Screen.Mesh
         || screen == Screen.Adjustments
@@ -912,12 +962,12 @@ public class MRConfigurationController : MonoBehaviour
         return "|" + string.Join("|", parts) + "|";
     }
 
-    void DrawListRow(int row, int listIndex, int selectedIndex, string label, IReadOnlyList<RowActionKind> actions, string suffix = null)
+    void DrawListRow(int row, int listIndex, int selectedIndex, string label, IReadOnlyList<RowActionKind> actions, string suffix = null, int nameWidth = ListRowNameWidth)
     {
         bool rowSelected = listIndex == selectedIndex;
         string prefix = rowSelected ? "> " : "  ";
         string suffixPart = string.IsNullOrEmpty(suffix) ? string.Empty : suffix;
-        string line = prefix + PadRight(Truncate(label, ListRowNameWidth), ListRowNameWidth) + suffixPart;
+        string line = prefix + PadRight(Truncate(label, nameWidth), nameWidth) + suffixPart;
         if (rowSelected)
             line += FormatActionColumns(actions, true);
 
@@ -965,6 +1015,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Environment => GetEnvironmentRowActions(selectedListIndex),
             Screen.Lights => GetLightsRowActions(selectedListIndex),
             Screen.Posters => GetPostersRowActions(selectedListIndex),
+            Screen.RoomSkins => GetRoomSkinsRowActions(selectedListIndex),
             Screen.PlacedInstances => GetPlacedInstanceRowActions(selectedListIndex),
             Screen.Mesh => GetMeshRowActions(selectedListIndex),
             Screen.Adjustments => AdjustmentValueActions,
@@ -1043,6 +1094,16 @@ public class MRConfigurationController : MonoBehaviour
         return actions;
     }
 
+    List<RowActionKind> GetRoomSkinsRowActions(int index)
+    {
+        var actions = new List<RowActionKind>();
+        if (index < 0 || index >= roomSkinsCatalogEntries.Count)
+            return actions;
+
+        actions.Add(RowActionKind.Add);
+        return actions;
+    }
+
     List<RowActionKind> GetAutoLightRowActions()
     {
         var actions = new List<RowActionKind>();
@@ -1065,7 +1126,8 @@ public class MRConfigurationController : MonoBehaviour
         if (index < 0 || index >= placedInstances.Count)
             return actions;
 
-        actions.Add(RowActionKind.Move);
+        if (instancesCatalogEntry.Source != MREnvironmentObjectSource.RoomSkin)
+            actions.Add(RowActionKind.Move);
         if (instancesCatalogEntry.Source == MREnvironmentObjectSource.Light)
             actions.Add(RowActionKind.Tune);
         actions.Add(RowActionKind.Remove);
@@ -1137,6 +1199,8 @@ public class MRConfigurationController : MonoBehaviour
                 return ExecuteLightsRowAction(action);
             case Screen.Posters:
                 return ExecutePostersRowAction(action);
+            case Screen.RoomSkins:
+                return ExecuteRoomSkinsRowAction(action);
             case Screen.PlacedInstances:
                 return ExecutePlacedInstanceRowAction(action);
             case Screen.Mesh:
@@ -1202,6 +1266,22 @@ public class MRConfigurationController : MonoBehaviour
             case RowActionKind.Options:
                 OpenPlacedInstances(entry, Screen.Environment);
                 return true;
+            default:
+                return false;
+        }
+    }
+
+    bool ExecuteRoomSkinsRowAction(RowActionKind action)
+    {
+        if (selectedListIndex < 0 || selectedListIndex >= roomSkinsCatalogEntries.Count)
+            return false;
+
+        MREnvironmentCatalogEntry entry = roomSkinsCatalogEntries[selectedListIndex];
+        switch (action)
+        {
+            case RowActionKind.Add:
+                BeginAddRoomSkinInstant(entry);
+                return false;
             default:
                 return false;
         }
@@ -1430,6 +1510,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Environment => envCatalogEntries.Count,
             Screen.Lights => Mathf.Max(1, 1 + lightsCatalogEntries.Count),
             Screen.Posters => postersCatalogEntries.Count,
+            Screen.RoomSkins => roomSkinsCatalogEntries.Count,
             Screen.PlacedInstances => placedInstances.Count + 1,
             Screen.Mesh => MeshOptionCount,
             Screen.Debug => debugDisplayLines.Count,
@@ -1452,6 +1533,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Cabinets:
             case Screen.Environment:
             case Screen.Posters:
+            case Screen.RoomSkins:
             case Screen.PlacedInstances:
             case Screen.Mesh:
                 int count = GetListCount();
@@ -1547,6 +1629,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Environment:
             case Screen.Lights:
             case Screen.Posters:
+            case Screen.RoomSkins:
             case Screen.PlacedInstances:
             case Screen.Mesh:
             case Screen.Adjustments:
@@ -1608,6 +1691,13 @@ public class MRConfigurationController : MonoBehaviour
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.Posters;
+                break;
+            case "ROOM SKIN":
+                RefreshRoomSkinsCatalog();
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.RoomSkins;
                 break;
             case "DEBUG":
                 listScrollOffset = 0;
@@ -1774,6 +1864,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Mesh:
             case Screen.Lights:
             case Screen.Posters:
+            case Screen.RoomSkins:
             case Screen.Environment:
             case Screen.Debug:
             case Screen.Help:
@@ -1799,10 +1890,16 @@ public class MRConfigurationController : MonoBehaviour
 
     void BeginAddEnvironmentWithRay(MREnvironmentCatalogEntry entry)
     {
-        if (envRegistry == null || placementRay == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
+        if (envRegistry == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
             return;
 
-        if (placementRay.IsActive)
+        if (entry.Source == MREnvironmentObjectSource.RoomSkin)
+        {
+            BeginAddRoomSkinInstant(entry);
+            return;
+        }
+
+        if (placementRay == null || placementRay.IsActive)
             return;
 
         if (entry.Source == MREnvironmentObjectSource.Custom)
@@ -1824,6 +1921,34 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         BeginAddBuildEnvironmentWithRay(entry);
+    }
+
+    void BeginAddRoomSkinInstant(MREnvironmentCatalogEntry entry)
+    {
+        if (envRegistry == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
+            return;
+
+        if (placementRay != null && placementRay.IsActive)
+            return;
+
+        StartCoroutine(BeginAddRoomSkinInstantCoroutine(entry));
+    }
+
+    IEnumerator BeginAddRoomSkinInstantCoroutine(MREnvironmentCatalogEntry entry)
+    {
+        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+
+        yield return MRRoomSurfaceSkin.ApplyPackageWhenReady(entry.Key);
+
+        bool saved = envRegistry.TryFinalizeRoomSkinInstant(entry);
+        if (!saved)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} room skin add failed for {entry}");
+            MRDebugLog.LogError($"Room skin add failed: {entry}");
+        }
+
+        ShowIdleAfterExternalPlacement();
+        ConfigManager.WriteConsole($"{LogPrefix} room skin applied {entry}");
     }
 
     void BeginAddPosterWithRay(MREnvironmentCatalogEntry entry)

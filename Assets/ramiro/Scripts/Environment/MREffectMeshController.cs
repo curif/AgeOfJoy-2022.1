@@ -34,6 +34,16 @@ public class MREffectMeshController : MonoBehaviour
     public bool IsAnchorMeshSpawned => anchorMeshRoot != null && anchorMeshRoot.activeSelf;
     public bool IsGlobalMeshSpawned => globalMeshRoot != null && globalMeshRoot.activeSelf;
 
+    public EffectMesh GetAnchorEffectMesh() => anchorEffectMesh;
+
+    public void RestoreDefaultMeshMaterials()
+    {
+        if (MRRoomSurfaceSkin.IsActive)
+            return;
+
+        ApplyColorTint();
+    }
+
     public void Spawn()
     {
         ApplySettings();
@@ -51,6 +61,9 @@ public class MREffectMeshController : MonoBehaviour
     /// <summary>Refresh EffectMesh materials (RoomBoxEffects vs occluder) without respawning.</summary>
     public void ApplyColorTint()
     {
+        if (MRRoomSurfaceSkin.IsActive)
+            return;
+
         if (MREffectMeshSettings.AnchorMeshEnabled
             && anchorEffectMesh != null
             && !HasEffectMeshGeometry(anchorEffectMesh))
@@ -60,6 +73,19 @@ public class MREffectMeshController : MonoBehaviour
 
         ApplyMeshMaterials(anchorEffectMesh);
         ApplyMeshMaterials(globalEffectMesh);
+    }
+
+    public IEnumerator WaitForAnchorMeshReady(float timeoutSeconds = 15f)
+    {
+        float remaining = timeoutSeconds;
+        while (remaining > 0f)
+        {
+            if (anchorEffectMesh != null && HasEffectMeshGeometry(anchorEffectMesh))
+                yield break;
+
+            remaining -= Time.unscaledDeltaTime;
+            yield return null;
+        }
     }
 
     public void Despawn()
