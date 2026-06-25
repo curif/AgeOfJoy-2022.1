@@ -49,6 +49,7 @@ public static class MRCustomObjectLoader
 
         ApplyPlacementProfile(root, definition);
         EnsureCollider(root, definition);
+        ApplyPlacementAnchor(root, definition);
         TryAttachAudio(root, definition);
         MRCustomObjectComponentApplier.Apply(root, definition);
 
@@ -161,6 +162,62 @@ public static class MRCustomObjectLoader
         BoxCollider box = renderer.gameObject.AddComponent<BoxCollider>();
         box.center = renderer.bounds.center - renderer.transform.position;
         box.size = renderer.bounds.size;
+    }
+
+    static void ApplyPlacementAnchor(GameObject root, MRCustomObjectDefinition definition)
+    {
+        if (!definition.GetProvidesAnchor())
+            return;
+
+        string anchorTargetName = definition.GetAnchorTarget();
+        Transform anchorTransform = string.IsNullOrEmpty(anchorTargetName)
+            ? root.transform
+            : MRObjectAnchorPoseResolver.FindChildByName(root.transform, anchorTargetName);
+
+        if (anchorTransform == null)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {definition.PackageName}: providesAnchor but anchorTarget '{anchorTargetName}' not found");
+            return;
+        }
+
+        EnsureAnchorCollider(anchorTransform.gameObject, root);
+        anchorTransform.gameObject.tag = MRObjectAnchorPoseResolver.AnchorTag;
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} {definition.PackageName}: placement anchor on '{anchorTransform.name}'");
+    }
+
+    static void EnsureAnchorCollider(GameObject anchorGo, GameObject packageRoot)
+    {
+        if (anchorGo.GetComponent<Collider>() != null)
+            return;
+
+        Renderer renderer = anchorGo.GetComponent<Renderer>();
+        if (renderer == null)
+            renderer = packageRoot.GetComponentInChildren<Renderer>(true);
+
+        if (renderer != null)
+        {
+            BoxCollider box = anchorGo.AddComponent<BoxCollider>();
+            if (anchorGo.transform == renderer.transform)
+            {
+                box.center = renderer.bounds.center - anchorGo.transform.position;
+                box.size = renderer.bounds.size;
+            }
+            else
+            {
+                Bounds bounds = renderer.bounds;
+                box.size = new Vector3(bounds.size.x, 0.04f, bounds.size.z);
+                Vector3 topCenter = new Vector3(bounds.center.x, bounds.max.y - 0.02f, bounds.center.z);
+                box.center = anchorGo.transform.InverseTransformPoint(topCenter);
+            }
+
+            return;
+        }
+
+        BoxCollider fallback = anchorGo.AddComponent<BoxCollider>();
+        fallback.size = new Vector3(0.4f, 0.04f, 0.4f);
+        fallback.center = Vector3.zero;
     }
 
     static void TryAttachAudio(GameObject root, MRCustomObjectDefinition definition)

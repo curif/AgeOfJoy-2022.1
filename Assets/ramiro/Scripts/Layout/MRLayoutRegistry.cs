@@ -85,7 +85,12 @@ public class MRLayoutRegistry : MonoBehaviour
             if (!string.IsNullOrEmpty(placement.AnchorUuid))
                 Guid.TryParse(placement.AnchorUuid, out anchorUuid);
 
-            WriteStoredPose(placement, placement.SurfaceType, storagePos, rot, anchorUuid);
+            WriteStoredPose(
+                placement,
+                placement.SurfaceType,
+                storagePos,
+                rot,
+                MRPlacementConfirmAnchor.FromMruk(anchorUuid));
             changed = true;
             MRTransitionLog.Log(
                 $"SnapshotWorldPose {placement.DisplayLabel} display={displayPos} storage={storagePos} anchor={placement.AnchorUuid ?? "none"}");
@@ -437,7 +442,7 @@ public class MRLayoutRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid = default)
+        MRPlacementConfirmAnchor anchor = default)
     {
         EnsureLayoutLoaded();
         if (layout == null || string.IsNullOrEmpty(cabinetDBName) || mrSpaceOrigin == null)
@@ -461,7 +466,7 @@ public class MRLayoutRegistry : MonoBehaviour
             PlacementSurfaceType.Floor,
             WorldPositionForStorage(PlacementSurfaceType.Floor, worldPosition),
             worldRotation,
-            anchorUuid);
+            anchor);
         layout.AddPlacement(placement);
         layout.Version = AnchorRelativeLayoutVersion;
         layout.Save(LayoutFilePath);
@@ -578,7 +583,7 @@ public class MRLayoutRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid = default)
+        MRPlacementConfirmAnchor anchor = default)
     {
         EnsureLayoutLoaded();
         if (layout == null || string.IsNullOrEmpty(cabinetDBName) || root == null || mrSpaceOrigin == null)
@@ -604,7 +609,7 @@ public class MRLayoutRegistry : MonoBehaviour
             PlacementSurfaceType.Floor,
             WorldPositionForStorage(PlacementSurfaceType.Floor, worldPosition),
             worldRotation,
-            anchorUuid);
+            anchor);
 
         layout.AddPlacement(placement);
         layout.Version = AnchorRelativeLayoutVersion;
@@ -645,7 +650,7 @@ public class MRLayoutRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid = default)
+        MRPlacementConfirmAnchor anchor = default)
     {
         EnsureLayoutLoaded();
         if (layout == null || string.IsNullOrEmpty(placementId) || mrSpaceOrigin == null)
@@ -656,7 +661,7 @@ public class MRLayoutRegistry : MonoBehaviour
             return false;
 
         Vector3 storedPosition = WorldPositionForStorage(placement.SurfaceType, worldPosition);
-        WriteStoredPose(placement, placement.SurfaceType, storedPosition, worldRotation, anchorUuid);
+        WriteStoredPose(placement, placement.SurfaceType, storedPosition, worldRotation, anchor);
         layout.Version = AnchorRelativeLayoutVersion;
         layout.Save(LayoutFilePath);
 
@@ -1042,7 +1047,7 @@ public class MRLayoutRegistry : MonoBehaviour
         PlacementSurfaceType surfaceType,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid)
+        MRPlacementConfirmAnchor anchor)
     {
         placement.WorldPosition = MRVector3.From(worldPosition);
         placement.WorldRotation = MRQuaternion.From(worldRotation);
@@ -1053,7 +1058,7 @@ public class MRLayoutRegistry : MonoBehaviour
                 surfaceType,
                 worldPosition,
                 worldRotation,
-                anchorUuid,
+                anchor.MrukUuid,
                 out string anchorUuidText,
                 out MRVector3 storedPosition,
                 out MRQuaternion storedRotation))

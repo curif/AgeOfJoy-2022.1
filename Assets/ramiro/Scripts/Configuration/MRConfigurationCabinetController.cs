@@ -895,9 +895,9 @@ public class MRConfigurationCabinetController : MonoBehaviour
             cabinetInstance,
             GetPlacementSurfaceType(),
             GetPlacementFacingAxis(),
-            confirmCallback: (worldPos, worldRot, anchorUuid) =>
+            confirmCallback: (worldPos, worldRot, anchor) =>
             {
-                SavePose(worldPos, worldRot, anchorUuid);
+                SavePose(worldPos, worldRot, anchor);
                 initialPlacementRequested = true;
                 if (reopenEdit)
                     OpenEdit();
@@ -1050,7 +1050,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     static bool HasSavedPose() => PlayerPrefs.HasKey(SavedPoseFlagKey);
 
-    void SavePose(Vector3 worldPosition, Quaternion worldRotation, System.Guid anchorUuid = default)
+    void SavePose(Vector3 worldPosition, Quaternion worldRotation, MRPlacementConfirmAnchor anchor = default)
     {
         PlacementSurfaceType surfaceType = GetPlacementSurfaceType();
         Meta.XR.MRUtilityKit.MRUKRoom room = MREnvironmentSurfaces.Instance?.CurrentRoom;
@@ -1060,7 +1060,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
                 surfaceType,
                 worldPosition,
                 worldRotation,
-                anchorUuid,
+                anchor.MrukUuid,
                 out string anchorUuidText,
                 out MRVector3 storedPosition,
                 out MRQuaternion storedRotation))

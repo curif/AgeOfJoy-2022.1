@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 
 /// <summary>
 /// Runtime placement ray used to reposition placed MR objects.
-/// Supports Floor, Wall, Ceiling, and Table surfaces.
+/// Supports Floor, Wall, Ceiling, Table, and Object (MRPlacementAnchor) surfaces.
 /// </summary>
 public class MRPlacementRayController : MonoBehaviour
 {
@@ -55,7 +55,7 @@ public class MRPlacementRayController : MonoBehaviour
     float stickRotationSpeed;
     float initialYawDegrees;
     float userYawOffsetDegrees;
-    Action<Vector3, Quaternion, Guid> onConfirmPose;
+    Action<Vector3, Quaternion, MRPlacementConfirmAnchor> onConfirmPose;
     Action onCancel;
 
     MeshRenderer beamRenderer;
@@ -77,6 +77,8 @@ public class MRPlacementRayController : MonoBehaviour
     Vector3 previewSurfaceNormal = Vector3.up;
     bool hasValidPreview;
     Guid previewAnchorUuid = Guid.Empty;
+    string previewObjectPlacementId;
+    string previewObjectAnchorPoint;
     float ignoreCancelUntilUnscaledTime;
     float ignoreConfirmUntilUnscaledTime;
     float nextInvalidPreviewLogTime;
@@ -89,7 +91,7 @@ public class MRPlacementRayController : MonoBehaviour
         GameObject target,
         PlacementSurfaceType placementSurfaceType,
         PlacementFacingAxis objectFacingAxis,
-        Action<Vector3, Quaternion, Guid> confirmCallback,
+        Action<Vector3, Quaternion, MRPlacementConfirmAnchor> confirmCallback,
         Action cancelCallback = null)
     {
         if (target == null || confirmCallback == null)
@@ -111,6 +113,8 @@ public class MRPlacementRayController : MonoBehaviour
         previewRotation = startRotation;
         hasValidPreview = false;
         previewAnchorUuid = Guid.Empty;
+        previewObjectPlacementId = null;
+        previewObjectAnchorPoint = null;
         initialYawDegrees = NormalizeYaw(startRotation.eulerAngles.y);
         userYawOffsetDegrees = 0f;
         hadValidPreviewThisSession = false;
@@ -171,7 +175,8 @@ public class MRPlacementRayController : MonoBehaviour
         // Game cabinets are not prefabs — floor/ceiling placement defaults to yaw on world Y.
         stickEnabled = placementSurface == PlacementSurfaceType.Floor
             || placementSurface == PlacementSurfaceType.Ceiling
-            || placementSurface == PlacementSurfaceType.Table;
+            || placementSurface == PlacementSurfaceType.Table
+            || placementSurface == PlacementSurfaceType.Object;
         rotationAxis = PlacementStickRotationAxis.WorldYaw;
         rotationSpeed = defaultStickRotationSpeed;
     }
@@ -182,7 +187,8 @@ public class MRPlacementRayController : MonoBehaviour
             return profile.allowStickRotation;
         return placementSurface == PlacementSurfaceType.Floor
             || placementSurface == PlacementSurfaceType.Ceiling
-            || placementSurface == PlacementSurfaceType.Table;
+            || placementSurface == PlacementSurfaceType.Table
+            || placementSurface == PlacementSurfaceType.Object;
     }
 
     void Update()
@@ -219,7 +225,10 @@ public class MRPlacementRayController : MonoBehaviour
             MRTransitionLog.LogStep(
                 "PlacementRay",
                 $"confirm {movingTarget.name} pos={previewPosition} rotY={previewRotation.eulerAngles.y:F1} anchor={previewAnchorUuid}");
-            onConfirmPose?.Invoke(previewPosition, previewRotation, previewAnchorUuid);
+            MRPlacementConfirmAnchor anchor = !string.IsNullOrEmpty(previewObjectPlacementId)
+                ? MRPlacementConfirmAnchor.FromObject(previewObjectPlacementId, previewObjectAnchorPoint)
+                : MRPlacementConfirmAnchor.FromMruk(previewAnchorUuid);
+            onConfirmPose?.Invoke(previewPosition, previewRotation, anchor);
             StopMove(cancelled: false, reason: "confirm");
         }
     }
@@ -231,6 +240,8 @@ public class MRPlacementRayController : MonoBehaviour
 
         bool ok = false;
         Guid hitAnchorUuid = Guid.Empty;
+        string hitObjectPlacementId = null;
+        string hitObjectAnchorPoint = null;
         Vector3 worldPos = movingTarget.transform.position;
         Quaternion worldRot = movingTarget.transform.rotation;
 
@@ -325,6 +336,27 @@ public class MRPlacementRayController : MonoBehaviour
                 }
                 break;
 
+            case PlacementSurfaceType.Object:
+                if (TryGetObjectPointFromRay(
+                        rayOrigin,
+                        rayDir,
+                        maxDistanceMeters,
+                        viewerPosition,
+                        out Vector3 objectPoint,
+                        out Quaternion objectRot,
+                        out hitObjectPlacementId,
+                        out hitObjectAnchorPoint,
+                        out Vector3 objectNormal))
+                {
+                    worldPos = objectPoint;
+                    worldRot = objectRot;
+                    previewSurfaceNormal = objectNormal;
+                    if (!placeByPivot)
+                        ApplyFloorPivotOffset(movingTarget, ref worldPos, worldRot);
+                    ok = true;
+                }
+                break;
+
             case PlacementSurfaceType.Floor:
             default:
                 if (surfaces != null && surfaces.TryGetFloorPointFromRay(
@@ -361,13 +393,76 @@ public class MRPlacementRayController : MonoBehaviour
         if (ok)
             hadValidPreviewThisSession = true;
         previewAnchorUuid = hitAnchorUuid;
+        previewObjectPlacementId = hitObjectPlacementId;
+        previewObjectAnchorPoint = hitObjectAnchorPoint;
         previewPosition = worldPos;
         previewRotation = worldRot;
-        if (ok)
+        if (ok && surfaceType != PlacementSurfaceType.Object)
             previewSurfaceNormal = ResolvePreviewSurfaceNormal(worldRot);
 
         if (ok)
             movingTarget.transform.SetPositionAndRotation(previewPosition, previewRotation);
+    }
+
+    bool TryGetObjectPointFromRay(
+        Vector3 rayOrigin,
+        Vector3 rayDirection,
+        float maxDistance,
+        Vector3 viewerPosition,
+        out Vector3 worldPos,
+        out Quaternion worldRot,
+        out string placementId,
+        out string anchorPoint,
+        out Vector3 surfaceNormal)
+    {
+        worldPos = Vector3.zero;
+        worldRot = Quaternion.identity;
+        placementId = null;
+        anchorPoint = null;
+        surfaceNormal = Vector3.up;
+
+        Vector3 direction = rayDirection;
+        if (direction.sqrMagnitude < 0.001f)
+            return false;
+        direction.Normalize();
+
+        Ray ray = new Ray(rayOrigin, direction);
+        RaycastHit[] hits = Physics.RaycastAll(ray, Mathf.Max(0.5f, maxDistance));
+        if (hits == null || hits.Length == 0)
+            return false;
+
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        foreach (RaycastHit hit in hits)
+        {
+            if (!MRObjectAnchorPoseResolver.TryResolveHit(hit, out placementId, out anchorPoint, out _))
+                continue;
+
+            worldPos = hit.point;
+            surfaceNormal = hit.normal.sqrMagnitude > 0.001f ? hit.normal.normalized : Vector3.up;
+
+            if (allowStickRotation)
+            {
+                Quaternion baseYaw = Quaternion.Euler(0f, initialYawDegrees, 0f);
+                worldRot = PlacementOrientation.ApplyStickRotationOffset(
+                    baseYaw, stickRotationAxis, userYawOffsetDegrees);
+            }
+            else
+            {
+                Vector3 look = viewerPosition - worldPos;
+                look.y = 0f;
+                if (look.sqrMagnitude < 0.001f)
+                    look = Vector3.forward;
+                worldRot = PlacementOrientation.LookRotationWithFacing(look, facingAxis, Vector3.up);
+                worldRot = PlacementOrientation.EnsureFacingViewer(
+                    worldRot, facingAxis, worldPos, viewerPosition);
+            }
+
+            return true;
+        }
+
+        placementId = null;
+        anchorPoint = null;
+        return false;
     }
 
     Vector3 ResolvePreviewSurfaceNormal(Quaternion worldRot)
@@ -379,6 +474,7 @@ public class MRPlacementRayController : MonoBehaviour
             case PlacementSurfaceType.Wall:
                 return worldRot * PlacementOrientation.LocalForward(facingAxis);
             case PlacementSurfaceType.Table:
+            case PlacementSurfaceType.Object:
             case PlacementSurfaceType.Floor:
             default:
                 return Vector3.up;
@@ -554,6 +650,8 @@ public class MRPlacementRayController : MonoBehaviour
         onCancel = null;
         hasValidPreview = false;
         previewAnchorUuid = Guid.Empty;
+        previewObjectPlacementId = null;
+        previewObjectAnchorPoint = null;
 
         MRTransitionLog.LogStep(
             "PlacementRay",

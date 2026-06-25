@@ -75,6 +75,8 @@ public class MREnvironmentRegistry : MonoBehaviour
         }
 
         int index = 0;
+        var spawnFirst = new List<MREnvironmentPlacement>();
+        var spawnAfterParents = new List<MREnvironmentPlacement>();
         foreach (MREnvironmentPlacement placement in layout.GetProps())
         {
             if (placement == null || string.IsNullOrEmpty(placement.Id))
@@ -83,6 +85,24 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (!placement.HasValidCatalogReference())
                 continue;
 
+            if (placement.SurfaceType == PlacementSurfaceType.Object
+                && !string.IsNullOrEmpty(placement.AnchorPlacementId))
+                spawnAfterParents.Add(placement);
+            else
+                spawnFirst.Add(placement);
+        }
+
+        foreach (MREnvironmentPlacement placement in spawnFirst)
+        {
+            yield return TrySpawnPlacementAsync(placement, mrSpaceOrigin, index, spawned =>
+            {
+                if (spawned)
+                    index++;
+            });
+        }
+
+        foreach (MREnvironmentPlacement placement in spawnAfterParents)
+        {
             yield return TrySpawnPlacementAsync(placement, mrSpaceOrigin, index, spawned =>
             {
                 if (spawned)
@@ -170,9 +190,7 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (placement == null)
                 continue;
 
-            Guid anchorUuid = Guid.Empty;
-            if (!string.IsNullOrEmpty(placement.AnchorUuid))
-                Guid.TryParse(placement.AnchorUuid, out anchorUuid);
+            MRPlacementConfirmAnchor anchor = BuildAnchorFromPlacement(placement);
 
             Vector3 displayPos = entry.Value.transform.position;
             Quaternion rot = entry.Value.transform.rotation;
@@ -181,7 +199,7 @@ public class MREnvironmentRegistry : MonoBehaviour
                 placement.SurfaceType,
                 displayPos,
                 rot,
-                anchorUuid);
+                anchor);
             changed = true;
             MRTransitionLog.Log(
                 $"SnapshotWorldPose {placement.DisplayLabel} pos={displayPos} rotY={rot.eulerAngles.y:F1} anchor={placement.AnchorUuid ?? "none"}");
@@ -515,14 +533,14 @@ public class MREnvironmentRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid = default) =>
+        MRPlacementConfirmAnchor anchor = default) =>
         TryFinalizeTransientCatalogEntry(
             MREnvironmentCatalogEntry.FromBuild(prefabName, prefabName),
             root,
             mrSpaceOrigin,
             worldPosition,
             worldRotation,
-            anchorUuid);
+            anchor);
 
     public bool TryFinalizeTransientCatalogEntry(
         MREnvironmentCatalogEntry entry,
@@ -530,7 +548,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid = default)
+        MRPlacementConfirmAnchor anchor = default)
     {
         EnsureLayoutLoaded();
         if (layout == null || string.IsNullOrEmpty(entry.Key) || root == null || mrSpaceOrigin == null)
@@ -543,9 +561,11 @@ public class MREnvironmentRegistry : MonoBehaviour
         }
 
         MRPlacementProfile profile = MRPlacementProfile.Resolve(root);
-        PlacementSurfaceType surfaceType = profile != null
-            ? profile.surfaceType
-            : PlacementSurfaceType.Floor;
+        PlacementSurfaceType surfaceType = anchor.IsObjectAnchor
+            ? PlacementSurfaceType.Object
+            : profile != null
+                ? profile.surfaceType
+                : PlacementSurfaceType.Floor;
         PlacementFacingAxis facingAxis = profile != null
             ? profile.facingAxis
             : PlacementFacingAxis.PositiveZ;
@@ -582,7 +602,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (entry.Source == MREnvironmentObjectSource.Light)
             CaptureLightSettingsFromRoot(placement, root);
 
-        WriteStoredPose(placement, surfaceType, worldPosition, worldRotation, anchorUuid);
+        WriteStoredPose(placement, surfaceType, worldPosition, worldRotation, anchor);
 
         layout.AddPlacement(placement);
         layout.Save(LayoutFilePath);
@@ -612,7 +632,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         Transform mrSpaceOrigin,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid = default)
+        MRPlacementConfirmAnchor anchor = default)
     {
         EnsureLayoutLoaded();
         if (layout == null || string.IsNullOrEmpty(placementId) || mrSpaceOrigin == null)
@@ -622,7 +642,11 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (placement == null)
             return false;
 
-        WriteStoredPose(placement, placement.SurfaceType, worldPosition, worldRotation, anchorUuid);
+        PlacementSurfaceType surfaceType = anchor.IsObjectAnchor
+            ? PlacementSurfaceType.Object
+            : placement.SurfaceType;
+        placement.SurfaceType = surfaceType;
+        WriteStoredPose(placement, surfaceType, worldPosition, worldRotation, anchor);
         layout.Save(LayoutFilePath);
 
         if (TryGetSpawnedRoot(placementId, out GameObject root))
@@ -1016,15 +1040,60 @@ public class MREnvironmentRegistry : MonoBehaviour
         placement.WorldRotation = MRQuaternion.From(worldRot);
     }
 
+    static MRPlacementConfirmAnchor BuildAnchorFromPlacement(MREnvironmentPlacement placement)
+    {
+        if (placement != null
+            && placement.SurfaceType == PlacementSurfaceType.Object
+            && !string.IsNullOrEmpty(placement.AnchorPlacementId))
+        {
+            return MRPlacementConfirmAnchor.FromObject(
+                placement.AnchorPlacementId,
+                placement.AnchorPoint);
+        }
+
+        if (placement != null
+            && !string.IsNullOrEmpty(placement.AnchorUuid)
+            && Guid.TryParse(placement.AnchorUuid, out Guid anchorUuid))
+            return MRPlacementConfirmAnchor.FromMruk(anchorUuid);
+
+        return default;
+    }
+
     static void WriteStoredPose(
         MREnvironmentPlacement placement,
         PlacementSurfaceType surfaceType,
         Vector3 worldPosition,
         Quaternion worldRotation,
-        Guid anchorUuid)
+        MRPlacementConfirmAnchor anchor)
     {
         placement.WorldPosition = MRVector3.From(worldPosition);
         placement.WorldRotation = MRQuaternion.From(worldRotation);
+        placement.SurfaceType = surfaceType;
+
+        if (anchor.IsObjectAnchor
+            && Instance != null
+            && Instance.TryGetSpawnedRoot(anchor.ObjectPlacementId, out GameObject parentRoot))
+        {
+            if (MRObjectAnchorPoseResolver.TryWriteAnchorRelativePose(
+                    parentRoot,
+                    anchor.ObjectAnchorPoint,
+                    worldPosition,
+                    worldRotation,
+                    out string storedAnchorPoint,
+                    out MRVector3 storedPosition,
+                    out MRQuaternion storedRotation))
+            {
+                placement.AnchorPlacementId = anchor.ObjectPlacementId;
+                placement.AnchorPoint = storedAnchorPoint;
+                placement.AnchorUuid = null;
+                placement.Position = storedPosition;
+                placement.Rotation = storedRotation;
+                return;
+            }
+        }
+
+        placement.AnchorPlacementId = null;
+        placement.AnchorPoint = null;
 
         Meta.XR.MRUtilityKit.MRUKRoom room = MREnvironmentSurfaces.Instance?.CurrentRoom;
         if (MRAnchorPoseResolver.TryWriteAnchorRelativePose(
@@ -1032,14 +1101,14 @@ public class MREnvironmentRegistry : MonoBehaviour
                 surfaceType,
                 worldPosition,
                 worldRotation,
-                anchorUuid,
+                anchor.MrukUuid,
                 out string anchorUuidText,
-                out MRVector3 storedPosition,
-                out MRQuaternion storedRotation))
+                out MRVector3 mrukStoredPosition,
+                out MRQuaternion mrukStoredRotation))
         {
             placement.AnchorUuid = anchorUuidText;
-            placement.Position = storedPosition;
-            placement.Rotation = storedRotation;
+            placement.Position = mrukStoredPosition;
+            placement.Rotation = mrukStoredRotation;
             return;
         }
 
@@ -1055,6 +1124,32 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         if (placement == null)
             return false;
+
+        if (placement.SurfaceType == PlacementSurfaceType.Object
+            && !string.IsNullOrEmpty(placement.AnchorPlacementId)
+            && Instance != null
+            && Instance.TryGetSpawnedRoot(placement.AnchorPlacementId, out GameObject parentRoot))
+        {
+            Vector3 storedPosition = placement.Position != null ? placement.Position.ToVector3() : Vector3.zero;
+            Quaternion storedRotation = placement.Rotation != null ? placement.Rotation.ToQuaternion() : Quaternion.identity;
+            if (MRObjectAnchorPoseResolver.TryResolveWorldPose(
+                    parentRoot,
+                    placement.AnchorPoint,
+                    storedPosition,
+                    storedRotation,
+                    out worldPosition,
+                    out worldRotation))
+                return true;
+
+            if (TryReadWorldFallback(placement, out worldPosition, out worldRotation))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"{LogPrefix} {placement.DisplayLabel} object anchor unresolved — using world fallback {worldPosition}");
+                return true;
+            }
+
+            return false;
+        }
 
         if (!string.IsNullOrEmpty(placement.AnchorUuid))
         {

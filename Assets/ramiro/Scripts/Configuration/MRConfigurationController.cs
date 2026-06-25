@@ -798,6 +798,7 @@ public class MRConfigurationController : MonoBehaviour
             PlacementSurfaceType.Floor => "Flr",
             PlacementSurfaceType.Wall => "Wal",
             PlacementSurfaceType.Ceiling => "Cel",
+            PlacementSurfaceType.Object => "Obj",
             _ => "?"
         };
 
@@ -1062,7 +1063,14 @@ public class MRConfigurationController : MonoBehaviour
         yield return "  file  scale  offset  rotation";
         yield return "placement: -> MRPlacementProfile";
         yield return "  surfaceType 0=floor 1=wall";
-        yield return "    2=ceiling 3=free3D 4=table";
+        yield return "    2=ceiling 3=free 4=table";
+        yield return "    5=object (on another prop)";
+        yield return "  providesAnchor true = shelf/TV";
+        yield return "    top surface for other props";
+        yield return "  anchorTarget optional GLB child";
+        yield return "    (e.g. Top); omit = root";
+        yield return "  Tag MRPlacementAnchor at spawn";
+        yield return "    (runtime - not in GLB)";
         yield return "  facingAxis 0=+Z 1=-Z 2=+X 3=-X";
         yield return "  allowStickRotation true/false";
         yield return "    true = R-stick spin in ray";
@@ -1120,10 +1128,22 @@ public class MRConfigurationController : MonoBehaviour
         yield return "Floor placement ray by default";
         yield return "No profile: R-stick yaw on floor";
         yield return string.Empty;
+        yield return "OBJECT ON OBJECT (book on shelf)";
+        yield return "Parent object.yaml: surfaceType 0";
+        yield return "  + providesAnchor: true";
+        yield return "Child object.yaml: surfaceType 5";
+        yield return "In game: 1) Add parent (floor)";
+        yield return "  2) Add child - ray on parent";
+        yield return "  3) Confirm. Layout stores";
+        yield return "  anchorPlacementId + local pose";
+        yield return "Parent first, then child.";
+        yield return string.Empty;
         yield return "PLACEMENT RAY";
         yield return "After Add or Move on a prop";
         yield return "Point right hand at surface";
         yield return "Green = valid hit  Red = blocked";
+        yield return "Object(5): ray hits MRPlacement";
+        yield return "  Anchor tag on parent prop";
         yield return "R-stick L/R only if rotation on";
         yield return string.Empty;
         yield return "OTHER";
@@ -2558,7 +2578,7 @@ public class MRConfigurationController : MonoBehaviour
             root,
             surfaceType,
             facingAxis,
-            confirmCallback: (finalPos, finalRot, anchorUuid) =>
+            confirmCallback: (finalPos, finalRot, anchor) =>
             {
                 placementAddActive = false;
                 MREnvironmentCatalogEntry catalogEntry = pendingAddEnvEntry;
@@ -2571,7 +2591,7 @@ public class MRConfigurationController : MonoBehaviour
                     spawned.transform.SetPositionAndRotation(finalPos, finalRot);
 
                 bool saved = envRegistry.TryFinalizeTransientCatalogEntry(
-                    catalogEntry, spawned, mrSpaceOrigin, finalPos, finalRot, anchorUuid);
+                    catalogEntry, spawned, mrSpaceOrigin, finalPos, finalRot, anchor);
 
                 if (!saved)
                 {
@@ -2618,11 +2638,11 @@ public class MRConfigurationController : MonoBehaviour
             spawnedRoot,
             placement.SurfaceType,
             placement.FacingAxis,
-            confirmCallback: (worldPos, worldRot, anchorUuid) =>
+            confirmCallback: (worldPos, worldRot, anchor) =>
             {
                 placementEnvMoveActive = false;
                 bool saved = envRegistry.TryUpdatePlacementPose(
-                    movingEnvPlacementId, mrSpaceOrigin, worldPos, worldRot, anchorUuid);
+                    movingEnvPlacementId, mrSpaceOrigin, worldPos, worldRot, anchor);
                 if (!saved)
                 {
                     ConfigManager.WriteConsoleWarning($"{LogPrefix} env move confirm but save failed ({movingEnvPlacementId})");
@@ -2695,7 +2715,7 @@ public class MRConfigurationController : MonoBehaviour
             root,
             surfaceType,
             facingAxis,
-            confirmCallback: (finalPos, finalRot, anchorUuid) =>
+            confirmCallback: (finalPos, finalRot, anchor) =>
             {
                 placementAddActive = false;
                 string name = pendingAddCabinetName;
@@ -2707,7 +2727,7 @@ public class MRConfigurationController : MonoBehaviour
                     spawned.transform.SetPositionAndRotation(finalPos, finalRot);
 
                 bool saved = registry.TryFinalizeTransientCabinetAdd(
-                    name, spawned, mrSpaceOrigin, finalPos, finalRot, anchorUuid);
+                    name, spawned, mrSpaceOrigin, finalPos, finalRot, anchor);
 
                 if (!saved)
                 {
@@ -2788,11 +2808,11 @@ public class MRConfigurationController : MonoBehaviour
             spawnedRoot,
             placement.SurfaceType,
             placement.FacingAxis,
-            confirmCallback: (worldPos, worldRot, anchorUuid) =>
+            confirmCallback: (worldPos, worldRot, anchor) =>
             {
                 placementMoveActive = false;
                 bool saved = registry.TryUpdatePlacementPose(
-                    movingPlacementId, mrSpaceOrigin, worldPos, worldRot, anchorUuid);
+                    movingPlacementId, mrSpaceOrigin, worldPos, worldRot, anchor);
                 if (!saved)
                 {
                     ConfigManager.WriteConsoleWarning($"{LogPrefix} move confirm but save failed ({movingPlacementId})");

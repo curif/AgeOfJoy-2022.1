@@ -65,6 +65,10 @@ public class MRCustomObjectDefinition
     public float GetStickRotationSpeed() =>
         Placement != null && Placement.StickRotationSpeed > 0f ? Placement.StickRotationSpeed : 90f;
 
+    public bool GetProvidesAnchor() => Placement != null && Placement.ProvidesAnchor;
+
+    public string GetAnchorTarget() => Placement?.AnchorTarget;
+
     public MRCustomObjectCollisionMode GetCollisionMode()
     {
         if (Collision == null || string.IsNullOrEmpty(Collision.Mode))
@@ -242,6 +246,10 @@ public class MRCustomObjectPlacementYaml
     public bool AllowStickRotation;
     public PlacementStickRotationAxis StickRotationAxis = PlacementStickRotationAxis.WorldYaw;
     public float StickRotationSpeed = 90f;
+    /// <summary>When true, a child collider is tagged MRPlacementAnchor at spawn for other props to snap to.</summary>
+    public bool ProvidesAnchor;
+    /// <summary>Optional GLB child name for the anchor surface; omit for package root.</summary>
+    public string AnchorTarget;
 }
 
 [Serializable]

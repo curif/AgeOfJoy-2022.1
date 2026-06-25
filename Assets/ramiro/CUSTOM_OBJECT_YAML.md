@@ -54,6 +54,8 @@ placement:
   allowStickRotation: true
   stickRotationAxis: 0
   stickRotationSpeed: 90
+  providesAnchor: false    # true = runtime MRPlacementAnchor tag
+  anchorTarget: Top        # optional GLB child; omit = root
 
 # --- Collision (optional) ---
 collision:
@@ -243,7 +245,19 @@ video:
 | 1     | Wall      | fan, poster, shelf  |
 | 2     | Ceiling   | lamp, hanger        |
 | 3     | Free3D    | floating prop       |
-| 4     | Table     | small object on desk |
+| 4     | Table     | small object on desk (MRUK scan) |
+| 5     | Object    | on another placed prop (`providesAnchor` parent) |
+
+### `placement.providesAnchor` / `placement.anchorTarget`
+
+When `providesAnchor: true`, the loader tags a collider at spawn with **`MRPlacementAnchor`** (runtime — do not set the tag in the GLB). Other props with `surfaceType: 5` (Object) snap to that surface via the placement ray.
+
+| Field | Meaning |
+|-------|---------|
+| `providesAnchor` | This prop is a placement surface for other objects |
+| `anchorTarget` | GLB child name for the anchor collider; omit for package root |
+
+Pose of the child is stored in `objects-layout.yaml` as local coordinates relative to the parent (`anchorPlacementId` + `anchorPoint`), not in `object.yaml`.
 
 ## `placement.facingAxis`
 

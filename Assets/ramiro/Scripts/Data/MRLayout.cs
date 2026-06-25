@@ -41,7 +41,9 @@ public enum PlacementSurfaceType
     Wall = 1,
     Ceiling = 2,
     Free3D = 3,
-    Table = 4
+    Table = 4,
+    /// <summary>Placed relative to another MR prop (tag MRPlacementAnchor).</summary>
+    Object = 5
 }
 
 [Serializable]
@@ -55,6 +57,10 @@ public class MRCabinetPlacement
     public float Scale = 1f;
     /// <summary>OVRAnchor UUID when Position/Rotation are local to that MRUK anchor (layout v3+).</summary>
     public string AnchorUuid;
+    /// <summary>Parent prop placement id when SurfaceType is Object.</summary>
+    public string AnchorPlacementId;
+    /// <summary>Named child on the parent prop (MRPlacementAnchor); empty = first tagged collider or root.</summary>
+    public string AnchorPoint;
     /// <summary>Last known world pose — used when anchor UUID cannot be resolved on MR re-entry.</summary>
     public MRVector3 WorldPosition;
     public MRQuaternion WorldRotation;
@@ -216,6 +222,10 @@ public class MREnvironmentPlacement
     public MRQuaternion Rotation;
     public float Scale = 1f;
     public string AnchorUuid;
+    /// <summary>Parent prop placement id when SurfaceType is Object.</summary>
+    public string AnchorPlacementId;
+    /// <summary>Named child on the parent prop (MRPlacementAnchor); empty = first tagged collider or root.</summary>
+    public string AnchorPoint;
     public MRVector3 WorldPosition;
     public MRQuaternion WorldRotation;
     public PlacementSurfaceType SurfaceType = PlacementSurfaceType.Floor;

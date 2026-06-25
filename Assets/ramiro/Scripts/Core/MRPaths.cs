@@ -168,7 +168,7 @@ model:
   file: example.glb
   scale: 1.0
 
-# placement.surfaceType: 0=Floor 1=Wall 2=Ceiling 3=Free3D 4=Table
+# placement.surfaceType: 0=Floor 1=Wall 2=Ceiling 3=Free3D 4=Table 5=Object
 # placement.facingAxis: 0=+Z 1=-Z 2=+X 3=-X
 # placement.stickRotationAxis: 0=WorldYaw 1=WorldPitch 2=WorldRoll
 placement:
@@ -177,6 +177,8 @@ placement:
   allowStickRotation: true
   stickRotationAxis: 0
   stickRotationSpeed: 90
+  providesAnchor: false
+  # anchorTarget: Top
 
 collision:
   mode: mesh
