@@ -18,7 +18,9 @@ public class MRConfigurationController : MonoBehaviour
     const int VisibleCabinetRows = 11;
     const int VisibleDebugRows = 10;
     const int VisibleDebugDetailRows = 16;
+    const int VisibleHelpRows = 18;
     const int DebugDetailWrapWidth = 38;
+    const int HelpWrapWidth = 38;
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
     const int LightsAutoRowIndex = 0;
@@ -93,8 +95,10 @@ public class MRConfigurationController : MonoBehaviour
     readonly List<MREnvironmentPlacement> placedInstances = new List<MREnvironmentPlacement>();
     readonly List<MRDebugLog.DisplayLine> debugDisplayLines = new List<MRDebugLog.DisplayLine>();
     readonly List<string> debugDetailWrappedLines = new List<string>();
+    readonly List<string> helpWrappedLines = new List<string>();
     MRDebugLog.Entry debugDetailEntry;
     int debugDetailScrollOffset;
+    int helpScrollOffset;
 
     MRLayoutRegistry registry;
     MREnvironmentRegistry envRegistry;
@@ -342,7 +346,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("OFFICIAL OBJECTS", "Lights + PrefabsEnvironment props");
         navMenu.AddOption("CONFIG", "Move cabinet, scale, EffectMesh");
         navMenu.AddOption("DEBUG", "MR errors by date");
-        navMenu.AddOption("HELP", "Controls");
+        navMenu.AddOption("HELP", "Controls + objects guide");
         navMenu.AddOption("EXIT", "Close panel");
     }
 
@@ -978,21 +982,155 @@ public class MRConfigurationController : MonoBehaviour
     void DrawHelpPage()
     {
         screen.PrintCentered(0, "HELP", true);
-        screen.Print(2, 3, "Up/Down: select row", false);
-        screen.Print(2, 5, "L/R: select action on row", false);
-        screen.Print(2, 7, "A: run action   B: back", false);
-        screen.Print(2, 9, "Row: Name|Opts|Add|Rem|", false);
-        screen.Print(2, 10, "Placed: Move|Tune|Rem|", false);
-        screen.Print(2, 11, "Light tune: Int|Rng|Tmp K", false);
-        screen.Print(2, 12, "Poster tune: YZ scale", false);
-        screen.Print(2, 13, "MR Auto: EnterMR lights only", false);
-        screen.Print(2, 14, "Cabinets: 1 per game only", false);
-        screen.Print(2, 15, "Custom + Official cats", false);
-        screen.Print(2, 16, "Posters: stick L/R = spin Y", false);
-        screen.Print(2, 17, "Room Skin: no placement ray", false);
-        screen.Print(2, 18, "Placement ray after Add/Move", false);
-        screen.Print(2, 19, "Layout = MR/objects-layout.yaml", false);
+        screen.PrintLine(1, false, '-');
+
+        int row = 2;
+        for (int i = 0; i < VisibleHelpRows; i++)
+        {
+            int idx = helpScrollOffset + i;
+            if (idx >= helpWrappedLines.Count)
+                break;
+
+            string line = helpWrappedLines[idx];
+            if (!string.IsNullOrEmpty(line))
+                screen.Print(1, row, line, false);
+            row++;
+        }
+
+        if (helpWrappedLines.Count > VisibleHelpRows)
+        {
+            int page = helpScrollOffset / VisibleHelpRows + 1;
+            int pages = (helpWrappedLines.Count + VisibleHelpRows - 1) / VisibleHelpRows;
+            screen.Print(
+                1,
+                screen.CharactersYCount - 3,
+                $"Page {page}/{pages}  Up/Down: scroll",
+                false);
+        }
+
         DrawFooter("B: back");
+    }
+
+    void BuildHelpWrappedLines()
+    {
+        helpWrappedLines.Clear();
+        foreach (string line in GetHelpSourceLines())
+        {
+            if (string.IsNullOrEmpty(line))
+            {
+                helpWrappedLines.Add(string.Empty);
+                continue;
+            }
+
+            if (line.Length <= HelpWrapWidth)
+                helpWrappedLines.Add(line);
+            else
+                helpWrappedLines.AddRange(WrapDebugText(line, HelpWrapWidth));
+        }
+    }
+
+    static IEnumerable<string> GetHelpSourceLines()
+    {
+        yield return "CONTROLS";
+        yield return "Up/Down: row or scroll this help";
+        yield return "L/R: action on row  A: go  B: back";
+        yield return "Catalog row: Add Rem Opts (placed #)";
+        yield return "Opts = list placed copies Move/Tune";
+        yield return "Placement ray: A place  B cancel";
+        yield return string.Empty;
+        yield return "OFFICIAL OBJECTS (built-in)";
+        yield return "Lights: ceiling + wall lamps";
+        yield return "Others: PF_Fan, PortableGames,...";
+        yield return "Shipped in app Resources (not";
+        yield return "the config cabinet - auto spawn)";
+        yield return "CEILING LIGHT: ceiling surface";
+        yield return "  CAN rotate: R-stick L/R = yaw";
+        yield return "WALL LIGHT: wall, auto-faces you";
+        yield return "  NO stick rotation when placing";
+        yield return "PF_FAN: ceiling, NO stick spin";
+        yield return "PORTABLEGAMES: table surface";
+        yield return "  CAN rotate: R-stick L/R = yaw";
+        yield return string.Empty;
+        yield return "CUSTOM OBJECTS (user packages)";
+        yield return "Folder: MR/Custom Objects/Name/";
+        yield return "  object.yaml + model.glb required";
+        yield return "Pose saved in MR/objects-layout.yaml";
+        yield return string.Empty;
+        yield return "OBJECT.YAML v1 - ROOT BLOCKS";
+        yield return "version: 1  name  displayName  author";
+        yield return "model: (required)";
+        yield return "  file  scale  offset  rotation";
+        yield return "placement: -> MRPlacementProfile";
+        yield return "  surfaceType 0=floor 1=wall";
+        yield return "    2=ceiling 3=free3D 4=table";
+        yield return "  facingAxis 0=+Z 1=-Z 2=+X 3=-X";
+        yield return "  allowStickRotation true/false";
+        yield return "    true = R-stick spin in ray";
+        yield return "    false = fixed / wall auto-face";
+        yield return "  stickRotationAxis 0=yaw 1=pitch";
+        yield return "    2=roll  stickRotationSpeed";
+        yield return "collision: (optional)";
+        yield return "  mode mesh|box|none  convex";
+        yield return "  default mesh + convex true";
+        yield return "audio: (optional, not components)";
+        yield return "  file wav/mp3/ogg  loop  volume";
+        yield return "  playOnAwake  distance min/max";
+        yield return string.Empty;
+        yield return "OBJECT.YAML - components: list";
+        yield return "Runtime behaviours at spawn.";
+        yield return "List id + matching root block:";
+        yield return string.Empty;
+        yield return "  rotator  -> rotator:";
+        yield return "    Spin GLB child in local space.";
+        yield return "    target (required) child name";
+        yield return "    axis x|y|z or -x -y -z";
+        yield return "    speed deg/sec (default 180)";
+        yield return string.Empty;
+        yield return "  grab  -> grab:";
+        yield return "    XR grab one or two hands.";
+        yield return "    twoHands false=1 hand true=2";
+        yield return "    returnOnRelease  hideHands";
+        yield return "    target optional child root";
+        yield return "    returnDurationSeconds";
+        yield return string.Empty;
+        yield return "  video  -> video:";
+        yield return "    MP4 on child mesh Renderer.";
+        yield return "    file + target (required)";
+        yield return "    loop  playOnAwake  volume";
+        yield return "    invertX  invertY";
+        yield return "    Use H.264 yuv420p on Quest";
+        yield return string.Empty;
+        yield return "Unknown component id = warning,";
+        yield return "ignored. Combine ids as needed";
+        yield return "(e.g. video + grab for TV).";
+        yield return "See CUSTOM_OBJECT_YAML.md";
+        yield return string.Empty;
+        yield return "CUSTOM: POSTERS";
+        yield return "Folder: MR/Posters/";
+        yield return "Wall placement. R-stick L/R spin Y";
+        yield return "Tune on placed copy = YZ scale";
+        yield return string.Empty;
+        yield return "CUSTOM: ROOM SKIN";
+        yield return "Folder: MR/Room Skins/";
+        yield return "Textures on room scan mesh";
+        yield return "No placement ray - instant apply";
+        yield return string.Empty;
+        yield return "CABINETS (arcade games)";
+        yield return "One cabinet per game only";
+        yield return "Floor placement ray by default";
+        yield return "No profile: R-stick yaw on floor";
+        yield return string.Empty;
+        yield return "PLACEMENT RAY";
+        yield return "After Add or Move on a prop";
+        yield return "Point right hand at surface";
+        yield return "Green = valid hit  Red = blocked";
+        yield return "R-stick L/R only if rotation on";
+        yield return string.Empty;
+        yield return "OTHER";
+        yield return "Lights: auto on EnterMR vs placed";
+        yield return "  lamps (Tune Int/Rng/Temp K)";
+        yield return "Layout: MR/objects-layout.yaml";
+        yield return "Room scan required (Quest setup)";
     }
 
     void DrawDebugDetailPage()
@@ -1813,6 +1951,19 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
 
+            case Screen.Help:
+                if (helpWrappedLines.Count == 0)
+                    return;
+
+                helpScrollOffset += delta;
+                if (helpScrollOffset < 0)
+                    helpScrollOffset = 0;
+                else if (helpScrollOffset > Mathf.Max(0, helpWrappedLines.Count - VisibleHelpRows))
+                    helpScrollOffset = Mathf.Max(0, helpWrappedLines.Count - VisibleHelpRows);
+
+                DrawCurrentScreen();
+                break;
+
             case Screen.Adjustments:
                 selectedAdjustmentIndex += delta;
                 if (selectedAdjustmentIndex < 0)
@@ -1926,6 +2077,8 @@ public class MRConfigurationController : MonoBehaviour
                 currentScreen = Screen.Debug;
                 break;
             case "HELP":
+                helpScrollOffset = 0;
+                BuildHelpWrappedLines();
                 currentScreen = Screen.Help;
                 break;
             case "EXIT":
