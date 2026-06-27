@@ -101,6 +101,7 @@ List of behaviour ids to attach when the object spawns. Each id has a **root-lev
 | `rotator` | `rotator:` | Spin a child mesh continuously |
 | `grab` | `grab:` | XR grab — one hand or two hands |
 | `video` | `video:` | Play a video file on a child screen mesh |
+| `animator` | `animator:` | Play an embedded GLB glTF animation clip |
 
 Unknown ids in `components` log a warning.
 
@@ -194,6 +195,34 @@ video:
 ```
 
 The GLB must contain a node named `Screen` (case-insensitive) with a `Renderer`. Place `screen.mp4` beside `object.yaml` in the package folder.
+
+### `animator`
+
+Plays an **embedded glTF animation** from the GLB (skeletal or keyframe). Uses Unity legacy `Animation` on the target transform.
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `clip` | string | — | Animation name in the GLB (glTF `animations[].name`). Required. |
+| `target` | string | — | Optional GLB child; omit = auto-detect first `Animation`/`Animator` child |
+| `loop` | bool | `true` | Loop playback |
+| `playOnAwake` | bool | `true` | Start when object spawns |
+| `speed` | float | `1` | Playback speed multiplier |
+
+Example (character with walk cycle):
+
+```yaml
+components:
+  - animator
+
+animator:
+  clip: Walk
+  target: Character
+  loop: true
+  playOnAwake: true
+  speed: 1.0
+```
+
+The GLB must contain an animation named `Walk` (case-insensitive). This is **not** the same as `rotator` (continuous spin) or `placement.allowStickRotation` (right stick before placement).
 
 #### Recommended video format (Quest + Windows Editor)
 

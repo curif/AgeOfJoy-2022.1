@@ -1108,6 +1108,12 @@ public class MRConfigurationController : MonoBehaviour
         yield return "    invertX  invertY";
         yield return "    Use H.264 yuv420p on Quest";
         yield return string.Empty;
+        yield return "  animator  -> animator:";
+        yield return "    GLB embedded glTF animation.";
+        yield return "    clip (required) animation name";
+        yield return "    target optional GLB child";
+        yield return "    loop  playOnAwake  speed";
+        yield return string.Empty;
         yield return "Unknown component id = warning,";
         yield return "ignored. Combine ids as needed";
         yield return "(e.g. video + grab for TV).";

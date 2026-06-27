@@ -198,11 +198,18 @@ collision:
 #components:
 #  - rotator
 #  - grab
+#  - animator
 #
 #rotator:
 #  target: Blades
 #  axis: y
 #  speed: 180
+#
+#animator:
+#  clip: Walk
+#  target: Character
+#  loop: true
+#  playOnAwake: true
 #
 #grab:
 #  twoHands: false

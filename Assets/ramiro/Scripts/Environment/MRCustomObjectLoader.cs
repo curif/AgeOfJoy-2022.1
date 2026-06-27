@@ -29,7 +29,12 @@ public static class MRCustomObjectLoader
 
         string modelPath = Path.Combine(definition.PackageDir, definition.GetModelFileName());
         GameObject modelRoot = null;
-        yield return LoadGlbRoot(modelPath, loaded => modelRoot = loaded);
+        AnimationClip[] animationClips = null;
+        yield return LoadGlbRoot(modelPath, (loaded, clips) =>
+        {
+            modelRoot = loaded;
+            animationClips = clips;
+        });
 
         if (modelRoot == null)
         {
@@ -51,29 +56,68 @@ public static class MRCustomObjectLoader
         EnsureCollider(root, definition);
         ApplyPlacementAnchor(root, definition);
         TryAttachAudio(root, definition);
+
+        animationClips = MRCustomObjectGlbSupport.CollectClips(modelRoot, animationClips);
+
+        if (animationClips != null && animationClips.Length > 0)
+        {
+            MRCustomObjectGlbClips clipHolder = root.AddComponent<MRCustomObjectGlbClips>();
+            clipHolder.Clips = animationClips;
+        }
+
         MRCustomObjectComponentApplier.Apply(root, definition);
+
+        if (definition.HasAnimatorComponent())
+            MRCustomObjectGlbSupport.EnsureReadableWorldScale(root);
+
+        LogSpawnDiagnostics(packageName, root, modelRoot, definition.GetModelFileName());
 
         result.Root = root;
         result.Success = true;
         ConfigManager.WriteConsole($"{LogPrefix} spawned custom package {packageName}");
     }
 
-    static IEnumerator LoadGlbRoot(string modelFilePath, Action<GameObject> onLoaded)
+    static void LogSpawnDiagnostics(string packageName, GameObject packageRoot, GameObject modelRoot, string modelFile)
+    {
+        int meshFilters = packageRoot.GetComponentsInChildren<MeshFilter>(true).Length;
+        int skinnedMeshes = packageRoot.GetComponentsInChildren<SkinnedMeshRenderer>(true).Length;
+        int meshRenderers = packageRoot.GetComponentsInChildren<MeshRenderer>(true).Length;
+
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} {packageName}: source={modelFile} modelRoot='{modelRoot.name}' "
+            + $"SkinnedMeshRenderer={skinnedMeshes} MeshFilter={meshFilters} MeshRenderer={meshRenderers}");
+
+        if (skinnedMeshes == 0 && meshFilters == 0)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {packageName}: GLB loaded but no visible mesh found — check export includes skinned mesh");
+        }
+    }
+
+    static IEnumerator LoadGlbRoot(string modelFilePath, Action<GameObject, AnimationClip[]> onLoaded)
     {
         GameObject loaded = null;
+        AnimationClip[] clips = null;
         ImportSettings importSettings = new ImportSettings();
         importSettings.shaderOverrides.CacheDefaultShaders();
+        // Generic clips cannot receive SetCurve or SampleAnimation on device builds.
+        importSettings.animationSettings.useLegacyClips = true;
 
-        TaskCompletionSource<GameObject> tcs = new TaskCompletionSource<GameObject>();
+        TaskCompletionSource<(GameObject go, AnimationClip[] animationClips)> tcs =
+            new TaskCompletionSource<(GameObject, AnimationClip[])>();
         try
         {
-            Importer.LoadFromFileAsync(modelFilePath, importSettings, (go, _) => tcs.SetResult(go), null);
+            Importer.LoadFromFileAsync(
+                modelFilePath,
+                importSettings,
+                (go, animationClips) => tcs.SetResult((go, animationClips)),
+                null);
         }
         catch (Exception e)
         {
             ConfigManager.WriteConsoleException($"{LogPrefix} LoadFromFileAsync {modelFilePath}", e);
             MRDebugLog.LogError($"Custom object GLB load exception: {Path.GetFileName(modelFilePath)} ({e.Message})");
-            onLoaded?.Invoke(null);
+            onLoaded?.Invoke(null, null);
             yield break;
         }
 
@@ -87,16 +131,28 @@ public static class MRCustomObjectLoader
                 baseEx);
             MRDebugLog.LogError(
                 $"Custom object GLB load failed: {Path.GetFileName(modelFilePath)} ({baseEx?.Message ?? "unknown"})");
-            onLoaded?.Invoke(null);
+            onLoaded?.Invoke(null, null);
             yield break;
         }
 
-        loaded = tcs.Task.Result;
+        (loaded, clips) = tcs.Task.Result;
+        if (loaded != null)
+        {
+            clips = MRCustomObjectGlbSupport.CollectClips(loaded, clips);
+            if (clips != null && clips.Length > 0)
+            {
+                ConfigManager.WriteConsole(
+                    $"{LogPrefix} GLB clips: {MRCustomObjectGlbSupport.DescribeClips(clips)}");
+            }
+        }
+
         if (loaded != null)
             loaded.SetActive(true);
 
         if (loaded != null)
         {
+            MRCustomObjectMaterialFix.Apply(loaded, Path.GetFileNameWithoutExtension(modelFilePath));
+
             foreach (GameObject go in SceneManager.GetActiveScene().GetRootGameObjects())
             {
                 if (go.name == "Root"
@@ -109,7 +165,7 @@ public static class MRCustomObjectLoader
             }
         }
 
-        onLoaded?.Invoke(loaded);
+        onLoaded?.Invoke(loaded, clips);
     }
 
     static void ApplyPlacementProfile(GameObject root, MRCustomObjectDefinition definition)

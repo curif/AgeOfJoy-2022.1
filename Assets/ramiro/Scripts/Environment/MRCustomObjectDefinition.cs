@@ -30,6 +30,7 @@ public class MRCustomObjectDefinition
     public MRCustomObjectRotatorYaml Rotator;
     public MRCustomObjectGrabYaml Grab;
     public MRCustomObjectVideoYaml Video;
+    public MRCustomObjectAnimatorYaml Animator;
 
     public string PackageName { get; private set; }
     public string PackageDir { get; private set; }
@@ -103,6 +104,8 @@ public class MRCustomObjectDefinition
     public bool HasGrabComponent() => HasComponent("grab");
 
     public bool HasVideoComponent() => HasComponent("video");
+
+    public bool HasAnimatorComponent() => HasComponent("animator");
 
     public static bool TryLoad(string packageName, out MRCustomObjectDefinition definition)
     {
@@ -211,6 +214,13 @@ public class MRCustomObjectDefinition
                 }
             }
 
+            if (definition.HasAnimatorComponent()
+                && (definition.Animator == null || string.IsNullOrEmpty(definition.Animator.Clip)))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"[MRCustomObjectDefinition] {packageName}: components lists animator but animator.clip is missing");
+            }
+
             return true;
         }
         catch (Exception e)
@@ -311,4 +321,17 @@ public class MRCustomObjectRotatorYaml
     public string Axis = "y";
     /// <summary>Degrees per second.</summary>
     public float Speed = 180f;
+}
+
+[Serializable]
+public class MRCustomObjectAnimatorYaml
+{
+    /// <summary>Animation name from the GLB (glTF animation). Required.</summary>
+    public string Clip;
+    /// <summary>Optional GLB child; omit = auto-detect Animation/Animator on model.</summary>
+    public string Target;
+    public bool Loop = true;
+    public bool PlayOnAwake = true;
+    /// <summary>Playback speed multiplier (default 1).</summary>
+    public float Speed = 1f;
 }

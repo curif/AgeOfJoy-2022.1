@@ -28,6 +28,9 @@ public static class MRCustomObjectComponentApplier
             if (string.Equals(componentId, "video", System.StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            if (string.Equals(componentId, "animator", System.StringComparison.OrdinalIgnoreCase))
+                continue;
+
             ConfigManager.WriteConsoleWarning(
                 $"{LogPrefix} {definition.PackageName}: unknown component '{componentId}'");
         }
@@ -40,6 +43,9 @@ public static class MRCustomObjectComponentApplier
 
         if (definition.HasVideoComponent())
             ApplyVideo(root, definition);
+
+        if (definition.HasAnimatorComponent())
+            ApplyAnimator(root, definition);
     }
 
     static void ApplyGrab(GameObject root, MRCustomObjectDefinition definition)
@@ -109,6 +115,59 @@ public static class MRCustomObjectComponentApplier
         rotator.Configure(target, config.Axis, speed);
         ConfigManager.WriteConsole(
             $"{LogPrefix} {definition.PackageName}: rotator on '{config.Target}' axis={config.Axis ?? "y"} speed={speed}");
+    }
+
+    static void ApplyAnimator(GameObject root, MRCustomObjectDefinition definition)
+    {
+        MRCustomObjectAnimatorYaml config = definition.Animator;
+        if (config == null || string.IsNullOrEmpty(config.Clip))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {definition.PackageName}: components includes animator but animator.clip is missing");
+            return;
+        }
+
+        MRCustomObjectGlbClips clipHolder = root.GetComponent<MRCustomObjectGlbClips>();
+        if (clipHolder == null || clipHolder.Clips == null || clipHolder.Clips.Length == 0)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {definition.PackageName}: animator requested but GLB has no animation clips");
+            MRDebugLog.LogError($"Custom object '{definition.PackageName}': GLB has no embedded animations");
+            return;
+        }
+
+        Transform target = ResolveAnimatorTarget(root.transform, config.Target);
+        if (target == null)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} {definition.PackageName}: animator target not found '{config.Target}'");
+            return;
+        }
+
+        MRCustomObjectAnimator animator = root.GetComponent<MRCustomObjectAnimator>();
+        if (animator == null)
+            animator = root.AddComponent<MRCustomObjectAnimator>();
+
+        animator.Configure(definition.PackageName, config, target, clipHolder.Clips);
+    }
+
+    static Transform ResolveAnimatorTarget(Transform searchRoot, string targetName)
+    {
+        if (searchRoot == null)
+            return null;
+
+        if (!string.IsNullOrEmpty(targetName))
+            return FindChildByName(searchRoot, targetName);
+
+        Animator existingAnimator = searchRoot.GetComponentInChildren<Animator>(true);
+        if (existingAnimator != null)
+            return existingAnimator.transform;
+
+        Animation existingAnimation = searchRoot.GetComponentInChildren<Animation>(true);
+        if (existingAnimation != null)
+            return existingAnimation.transform;
+
+        return searchRoot.childCount > 0 ? searchRoot.GetChild(0) : searchRoot;
     }
 
     static Transform FindChildByName(Transform root, string childName)
