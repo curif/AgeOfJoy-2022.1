@@ -914,6 +914,45 @@ public class MREnvironmentRegistry : MonoBehaviour
         return true;
     }
 
+    public bool TryGetCustomObjectScale(string placementId, out float scale)
+    {
+        EnsureLayoutLoaded();
+        scale = MRCustomObjectPlacement.DefaultScale;
+        if (layout == null || string.IsNullOrEmpty(placementId))
+            return false;
+
+        MREnvironmentPlacement placement = layout.FindById(placementId);
+        if (placement == null || !placement.IsCustomSource)
+            return false;
+
+        scale = ResolveSpawnScale(placement);
+        return true;
+    }
+
+    public bool TryUpdateCustomObjectScale(string placementId, float scale)
+    {
+        EnsureLayoutLoaded();
+        if (layout == null || string.IsNullOrEmpty(placementId))
+            return false;
+
+        MREnvironmentPlacement placement = layout.FindById(placementId);
+        if (placement == null || !placement.IsCustomSource)
+            return false;
+
+        placement.Scale = MRCustomObjectPlacement.SnapScale(scale);
+        layout.Save(LayoutFilePath);
+
+        if (TryGetSpawnedRoot(placement.Id, out GameObject root))
+        {
+            MRCustomObjectPlacement.ApplyUserScale(root, placement.Scale);
+            NotifyPortableGamesPlacementUpdated(root);
+        }
+
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} custom object scale {placement.DisplayLabel} xyz={placement.Scale:F2}");
+        return true;
+    }
+
     static void CaptureLightSettingsFromRoot(MREnvironmentPlacement placement, GameObject root)
     {
         if (placement == null || root == null)
