@@ -1,0 +1,95 @@
+---
+name: umk3
+game: umk3
+author: Emashzed & DangerMiaus
+
+rom: umk3.zip
+
+timetoload: 1
+
+model:
+  file: umk3.glb
+
+material: black
+
+video: 
+  file: umk3.mp4
+
+parts:
+  - name: left
+    art: 
+      file: left.png
+  - name: right
+    art: 
+      file: right.png
+  - name: speakers
+    art: 
+      file: speakers.png  
+  - name: joystick
+    art: 
+      file: joystick.png
+  - name: joystick-right
+    art: 
+      file: joystick-right.png
+  - name: joystick-front
+    art: 
+      file: joystick-front.png
+  - name: joystick-left
+    art: 
+      file: joystick-left.png
+  - name: btn-white
+    color:
+      r: 234
+      g: 227
+      b: 223
+  - name: btn-yellow
+    color:
+      r: 254
+      g: 193
+      b: 1
+  - name: btn-red
+    color:
+      r: 225
+      g: 21
+      b: 2
+  - name: btn-blue
+    color:
+      r: 24
+      g: 55
+      b: 162
+  - name: instructions
+    art:
+      file: instructions.png
+  - name: marquee
+    type: marquee
+    art:
+      file: marquee.png
+    color:
+      r: 238
+      g: 232
+      b: 176
+      intensity: -5
+  - name: trim-red
+    color:
+      r: 200
+      g: 0
+      b: 0
+    
+crt:
+  type: 19i
+  orientation: horizontal
+  screen:
+    shader: crt
+    damage: none
+    inverty: true
+  geometry:
+    scalepercentage: 125
+    rotation: 
+      x: -90
+    ratio:
+      y: 0.9
+    
+coinslot: coin-slot-double
+coinslotgeometry:
+  rotation:
+    x: -90

@@ -1,0 +1,40 @@
+# MR Custom Object v1 — copy folder to: {BaseDir}/MR/Custom Objects/Fan/
+# Requires: fan.glb, fan.wav
+# Spec: Assets/ramiro/CUSTOM_OBJECT_YAML.md
+
+version: 1
+
+name: Fan
+displayName: Ventoinha
+
+model:
+  file: fan.glb
+  scale: 1.0
+
+placement:
+  surfaceType: 1
+  facingAxis: 0
+  allowStickRotation: true
+  stickRotationAxis: 0
+  stickRotationSpeed: 90
+
+collision:
+  mode: mesh
+  convex: true
+
+audio:
+  file: fan.wav
+  loop: true
+  volume: 0.6
+  playOnAwake: true
+  distance:
+    min: 0.5
+    max: 4.0
+
+components:
+  - rotator
+
+rotator:
+  target: Blades
+  axis: y
+  speed: 180

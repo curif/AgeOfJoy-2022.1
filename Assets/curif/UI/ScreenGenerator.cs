@@ -38,6 +38,9 @@ public class ScreenGenerator : MonoBehaviour
 
     private bool needsDraw = false;
 
+    /// <summary>Flip the composed menu texture vertically at DrawScreen (portable / custom CRT UV).</summary>
+    public bool FlipOutputY { get; set; }
+
     private ShaderScreenBase shader;
     public ScreenGeneratorSkin Skin;
 
@@ -199,14 +202,42 @@ public class ScreenGenerator : MonoBehaviour
                 }
                 foreach (var s in sortedSpritesList)
                     DrawSpriteToBuffer(compositingBuffer, s.Pixels, s.PixelWidth, s.PixelHeight, s.X, s.Y);
+                if (FlipOutputY)
+                    FlipPixelRows(compositingBuffer, TextureWidth, TextureHeight);
                 screenTexture.SetPixels32(compositingBuffer);
                 screenTexture.Apply();
             } else {
+                if (FlipOutputY)
+                {
+                    Color32[] pixels = screenTexture.GetPixels32();
+                    FlipPixelRows(pixels, TextureWidth, TextureHeight);
+                    screenTexture.SetPixels32(pixels);
+                }
                 screenTexture.Apply();
             }
             needsDraw = false;
         }
         return this;
+    }
+
+    static void FlipPixelRows(Color32[] pixels, int width, int height)
+    {
+        if (pixels == null || width <= 0 || height <= 1)
+            return;
+
+        for (int y = 0; y < height / 2; y++)
+        {
+            int row = y * width;
+            int opposite = (height - 1 - y) * width;
+            for (int x = 0; x < width; x++)
+            {
+                int i = row + x;
+                int j = opposite + x;
+                Color32 tmp = pixels[i];
+                pixels[i] = pixels[j];
+                pixels[j] = tmp;
+            }
+        }
     }
 
     public class ScreenSprite

@@ -7,6 +7,15 @@ public class AtStart : MonoBehaviour
 {
     public void Start()
     {
+        MRRuntimeSettings.LogMissingInstanceOnce("AtStart");
+
+        if (MRRuntimeSettings.AutoEnterMrOnFixedSceneBoot)
+        {
+            ConfigManager.WriteConsole("[AtStart] skipped VR additive scenes — auto MR boot from FixedScene");
+            _ = CabinetInformation.PreloadAllAsync();
+            return;
+        }
+
         SceneManager.LoadSceneAsync("IntroGalleryExterior", LoadSceneMode.Additive);
         SceneManager.LoadSceneAsync("IntroGallery", LoadSceneMode.Additive);
 
