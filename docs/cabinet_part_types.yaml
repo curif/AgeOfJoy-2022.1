@@ -1,0 +1,118 @@
+# Cabinet part types reference
+# Source of truth: CabinetMaterials.cs, CabinetInformation.cs, CabinetFactory.cs
+
+part_types:
+  - value: normal
+    description: Regular cabinet geometry part (default)
+  - value: bezel
+    description: Front glass / bezel overlay; use sub-type to select the glass variant
+  - value: marquee
+    description: Top lit sign panel; use illumination-type to select lamp/tube variant
+  - value: blocker
+    description: Invisible collision/occluder mesh
+
+materials:
+  # Used in the `material:` field of any part
+  - name: black
+    description: Black with normal map support (fallback when an unknown name is given)
+    asset: Assets/Resources/Cabinets/Materials/CabinetBlackNormal.mat
+    shader: Unity built-in Standard
+  - name: base
+    description: Base sticker material with normal map
+    asset: Assets/Resources/Cabinets/Materials/BaseNormal.mat
+    shader: Unity built-in Standard
+  - name: lightwood
+    description: Light wood standard shader
+    asset: Assets/Resources/Cabinets/Materials/LightWoodStandard.mat
+    shader: Unity built-in Standard
+  - name: darkwood
+    description: Dark wood standard shader
+    asset: Assets/Resources/Cabinets/Materials/DarkWoodStandard.mat
+    shader: Unity built-in Standard
+  - name: plastic
+    description: Plastic
+    asset: Assets/Resources/Cabinets/Materials/Plastic.mat
+    shader: Unity built-in Standard
+  - name: dirty glass
+    description: Dirty/tinted glass
+    asset: Assets/Resources/Cabinets/Materials/GlassDirt.mat
+    shader: Unity built-in Standard
+  - name: layer glass
+    description: Transparent layered glass
+    asset: Assets/Resources/Cabinets/Materials/GlassTranspLayer.mat
+    shader: Unity built-in Standard
+  - name: clean glass
+    description: Clean glass
+    asset: Assets/Resources/Cabinets/Materials/GlassClean.mat
+    shader: Unity built-in Standard
+  - name: Vertex Color
+    description: Vertex-color-driven material with normal map
+    asset: Assets/Resources/Cabinets/Materials/Base_VertexColor_Normal.mat
+    shader: Assets/Shaders/AOJ/SH_AOJ_VertexColor_Normal.shader
+
+  common_properties:
+    # YAML key -> underlying shader property
+    smoothness: _Glossiness
+    metallic: _Metallic
+    color: _Color
+    emission-color: _EmmisionColor   # note: typo is in the shader; marquee uses _EmissionColor
+    normal: _BumpMap                 # vertex-color variant maps to _NormalMap instead
+
+bezel_sub_types:
+  # Applies only to parts with type: bezel
+  - value: simple
+    asset: Assets/Resources/Cabinets/Materials/FrontGlass_Cutout.mat
+    shader: Assets/Resources/Cabinets/Materials/FrontGlass_Cutout.shader
+    description: Cut-out glass, no additional dirt
+    properties:
+      smoothness: _Glossiness
+      metallic: _Metallic
+      color: _Color
+  - value: dirty glass
+    asset: Assets/Resources/Cabinets/Materials/FrontGlass_Bezel.mat
+    shader: Assets/Resources/Cabinets/Materials/SHA_FrontGlass_Bezel.shader
+    description: Smudged/dirty glass with extra surface controls
+    properties:
+      smoothness: _Glossiness
+      metallic: _Metallic
+      color: _Color
+      glass-translucency: _GlassTranslucency
+      dirtiness: _Dirtiness
+      glossiness-high: _GlossinessHigh
+      glossiness-low: _GlossinessLow
+      glossy-reflections: _GlossyReflections
+  - value: default
+    asset: Assets/Resources/Cabinets/Materials/FrontGlass.mat
+    shader: Assets/Resources/Cabinets/Materials/FrontGlass.shader
+    description: Standard bezel glass (used when sub-type is omitted or unrecognised)
+    properties:
+      smoothness: _Glossiness
+      metallic: _Metallic
+      color: _Color
+
+marquee_illumination_types:
+  # All marquee variants share the same shader; the emission map texture differs per material.
+  # Set via marquee.illuminationType in the part block.
+  shared_shader: Assets/Resources/Cabinets/Materials/MarqueeBacklitImage.shader
+  variants:
+    - value: none
+      asset: Assets/Resources/Cabinets/Materials/MarqueeNoLamps.mat
+      emission_map: Assets/Resources/Cabinets/Materials/MarqueeEmissionMapNoLamps.png
+    - value: one-lamp
+      asset: Assets/Resources/Cabinets/Materials/MarqueeOneLamp.mat
+      emission_map: Assets/Resources/Cabinets/Materials/MarqueeEmissionMapOneLamp.png
+      description: Default when illuminationType is omitted or unrecognised
+    - value: two-lamps
+      asset: Assets/Resources/Cabinets/Materials/MarqueeTwoLamps.mat
+      emission_map: Assets/Resources/Cabinets/Materials/MarqueeEmissionMapTwoLamps.png
+    - value: one-tube
+      asset: Assets/Resources/Cabinets/Materials/MarqueeOneTube.mat
+      emission_map: Assets/Resources/Cabinets/Materials/MarqueeEmissionMapOneTube.png
+    - value: two-tubes
+      asset: Assets/Resources/Cabinets/Materials/MarqueeTwoTubes.mat
+      emission_map: Assets/Resources/Cabinets/Materials/MarqueeEmissionMapTwoTubes.png
+
+  marquee_properties:
+    smoothness: _Glossiness
+    metallic: _Metallic
+    emission-color: _EmissionColor
