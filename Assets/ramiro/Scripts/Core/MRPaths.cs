@@ -12,6 +12,7 @@ public static class MRPaths
     public const string MrFolderName = "MR";
     public const string CustomObjectsFolderName = "Custom Objects";
     public const string PostersFolderName = "Posters";
+    public const string MagazinesFolderName = "Magazines";
     public const string RoomSkinsFolderName = "Room Skins";
     public const string CabinetsLayoutFileName = "cabinets-layout.yaml";
     public const string ObjectsLayoutFileName = "objects-layout.yaml";
@@ -26,6 +27,7 @@ public static class MRPaths
     public static string MrDir => Path.Combine(ConfigManager.BaseDir, MrFolderName);
     public static string CustomObjectsDir => Path.Combine(MrDir, CustomObjectsFolderName);
     public static string PostersDir => Path.Combine(MrDir, PostersFolderName);
+    public static string MagazinesDir => Path.Combine(MrDir, MagazinesFolderName);
     public static string RoomSkinsDir => Path.Combine(MrDir, RoomSkinsFolderName);
     public static string CabinetsLayoutPath => Path.Combine(MrDir, CabinetsLayoutFileName);
     public static string ObjectsLayoutPath => Path.Combine(MrDir, ObjectsLayoutFileName);
@@ -44,9 +46,11 @@ public static class MRPaths
         ConfigManager.CreateFolder(MrDir);
         ConfigManager.CreateFolder(CustomObjectsDir);
         ConfigManager.CreateFolder(PostersDir);
+        ConfigManager.CreateFolder(MagazinesDir);
         ConfigManager.CreateFolder(RoomSkinsDir);
         SeedExampleCustomObjectIfNeeded();
         SeedPostersReadmeIfNeeded();
+        SeedMagazineReadmeIfNeeded();
         MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
     }
 
@@ -101,6 +105,90 @@ public static class MRPaths
 
         return fullPath;
     }
+
+    public static string GetMagazineIssueDir(string issueName)
+    {
+        if (string.IsNullOrEmpty(issueName))
+            return null;
+
+        return Path.Combine(MagazinesDir, issueName);
+    }
+
+    public static string ResolveMagazinePagePath(string issueName, string pageFileName)
+    {
+        if (string.IsNullOrEmpty(issueName) || string.IsNullOrEmpty(pageFileName))
+            return null;
+
+        string issueDir = GetMagazineIssueDir(issueName);
+        string fullPath = Path.GetFullPath(Path.Combine(issueDir, pageFileName));
+        string magazineRoot = Path.GetFullPath(MagazinesDir);
+        if (!fullPath.StartsWith(magazineRoot, System.StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return fullPath;
+    }
+
+    /// <summary>Writes MR/Magazines/README.txt when the folder is new or empty.</summary>
+    public static void SeedMagazineReadmeIfNeeded()
+    {
+        if (!Directory.Exists(MagazinesDir))
+            return;
+
+        if (HasAnyMagazineIssue())
+            return;
+
+        string readmePath = Path.Combine(MagazinesDir, "README.txt");
+        if (File.Exists(readmePath))
+            return;
+
+        try
+        {
+            ConfigManager.CreateFolder(Path.Combine(MagazinesDir, ExamplePackageName));
+            File.WriteAllText(readmePath, MagazineReadmeText);
+            ConfigManager.WriteConsole($"[MRPaths] created magazine readme at {readmePath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {readmePath}", e);
+        }
+    }
+
+    static bool HasAnyMagazineIssue()
+    {
+        if (!Directory.Exists(MagazinesDir))
+            return false;
+
+        foreach (string issueDir in Directory.GetDirectories(MagazinesDir))
+        {
+            foreach (string file in Directory.GetFiles(issueDir, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                if (MRPostersCatalog.IsSupportedImageFile(file))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    const string MagazineReadmeText = @"Age of Joy — MR magazine pages
+==================================
+
+Export each PDF page as a numbered image, one issue per subfolder:
+
+  MR/Magazines/MyIssue/1.png   — front cover (outside, Left)
+  MR/Magazines/MyIssue/2.png   — inside front cover
+  MR/Magazines/MyIssue/3.png   — first right page
+  MR/Magazines/MyIssue/4.png   — next left page
+  ...
+  MR/Magazines/MyIssue/N-1.png — inside back cover
+  MR/Magazines/MyIssue/N.png   — back cover (outside, Right)
+
+Use an even page count. Files are sorted by leading number (1, 2, … 10, not 1, 10, 2).
+Supported formats: .png .jpg .jpeg .webp .bmp
+On Quest prefer .png or .jpg (.tif often does not load).
+
+Set the issue folder name on the Magazine component (e.g. MyIssue).
+";
 
     const string PostersReadmeText = @"Age of Joy — MR wall posters
 ================================
