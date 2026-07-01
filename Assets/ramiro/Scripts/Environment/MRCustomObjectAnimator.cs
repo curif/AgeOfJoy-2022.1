@@ -165,8 +165,7 @@ public class MRCustomObjectAnimator : MonoBehaviour
         clip.SampleAnimation(sampleRoot, 0f);
         ConfigManager.WriteConsoleWarning(
             $"{LogPrefix} {packageName}: clip '{clip.name}' is not legacy — using Editor SampleAnimation fallback");
-        return;
-#endif
+#else
         Animator animator = sampleRoot.GetComponent<Animator>();
         if (animator == null)
             animator = sampleRoot.AddComponent<Animator>();
@@ -184,6 +183,7 @@ public class MRCustomObjectAnimator : MonoBehaviour
 
         if (playing)
             playableGraph.Play();
+#endif
     }
 
     void StopPlayback()

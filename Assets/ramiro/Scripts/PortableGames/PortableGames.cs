@@ -1195,6 +1195,10 @@ public class PortableGames : MonoBehaviour
 #endif
         if (gameRunning && LibretroMameCore.isRunning(screenName, selectedGame))
             LibretroMameCore.End(screenName, selectedGame);
+
+        menuShaderOnline?.ReleaseMaterialInstance();
+        menuShaderOffline?.ReleaseMaterialInstance();
+        gameShader?.ReleaseMaterialInstance();
     }
 
     static string Truncate(string value, int maxLen)

@@ -524,7 +524,11 @@ public class MixedRealityManager : MonoBehaviour
         passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
 
         MRTransitionLog.LogStep("BoothEnterMR", "before EnablePassthroughWhenReady");
-        yield return passthrough.EnablePassthroughWhenReady();
+        // keepCameraBlack=true: VR scenes are still loaded here. Without this, ApplyPassthroughRendering
+        // would set Color.clear (travel head fade already ended), letting VR geometry show through the
+        // passthrough underlay. The black is released by RefreshPassthroughAfterSceneUnload once VR
+        // scenes are gone.
+        yield return passthrough.EnablePassthroughWhenReady(keepCameraBlack: true);
         MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();
         if (!IsTransitionCurrent(generation))
             yield break;

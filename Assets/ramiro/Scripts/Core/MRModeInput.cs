@@ -27,6 +27,7 @@ public class MRModeInput : MonoBehaviour
             cooldownTimer -= Time.unscaledDeltaTime;
 
         bool pressed = IsToggleButtonPressed();
+
         if (pressed)
         {
             holdTimer += Time.unscaledDeltaTime;

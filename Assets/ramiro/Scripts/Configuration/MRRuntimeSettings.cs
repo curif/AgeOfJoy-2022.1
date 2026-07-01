@@ -145,10 +145,16 @@ public class MRRuntimeSettings : MonoBehaviour
     void OnValidate()
     {
         if (!MRPhoneBoothTransitionSequence.ValidateImmersive(immersiveTravelSteps, out string immersiveWarn))
-            Debug.LogWarning($"[MRRuntimeSettings] immersive travel: {immersiveWarn}", this);
+        {
+            Debug.LogWarning($"[MRRuntimeSettings] immersive travel: {immersiveWarn} — resetting to defaults", this);
+            immersiveTravelSteps = MRPhoneBoothTransitionSequence.CopyDefaultImmersive();
+        }
 
         if (!MRPhoneBoothTransitionSequence.ValidateMrToVr(mrToVrReturnSteps, out string mrToVrWarn))
-            Debug.LogWarning($"[MRRuntimeSettings] MR→VR return: {mrToVrWarn}", this);
+        {
+            Debug.LogWarning($"[MRRuntimeSettings] MR→VR return: {mrToVrWarn} — resetting to defaults", this);
+            mrToVrReturnSteps = MRPhoneBoothTransitionSequence.CopyDefaultMrToVr();
+        }
 
         if (Application.isPlaying && !showRoomAnchorInfoCanvas)
             MRRoomInfoUI.Instance?.Hide();

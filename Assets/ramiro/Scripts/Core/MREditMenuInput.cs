@@ -4,16 +4,23 @@ This program is free software: you can redistribute it and/or modify it under th
 
 using UnityEngine;
 
-/// <summary>Hold Y 3s in MR to open the ConfigurationCabinet layout panel.</summary>
+/// <summary>
+/// Hold Y 3s in MR to open/close the ConfigurationCabinet layout panel.
+/// Double-tap Y (two presses within 0.5s) to summon the cabinet to the player's current position.
+/// </summary>
 public class MREditMenuInput : MonoBehaviour
 {
     const string LogPrefix = "[MREditMenuInput]";
 
     [SerializeField] float holdDurationSeconds = 3f;
+    [SerializeField] float doubleTapWindowSeconds = 0.5f;
     [SerializeField] KeyCode editorToggleKey = KeyCode.M;
+    [SerializeField] KeyCode editorSummonKey = KeyCode.N;
 
     float holdTimer;
+    float doubleTapTimer;
     bool wasPressed;
+    bool waitingForSecondTap;
 
     void Update()
     {
@@ -31,6 +38,13 @@ public class MREditMenuInput : MonoBehaviour
             ResetHold();
             return;
         }
+        if (MREditorInput.WasPressed(editorSummonKey))
+        {
+            MRConfigurationCabinetController.Instance?.SummonToPlayer();
+            ConfigManager.WriteConsole($"{LogPrefix} editor summon ({editorSummonKey})");
+            ResetHold();
+            return;
+        }
 #endif
 
         ExperienceMode mode = MixedRealityManager.Instance.CurrentMode;
@@ -40,7 +54,33 @@ public class MREditMenuInput : MonoBehaviour
             return;
         }
 
+        if (waitingForSecondTap)
+        {
+            doubleTapTimer -= Time.deltaTime;
+            if (doubleTapTimer <= 0f)
+                waitingForSecondTap = false;
+        }
+
         bool pressed = IsYButtonPressed();
+        bool justPressed = pressed && !wasPressed;
+
+        if (justPressed)
+        {
+            if (waitingForSecondTap)
+            {
+                waitingForSecondTap = false;
+                holdTimer = 0f;
+                MRConfigurationCabinetController.Instance?.SummonToPlayer();
+                ConfigManager.WriteConsole($"{LogPrefix} double-tap Y — summoning cabinet to player");
+                PulseHaptic();
+            }
+            else
+            {
+                waitingForSecondTap = true;
+                doubleTapTimer = doubleTapWindowSeconds;
+            }
+        }
+
         if (pressed)
         {
             holdTimer += Time.deltaTime;
@@ -48,6 +88,7 @@ public class MREditMenuInput : MonoBehaviour
                 ConfigManager.WriteConsole($"{LogPrefix} holding Y to toggle layout cabinet...");
             if (holdTimer >= holdDurationSeconds)
             {
+                waitingForSecondTap = false;
                 MRConfigurationCabinetController.Instance?.ToggleEdit();
                 holdTimer = 0f;
                 PulseHaptic();
@@ -65,6 +106,8 @@ public class MREditMenuInput : MonoBehaviour
     {
         holdTimer = 0f;
         wasPressed = false;
+        waitingForSecondTap = false;
+        doubleTapTimer = 0f;
     }
 
     static bool IsYButtonPressed()

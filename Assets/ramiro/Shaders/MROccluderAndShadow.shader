@@ -115,6 +115,7 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_fwdbase
+            #pragma skip_variants LIGHTMAP_ON DIRLIGHTMAP_COMBINED DYNAMICLIGHTMAP_ON LIGHTMAP_SHADOW_MIXING SHADOWS_SHADOWMASK
             #include "UnityCG.cginc"
             #include "AutoLight.cginc"
 
