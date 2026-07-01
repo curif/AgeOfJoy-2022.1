@@ -26,7 +26,7 @@ using UnityEditor;
 [RequireComponent(typeof(basicAGE))]
 [RequireComponent(typeof(CabinetAGEBasic))]
 [RequireComponent(typeof(LightGunTarget))]
-public class AGEBasicCabinetController : MonoBehaviour
+public class AGEBasicCabinetController : MonoBehaviour, ISuspendableCabinetScreen
 {
     
     [SerializeField]
@@ -146,6 +146,41 @@ public class AGEBasicCabinetController : MonoBehaviour
         {
             StopCoroutine(mainCoroutine);
             mainCoroutine = null;
+        }
+    }
+
+    /// <summary>Restart the attract-mode BT after a suspend.</summary>
+    public void EnsureAttractLoopRunning()
+    {
+        if (!initialized || !isActiveAndEnabled)
+            return;
+
+        if (mainCoroutine == null)
+            mainCoroutine = StartCoroutine(runBT());
+    }
+
+    /// <summary>Stop BT ticking and any running AGEBasic program (no video on this controller type).</summary>
+    public void SuspendAttractAndPlaybackForTransition()
+    {
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
+
+        // Fully stop a running program (same cleanup as the "END Program" BT node)
+        // so the AGEBasic interpreter doesn't keep executing invisibly.
+        if (CoinWasInserted || cabinetAGEBasic.AGEBasic.IsRunning() || cabinetAGEBasic.AGEBasic.IsRunningInBackground())
+        {
+            cabinet.PhyDeactivate();
+            cabinetAGEBasic.Stop(); //force
+            cabinetAGEBasic.ExecAfterLeaveBas();
+
+            EndPlayerActivities();
+            if (lightGunTarget != null && lightGunInformation != null)
+                lightGunTarget.enabled = false;
+
+            CoinWasInserted = false;
         }
     }
 

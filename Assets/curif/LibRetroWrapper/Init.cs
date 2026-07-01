@@ -122,6 +122,101 @@ public class Init : MonoBehaviour
             sb.Append(SceneManager.GetSceneAt(i).name);
         }
         ConfigManager.WriteConsole(sb.ToString());
+
+        LogLightmapMemorySnapshot(context);
+    }
+
+    // Baked lightmaps (color/dir/shadowmask) are GPU-resident textures that live
+    // outside CabinetTextureCache entirely - LightmapSettings.lightmaps is a global
+    // array combining every currently loaded scene's lightmap set, so this tells us
+    // whether lightmaps plausibly explain the gap between graphicsDriver and our
+    // tracked cache size, without reading pixel data back (which would stall the GPU).
+    private void LogLightmapMemorySnapshot(string context)
+    {
+        LightmapData[] lightmaps = LightmapSettings.lightmaps;
+        long totalBytes = 0;
+        var detail = new StringBuilder();
+
+        for (int i = 0; i < lightmaps.Length; i++)
+        {
+            LightmapData data = lightmaps[i];
+            long setBytes = 0;
+
+            detail.Append($"[Init.Memory] {context} | lightmap[{i}]");
+            setBytes += AppendTextureInfo(detail, "color", data.lightmapColor);
+            setBytes += AppendTextureInfo(detail, "dir", data.lightmapDir);
+            setBytes += AppendTextureInfo(detail, "shadowMask", data.shadowMask);
+            detail.Append($" estMB={setBytes / (1024f * 1024f):F2}");
+
+            totalBytes += setBytes;
+            ConfigManager.WriteConsole(detail.ToString());
+            detail.Clear();
+        }
+
+        ConfigManager.WriteConsole($"[Init.Memory] {context} | lightmaps: {lightmaps.Length} sets, estTotal: {totalBytes / (1024f * 1024f):F1}MB");
+    }
+
+    private static long AppendTextureInfo(StringBuilder sb, string label, Texture2D tex)
+    {
+        if (tex == null)
+        {
+            sb.Append($" {label}=none");
+            return 0;
+        }
+
+        long bytes = (long)((float)tex.width * tex.height * BytesPerPixel(tex.format));
+        sb.Append($" {label}={tex.format} {tex.width}x{tex.height}");
+        return bytes;
+    }
+
+    private static float BytesPerPixel(TextureFormat format)
+    {
+        switch (format)
+        {
+            case TextureFormat.RGBA32:
+            case TextureFormat.ARGB32:
+            case TextureFormat.BGRA32:
+                return 4f;
+            case TextureFormat.RGB24:
+                return 3f;
+            case TextureFormat.RGB565:
+            case TextureFormat.RGBA4444:
+                return 2f;
+            case TextureFormat.Alpha8:
+            case TextureFormat.R8:
+                return 1f;
+            case TextureFormat.RGBAHalf:
+                return 8f;
+            case TextureFormat.RGHalf:
+                return 4f;
+            case TextureFormat.RHalf:
+                return 2f;
+            case TextureFormat.RGB9e5Float:
+                return 4f;
+            case TextureFormat.BC6H:
+                return 1f; // 16 bytes per 4x4 block = 1 byte/pixel
+            case TextureFormat.DXT1:
+            case TextureFormat.ETC2_RGB:
+                return 0.5f; // 8 bytes per 4x4 block
+            case TextureFormat.DXT5:
+            case TextureFormat.ETC2_RGBA8:
+                return 1f; // 16 bytes per 4x4 block
+            // ASTC: 128 bits per block regardless of block size, so bytes/pixel = 16 / (blockW * blockH)
+            case TextureFormat.ASTC_4x4:
+                return 1f;
+            case TextureFormat.ASTC_5x5:
+                return 0.64f;
+            case TextureFormat.ASTC_6x6:
+                return 0.444f;
+            case TextureFormat.ASTC_8x8:
+                return 0.25f;
+            case TextureFormat.ASTC_10x10:
+                return 0.16f;
+            case TextureFormat.ASTC_12x12:
+                return 0.111f;
+            default:
+                return 4f; // conservative fallback for unlisted formats
+        }
     }
 
     void loadOperations()

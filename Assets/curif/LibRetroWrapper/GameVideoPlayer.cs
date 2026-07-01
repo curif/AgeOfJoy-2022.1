@@ -183,9 +183,20 @@ public class GameVideoPlayer : MonoBehaviour
         // ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
         //destroy internal resources.
         videoPlayer.Stop();
-        if (textureCache.AlreadyCached() && shader.Texture != textureCache.CachedTexture)
-            shader.Texture = textureCache.CachedTexture;
-        // shader.Activate(textureCache.CachedTexture);
+        if (shader != null)
+        {
+            if (textureCache.AlreadyCached())
+            {
+                if (shader.Texture != textureCache.CachedTexture)
+                    shader.Texture = textureCache.CachedTexture;
+            }
+            else if (ShaderScreenBase.StandByTexture != null && shader.Texture != ShaderScreenBase.StandByTexture)
+            {
+                // No attract-video frame cached yet: fall back to the generic standby image
+                // rather than leaving whatever was previously rendered on screen.
+                shader.Texture = ShaderScreenBase.StandByTexture;
+            }
+        }
 
 #endif
         return this;
