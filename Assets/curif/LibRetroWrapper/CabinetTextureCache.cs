@@ -115,6 +115,13 @@ public static class CabinetTextureCache
 
                 ConfigManager.WriteConsole($"[LoadAndCacheAsync] use original texture -  size {originalSizeInBytes} or player conf {path}");
 
+                // FREE SYSTEM RAM (same as the compressed-mode branch below): uploads to GPU
+                // and drops the CPU-side mirror when the caller doesn't need pixel readback
+                // (e.g. ScreenGenerator's sprites pass makeNoLongerReadable: false because they
+                // need GetPixels32() later). Without this, every original-mode texture kept a
+                // full CPU copy alongside its GPU copy indefinitely.
+                texTmp.Apply(false, makeNoLongerReadable);
+
                 cached = CachedTextures.Add(path, texTmp, originalSizeInBytes / (1024f * 1024f));
                 if (cached != texTmp)
                 {

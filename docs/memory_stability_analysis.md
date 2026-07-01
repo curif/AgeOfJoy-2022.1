@@ -239,3 +239,77 @@ and gates, and watch the `[Memory Check] RAM after unload` log line in
 often. For the `RenderTexture` fix specifically, rapidly entering/leaving a room with
 several cabinets mid-load and checking `adb shell dumpsys meminfo` for GPU memory growth
 would confirm the leak is closed.
+
+---
+
+## Follow-up: 2026-07-01 GPU memory gap investigation
+
+On-device logs show a confirmed gap between `CabinetTextureCache`'s tracked size and
+Unity's actual GPU memory in use:
+
+```
+graphicsDriver: 3430.7MB | texturesCache: 1474.04MB (96.0%, 258 items, 222 pinned)
+CabinetCache: 53.05MB | CabinetInformationCache: 8.55MB
+gap ≈ 3430.7 - 1474.04 - 53.05 - 8.55 ≈ 1895MB
+```
+
+This pass checked every remaining candidate from the prior session's open list and ruled
+each one out or found it to be a non-issue — none of them explain the ~1.9GB:
+
+- **`ScreenGenerator.cs` CRT textures**: ~256-512KB/cabinet, already has the `OnDestroy()`
+  teardown from the fix above. Too small to matter.
+- **`LibretroMameCore.cs` frame texture**: a single static, reused `GameTexture`; only one
+  emulator core runs app-wide at a time. Too small to matter.
+- **Pixel Crushers "Scene Streamer" plugin** (`Assets/Plugins/Pixel Crushers/Scene Streamer/`):
+  looked plausible at first (`maxNeighborDistance: 1` would keep multiple rooms' lightmaps
+  resident), but confirmed via GUID/reference search across every scene/prefab/script that
+  it is **entirely dead code** — not instantiated anywhere, not referenced by any gameplay
+  script. Not relevant to the real room-traversal flow (`GateController`/`TeleportationController`).
+- **`Assets/ramiro/.../MRSceneTransition.cs`**: has a real defect (its
+  `Resources.UnloadUnusedAssets()` call after `UnloadVrScenes()` is wrongly wrapped in
+  `#if UNITY_EDITOR`, so it never runs in device builds), but this project doesn't use MR
+  mode, so it's not contributing to this gap. Noted here for awareness, not fixed.
+- **Baked lightmaps**: added `LogLightmapMemorySnapshot()` to `Init.cs` (reads
+  `LightmapSettings.lightmaps`, estimates size from format/dimensions without reading back
+  pixel data). Confirmed via device log: only ~32MB total across 4 lightmap sets
+  (2048x2048, ASTC_4x4) even with 4 scenes loaded simultaneously (`FixedScene`, `Room004`,
+  `Room005`, `Room006`). Negligible.
+- **`CabinetTextureCache.CalculateActualSizeBytes()`** (~line 577): confirmed
+  format-aware and mip-aware — reads the live `tex.format`/`tex.mipmapCount` at
+  cache-insert time, so it isn't silently undercounting its own cached textures (e.g. no
+  compressed-vs-uncompressed mismatch when `originalTextures` mode is active). One smaller
+  lead surfaced here: original-mode textures are never marked non-readable, so they may
+  keep a CPU-side shadow copy — but that's system RAM, not GPU driver memory, so it doesn't
+  explain this specific gap.
+- MSAA 4x on the active "High" quality level is a real but modest (~200-300MB order)
+  contributor to stereo eye-buffer memory; not touched, since changing it trades off visual
+  quality.
+
+### Tooling added: Memory Profiler wiring
+
+With every individually-instrumentable suspect ruled out, further one-at-a-time hypothesis
+testing has diminishing returns. Added an opt-in `-development` build flag to
+`Assets/Editor/Builder.cs` (sets `BuildOptions.Development | BuildOptions.ConnectWithProfiler
+| BuildOptions.AllowDebugging`, leaving normal builds unaffected) so a profiler-connectable
+APK can be produced on demand. Combined with Unity's `com.unity.memoryprofiler` package
+(install via **Window > Package Manager > Unity Registry > "Memory Profiler"** — not yet
+added to `Packages/manifest.json`, since picking a version compatible with 2021.3.22f1
+needs live registry resolution rather than a guessed version string), this gives a real
+categorized GPU memory snapshot (Unity Objects / Native / Managed / graphics resources)
+instead of further guesswork.
+
+### Verification performed
+
+Code-level only, as above. `LogLightmapMemorySnapshot()` was verified against a real
+device log (see numbers above). The `-development` build flag change is untested until the
+user builds with it; no gameplay behavior changes in this pass, so no regression risk
+beyond confirming normal builds (without `-development`) are unaffected.
+
+### Still open
+
+The ~1.9GB gap remains unexplained. Next step: user builds with `-development`, installs
+the Memory Profiler package, captures one snapshot on-device with several rooms/cabinets
+active, and shares the category breakdown — that data should point at the actual
+consumer (candidates not yet instrumented: scene mesh/vertex/index buffers, material/shader
+variant memory, VR compositor render targets, driver-side texture padding, or the
+poster/config `Texture2D`s outside `CabinetTextureCache` flagged during this investigation).
