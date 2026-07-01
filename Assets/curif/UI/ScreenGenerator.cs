@@ -58,6 +58,22 @@ public class ScreenGenerator : MonoBehaviour
     /// </summary>
     public Texture2D Screen { get { return screenTexture; } }
 
+    private void OnDestroy()
+    {
+        // Mirrors the explicit cleanup already done for baseTexture in ClearSprites();
+        // without this, screenTexture only gets reclaimed on the next Resources.UnloadUnusedAssets() sweep.
+        if (screenTexture != null)
+        {
+            UnityEngine.Object.Destroy(screenTexture);
+            screenTexture = null;
+        }
+        if (baseTexture != null)
+        {
+            UnityEngine.Object.Destroy(baseTexture);
+            baseTexture = null;
+        }
+    }
+
     /// <summary>
     /// Initializes the ScreenGenerator with a specific skin.
     /// Creates the texture, resets colors, and sets the cursor to (0,0).
