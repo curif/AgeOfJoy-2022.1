@@ -8,13 +8,13 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: MagazinePageTurn
-  m_Shader: {fileID: 4800000, guid: a07b306ddc245104faf85dfd81622970, type: 3}
+  m_Shader: {fileID: 4800000, guid: 6c53c4f4329eb5743a8f9b90c7f17fe4, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
-  - _CURLFROMBOTTOM_ON
-  - _INVERTBEND_ON
+  - _AUTOFRAME_ON
+  - _CURLFROMUV_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -26,29 +26,36 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _PageBack:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 349b45c07ec66f54a94dbeb3bdfbe9da, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _PageFront:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 87af48a8d81d6094f9a516fcfd6b26f9, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _CurlAngle: 160
-    - _CurlFromBottom: 1
-    - _CurlPower: 1.01
-    - _FlipBackU: 1
-    - _FlipFrontU: 1
+    - _AutoFrame: 1
+    - _CornerBias: 0.35
+    - _CurlAngle: 50
+    - _CurlFromUv: 1
+    - _CurlPower: 4
+    - _FlipBackU: 0
+    - _FlipFrontU: 0
     - _FlipProgress: 0
-    - _InvertBend: 1
+    - _GrabFarCorner: 0
+    - _GrabTopCorner: 0
+    - _InvertBend: 0
     - _PageHeight: 1
     - _PageHeightMin: 0
-    - _PageWidth: 2
+    - _PageWidth: 5
+    - _SpineAtUvX0: 1
+    - _SpineEdge: 0
+    - _TipLift: 0.05
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _CurlAxis: {r: 0, g: 0, b: 1, a: 0}
-    - _PageDir: {r: 0, g: 0, b: 1, a: 0}
+    - _PageDir: {r: 1, g: 0, b: 0, a: 0}
     - _PageHeightAxis: {r: 0, g: 1, b: 0, a: 0}
-    - _SpinePoint: {r: 0, g: 1, b: 0, a: 0}
+    - _SpinePoint: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []

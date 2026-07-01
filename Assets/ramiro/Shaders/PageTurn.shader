@@ -5,7 +5,12 @@ This program is free software: you can redistribute it and/or modify it under th
 // Corner-grab page turn. The bound edge (Spine Edge) stays fixed; the opposite free
 // edge lifts out of the page plane and rolls back over the spine, like a hand peeling
 // a page. Corner Bias makes one corner lead so it reads as a diagonal grab.
-Shader "ramiro/MagazinePageTurn"
+//
+// Test on a Unity Quad (1x1, UV 0..1):
+//   - Spine Edge = Top to reproduce a top-bound pad (hand lifts from the top).
+//   - Spine Edge = Left for a left-bound magazine page.
+//   - Drag Flip Progress 0 -> 1. Use Invert Bend if it lifts the wrong way.
+Shader "ramiro/PageTurn"
 {
     Properties
     {
@@ -107,12 +112,20 @@ Shader "ramiro/MagazinePageTurn"
                 return v * c + cross(axis, v) * s + axis * dot(axis, v) * (1.0 - c);
             }
 
+            // Resolve the page frame for this vertex.
+            //  along : dir from spine toward the free edge (unit)
+            //  spineAxis : dir along the spine / hinge (unit)
+            //  p : normalized 0 (spine) .. 1 (free edge)
+            //  q : normalized coordinate along the spine (for the leading corner)
+            //  width : object-space page length from spine to free edge
             void ResolveFrame(float3 localPos, float2 uv, float3 nrm, float4 tan,
                 out float3 along, out float3 spineAxis, out float p, out float q, out float width)
             {
                 float3 dirX, dirY;
                 if (_AutoFrame > 0.5)
                 {
+                    // Build the page frame straight from the mesh: tangent = +uv.x direction,
+                    // bitangent = +uv.y direction, normal = out of page. No manual axes needed.
                     float3 n = SafeNormalize(nrm, float3(0.0, 0.0, 1.0));
                     dirX = SafeNormalize(tan.xyz, float3(1.0, 0.0, 0.0));
                     dirY = SafeNormalize(cross(n, dirX) * tan.w, float3(0.0, 1.0, 0.0));
@@ -126,19 +139,20 @@ Shader "ramiro/MagazinePageTurn"
 
                 if (_CurlFromUv > 0.5)
                 {
-                    if (_SpineEdge < 0.5)        // Left
+                    // Pick along/spine axes and coordinates from the chosen spine edge.
+                    if (_SpineEdge < 0.5)        // Left  (spine at u=0)
                     {
                         along = dirX;  spineAxis = dirY;  p = uv.x;        q = uv.y;  width = _PageWidth;
                     }
-                    else if (_SpineEdge < 1.5)   // Right
+                    else if (_SpineEdge < 1.5)   // Right (spine at u=1)
                     {
                         along = -dirX; spineAxis = dirY;  p = 1.0 - uv.x;  q = uv.y;  width = _PageWidth;
                     }
-                    else if (_SpineEdge < 2.5)   // Bottom
+                    else if (_SpineEdge < 2.5)   // Bottom (spine at v=0)
                     {
                         along = dirY;  spineAxis = dirX;  p = uv.y;        q = uv.x;  width = _PageHeight;
                     }
-                    else                          // Top
+                    else                          // Top (spine at v=1)
                     {
                         along = -dirY; spineAxis = dirX;  p = 1.0 - uv.y;  q = uv.x;  width = _PageHeight;
                     }
@@ -170,19 +184,24 @@ Shader "ramiro/MagazinePageTurn"
                 float p, q, width;
                 ResolveFrame(localPos, uv, localNormal, tangent, along, spineAxis, p, q, width);
 
-                float3 outOfPlane = cross(along, spineAxis);
+                float3 outOfPlane = cross(along, spineAxis); // lift direction
 
+                // Leading corner weight along the spine (diagonal grab). Corner Bias 0 = the
+                // whole page rolls evenly; 1 = only the leading column rolls.
                 float cornerW = _GrabFarCorner > 0.5 ? q : (1.0 - q);
                 cornerW = pow(saturate(cornerW), _CurlPower);
                 float weight = lerp(1.0, cornerW, saturate(_CornerBias));
 
                 float bendSign = _InvertBend > 0.5 ? -1.0 : 1.0;
 
+                // Cylindrical roll: the whole strip from spine (p=0) to free edge bends into a
+                // circular arc. Curvature is constant per column, so the entire page folds
+                // smoothly instead of only the tip. Spine stays fixed.
                 float totalAngle = bendSign * _FlipProgress * radians(_CurlAngle) * weight;
-                float arcLen = p * width;
-                float3 pivot = localPos - along * arcLen;
+                float arcLen = p * width;                 // distance from spine along the page
+                float3 pivot = localPos - along * arcLen; // point on the spine at this column
 
-                float k = totalAngle / width;
+                float k = totalAngle / width;             // curvature (rad per object unit)
                 float bendAngle = k * arcLen;
                 float newAlong, newLift;
                 if (abs(k) < 1e-4)
