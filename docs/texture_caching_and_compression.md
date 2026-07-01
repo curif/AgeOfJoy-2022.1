@@ -51,6 +51,27 @@ Once loaded (either from disk cache or freshly processed), the `Texture2D` objec
 
 ---
 
+## 3b. Pinning: Protecting On-Screen Textures From Eviction
+
+### The Bug: Cabinets Going Dark
+Cabinet artwork is bound to a `Material` **once**, at cabinet-build time, via `CabinetPart.SetTextureFromFile()` / `SetEmissionTextureFromFile()`. The `Material` then holds a raw C# reference to the `Texture2D` and the cache is never queried again for that texture while the cabinet stays loaded — the LRU only refreshes an entry's recency on `Add`/`Get`, and nothing ever calls `Get` again for an already-displayed texture.
+
+Because of this, once enough *other* cabinets loaded and pushed the total past the 1024MB/1536MB budget, the LRU could pick an **actively on-screen** texture as the eviction victim (it looked "oldest" purely because nothing had touched it since load), destroy the underlying `Texture2D`, and leave the `Material` pointing at a destroyed object — rendering that cabinet dark/black, even though a player might be looking straight at it.
+
+### The Fix: Ref-Counted Pinning
+`ResourceCache<K,V>` (`Assets/curif/LibRetroWrapper/ResourceCache.cs`) now supports **pinning** an entry to protect it from automatic LRU eviction:
+*   `Pin(key)` / `Unpin(key)` maintain a ref count per key (multiple owners can pin the same texture, e.g. shared artwork reused across cabinets).
+*   `makeSpaceFor()` and `FreeHalfResources()` (the two eviction paths) walk the LRU list from least- to most-recently-used and **skip any pinned key**, only destroying genuinely idle (unpinned) textures.
+*   If every entry in the cache happens to be pinned and the budget is still exceeded, eviction gives up gracefully (logs a warning once) rather than destroying something currently in use — the cache simply runs over budget until something becomes eligible again.
+
+`CabinetTextureCache` exposes this as `PinTexture(path)` / `UnpinTexture(path)`.
+
+`CabinetPart` calls `PinTexture` immediately after binding a loaded texture to a material (in both `SetTextureFromFile` and `SetEmissionTextureFromFile`), and tracks every path it pinned in a local list. Its new `OnDestroy()` unpins all of them, so pins are released correctly when a cabinet is torn down (e.g. during a marketplace `CabinetReplace` swap) and don't leak over time.
+
+**Scope note:** this pinning mechanism currently only covers cabinet-part textures (marquee/bezel/side-art/emission). The thumbnail flow (`TextureCache.cs`) and UI sprite cache (`ScreenGenerator.LoadSprite`) still rely on plain LRU — lower risk since those textures are more transient — but can adopt the same `Pin`/`Unpin` primitive later if needed.
+
+---
+
 ## 4. Texture Size Calculation (`CalculateActualSizeBytes`)
 
 The LRU cache needs an accurate size in MB for every texture it stores. This is calculated by `CabinetTextureCache.CalculateActualSizeBytes(Texture2D)` using a **manual width × height × bytes-per-pixel formula**, accounting for the texture format and mipmap chain (×1.33 multiplier when mipmaps are present).
@@ -68,6 +89,8 @@ The manual formula uses only `tex.width`, `tex.height`, and `tex.format` — all
 ---
 
 ## 5. Summary of Key Files
-*   **`Assets/curif/LibRetroWrapper/CabinetTextureCache.cs`**: The orchestrator. Handles downloading, dimension verification, async GPU resizing, memory caching, and triggering the disk save.
+*   **`Assets/curif/LibRetroWrapper/CabinetTextureCache.cs`**: The orchestrator. Handles downloading, dimension verification, async GPU resizing, memory caching, and triggering the disk save. Also exposes `PinTexture`/`UnpinTexture`.
 *   **`Assets/curif/LibRetroWrapper/TextureDiskCache.cs`**: Handles the low-level binary I/O for saving and loading the `.aojv1` pre-compressed texture files.
+*   **`Assets/curif/LibRetroWrapper/ResourceCache.cs`**: The generic LRU memory cache (`ResourceCache<K,V>` / `ResourceCacheManager`) used for textures. Implements the ref-counted pinning described in section 3b.
+*   **`Assets/curif/LibRetroWrapper/CabinetPart.cs`**: Binds loaded textures to cabinet materials and pins them for as long as the cabinet part is alive, unpinning in `OnDestroy()`.
 *   **`Assets/curif/LibRetroWrapper/GpuRgb565Converter.cs` / `GpuAlphaCheck.cs`**: Auxiliary tools for advanced GPU-based texture manipulation, primarily used when trying to optimize alpha channels or convert to lower-precision 16-bit formats for older hardware.

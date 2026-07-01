@@ -140,15 +140,15 @@ If the player leaves the room while a cabinet is loading, Unity stops the corout
 
 ## Summary
 
-| # | Root Cause | Severity |
-|---|-----------|---------|
-| 1 | `FORCE_DEBUG` active in release — GC pressure from unconditional string allocation | Critical |
-| 2 | GLB cache uses disk file size instead of actual GPU memory size — eviction never fires | Critical |
-| 3 | `Clear()` discards the `AsyncOperation` from `UnloadUnusedAssets()` — memory not actually freed | High |
-| 4 | Texture cache limits (1024/1536 MB) leave no safety margin on Quest 2 | High |
-| 5 | `TextureCache` (video player) is uncoordinated with `ResourceCacheManager` — invisible unbounded memory | High |
-| 6 | `CabinetInformationCache` uses item-count units in an MB-based LRU — eviction logic broken | Medium |
-| 7 | GPU `RenderTexture` leaked when texture-load coroutine is cancelled mid-readback | Medium |
+| # | Root Cause | Severity | Status |
+|---|-----------|---------|--------|
+| 1 | `FORCE_DEBUG` active in release — GC pressure from unconditional string allocation | Critical | ✅ Fixed |
+| 2 | GLB cache uses disk file size instead of actual GPU memory size — eviction never fires | Critical | ✅ Fixed |
+| 3 | `Clear()` discards the `AsyncOperation` from `UnloadUnusedAssets()` — memory not actually freed | High | ✅ Fixed |
+| 4 | Texture cache limits (1024/1536 MB) leave no safety margin on Quest 2 | High | ⏳ Open — needs on-device profiling before changing |
+| 5 | `TextureCache` (video player) is uncoordinated with `ResourceCacheManager` — invisible unbounded memory | High | ✅ Fixed |
+| 6 | `CabinetInformationCache` uses item-count units in an MB-based LRU — eviction logic broken | Medium | ✅ Fixed (2026-07-01) |
+| 7 | GPU `RenderTexture` leaked when texture-load coroutine is cancelled mid-readback | Medium | ✅ Fixed (2026-07-01) |
 
 ---
 
@@ -162,3 +162,80 @@ If the player leaves the room while a cabinet is loading, Unity stops the corout
 6. GC pressure from debug logging compounds every step (Issue #1).
 
 The single highest-impact fix is **Issue #2** (measure actual model memory). The quickest fix to ship is **Issue #1** (gate `WriteConsole` on `BugReportManager.IsDebugModeActive()`).
+
+---
+
+## Follow-up: 2026-07-01 fixes
+
+By this date, issues #1, #2, #3, and #5 had already been fixed in earlier commits
+(`42a10b04`, `a5cc41a6`, `5542ed1a`, and the `#if UNITY_EDITOR || DEVELOPMENT_BUILD`
+guard now around `DEBUG_ACTIVE` in `ConfigManager.cs:7-9`). This pass closed the
+remaining two documented issues and one additional gap found during the review.
+
+### Issue #6 fixed — `CabinetInformationCache` now sized in real MB
+
+**Files:** `Assets/curif/LibRetroWrapper/CabinetInformation.cs`, `Assets/curif/LibRetroWrapper/ConfigManager.cs`
+
+The original proposed fix (shrink the 5000-item cap) would have broken an intentional
+feature: `CabinetInformation.PreloadAllAsync()` deliberately preloads *every* cabinet's
+`description.yaml` into this cache at startup, so a small cap would cause constant
+eviction/reload churn during preload.
+
+Instead, `CabinetInformation.fromYaml()` now estimates each entry's real size from its
+source YAML text length (`yaml.Length * 2` bytes, a reasonable proxy since a parsed YAML
+object graph stays the same order of magnitude as its source text — unlike a GLB's much
+larger GPU expansion) and passes that as the `sizeInMB` argument to
+`ConfigManager.CabinetInformationCache.Add(...)`. The cache budget in `ConfigManager.cs`
+was changed from `5000f` (mislabeled "units not MB") to a genuine `64f` MB, which
+comfortably holds several thousand typical cabinet descriptions while still being a real,
+enforceable memory bound.
+
+### Issue #7 fixed — GPU `RenderTexture` no longer leaks on coroutine cancellation
+
+**Files:** `Assets/curif/LibRetroWrapper/CabinetTextureCache.cs` (GPU resize/compress path, ~line 142), `Assets/curif/LibRetroWrapper/TextureCache.cs` (`SaveTextureCoroutine`, ~line 66)
+
+Both coroutines now wrap `Graphics.Blit` + `AsyncGPUReadback.Request` + the
+`while (!request.done) yield return null;` wait loop in a `try/finally`, with
+`RenderTexture.ReleaseTemporary(rt)` moved into the `finally` block. If Unity stops the
+coroutine mid-wait (e.g. the player leaves the room while a cabinet's art is still
+loading or a thumbnail is still being saved), the `RenderTexture` is now always released
+instead of leaking GPU memory. `AsyncGPUReadbackRequest` is a struct, so it's declared
+before the `try` and assigned inside it — used again after the `finally` runs.
+
+### New finding fixed — `ScreenGenerator.screenTexture` had no explicit teardown
+
+**File:** `Assets/curif/UI/ScreenGenerator.cs`
+
+Not one of the original 7 issues, but found while reviewing the same area: every cabinet
+screen's `screenTexture` (created in `createTexture()`) had no `OnDestroy()`, unlike its
+sibling `baseTexture` in the same class, which is explicitly `Destroy()`'d in
+`ClearSprites()`. It relied entirely on periodic `Resources.UnloadUnusedAssets()` sweeps
+to be reclaimed. Added an `OnDestroy()` that destroys both `screenTexture` and
+`baseTexture` (if still set) as soon as the `ScreenGenerator` component is destroyed,
+rather than waiting for the next sweep.
+
+### Still open — Issue #4 (cache size constants)
+
+Texture cache (1024 MB Quest 2 / 1536 MB Quest 3) and model cache (512 MB) budgets were
+left unchanged. Now that Issues #1-#3 are fixed, there may be headroom to raise them
+responsibly, but this needs on-device validation (`adb shell dumpsys meminfo <package>`
+on real Quest 2 hardware) rather than a code-only guess — changing these blind risks
+re-introducing OOM crashes. Recommended next step: build with the fixes above, profile
+actual memory headroom on-device across a full room-traversal session, then revisit these
+constants together with the `GateController.cs` aggressive-cleanup threshold (`mem > 2500`)
+so they're tuned as one system rather than independently.
+
+### Verification performed
+
+Code-level only (no automated test runner for this project). Confirmed by direct
+inspection that:
+- `ConfigManager.cs:7-9` gates `DEBUG_ACTIVE` on editor/dev builds (Issue #1 stayed fixed).
+- `CabinetFactory.CalculateGameObjectSizeBytes()` and `ResourceCacheManager.FreeResourcesAsync()` remain in place (Issues #2, #3 stayed fixed).
+- `TextureCache.cs` still delegates to `CabinetTextureCache.LoadAndCacheAsync` (Issue #5 stayed fixed).
+
+Not yet verified on-device: the user should build to Quest 2/3, traverse several rooms
+and gates, and watch the `[Memory Check] RAM after unload` log line in
+`GateController.cs` to confirm memory stays lower and the `> 2500` warning fires less
+often. For the `RenderTexture` fix specifically, rapidly entering/leaving a room with
+several cabinets mid-load and checking `adb shell dumpsys meminfo` for GPU memory growth
+would confirm the leak is closed.
