@@ -66,6 +66,26 @@ public static class MRMagazineCatalog
         return pages.Count;
     }
 
+    /// <summary>Highest leading page number in filenames (76 from 76.jpg), not file count.</summary>
+    public static int GetLogicalPageCount(string issueName)
+    {
+        if (cachedIssuePages == null)
+            RefreshCache();
+
+        if (string.IsNullOrEmpty(issueName) || !cachedIssuePages.TryGetValue(issueName, out List<string> pages))
+            return 0;
+
+        int maxPageNumber = 0;
+        foreach (string page in pages)
+        {
+            int pageNumber = TryParseLeadingPageNumber(page);
+            if (pageNumber > maxPageNumber)
+                maxPageNumber = pageNumber;
+        }
+
+        return maxPageNumber;
+    }
+
     public static bool IssueExists(string issueName)
     {
         if (cachedIssuePages == null)
@@ -91,6 +111,60 @@ public static class MRMagazineCatalog
     public static Texture2D LoadPageTexture(string issueName, int pageIndex)
     {
         string pageFileName = GetPageFileName(issueName, pageIndex);
+        if (string.IsNullOrEmpty(pageFileName))
+            return null;
+
+        return LoadPageTextureFromFile(issueName, pageFileName);
+    }
+
+    /// <summary>Load by filename or stem (FrontCover → FrontCover.png in the issue folder).</summary>
+    public static Texture2D LoadPageTextureByFileName(string issueName, string fileNameOrStem)
+    {
+        string pageFileName = ResolvePageFileName(issueName, fileNameOrStem);
+        if (string.IsNullOrEmpty(pageFileName))
+            return null;
+
+        return LoadPageTextureFromFile(issueName, pageFileName);
+    }
+
+    public static string ResolvePageFileName(string issueName, string fileNameOrStem)
+    {
+        if (string.IsNullOrWhiteSpace(fileNameOrStem))
+            return null;
+
+        string trimmed = fileNameOrStem.Trim();
+        string fullPath = MRPaths.ResolveMagazinePagePath(issueName, trimmed);
+        if (!string.IsNullOrEmpty(fullPath) && File.Exists(fullPath))
+            return trimmed;
+
+        if (cachedIssuePages == null)
+            RefreshCache();
+
+        if (!string.IsNullOrEmpty(issueName) && cachedIssuePages.TryGetValue(issueName, out List<string> pages))
+        {
+            foreach (string page in pages)
+            {
+                if (string.Equals(page, trimmed, StringComparison.OrdinalIgnoreCase))
+                    return page;
+
+                if (string.Equals(Path.GetFileNameWithoutExtension(page), trimmed, StringComparison.OrdinalIgnoreCase))
+                    return page;
+            }
+        }
+
+        foreach (string ext in new[] { ".png", ".jpg", ".jpeg", ".webp", ".bmp" })
+        {
+            string candidate = trimmed + ext;
+            fullPath = MRPaths.ResolveMagazinePagePath(issueName, candidate);
+            if (!string.IsNullOrEmpty(fullPath) && File.Exists(fullPath))
+                return candidate;
+        }
+
+        return null;
+    }
+
+    static Texture2D LoadPageTextureFromFile(string issueName, string pageFileName)
+    {
         if (string.IsNullOrEmpty(pageFileName))
             return null;
 
@@ -130,13 +204,20 @@ public static class MRMagazineCatalog
         GetSpreadInteriorPageNumbers(spreadIndex, pageCount, out leftPageNumber, out rightPageNumber);
     }
 
-    /// <summary>Interior faces (0 = hidden). Spread 0: 2|3, then 4|5, … last: N-1|—.</summary>
+    /// <summary>Spread 0: cover int 2 + first right page 3. Spread 1+: 4|5, … last: N-1|—.</summary>
     public static void GetSpreadInteriorPageNumbers(int spreadIndex, int pageCount, out int readingLeft, out int readingRight)
     {
         readingLeft = 0;
         readingRight = 0;
         if (pageCount <= 0 || spreadIndex < 0)
             return;
+
+        if (spreadIndex == 0)
+        {
+            readingLeft = 2;
+            readingRight = 3;
+            return;
+        }
 
         int lastSpreadIndex = GetLastSpreadIndex(pageCount);
         if (spreadIndex >= lastSpreadIndex)
@@ -145,8 +226,8 @@ public static class MRMagazineCatalog
             return;
         }
 
-        readingLeft = 2 + spreadIndex * 2;
-        readingRight = 3 + spreadIndex * 2;
+        readingLeft = 4 + (spreadIndex - 1) * 2;
+        readingRight = 5 + (spreadIndex - 1) * 2;
     }
 
     public static int GetLastSpreadIndex(int pageCount)
