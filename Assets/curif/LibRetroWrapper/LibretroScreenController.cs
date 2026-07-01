@@ -242,6 +242,8 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         }
         videoShader = ShaderScreen.Factory(display, 1, videoShaderName, videoShaderConfig);
 
+        AttractVideoBudget.Configure(globalConfiguration.Configuration.cabinet.maxAttractVideos);
+
         ConfigManager.WriteConsole($"[LibretroScreenController.Start] {name} game shader created: {shader} video shader: {videoShader}");
 
         // age basic ---------------------

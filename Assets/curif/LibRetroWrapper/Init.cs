@@ -109,6 +109,7 @@ public class Init : MonoBehaviour
         // GPU/texture-driven or something else (managed heap, native plugins, audio...).
         ConfigManager.WriteConsole($"[Init.Memory] {context} | allocated: {allocated / (1024f * 1024f):F1}MB | reserved: {reserved / (1024f * 1024f):F1}MB | unusedReserved: {unusedReserved / (1024f * 1024f):F1}MB | mono: {monoUsed / (1024f * 1024f):F1}/{monoHeap / (1024f * 1024f):F1}MB | graphicsDriver: {graphicsDriver / (1024f * 1024f):F1}MB | originalTextures: {DeviceController.originalTextures}");
         ResourceCacheManager.LogAllCacheStatus(context);
+        AttractVideoBudget.Status();
 
         // Loaded (additive) scenes drive which cabinets are instantiated and pinning
         // their textures - if rooms accumulate here instead of unloading via gates,

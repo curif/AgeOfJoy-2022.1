@@ -31,6 +31,15 @@ public class GameVideoPlayer : MonoBehaviour
     //private Texture2D FirstTexture = null;
     private TextureCache textureCache;
 
+    // Latest intention expressed by the callers (BT ticks, AGEBasic commands).
+    // PrepareCompleted honors this instead of blindly starting playback, so an
+    // async prepare can't fight a Stop()/Pause() that arrived in the meantime.
+    private enum Desired { Stopped, Paused, Playing }
+    private Desired desired = Desired.Stopped;
+    private bool eventsHooked = false;
+
+    public bool IsActuallyPlaying => videoPlayer != null && videoPlayer.isPlaying;
+
     void EnsureInitialized()
     {
         if (videoPlayer == null)
@@ -39,6 +48,14 @@ public class GameVideoPlayer : MonoBehaviour
             textureCache = GetComponent<TextureCache>();
         if (display == null)
             display = GetComponent<Renderer>();
+        if (!eventsHooked && videoPlayer != null)
+        {
+            // hook exactly once for the component's lifetime; PrepareVideo used to
+            // re-subscribe on every call, leaking duplicated errorReceived handlers.
+            videoPlayer.prepareCompleted += PrepareCompleted;
+            videoPlayer.errorReceived += ErrorReceived;
+            eventsHooked = true;
+        }
     }
 
     // Start is called before the first frame update
@@ -62,7 +79,8 @@ public class GameVideoPlayer : MonoBehaviour
         this.inverty = inverty;
 
         shader.Invert(invertx, inverty);
-        textureCache.OnTextureLoaded = tex => shader.Activate(tex);
+        // don't let a late async thumbnail load stomp the live video frame
+        textureCache.OnTextureLoaded = tex => { if (!IsActuallyPlaying) shader.Activate(tex); };
         textureCache.Init(path);
 
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
@@ -86,12 +104,27 @@ public class GameVideoPlayer : MonoBehaviour
 
     private void PrepareVideo()
     {
-        videoPlayer.prepareCompleted += PrepareCompleted;
-        videoPlayer.errorReceived += ErrorReceived;
-
         isPreparing = true;
         isReady = false;
         videoPlayer.Prepare();
+    }
+
+    // cached first frame of the attraction video, or the generic standby image
+    private void ShowFallbackTexture()
+    {
+        if (shader == null)
+            return;
+        if (textureCache != null && textureCache.AlreadyCached())
+        {
+            if (shader.Texture != textureCache.CachedTexture)
+                shader.Texture = textureCache.CachedTexture;
+        }
+        else if (ShaderScreenBase.StandByTexture != null && shader.Texture != ShaderScreenBase.StandByTexture)
+        {
+            // No attract-video frame cached yet: fall back to the generic standby image
+            // rather than leaving whatever was previously rendered on screen.
+            shader.Texture = ShaderScreenBase.StandByTexture;
+        }
     }
 
     public GameVideoPlayer Play()
@@ -99,13 +132,17 @@ public class GameVideoPlayer : MonoBehaviour
 #if !DISABLE_VIDEO
         EnsureInitialized();
         // ConfigManager.WriteConsole($"[videoPlayer.Play] prepared: {videoPlayer.isPrepared} playing: {videoPlayer.isPlaying} {videoPath}  ====");
-        if (videoPlayer == null || string.IsNullOrEmpty(videoPath) || isPreparing)
+        if (videoPlayer == null || string.IsNullOrEmpty(videoPath))
             return this;
+
+        desired = Desired.Playing;
+        if (isPreparing)
+            return this; // PrepareCompleted honors the desired state
 
         if (videoPlayer.url != videoPath)
         {
             videoPlayer.url = videoPath;
-            videoPlayer.playOnAwake = true;
+            videoPlayer.playOnAwake = false; // playback is always explicit
             videoPlayer.isLooping = loopEnabled;
             videoPlayer.renderMode = UnityEngine.Video.VideoRenderMode.APIOnly;
             if (UseDirectAudio)
@@ -122,6 +159,11 @@ public class GameVideoPlayer : MonoBehaviour
         // ConfigManager.WriteConsole($"[videoPlayer.Play] isPlaying: {videoPlayer.isPlaying} ====");
         if (!videoPlayer.isPrepared)
         {
+            if (!AttractVideoBudget.RequestSlot(this))
+            {
+                ShowFallbackTexture();
+                return this; // denied: the BT retries on the next tick
+            }
             ConfigManager.WriteConsole($"[videoPlayer.Play] prepare {videoPath} ====");
             PrepareVideo();
             shader.Invert(invertx, inverty);
@@ -132,6 +174,11 @@ public class GameVideoPlayer : MonoBehaviour
         }
         else if (isReady && !videoPlayer.isPlaying)
         {
+            if (!AttractVideoBudget.RequestSlot(this))
+            {
+                ShowFallbackTexture();
+                return this;
+            }
             ConfigManager.WriteConsole($"[videoPlayer.Play] PLAY {videoPath} ====");
             videoPlayer.isLooping = loopEnabled;
             if (videoPlayer.canSetSkipOnDrop)
@@ -157,11 +204,17 @@ public class GameVideoPlayer : MonoBehaviour
     public GameVideoPlayer Pause()
     {
 #if !DISABLE_VIDEO
-        if (videoPlayer == null || string.IsNullOrEmpty(videoPath)
-            || !videoPlayer.isPrepared || isPreparing || videoPlayer.isPaused || !videoPlayer.isPlaying)
+        if (videoPlayer == null || string.IsNullOrEmpty(videoPath))
             return this;
 
-        //is is necessary because the VideoPlayer.Pause method only works if isLooping is set to false. 
+        desired = Desired.Paused;
+        if (isPreparing)
+            return this; // prepare finishes into a paused-ready state, slot kept
+
+        if (!videoPlayer.isPrepared || videoPlayer.isPaused || !videoPlayer.isPlaying)
+            return this;
+
+        //is is necessary because the VideoPlayer.Pause method only works if isLooping is set to false.
         // If isLooping is set to true, the Pause method will have no effect and the video will 
         // continue to play.
         ConfigManager.WriteConsole($"[videoPlayer.Pause] {videoPath} ====");
@@ -181,22 +234,15 @@ public class GameVideoPlayer : MonoBehaviour
             return this;
 
         // ConfigManager.WriteConsole($"[videoPlayer.Stop] {videoPath} ====");
+        desired = Desired.Stopped;
+        // Unity cancels an in-flight Prepare on Stop and PrepareCompleted never
+        // fires, so clear the flag here or Play() stays blocked forever.
+        // isReady is kept so VIDEOSTATUS() still reports 1 (stopped) after VIDEOSTOP.
+        isPreparing = false;
         //destroy internal resources.
         videoPlayer.Stop();
-        if (shader != null)
-        {
-            if (textureCache.AlreadyCached())
-            {
-                if (shader.Texture != textureCache.CachedTexture)
-                    shader.Texture = textureCache.CachedTexture;
-            }
-            else if (ShaderScreenBase.StandByTexture != null && shader.Texture != ShaderScreenBase.StandByTexture)
-            {
-                // No attract-video frame cached yet: fall back to the generic standby image
-                // rather than leaving whatever was previously rendered on screen.
-                shader.Texture = ShaderScreenBase.StandByTexture;
-            }
-        }
+        AttractVideoBudget.ReleaseSlot(this);
+        ShowFallbackTexture();
 
 #endif
         return this;
@@ -212,6 +258,8 @@ public class GameVideoPlayer : MonoBehaviour
 #if !DISABLE_VIDEO
         if (videoPlayer != null)
             videoPlayer.Stop();
+        AttractVideoBudget.ReleaseSlot(this);
+        desired = Desired.Stopped;
         videoPath = string.Empty;
         isPreparing = false;
         isReady = false;
@@ -252,6 +300,8 @@ public class GameVideoPlayer : MonoBehaviour
         isPreparing = false;
         isReady = false;
         videoPlayer.Stop();
+        AttractVideoBudget.ReleaseSlot(this);
+        desired = Desired.Stopped;
 
         ConfigManager.WriteConsole($"[videoPlayer.ChangeVideo] {videoPath}");
 #endif
@@ -318,16 +368,54 @@ public class GameVideoPlayer : MonoBehaviour
         ConfigManager.WriteConsole($"[videoPlayer.PrepareCompleted] {videoPath} ====");
         isPreparing = false;
         isReady = true;
-        vp.prepareCompleted -= PrepareCompleted;
 
-        // Start playing immediately — handles shader switch and works for both
-        // attraction video and AGEBasic-controlled video (VIDEOPLAY is a one-shot call).
-        Play();
+        // Honor the latest caller intention: the BT or an AGEBasic command may
+        // have asked for Pause/Stop while the prepare was in flight.
+        switch (desired)
+        {
+            case Desired.Playing:
+                Play();
+                break;
+            case Desired.Stopped:
+                // defensive: Stop() normally cancels the prepare before this fires
+                vp.Stop();
+                AttractVideoBudget.ReleaseSlot(this);
+                ShowFallbackTexture();
+                break;
+                // Desired.Paused: stay prepared/ready, keep the slot
+        }
     }
 
     void ErrorReceived(VideoPlayer vp, string message)
     {
         ConfigManager.WriteConsoleWarningAGEBasic($"[videoPlayer] ERROR {videoPath} - {message}");
+        isPreparing = false;
+        isReady = false;
+        AttractVideoBudget.ReleaseSlot(this);
         showCachedImage();
+    }
+
+    /// <summary>
+    /// Pin/unpin this player in the global video budget. Pinned players are
+    /// always granted a decoder slot and never evicted; used while an AGEBasic
+    /// game session (coin inserted) controls the screen.
+    /// </summary>
+    public void BudgetPin(bool pin)
+    {
+        if (pin)
+            AttractVideoBudget.Pin(this);
+        else
+            AttractVideoBudget.Unpin(this);
+    }
+
+    void OnDisable()
+    {
+        AttractVideoBudget.ReleaseSlot(this);
+    }
+
+    void OnDestroy()
+    {
+        AttractVideoBudget.Unpin(this);
+        AttractVideoBudget.ReleaseSlot(this);
     }
 }

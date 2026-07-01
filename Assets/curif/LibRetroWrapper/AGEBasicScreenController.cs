@@ -178,7 +178,9 @@ public class AGEBasicScreenController : MonoBehaviour, ISuspendableCabinetScreen
 
         //video shader ----------------
         videoShader = ShaderScreen.Factory(display, 1, shader.AlternativeShaderForAttractionVideos(), screen.config());
-        
+
+        AttractVideoBudget.Configure(globalConfiguration.Configuration.cabinet.maxAttractVideos);
+
         ConfigManager.WriteConsole($"[AGEBasicScreenController.Start]  {name} shader created: {shader} video shader {videoShader}");
 
         mainCoroutine = StartCoroutine(runBT());
@@ -254,6 +256,7 @@ public class AGEBasicScreenController : MonoBehaviour, ISuspendableCabinetScreen
             cabinetAGEBasic.Stop(); //force
             cabinetAGEBasic.ExecAfterLeaveBas();
 
+            videoPlayer.BudgetPin(false);
             if (!string.IsNullOrEmpty(VideoFile))
                 videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
             else
@@ -393,6 +396,8 @@ public class AGEBasicScreenController : MonoBehaviour, ISuspendableCabinetScreen
               .Do("Run main program", () =>
               {
                   //   videoPlayer.Stop();
+                  // the player paid a coin: this screen's video always wins a decoder slot
+                  videoPlayer.BudgetPin(true);
                   videoPlayer.Pause();
 
                   cabinetAGEBasic.ActivateShader(shader);
@@ -447,6 +452,7 @@ public class AGEBasicScreenController : MonoBehaviour, ISuspendableCabinetScreen
                       // VIDEOLOAD may have changed videoPath during the session; reset it here.
                       // If no attraction video is configured, reset completely so Play() is a
                       // no-op and the BT video loop cannot restart the last AGEBasic-loaded clip.
+                      videoPlayer.BudgetPin(false);
                       if (!string.IsNullOrEmpty(VideoFile))
                           videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
                       else
