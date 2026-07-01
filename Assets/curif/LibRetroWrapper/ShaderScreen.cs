@@ -8,6 +8,7 @@ public abstract class ShaderScreenBase
     protected int position;
     protected Renderer display;
     protected Material material;
+    Material instantiatedMaterial; // material instance created by a previous Activate() call, owned by this object
     Dictionary<string, string> configuration;
     CabinetMaterials.MaterialPropertyTranslator translator;
 
@@ -68,10 +69,24 @@ public abstract class ShaderScreenBase
         Material[] mats = display.materials;
         mats[position] = material;
         display.materials = mats;
-        material = display.materials[position];
-        
+        Material newInstance = display.materials[position];
+
+        if (instantiatedMaterial != null && instantiatedMaterial != newInstance)
+            UnityEngine.Object.Destroy(instantiatedMaterial);
+
+        material = newInstance;
+        instantiatedMaterial = newInstance;
+
         if (texture != null)
             Texture = texture; //child should change it in render material by position
+    }
+
+    // releases the material instance created by Activate(), if any; call from owning MonoBehaviour's OnDestroy
+    public void ReleaseMaterialInstance()
+    {
+        if (instantiatedMaterial != null)
+            UnityEngine.Object.Destroy(instantiatedMaterial);
+        instantiatedMaterial = null;
     }
     public virtual void Refresh(Texture texture) { }
 

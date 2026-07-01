@@ -731,6 +731,9 @@ public class LibretroScreenController : MonoBehaviour
             PreparePlayerToPlayGame(false);
 
         LibretroMameCore.End(ScreenName, GameFile);
+
+        shader?.ReleaseMaterialInstance();
+        videoShader?.ReleaseMaterialInstance();
     }
 
 #if UNITY_EDITOR
