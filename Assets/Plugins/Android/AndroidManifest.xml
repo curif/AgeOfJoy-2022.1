@@ -15,5 +15,10 @@
     <meta-data android:name="com.samsung.android.vr.application.mode" android:value="vr_only" />
   </application>
   <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="true" />
+  <uses-feature android:name="com.oculus.feature.SCENE" android:required="true" />
+  <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="true" />
+  <uses-permission android:name="com.oculus.permission.USE_SCENE" />
+  <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
+  <uses-permission android:name="com.oculus.permission.USE_PASSTHROUGH" />
 
 </manifest>
