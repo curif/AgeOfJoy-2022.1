@@ -40,12 +40,19 @@ public class Init : MonoBehaviour
         cabinetDBAdmin = GetComponent<CabinetDBAdmin>();
         Application.lowMemory += OnLowMemory;
         Application.memoryUsageChanged += OnMemoryUsageChanged;
+        ConfigManager.WriteConsole($"[Init.Memory] Device reference | SystemInfo.graphicsMemorySize: {SystemInfo.graphicsMemorySize}MB | SystemInfo.systemMemorySize: {SystemInfo.systemMemorySize}MB");
         ConfigManager.InitFolders();
         loadOperations();
 
         // Periodic memory/cache snapshot so real usage trends over a play session
         // can be observed in the logs, to make an informed decision on cache budgets.
-        InvokeRepeating(nameof(LogMemorySnapshot), 10f, 15f);
+        InvokeRepeating(nameof(LogPeriodicMemorySnapshot), 10f, 15f);
+    }
+
+    // InvokeRepeating requires a parameterless method.
+    private void LogPeriodicMemorySnapshot()
+    {
+        LogMemorySnapshot("Periodic");
     }
     /*
     private static void start()
@@ -89,7 +96,18 @@ public class Init : MonoBehaviour
     {
         long allocated = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
         long reserved = UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong();
-        ConfigManager.WriteConsole($"[Init.Memory] {context} | allocated: {allocated / (1024f * 1024f):F1}MB | reserved: {reserved / (1024f * 1024f):F1}MB | originalTextures: {DeviceController.originalTextures}");
+        long unusedReserved = UnityEngine.Profiling.Profiler.GetTotalUnusedReservedMemoryLong();
+        long monoUsed = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong();
+        long monoHeap = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong();
+        long graphicsDriver = UnityEngine.Profiling.Profiler.GetAllocatedMemoryForGraphicsDriver();
+
+        // "reserved" tracks Unity's native + managed heaps; it does NOT include
+        // GPU-only allocations (e.g. textures uploaded via Apply(.., makeNoLongerReadable:
+        // true), which is how every cabinet texture ends up). graphicsDriver is the
+        // separate counter for that, so comparing it against our own cache size tells
+        // us whether the "missing" memory (reserved minus our tracked cache size) is
+        // GPU/texture-driven or something else (managed heap, native plugins, audio...).
+        ConfigManager.WriteConsole($"[Init.Memory] {context} | allocated: {allocated / (1024f * 1024f):F1}MB | reserved: {reserved / (1024f * 1024f):F1}MB | unusedReserved: {unusedReserved / (1024f * 1024f):F1}MB | mono: {monoUsed / (1024f * 1024f):F1}/{monoHeap / (1024f * 1024f):F1}MB | graphicsDriver: {graphicsDriver / (1024f * 1024f):F1}MB | originalTextures: {DeviceController.originalTextures}");
         ResourceCacheManager.LogAllCacheStatus(context);
 
         // Loaded (additive) scenes drive which cabinets are instantiated and pinning

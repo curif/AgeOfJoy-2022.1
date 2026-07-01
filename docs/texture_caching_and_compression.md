@@ -92,7 +92,34 @@ Because the previous logging wasn't enough to see *why* cabinets were going dark
 *   **`ResourceCacheManager.LogAllCacheStatus(label)`** dumps `Status()` for every registered cache (textures, cabinet GameObjects, cabinet info) in one call.
 *   **`FreeResourcesAsync()`** now logs a full `LogAllCacheStatus("BEFORE")` / `LogAllCacheStatus("AFTER")` snapshot around every free, so you can see exactly what was freed vs. kept per cache.
 *   **`Pin`/`Unpin`** log the resulting ref count on every call, so a leak (a pin count that never returns to 0) is visible directly in the logs.
-*   **`Init.cs`** now logs a combined snapshot — engine-level `Profiler.GetTotalAllocatedMemoryLong()` / `GetTotalReservedMemoryLong()` plus all cache statuses — on every `OnLowMemory` and `OnMemoryUsageChanged` event, and also on a 15-second repeating timer (`InvokeRepeating(nameof(LogMemorySnapshot), 10f, 15f)`) so real memory/cache trends over a full play session are visible in the logs, not just at crisis moments. This is the data set to use when deciding whether the 1024MB/1536MB texture budgets need to change (e.g., a separate/larger budget for `originalTextures` mode, or restricting that mode altogether).
+*   **`Init.cs`** now logs a combined snapshot — engine-level memory counters (see below), all cache statuses, and the list of currently-loaded (additive) scenes — on every `OnLowMemory` and `OnMemoryUsageChanged` event, and also on a 15-second repeating timer (`InvokeRepeating(nameof(LogPeriodicMemorySnapshot), 10f, 15f)`), so real memory/cache trends over a full play session are visible in the logs, not just at crisis moments.
+
+### What The Diagnostics Revealed: The Cache Budget Isn't The Bottleneck
+
+Real-device logs captured after the pinning fix confirmed pinning now works correctly (e.g. `texturesCache: FreeResources freed 5/92 entries. Kept 87 pinned entries in use`), but exposed the actual constraint: **the OS-level "Critical" memory event can fire while the texture cache is nowhere near its budget.** One capture showed `texturesCache | size: 492.74MB / 1536.00MB (32.1%)` with only **two** scenes loaded (`FixedScene`, `Room005`) — so this isn't a room-unload leak either; `GateController`/`TeleportationController`'s per-gate `ScenesToUnload` mechanism is working as designed.
+
+The real issue: a **single room's** worth of cabinet art, in `originalTextures` (uncompressed) mode, is already enough to push total device memory into critical territory — independent of our own cache bookkeeping. The gap between Unity's `GetTotalReservedMemoryLong()` (~1.5GB) and our tracked cache size (~0.5GB) is roughly ~1GB of overhead our texture cache never accounts for, because `GetTotalReservedMemoryLong()`/`GetTotalAllocatedMemoryLong()` only track native + managed heaps, **not GPU-only allocations** — and every cabinet texture ends up GPU-only after `Apply(false, makeNoLongerReadable: true)` (see section 4 below for the same GPU-visibility gotcha in `CalculateActualSizeBytes`).
+
+To pin down where that gap actually lives, `Init.LogMemorySnapshot` now also logs:
+*   `Profiler.GetAllocatedMemoryForGraphicsDriver()` — GPU/graphics-driver memory, separate from the native/managed counters above; if this tracks closely with the "missing" memory, the overhead is GPU-side (consistent with uncompressed cabinet textures).
+*   `Profiler.GetMonoUsedSizeLong()` / `GetMonoHeapSizeLong()` — managed heap usage, to rule out a C#-side leak as the source of the gap.
+*   `Profiler.GetTotalUnusedReservedMemoryLong()` — reserved-but-idle native memory (fragmentation), logged for completeness.
+*   `SystemInfo.graphicsMemorySize` / `SystemInfo.systemMemorySize` — logged once at startup as a static reference point for the device's total capacity.
+
+**Decision so far:** compression policy (whether to cap/restrict `originalTextures` mode) is deliberately left unchanged for now — ship the pinning fix and the expanded diagnostics first, and let the graphics-driver/mono breakdown from real play sessions confirm where the ~1GB baseline actually comes from before deciding whether to touch the 1024MB/1536MB cache budgets or the compression policy itself.
+
+### Confirmed: The Gap Is GPU Memory, and It's Bigger Than The Texture Cache Itself
+
+A subsequent capture with 3 scenes loaded (`FixedScene`, `HallwayToPolybius`, `Room018`) gave the answer the breakdown was added to find:
+
+```
+texturesCache | size: 1415.30MB / 1536.00MB (92.1%) | count: 222 | pinned: 204
+[Init.Memory] OnLowMemory (CRITICAL) | allocated: 1815.5MB | reserved: 2100.7MB | unusedReserved: 285.2MB | mono: 18.1/26.2MB | graphicsDriver: 3223.0MB | originalTextures: True
+```
+
+`graphicsDriver: 3223.0MB` — over 3.2GB of GPU memory in use, while `CabinetTextureCache` accounts for only 1415MB of it. **Roughly 1.8GB of GPU memory is consumed by something entirely outside the texture cache.** This is now a confirmed, quantified finding, not a hypothesis: whatever is eating that 1.8GB cannot be fixed by touching `CabinetTextureCache`, `ResourceCache`, or their budgets — it lives elsewhere in the rendering pipeline.
+
+**This is out of scope for this document/fix.** The "cabinets going dark" bug (destroying pinned/in-use textures) is confirmed resolved — pinning protects 204/222 live textures in the same capture, evicting only the 18 genuinely idle ones. The remaining ~1.8GB GPU consumer is a separate, larger investigation. See `conductor/` for the follow-up task tracking it (likely candidates to check first: baked lightmaps and `OcclusionCullingData` per room — most room scenes had these regenerated recently per git history — `ScreenGenerator`'s per-cabinet CRT screen textures, LibRetro emulator framebuffers for running cabinets, and VR stereo/compositor render targets, none of which route through `CabinetTextureCache`).
 
 ---
 
