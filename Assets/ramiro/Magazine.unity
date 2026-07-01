@@ -354,35 +354,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   issueFolderName: Dezembro_1997_45
+  pagesFolderOverride: 
   frontCoverImgName: 1.jpg
   insideFrontCoverImgName: 2.jpg
   insideBackCoverImgName: 75.jpg
   backCoverImgName: 76.jpg
-  frontCover: {fileID: 2100000, guid: 478fb1a3939febd478cc9aa2bd98df9f, type: 2}
-  insideFrontCover: {fileID: 2100000, guid: 7b0527713a9e8404d9537f645bd5c626, type: 2}
-  insideBackCover: {fileID: 2100000, guid: 88d3c83b485fd964d88b823364a10ed6, type: 2}
-  backCover: {fileID: 2100000, guid: 041871c9b8989d6478c8140a483a1fcd, type: 2}
-  pageFront: {fileID: 2100000, guid: ebf777aa57ded2b49af0db4e449b4519, type: 2}
-  pageBack: {fileID: 2100000, guid: e4eec49e784d0ce478187326ee5defb9, type: 2}
-  FrontCover: {fileID: 979402944}
-  page: {fileID: 979402945}
-  sheetStackOffsetY: 0.00001
-  pageTurnDurationSeconds: 0.8
-  pageTurnAngleDegrees: 180
-  sheetTurnAngleStepDegrees: 0.2
+  FrontCover: {fileID: 1981056688}
+  BackCover: {fileID: 1208859625}
+  sheetTemplate: {fileID: 979402945}
+  physicalSheetCount: 4
+  pageTurnDurationSeconds: 0.6
+  pageTurnAngleDegrees: 179
+  sheetStackDepth: 0.001
   editorPageKeys: 1
   openDurationSeconds: 0.5
-  openAngleDegrees: 180
-  flipLeftCoverTextureX: 1
-  flipRightCoverTextureX: 1
---- !u!4 &979402944 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 2970804977150738766, guid: 6902236c09b0a8f418cbe0b8ff071bb4, type: 3}
-  m_PrefabInstance: {fileID: 979402941}
-  m_PrefabAsset: {fileID: 0}
+  openAngleDegrees: -180.81
+  flipFrontFace: 1
+  flipBackFace: 0
+  flipFrontCover: 1
+  flipInsideFrontCover: 0
+  flipInsideBackCover: 0
+  flipBackCover: 1
 --- !u!4 &979402945 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -7314013169025083587, guid: 6902236c09b0a8f418cbe0b8ff071bb4, type: 3}
+  m_PrefabInstance: {fileID: 979402941}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1208859625 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -5984850566881672304, guid: 6902236c09b0a8f418cbe0b8ff071bb4, type: 3}
   m_PrefabInstance: {fileID: 979402941}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1366172977
@@ -477,6 +477,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 42.5, y: 0, z: 0}
+--- !u!4 &1981056688 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2970804977150738766, guid: 6902236c09b0a8f418cbe0b8ff071bb4, type: 3}
+  m_PrefabInstance: {fileID: 979402941}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
