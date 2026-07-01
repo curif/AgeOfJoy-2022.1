@@ -70,6 +70,30 @@ Because of this, once enough *other* cabinets loaded and pushed the total past t
 
 **Scope note:** this pinning mechanism currently only covers cabinet-part textures (marquee/bezel/side-art/emission). The thumbnail flow (`TextureCache.cs`) and UI sprite cache (`ScreenGenerator.LoadSprite`) still rely on plain LRU — lower risk since those textures are more transient — but can adopt the same `Pin`/`Unpin` primitive later if needed.
 
+### The Real Culprit: `OnLowMemory` Bypassed Pinning Entirely
+
+The pinning fix above did **not** fully solve the "cabinets going dark" bug, because there is a *third* eviction path that ran alongside `makeSpaceFor`/`FreeHalfResources` and originally ignored pin status completely: Unity's OS-level low-memory callback.
+
+`Assets/curif/LibRetroWrapper/Init.cs` subscribes to `Application.lowMemory` in `Awake()`:
+```csharp
+Application.lowMemory += OnLowMemory;
+```
+`OnLowMemory()` calls `ResourceCacheManager.FreeResourcesAsync()`, which calls `FreeResources()` on **every** registered `ResourceCache` (textures, `ConfigManager.CabinetCache`, `ConfigManager.CabinetInformationCache`). The original `ResourceCache<K,V>.FreeResources()` did an **unconditional full wipe** — destroying every entry regardless of pin status — because it predates the pinning work and was never updated alongside `makeSpaceFor`/`FreeHalfResources`.
+
+This explains why the bug persisted after the first fix, and why disabling texture compression (`DeviceController.originalTextures = true`) made it *worse*: uncompressed textures are up to 4x larger, so the memory budget is exhausted faster, which means the Android/Quest OS fires `Application.lowMemory` more often — and every firing nuked every visible cabinet's textures at once, pinned or not.
+
+**Fix:** `ResourceCache<K,V>.FreeResources()` now walks the cache the same way `makeSpaceFor` does — it destroys only **unpinned** entries and leaves pinned (actively displayed) ones untouched, logging how many were freed vs. kept. `Remove()` (used by `CabinetTextureCache.InvalidateCachedTexture`) was given the same guard: it now refuses to destroy a pinned entry and logs a warning instead.
+
+### Diagnostics Added For Cache-Size Decisions
+
+Because the previous logging wasn't enough to see *why* cabinets were going dark, the following was added:
+
+*   **`ResourceCache<K,V>.Status()`** now reports `size / maxSize (%)`, entry count, and pinned-entry count in one line, instead of just size and count.
+*   **`ResourceCacheManager.LogAllCacheStatus(label)`** dumps `Status()` for every registered cache (textures, cabinet GameObjects, cabinet info) in one call.
+*   **`FreeResourcesAsync()`** now logs a full `LogAllCacheStatus("BEFORE")` / `LogAllCacheStatus("AFTER")` snapshot around every free, so you can see exactly what was freed vs. kept per cache.
+*   **`Pin`/`Unpin`** log the resulting ref count on every call, so a leak (a pin count that never returns to 0) is visible directly in the logs.
+*   **`Init.cs`** now logs a combined snapshot — engine-level `Profiler.GetTotalAllocatedMemoryLong()` / `GetTotalReservedMemoryLong()` plus all cache statuses — on every `OnLowMemory` and `OnMemoryUsageChanged` event, and also on a 15-second repeating timer (`InvokeRepeating(nameof(LogMemorySnapshot), 10f, 15f)`) so real memory/cache trends over a full play session are visible in the logs, not just at crisis moments. This is the data set to use when deciding whether the 1024MB/1536MB texture budgets need to change (e.g., a separate/larger budget for `originalTextures` mode, or restricting that mode altogether).
+
 ---
 
 ## 4. Texture Size Calculation (`CalculateActualSizeBytes`)
@@ -93,4 +117,5 @@ The manual formula uses only `tex.width`, `tex.height`, and `tex.format` — all
 *   **`Assets/curif/LibRetroWrapper/TextureDiskCache.cs`**: Handles the low-level binary I/O for saving and loading the `.aojv1` pre-compressed texture files.
 *   **`Assets/curif/LibRetroWrapper/ResourceCache.cs`**: The generic LRU memory cache (`ResourceCache<K,V>` / `ResourceCacheManager`) used for textures. Implements the ref-counted pinning described in section 3b.
 *   **`Assets/curif/LibRetroWrapper/CabinetPart.cs`**: Binds loaded textures to cabinet materials and pins them for as long as the cabinet part is alive, unpinning in `OnDestroy()`.
+*   **`Assets/curif/LibRetroWrapper/Init.cs`**: Subscribes to `Application.lowMemory`/`memoryUsageChanged`, triggers `ResourceCacheManager.FreeResourcesAsync()`, and logs combined engine + cache memory snapshots (on low-memory events and a 15s repeating timer) for cache-size decisions.
 *   **`Assets/curif/LibRetroWrapper/GpuRgb565Converter.cs` / `GpuAlphaCheck.cs`**: Auxiliary tools for advanced GPU-based texture manipulation, primarily used when trying to optimize alpha channels or convert to lower-precision 16-bit formats for older hardware.

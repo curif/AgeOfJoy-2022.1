@@ -10,6 +10,8 @@ using System.IO;
 using UnityEngine.Android;
 using System.Diagnostics;
 using System;
+using System.Text;
+using UnityEngine.SceneManagement;
 
 // check Project settings -> Script execution order.
 [DefaultExecutionOrder(-500)] // This will ensure that this script executes before others
@@ -40,6 +42,10 @@ public class Init : MonoBehaviour
         Application.memoryUsageChanged += OnMemoryUsageChanged;
         ConfigManager.InitFolders();
         loadOperations();
+
+        // Periodic memory/cache snapshot so real usage trends over a play session
+        // can be observed in the logs, to make an informed decision on cache budgets.
+        InvokeRepeating(nameof(LogMemorySnapshot), 10f, 15f);
     }
     /*
     private static void start()
@@ -67,15 +73,37 @@ public class Init : MonoBehaviour
 
     private void OnMemoryUsageChanged(in ApplicationMemoryUsageChange usage)
     {
-        ConfigManager.WriteConsole("+++++++++++++++++++++ OnMemoryUsageChanged ***********************");
-        ConfigManager.WriteConsole($"+++++++++++++++++++++++ {usage.memoryUsage}");
+        LogMemorySnapshot($"OnMemoryUsageChanged -> {usage.memoryUsage}");
     }
 
- 
     private void OnLowMemory()
     {
-        ConfigManager.WriteConsole("[OnLowMemory] CRITICAL Triggered! Dumping Cache...");
+        LogMemorySnapshot("OnLowMemory (CRITICAL)");
         StartCoroutine(ResourceCacheManager.FreeResourcesAsync());
+    }
+
+    // Logs both the app-level cache accounting (per ResourceCache budget/usage/pin
+    // count) and the actual engine memory counters, so the two can be compared
+    // when deciding whether cache budgets need to change.
+    private void LogMemorySnapshot(string context)
+    {
+        long allocated = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong();
+        long reserved = UnityEngine.Profiling.Profiler.GetTotalReservedMemoryLong();
+        ConfigManager.WriteConsole($"[Init.Memory] {context} | allocated: {allocated / (1024f * 1024f):F1}MB | reserved: {reserved / (1024f * 1024f):F1}MB | originalTextures: {DeviceController.originalTextures}");
+        ResourceCacheManager.LogAllCacheStatus(context);
+
+        // Loaded (additive) scenes drive which cabinets are instantiated and pinning
+        // their textures - if rooms accumulate here instead of unloading via gates,
+        // that's the working-set growth, not the cache budget.
+        int sceneCount = SceneManager.sceneCount;
+        var sb = new StringBuilder();
+        sb.Append($"[Init.Memory] {context} | loaded scenes ({sceneCount}): ");
+        for (int i = 0; i < sceneCount; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            sb.Append(SceneManager.GetSceneAt(i).name);
+        }
+        ConfigManager.WriteConsole(sb.ToString());
     }
 
     void loadOperations()

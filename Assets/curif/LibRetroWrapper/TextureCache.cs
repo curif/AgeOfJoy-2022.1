@@ -2,74 +2,66 @@ using UnityEngine;
 using System.IO;
 using System.Collections;
 using System;
+using UnityEngine.Rendering;
 
 public class TextureCache : MonoBehaviour
 {
-    public Texture2D CachedTexture;
-    private Texture originalTexture;
+    // Read-only: always reflects what is in the LRU cache.
+    public Texture2D CachedTexture => CabinetTextureCache.GetCachedTexture(texturePath);
+
     public string texturePath;
     public float SavingDelayTime = 1f;
 
-    enum Status
-    {
-        None,
-        WaitingForCreation,
-        Loaded,
-        Error
-    }
-    private Status status = Status.None;
+    // Invoked when the thumbnail texture becomes available (initial load or after a new frame is saved).
+    public Action<Texture2D> OnTextureLoaded;
+
+    private bool isSaving = false;
+    private bool isLoadingExisting = false;
+    private Texture pendingSourceTexture;
 
     public void Init(string path)
     {
         texturePath = path + ".png";
-        LoadTextureFromDisk();
+        StartCoroutine(CabinetTextureCache.LoadAndCacheAsync(
+            texturePath,
+            tex => OnTextureLoaded?.Invoke(tex),
+            forceCompress: true
+        ));
     }
+
     public void Load(Texture newSourceTexture)
     {
-        // Check if texture is already loaded
-        if (CachedTexture != null || status == Status.WaitingForCreation)
+        if (isSaving || isLoadingExisting || AlreadyCached())
+            return;
+
+        // A PNG may already exist on disk from a previous session (or a race with
+        // Init's own async load) even though it hasn't landed in the in-memory
+        // cache yet. Load it instead of overwriting it with a fresh encode.
+        if (File.Exists(texturePath))
         {
-            // Debug.LogWarning("Texture is already loaded.");
+            isLoadingExisting = true;
+            StartCoroutine(LoadExistingFromDiskCoroutine());
             return;
         }
 
-        if (CachedTexture == null)
-        {
-            // Assign the source texture to the texture variable
-            originalTexture = newSourceTexture;
-            status = Status.WaitingForCreation;
+        pendingSourceTexture = newSourceTexture;
+        isSaving = true;
+        StartCoroutine(SaveTextureCoroutine());
+    }
 
-            // Save the texture to disk after N seconds
-            StartCoroutine(SaveTextureCoroutine());
-        }
+    private IEnumerator LoadExistingFromDiskCoroutine()
+    {
+        yield return CabinetTextureCache.LoadAndCacheAsync(
+            texturePath,
+            tex => OnTextureLoaded?.Invoke(tex),
+            forceCompress: true
+        );
+        isLoadingExisting = false;
     }
 
     public bool AlreadyCached()
     {
-        return CachedTexture != null;
-    }
-
-    public void LoadTextureFromDisk()
-    {
-        if (!File.Exists(texturePath))
-            return;
-
-        byte[] fileData;
-        try
-        {
-            fileData = File.ReadAllBytes(texturePath);
-        }
-        catch (Exception e)
-        {
-            ConfigManager.WriteConsoleException($"[LoadTextureFromDisk] {texturePath} can't read texture from disk", e);
-            return;
-        }
-
-        CachedTexture = new Texture2D(2, 2, TextureFormat.RGB565, true);
-        CachedTexture.LoadImage(fileData);
-        status = Status.Loaded;
-
-        ConfigManager.WriteConsole($"[TextureCache] {texturePath} loaded.");
+        return CabinetTextureCache.IsTextureCached(texturePath);
     }
 
     private IEnumerator SaveTextureCoroutine()
@@ -77,29 +69,55 @@ public class TextureCache : MonoBehaviour
         if (string.IsNullOrEmpty(texturePath))
         {
             ConfigManager.WriteConsoleError($"[TextureCache] SaveTextureCoroutine: texturePath is empty, skipping save.");
+            isSaving = false;
             yield break;
         }
+
         yield return new WaitForSeconds(SavingDelayTime);
 
-        byte[] imageData;
-        if (originalTexture is Texture2D)
-        {
-            Texture2D tex2D = originalTexture as Texture2D;
-            imageData = tex2D.EncodeToPNG();
-            Graphics.CopyTexture(tex2D, CachedTexture);
-        }
-        else
-        {
-            CachedTexture = ConvertToTexture2D(originalTexture);
-            imageData = CachedTexture.EncodeToPNG();
-        }
-        status = Status.Loaded;
+        Texture src = pendingSourceTexture;
+        pendingSourceTexture = null;
 
-        /*else
+        if (src == null)
         {
-            ConfigManager.WriteConsoleError($"[TextureCache] {texturePath} Unsupported texture for saving!");
+            ConfigManager.WriteConsoleError($"[TextureCache] SaveTextureCoroutine: source texture is null, skipping save.");
+            isSaving = false;
             yield break;
-        }*/
+        }
+
+        // Blit into a temporary RenderTexture so we can read back any Texture type.
+        RenderTexture rt = RenderTexture.GetTemporary(src.width, src.height, 0, RenderTextureFormat.ARGB32);
+        UnityEngine.Rendering.AsyncGPUReadbackRequest request;
+        try
+        {
+            Graphics.Blit(src, rt);
+
+            // Async readback — no main-thread stall, no dropped frame.
+            request = AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
+            while (!request.done)
+                yield return null;
+        }
+        finally
+        {
+            // Runs even if the coroutine is stopped mid-yield (e.g. player leaves the room),
+            // so the temporary RenderTexture is never leaked.
+            RenderTexture.ReleaseTemporary(rt);
+        }
+
+        if (request.hasError)
+        {
+            ConfigManager.WriteConsoleError($"[TextureCache] AsyncGPUReadback failed for {texturePath}");
+            isSaving = false;
+            yield break;
+        }
+
+        // Build a Texture2D from the readback data and encode it to PNG.
+        Texture2D snap = new Texture2D(src.width, src.height, TextureFormat.RGBA32, false);
+        snap.LoadRawTextureData(request.GetData<byte>());
+        snap.Apply(false, false);
+
+        byte[] imageData = snap.EncodeToPNG();
+        Destroy(snap);
 
         try
         {
@@ -109,22 +127,20 @@ public class TextureCache : MonoBehaviour
         catch (Exception e)
         {
             ConfigManager.WriteConsoleException($"[TextureCache] {texturePath} can't save texture to disk", e);
+            isSaving = false;
+            yield break;
         }
 
-    }
+        // Evict any stale in-memory entry so LoadAndCacheAsync picks up the fresh PNG.
+        CabinetTextureCache.InvalidateCachedTexture(texturePath);
 
-    private Texture2D ConvertToTexture2D(Texture texture)
-    {
-        RenderTexture renderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.Default, RenderTextureReadWrite.Linear);
-        Graphics.Blit(texture, renderTexture);
-        RenderTexture previous = RenderTexture.active;
-        RenderTexture.active = renderTexture;
-        Texture2D tex = new Texture2D(texture.width, texture.height);
-        tex.ReadPixels(new Rect(0, 0, renderTexture.width, renderTexture.height), 0, 0);
-        tex.Apply();
-        RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(renderTexture);
-        return tex;
-    }
+        // Reload through the LRU — this handles compression, .aojv1 disk cache, and budget tracking.
+        yield return CabinetTextureCache.LoadAndCacheAsync(
+            texturePath,
+            tex => OnTextureLoaded?.Invoke(tex),
+            forceCompress: true
+        );
 
+        isSaving = false;
+    }
 }

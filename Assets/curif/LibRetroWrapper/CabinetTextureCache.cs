@@ -25,12 +25,15 @@ public static class CabinetTextureCache
     private static GpuRgb565Converter gpuRgb565Converter = null;
 
     //convert textures > X mb
-    private const float ORIGINAL_SIZE_THRESHOLD = 5f * 1024 * 1024;
-    public const float CACHE_SIZE = 1024;
+    //private const float ORIGINAL_SIZE_THRESHOLD = 5f * 1024 * 1024;
+    //public const float CACHE_SIZE = 1024;
     //public const float CACHE_SIZE = 50; //forced for testing.
+    //public const float CACHE_SIZE_Q3 = 1536f;
+    public const float CACHE_SIZE = 1024;
     public const float CACHE_SIZE_Q3 = 1536f;
 
-    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete, bool makeNoLongerReadable = true)
+
+    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete, bool makeNoLongerReadable = true, bool forceCompress = false)
     {
         if (CachedTextures == null)
         {
@@ -50,8 +53,12 @@ public static class CabinetTextureCache
             yield break;
         }
 
+        // forceCompress (e.g. attraction-mode video first-frame thumbnails) always compresses,
+        // regardless of the user's per-cabinet "original textures" setting.
+        bool useOriginalMode = DeviceController.originalTextures && !forceCompress;
+
         // load disk cached texture
-        if (DeviceController.originalTextures)
+        if (useOriginalMode)
             // clean up any previously generated compressed disk cache when the user
             // is not compressing textures
             TextureDiskCache.DeleteCache(path);
@@ -94,7 +101,7 @@ public static class CabinetTextureCache
             float originalSizeInBytes = CalculateActualSizeBytes(texTmp);
             texTmp.name = "ORIGINAL-" + path;
             Texture2D cached;
-            if (DeviceController.originalTextures)
+            if (useOriginalMode)
             {
                 // user wants original uncompressed textures
 
@@ -137,16 +144,25 @@ public static class CabinetTextureCache
                     ConfigManager.WriteConsole($"[LoadAndCacheAsync] GPU Resizing {path} from {w}x{h} to {newWidth}x{newHeight} for compression.");
 
                     RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight, 0, RenderTextureFormat.ARGB32);
-                    
-                    // Blit stretches the image perfectly to the new dimensions
-                    Graphics.Blit(texTmp, rt);
-
-                    var request = UnityEngine.Rendering.AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
-                    
-                    // Wait for the GPU to finish reading back the data without blocking the main thread
-                    while (!request.done)
+                    UnityEngine.Rendering.AsyncGPUReadbackRequest request;
+                    try
                     {
-                        yield return null;
+                        // Blit stretches the image perfectly to the new dimensions
+                        Graphics.Blit(texTmp, rt);
+
+                        request = UnityEngine.Rendering.AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
+
+                        // Wait for the GPU to finish reading back the data without blocking the main thread
+                        while (!request.done)
+                        {
+                            yield return null;
+                        }
+                    }
+                    finally
+                    {
+                        // Runs even if the coroutine is stopped mid-yield (e.g. player leaves the room),
+                        // so the temporary RenderTexture is never leaked.
+                        RenderTexture.ReleaseTemporary(rt);
                     }
 
                     if (!request.hasError)
@@ -154,10 +170,10 @@ public static class CabinetTextureCache
                         // Create without mipmaps initially so LoadRawTextureData's expected byte size matches the single mip level read back.
                         Texture2D resizedTex = new Texture2D(newWidth, newHeight, TextureFormat.RGBA32, false, false);
                         resizedTex.LoadRawTextureData(request.GetData<byte>());
-                        
+
                         // Apply with 'updateMipmaps: true' so Unity generates the mip chain now.
                         resizedTex.Apply(true, false);
-                        
+
                         UnityEngine.Object.Destroy(texTmp);
                         texTmp = resizedTex;
                         format = TextureFormat.RGBA32;
@@ -166,8 +182,6 @@ public static class CabinetTextureCache
                     {
                         ConfigManager.WriteConsoleError($"[LoadAndCacheAsync] GPU Resize failed for {path}");
                     }
-                    
-                    RenderTexture.ReleaseTemporary(rt);
                 }
 
                 // These are all "Raw" formats and are safe to compress
@@ -704,6 +718,20 @@ public static class CabinetTextureCache
         if (CachedTextures == null) return;
 
         CachedTextures.Remove(path);
+    }
+
+    // Protects a texture currently bound to a live material from LRU eviction.
+    // Ref-counted - must be paired with a matching UnpinTexture call.
+    public static void PinTexture(string path)
+    {
+        if (CachedTextures == null || string.IsNullOrEmpty(path)) return;
+        CachedTextures.Pin(path);
+    }
+
+    public static void UnpinTexture(string path)
+    {
+        if (CachedTextures == null || string.IsNullOrEmpty(path)) return;
+        CachedTextures.Unpin(path);
     }
 
     // Method to retrieve a cached texture

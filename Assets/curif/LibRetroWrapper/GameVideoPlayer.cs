@@ -62,8 +62,8 @@ public class GameVideoPlayer : MonoBehaviour
         this.inverty = inverty;
 
         shader.Invert(invertx, inverty);
+        textureCache.OnTextureLoaded = tex => shader.Activate(tex);
         textureCache.Init(path);
-        showCachedImage();
 
         ConfigManager.WriteConsole($"[videoPlayer] Start {videoPath} ====");
 #endif
