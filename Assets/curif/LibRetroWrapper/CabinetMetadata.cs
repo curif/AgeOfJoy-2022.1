@@ -139,8 +139,17 @@ public class CabinetMetadata
     {
         string yamlPath = Path.Combine(cabPath, "metadata.yaml");
         ConfigManager.WriteConsole($"[CabinetMetadata]: save to Yaml: {yamlPath}");
-        string yaml = serializer.Serialize(metadata);
-        File.WriteAllText(yamlPath, yaml);
+        try
+        {
+            string yaml = serializer.Serialize(metadata);
+            File.WriteAllText(yamlPath, yaml);
+        }
+        catch (Exception e)
+        {
+            // metadata.yaml is just a cache (hash/size lookup); a failed write must not
+            // fault the cabinet for the whole session - worst case we re-hash next launch.
+            ConfigManager.WriteConsoleException($"[CabinetMetadata.toYaml] failed to save {yamlPath}, continuing with in-memory hash", e);
+        }
     }
 
     private static CabinetMetadata fromYaml(string cabPath)
