@@ -33,17 +33,178 @@ public static class CabinetTextureCache
     public const float CACHE_SIZE_Q3 = 1536f;
 
 
+    private static void EnsureCacheInitialized()
+    {
+        if (CachedTextures != null) return;
+
+        // lazy creation:
+        float cacheSize = CACHE_SIZE;
+        if (DeviceController.IsQ3)
+            cacheSize = CACHE_SIZE_Q3;
+        CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", cacheSize);
+        ConfigManager.WriteConsole($"[LoadAndCacheAsync] created cache textures size: {cacheSize}");
+    }
+
+    // Tries to serve `path` from the on-disk .aojv1 cache into the LRU. Reports success via
+    // onDone so callers can fall through to (re)compressing when there's no valid cache yet.
+    private static IEnumerator TryLoadFromDiskCache(string path, bool makeNoLongerReadable, Action<Texture2D> onComplete, Action<bool> onDone)
+    {
+        if (!TextureDiskCache.HasValidCache(path))
+        {
+            onDone(false);
+            yield break;
+        }
+
+        Texture2D cachedTex = null;
+        yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex, makeNoLongerReadable);
+
+        if (cachedTex == null)
+        {
+            onDone(false);
+            yield break;
+        }
+
+        cachedTex.name = "DISK-CACHED-COMPRESSED-" + path;
+
+        // Add to LRU Cache
+        float sizeMB = CalculateActualSizeBytes(cachedTex) / (1024f * 1024f);
+        CachedTextures.Add(path, cachedTex, sizeMB);
+
+        ConfigManager.WriteConsole($"[LoadAndCacheAsync] DISK CACHE HIT: {cachedTex.name} ({sizeMB:F2}MB)");
+        onComplete?.Invoke(cachedTex);
+        onDone(true);
+    }
+
+    // Takes an already-decoded, CPU-readable texture (e.g. a freshly downloaded image, or an
+    // in-memory video-frame snapshot) through GPU resize-to-multiple-of-4, compression, the
+    // .aojv1 disk cache write, and the LRU add. Shared by LoadAndCacheAsync (downloaded textures)
+    // and CacheTextureAsync (textures the caller already has in memory).
+    private static IEnumerator CompressAndCache(string path, Texture2D texTmp, Action<Texture2D> onComplete, bool makeNoLongerReadable)
+    {
+        float originalSizeInBytes = CalculateActualSizeBytes(texTmp);
+
+        // DownloadHandlerTexture usually returns RGBA32 or RGB24
+        TextureFormat format = texTmp.format;
+
+        if (format == TextureFormat.RGBA32 ||
+            format == TextureFormat.RGB24 ||
+            format == TextureFormat.ARGB32 ||
+            format == TextureFormat.BGRA32) // Added BGRA32 just in case
+        {
+            int w = texTmp.width;
+            int h = texTmp.height;
+
+            // Hardware compression requires dimensions to be multiples of 4.
+            if (w % 4 != 0 || h % 4 != 0)
+            {
+                int newWidth = w + (4 - (w % 4)) % 4;
+                int newHeight = h + (4 - (h % 4)) % 4;
+                ConfigManager.WriteConsole($"[CompressAndCache] GPU Resizing {path} from {w}x{h} to {newWidth}x{newHeight} for compression.");
+
+                RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight, 0, RenderTextureFormat.ARGB32);
+                UnityEngine.Rendering.AsyncGPUReadbackRequest request;
+                try
+                {
+                    // Blit stretches the image perfectly to the new dimensions
+                    Graphics.Blit(texTmp, rt);
+
+                    request = UnityEngine.Rendering.AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
+
+                    // Wait for the GPU to finish reading back the data without blocking the main thread
+                    while (!request.done)
+                    {
+                        yield return null;
+                    }
+                }
+                finally
+                {
+                    // Runs even if the coroutine is stopped mid-yield (e.g. player leaves the room),
+                    // so the temporary RenderTexture is never leaked.
+                    RenderTexture.ReleaseTemporary(rt);
+                }
+
+                if (!request.hasError)
+                {
+                    // Create without mipmaps initially so LoadRawTextureData's expected byte size matches the single mip level read back.
+                    Texture2D resizedTex = new Texture2D(newWidth, newHeight, TextureFormat.RGBA32, false, false);
+                    resizedTex.LoadRawTextureData(request.GetData<byte>());
+
+                    // Apply with 'updateMipmaps: true' so Unity generates the mip chain now.
+                    resizedTex.Apply(true, false);
+
+                    UnityEngine.Object.Destroy(texTmp);
+                    texTmp = resizedTex;
+                    format = TextureFormat.RGBA32;
+                }
+                else
+                {
+                    ConfigManager.WriteConsoleError($"[CompressAndCache] GPU Resize failed for {path}");
+                }
+            }
+
+            // These are all "Raw" formats and are safe to compress
+            if (texTmp.width % 4 == 0 && texTmp.height % 4 == 0)
+            {
+                texTmp.Compress(false);
+                texTmp.name = "COMPRESSED-" + path;
+
+                //SAVE CACHE immediately
+                TextureDiskCache.SaveToDisk(path, texTmp);
+            }
+            else
+            {
+                ConfigManager.WriteConsoleWarning($"[CompressAndCache] Skipping compression for {path} because dimensions ({texTmp.width}x{texTmp.height}) are not a multiple of 4.");
+            }
+        }
+
+        // FREE SYSTEM RAM
+        // This uploads to GPU and DELETES the CPU-side copy.
+        // Once you do this, you can't use GetPixels() anymore, but the GPU memory is halved.
+        texTmp.Apply(false, makeNoLongerReadable);
+        // From this point on, texTmp is NO LONGER READABLE by the CPU,
+
+        // CACHE THE COMPRESSED VERSION
+        float compressedSizeMB = CalculateActualSizeBytes(texTmp) / (1024f * 1024f);
+        ConfigManager.WriteConsole($"[CompressAndCache] {texTmp.name} original: {originalSizeInBytes / (1024f * 1024f):F2}MB after process it: {compressedSizeMB:F2}MB");
+
+        Texture2D cached = CachedTextures.Add(path, texTmp, compressedSizeMB);
+        if (cached != texTmp)
+        {
+            UnityEngine.Object.Destroy(texTmp);
+            texTmp = cached;
+        }
+
+        onComplete?.Invoke(texTmp);
+    }
+
+    // Entry point for callers that already hold a decoded texture in memory (e.g. a video
+    // first-frame snapshot from an AsyncGPUReadback) and don't need the URL-download branch.
+    // Always compresses to .aojv1 - unlike LoadAndCacheAsync there is no useOriginalMode
+    // branch here, intentionally: video thumbnails must always be compressed regardless of
+    // DeviceController.originalTextures.
+    public static IEnumerator CacheTextureAsync(string path, Texture2D sourceTex, Action<Texture2D> onComplete, bool makeNoLongerReadable = true)
+    {
+        EnsureCacheInitialized();
+
+        if (IsTextureCached(path))
+        {
+            ConfigManager.WriteConsole($"[CacheTextureAsync] from memory CACHE: {path}");
+            onComplete?.Invoke(GetCachedTexture(path));
+            yield break;
+        }
+
+        // A valid .aojv1 may already exist on disk (e.g. from a previous session) even though
+        // nothing is in the in-memory LRU yet - never blindly recompress/overwrite it.
+        bool diskHit = false;
+        yield return TryLoadFromDiskCache(path, makeNoLongerReadable, onComplete, done => diskHit = done);
+        if (diskHit) yield break;
+
+        yield return CompressAndCache(path, sourceTex, onComplete, makeNoLongerReadable);
+    }
+
     public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete, bool makeNoLongerReadable = true, bool forceCompress = false)
     {
-        if (CachedTextures == null)
-        {
-            // lazy creation:
-            float cacheSize = CACHE_SIZE;
-            if (DeviceController.IsQ3)
-                cacheSize = CACHE_SIZE_Q3;
-            CachedTextures = ResourceCacheManager.Create<string, Texture2D>("texturesCache", cacheSize);
-            ConfigManager.WriteConsole($"[LoadAndCacheAsync] created cache textures size: {cacheSize}");
-        }
+        EnsureCacheInitialized();
 
         if (IsTextureCached(path))
         {
@@ -62,24 +223,11 @@ public static class CabinetTextureCache
             // clean up any previously generated compressed disk cache when the user
             // is not compressing textures
             TextureDiskCache.DeleteCache(path);
-        else if (TextureDiskCache.HasValidCache(path))
+        else
         {
-            Texture2D cachedTex = null;
-            yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex, makeNoLongerReadable);
-
-            if (cachedTex != null)
-            {
-                cachedTex.name = "DISK-CACHED-COMPRESSED-" + path;
-
-                // Add to LRU Cache
-                float sizeMB = CalculateActualSizeBytes(cachedTex) / (1024f * 1024f);
-                CachedTextures.Add(path, cachedTex, sizeMB);
-
-                ConfigManager.WriteConsole($"[LoadAndCacheAsync] DISK CACHE HIT: {cachedTex.name} ({sizeMB:F2}MB)");
-                onComplete?.Invoke(cachedTex);
-
-                yield break;
-            }
+            bool diskHit = false;
+            yield return TryLoadFromDiskCache(path, makeNoLongerReadable, onComplete, done => diskHit = done);
+            if (diskHit) yield break;
         }
 
         //load original file
@@ -132,101 +280,9 @@ public static class CabinetTextureCache
                 yield break;
             }
                 
-            // DownloadHandlerTexture usually returns RGBA32 or RGB24
-            TextureFormat format = texTmp.format;
-
-            if (format == TextureFormat.RGBA32 ||
-                format == TextureFormat.RGB24 ||
-                format == TextureFormat.ARGB32 ||
-                format == TextureFormat.BGRA32) // Added BGRA32 just in case
-            {
-                int w = texTmp.width;
-                int h = texTmp.height;
-
-                // Hardware compression requires dimensions to be multiples of 4.
-                if (w % 4 != 0 || h % 4 != 0)
-                {
-                    int newWidth = w + (4 - (w % 4)) % 4;
-                    int newHeight = h + (4 - (h % 4)) % 4;
-                    ConfigManager.WriteConsole($"[LoadAndCacheAsync] GPU Resizing {path} from {w}x{h} to {newWidth}x{newHeight} for compression.");
-
-                    RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight, 0, RenderTextureFormat.ARGB32);
-                    UnityEngine.Rendering.AsyncGPUReadbackRequest request;
-                    try
-                    {
-                        // Blit stretches the image perfectly to the new dimensions
-                        Graphics.Blit(texTmp, rt);
-
-                        request = UnityEngine.Rendering.AsyncGPUReadback.Request(rt, 0, TextureFormat.RGBA32);
-
-                        // Wait for the GPU to finish reading back the data without blocking the main thread
-                        while (!request.done)
-                        {
-                            yield return null;
-                        }
-                    }
-                    finally
-                    {
-                        // Runs even if the coroutine is stopped mid-yield (e.g. player leaves the room),
-                        // so the temporary RenderTexture is never leaked.
-                        RenderTexture.ReleaseTemporary(rt);
-                    }
-
-                    if (!request.hasError)
-                    {
-                        // Create without mipmaps initially so LoadRawTextureData's expected byte size matches the single mip level read back.
-                        Texture2D resizedTex = new Texture2D(newWidth, newHeight, TextureFormat.RGBA32, false, false);
-                        resizedTex.LoadRawTextureData(request.GetData<byte>());
-
-                        // Apply with 'updateMipmaps: true' so Unity generates the mip chain now.
-                        resizedTex.Apply(true, false);
-
-                        UnityEngine.Object.Destroy(texTmp);
-                        texTmp = resizedTex;
-                        format = TextureFormat.RGBA32;
-                    }
-                    else
-                    {
-                        ConfigManager.WriteConsoleError($"[LoadAndCacheAsync] GPU Resize failed for {path}");
-                    }
-                }
-
-                // These are all "Raw" formats and are safe to compress
-                if (texTmp.width % 4 == 0 && texTmp.height % 4 == 0)
-                {
-                    texTmp.Compress(false);
-                    texTmp.name = "COMPRESSED-" + path;
-                    //ConfigManager.WriteConsole($"[LoadAndCacheAsync] compressed {texTmp.name} original format: {format} to ETC2.");
-                        
-                    //SAVE CACHE immediately
-                    TextureDiskCache.SaveToDisk(path, texTmp);
-                }
-                else
-                {
-                    ConfigManager.WriteConsoleWarning($"[LoadAndCacheAsync] Skipping compression for {path} because dimensions ({texTmp.width}x{texTmp.height}) are not a multiple of 4.");
-                }
-            }
-
-            // FREE SYSTEM RAM
-            // This uploads to GPU and DELETES the CPU-side copy.
-            // Once you do this, you can't use GetPixels() anymore, but the GPU memory is halved.
-            texTmp.Apply(false, makeNoLongerReadable);
-            // From this point on, texTmp is NO LONGER READABLE by the CPU,
-
-            // CACHE THE COMPRESSED VERSION
-            float compressedSizeMB = CalculateActualSizeBytes(texTmp) / (1024f * 1024f);
-            ConfigManager.WriteConsole($"[LoadAndCacheAsync] {texTmp.name} original: {originalSizeInBytes / (1024f * 1024f):F2}MB after process it: {compressedSizeMB:F2}MB");
-                
-            cached = CachedTextures.Add(path, texTmp, compressedSizeMB);
-            if (cached != texTmp)
-            {
-                UnityEngine.Object.Destroy(texTmp);
-                texTmp = cached;
-            }
-
-            onComplete?.Invoke(texTmp);
+            yield return CompressAndCache(path, texTmp, onComplete, makeNoLongerReadable);
             yield break;
-            
+
             /*
              * The conversion to RGB565 wasn't possible for
              * Meta Quest. Even when the docs

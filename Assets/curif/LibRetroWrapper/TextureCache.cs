@@ -22,6 +22,23 @@ public class TextureCache : MonoBehaviour
     public void Init(string path)
     {
         texturePath = path + ".png";
+
+        // Old installations may have a legacy PNG thumbnail left on disk from before video
+        // thumbnails were compressed into .aojv1. Once the compressed cache is confirmed valid
+        // it's pure disk waste - clean it up.
+        if (TextureDiskCache.HasValidCache(texturePath) && File.Exists(texturePath))
+        {
+            try
+            {
+                File.Delete(texturePath);
+                ConfigManager.WriteConsole($"[TextureCache] deleted legacy PNG {texturePath} (replaced by .aojv1)");
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[TextureCache] failed deleting legacy PNG {texturePath}", e);
+            }
+        }
+
         StartCoroutine(CabinetTextureCache.LoadAndCacheAsync(
             texturePath,
             tex => OnTextureLoaded?.Invoke(tex),
@@ -34,10 +51,11 @@ public class TextureCache : MonoBehaviour
         if (isSaving || isLoadingExisting || AlreadyCached())
             return;
 
-        // A PNG may already exist on disk from a previous session (or a race with
-        // Init's own async load) even though it hasn't landed in the in-memory
-        // cache yet. Load it instead of overwriting it with a fresh encode.
-        if (File.Exists(texturePath))
+        // A cached thumbnail may already exist on disk (compressed .aojv1, or a legacy PNG
+        // from before thumbnails were compressed) from a previous session - or a race with
+        // Init's own async load - even though it hasn't landed in the in-memory cache yet.
+        // Load it instead of overwriting it with a fresh capture.
+        if (TextureDiskCache.HasValidCache(texturePath) || File.Exists(texturePath))
         {
             isLoadingExisting = true;
             StartCoroutine(LoadExistingFromDiskCoroutine());
@@ -111,34 +129,18 @@ public class TextureCache : MonoBehaviour
             yield break;
         }
 
-        // Build a Texture2D from the readback data and encode it to PNG.
+        // Build a Texture2D from the readback data and hand it straight to the compressed
+        // disk cache - no intermediate PNG. This handles compression, .aojv1 disk cache, and
+        // budget tracking.
         Texture2D snap = new Texture2D(src.width, src.height, TextureFormat.RGBA32, false);
         snap.LoadRawTextureData(request.GetData<byte>());
         snap.Apply(false, false);
 
-        byte[] imageData = snap.EncodeToPNG();
-        Destroy(snap);
-
-        try
-        {
-            File.WriteAllBytes(texturePath, imageData);
-            ConfigManager.WriteConsole($"[TextureCache] {texturePath} saved first texture");
-        }
-        catch (Exception e)
-        {
-            ConfigManager.WriteConsoleException($"[TextureCache] {texturePath} can't save texture to disk", e);
-            isSaving = false;
-            yield break;
-        }
-
-        // Evict any stale in-memory entry so LoadAndCacheAsync picks up the fresh PNG.
-        CabinetTextureCache.InvalidateCachedTexture(texturePath);
-
-        // Reload through the LRU — this handles compression, .aojv1 disk cache, and budget tracking.
-        yield return CabinetTextureCache.LoadAndCacheAsync(
+        yield return CabinetTextureCache.CacheTextureAsync(
             texturePath,
+            snap,
             tex => OnTextureLoaded?.Invoke(tex),
-            forceCompress: true
+            makeNoLongerReadable: true
         );
 
         isSaving = false;
