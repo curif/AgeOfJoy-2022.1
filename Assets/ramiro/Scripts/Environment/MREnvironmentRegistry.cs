@@ -472,6 +472,9 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (entry.Source == MREnvironmentObjectSource.Poster)
             return TrySpawnPosterAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
 
+        if (entry.Source == MREnvironmentObjectSource.Magazine)
+            return TrySpawnMagazineAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
+
         return TrySpawnBuildPrefabAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
     }
 
@@ -518,6 +521,17 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (TrySpawnPosterAtWorldPose(entry.Key, worldPosition, worldRotation, out GameObject posterRoot))
             {
                 result.Root = posterRoot;
+                result.Success = true;
+            }
+
+            yield break;
+        }
+
+        if (entry.Source == MREnvironmentObjectSource.Magazine)
+        {
+            if (TrySpawnMagazineAtWorldPose(entry.Key, worldPosition, worldRotation, out GameObject magazineRoot))
+            {
+                result.Root = magazineRoot;
                 result.Success = true;
             }
 
@@ -580,6 +594,7 @@ public class MREnvironmentRegistry : MonoBehaviour
                 MREnvironmentObjectSource.Light => "light",
                 MREnvironmentObjectSource.Poster => "poster",
                 MREnvironmentObjectSource.RoomSkin => "roomSkin",
+                MREnvironmentObjectSource.Magazine => "magazine",
                 _ => "build"
             },
             Scale = ResolveScaleFromRoot(root),
@@ -595,6 +610,11 @@ public class MREnvironmentRegistry : MonoBehaviour
         {
             placement.TextureFile = entry.Key;
             placement.PrefabName = MRPosterFactory.PosterPrefabId;
+        }
+        else if (entry.Source == MREnvironmentObjectSource.Magazine)
+        {
+            placement.MagazineIssueName = entry.Key;
+            placement.PrefabName = MREnvironmentCatalog.MagazinePrefabName;
         }
         else
             placement.PrefabName = entry.Key;
@@ -717,6 +737,15 @@ public class MREnvironmentRegistry : MonoBehaviour
                 yield break;
             }
         }
+        else if (placement.IsMagazineSource)
+        {
+            if (!TrySpawnMagazineAtWorldPose(placement.MagazineIssueName, worldPos, worldRot, out root))
+            {
+                MRDebugLog.LogError($"Environment spawn failed: magazine '{placement.MagazineIssueName}' ({placement.Id})");
+                onComplete?.Invoke(false);
+                yield break;
+            }
+        }
         else if (placement.IsRoomSkinSource)
         {
             if (!TrySpawnRoomSkinMarker(placement, entry: MREnvironmentCatalogEntry.FromRoomSkin(
@@ -751,7 +780,9 @@ public class MREnvironmentRegistry : MonoBehaviour
                     ? MREnvironmentCatalogEntry.FromPoster(placement.TextureFile, placement.DisplayLabel)
                     : placement.IsRoomSkinSource
                         ? MREnvironmentCatalogEntry.FromRoomSkin(placement.PackageName, placement.DisplayLabel)
-                        : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
+                        : placement.IsMagazineSource
+                            ? MREnvironmentCatalogEntry.FromMagazine(placement.MagazineIssueName, placement.DisplayLabel)
+                            : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
         marker.Initialize(placement.Id, entry);
 
         spawnedById[placement.Id] = root;
@@ -775,6 +806,39 @@ public class MREnvironmentRegistry : MonoBehaviour
             return false;
         }
 
+        return true;
+    }
+
+    bool TrySpawnMagazineAtWorldPose(
+        string issueName,
+        Vector3 worldPos,
+        Quaternion worldRot,
+        out GameObject spawnedRoot)
+    {
+        spawnedRoot = null;
+        if (string.IsNullOrEmpty(issueName) || !MRMagazineCatalog.IssueHasYaml(issueName))
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} magazine issue missing yaml: {issueName}");
+            MRDebugLog.LogError($"Magazine issue missing {MRPaths.MagazineYamlFileName}: {issueName}");
+            return false;
+        }
+
+        GameObject prefab = MREnvironmentCatalog.LoadMagazinePrefab();
+        if (prefab == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} magazine prefab missing: {MREnvironmentCatalog.MagazinePrefabName}");
+            MRDebugLog.LogError($"Magazine prefab missing: {MREnvironmentCatalog.MagazinePrefabName}");
+            return false;
+        }
+
+        spawnedRoot = Instantiate(prefab, worldPos, worldRot);
+        spawnedRoot.name = $"{MREnvironmentCatalog.MagazinePrefabName}_{issueName}";
+        spawnedRoot.transform.SetParent(null, worldPositionStays: true);
+
+        Magazine magazine = spawnedRoot.GetComponent<Magazine>();
+        magazine?.ConfigureIssue(issueName);
+
+        NotifyPortableGamesPlacementUpdated(spawnedRoot);
         return true;
     }
 
@@ -1043,8 +1107,12 @@ public class MREnvironmentRegistry : MonoBehaviour
         PortableGamesTwoHandGrab portableGrab = root.GetComponentInChildren<PortableGamesTwoHandGrab>(true);
         portableGrab?.NotifyPlacementPoseUpdated();
 
+        MagazineGrab magazineGrab = root.GetComponentInChildren<MagazineGrab>(true);
+        magazineGrab?.NotifyPlacementPoseUpdated();
+
         MRCustomObjectGrab customGrab = root.GetComponentInChildren<MRCustomObjectGrab>(true);
-        customGrab?.NotifyPlacementPoseUpdated();
+        if (magazineGrab == null)
+            customGrab?.NotifyPlacementPoseUpdated();
     }
 
     static bool TrySpawnRoomSkinMarker(MREnvironmentPlacement placement, MREnvironmentCatalogEntry entry, out GameObject root)

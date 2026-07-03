@@ -24,7 +24,7 @@ public class MRConfigurationController : MonoBehaviour
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
     const int LightsAutoRowIndex = 0;
-    const int OfficialCategoryCount = 2;
+    const int OfficialCategoryCount = 3;
     const int CustomCategoryCount = 3;
     const int ConfigCategoryCount = 3;
     const int ListRowNameWidth = 10;
@@ -62,6 +62,7 @@ public class MRConfigurationController : MonoBehaviour
         Mesh,
         Lights,
         Posters,
+        Magazines,
         RoomSkins,
         PlacedInstances,
         LightTune,
@@ -92,6 +93,7 @@ public class MRConfigurationController : MonoBehaviour
     readonly List<MREnvironmentCatalogEntry> officialCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> lightsCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> postersCatalogEntries = new List<MREnvironmentCatalogEntry>();
+    readonly List<MREnvironmentCatalogEntry> magazinesCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> roomSkinsCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentPlacement> placedInstances = new List<MREnvironmentPlacement>();
     readonly List<MRDebugLog.DisplayLine> debugDisplayLines = new List<MRDebugLog.DisplayLine>();
@@ -345,7 +347,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("PHONE BOOTH", "Show or hide phone booth in MR");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
-        navMenu.AddOption("OFFICIAL OBJECTS", "Lights + PrefabsEnvironment props");
+        navMenu.AddOption("OFFICIAL OBJECTS", "Lights + Magazines + PrefabsEnvironment");
         navMenu.AddOption("CONFIG", "Move cabinet, scale, EffectMesh");
         navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls + objects guide");
@@ -398,6 +400,13 @@ public class MRConfigurationController : MonoBehaviour
         postersCatalogEntries.Clear();
         MRPostersCatalog.RefreshCache();
         postersCatalogEntries.AddRange(MRPostersCatalog.GetCatalogEntries());
+    }
+
+    void RefreshMagazinesCatalog()
+    {
+        magazinesCatalogEntries.Clear();
+        MRMagazineCatalog.RefreshCache();
+        magazinesCatalogEntries.AddRange(MRMagazineCatalog.GetCatalogEntries());
     }
 
     void RefreshRoomSkinsCatalog()
@@ -453,6 +462,9 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Posters:
                 DrawPostersPage();
+                break;
+            case Screen.Magazines:
+                DrawMagazinesPage();
                 break;
             case Screen.RoomSkins:
                 DrawRoomSkinsPage();
@@ -586,12 +598,15 @@ public class MRConfigurationController : MonoBehaviour
         screen.PrintLine(1, false, '-');
 
         string lightsPrefix = selectedListIndex == 0 ? "> " : "  ";
-        string othersPrefix = selectedListIndex == 1 ? "> " : "  ";
+        string magazinesPrefix = selectedListIndex == 1 ? "> " : "  ";
+        string othersPrefix = selectedListIndex == 2 ? "> " : "  ";
         screen.Print(1, 5, lightsPrefix + "Lights", selectedListIndex == 0);
-        screen.Print(1, 7, othersPrefix + "Others", selectedListIndex == 1);
+        screen.Print(1, 7, magazinesPrefix + "Magazines", selectedListIndex == 1);
+        screen.Print(1, 9, othersPrefix + "Others", selectedListIndex == 2);
 
-        screen.Print(1, 10, "Lights: ramiro/Lights/", false);
-        screen.Print(1, 11, "Others: PrefabsEnvironment/", false);
+        screen.Print(1, 12, "Lights: ramiro/Lights/", false);
+        screen.Print(1, 13, "Magazines: MR/Magazines/", false);
+        screen.Print(1, 14, "Others: PrefabsEnvironment/", false);
         DrawFooter("A: open   B: back");
     }
 
@@ -728,6 +743,42 @@ public class MRConfigurationController : MonoBehaviour
 
         if (selectedListIndex >= 0 && selectedListIndex < postersCatalogEntries.Count)
             screen.Print(1, 20, Truncate(postersCatalogEntries[selectedListIndex].ToString(), 36), false);
+
+        DrawFooter(RowColumnFooter);
+    }
+
+    void DrawMagazinesPage()
+    {
+        screen.PrintCentered(0, "MAGAZINES", true);
+        screen.Print(1, 2, "Official Objects", false);
+        screen.PrintLine(3, false, '-');
+
+        if (magazinesCatalogEntries.Count == 0)
+        {
+            screen.PrintCentered(8, "No magazine issues", true);
+            screen.PrintCentered(10, "MR/Magazines/<issue>/", false);
+            screen.PrintCentered(11, $"{MRPaths.MagazineYamlFileName} + page images", false);
+            DrawFooter("B: back");
+            return;
+        }
+
+        int row = 5;
+        for (int i = 0; i < VisibleCabinetRows; i++)
+        {
+            int idx = listScrollOffset + i;
+            if (idx >= magazinesCatalogEntries.Count)
+                break;
+
+            MREnvironmentCatalogEntry entry = magazinesCatalogEntries[idx];
+            string label = Truncate(entry.MenuLabel, ListRowNameWidth);
+            int count = envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0;
+            string suffix = PadLeft(count.ToString(), 2) + " ";
+            DrawListRow(row, idx, selectedListIndex, label, GetMagazinesRowActions(idx), suffix);
+            row++;
+        }
+
+        if (selectedListIndex >= 0 && selectedListIndex < magazinesCatalogEntries.Count)
+            screen.Print(1, 20, Truncate(magazinesCatalogEntries[selectedListIndex].ToString(), 36), false);
 
         DrawFooter(RowColumnFooter);
     }
@@ -1149,6 +1200,13 @@ public class MRConfigurationController : MonoBehaviour
         yield return "Wall placement. R-stick L/R spin Y";
         yield return "Tune on placed copy = YZ scale";
         yield return string.Empty;
+        yield return "OFFICIAL: MAGAZINES";
+        yield return "Folder: MR/Magazines/<issue>/";
+        yield return $"{MRPaths.MagazineYamlFileName} + numbered pages";
+        yield return $"Prefab: Resources/{MREnvironmentCatalog.ResourcesPath}/";
+        yield return $"{MREnvironmentCatalog.MagazinePrefabName}";
+        yield return "Table placement. Grab to read";
+        yield return string.Empty;
         yield return "CUSTOM: ROOM SKIN";
         yield return "Folder: MR/Room Skins/";
         yield return "Textures on room scan mesh";
@@ -1239,6 +1297,7 @@ public class MRConfigurationController : MonoBehaviour
         || screen == Screen.OfficialObjectsOthers
         || screen == Screen.Lights
         || screen == Screen.Posters
+        || screen == Screen.Magazines
         || screen == Screen.RoomSkins
         || screen == Screen.PlacedInstances
         || screen == Screen.Mesh
@@ -1338,6 +1397,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.OfficialObjectsOthers => GetObjectCatalogRowActions(selectedListIndex),
             Screen.Lights => GetLightsRowActions(selectedListIndex),
             Screen.Posters => GetPostersRowActions(selectedListIndex),
+            Screen.Magazines => GetMagazinesRowActions(selectedListIndex),
             Screen.RoomSkins => GetRoomSkinsRowActions(selectedListIndex),
             Screen.PlacedInstances => GetPlacedInstanceRowActions(selectedListIndex),
             Screen.Mesh => GetMeshRowActions(selectedListIndex),
@@ -1413,6 +1473,20 @@ public class MRConfigurationController : MonoBehaviour
             return actions;
 
         MREnvironmentCatalogEntry entry = postersCatalogEntries[index];
+        int count = envRegistry.GetInstanceCount(entry);
+        if (count > 0)
+            actions.Add(RowActionKind.Options);
+        actions.Add(RowActionKind.Add);
+        return actions;
+    }
+
+    List<RowActionKind> GetMagazinesRowActions(int index)
+    {
+        var actions = new List<RowActionKind>();
+        if (index < 0 || index >= magazinesCatalogEntries.Count || envRegistry == null)
+            return actions;
+
+        MREnvironmentCatalogEntry entry = magazinesCatalogEntries[index];
         int count = envRegistry.GetInstanceCount(entry);
         if (count > 0)
             actions.Add(RowActionKind.Options);
@@ -1534,6 +1608,8 @@ public class MRConfigurationController : MonoBehaviour
                 return ExecuteLightsRowAction(action);
             case Screen.Posters:
                 return ExecutePostersRowAction(action);
+            case Screen.Magazines:
+                return ExecuteMagazinesRowAction(action);
             case Screen.RoomSkins:
                 return ExecuteRoomSkinsRowAction(action);
             case Screen.PlacedInstances:
@@ -1685,6 +1761,26 @@ public class MRConfigurationController : MonoBehaviour
                 return false;
             case RowActionKind.Options:
                 OpenPlacedInstances(entry, Screen.Posters);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    bool ExecuteMagazinesRowAction(RowActionKind action)
+    {
+        if (selectedListIndex < 0 || selectedListIndex >= magazinesCatalogEntries.Count)
+            return false;
+
+        MREnvironmentCatalogEntry entry = magazinesCatalogEntries[selectedListIndex];
+        switch (action)
+        {
+            case RowActionKind.Add:
+                QueueReturnToPlacedInstances(entry, Screen.Magazines);
+                BeginAddEnvironmentWithRay(entry);
+                return false;
+            case RowActionKind.Options:
+                OpenPlacedInstances(entry, Screen.Magazines);
                 return true;
             default:
                 return false;
@@ -1921,6 +2017,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.OfficialObjectsOthers => officialCatalogEntries.Count,
             Screen.Lights => Mathf.Max(1, 1 + lightsCatalogEntries.Count),
             Screen.Posters => postersCatalogEntries.Count,
+            Screen.Magazines => magazinesCatalogEntries.Count,
             Screen.RoomSkins => roomSkinsCatalogEntries.Count,
             Screen.PlacedInstances => placedInstances.Count + 1,
             Screen.Mesh => MeshOptionCount,
@@ -1972,6 +2069,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.CustomObjectsOthers:
             case Screen.OfficialObjectsOthers:
             case Screen.Posters:
+            case Screen.Magazines:
             case Screen.RoomSkins:
             case Screen.PlacedInstances:
             case Screen.Mesh:
@@ -2094,6 +2192,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.OfficialObjectsOthers:
             case Screen.Lights:
             case Screen.Posters:
+            case Screen.Magazines:
             case Screen.RoomSkins:
             case Screen.PlacedInstances:
             case Screen.Mesh:
@@ -2323,6 +2422,7 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
             case Screen.Lights:
+            case Screen.Magazines:
             case Screen.OfficialObjectsOthers:
                 currentScreen = Screen.OfficialObjects;
                 navCooldown = navRepeatDelay;
@@ -2437,21 +2537,29 @@ public class MRConfigurationController : MonoBehaviour
 
     void OpenOfficialObjectsCategory()
     {
-        if (selectedListIndex == 0)
+        switch (selectedListIndex)
         {
-            RefreshLightsCatalog();
-            selectedListIndex = 0;
-            selectedColumnIndex = 0;
-            listScrollOffset = 0;
-            currentScreen = Screen.Lights;
-        }
-        else
-        {
-            RefreshObjectCatalogs();
-            selectedListIndex = 0;
-            selectedColumnIndex = 0;
-            listScrollOffset = 0;
-            currentScreen = Screen.OfficialObjectsOthers;
+            case 0:
+                RefreshLightsCatalog();
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.Lights;
+                break;
+            case 1:
+                RefreshMagazinesCatalog();
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.Magazines;
+                break;
+            default:
+                RefreshObjectCatalogs();
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.OfficialObjectsOthers;
+                break;
         }
 
         navCooldown = navRepeatDelay;
@@ -2496,6 +2604,12 @@ public class MRConfigurationController : MonoBehaviour
         if (entry.Source == MREnvironmentObjectSource.Poster)
         {
             BeginAddPosterWithRay(entry);
+            return;
+        }
+
+        if (entry.Source == MREnvironmentObjectSource.Magazine)
+        {
+            BeginAddMagazineWithRay(entry);
             return;
         }
 
@@ -2574,6 +2688,34 @@ public class MRConfigurationController : MonoBehaviour
 
         BeginEnvironmentPlacementRay(entry, root);
         ConfigManager.WriteConsole($"{LogPrefix} light add ray begin {entry}");
+    }
+
+    void BeginAddMagazineWithRay(MREnvironmentCatalogEntry entry)
+    {
+        if (envRegistry == null || placementRay == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
+            return;
+
+        if (placementRay.IsActive)
+            return;
+
+        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+
+        GameObject prefab = MREnvironmentCatalog.LoadMagazinePrefab();
+        MRPlacementProfile prefabProfile = MRPlacementProfile.Resolve(prefab);
+        PlacementSurfaceType initialSurface = prefabProfile != null
+            ? prefabProfile.surfaceType
+            : PlacementSurfaceType.Table;
+        ComputeInitialPlacementPose(initialSurface, out Vector3 worldPos, out Quaternion worldRot);
+
+        if (!envRegistry.TrySpawnTransientCatalogEntry(entry, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} magazine add ray spawn failed for {entry}");
+            MRDebugLog.LogError($"Magazine add failed: {entry} (spawn)");
+            return;
+        }
+
+        BeginEnvironmentPlacementRay(entry, root);
+        ConfigManager.WriteConsole($"{LogPrefix} magazine add ray begin {entry}");
     }
 
     void BeginAddBuildEnvironmentWithRay(MREnvironmentCatalogEntry entry)

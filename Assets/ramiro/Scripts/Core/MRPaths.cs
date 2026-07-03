@@ -18,6 +18,7 @@ public static class MRPaths
     public const string ObjectsLayoutFileName = "objects-layout.yaml";
     public const string CustomObjectYamlFileName = "object.yaml";
     public const string RoomSkinYamlFileName = "roomskin.yaml";
+    public const string MagazineYamlFileName = "magazine.yaml";
     /// <summary>Default image filename when <c>texture</c> is omitted in roomskin.yaml.</summary>
     public const string RoomSkinDefaultTextureFileName = "texture.png";
 
@@ -51,6 +52,7 @@ public static class MRPaths
         SeedExampleCustomObjectIfNeeded();
         SeedPostersReadmeIfNeeded();
         SeedMagazineReadmeIfNeeded();
+        SeedExampleMagazineIfNeeded();
         MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
     }
 
@@ -114,6 +116,12 @@ public static class MRPaths
         return Path.Combine(MagazinesDir, issueName);
     }
 
+    public static string GetMagazineIssueYamlPath(string issueName)
+    {
+        string issueDir = GetMagazineIssueDir(issueName);
+        return string.IsNullOrEmpty(issueDir) ? null : Path.Combine(issueDir, MagazineYamlFileName);
+    }
+
     public static string ResolveMagazinePagePath(string issueName, string pageFileName)
     {
         if (string.IsNullOrEmpty(issueName) || string.IsNullOrEmpty(pageFileName))
@@ -134,11 +142,11 @@ public static class MRPaths
         if (!Directory.Exists(MagazinesDir))
             return;
 
-        if (HasAnyMagazineIssue())
-            return;
-
         string readmePath = Path.Combine(MagazinesDir, "README.txt");
         if (File.Exists(readmePath))
+            return;
+
+        if (HasAnyMagazineIssue())
             return;
 
         try
@@ -150,6 +158,29 @@ public static class MRPaths
         catch (System.Exception e)
         {
             ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {readmePath}", e);
+        }
+    }
+
+    /// <summary>Writes MR/Magazines/Example/magazine.yaml when missing.</summary>
+    public static void SeedExampleMagazineIfNeeded()
+    {
+        if (!Directory.Exists(MagazinesDir))
+            return;
+
+        string exampleDir = Path.Combine(MagazinesDir, ExamplePackageName);
+        string yamlPath = Path.Combine(exampleDir, MagazineYamlFileName);
+        if (File.Exists(yamlPath))
+            return;
+
+        try
+        {
+            ConfigManager.CreateFolder(exampleDir);
+            File.WriteAllText(yamlPath, ExampleMagazineYaml);
+            ConfigManager.WriteConsole($"[MRPaths] created example magazine yaml at {yamlPath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {yamlPath}", e);
         }
     }
 
@@ -170,24 +201,46 @@ public static class MRPaths
         return false;
     }
 
-    const string MagazineReadmeText = @"Age of Joy — MR magazine pages
-==================================
+    const string MagazineReadmeText = @"Age of Joy — MR magazines
+==============================
 
-Export each PDF page as a numbered image, one issue per subfolder:
+Copy one folder per issue under MR/Magazines/ (Quest: Android/data/com.curif.AgeOfJoy/MR/Magazines/).
 
-  MR/Magazines/MyIssue/1.png   — front cover (outside, Left)
-  MR/Magazines/MyIssue/2.png   — inside front cover
-  MR/Magazines/MyIssue/3.png   — first right page
-  MR/Magazines/MyIssue/4.png   — next left page
+Each issue folder must contain:
+  magazine.yaml   — cover image filenames (see Example/magazine.yaml)
+  1.png, 2.png, … — page images (sorted by leading number)
+
+Example layout:
+
+  MR/Magazines/MyIssue/magazine.yaml
+  MR/Magazines/MyIssue/1.jpg    — front cover (outside, left)
+  MR/Magazines/MyIssue/2.jpg    — inside front cover
+  MR/Magazines/MyIssue/3.jpg    — first interior right page
+  MR/Magazines/MyIssue/4.jpg    — next left page
   ...
-  MR/Magazines/MyIssue/N-1.png — inside back cover
-  MR/Magazines/MyIssue/N.png   — back cover (outside, Right)
+  MR/Magazines/MyIssue/N-1.jpg  — inside back cover
+  MR/Magazines/MyIssue/N.jpg    — back cover (outside, right)
 
-Use an even page count. Files are sorted by leading number (1, 2, … 10, not 1, 10, 2).
+Interior pages are every numbered image not listed in magazine.yaml covers.
 Supported formats: .png .jpg .jpeg .webp .bmp
 On Quest prefer .png or .jpg (.tif often does not load).
 
-Set the issue folder name on the Magazine component (e.g. MyIssue).
+Set issueFolderName on the Magazine component to the folder name (e.g. MyIssue).
+";
+
+    const string ExampleMagazineYaml = @"# Age of Joy — MR magazine issue (schema v1)
+# Copy this folder under MR/Magazines/ and add numbered page images.
+
+version: 1
+
+displayName: Example magazine
+
+# Cover filenames inside this issue folder (interior pages = all other numbered images).
+covers:
+  front: 1.jpg
+  insideFront: 2.jpg
+  insideBack: 75.jpg
+  back: 76.jpg
 ";
 
     const string PostersReadmeText = @"Age of Joy — MR wall posters

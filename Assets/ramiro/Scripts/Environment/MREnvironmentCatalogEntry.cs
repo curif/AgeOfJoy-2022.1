@@ -36,10 +36,14 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
     public static MREnvironmentCatalogEntry FromRoomSkin(string packageName, string displayLabel) =>
         new MREnvironmentCatalogEntry(MREnvironmentObjectSource.RoomSkin, packageName, displayLabel);
 
+    public static MREnvironmentCatalogEntry FromMagazine(string issueName, string displayLabel) =>
+        new MREnvironmentCatalogEntry(MREnvironmentObjectSource.Magazine, issueName, displayLabel);
+
     public string MenuPrefix => Source switch
     {
         MREnvironmentObjectSource.Custom => "[C] ",
         MREnvironmentObjectSource.RoomSkin => "[R] ",
+        MREnvironmentObjectSource.Magazine => "[M] ",
         _ => string.Empty
     };
 
@@ -69,6 +73,10 @@ public readonly struct MREnvironmentCatalogEntry : IEquatable<MREnvironmentCatal
             return placement.IsRoomSkinSource
                 && string.Equals(placement.PackageName, Key, StringComparison.OrdinalIgnoreCase);
 
+        if (Source == MREnvironmentObjectSource.Magazine)
+            return placement.IsMagazineSource
+                && string.Equals(placement.MagazineIssueName, Key, StringComparison.OrdinalIgnoreCase);
+
         return string.Equals(placement.PrefabName, Key, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -96,5 +104,6 @@ public enum MREnvironmentObjectSource
     Custom = 1,
     Light = 2,
     Poster = 3,
-    RoomSkin = 4
+    RoomSkin = 4,
+    Magazine = 5
 }

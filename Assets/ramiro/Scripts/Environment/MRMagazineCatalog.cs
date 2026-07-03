@@ -36,6 +36,10 @@ public static class MRMagazineCatalog
             if (string.IsNullOrEmpty(issueName))
                 continue;
 
+            string yamlPath = Path.Combine(issueDir, MRPaths.MagazineYamlFileName);
+            if (!File.Exists(yamlPath))
+                continue;
+
             var pages = new List<string>();
             foreach (string file in Directory.EnumerateFiles(issueDir, "*.*", SearchOption.TopDirectoryOnly))
             {
@@ -52,7 +56,40 @@ public static class MRMagazineCatalog
         }
 
         ConfigManager.WriteConsole(
-            $"[MRMagazineCatalog] {cachedIssuePages.Count} issue(s) in {MRPaths.MagazinesDir}");
+            $"[MRMagazineCatalog] {cachedIssuePages.Count} issue(s) with {MRPaths.MagazineYamlFileName} in {MRPaths.MagazinesDir}");
+    }
+
+    public static List<MREnvironmentCatalogEntry> GetCatalogEntries()
+    {
+        if (cachedIssuePages == null)
+            RefreshCache();
+
+        var entries = new List<MREnvironmentCatalogEntry>();
+        foreach (string issueName in GetIssueNames())
+        {
+            entries.Add(MREnvironmentCatalogEntry.FromMagazine(
+                issueName,
+                GetDisplayLabel(issueName)));
+        }
+
+        return entries;
+    }
+
+    public static string GetDisplayLabel(string issueName)
+    {
+        if (string.IsNullOrEmpty(issueName))
+            return "(magazine)";
+
+        if (MRMagazineIssueDefinition.TryLoad(issueName, out MRMagazineIssueDefinition definition))
+            return definition.GetDisplayName();
+
+        return issueName;
+    }
+
+    public static bool IssueHasYaml(string issueName)
+    {
+        string yamlPath = MRPaths.GetMagazineIssueYamlPath(issueName);
+        return !string.IsNullOrEmpty(yamlPath) && File.Exists(yamlPath);
     }
 
     public static int GetPageCount(string issueName)
