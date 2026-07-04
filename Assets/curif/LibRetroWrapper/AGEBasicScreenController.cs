@@ -35,7 +35,7 @@ using UnityEditor;
 [RequireComponent(typeof(CabinetAGEBasic))]
 [RequireComponent(typeof(LightGunTarget))]
 // [RequireComponent(typeof(BoxCollider))]
-public class AGEBasicScreenController : MonoBehaviour
+public class AGEBasicScreenController : MonoBehaviour, ISuspendableCabinetScreen
 {
     public string ScreenName = ""; //loaded on start, needed for the multitasking
 
@@ -102,6 +102,7 @@ public class AGEBasicScreenController : MonoBehaviour
 
     private Coroutine mainCoroutine;
     private bool initialized = false;
+    private bool videoInitialized = false;
     private bool CoinWasInserted = false;
 
     private LightGunTarget lightGunTarget;
@@ -177,7 +178,9 @@ public class AGEBasicScreenController : MonoBehaviour
 
         //video shader ----------------
         videoShader = ShaderScreen.Factory(display, 1, shader.AlternativeShaderForAttractionVideos(), screen.config());
-        
+
+        AttractVideoBudget.Configure(globalConfiguration.Configuration.cabinet.maxAttractVideos);
+
         ConfigManager.WriteConsole($"[AGEBasicScreenController.Start]  {name} shader created: {shader} video shader {videoShader}");
 
         mainCoroutine = StartCoroutine(runBT());
@@ -226,12 +229,66 @@ public class AGEBasicScreenController : MonoBehaviour
         }
     }
 
+    /// <summary>Restart the attract-mode BT after a suspend.</summary>
+    public void EnsureAttractLoopRunning()
+    {
+        if (!initialized || !isActiveAndEnabled)
+            return;
+
+        if (mainCoroutine == null)
+            mainCoroutine = StartCoroutine(runBT());
+    }
+
+    /// <summary>Stop BT ticking, any running AGEBasic program, and the attract video.</summary>
+    public void SuspendAttractAndPlaybackForTransition()
+    {
+        if (mainCoroutine != null)
+        {
+            StopCoroutine(mainCoroutine);
+            mainCoroutine = null;
+        }
+
+        // Fully stop a running program (same cleanup as the "END Program" BT node)
+        // so the AGEBasic interpreter doesn't keep executing invisibly.
+        if (CoinWasInserted || cabinetAGEBasic.AGEBasic.IsRunning() || cabinetAGEBasic.AGEBasic.IsRunningInBackground())
+        {
+            cabinet.PhyDeactivate();
+            cabinetAGEBasic.Stop(); //force
+            cabinetAGEBasic.ExecAfterLeaveBas();
+
+            videoPlayer.BudgetPin(false);
+            if (!string.IsNullOrEmpty(VideoFile))
+                videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
+            else
+                videoPlayer.StopAndReset();
+
+            EndPlayerActivities();
+            if (lightGunTarget != null && lightGunInformation != null)
+                lightGunTarget.enabled = false;
+
+            CoinWasInserted = false;
+        }
+
+        // Stop() (not Pause()) releases the video decoder; the shader is left showing
+        // the cached attract-video frame (or the standby image if none was cached yet).
+        if (videoPlayer != null)
+            videoPlayer.Stop();
+    }
+
     IEnumerator runBT()
     {
         yield return new WaitForEndOfFrame();
 
         // LibretroMameCore.WriteConsole($"[AGEBasicScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
-        videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
+        // Only wire up the video source once: re-running setVideo() (and the
+        // TextureCache.Init() it triggers) on every resume races an async cached-thumbnail
+        // load against the live video frame binding, sometimes leaving the screen frozen
+        // on the thumbnail while the video (and its audio) keeps playing underneath.
+        if (!videoInitialized)
+        {
+            videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
+            videoInitialized = true;
+        }
         cabinetAGEBasic.Init(ageBasicInformation, PathBase, cabinet, CoinSlot, lightGunTarget);
         cabinetAGEBasic.ActivateShader(shader);
         cabinetAGEBasic.SetVideoConfig(videoPlayer, shader);
@@ -339,6 +396,8 @@ public class AGEBasicScreenController : MonoBehaviour
               .Do("Run main program", () =>
               {
                   //   videoPlayer.Stop();
+                  // the player paid a coin: this screen's video always wins a decoder slot
+                  videoPlayer.BudgetPin(true);
                   videoPlayer.Pause();
 
                   cabinetAGEBasic.ActivateShader(shader);
@@ -393,6 +452,7 @@ public class AGEBasicScreenController : MonoBehaviour
                       // VIDEOLOAD may have changed videoPath during the session; reset it here.
                       // If no attraction video is configured, reset completely so Play() is a
                       // no-op and the BT video loop cannot restart the last AGEBasic-loaded clip.
+                      videoPlayer.BudgetPin(false);
                       if (!string.IsNullOrEmpty(VideoFile))
                           videoPlayer.setVideo(VideoFile, videoShader, VideoInvertX, VideoInvertY);
                       else

@@ -4,6 +4,7 @@ This program is free software: you can redistribute it and/or modify it under th
 
 using System.Collections;
 using System.Collections.Generic;
+using Meta.XR.MRUtilityKit;
 using UnityEngine;
 using LC = LibretroControlMapDictionnary;
 
@@ -136,6 +137,7 @@ public class MRConfigurationController : MonoBehaviour
     GameObject pendingAddRoot;
     bool scanRequestInProgress;
     Coroutine scanRoomCoroutine;
+    string scanStatusLine = "";
 
     public bool IsSessionActive => sessionActive;
 
@@ -424,7 +426,10 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.NavMain:
                 navMenu.DrawMenu();
                 if (RequiresRoomScanMenu())
+                {
+                    DrawScanRequiredDiagnostic();
                     DrawFooter("A: scan room");
+                }
                 else
                     DrawFooter("STICK: move   A: select   B: back");
                 break;
@@ -498,9 +503,45 @@ public class MRConfigurationController : MonoBehaviour
     {
         screen.PrintCentered(0, "SCAN ROOM", true);
         screen.PrintLine(1, false, '-');
-        screen.PrintCentered(8, "Quest scanner open", true);
-        screen.PrintCentered(10, "Walk around your room", false);
-        screen.PrintCentered(12, "Finish setup to continue", false);
+        if (!string.IsNullOrEmpty(scanStatusLine))
+        {
+            screen.PrintCentered(8, scanStatusLine, true);
+        }
+        else
+        {
+            screen.PrintCentered(8, "Quest scanner open", true);
+            screen.PrintCentered(10, "Walk around your room", false);
+            screen.PrintCentered(12, "Finish setup to continue", false);
+        }
+    }
+
+    void DrawScanRequiredDiagnostic()
+    {
+        bool mrukReady = MRUK.Instance != null;
+        MRUKRoom room = mrukReady ? MRUK.Instance.GetCurrentRoom() : null;
+        bool hasRoom = room != null && room.Anchors != null && room.Anchors.Count > 0;
+        bool hasFloor = room?.FloorAnchor != null;
+        int wallCount = room?.WallAnchors != null ? room.WallAnchors.Count : 0;
+
+        int row = 3;
+        screen.PrintLine(2, false, '-');
+
+        if (!hasRoom)
+        {
+            string mrukLabel = mrukReady ? "MRUK:ready" : "MRUK:NULL";
+            screen.PrintCentered(row++, mrukLabel, false);
+            screen.PrintCentered(row++, MRSceneLoadState.LastLoadResult.ToString(), false);
+            string fault = MRSceneLoadState.LastFaultDetail;
+            if (!string.IsNullOrEmpty(fault))
+                screen.PrintCentered(row++, Truncate(fault, 36), false);
+        }
+        else
+        {
+            string floorStr = hasFloor ? "Floor:OK" : "Floor:MISSING";
+            string wallStr = wallCount > 0 ? $"Walls:{wallCount}" : "Walls:MISSING";
+            screen.PrintCentered(row++, $"{floorStr}  {wallStr}", false);
+            screen.PrintCentered(row++, $"Anchors:{room.Anchors.Count}", false);
+        }
     }
 
     void DrawCabinetsPage()
@@ -2289,12 +2330,24 @@ public class MRConfigurationController : MonoBehaviour
     IEnumerator RunRoomScanFromMenu()
     {
         scanRequestInProgress = true;
+        scanStatusLine = "Opening Quest Space Setup...";
         currentScreen = Screen.ScanInProgress;
         DrawCurrentScreen();
 
         Transform player = ResolvePlayerTransform();
         yield return MRSceneScanRequest.RunSpaceSetupAndReload(player);
 
+        scanStatusLine = "Reloading room data...";
+        DrawCurrentScreen();
+        yield return null;
+
+        bool scanned = MRSceneScanState.IsRoomScanned();
+        scanStatusLine = scanned ? "Room loaded!" : "Room not found";
+        DrawCurrentScreen();
+
+        yield return new WaitForSecondsRealtime(2f);
+
+        scanStatusLine = "";
         scanRequestInProgress = false;
         scanRoomCoroutine = null;
         BuildNavMenu();
@@ -2306,7 +2359,7 @@ public class MRConfigurationController : MonoBehaviour
         SyncBackControlEdgeState();
         DrawCurrentScreen();
 
-        if (MRSceneScanState.IsRoomScanned())
+        if (scanned)
             ConfigManager.WriteConsole($"{LogPrefix} room scan complete — full menu unlocked");
         else
             ConfigManager.WriteConsoleWarning($"{LogPrefix} room scan finished without MRUK room");

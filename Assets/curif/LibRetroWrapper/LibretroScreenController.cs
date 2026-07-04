@@ -34,7 +34,7 @@ using UnityEditor;
 [RequireComponent(typeof(LibretroControlMap))]
 [RequireComponent(typeof(basicAGE))]
 [RequireComponent(typeof(CabinetAGEBasic))]
-public class LibretroScreenController : MonoBehaviour
+public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
 {
     [SerializeField]
     public string GameFile = "1942.zip";
@@ -148,10 +148,12 @@ public class LibretroScreenController : MonoBehaviour
 
     private Coroutine mainCoroutine;
     private bool initialized = false;
+    private bool videoInitialized = false;
     private bool gameRunning = false;
     private bool playerInTheZone = false;
     private float distanceToPlayer;
     private bool screenLightON = false;
+    private DateTime lastAudioStatsReport = DateTime.MinValue;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -241,6 +243,8 @@ public class LibretroScreenController : MonoBehaviour
         }
         videoShader = ShaderScreen.Factory(display, 1, videoShaderName, videoShaderConfig);
 
+        AttractVideoBudget.Configure(globalConfiguration.Configuration.cabinet.maxAttractVideos);
+
         ConfigManager.WriteConsole($"[LibretroScreenController.Start] {name} game shader created: {shader} video shader: {videoShader}");
 
         // age basic ---------------------
@@ -308,7 +312,7 @@ public class LibretroScreenController : MonoBehaviour
             mainCoroutine = StartCoroutine(runBT());
     }
 
-    /// <summary>Stop attract BT and clip playback during MR phone-booth travel (game End is separate).</summary>
+    /// <summary>Stop attract BT, clip playback, and (if applicable) a running game.</summary>
     public void SuspendAttractAndPlaybackForTransition()
     {
         if (mainCoroutine != null)
@@ -317,8 +321,15 @@ public class LibretroScreenController : MonoBehaviour
             mainCoroutine = null;
         }
 
+        // Fully stop an in-progress game so the emulator run thread and audio
+        // streaming don't keep consuming CPU while nobody is playing.
+        if (gameRunning || LibretroMameCore.isRunning(ScreenName, GameFile))
+            ExitPlayerFromGame();
+
+        // Stop() (not Pause()) releases the video decoder; the shader is left showing
+        // the cached attract-video frame (or the standby image if none was cached yet).
         if (videoPlayer != null)
-            videoPlayer.Pause();
+            videoPlayer.Stop();
 
         if (audioPlayer != null)
             audioPlayer.Stop();
@@ -330,8 +341,16 @@ public class LibretroScreenController : MonoBehaviour
     {
         // LibretroMameCore.WriteConsole($"[LibretroScreenController.runBT] coroutine BT cicle Start {gameObject.name}");
 
-        videoPlayer.setVideo(GameVideoFile, videoShader, GameVideoInvertX, GameVideoInvertY);
-        audioPlayer.path = GameAudioFile;
+        // Only wire up the video/audio source once: re-running setVideo() (and the
+        // TextureCache.Init() it triggers) on every resume races an async cached-thumbnail
+        // load against the live video frame binding, sometimes leaving the screen frozen
+        // on the thumbnail while the video (and its audio) keeps playing underneath.
+        if (!videoInitialized)
+        {
+            videoPlayer.setVideo(GameVideoFile, videoShader, GameVideoInvertX, GameVideoInvertY);
+            audioPlayer.path = GameAudioFile;
+            videoInitialized = true;
+        }
 
         tree = buildScreenBT();
         while (true)
@@ -687,6 +706,22 @@ public class LibretroScreenController : MonoBehaviour
 
             LibretroMameCore.UpdateTexture();
 
+            if (DateTime.Now >= lastAudioStatsReport)
+            {
+                string stats = LibretroMameCore.GetAndResetAudioStats();
+                if (stats != null)
+                {
+                    // how many voices the audio thread is servicing besides this game
+                    int playingSources = 0;
+                    foreach (AudioSource src in FindObjectsOfType<AudioSource>())
+                        if (src.isPlaying)
+                            playingSources++;
+                    ConfigManager.WriteConsole($"[LibretroScreenController] {name} {stats} playingAudioSources: {playingSources}");
+                }
+                lastAudioStatsReport = DateTime.Now.AddSeconds(5);
+            }
+
+            LibretroMameCore.FlushAudioCaptureIfReady();
         }
 
         shader.Update();
@@ -722,7 +757,7 @@ public class LibretroScreenController : MonoBehaviour
     private void OnAudioFilterRead(float[] data, int channels)
     {
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
-            LibretroMameCore.MoveAudioStreamTo(data);
+            LibretroMameCore.MoveAudioStreamTo(data, channels);
     }
 
     private void OnDestroy()
@@ -731,6 +766,9 @@ public class LibretroScreenController : MonoBehaviour
             PreparePlayerToPlayGame(false);
 
         LibretroMameCore.End(ScreenName, GameFile);
+
+        shader?.ReleaseMaterialInstance();
+        videoShader?.ReleaseMaterialInstance();
     }
 
 #if UNITY_EDITOR

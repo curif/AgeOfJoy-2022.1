@@ -258,9 +258,15 @@ public class ConfigInformation
         [YamlMember(Alias = "original-textures", ApplyNamingConventions = false)]
         public bool OriginalTextures = originalTexturesDefault;
 
+        // max simultaneous attraction-video decoders. 0 = auto (Quest3: 5, others: 3)
+        public static readonly int maxAttractVideosDefault = 0;
+        [YamlMember(Alias = "max-attract-videos", ApplyNamingConventions = false)]
+        public int maxAttractVideos = maxAttractVideosDefault;
+
         public override bool IsValid()
         {
-            return screenGlowIntensity >= 0;
+            return screenGlowIntensity >= 0
+                && maxAttractVideos >= 0 && maxAttractVideos <= 10;
         }
 
         public static List<string> GlowIntensities()

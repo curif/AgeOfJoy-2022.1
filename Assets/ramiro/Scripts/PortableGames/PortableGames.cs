@@ -1185,7 +1185,7 @@ public class PortableGames : MonoBehaviour
     void OnAudioFilterRead(float[] data, int channels)
     {
         if (gameRunning && LibretroMameCore.isRunning(screenName, selectedGame))
-            LibretroMameCore.MoveAudioStreamTo(data);
+            LibretroMameCore.MoveAudioStreamTo(data, channels);
     }
 
     void OnDestroy()
@@ -1195,6 +1195,10 @@ public class PortableGames : MonoBehaviour
 #endif
         if (gameRunning && LibretroMameCore.isRunning(screenName, selectedGame))
             LibretroMameCore.End(screenName, selectedGame);
+
+        menuShaderOnline?.ReleaseMaterialInstance();
+        menuShaderOffline?.ReleaseMaterialInstance();
+        gameShader?.ReleaseMaterialInstance();
     }
 
     static string Truncate(string value, int maxLen)

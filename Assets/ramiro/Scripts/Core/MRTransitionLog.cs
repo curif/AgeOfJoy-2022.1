@@ -168,6 +168,9 @@ public static class MRTransitionLog
 
     static void WriteRaw(string text)
     {
+        if (!Debug.isDebugBuild)
+            return;
+
         try
         {
             File.AppendAllText(logFilePath, text, Encoding.UTF8);
@@ -181,6 +184,9 @@ public static class MRTransitionLog
 
     static void TrimIfNeeded()
     {
+        if (!Debug.isDebugBuild)
+            return;
+
         try
         {
             if (!File.Exists(logFilePath))

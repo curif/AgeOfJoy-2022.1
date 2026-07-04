@@ -6,6 +6,7 @@ using UnityEngine;
 public interface IResourceCache
 {
     void FreeResources();
+    void Status();
 }
 
 public class ResourceCacheManager
@@ -38,13 +39,26 @@ public class ResourceCacheManager
 
     public static IEnumerator FreeResourcesAsync()
     {
+        ConfigManager.WriteConsole("[ResourceCacheManager] ==== FreeResources triggered ====");
+        LogAllCacheStatus("BEFORE");
+
         FreeResources();
+
         System.GC.Collect();
         yield return null;
         AsyncOperation unloadOp = Resources.UnloadUnusedAssets();
         while (!unloadOp.isDone)
             yield return null;
+
+        LogAllCacheStatus("AFTER");
         ConfigManager.WriteConsole("[ResourceCacheManager] Memory reclaimed successfully.");
+    }
+
+    public static void LogAllCacheStatus(string label)
+    {
+        ConfigManager.WriteConsole($"[ResourceCacheManager] ---- cache status ({label}) ----");
+        foreach (IResourceCache cache in caches)
+            cache.Status();
     }
 }
 
@@ -55,6 +69,7 @@ public class ResourceCache<K, V> : IResourceCache
     private Dictionary<K, V> cache = new Dictionary<K, V>();
     private Dictionary<K, float> sizeMap = new Dictionary<K, float>(); // Tracks size of each item
     private LinkedList<K> lruList = new LinkedList<K>(); // Tracks usage order
+    private Dictionary<K, int> pinCount = new Dictionary<K, int>(); // Ref-counts entries currently in active use
     string Name;
     private readonly object locker = new object();
 
@@ -70,18 +85,43 @@ public class ResourceCache<K, V> : IResourceCache
     public float MaxSizeInMB => maxSizeInMB;
     public int Count => lruList.Count;
 
+    // Frees every UNPINNED entry (e.g. in response to the OS-level low-memory
+    // callback). Pinned entries (textures still bound to a live, on-screen
+    // material) are intentionally left untouched - destroying those is exactly
+    // what caused cabinets to go dark under memory pressure.
     public void FreeResources()
     {
         lock (locker)
         {
-            foreach (var pair in cache)
+            int totalCountBefore = lruList.Count;
+            float totalSizeBefore = currentSizeInMB;
+            int freedCount = 0;
+            int pinnedSkipped = 0;
+
+            LinkedListNode<K> node = lruList.Last;
+            while (node != null)
             {
-                DestroyIfUnityObject(pair.Value);
+                LinkedListNode<K> prev = node.Previous;
+                K key = node.Value;
+
+                if (IsPinned(key))
+                {
+                    pinnedSkipped++;
+                }
+                else
+                {
+                    DestroyIfUnityObject(cache[key]);
+                    currentSizeInMB -= sizeMap[key];
+                    cache.Remove(key);
+                    sizeMap.Remove(key);
+                    lruList.Remove(node);
+                    freedCount++;
+                }
+
+                node = prev;
             }
-            cache.Clear();
-            sizeMap.Clear();
-            lruList.Clear();
-            currentSizeInMB = 0f;
+
+            ConfigManager.WriteConsole($"[ResourceCacheManager] {Name}: FreeResources freed {freedCount}/{totalCountBefore} entries ({totalSizeBefore - currentSizeInMB:F2}MB freed). Kept {pinnedSkipped} pinned entries in use ({currentSizeInMB:F2}MB remaining).");
         }
     }
 
@@ -110,6 +150,43 @@ public class ResourceCache<K, V> : IResourceCache
             return currentSizeInMB + sizeInMB > maxSizeInMB && lruList.Count > 0;
         }
     }
+
+    // Marks an entry as actively in use, protecting it from LRU eviction. Ref-counted:
+    // callers must pair every Pin() with an Unpin() when they stop using the entry.
+    public void Pin(K key)
+    {
+        if (key == null) return;
+
+        lock (locker)
+        {
+            if (!cache.ContainsKey(key)) return;
+            pinCount.TryGetValue(key, out int c);
+            pinCount[key] = c + 1;
+            ConfigManager.WriteConsole($"[ResourceCacheManager] {Name}: Pin({key}) -> refcount {c + 1}");
+        }
+    }
+
+    public void Unpin(K key)
+    {
+        if (key == null) return;
+
+        lock (locker)
+        {
+            if (!pinCount.TryGetValue(key, out int c)) return;
+            if (c <= 1)
+            {
+                pinCount.Remove(key);
+                ConfigManager.WriteConsole($"[ResourceCacheManager] {Name}: Unpin({key}) -> refcount 0 (unpinned)");
+            }
+            else
+            {
+                pinCount[key] = c - 1;
+                ConfigManager.WriteConsole($"[ResourceCacheManager] {Name}: Unpin({key}) -> refcount {c - 1}");
+            }
+        }
+    }
+
+    private bool IsPinned(K key) => pinCount.TryGetValue(key, out int c) && c > 0;
     public V Add(K key, V value, float sizeInMB, bool replaceIfExists = false)
     {
         if (key == null || value == null || sizeInMB < 0f) return value;
@@ -138,6 +215,9 @@ public class ResourceCache<K, V> : IResourceCache
                     if (sizeInMB > oldSize)
                     {
                         // Pass 0 because currentSizeInMB is already updated
+                        // NOTE: this does not guard existingValue against being destroyed while
+                        // pinned (see step 1 above) - no current caller passes replaceIfExists:
+                        // true, so this is a known gap rather than an active bug.
                         makeSpaceFor(0);
                     }
                 }
@@ -165,12 +245,31 @@ public class ResourceCache<K, V> : IResourceCache
     private void makeSpaceFor(float sizeInMB)
     {
         bool evictedAny = false;
+        bool loggedAllPinned = false;
 
         // 1. Loop and Evict
         while (CacheExceeded(sizeInMB))
         {
-            K lruKey = lruList.Last.Value;
-            lruList.RemoveLast();
+            // Walk from least-recently-used towards most-recently-used, skipping
+            // any key that is currently pinned (i.e. still actively displayed).
+            LinkedListNode<K> victim = lruList.Last;
+            while (victim != null && IsPinned(victim.Value))
+                victim = victim.Previous;
+
+            if (victim == null)
+            {
+                // Every entry is pinned - nothing can be evicted right now.
+                // Better to run over budget than to destroy a texture in active use.
+                if (!loggedAllPinned)
+                {
+                    ConfigManager.WriteConsoleWarning($"[ResourceCacheManager] {Name}: cannot free space, all {lruList.Count} entries are pinned. Over budget: {currentSizeInMB}MB / {maxSizeInMB}MB.");
+                    loggedAllPinned = true;
+                }
+                break;
+            }
+
+            K lruKey = victim.Value;
+            lruList.Remove(victim);
 
             V value = cache[lruKey];
             DestroyIfUnityObject(value);
@@ -178,6 +277,7 @@ public class ResourceCache<K, V> : IResourceCache
             currentSizeInMB -= sizeMap[lruKey];
             cache.Remove(lruKey);
             sizeMap.Remove(lruKey);
+            pinCount.Remove(lruKey);
             evictedAny = true;
         }
 
@@ -191,23 +291,36 @@ public class ResourceCache<K, V> : IResourceCache
 
     public void Status()
     {
-        ConfigManager.WriteConsole($"[ResourceCacheManager] {this.Name} \n size: {currentSizeInMB}MB \n Count: {lruList.Count}");
+        lock (locker)
+        {
+            float pct = maxSizeInMB > 0f ? (currentSizeInMB / maxSizeInMB * 100f) : 0f;
+            ConfigManager.WriteConsole($"[ResourceCacheManager] {this.Name} | size: {currentSizeInMB:F2}MB / {maxSizeInMB:F2}MB ({pct:F1}%) | count: {lruList.Count} | pinned: {pinCount.Count}");
+        }
     }
 
+    // Explicit invalidation (e.g. artwork file changed on disk). Unlike automatic
+    // eviction, this refuses to destroy a pinned entry - it is still bound to a
+    // live material and destroying it would leave that material dark.
     public void Remove(K key)
     {
         if (key == null) return;
 
         lock (locker)
         {
-            if (cache.ContainsKey(key))
+            if (!cache.ContainsKey(key)) return;
+
+            if (IsPinned(key))
             {
-                lruList.Remove(key);
-                DestroyIfUnityObject(cache[key]);
-                currentSizeInMB -= sizeMap[key];
-                cache.Remove(key);
-                sizeMap.Remove(key);
+                ConfigManager.WriteConsoleWarning($"[ResourceCacheManager] {Name}: Remove({key}) skipped, entry is pinned (refcount {pinCount[key]}) and still in use.");
+                return;
             }
+
+            lruList.Remove(key);
+            DestroyIfUnityObject(cache[key]);
+            currentSizeInMB -= sizeMap[key];
+            cache.Remove(key);
+            sizeMap.Remove(key);
+            pinCount.Remove(key);
         }
     }
 
@@ -236,6 +349,7 @@ public class ResourceCache<K, V> : IResourceCache
             cache.Clear();
             sizeMap.Clear();
             lruList.Clear();
+            pinCount.Clear();
             currentSizeInMB = 0f;
         }
 
@@ -296,16 +410,32 @@ public class ResourceCache<K, V> : IResourceCache
 
             float targetSizeToFree = currentSizeInMB / 2f;
             float freedSize = 0f;
+            bool loggedAllPinned = false;
 
             while (freedSize < targetSizeToFree && lruList.Count > 0)
             {
-                K lruKey = lruList.Last.Value;
+                LinkedListNode<K> victim = lruList.Last;
+                while (victim != null && IsPinned(victim.Value))
+                    victim = victim.Previous;
+
+                if (victim == null)
+                {
+                    if (!loggedAllPinned)
+                    {
+                        ConfigManager.WriteConsoleWarning($"[ResourceCacheManager] {Name}: FreeHalfResources cannot free more, remaining entries are pinned.");
+                        loggedAllPinned = true;
+                    }
+                    break;
+                }
+
+                K lruKey = victim.Value;
                 float itemSize = sizeMap[lruKey];
 
-                lruList.RemoveLast();
+                lruList.Remove(victim);
                 DestroyIfUnityObject(cache[lruKey]);
                 cache.Remove(lruKey);
                 sizeMap.Remove(lruKey);
+                pinCount.Remove(lruKey);
 
                 currentSizeInMB -= itemSize;
                 freedSize += itemSize;

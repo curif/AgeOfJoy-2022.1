@@ -115,10 +115,12 @@ public static class ConfigManager
     // after collecting real-device logs — same pattern as CACHE_SIZE_Q3 in CabinetTextureCache.
     public static ResourceCache<string, GameObject> CabinetCache = ResourceCacheManager.Create<string, GameObject>("CabinetCache", 512f);
     
-    // Cabinet information are objects created using the deserealization of the description.yaml file. We cannot know easily the size
-    // of the object so we are using a counter to maintain to N elements in the cache.
+    // Cabinet information objects are the deserialized description.yaml of every cabinet, preloaded in bulk
+    // at startup (see CabinetInformation.PreloadAllAsync). CabinetInformation.fromYaml() now sizes each entry
+    // from its source YAML length as a real MB estimate (see comment there), so this budget is in actual MB,
+    // not an item count. 64 MB comfortably holds several thousand typical cabinet descriptions.
     public static ResourceCache<string, CabinetInformation> CabinetInformationCache =
-                                       ResourceCacheManager.Create<string, CabinetInformation>("CabinetInformationCache", 5000f); //units not MB
+                                       ResourceCacheManager.Create<string, CabinetInformation>("CabinetInformationCache", 64f);
 
     // textures are loaded from image files  and assigned to cabinets parts (no copy).
     // If cache exceed the limit the manager will delete old textures in the cache. 

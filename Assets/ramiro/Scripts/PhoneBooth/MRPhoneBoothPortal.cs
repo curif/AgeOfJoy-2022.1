@@ -215,20 +215,13 @@ public class MRPhoneBoothPortal : MonoBehaviour
         if (MRSceneScanState.IsRoomScanned())
             yield break;
 
-#if UNITY_ANDROID && !UNITY_EDITOR
-        MRTransitionLog.LogStep("MRPhoneBoothPortal", "no room — opening Space Setup");
-        yield return MRSceneScanRequest.EnsureScannedRoomForTravel(player);
-
-        if (!MRSceneScanState.IsRoomScanned())
-        {
-            AbortImmersiveTravelForRoomScan("VR→MR travel cancelled — room scan required");
-            yield break;
-        }
-
-        yield return AbortImmersiveTravelForRoomScanAndReloadVr();
-#else
-        AbortImmersiveTravelForRoomScan("VR→MR travel cancelled — room scan required");
-#endif
+        // The XR Scene API (XR_FB_scene) is only available once the MR/passthrough session is
+        // active. In this VR phase LoadSceneFromDevice always returns -1004 and
+        // RequestSpaceSetup also fails immediately. Let travel proceed — EnterMRFromPhoneBoothCoroutine
+        // calls ProbeWhenReady(requestSceneCaptureIfMissing:true) after the MR session is
+        // established, where the scene API works and MRUK can load (or trigger Space Setup) correctly.
+        MRTransitionLog.LogStep("MRPhoneBoothPortal",
+            "no room in VR phase — scene API unavailable here, continuing to MR phase");
     }
 
     void AbortImmersiveTravelForRoomScan(string reason)

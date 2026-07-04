@@ -124,7 +124,13 @@ public class MRPassthroughController : MonoBehaviour
         ConfigManager.WriteConsole($"{LogPrefix} direct MR boot (no transition blackout)");
     }
 
-    public IEnumerator EnablePassthroughWhenReady()
+    /// <param name="keepCameraBlack">
+    /// When true, forces the camera background to black immediately after ApplyPassthroughRendering,
+    /// even if IsTravelBlackoutActive is false. Use this for the phone-booth VR→MR path where VR
+    /// scenes are still loaded during this wait — prevents VR geometry from bleeding through the
+    /// passthrough underlay while the caller unloads those scenes.
+    /// </param>
+    public IEnumerator EnablePassthroughWhenReady(bool keepCameraBlack = false)
     {
         if (!initialized)
             Initialize();
@@ -158,6 +164,17 @@ public class MRPassthroughController : MonoBehaviour
             yield break;
 
         ApplyPassthroughRendering();
+
+        // Phone-booth VR→MR: the travel head fade may have ended before we get here, leaving
+        // IsTravelBlackoutActive=false and ApplyPassthroughRendering setting Color.clear. VR scenes
+        // are still loaded at this point, so a clear background would let VR geometry show through
+        // the passthrough underlay. Force black until the caller unloads those scenes.
+        if (keepCameraBlack && xrCamera != null)
+        {
+            xrCamera.backgroundColor = Color.black;
+            ConfigManager.WriteConsole($"{LogPrefix} keepCameraBlack: background forced black while VR scenes unload");
+        }
+
         yield return WaitUntilPassthroughLayerVisible();
 
         MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();

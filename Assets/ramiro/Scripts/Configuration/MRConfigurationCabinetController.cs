@@ -344,6 +344,64 @@ public class MRConfigurationCabinetController : MonoBehaviour
             $"{LogPrefix} spawned (floor) at {cabinetInstance.transform.position} rot={cabinetInstance.transform.eulerAngles}");
     }
 
+    /// <summary>Instantly re-place the cabinet in front of the player without opening a placement ray.</summary>
+    public void SummonToPlayer()
+    {
+        if (MixedRealityManager.Instance == null)
+            return;
+
+        ExperienceMode mode = MixedRealityManager.Instance.CurrentMode;
+        if (mode != ExperienceMode.MR && mode != ExperienceMode.MR_EDIT)
+            return;
+
+        ClearSavedPose();
+
+        if (cabinetInstance == null)
+        {
+            SpawnAtMrOrigin();
+            return;
+        }
+
+        Transform player = FindPlayerTransform();
+        MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
+
+        Vector3 worldPos;
+        Quaternion worldRot;
+        bool useWallMount = GetPlacementSurfaceType() == PlacementSurfaceType.Wall;
+
+        if (useWallMount && surfaces != null && player != null
+            && surfaces.TryGetWallMountedFramePose(
+                player, spawnDistanceMeters, 0f, out worldPos, out worldRot, GetPlacementFacingAxis()))
+        {
+            worldRot *= Quaternion.Euler(0f, spawnYawOffsetDegrees + wallMountYawOffsetDegrees, 0f);
+        }
+        else if (surfaces != null && player != null
+            && surfaces.TryGetConfigurationCabinetPose(
+                player, spawnDistanceMeters, CabinetFootprint, out worldPos, out worldRot))
+        {
+            worldRot *= Quaternion.Euler(0f, spawnYawOffsetDegrees, 0f);
+        }
+        else
+        {
+            Vector3 forward = ResolveViewForward(player);
+            Vector3 eye = ResolveEyePosition(player);
+            worldPos = eye + forward * spawnDistanceMeters;
+            worldPos.y = ResolveFloorY(surfaces, worldPos, player);
+            Vector3 faceDir = player != null ? player.position - worldPos : forward;
+            faceDir.y = 0f;
+            if (faceDir.sqrMagnitude < 0.001f)
+                faceDir = forward;
+            worldRot = Quaternion.LookRotation(faceDir.normalized, Vector3.up)
+                * Quaternion.Euler(0f, spawnYawOffsetDegrees, 0f);
+        }
+
+        cabinetInstance.transform.SetPositionAndRotation(worldPos, worldRot);
+        initialPlacementRequested = true;
+
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} cabinet summoned to player pos={worldPos} rot={worldRot.eulerAngles}");
+    }
+
     public void Despawn()
     {
         ForceCloseEdit();

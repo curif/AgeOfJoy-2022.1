@@ -40,27 +40,28 @@ public static class MRSceneScanRequest
             yield break;
         }
 
+        // false = dismissed/no-changes (room already set up); still reload MRUK so existing data is picked up
         if (!setupTask.GetResult())
-        {
-            ConfigManager.WriteConsoleWarning($"{LogPrefix} Space Setup cancelled — VR→MR travel aborted");
-            yield break;
-        }
-
-        ConfigManager.WriteConsole($"{LogPrefix} Space Setup closed — reloading MRUK room");
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} Space Setup dismissed (room may already be set up) — reloading MRUK anyway");
+        else
+            ConfigManager.WriteConsole($"{LogPrefix} Space Setup closed — reloading MRUK room");
 
         if (MREnvironmentSurfaces.Instance != null)
         {
             MREnvironmentSurfaces.Instance.InvalidateProbe();
-            yield return MREnvironmentSurfaces.Instance.ProbeWhenReady(player, requestSceneCaptureIfMissing: false);
+            yield return MREnvironmentSurfaces.Instance.ProbeWhenReady(player, requestSceneCaptureIfMissing: true);
         }
         else if (MRUK.Instance != null)
         {
             Task<MRUK.LoadDeviceResult> loadTask = MRUK.Instance.LoadSceneFromDevice(
-                requestSceneCaptureIfNoDataFound: false,
+                requestSceneCaptureIfNoDataFound: true,
                 removeMissingRooms: true);
 
             while (!loadTask.IsCompleted)
                 yield return null;
+
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} LoadSceneFromDevice result={(int)loadTask.Result} ({loadTask.Result}) room={(MRUK.Instance.GetCurrentRoom() != null ? "yes" : "no")}");
         }
 
         ConfigManager.WriteConsole(
@@ -98,27 +99,28 @@ public static class MRSceneScanRequest
             yield break;
         }
 
+        // false = dismissed/no-changes (room already set up); still reload MRUK so existing data is picked up
         if (!setupTask.GetResult())
-        {
-            ConfigManager.WriteConsoleWarning($"{LogPrefix} Space Setup returned false (unexpected failure)");
-            yield break;
-        }
-
-        ConfigManager.WriteConsole($"{LogPrefix} Space Setup closed — reloading MRUK room");
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} Space Setup dismissed (room may already be set up) — reloading MRUK anyway");
+        else
+            ConfigManager.WriteConsole($"{LogPrefix} Space Setup closed — reloading MRUK room");
 
         if (MREnvironmentSurfaces.Instance != null)
         {
             MREnvironmentSurfaces.Instance.InvalidateProbe();
-            yield return MREnvironmentSurfaces.Instance.ProbeWhenReady(player, requestSceneCaptureIfMissing: false);
+            yield return MREnvironmentSurfaces.Instance.ProbeWhenReady(player, requestSceneCaptureIfMissing: true);
         }
         else if (MRUK.Instance != null)
         {
             Task<MRUK.LoadDeviceResult> loadTask = MRUK.Instance.LoadSceneFromDevice(
-                requestSceneCaptureIfNoDataFound: false,
+                requestSceneCaptureIfNoDataFound: true,
                 removeMissingRooms: true);
 
             while (!loadTask.IsCompleted)
                 yield return null;
+
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} LoadSceneFromDevice result={(int)loadTask.Result} ({loadTask.Result}) room={(MRUK.Instance.GetCurrentRoom() != null ? "yes" : "no")}");
         }
 
         if (MixedRealityManager.Instance != null)
