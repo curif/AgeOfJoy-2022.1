@@ -472,6 +472,9 @@ public class MREnvironmentRegistry : MonoBehaviour
         if (entry.Source == MREnvironmentObjectSource.Poster)
             return TrySpawnPosterAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
 
+        if (entry.Source == MREnvironmentObjectSource.Bookshelf)
+            return TrySpawnBookshelfAtWorldPose(entry.GroupedKeys, worldPosition, worldRotation, out spawnedRoot);
+
         if (entry.Source == MREnvironmentObjectSource.Magazine)
             return TrySpawnMagazineAtWorldPose(entry.Key, worldPosition, worldRotation, out spawnedRoot);
 
@@ -521,6 +524,17 @@ public class MREnvironmentRegistry : MonoBehaviour
             if (TrySpawnPosterAtWorldPose(entry.Key, worldPosition, worldRotation, out GameObject posterRoot))
             {
                 result.Root = posterRoot;
+                result.Success = true;
+            }
+
+            yield break;
+        }
+
+        if (entry.Source == MREnvironmentObjectSource.Bookshelf)
+        {
+            if (TrySpawnBookshelfAtWorldPose(entry.GroupedKeys, worldPosition, worldRotation, out GameObject bookshelfRoot))
+            {
+                result.Root = bookshelfRoot;
                 result.Success = true;
             }
 
@@ -594,6 +608,7 @@ public class MREnvironmentRegistry : MonoBehaviour
                 MREnvironmentObjectSource.Light => "light",
                 MREnvironmentObjectSource.Poster => "poster",
                 MREnvironmentObjectSource.RoomSkin => "roomSkin",
+                MREnvironmentObjectSource.Bookshelf => "bookshelf",
                 MREnvironmentObjectSource.Magazine => "magazine",
                 _ => "build"
             },
@@ -610,6 +625,13 @@ public class MREnvironmentRegistry : MonoBehaviour
         {
             placement.TextureFile = entry.Key;
             placement.PrefabName = MRPosterFactory.PosterPrefabId;
+        }
+        else if (entry.Source == MREnvironmentObjectSource.Bookshelf)
+        {
+            placement.PrefabName = MREnvironmentCatalog.BookshelfPrefabName;
+            placement.BookshelfIssueNames = entry.GroupedKeys != null
+                ? new List<string>(entry.GroupedKeys)
+                : new List<string>();
         }
         else if (entry.Source == MREnvironmentObjectSource.Magazine)
         {
@@ -737,6 +759,15 @@ public class MREnvironmentRegistry : MonoBehaviour
                 yield break;
             }
         }
+        else if (placement.IsBookshelfSource)
+        {
+            if (!TrySpawnBookshelfAtWorldPose(placement.BookshelfIssueNames, worldPos, worldRot, out root))
+            {
+                MRDebugLog.LogError($"Environment spawn failed: bookshelf '{placement.DisplayLabel}' ({placement.Id})");
+                onComplete?.Invoke(false);
+                yield break;
+            }
+        }
         else if (placement.IsMagazineSource)
         {
             if (!TrySpawnMagazineAtWorldPose(placement.MagazineIssueName, worldPos, worldRot, out root))
@@ -780,6 +811,11 @@ public class MREnvironmentRegistry : MonoBehaviour
                     ? MREnvironmentCatalogEntry.FromPoster(placement.TextureFile, placement.DisplayLabel)
                     : placement.IsRoomSkinSource
                         ? MREnvironmentCatalogEntry.FromRoomSkin(placement.PackageName, placement.DisplayLabel)
+                        : placement.IsBookshelfSource
+                            ? MREnvironmentCatalogEntry.FromBookshelf(
+                                placement.PrefabName,
+                                placement.DisplayLabel,
+                                placement.BookshelfIssueNames)
                         : placement.IsMagazineSource
                             ? MREnvironmentCatalogEntry.FromMagazine(placement.MagazineIssueName, placement.DisplayLabel)
                             : MREnvironmentCatalogEntry.FromBuild(placement.PrefabName, placement.DisplayLabel);
@@ -837,6 +873,24 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         Magazine magazine = spawnedRoot.GetComponent<Magazine>();
         magazine?.ConfigureIssue(issueName);
+
+        NotifyPortableGamesPlacementUpdated(spawnedRoot);
+        return true;
+    }
+
+    bool TrySpawnBookshelfAtWorldPose(
+        IReadOnlyList<string> issueNames,
+        Vector3 worldPos,
+        Quaternion worldRot,
+        out GameObject spawnedRoot)
+    {
+        spawnedRoot = null;
+        if (!MRBookshelfFactory.TryInstantiate(issueNames, worldPos, worldRot, out spawnedRoot))
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} bookshelf failed to spawn");
+            MRDebugLog.LogError("Bookshelf failed to spawn");
+            return false;
+        }
 
         NotifyPortableGamesPlacementUpdated(spawnedRoot);
         return true;

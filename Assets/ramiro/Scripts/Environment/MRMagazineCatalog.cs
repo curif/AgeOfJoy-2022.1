@@ -235,6 +235,23 @@ public static class MRMagazineCatalog
         }
     }
 
+    static bool IsCoverFileName(
+        string candidate,
+        string frontCover,
+        string insideFrontCover,
+        string insideBackCover,
+        string backCover)
+    {
+        return NameEquals(candidate, frontCover)
+            || NameEquals(candidate, insideFrontCover)
+            || NameEquals(candidate, insideBackCover)
+            || NameEquals(candidate, backCover);
+    }
+
+    static bool NameEquals(string a, string b) =>
+        !string.IsNullOrEmpty(a) && !string.IsNullOrEmpty(b)
+        && string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>Legacy — prefer <see cref="GetSpreadInteriorPageNumbers"/>.</summary>
     public static void GetSpreadPageNumbers(int spreadIndex, int pageCount, out int leftPageNumber, out int rightPageNumber)
     {

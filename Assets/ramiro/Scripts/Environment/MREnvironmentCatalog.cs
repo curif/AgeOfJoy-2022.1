@@ -16,6 +16,7 @@ public static class MREnvironmentCatalog
     public const string ResourcesPath = "ramiro/PrefabsEnvironment";
     public const string ExcludedPrefabName = "ConfigurationCabinetMiniMR";
     public const string MagazinePrefabName = "Magazine";
+    public const string BookshelfPrefabName = "Bookshelf";
 
     static List<string> cachedNames;
 
@@ -39,6 +40,9 @@ public static class MREnvironmentCatalog
                 continue;
 
             if (string.Equals(prefab.name, MagazinePrefabName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (string.Equals(prefab.name, BookshelfPrefabName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
             cachedNames.Add(prefab.name);

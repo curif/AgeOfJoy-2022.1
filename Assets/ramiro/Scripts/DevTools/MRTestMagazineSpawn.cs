@@ -3,11 +3,13 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// Magazine test scene: spawn the Resources prefab at the disabled scene marker pose (production flow).
+/// Magazine test scene: spawn a populated Bookshelf at the scene placeholder or marker pose.
 /// Editor issue path: %UserProfile%/cabs/MR/Magazines/&lt;issue&gt;/magazine.yaml
 /// </summary>
 public class MRTestMagazineSpawn : MonoBehaviour
@@ -15,8 +17,9 @@ public class MRTestMagazineSpawn : MonoBehaviour
     public const string TestSceneName = "Magazine";
 
     const string LogPrefix = "[MRTestMagazineSpawn]";
-    const string SpawnRootName = "SpawnedMagazine";
+    const string SpawnRootName = "SpawnedBookshelves";
     const string PlacementMarkerName = "Magazine";
+    const string BookshelfObjectName = "Bookshelf";
 
     [SerializeField] string issueName = "Dezembro_1997_45";
     [SerializeField] float startDelaySeconds = 0.25f;
@@ -44,6 +47,17 @@ public class MRTestMagazineSpawn : MonoBehaviour
         StartCoroutine(SpawnMagazineWhenReady());
     }
 
+    void Update()
+    {
+#if UNITY_EDITOR
+        if (SceneManager.GetActiveScene().name != TestSceneName)
+            return;
+
+        if (MREditorInput.WasAnyPressed(KeyCode.G))
+            TryGrabFirstShelfMagazineInEditor();
+#endif
+    }
+
     IEnumerator SpawnMagazineWhenReady()
     {
         yield return new WaitForSeconds(startDelaySeconds);
@@ -51,33 +65,74 @@ public class MRTestMagazineSpawn : MonoBehaviour
         MRPaths.EnsureFolders();
         MRMagazineCatalog.RefreshCache();
 
-        string issue = string.IsNullOrWhiteSpace(issueName) ? null : issueName.Trim();
-        if (string.IsNullOrEmpty(issue) || !MRMagazineCatalog.IssueHasYaml(issue))
+        List<string> issues = ResolveIssueList();
+        if (issues.Count == 0)
         {
             ConfigManager.WriteConsoleWarning(
-                $"{LogPrefix} issue missing {MRPaths.MagazineYamlFileName}: {issue} in {MRPaths.MagazinesDir}");
+                $"{LogPrefix} no magazine issues with {MRPaths.MagazineYamlFileName} in {MRPaths.MagazinesDir}");
+            MRDebugLog.LogWarning($"{LogPrefix} no magazine issues with {MRPaths.MagazineYamlFileName} in {MRPaths.MagazinesDir}");
             yield break;
         }
 
-        GameObject prefab = MREnvironmentCatalog.LoadMagazinePrefab();
-        if (prefab == null)
+        Transform spawnRoot = EnsureSpawnRoot();
+        ResolveBookshelfSpawnPose(out Vector3 worldPos, out Quaternion worldRot);
+        GameObject sceneBookshelfTemplate = FindSceneObjectIncludingInactive(BookshelfObjectName);
+        SpawnBookshelf(issues, worldPos, worldRot, spawnRoot, sceneBookshelfTemplate);
+    }
+
+    List<string> ResolveIssueList()
+    {
+        var issues = MRMagazineCatalog.GetIssueNames()
+            .Where(MRMagazineCatalog.IssueHasYaml)
+            .ToList();
+
+        if (issues.Count > 0)
+            return issues;
+
+        string fallback = string.IsNullOrWhiteSpace(issueName) ? null : issueName.Trim();
+        if (!string.IsNullOrEmpty(fallback) && MRMagazineCatalog.IssueHasYaml(fallback))
+            issues.Add(fallback);
+
+        return issues;
+    }
+
+    void SpawnBookshelf(
+        IReadOnlyList<string> issues,
+        Vector3 worldPos,
+        Quaternion worldRot,
+        Transform spawnRoot,
+        GameObject sceneBookshelfTemplate)
+    {
+        GameObject spawnedRoot = null;
+
+        if (sceneBookshelfTemplate != null)
         {
-            ConfigManager.WriteConsoleError(
-                $"{LogPrefix} prefab missing: Resources/{MREnvironmentCatalog.ResourcesPath}/{MREnvironmentCatalog.MagazinePrefabName}");
-            yield break;
+            bool wasActive = sceneBookshelfTemplate.activeSelf;
+            sceneBookshelfTemplate.SetActive(true);
+            sceneBookshelfTemplate.transform.SetPositionAndRotation(worldPos, worldRot);
+
+            if (MRBookshelfFactory.TryPopulateBookshelf(sceneBookshelfTemplate, issues))
+            {
+                sceneBookshelfTemplate.transform.SetParent(spawnRoot, true);
+                spawnedRoot = sceneBookshelfTemplate;
+            }
+            else
+            {
+                sceneBookshelfTemplate.SetActive(wasActive);
+            }
         }
 
-        ResolveSpawnPose(out Vector3 worldPos, out Quaternion worldRot);
+        if (spawnedRoot == null
+            && !MRBookshelfFactory.TryInstantiate(issues, worldPos, worldRot, out spawnedRoot))
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} failed to spawn populated bookshelf");
+            MRDebugLog.LogError($"{LogPrefix} failed to spawn populated bookshelf");
+            return;
+        }
 
-        GameObject spawnedRoot = Instantiate(prefab, worldPos, worldRot);
-        spawnedRoot.name = $"{MREnvironmentCatalog.MagazinePrefabName}_{issue}";
-        spawnedRoot.transform.SetParent(EnsureSpawnRoot(), true);
-
-        Magazine magazine = spawnedRoot.GetComponent<Magazine>();
-        magazine?.ConfigureIssue(issue);
-
+        spawnedRoot.transform.SetParent(spawnRoot, true);
         ConfigManager.WriteConsole(
-            $"{LogPrefix} spawned {spawnedRoot.name} from Resources at {worldPos} (issue {issue})");
+            $"{LogPrefix} spawned {spawnedRoot.name} at {worldPos} with up to {MRBookshelfFactory.MaxShelfMagazineCount} issue(s)");
     }
 
     Transform EnsureSpawnRoot()
@@ -91,8 +146,16 @@ public class MRTestMagazineSpawn : MonoBehaviour
         return rootGo.transform;
     }
 
-    void ResolveSpawnPose(out Vector3 worldPos, out Quaternion worldRot)
+    void ResolveBookshelfSpawnPose(out Vector3 worldPos, out Quaternion worldRot)
     {
+        GameObject bookshelf = FindSceneObjectIncludingInactive(BookshelfObjectName);
+        if (bookshelf != null)
+        {
+            worldPos = bookshelf.transform.position;
+            worldRot = bookshelf.transform.rotation;
+            return;
+        }
+
         GameObject marker = FindSceneObjectIncludingInactive(PlacementMarkerName);
         if (marker != null)
         {
@@ -142,4 +205,21 @@ public class MRTestMagazineSpawn : MonoBehaviour
 
         return null;
     }
+
+#if UNITY_EDITOR
+    void TryGrabFirstShelfMagazineInEditor()
+    {
+        MRBookshelfMagazineProxy[] proxies = FindObjectsOfType<MRBookshelfMagazineProxy>(includeInactive: false);
+        foreach (MRBookshelfMagazineProxy proxy in proxies)
+        {
+            if (proxy != null && proxy.TrySpawnHeldMagazineForEditor())
+            {
+                ConfigManager.WriteConsole($"{LogPrefix} editor grabbed first shelf magazine");
+                return;
+            }
+        }
+
+        ConfigManager.WriteConsoleWarning($"{LogPrefix} no shelf magazine available for editor grab");
+    }
+#endif
 }

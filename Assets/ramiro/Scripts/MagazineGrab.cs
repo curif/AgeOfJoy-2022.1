@@ -33,6 +33,7 @@ public class MagazineGrab : MonoBehaviour
     Magazine magazine;
     MRCustomObjectGrab customGrab;
     XRGrabInteractable grabInteractable;
+    bool initialized;
 
     bool grabIsLeft;
     bool stickPastNext;
@@ -62,18 +63,13 @@ public class MagazineGrab : MonoBehaviour
             ReturnDurationSeconds = returnDurationSeconds,
             Target = ""
         }, transform);
+
+        EnsureInitialized();
     }
 
     void Start()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
-        if (grabInteractable == null)
-            return;
-
-        ApplyGrabColliders();
-        grabInteractable.selectEntered.AddListener(OnGrabbed);
-        grabInteractable.selectExited.AddListener(OnReleased);
-        NotifyPlacementPoseUpdated();
+        EnsureInitialized();
 
 #if UNITY_EDITOR
         if (editorSimulateGrab && Application.isEditor)
@@ -96,6 +92,8 @@ public class MagazineGrab : MonoBehaviour
 #endif
     }
 
+    public bool IsHeldNow() => IsMagazineHeld();
+
     void LateUpdate()
     {
 #if UNITY_EDITOR
@@ -106,11 +104,27 @@ public class MagazineGrab : MonoBehaviour
 
     void OnDestroy()
     {
-        if (grabInteractable == null)
+        if (!initialized || grabInteractable == null)
             return;
 
         grabInteractable.selectEntered.RemoveListener(OnGrabbed);
         grabInteractable.selectExited.RemoveListener(OnReleased);
+    }
+
+    void EnsureInitialized()
+    {
+        if (initialized)
+            return;
+
+        grabInteractable = GetComponent<XRGrabInteractable>();
+        if (grabInteractable == null)
+            return;
+
+        ApplyGrabColliders();
+        grabInteractable.selectEntered.AddListener(OnGrabbed);
+        grabInteractable.selectExited.AddListener(OnReleased);
+        NotifyPlacementPoseUpdated();
+        initialized = true;
     }
 
     /// <summary>Call after MR placement moves this prop so release returns to the new pose.</summary>
@@ -122,6 +136,22 @@ public class MagazineGrab : MonoBehaviour
         CaptureHomePose();
 #endif
     }
+
+    public void SetReturnOnRelease(bool enabled)
+    {
+        returnOnRelease = enabled;
+        customGrab?.SetReturnOnRelease(enabled);
+    }
+
+#if UNITY_EDITOR
+    public void BeginEditorGrabExternally()
+    {
+        if (!Application.isEditor || editorGrabActive)
+            return;
+
+        BeginEditorGrab();
+    }
+#endif
 
     void OnGrabbed(SelectEnterEventArgs args)
     {

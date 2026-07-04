@@ -347,7 +347,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("PHONE BOOTH", "Show or hide phone booth in MR");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
-        navMenu.AddOption("OFFICIAL OBJECTS", "Lights + Magazines + PrefabsEnvironment");
+        navMenu.AddOption("OFFICIAL OBJECTS", "Lights + Bookshelves + PrefabsEnvironment");
         navMenu.AddOption("CONFIG", "Move cabinet, scale, EffectMesh");
         navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls + objects guide");
@@ -405,8 +405,7 @@ public class MRConfigurationController : MonoBehaviour
     void RefreshMagazinesCatalog()
     {
         magazinesCatalogEntries.Clear();
-        MRMagazineCatalog.RefreshCache();
-        magazinesCatalogEntries.AddRange(MRMagazineCatalog.GetCatalogEntries());
+        magazinesCatalogEntries.AddRange(MRBookshelfCatalog.GetCatalogEntries());
     }
 
     void RefreshRoomSkinsCatalog()
@@ -601,11 +600,11 @@ public class MRConfigurationController : MonoBehaviour
         string magazinesPrefix = selectedListIndex == 1 ? "> " : "  ";
         string othersPrefix = selectedListIndex == 2 ? "> " : "  ";
         screen.Print(1, 5, lightsPrefix + "Lights", selectedListIndex == 0);
-        screen.Print(1, 7, magazinesPrefix + "Magazines", selectedListIndex == 1);
+        screen.Print(1, 7, magazinesPrefix + "Bookshelves", selectedListIndex == 1);
         screen.Print(1, 9, othersPrefix + "Others", selectedListIndex == 2);
 
         screen.Print(1, 12, "Lights: ramiro/Lights/", false);
-        screen.Print(1, 13, "Magazines: MR/Magazines/", false);
+        screen.Print(1, 13, "Bookshelves: MR/Magazines/", false);
         screen.Print(1, 14, "Others: PrefabsEnvironment/", false);
         DrawFooter("A: open   B: back");
     }
@@ -749,15 +748,15 @@ public class MRConfigurationController : MonoBehaviour
 
     void DrawMagazinesPage()
     {
-        screen.PrintCentered(0, "MAGAZINES", true);
+        screen.PrintCentered(0, "BOOKSHELVES", true);
         screen.Print(1, 2, "Official Objects", false);
         screen.PrintLine(3, false, '-');
 
         if (magazinesCatalogEntries.Count == 0)
         {
-            screen.PrintCentered(8, "No magazine issues", true);
-            screen.PrintCentered(10, "MR/Magazines/<issue>/", false);
-            screen.PrintCentered(11, $"{MRPaths.MagazineYamlFileName} + page images", false);
+            screen.PrintCentered(8, "No bookshelves available", true);
+            screen.PrintCentered(10, "Add issues to", false);
+            screen.PrintCentered(11, "MR/Magazines/<issue>/", false);
             DrawFooter("B: back");
             return;
         }
@@ -1200,12 +1199,13 @@ public class MRConfigurationController : MonoBehaviour
         yield return "Wall placement. R-stick L/R spin Y";
         yield return "Tune on placed copy = YZ scale";
         yield return string.Empty;
-        yield return "OFFICIAL: MAGAZINES";
+        yield return "OFFICIAL: BOOKSHELVES";
         yield return "Folder: MR/Magazines/<issue>/";
         yield return $"{MRPaths.MagazineYamlFileName} + numbered pages";
         yield return $"Prefab: Resources/{MREnvironmentCatalog.ResourcesPath}/";
-        yield return $"{MREnvironmentCatalog.MagazinePrefabName}";
-        yield return "Table placement. Grab to read";
+        yield return $"{MREnvironmentCatalog.BookshelfPrefabName}";
+        yield return "Auto groups up to 8 issues";
+        yield return "Floor placement. Grab magazines";
         yield return string.Empty;
         yield return "CUSTOM: ROOM SKIN";
         yield return "Folder: MR/Room Skins/";
@@ -2607,6 +2607,12 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
+        if (entry.Source == MREnvironmentObjectSource.Bookshelf)
+        {
+            BeginAddBookshelfWithRay(entry);
+            return;
+        }
+
         if (entry.Source == MREnvironmentObjectSource.Magazine)
         {
             BeginAddMagazineWithRay(entry);
@@ -2716,6 +2722,34 @@ public class MRConfigurationController : MonoBehaviour
 
         BeginEnvironmentPlacementRay(entry, root);
         ConfigManager.WriteConsole($"{LogPrefix} magazine add ray begin {entry}");
+    }
+
+    void BeginAddBookshelfWithRay(MREnvironmentCatalogEntry entry)
+    {
+        if (envRegistry == null || placementRay == null || placementMoveActive || placementEnvMoveActive || placementAddActive)
+            return;
+
+        if (placementRay.IsActive)
+            return;
+
+        MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
+
+        GameObject prefab = MREnvironmentCatalog.LoadPrefab(MREnvironmentCatalog.BookshelfPrefabName);
+        MRPlacementProfile prefabProfile = MRPlacementProfile.Resolve(prefab);
+        PlacementSurfaceType initialSurface = prefabProfile != null
+            ? prefabProfile.surfaceType
+            : PlacementSurfaceType.Floor;
+        ComputeInitialPlacementPose(initialSurface, out Vector3 worldPos, out Quaternion worldRot);
+
+        if (!envRegistry.TrySpawnTransientCatalogEntry(entry, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} bookshelf add ray spawn failed for {entry}");
+            MRDebugLog.LogError($"Bookshelf add failed: {entry} (spawn)");
+            return;
+        }
+
+        BeginEnvironmentPlacementRay(entry, root);
+        ConfigManager.WriteConsole($"{LogPrefix} bookshelf add ray begin {entry}");
     }
 
     void BeginAddBuildEnvironmentWithRay(MREnvironmentCatalogEntry entry)
