@@ -17,6 +17,7 @@ public class TextureCache : MonoBehaviour
 
     private bool isSaving = false;
     private bool isLoadingExisting = false;
+    private bool legacyPngUnreadable = false;
     private Texture pendingSourceTexture;
 
     public void Init(string path)
@@ -41,7 +42,7 @@ public class TextureCache : MonoBehaviour
 
         StartCoroutine(CabinetTextureCache.LoadAndCacheAsync(
             texturePath,
-            tex => OnTextureLoaded?.Invoke(tex),
+            HandleFailedLoad,
             forceCompress: true
         ));
     }
@@ -54,8 +55,11 @@ public class TextureCache : MonoBehaviour
         // A cached thumbnail may already exist on disk (compressed .aojv1, or a legacy PNG
         // from before thumbnails were compressed) from a previous session - or a race with
         // Init's own async load - even though it hasn't landed in the in-memory cache yet.
-        // Load it instead of overwriting it with a fresh capture.
-        if (TextureDiskCache.HasValidCache(texturePath) || File.Exists(texturePath))
+        // Load it instead of overwriting it with a fresh capture. Skip this if a legacy PNG
+        // was already found unreadable so we fall through to a fresh capture instead of
+        // looping forever on a file Unity can't decode.
+        if (!legacyPngUnreadable &&
+            (TextureDiskCache.HasValidCache(texturePath) || File.Exists(texturePath)))
         {
             isLoadingExisting = true;
             StartCoroutine(LoadExistingFromDiskCoroutine());
@@ -71,10 +75,38 @@ public class TextureCache : MonoBehaviour
     {
         yield return CabinetTextureCache.LoadAndCacheAsync(
             texturePath,
-            tex => OnTextureLoaded?.Invoke(tex),
+            HandleFailedLoad,
             forceCompress: true
         );
         isLoadingExisting = false;
+    }
+
+    // Invoked by LoadAndCacheAsync. On success just forwards the texture. On failure, if the
+    // failing file is a legacy PNG thumbnail (no .aojv1 exists) that Unity's runtime decoder
+    // couldn't read (e.g. shipped in a cabinet zip from an old game version but in a format
+    // DownloadHandlerTexture rejects), remove it so Load() regenerates a fresh .aojv1 from the
+    // playing video instead of failing on the same unreadable file forever.
+    private void HandleFailedLoad(Texture2D tex)
+    {
+        if (tex != null)
+        {
+            OnTextureLoaded?.Invoke(tex);
+            return;
+        }
+
+        if (!TextureDiskCache.HasValidCache(texturePath) && File.Exists(texturePath))
+        {
+            legacyPngUnreadable = true;
+            try
+            {
+                File.Delete(texturePath);
+                ConfigManager.WriteConsole($"[TextureCache] deleted unreadable legacy PNG {texturePath}; thumbnail will be regenerated from video");
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[TextureCache] failed deleting unreadable legacy PNG {texturePath}", e);
+            }
+        }
     }
 
     public bool AlreadyCached()
