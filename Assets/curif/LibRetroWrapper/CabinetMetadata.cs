@@ -149,6 +149,11 @@ public class CabinetMetadata
             // metadata.yaml is just a cache (hash/size lookup); a failed write must not
             // fault the cabinet for the whole session - worst case we re-hash next launch.
             ConfigManager.WriteConsoleException($"[CabinetMetadata.toYaml] failed to save {yamlPath}, continuing with in-memory hash", e);
+
+            // The file may have been left in a partial/corrupt state by the failed write.
+            // Remove it so the next load doesn't trip over it; if deletion also fails,
+            // keep going anyway - a bad metadata.yaml must never block cabinet creation.
+            tryDeleteCorruptedYaml(yamlPath);
         }
     }
 
@@ -160,9 +165,31 @@ public class CabinetMetadata
         {
             return null;
         }
-        
+
         string yaml = yamlFileToString(yamlPath);
-        return parseYaml(yamlPath, yaml);
+        CabinetMetadata metadata = yaml != null ? parseYaml(yamlPath, yaml) : null;
+
+        if (metadata == null)
+        {
+            // File is unreadable or corrupt: try to remove it so init() can
+            // regenerate a fresh one. If deletion fails, keep going anyway -
+            // a bad metadata.yaml must never block cabinet creation.
+            tryDeleteCorruptedYaml(yamlPath);
+        }
+
+        return metadata;
+    }
+
+    private static void tryDeleteCorruptedYaml(string yamlPath)
+    {
+        try
+        {
+            File.Delete(yamlPath);
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetMetadata.tryDeleteCorruptedYaml] failed to delete corrupted {yamlPath}, continuing anyway", e);
+        }
     }
 
     private static string yamlFileToString(string yamlPath)
