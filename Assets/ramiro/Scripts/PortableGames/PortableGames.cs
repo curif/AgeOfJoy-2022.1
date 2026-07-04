@@ -1185,7 +1185,7 @@ public class PortableGames : MonoBehaviour
     void OnAudioFilterRead(float[] data, int channels)
     {
         if (gameRunning && LibretroMameCore.isRunning(screenName, selectedGame))
-            LibretroMameCore.MoveAudioStreamTo(data);
+            LibretroMameCore.MoveAudioStreamTo(data, channels);
     }
 
     void OnDestroy()

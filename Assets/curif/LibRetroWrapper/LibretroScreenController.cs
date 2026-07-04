@@ -153,6 +153,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     private bool playerInTheZone = false;
     private float distanceToPlayer;
     private bool screenLightON = false;
+    private DateTime lastAudioStatsReport = DateTime.MinValue;
 
     private CoinSlotController getCoinSlotController()
     {
@@ -705,6 +706,22 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
 
             LibretroMameCore.UpdateTexture();
 
+            if (DateTime.Now >= lastAudioStatsReport)
+            {
+                string stats = LibretroMameCore.GetAndResetAudioStats();
+                if (stats != null)
+                {
+                    // how many voices the audio thread is servicing besides this game
+                    int playingSources = 0;
+                    foreach (AudioSource src in FindObjectsOfType<AudioSource>())
+                        if (src.isPlaying)
+                            playingSources++;
+                    ConfigManager.WriteConsole($"[LibretroScreenController] {name} {stats} playingAudioSources: {playingSources}");
+                }
+                lastAudioStatsReport = DateTime.Now.AddSeconds(5);
+            }
+
+            LibretroMameCore.FlushAudioCaptureIfReady();
         }
 
         shader.Update();
@@ -740,7 +757,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     private void OnAudioFilterRead(float[] data, int channels)
     {
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
-            LibretroMameCore.MoveAudioStreamTo(data);
+            LibretroMameCore.MoveAudioStreamTo(data, channels);
     }
 
     private void OnDestroy()
