@@ -652,8 +652,6 @@ public class MixedRealityManager : MonoBehaviour
         if (!IsTransitionCurrent(generation))
             yield break;
 
-        MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
-
         yield return null;
         layoutRegistry?.EnsureAttractPlaybackOnSpawned();
 
@@ -662,6 +660,10 @@ public class MixedRealityManager : MonoBehaviour
         yield return FinalizeEnvironmentAfterEnterMr(generation, player);
         if (!IsTransitionCurrent(generation))
             yield break;
+
+        MRConfigurationCabinetController configCabinet = MRConfigurationCabinetController.Instance;
+        configCabinet?.PrepareConfigCabinetAfterRoomScan();
+        configCabinet?.BeginPlacementRayAfterRoomScan();
 
         MRPhoneBoothVisibility.EnsureMrInstance();
         MRPhoneBoothVisibility.ApplySavedVisibility();
@@ -732,6 +734,7 @@ public class MixedRealityManager : MonoBehaviour
             MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", $"start generation={generation}");
             ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth coroutine");
 
+            CancelActivePlacementRay();
             MRScenePermissions.Reset();
             MRSceneHost.PrepareForMr();
             yield return MRScenePermissions.EnsureGranted();
@@ -788,9 +791,6 @@ public class MixedRealityManager : MonoBehaviour
             if (!IsTransitionCurrent(generation))
                 yield break;
 
-            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before config cabinet SpawnAtMrOrigin");
-            MRConfigurationCabinetController.Instance?.SpawnAtMrOrigin();
-
             yield return null;
             layoutRegistry?.EnsureAttractPlaybackOnSpawned();
             yield return RefreshMrPosesWhenReady(generation, player);
@@ -800,6 +800,9 @@ public class MixedRealityManager : MonoBehaviour
             yield return FinalizeEnvironmentAfterEnterMr(generation, player);
             if (!IsTransitionCurrent(generation))
                 yield break;
+
+            MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "config cabinet after room scan");
+            MRConfigurationCabinetController.Instance?.PrepareConfigCabinetAfterRoomScan();
 
             // Re-probe immediately before booth placement — MRUK may have registered anchors
             // after the probe at coroutine start (long spawn/refresh gap since merge 47844e94).
@@ -819,6 +822,9 @@ public class MixedRealityManager : MonoBehaviour
             if (!IsTransitionCurrent(generation))
                 yield break;
 
+            // Placement ray only after arrival VFX — avoids freeze when re-entering MR with saved pose.
+            MRConfigurationCabinetController.Instance?.BeginPlacementRayAfterRoomScan();
+
             // Re-snap after smoke/glass/blackout — arrival VFX can skew bounds; MRUK may
             // still be settling when the first snap ran (~20 s earlier in the coroutine).
             if (environmentSurfaces != null)
@@ -829,6 +835,7 @@ public class MixedRealityManager : MonoBehaviour
                     yield return null;
 
                 portal.ReconcileVerticalMrFloorSnap(environmentSurfaces);
+                MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
             }
 
             MRPhoneBoothSettings.SetVisible(true);

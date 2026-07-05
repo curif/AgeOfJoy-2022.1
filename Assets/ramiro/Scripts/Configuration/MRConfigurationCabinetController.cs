@@ -309,7 +309,8 @@ public class MRConfigurationCabinetController : MonoBehaviour
             cabinetInstance.SetActive(true);
             EnsureCoinSlotBound();
             ApplyPoseToExistingCabinet();
-            RequestInitialPlacementRayWhenReady();
+            if (NeedsInitialPlacementRay())
+                RequestInitialPlacementRayWhenReady();
             return;
         }
 
@@ -475,6 +476,82 @@ public class MRConfigurationCabinetController : MonoBehaviour
             return;
 
         ApplyPoseToExistingCabinet();
+    }
+
+    /// <summary>
+    /// Spawn or restore config cabinet after MRUK probe — no placement ray (safe during transition).
+    /// </summary>
+    public void PrepareConfigCabinetAfterRoomScan()
+    {
+        CancelActivePlacementRay();
+
+        if (initialPlacementRayCoroutine != null)
+        {
+            StopCoroutine(initialPlacementRayCoroutine);
+            initialPlacementRayCoroutine = null;
+        }
+
+        if (cabinetInstance == null)
+            SpawnAtMrOrigin();
+        else if (!NeedsInitialPlacementRay())
+            EnsureCabinetVisibleWithSavedPose();
+
+        MRTransitionLog.LogStep("MRConfigurationCabinetController", "PrepareConfigCabinetAfterRoomScan");
+    }
+
+    void EnsureCabinetVisibleWithSavedPose()
+    {
+        if (cabinetInstance == null)
+            return;
+
+        cabinetInstance.SetActive(true);
+        EnsureCoinSlotBound();
+        ApplyPoseToExistingCabinet();
+    }
+
+    /// <summary>
+    /// First MR entry only — open placement ray after room scan (not when pose is already saved).
+    /// </summary>
+    public bool BeginPlacementRayAfterRoomScan()
+    {
+        if (!MRSceneScanState.IsRoomScanned())
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} placement ray deferred — room not scanned");
+            return false;
+        }
+
+        if (!NeedsInitialPlacementRay())
+        {
+            EnsureCabinetVisibleWithSavedPose();
+            ConfigManager.WriteConsole($"{LogPrefix} placement ray skipped — saved pose");
+            MRTransitionLog.LogStep("MRConfigurationCabinetController", "BeginPlacementRayAfterRoomScan-skipped-saved");
+            return false;
+        }
+
+        CancelActivePlacementRay();
+
+        if (cabinetInstance == null)
+            SpawnAtMrOrigin();
+
+        if (cabinetInstance == null)
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} placement ray failed — no cabinet instance");
+            return false;
+        }
+
+        if (initialPlacementRayCoroutine != null)
+        {
+            StopCoroutine(initialPlacementRayCoroutine);
+            initialPlacementRayCoroutine = null;
+        }
+
+        PlaceCabinetNearViewForInitialRay(cabinetInstance);
+        bool started = BeginRepositionWithRay(isInitialPlacement: true);
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} placement ray after room scan started={started}");
+        MRTransitionLog.LogStep("MRConfigurationCabinetController",
+            started ? "BeginPlacementRayAfterRoomScan" : "BeginPlacementRayAfterRoomScan-failed");
+        return started;
     }
 
     void CancelActivePlacementRay()
@@ -987,7 +1064,17 @@ public class MRConfigurationCabinetController : MonoBehaviour
         forward.Normalize();
 
         Vector3 startPos = view.position + forward * 1.2f;
-        startPos.y = view.position.y;
+        MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
+        if (surfaces != null && surfaces.IsReady && surfaces.HasFloor)
+        {
+            if (surfaces.TryGetFloorPointAt(startPos, out Vector3 floorPoint))
+                startPos.y = floorPoint.y;
+            else
+                startPos.y = surfaces.FloorHeight;
+        }
+        else
+            startPos.y = view.position.y;
+
         root.transform.SetPositionAndRotation(startPos, Quaternion.LookRotation(forward, Vector3.up));
     }
 
