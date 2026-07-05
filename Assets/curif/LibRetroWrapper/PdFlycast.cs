@@ -31,6 +31,11 @@ public class PdFlycast : MonoBehaviour
              "core doesn't report a rate.")]
     public float targetHz = 60f;
 
+    [Tooltip("VR display refresh (Hz). The native pump phase-locks the emulator to this cadence so " +
+             "≈60 Hz content on the 72 Hz display shows a steady 5:6 pulldown instead of a drifting, " +
+             "juddery beat. Quest rooms present at 72; set 90 if a room runs at 90.")]
+    public float displayHz = 72f;
+
     [Tooltip("Flip vertically. CPU path: software row-flip. Zero-copy path: UV transform on the " +
              "sampled texture. Device-tested false here (Flycast already matches Unity's orientation).")]
     public bool flipY = false;
@@ -137,6 +142,9 @@ public class PdFlycast : MonoBehaviour
             zeroCopy = false;
             Status("zero-copy unavailable on the core's device — using CPU read-back path");
         }
+        // Phase-lock the native pump to the VR display cadence (removes the 60→72 beat/judder). Must
+        // be set after Start(); the per-frame NotifyDisplayFrame() in Update drives the lock.
+        PdLibretro.SetDisplayHz(displayHz);
         double coreFps = PdLibretro.FrameFps;
         _tickHz = (useCoreFrameRate && coreFps > 1.0) ? (float)coreFps : targetHz;
         Status(started
@@ -153,11 +161,17 @@ public class PdFlycast : MonoBehaviour
 
         float now = Time.unscaledTime;
 
-        // Drive the core at _tickHz (~60), decoupled from the VR display rate. The old
-        // skip-if-too-soon throttle aliased badly against a 72Hz display (16.7ms spacing vs 13.9ms
-        // frames → it fired every OTHER frame → ~36fps), which starved the emulation and its audio.
-        // Instead accumulate real elapsed time and run exactly as many ticks as are due (capped to
-        // avoid a spiral if we ever fall far behind). retro_run is ~1ms and non-blocking here.
+        // Phase-lock reference for the native pump: one tick per rendered VR frame. The pump paces
+        // retro_run off this (display-locked 5:6 cadence) rather than a free-running wall clock, which
+        // removes the 60→72 beat/judder. Cheap (atomic bump + condvar signal in native).
+        PdLibretro.NotifyDisplayFrame();
+
+        PollInput();   // push input once per rendered frame
+
+        // Fallback core driver: a NO-OP while the native pump thread is active (it drives retro_run and
+        // paces itself). Only ticks the core if the pump's pthread_create failed at start. The old
+        // skip-if-too-soon throttle aliased badly against 72Hz, so accumulate elapsed time and run the
+        // ticks that are due, capped to avoid a spiral. retro_run is ~1ms and non-blocking here.
         float period = (_tickHz > 0f) ? 1f / _tickHz : 1f / 60f;
         _tickAccum += Time.unscaledDeltaTime;
         int ticks = 0;
@@ -165,10 +179,7 @@ public class PdFlycast : MonoBehaviour
         if (_tickAccum > period) _tickAccum = 0f;   // drop backlog after a hitch/pause (no catch-up spiral)
 
         for (int i = 0; i < ticks; i++)
-        {
-            PollInput();
             PdLibretro.Run();
-        }
         if (audioEnabled) EnsureAudioPlaying();   // re-arm if a focus/HMD change stopped the source
 
         if (zeroCopy) UpdateZeroCopy();

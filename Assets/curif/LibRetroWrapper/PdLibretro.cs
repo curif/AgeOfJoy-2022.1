@@ -32,6 +32,12 @@ public static class PdLibretro
     [DllImport(LIB, EntryPoint = "pdlr_set_paused")]
     static extern void _pdlr_set_paused(int paused);
 
+    [DllImport(LIB, EntryPoint = "pdlr_notify_display_frame")]
+    static extern void _pdlr_notify_display_frame();
+
+    [DllImport(LIB, EntryPoint = "pdlr_set_display_hz")]
+    static extern void _pdlr_set_display_hz(double hz);
+
     [DllImport(LIB, EntryPoint = "pdlr_get_frame")]
     static extern int _pdlr_get_frame(out IntPtr pixels, out int width, out int height);
 
@@ -160,6 +166,14 @@ public static class PdLibretro
     // Suspend/resume the native emu pump (wire to OnApplicationPause — headset off / system
     // overlay). Paused = the guest stops advancing; native resyncs its schedule on resume.
     public static void SetPaused(bool paused) { if (Available) _pdlr_set_paused(paused ? 1 : 0); }
+
+    // Display-locked pacing: call once per rendered frame so the native pump phase-locks retro_run to
+    // the VR display cadence (removes 60→72 judder). Cheap (atomic bump + condvar signal); safe any time.
+    public static void NotifyDisplayFrame() { if (Available) _pdlr_notify_display_frame(); }
+
+    // Tell the pump the display's actual refresh (Hz) so it uses the right emulated:display ratio.
+    // Call once at start (default 72). Quest 2/3 rooms present at 72; pass 90 if a room runs at 90.
+    public static void SetDisplayHz(double hz) { if (Available) _pdlr_set_display_hz(hz); }
 
     // Latest CPU-read-back frame: tightly packed RGBA8 + dimensions. Valid after Run().
     public static bool GetFrame(out IntPtr pixels, out int width, out int height)
