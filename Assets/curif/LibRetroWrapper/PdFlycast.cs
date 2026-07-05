@@ -98,6 +98,28 @@ public class PdFlycast : MonoBehaviour
         string sysDir   = Application.persistentDataPath;
         string dcDir    = Path.Combine(sysDir, dcSubDir);
         string saveDir  = Path.Combine(dcDir, "saves");
+
+        // Per-device override: first non-empty line of <dc>/game.txt names the game file to load
+        // (relative to dcDir), replacing the scene-serialized gameFile. Lets us swap games (DC disc
+        // images, NAOMI/Atomiswave romsets — flycast auto-detects the platform from the content)
+        // with an adb push instead of a Unity rebuild.
+        string overridePath = Path.Combine(dcDir, "game.txt");
+        try
+        {
+            if (File.Exists(overridePath))
+            {
+                foreach (string line in File.ReadAllLines(overridePath))
+                {
+                    string trimmed = line.Trim();
+                    if (trimmed.Length == 0) continue;
+                    Status($"game.txt override: '{gameFile}' → '{trimmed}'");
+                    gameFile = trimmed;
+                    break;
+                }
+            }
+        }
+        catch (Exception e) { Status("game.txt read failed (using default game): " + e.Message); }
+
         string gamePath = Path.Combine(dcDir, gameFile);
         string corePath = Path.Combine(PdLibretro.NativeLibraryDir(), coreFileName);
         try { Directory.CreateDirectory(saveDir); } catch { }
