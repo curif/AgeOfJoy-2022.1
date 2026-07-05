@@ -1,0 +1,454 @@
+using System;
+using System.IO;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+// PdFlycast — DEBUG driver for stage 2b: bring up Flycast on its own Vulkan device via libpdlr, run
+// it, and show its emulated frame on this object's material (CPU read-back path). Proves the full
+// pipeline end-to-end (stock core → in-process Vulkan → quad). Zero-copy AHB is the later upgrade.
+//
+// Attach to a debug QUAD (e.g. the "FrameBuffer" object — disable PdVkQuad there first). On-device
+// only (no-op in editor). Watch logcat "pdlr"/"flycast". Remove before release.
+//
+// Setup (push BIOS + game once):
+//   adb push dc_boot.bin dc_flash.bin vf3.cdi /sdcard/Android/data/com.curif.AgeOfJoy/files/dc/
+[RequireComponent(typeof(Renderer))]
+[RequireComponent(typeof(AudioSource))]   // authored (NOT runtime-added) — runtime-added sources never
+                                          // get pulled into the DSP graph on Quest/Meta XR (callbacks fire 0×)
+public class PdFlycast : MonoBehaviour
+{
+    [Tooltip("Folder (under persistentDataPath) holding dc_boot.bin, dc_flash.bin and the game.")]
+    public string dcSubDir = "dc";
+    public string gameFile = "vf3.cdi";
+    public string coreFileName = "libflycast_libretro_android.so";
+
+    [Tooltip("Tick the emulator at the core's own reported rate (Dreamcast NTSC ≈ 59.94 Hz) rather " +
+             "than targetHz. Keeps emulated time correct — matters for audio sync. If off, or the " +
+             "core reports no rate, targetHz is used.")]
+    public bool useCoreFrameRate = true;
+
+    [Tooltip("Fallback/override retro_run ticks per second, used when useCoreFrameRate is off or the " +
+             "core doesn't report a rate.")]
+    public float targetHz = 60f;
+
+    [Tooltip("Flip vertically. CPU path: software row-flip. Zero-copy path: UV transform on the " +
+             "sampled texture. Device-tested false here (Flycast already matches Unity's orientation).")]
+    public bool flipY = false;
+
+    [Tooltip("Flip horizontally (zero-copy path only — applied as a UV transform on the sampled AHB " +
+             "texture). Default true: the AHB-sampled frame comes out horizontally mirrored vs the " +
+             "CPU path, so this corrects it. Harmless on the CPU path (not applied there).")]
+    public bool flipX = true;
+
+    [Tooltip("Zero-copy AHB transport (no per-frame CPU copy — the 72 fps form). Falls back to the " +
+             "CPU read-back path automatically if the core's device can't enable the AHB extensions. " +
+             "Set before entering play.")]
+    public bool zeroCopy = true;
+
+    [Tooltip("Play emulated audio through a 2D (non-spatial) AudioSource on this object. Debug.")]
+    public bool audioEnabled = true;
+
+    [Tooltip("DEBUG: record the exact PCM Unity pulls (post zero-fill — i.e. what would be heard) to a " +
+             "16-bit WAV under persistentDataPath (pdflycast_audio.wav). Captures dumpSeconds then stops; " +
+             "a partial file is flushed on scene exit. adb pull it and play on PC to confirm audio exists.")]
+    public bool dumpAudioWav = true;   // debug driver: on by default so the capture needs no Inspector step
+    [Tooltip("Seconds of audio to capture when dumpAudioWav is on. Buffer is preallocated (≈8 MB / 20 s).")]
+    public float dumpSeconds = 60f;
+
+    [Tooltip("Also append every status line to a file under persistentDataPath (pdflycast_status.txt). " +
+             "Off by default — it's a per-second disk write that's only useful for offline diagnosis.")]
+    public bool verboseStatus = false;
+
+    [Header("Status (read-only)")]
+    public bool started;
+    public int  frameCount;
+    public string res;
+
+    Renderer    _renderer;
+    Material    _material;
+    Texture2D   _tex;            // CPU-path frame texture
+    Texture2D[] _zcTexes;        // zero-copy: one external texture per AHB buffer
+    byte[]    _flipBuf;
+    float     _lastRunAt;
+    float     _tickAccum;      // time accumulator to drive retro_run at _tickHz, display-rate-agnostic
+    float     _tickHz;         // effective retro_run rate (core fps or targetHz)
+    float     _nextStatusAt;
+    string    _statusPath;
+    bool      _importIssued;   // zero-copy: GL.IssuePluginEvent(IMPORT_AHB) sent
+    bool      _extTexReady;    // zero-copy: external Texture2D created + bound
+    AudioSource _audio;        // 2D authored source; OnAudioFilterRead (this GO) generates its output
+    AudioClip   _keepAlive;    // short silent looping clip — keeps the source "playing" so the DSP
+                               // filter chain (OnAudioFilterRead) is pulled; we overwrite its output
+    float[]   _dumpBuf;        // WAV capture: preallocated, filled on the audio thread
+    int       _dumpPos;        // floats captured so far
+    int       _dumpRate;       // capture sample rate (= Unity output rate)
+    bool      _dumpWritten;    // file flushed (full or on disable) — write once
+
+    void OnEnable()
+    {
+        _statusPath = Path.Combine(Application.persistentDataPath, "pdflycast_status.txt");
+        _renderer = GetComponent<Renderer>();
+        _material = _renderer.material;   // instance, safe to mutate
+
+        // Flycast treats <systemDir>/dc as its Dreamcast root and looks for BIOS at
+        // <systemDir>/dc/dc_boot.bin. Pass persistentDataPath (not dcDir) so that resolves to
+        // <persistentDataPath>/dc — the dcSubDir folder where dc_boot.bin/dc_flash.bin already live.
+        // Passing dcDir made it look one level too deep (…/dc/dc/) and silently fall back to the HLE
+        // reios BIOS, which renders video but leaves AICA (sound) undriven → all-zero audio.
+        string sysDir   = Application.persistentDataPath;
+        string dcDir    = Path.Combine(sysDir, dcSubDir);
+        string saveDir  = Path.Combine(dcDir, "saves");
+        string gamePath = Path.Combine(dcDir, gameFile);
+        string corePath = Path.Combine(PdLibretro.NativeLibraryDir(), coreFileName);
+        try { Directory.CreateDirectory(saveDir); } catch { }
+
+        Status($"start core='{corePath}' sys='{sysDir}' dc='{dcDir}' game='{gamePath}' zeroCopy={zeroCopy}");
+        if (!File.Exists(gamePath)) Status($"WARNING game not found at '{gamePath}' — push it first");
+
+        // Must be set before Start() — it decides which device extensions the core is asked to enable.
+        PdLibretro.SetZeroCopy(zeroCopy);
+        started = PdLibretro.Start(corePath, sysDir, saveDir, gamePath);
+        if (started && zeroCopy && !PdLibretro.ZeroCopyActive)
+        {
+            // The core's device couldn't get the AHB extensions; native fell back to CPU readback.
+            // Follow it so we actually display (otherwise we'd wait forever for an import that never comes).
+            zeroCopy = false;
+            Status("zero-copy unavailable on the core's device — using CPU read-back path");
+        }
+        double coreFps = PdLibretro.FrameFps;
+        _tickHz = (useCoreFrameRate && coreFps > 1.0) ? (float)coreFps : targetHz;
+        Status(started
+            ? $"pdlr_start OK — running (zeroCopy={zeroCopy}, tick={_tickHz:F3}Hz, coreFps={coreFps:F3}, sampleRate={PdLibretro.SampleRate:F0})"
+            : $"pdlr_start FAILED — Available={PdLibretro.Available} preload='{PdLibretro.PreloadInfo}' lastError='{PdLibretro.LastError}'");
+
+        if (started && audioEnabled) SetupAudio();
+        _lastRunAt = Time.unscaledTime;
+    }
+
+    void Update()
+    {
+        if (!started) return;
+
+        float now = Time.unscaledTime;
+
+        // Drive the core at _tickHz (~60), decoupled from the VR display rate. The old
+        // skip-if-too-soon throttle aliased badly against a 72Hz display (16.7ms spacing vs 13.9ms
+        // frames → it fired every OTHER frame → ~36fps), which starved the emulation and its audio.
+        // Instead accumulate real elapsed time and run exactly as many ticks as are due (capped to
+        // avoid a spiral if we ever fall far behind). retro_run is ~1ms and non-blocking here.
+        float period = (_tickHz > 0f) ? 1f / _tickHz : 1f / 60f;
+        _tickAccum += Time.unscaledDeltaTime;
+        int ticks = 0;
+        while (_tickAccum >= period && ticks < 4) { _tickAccum -= period; ticks++; }
+        if (_tickAccum > period) _tickAccum = 0f;   // drop backlog after a hitch/pause (no catch-up spiral)
+
+        for (int i = 0; i < ticks; i++)
+        {
+            PollInput();
+            PdLibretro.Run();
+        }
+        if (audioEnabled) EnsureAudioPlaying();   // re-arm if a focus/HMD change stopped the source
+
+        if (zeroCopy) UpdateZeroCopy();
+        else if (PdLibretro.GetFrame(out IntPtr pixels, out int w, out int h) && pixels != IntPtr.Zero && w > 0 && h > 0)
+            Blit(pixels, w, h);
+
+        if (now >= _nextStatusAt)
+        {
+            _nextStatusAt = now + 1f;
+            frameCount = PdLibretro.FrameCount;
+            res = PdLibretro.FrameSize(out int rw, out int rh) ? $"{rw}x{rh}" : "?";
+            Status($"running — core frames={frameCount} tex={res} zc={zeroCopy} extTex={_extTexReady} readyIdx={(zeroCopy ? PdLibretro.ReadyBufferIndex : -1)}");
+        }
+
+        if (_dumpBuf != null && !_dumpWritten && _dumpPos >= _dumpBuf.Length) WriteWavDump();
+    }
+
+    // Zero-copy path: once the FIRST BLIT has completed (ReadyBufferIndex >= 0 — that's the only
+    // signal that guarantees the AHB buffers exist, now that retro_run+blit live on the native pump
+    // thread), issue the import event; re-issue each frame until the render-thread import succeeds
+    // (it's idempotent native-side, and a one-shot latch raced the pump: event fired before the first
+    // blit → "buffers not allocated" → permanent black quad). Once Unity has imported all N buffers,
+    // wrap each in an external Texture2D. Then each frame just bind the material to the "ready"
+    // buffer the native side most recently blitted — triple-buffered, no per-frame copy.
+    void UpdateZeroCopy()
+    {
+        if (!_extTexReady)
+        {
+            if (PdLibretro.ReadyBufferIndex >= 0 && !PdLibretro.UnityImagesReady)
+            {
+                IntPtr fn = PdLibretro.GetRenderEventFunc();
+                if (fn != IntPtr.Zero)
+                {
+                    GL.IssuePluginEvent(fn, PdLibretro.EVENT_IMPORT_AHB);
+                    if (!_importIssued) { _importIssued = true; Status("zero-copy: issued AHB import event"); }
+                }
+            }
+            if (PdLibretro.UnityImagesReady) CreateExternalTextures();
+            return;
+        }
+
+        int idx = PdLibretro.ReadyBufferIndex;
+        if (idx >= 0 && idx < _zcTexes.Length && _zcTexes[idx] != null) ShowBuffer(idx);
+    }
+
+    // Build one external Texture2D per AHB buffer (each aliases that buffer's Unity-imported VkImage).
+    void CreateExternalTextures()
+    {
+        if (!PdLibretro.FrameSize(out int w, out int h) || w <= 0 || h <= 0) return;
+        int n = PdLibretro.BufferCount;
+        if (n <= 0) return;
+
+        _zcTexes = new Texture2D[n];
+        for (int i = 0; i < n; i++)
+        {
+            IntPtr img = PdLibretro.GetUnityImagePtr(i);
+            if (img == IntPtr.Zero) { Status($"zero-copy: buffer {i} ptr null — abort"); return; }
+            var t = Texture2D.CreateExternalTexture(w, h, TextureFormat.RGBA32, false, false, img);
+            t.wrapMode = TextureWrapMode.Clamp; t.filterMode = FilterMode.Bilinear; t.name = $"PdFlycastAHB{i}";
+            _zcTexes[i] = t;
+        }
+        BindTexture(_zcTexes[0]);   // sets emission keyword/color once; per-frame ShowBuffer just swaps textures
+        ApplyZeroCopyFlips();       // UV transform persists on the material across swaps
+        _extTexReady = true;
+        Status($"zero-copy: {n} external textures bound {w}x{h}");
+    }
+
+    // Per-frame: point the material at the ready buffer's texture (cheap — keyword/color already set).
+    void ShowBuffer(int idx)
+    {
+        Texture t = _zcTexes[idx];
+        _material.mainTexture = t;
+        if (_material.HasProperty("_EmissionMap")) _material.SetTexture("_EmissionMap", t);
+    }
+
+    // DEBUG input: read the attached gamepad (Unity InputSystem) and push it to the core before the
+    // next retro_run. Buttons ABXY + d-pad + START, plus the left analog stick. Single port (0).
+    // This is throwaway test wiring — the shipping control layer lives elsewhere.
+    void PollInput()
+    {
+        var gp = Gamepad.current;
+        if (gp == null) { PdLibretro.SetInput(0, 0, 0); return; }
+
+        uint b = 0;
+        // Physical A/B/X/Y → RetroPad A/B/X/Y directly. Flycast's internal DC order can make this
+        // feel rotated on-device; remap here if so.
+        if (gp.buttonEast.isPressed)  b |= 1u << PdLibretro.Joypad.A;
+        if (gp.buttonSouth.isPressed) b |= 1u << PdLibretro.Joypad.B;
+        if (gp.buttonWest.isPressed)  b |= 1u << PdLibretro.Joypad.X;
+        if (gp.buttonNorth.isPressed) b |= 1u << PdLibretro.Joypad.Y;
+        if (gp.startButton.isPressed) b |= 1u << PdLibretro.Joypad.START;
+        if (gp.dpad.up.isPressed)     b |= 1u << PdLibretro.Joypad.UP;
+        if (gp.dpad.down.isPressed)   b |= 1u << PdLibretro.Joypad.DOWN;
+        if (gp.dpad.left.isPressed)   b |= 1u << PdLibretro.Joypad.LEFT;
+        if (gp.dpad.right.isPressed)  b |= 1u << PdLibretro.Joypad.RIGHT;
+
+        Vector2 s = gp.leftStick.ReadValue();
+        if (Mathf.Abs(s.x) < 0.2f) s.x = 0f;
+        if (Mathf.Abs(s.y) < 0.2f) s.y = 0f;
+        // libretro analog: +X right, +Y down — Unity's stick Y is up-positive, so negate Y.
+        short lx = (short)Mathf.Clamp(Mathf.RoundToInt(s.x * 32767f), -32767, 32767);
+        short ly = (short)Mathf.Clamp(Mathf.RoundToInt(-s.y * 32767f), -32767, 32767);
+        PdLibretro.SetInput(b, lx, ly);
+    }
+
+    // 2D audio mirroring AoJ's proven MAME path (LibretroScreenController): an AUTHORED AudioSource
+    // (RequireComponent — never AddComponent at runtime) plays a silent looping keep-alive clip, and
+    // OnAudioFilterRead on this same GameObject overwrites the source's output with the core's PCM.
+    // Runtime-added sources and streaming-clip readers were both device-confirmed silent on Quest
+    // (isPlaying=true but the callback fired 0×) — the source was never pulled into the DSP graph.
+    void SetupAudio()
+    {
+        PdLibretro.SetAudioOutputRate(AudioSettings.outputSampleRate);
+        _audio = GetComponent<AudioSource>();   // RequireComponent guarantees an authored instance
+        _audio.playOnAwake = false;
+        _audio.loop        = true;
+
+        int sr = AudioSettings.outputSampleRate;
+        // Silent keep-alive: just enough to keep the source "playing" so the filter chain runs. Its
+        // samples are ignored — OnAudioFilterRead replaces the whole buffer with our PCM.
+        _keepAlive = AudioClip.Create("_PdFlycastKeepAlive", sr, 2, sr, false);
+        _audio.clip = _keepAlive;
+        EnsureAudioPlaying();
+        Status($"audio: output rate {sr} Hz, core {PdLibretro.SampleRate:F0} Hz, isPlaying={_audio.isPlaying}");
+
+        if (dumpAudioWav)
+        {
+            _dumpRate = sr;
+            int floats = Mathf.Max(1, Mathf.CeilToInt(sr * 2f * Mathf.Max(1f, dumpSeconds)));
+            _dumpBuf = new float[floats]; _dumpPos = 0; _dumpWritten = false;
+            Status($"audio WAV capture armed: up to {dumpSeconds:F0}s → pdflycast_audio.wav ({floats} floats)");
+        }
+    }
+
+    // Re-arm the source whenever it isn't playing — the Meta XR spatializer or an HMD-unmount/focus
+    // change can stop it. Called each frame.
+    void EnsureAudioPlaying()
+    {
+        if (_audio == null || _audio.isPlaying) return;
+        _audio.spatialize        = false;   // OVR spatializer would mangle the stream
+        _audio.bypassReverbZones = true;
+        _audio.reverbZoneMix     = 0f;
+        _audio.spatialBlend      = 0f;       // pure 2D
+        _audio.Play();
+    }
+
+    // Unity audio thread (DSP filter on this GO's AudioSource): overwrite `data` with the core's PCM;
+    // zero-fill underflow. The native buffer is interleaved stereo, matching channels==2 (Quest default).
+    void OnAudioFilterRead(float[] data, int channels)
+    {
+        if (!started || !audioEnabled) { System.Array.Clear(data, 0, data.Length); return; }
+        int n = (channels == 2) ? PdLibretro.AudioRead(data) : 0;   // only stereo layout matches the buffer
+        for (int i = n; i < data.Length; i++) data[i] = 0f;
+
+        // Capture what Unity actually plays (post zero-fill) into the WAV buffer — audio-thread safe
+        // (just an array copy; no allocation, no I/O). Stops when the preallocated buffer is full.
+        if (_dumpBuf != null && _dumpPos < _dumpBuf.Length)
+        {
+            int c = Math.Min(_dumpBuf.Length - _dumpPos, data.Length);
+            Array.Copy(data, 0, _dumpBuf, _dumpPos, c);
+            _dumpPos += c;
+        }
+
+        // Continuous (throttled) so logcat shows whether the pull is sustained, not just the first frames.
+        if (_audioLogN < 3 || (_audioLogN % 500) == 0)
+            ConfigManager.WriteConsole($"[PdFlycast] OnAudioFilterRead #{_audioLogN} len={data.Length} ch={channels} got={n}");
+        _audioLogN++;
+    }
+    int _audioLogN;
+
+    // Write the captured PCM as a 16-bit mono-interleaved-stereo WAV. Main thread only (called from
+    // Update when full, or OnDisable for a partial capture). Writes once.
+    void WriteWavDump()
+    {
+        if (_dumpBuf == null || _dumpWritten) return;
+        _dumpWritten = true;
+        int samples = Math.Min(_dumpPos, _dumpBuf.Length);   // total floats captured
+        string path = Path.Combine(Application.persistentDataPath, "pdflycast_audio.wav");
+        try
+        {
+            const int channels = 2, bits = 16;
+            int rate = _dumpRate > 0 ? _dumpRate : 48000;
+            int dataBytes = samples * (bits / 8);
+            using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            using (var bw = new BinaryWriter(fs))
+            {
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+                bw.Write(36 + dataBytes);
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+                bw.Write(16);                                   // PCM fmt chunk size
+                bw.Write((short)1);                             // PCM
+                bw.Write((short)channels);
+                bw.Write(rate);
+                bw.Write(rate * channels * (bits / 8));         // byte rate
+                bw.Write((short)(channels * (bits / 8)));       // block align
+                bw.Write((short)bits);
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+                bw.Write(dataBytes);
+                for (int i = 0; i < samples; i++)
+                    bw.Write((short)Mathf.RoundToInt(Mathf.Clamp(_dumpBuf[i], -1f, 1f) * 32767f));
+            }
+            Status($"audio WAV dump written: {path} ({samples / (float)(channels * Mathf.Max(1, rate)):F1}s, {samples} floats)");
+        }
+        catch (Exception e) { Status("audio WAV dump FAILED: " + e.Message); }
+    }
+
+    void Blit(IntPtr pixels, int w, int h)
+    {
+        EnsureTexture(w, h);
+        int bytes = w * h * 4;
+        if (flipY)
+        {
+            if (_flipBuf == null || _flipBuf.Length != bytes) _flipBuf = new byte[bytes];
+            int row = w * 4;
+            // copy source row r into dest row (h-1-r) → vertical flip
+            for (int r = 0; r < h; r++)
+                System.Runtime.InteropServices.Marshal.Copy(IntPtr.Add(pixels, r * row), _flipBuf, (h - 1 - r) * row, row);
+            _tex.LoadRawTextureData(_flipBuf);
+        }
+        else
+        {
+            _tex.LoadRawTextureData(pixels, bytes);
+        }
+        _tex.Apply(false, false);
+    }
+
+    void EnsureTexture(int w, int h)
+    {
+        if (_tex != null && _tex.width == w && _tex.height == h) return;
+        if (_tex != null) Destroy(_tex);
+        // Flycast set_image is R8G8B8A8_UNORM → RGBA32.
+        _tex = new Texture2D(w, h, TextureFormat.RGBA32, false, false)
+        {
+            wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear, name = "PdFlycastFrame",
+        };
+        BindTexture(_tex);
+    }
+
+    // Zero-copy: orient the sampled AHB texture via the material's UV transform — the external
+    // texture can't be flipped in memory like the CPU path. Applies to _MainTex and _EmissionMap.
+    void ApplyZeroCopyFlips()
+    {
+        Vector2 scale  = new Vector2(flipX ? -1f : 1f, flipY ? -1f : 1f);
+        Vector2 offset = new Vector2(flipX ?  1f : 0f, flipY ?  1f : 0f);
+        _material.mainTextureScale  = scale;
+        _material.mainTextureOffset = offset;
+        if (_material.HasProperty("_EmissionMap"))
+        {
+            _material.SetTextureScale("_EmissionMap", scale);
+            _material.SetTextureOffset("_EmissionMap", offset);
+        }
+    }
+
+    // Bind a texture as both albedo and emission so the screen is lit regardless of room lighting.
+    void BindTexture(Texture tex)
+    {
+        _material.mainTexture = tex;
+        if (_material.HasProperty("_EmissionMap"))
+        {
+            _material.EnableKeyword("_EMISSION");
+            _material.SetTexture("_EmissionMap", tex);
+            _material.SetColor("_EmissionColor", Color.white);
+        }
+    }
+
+    void Status(string msg)
+    {
+        Debug.Log($"[PdFlycast] {msg}");
+        ConfigManager.WriteConsole($"[PdFlycast] {msg}");
+        if (!verboseStatus) return;
+        try { File.AppendAllText(_statusPath, $"{Time.frameCount} {Time.unscaledTime:F2} {msg}\n"); }
+        catch (Exception e) { Debug.LogWarning("[PdFlycast] status write failed: " + e.Message); }
+    }
+
+    // Pause policy (decided 2026-07-03): the emulator suspends with the app. Unity stops pulling
+    // OnAudioFilterRead while paused, so running through it just dropped every sample and advanced
+    // the game invisibly (the "heard nothing live / too fast" confusion) — RetroArch pauses too.
+    void OnApplicationPause(bool paused)
+    {
+        if (!started) return;
+        PdLibretro.SetPaused(paused);
+        Status(paused ? "app paused — emu pump suspended" : "app resumed — emu pump running");
+    }
+
+    void OnDisable()
+    {
+        // Stop the audio pull first so OnAudioFilterRead (audio thread) won't call into native
+        // during/after shutdown.
+        started = false;
+        if (_audio != null) { _audio.Stop(); _audio.clip = null; }
+        if (_keepAlive != null) { Destroy(_keepAlive); _keepAlive = null; }
+
+        // Flush whatever was captured (partial is fine) now that the audio thread has stopped pulling.
+        WriteWavDump();
+
+        // Destroy our textures BEFORE Shutdown: the zero-copy textures are external, wrapping the
+        // Unity-side VkImages that Shutdown tears down.
+        if (_tex != null) { Destroy(_tex); _tex = null; }
+        if (_zcTexes != null) { foreach (var t in _zcTexes) if (t != null) Destroy(t); _zcTexes = null; }
+        PdLibretro.Shutdown();
+        _importIssued = false;
+        _extTexReady = false;
+    }
+}
