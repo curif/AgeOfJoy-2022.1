@@ -48,6 +48,10 @@ public static class MRPhoneBoothVisibility
         if (!IsMrWorldActive())
             return;
 
+        MixedRealityManager manager = MixedRealityManager.Instance;
+        if (manager != null && manager.TransitionInProgress)
+            return;
+
         MRPhoneBoothPortal traveler = EnsureMrInstance();
         if (traveler == null)
             return;

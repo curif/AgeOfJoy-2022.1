@@ -801,12 +801,17 @@ public class MixedRealityManager : MonoBehaviour
             if (!IsTransitionCurrent(generation))
                 yield break;
 
+            // Re-probe immediately before booth placement — MRUK may have registered anchors
+            // after the probe at coroutine start (long spawn/refresh gap since merge 47844e94).
+            if (environmentSurfaces != null && player != null)
+                yield return environmentSurfaces.ProbeWhenReady(player);
+
             portal.PlaceOnMrFloor(environmentSurfaces, player);
             // MR colocado: não aplicar travel state ao rig (ApplyPhoneBoothTravelState
             // desativado). A cabine já foi colocada no chão real via PlaceOnMrFloor;
             // mover o rig deslocaria todo o conteúdo virtual face ao passthrough.
             MRPhoneBoothSettings.SetVisible(true);
-            portal.SetVisible(true);
+            portal.SetVisible(true, playHideEffect: false);
 
             MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before arrival explosion");
             yield return portal.PlayTravelArrivalExplosionAndRestoreGlassDoor();
@@ -814,6 +819,20 @@ public class MixedRealityManager : MonoBehaviour
             if (!IsTransitionCurrent(generation))
                 yield break;
 
+            // Re-snap after smoke/glass/blackout — arrival VFX can skew bounds; MRUK may
+            // still be settling when the first snap ran (~20 s earlier in the coroutine).
+            if (environmentSurfaces != null)
+            {
+                if (player != null)
+                    yield return environmentSurfaces.ProbeWhenReady(player);
+                else
+                    yield return null;
+
+                portal.ReconcileVerticalMrFloorSnap(environmentSurfaces);
+            }
+
+            MRPhoneBoothSettings.SetVisible(true);
+            portal.SetVisible(true, playHideEffect: false);
             portal.NotifyHandsetsTravelComplete();
 
             MRTransitionLog.LogManagerState("EnterMRFromPhoneBoothCoroutine-final");
@@ -1391,6 +1410,10 @@ public class MixedRealityManager : MonoBehaviour
         ActiveRegistry()?.RefreshAllSpawnedPosesFromLayout();
         if (!MRPlacementRayController.AnyActive)
             MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
+
+        MRPhoneBoothPortal phoneBooth = MRPhoneBoothPortal.FindMrTravelerInstance(includeInactive: true);
+        if (phoneBooth != null && phoneBooth.gameObject.activeSelf && environmentSurfaces != null)
+            phoneBooth.ReconcileVerticalMrFloorSnap(environmentSurfaces);
 
         MRRoomInfoUI.Instance?.RefreshContent();
         ConfigManager.WriteConsole($"{LogPrefix} environment refreshed after room scan");

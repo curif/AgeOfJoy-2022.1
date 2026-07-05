@@ -390,18 +390,17 @@ public class MRPhoneBoothPortal : MonoBehaviour
     {
         if (MRPhoneBoothSettings.TryGetMrPose(out Vector3 savedPos, out Quaternion savedRot))
         {
-            transform.SetPositionAndRotation(savedPos, savedRot);
-            ConfigManager.WriteConsole($"{LogPrefix} placed booth from saved MR pose");
+            // Never trust saved Y — stale prefs from the ceiling bug would re-lift the booth.
+            Vector3 horizontal = new Vector3(savedPos.x, 0f, savedPos.z);
+            Vector3 pos = new Vector3(savedPos.x, transform.position.y, savedPos.z);
+            transform.SetPositionAndRotation(pos, savedRot);
+            ApplyVerticalSnapToMrFloor(surfaces, horizontal, "saved MR pose");
+            FinalizeMrFloorPlacement();
             return;
         }
 
-        Vector3 near = player != null ? player.position : transform.position;
-        Vector3 floorPoint = near;
-        if (surfaces != null)
-            surfaces.TryGetFloorPointAt(near, out floorPoint);
-
-        float bottomY = ComputeLowestWorldY();
-        transform.position += Vector3.up * (floorPoint.y - bottomY);
+        Vector3 horizontalProbe = ResolveFloorProbeHorizontal(player);
+        ApplyVerticalSnapToMrFloor(surfaces, horizontalProbe, "MR floor probe");
 
         if (player != null)
         {
@@ -411,8 +410,82 @@ public class MRPhoneBoothPortal : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(toPlayer.normalized, Vector3.up);
         }
 
+        FinalizeMrFloorPlacement();
+    }
+
+    /// <summary>
+    /// Vertical-only re-snap after arrival VFX / late MRUK refresh — keeps current XZ, never reloads saved Y.
+    /// </summary>
+    public void ReconcileVerticalMrFloorSnap(MREnvironmentSurfaces surfaces)
+    {
+        Vector3 horizontal = new Vector3(transform.position.x, 0f, transform.position.z);
+        ApplyVerticalSnapToMrFloor(surfaces, horizontal, "reconcile");
+        FinalizeMrFloorPlacement();
+    }
+
+    void FinalizeMrFloorPlacement()
+    {
+        DetachFromTravelParent();
         MRPhoneBoothSettings.SaveMrPose(transform.position, transform.rotation);
-        ConfigManager.WriteConsole($"{LogPrefix} placed booth on MR floor at {transform.position}");
+    }
+
+    void DetachFromTravelParent()
+    {
+        if (transform.parent == null)
+            return;
+
+        transform.SetParent(null, worldPositionStays: true);
+        ConfigManager.WriteConsole($"{LogPrefix} detached booth from parent — world pos={transform.position}");
+    }
+
+    static Vector3 ResolveFloorProbeHorizontal(Transform player)
+    {
+        Vector3 near = player != null ? player.position : Vector3.zero;
+        return new Vector3(near.x, 0f, near.z);
+    }
+
+    void ApplyVerticalSnapToMrFloor(MREnvironmentSurfaces surfaces, Vector3 horizontalProbe, string source)
+    {
+        if (!TryResolveMrFloorPoint(surfaces, horizontalProbe, out Vector3 floorPoint))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} floor probe failed ({source}) — keeping Y={transform.position.y:F3}");
+            MRTransitionLog.LogWarning($"PlaceOnMrFloor failed ({source}) hasFloor={surfaces?.HasFloor}");
+            return;
+        }
+
+        float bottomY = ComputeLowestWorldY();
+        float delta = floorPoint.y - bottomY;
+        transform.position += Vector3.up * delta;
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} placed booth ({source}) floorY={floorPoint.y:F3} bottomY={bottomY:F3} " +
+            $"delta={delta:F3} pos={transform.position}");
+        MRTransitionLog.Log(
+            $"PlaceOnMrFloor {source} floorY={floorPoint.y:F3} bottomY={bottomY:F3} delta={delta:F3}");
+    }
+
+    static bool TryResolveMrFloorPoint(
+        MREnvironmentSurfaces surfaces,
+        Vector3 horizontalProbe,
+        out Vector3 floorPoint)
+    {
+        floorPoint = default;
+        if (surfaces == null)
+            return false;
+
+        float probeY = surfaces.HasFloor ? surfaces.FloorHeight : 0f;
+        Vector3 probe = new Vector3(horizontalProbe.x, probeY, horizontalProbe.z);
+
+        if (surfaces.TryGetFloorPointAt(probe, out floorPoint))
+            return true;
+
+        if (surfaces.HasFloor)
+        {
+            floorPoint = new Vector3(horizontalProbe.x, surfaces.FloorHeight, horizontalProbe.z);
+            return true;
+        }
+
+        return false;
     }
 
     public static void AdoptAsTraveler(MRPhoneBoothPortal portal, Transform ddolParent)
@@ -1119,10 +1192,20 @@ public class MRPhoneBoothPortal : MonoBehaviour
     {
         float minY = transform.position.y;
         foreach (Renderer renderer in GetComponentsInChildren<Renderer>(includeInactive: true))
+        {
+            if (renderer == null || !renderer.enabled || renderer is ParticleSystemRenderer)
+                continue;
+
             minY = Mathf.Min(minY, renderer.bounds.min.y);
+        }
 
         foreach (Collider collider in GetComponentsInChildren<Collider>(includeInactive: true))
+        {
+            if (collider == null || !collider.enabled)
+                continue;
+
             minY = Mathf.Min(minY, collider.bounds.min.y);
+        }
 
         return minY;
     }
