@@ -796,7 +796,7 @@ public class MRConfigurationController : MonoBehaviour
         if (magazinesCatalogEntries.Count == 0)
         {
             screen.PrintCentered(8, "No bookshelves available", true);
-            screen.PrintCentered(10, "Add issues to", false);
+            screen.PrintCentered(10, "Add numbered images to", false);
             screen.PrintCentered(11, "MR/Magazines/<issue>/", false);
             DrawFooter("B: back");
             return;
@@ -1242,7 +1242,7 @@ public class MRConfigurationController : MonoBehaviour
         yield return string.Empty;
         yield return "OFFICIAL: BOOKSHELVES";
         yield return "Folder: MR/Magazines/<issue>/";
-        yield return $"{MRPaths.MagazineYamlFileName} + numbered pages";
+        yield return "Numbered page images (1st/2nd/last)";
         yield return $"Prefab: Resources/{MREnvironmentCatalog.ResourcesPath}/";
         yield return $"{MREnvironmentCatalog.BookshelfPrefabName}";
         yield return "Auto groups up to 8 issues";

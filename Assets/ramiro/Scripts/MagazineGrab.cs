@@ -87,7 +87,7 @@ public class MagazineGrab : MonoBehaviour
 #if UNITY_EDITOR
         if (Application.isEditor)
             HandleEditorPageKeysWhenHeld();
-        if (Application.isEditor && editorSimulateGrab)
+        if (Application.isEditor && (editorSimulateGrab || editorGrabActive))
             HandleEditorGrabInput();
 #endif
     }
@@ -144,6 +144,10 @@ public class MagazineGrab : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+    public void SetEditorSimulateGrab(bool enabled) => editorSimulateGrab = enabled;
+#endif
+
+#if UNITY_EDITOR
     public void BeginEditorGrabExternally()
     {
         if (!Application.isEditor || editorGrabActive)
@@ -164,8 +168,11 @@ public class MagazineGrab : MonoBehaviour
     void OnReleased(SelectExitEventArgs _)
     {
         ResetStickPageState();
-        magazine.ResetMagazine();
+        if (!IsShelfPreparedMagazine())
+            magazine.ResetMagazine();
     }
+
+    bool IsShelfPreparedMagazine() => GetComponent<MRSpawnedShelfMagazine>() != null;
 
     void ApplyGrabColliders()
     {
@@ -315,10 +322,11 @@ public class MagazineGrab : MonoBehaviour
             return;
 
         bool held = MREditorInput.IsHeld(editorGrabKey);
-        if (held && !editorGrabActive)
-            BeginEditorGrab();
-        else if (!held && editorGrabActive)
+
+        if (!held && editorGrabActive)
             EndEditorGrab();
+        else if (held && !editorGrabActive && editorSimulateGrab)
+            BeginEditorGrab();
     }
 
     void BeginEditorGrab()
@@ -340,7 +348,8 @@ public class MagazineGrab : MonoBehaviour
     {
         editorGrabActive = false;
         ResetStickPageState();
-        magazine.ResetMagazine();
+        if (!IsShelfPreparedMagazine())
+            magazine.ResetMagazine();
 
         if (returnOnRelease)
             ReturnHome();

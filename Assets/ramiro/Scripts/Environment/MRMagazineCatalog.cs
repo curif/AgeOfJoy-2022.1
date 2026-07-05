@@ -36,27 +36,58 @@ public static class MRMagazineCatalog
             if (string.IsNullOrEmpty(issueName))
                 continue;
 
-            string yamlPath = Path.Combine(issueDir, MRPaths.MagazineYamlFileName);
-            if (!File.Exists(yamlPath))
-                continue;
-
-            var pages = new List<string>();
-            foreach (string file in Directory.EnumerateFiles(issueDir, "*.*", SearchOption.TopDirectoryOnly))
-            {
-                if (!MRPostersCatalog.IsSupportedImageFile(file))
-                    continue;
-
-                pages.Add(Path.GetFileName(file));
-            }
-
-            pages.Sort(ComparePageFileNames);
-
+            List<string> pages = CollectOrderedPageFileNames(issueDir);
             if (pages.Count > 0)
                 cachedIssuePages[issueName] = pages;
         }
 
         ConfigManager.WriteConsole(
-            $"[MRMagazineCatalog] {cachedIssuePages.Count} issue(s) with {MRPaths.MagazineYamlFileName} in {MRPaths.MagazinesDir}");
+            $"[MRMagazineCatalog] {cachedIssuePages.Count} issue(s) in {MRPaths.MagazinesDir}");
+    }
+
+    /// <summary>Supported image filenames in the issue folder, sorted for cover inference.</summary>
+    public static List<string> CollectOrderedPageFileNames(string issueDir)
+    {
+        var pages = new List<string>();
+        if (string.IsNullOrEmpty(issueDir) || !Directory.Exists(issueDir))
+            return pages;
+
+        foreach (string file in Directory.EnumerateFiles(issueDir, "*.*", SearchOption.TopDirectoryOnly))
+        {
+            if (!MRPostersCatalog.IsSupportedImageFile(file))
+                continue;
+
+            pages.Add(Path.GetFileName(file));
+        }
+
+        pages.Sort(ComparePageFileNames);
+        return pages;
+    }
+
+    /// <summary>
+    /// Cover roles from sorted page order:
+    /// first = front, second = insideFront, penultimate = insideBack, last = back.
+    /// </summary>
+    public static bool TryInferCoverFileNames(
+        IReadOnlyList<string> orderedPages,
+        out string front,
+        out string insideFront,
+        out string insideBack,
+        out string back)
+    {
+        front = null;
+        insideFront = null;
+        insideBack = null;
+        back = null;
+
+        if (orderedPages == null || orderedPages.Count == 0)
+            return false;
+
+        front = orderedPages[0];
+        insideFront = orderedPages.Count > 1 ? orderedPages[1] : orderedPages[0];
+        insideBack = orderedPages[orderedPages.Count - 2];
+        back = orderedPages[orderedPages.Count - 1];
+        return true;
     }
 
     public static List<MREnvironmentCatalogEntry> GetCatalogEntries()
@@ -75,22 +106,8 @@ public static class MRMagazineCatalog
         return entries;
     }
 
-    public static string GetDisplayLabel(string issueName)
-    {
-        if (string.IsNullOrEmpty(issueName))
-            return "(magazine)";
-
-        if (MRMagazineIssueDefinition.TryLoad(issueName, out MRMagazineIssueDefinition definition))
-            return definition.GetDisplayName();
-
-        return issueName;
-    }
-
-    public static bool IssueHasYaml(string issueName)
-    {
-        string yamlPath = MRPaths.GetMagazineIssueYamlPath(issueName);
-        return !string.IsNullOrEmpty(yamlPath) && File.Exists(yamlPath);
-    }
+    public static string GetDisplayLabel(string issueName) =>
+        string.IsNullOrEmpty(issueName) ? "(magazine)" : issueName;
 
     public static int GetPageCount(string issueName)
     {

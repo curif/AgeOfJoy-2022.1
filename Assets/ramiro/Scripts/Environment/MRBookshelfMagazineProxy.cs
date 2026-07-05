@@ -13,6 +13,7 @@ using UnityEngine.XR.Interaction.Toolkit;
 public class MRBookshelfMagazineProxy : MonoBehaviour
 {
     const string LogPrefix = "[MRBookshelfMagazineProxy]";
+    public const float ShelfReturnRadiusMeters = 0.25f;
     static readonly string[] GrabInteractionLayers = { "InteractablePart" };
     const string GrabPhysicsLayerName = "InteractablePart";
     static readonly Quaternion ShelfDockLocalRotation = Quaternion.Euler(-80f, 0f, 0f);
@@ -30,6 +31,7 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
     MRSpawnedShelfMagazine preparedShelfMagazine;
     bool proxyHidden;
     bool spawnPending;
+    bool magazineLooseInWorld;
 
     public void Configure(string configuredIssueName)
     {
@@ -43,6 +45,38 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
 
     public void RestoreProxyVisuals()
     {
+        ShowProxyRenderers();
+        ReturnPreparedMagazineToShelf();
+    }
+
+    public Vector3 GetDockWorldPosition() => transform.position;
+
+    public bool IsMagazineLooseInWorld() => magazineLooseInWorld;
+
+    public void ShowProxyAndLeaveMagazineInWorld()
+    {
+        magazineLooseInWorld = true;
+        ShowProxyRenderers();
+
+        if (preparedMagazineRoot == null)
+            return;
+
+        SetMagazineVisualState(show: true);
+
+#if UNITY_EDITOR
+        preparedMagazineGrab?.SetEditorSimulateGrab(true);
+#endif
+    }
+
+    public void ReturnPreparedMagazineToShelf()
+    {
+        magazineLooseInWorld = false;
+        ShowProxyRenderers();
+        DockPreparedMagazine();
+    }
+
+    void ShowProxyRenderers()
+    {
         proxyHidden = false;
         spawnPending = false;
 
@@ -51,14 +85,12 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
             if (renderer != null)
                 renderer.enabled = true;
         }
-
-        DockPreparedMagazine();
     }
 
     public bool TrySpawnHeldMagazineForEditor()
     {
 #if UNITY_EDITOR
-        if (spawnPending || proxyHidden || string.IsNullOrEmpty(issueName))
+        if (spawnPending || proxyHidden || magazineLooseInWorld || string.IsNullOrEmpty(issueName))
             return false;
 
         if (!TrySpawnHeldMagazine(interactor: null, out GameObject heldMagazine))
@@ -129,9 +161,9 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
     {
         heldMagazine = null;
 
-        if (!MRMagazineCatalog.IssueHasYaml(issueName))
+        if (!MRMagazineCatalog.IssueExists(issueName))
         {
-            MRDebugLog.LogError($"{LogPrefix} issue missing {MRPaths.MagazineYamlFileName}: {issueName}");
+            MRDebugLog.LogError($"{LogPrefix} issue has no page images: {issueName}");
             return false;
         }
 
@@ -148,11 +180,18 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
         if (preparedMagazineRoot == null)
             return;
 
+        bool wasLooseInWorld = magazineLooseInWorld;
+        magazineLooseInWorld = false;
         preparedMagazineRoot.SetActive(true);
-        ApplyDockPose(worldPositionStays: true);
+        if (!wasLooseInWorld)
+            ApplyDockPose(worldPositionStays: true);
         SetMagazineVisualState(show: true);
         preparedShelfMagazine?.BeginHeldSession();
         HideProxyVisuals();
+
+#if UNITY_EDITOR
+        preparedMagazineGrab?.SetEditorSimulateGrab(false);
+#endif
     }
 
     void HideProxyVisuals()
@@ -170,7 +209,7 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
     {
         ClearRuntimeResources();
 
-        if (!MRMagazineIssueDefinition.TryLoad(issueName, out MRMagazineIssueDefinition definition))
+        if (!MRMagazineIssueDefinition.TryResolve(issueName, out MRMagazineIssueDefinition definition))
         {
             MRDebugLog.LogWarning($"{LogPrefix} could not load issue definition for proxy: {issueName}");
             return;
@@ -348,7 +387,12 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
         preparedGrabInteractable = preparedMagazineRoot.GetComponent<XRGrabInteractable>();
         preparedMagazineGrab = preparedMagazineRoot.GetComponent<MagazineGrab>();
         if (preparedMagazineGrab != null)
+        {
             preparedMagazineGrab.SetReturnOnRelease(false);
+#if UNITY_EDITOR
+            preparedMagazineGrab.SetEditorSimulateGrab(false);
+#endif
+        }
 
         preparedShelfMagazine = preparedMagazineRoot.GetComponent<MRSpawnedShelfMagazine>();
         if (preparedShelfMagazine == null)

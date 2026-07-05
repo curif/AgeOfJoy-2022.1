@@ -2,6 +2,7 @@
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Magazine test scene: spawn a populated Bookshelf at the scene placeholder or marker pose.
-/// Editor issue path: %UserProfile%/cabs/MR/Magazines/&lt;issue&gt;/magazine.yaml
+/// Editor issue path: %UserProfile%/cabs/MR/Magazines/&lt;issue&gt;/ (numbered page images)
 /// </summary>
 public class MRTestMagazineSpawn : MonoBehaviour
 {
@@ -32,7 +33,7 @@ public class MRTestMagazineSpawn : MonoBehaviour
         if (active.name != TestSceneName)
             return;
 
-        if (Object.FindObjectOfType<MRTestMagazineSpawn>() != null)
+        if (UnityEngine.Object.FindObjectOfType<MRTestMagazineSpawn>() != null)
             return;
 
         var host = new GameObject("TestMagazineSpawner");
@@ -69,8 +70,8 @@ public class MRTestMagazineSpawn : MonoBehaviour
         if (issues.Count == 0)
         {
             ConfigManager.WriteConsoleWarning(
-                $"{LogPrefix} no magazine issues with {MRPaths.MagazineYamlFileName} in {MRPaths.MagazinesDir}");
-            MRDebugLog.LogWarning($"{LogPrefix} no magazine issues with {MRPaths.MagazineYamlFileName} in {MRPaths.MagazinesDir}");
+                $"{LogPrefix} no magazine issues with page images in {MRPaths.MagazinesDir}");
+            MRDebugLog.LogWarning($"{LogPrefix} no magazine issues with page images in {MRPaths.MagazinesDir}");
             yield break;
         }
 
@@ -82,15 +83,13 @@ public class MRTestMagazineSpawn : MonoBehaviour
 
     List<string> ResolveIssueList()
     {
-        var issues = MRMagazineCatalog.GetIssueNames()
-            .Where(MRMagazineCatalog.IssueHasYaml)
-            .ToList();
+        var issues = MRMagazineCatalog.GetIssueNames().ToList();
 
         if (issues.Count > 0)
             return issues;
 
         string fallback = string.IsNullOrWhiteSpace(issueName) ? null : issueName.Trim();
-        if (!string.IsNullOrEmpty(fallback) && MRMagazineCatalog.IssueHasYaml(fallback))
+        if (!string.IsNullOrEmpty(fallback) && MRMagazineCatalog.IssueExists(fallback))
             issues.Add(fallback);
 
         return issues;
@@ -181,7 +180,7 @@ public class MRTestMagazineSpawn : MonoBehaviour
         if (Camera.main != null)
             return Camera.main.transform;
 
-        PlayerController pc = Object.FindObjectOfType<PlayerController>();
+        PlayerController pc = UnityEngine.Object.FindObjectOfType<PlayerController>();
         if (pc != null && pc.xrorigin != null && pc.xrorigin.Camera != null)
             return pc.xrorigin.Camera.transform;
 
@@ -209,17 +208,66 @@ public class MRTestMagazineSpawn : MonoBehaviour
 #if UNITY_EDITOR
     void TryGrabFirstShelfMagazineInEditor()
     {
-        MRBookshelfMagazineProxy[] proxies = FindObjectsOfType<MRBookshelfMagazineProxy>(includeInactive: false);
+        if (IsAnyShelfMagazineHeldInEditor())
+            return;
+
+        MRBookshelfMagazineProxy[] proxies = FindObjectsOfType<MRBookshelfMagazineProxy>(includeInactive: false)
+            .Where(proxy => proxy != null)
+            .OrderBy(proxy => GetMagazineSlotSortKey(proxy.transform))
+            .ToArray();
+
         foreach (MRBookshelfMagazineProxy proxy in proxies)
         {
-            if (proxy != null && proxy.TrySpawnHeldMagazineForEditor())
+            if (proxy.TrySpawnHeldMagazineForEditor())
             {
-                ConfigManager.WriteConsole($"{LogPrefix} editor grabbed first shelf magazine");
+                ConfigManager.WriteConsole($"{LogPrefix} editor grabbed shelf magazine {proxy.name}");
                 return;
             }
         }
 
         ConfigManager.WriteConsoleWarning($"{LogPrefix} no shelf magazine available for editor grab");
+    }
+
+    static int GetMagazineSlotSortKey(Transform proxyTransform)
+    {
+        if (proxyTransform == null)
+            return int.MaxValue;
+
+        int nameOrder = GetMagazineSlotNameOrder(proxyTransform.name);
+        if (nameOrder != int.MaxValue)
+            return nameOrder;
+
+        return int.MaxValue - 1;
+    }
+
+    static bool IsAnyShelfMagazineHeldInEditor()
+    {
+        foreach (MRSpawnedShelfMagazine shelfMagazine in FindObjectsOfType<MRSpawnedShelfMagazine>(includeInactive: false))
+        {
+            if (shelfMagazine == null)
+                continue;
+
+            MagazineGrab grab = shelfMagazine.GetComponent<MagazineGrab>();
+            if (grab != null && grab.IsHeldNow())
+                return true;
+        }
+
+        return false;
+    }
+
+    static int GetMagazineSlotNameOrder(string objectName)
+    {
+        if (string.IsNullOrEmpty(objectName))
+            return int.MaxValue;
+
+        if (!objectName.StartsWith("Magazine", StringComparison.OrdinalIgnoreCase))
+            return int.MaxValue;
+
+        if (objectName.Length <= "Magazine".Length)
+            return 0;
+
+        string suffix = objectName.Substring("Magazine".Length);
+        return int.TryParse(suffix, out int index) ? index : int.MaxValue;
     }
 #endif
 }

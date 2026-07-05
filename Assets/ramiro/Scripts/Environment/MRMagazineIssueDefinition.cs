@@ -3,20 +3,19 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-/// <summary>Parsed <c>MR/Magazines/&lt;Issue&gt;/magazine.yaml</c> — schema v1.</summary>
+/// <summary>
+/// Magazine issue metadata from ordered page images in the issue folder.
+/// Optional <c>magazine.yaml</c> overrides inferred covers when present.
+/// </summary>
 [Serializable]
 public class MRMagazineIssueDefinition
 {
     public const int SupportedYamlVersion = 1;
-
-    public const string DefaultFrontCover = "1.jpg";
-    public const string DefaultInsideFrontCover = "2.jpg";
-    public const string DefaultInsideBackCover = "75.jpg";
-    public const string DefaultBackCover = "76.jpg";
 
     public int Version = 1;
     public string DisplayName;
@@ -25,37 +24,78 @@ public class MRMagazineIssueDefinition
     public string IssueName { get; private set; }
     public string IssueDir { get; private set; }
 
-    public string GetFrontCover() => FirstNonEmpty(Covers?.Front, DefaultFrontCover);
-    public string GetInsideFrontCover() => FirstNonEmpty(Covers?.InsideFront, DefaultInsideFrontCover);
-    public string GetInsideBackCover() => FirstNonEmpty(Covers?.InsideBack, DefaultInsideBackCover);
-    public string GetBackCover() => FirstNonEmpty(Covers?.Back, DefaultBackCover);
+    public string GetFrontCover() => Covers?.Front;
+    public string GetInsideFrontCover() => Covers?.InsideFront;
+    public string GetInsideBackCover() => Covers?.InsideBack;
+    public string GetBackCover() => Covers?.Back;
 
-    public string GetDisplayName() =>
-        FirstNonEmpty(DisplayName, IssueName);
+    public string GetDisplayName() => IssueName;
 
-    public static bool TryLoad(string issueName, out MRMagazineIssueDefinition definition)
+    /// <summary>Loads yaml when present, otherwise infers covers from sorted page images.</summary>
+    public static bool TryResolve(string issueName, out MRMagazineIssueDefinition definition)
     {
         definition = null;
         string issueDir = MRPaths.GetMagazineIssueDir(issueName);
         if (string.IsNullOrEmpty(issueDir) || !Directory.Exists(issueDir))
             return false;
 
-        return TryLoadFromDir(issueName, issueDir, out definition);
+        return TryResolveFromDir(issueName, issueDir, out definition);
     }
 
-    public static bool TryLoadFromDir(string issueName, string issueDir, out MRMagazineIssueDefinition definition)
+    /// <summary>Legacy alias — prefer <see cref="TryResolve"/>.</summary>
+    public static bool TryLoad(string issueName, out MRMagazineIssueDefinition definition) =>
+        TryResolve(issueName, out definition);
+
+    /// <summary>Legacy alias — prefer <see cref="TryResolveFromDir"/>.</summary>
+    public static bool TryLoadFromDir(string issueName, string issueDir, out MRMagazineIssueDefinition definition) =>
+        TryResolveFromDir(issueName, issueDir, out definition);
+
+    public static bool TryResolveFromDir(string issueName, string issueDir, out MRMagazineIssueDefinition definition)
     {
         definition = null;
         if (string.IsNullOrEmpty(issueDir) || !Directory.Exists(issueDir))
             return false;
 
         string yamlPath = Path.Combine(issueDir, MRPaths.MagazineYamlFileName);
-        if (!File.Exists(yamlPath))
+        if (File.Exists(yamlPath) && TryParseYamlFile(issueName, issueDir, yamlPath, out definition))
+            return true;
+
+        List<string> pages = MRMagazineCatalog.CollectOrderedPageFileNames(issueDir);
+        if (pages.Count == 0)
+            return false;
+
+        if (!MRMagazineCatalog.TryInferCoverFileNames(
+                pages,
+                out string front,
+                out string insideFront,
+                out string insideBack,
+                out string back))
         {
-            ConfigManager.WriteConsoleWarning(
-                $"[MRMagazineIssueDefinition] {issueName}: {MRPaths.MagazineYamlFileName} not found in {issueDir}");
             return false;
         }
+
+        definition = CreateFromCovers(issueName, issueDir, front, insideFront, insideBack, back);
+        return true;
+    }
+
+    public void ApplyTo(Magazine magazine)
+    {
+        if (magazine == null)
+            return;
+
+        magazine.frontCoverImgName = GetFrontCover();
+        magazine.insideFrontCoverImgName = GetInsideFrontCover();
+        magazine.insideBackCoverImgName = GetInsideBackCover();
+        magazine.backCoverImgName = GetBackCover();
+    }
+
+    static bool TryParseYamlFile(
+        string issueName,
+        string issueDir,
+        string yamlPath,
+        out MRMagazineIssueDefinition definition)
+    {
+        definition = null;
 
         try
         {
@@ -80,6 +120,29 @@ public class MRMagazineIssueDefinition
                     $"[MRMagazineIssueDefinition] {issueName}: version {definition.Version} > supported {SupportedYamlVersion}");
             }
 
+            if (definition.Covers == null)
+            {
+                List<string> pages = MRMagazineCatalog.CollectOrderedPageFileNames(issueDir);
+                if (pages.Count == 0
+                    || !MRMagazineCatalog.TryInferCoverFileNames(
+                        pages,
+                        out string front,
+                        out string insideFront,
+                        out string insideBack,
+                        out string back))
+                {
+                    return false;
+                }
+
+                definition.Covers = new MRMagazineCoversYaml
+                {
+                    Front = front,
+                    InsideFront = insideFront,
+                    InsideBack = insideBack,
+                    Back = back
+                };
+            }
+
             return true;
         }
         catch (Exception e)
@@ -90,19 +153,28 @@ public class MRMagazineIssueDefinition
         }
     }
 
-    public void ApplyTo(Magazine magazine)
+    static MRMagazineIssueDefinition CreateFromCovers(
+        string issueName,
+        string issueDir,
+        string front,
+        string insideFront,
+        string insideBack,
+        string back)
     {
-        if (magazine == null)
-            return;
-
-        magazine.frontCoverImgName = GetFrontCover();
-        magazine.insideFrontCoverImgName = GetInsideFrontCover();
-        magazine.insideBackCoverImgName = GetInsideBackCover();
-        magazine.backCoverImgName = GetBackCover();
+        return new MRMagazineIssueDefinition
+        {
+            Version = 1,
+            IssueName = issueName,
+            IssueDir = issueDir,
+            Covers = new MRMagazineCoversYaml
+            {
+                Front = front,
+                InsideFront = insideFront,
+                InsideBack = insideBack,
+                Back = back
+            }
+        };
     }
-
-    static string FirstNonEmpty(string value, string fallback) =>
-        string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
 }
 
 [Serializable]

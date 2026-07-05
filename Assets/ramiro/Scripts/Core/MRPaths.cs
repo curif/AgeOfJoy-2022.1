@@ -206,36 +206,29 @@ public static class MRPaths
 
 Copy one folder per issue under MR/Magazines/ (Quest: Android/data/com.curif.AgeOfJoy/MR/Magazines/).
 
-Each issue folder must contain:
-  magazine.yaml   — cover image filenames (see Example/magazine.yaml)
-  1.png, 2.png, … — page images (sorted by leading number)
+Each issue folder must contain numbered page images (sorted by leading number):
 
-Example layout:
-
-  MR/Magazines/MyIssue/magazine.yaml
   MR/Magazines/MyIssue/1.jpg    — front cover (outside, left)
   MR/Magazines/MyIssue/2.jpg    — inside front cover
-  MR/Magazines/MyIssue/3.jpg    — first interior right page
-  MR/Magazines/MyIssue/4.jpg    — next left page
+  MR/Magazines/MyIssue/3.jpg    — first interior page
   ...
   MR/Magazines/MyIssue/N-1.jpg  — inside back cover
   MR/Magazines/MyIssue/N.jpg    — back cover (outside, right)
 
-Interior pages are every numbered image not listed in magazine.yaml covers.
+Cover roles are inferred from sort order (1st, 2nd, penultimate, last).
+Optional magazine.yaml can override cover filenames.
+
 Supported formats: .png .jpg .jpeg .webp .bmp
 On Quest prefer .png or .jpg (.tif often does not load).
 
-Set issueFolderName on the Magazine component to the folder name (e.g. MyIssue).
+Bookshelves in MR CONFIGURATION group up to 8 issues per shelf.
 ";
 
-    const string ExampleMagazineYaml = @"# Age of Joy — MR magazine issue (schema v1)
-# Copy this folder under MR/Magazines/ and add numbered page images.
+    const string ExampleMagazineYaml = @"# Optional override — covers are inferred from sorted page images when absent.
+# Copy numbered images into this folder (1.jpg, 2.jpg, ... N.jpg).
 
 version: 1
 
-displayName: Example magazine
-
-# Cover filenames inside this issue folder (interior pages = all other numbered images).
 covers:
   front: 1.jpg
   insideFront: 2.jpg

@@ -6,14 +6,16 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
-/// <summary>Prepared shelf magazine that is shown while held and docked back into the proxy on release.</summary>
+/// <summary>
+/// Prepared shelf magazine: while held it can be read; on release near the shelf slot it docks,
+/// otherwise it stays in the world closed until picked up and returned manually.
+/// </summary>
 [DisallowMultipleComponent]
 public class MRSpawnedShelfMagazine : MonoBehaviour
 {
     XRGrabInteractable grabInteractable;
     MagazineGrab magazineGrab;
     MRBookshelfMagazineProxy sourceProxy;
-    bool releaseHandled;
     bool releaseCheckPending;
     bool wasHeld;
 
@@ -24,7 +26,6 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
 
     public void BeginHeldSession()
     {
-        releaseHandled = false;
         releaseCheckPending = false;
         wasHeld = false;
     }
@@ -53,32 +54,23 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
 
     void OnDestroy()
     {
-        if (!releaseHandled)
-        {
-            sourceProxy?.RestoreProxyVisuals();
-            sourceProxy?.DockPreparedMagazine();
-        }
+        sourceProxy?.ReturnPreparedMagazineToShelf();
     }
 
     void Update()
     {
-        if (releaseHandled || magazineGrab == null)
+        if (magazineGrab == null)
             return;
 
         bool heldNow = magazineGrab.IsHeldNow();
-        if (wasHeld && !heldNow)
-        {
-            releaseHandled = true;
-            StartCoroutine(RestoreProxyAndDock());
-            return;
-        }
+        if (wasHeld && !heldNow && !releaseCheckPending)
+            StartCoroutine(HandleReleaseAfterFrame());
 
         wasHeld = heldNow;
     }
 
     void OnGrabbed(SelectEnterEventArgs _)
     {
-        releaseHandled = false;
         releaseCheckPending = false;
         wasHeld = true;
         sourceProxy?.OnPreparedMagazineGrabbed();
@@ -86,7 +78,7 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
 
     void OnReleased(SelectExitEventArgs _)
     {
-        if (releaseHandled || releaseCheckPending)
+        if (releaseCheckPending)
             return;
 
         releaseCheckPending = true;
@@ -98,20 +90,23 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
         yield return null;
         releaseCheckPending = false;
 
-        if (releaseHandled)
-            yield break;
-
         if (magazineGrab != null && magazineGrab.IsHeldNow())
             yield break;
 
-        releaseHandled = true;
-        yield return RestoreProxyAndDock();
+        if (IsNearShelfDock())
+            sourceProxy?.ReturnPreparedMagazineToShelf();
+        else
+            sourceProxy?.ShowProxyAndLeaveMagazineInWorld();
+
+        wasHeld = false;
     }
 
-    IEnumerator RestoreProxyAndDock()
+    bool IsNearShelfDock()
     {
-        yield return null;
-        sourceProxy?.RestoreProxyVisuals();
-        sourceProxy?.DockPreparedMagazine();
+        if (sourceProxy == null)
+            return false;
+
+        return Vector3.Distance(transform.position, sourceProxy.GetDockWorldPosition())
+            <= MRBookshelfMagazineProxy.ShelfReturnRadiusMeters;
     }
 }

@@ -121,7 +121,7 @@ public static class MRBookshelfFactory
             if (!seen.Add(issueName))
                 continue;
 
-            if (!MRMagazineCatalog.IssueHasYaml(issueName))
+            if (!MRMagazineCatalog.IssueExists(issueName))
                 continue;
 
             valid.Add(issueName);

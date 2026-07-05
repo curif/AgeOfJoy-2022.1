@@ -31,7 +31,7 @@ public class Magazine : MonoBehaviour
     public string pagesFolderOverride = "";
 
     [Header("Cover image names (fixed)")]
-    [Tooltip("Loaded from magazine.yaml in the issue folder when present.")]
+    [Tooltip("Inferred from sorted page images (1st/2nd/penultimate/last) unless magazine.yaml overrides.")]
     public string frontCoverImgName = "";
     public string insideFrontCoverImgName = "";
     public string insideBackCoverImgName = "";
@@ -104,7 +104,7 @@ public class Magazine : MonoBehaviour
             BackCover = FindChild("RightCover");
 
         MRPaths.EnsureFolders();
-        ApplyIssueYaml();
+        ApplyIssueCovers();
 
         BuildPageList();
         BuildLeaves();
@@ -169,14 +169,14 @@ public class Magazine : MonoBehaviour
         pagesFolderOverride = "";
     }
 
-    void ApplyIssueYaml()
+    void ApplyIssueCovers()
     {
         if (!string.IsNullOrEmpty(pagesFolderOverride))
         {
-            if (MRMagazineIssueDefinition.TryLoadFromDir(issueFolderName, pagesFolderOverride, out MRMagazineIssueDefinition overrideDef))
+            if (MRMagazineIssueDefinition.TryResolveFromDir(issueFolderName, pagesFolderOverride, out MRMagazineIssueDefinition overrideDef))
             {
                 overrideDef.ApplyTo(this);
-                ConfigManager.WriteConsole($"{LogPrefix} covers from {MRPaths.MagazineYamlFileName} ({pagesFolderOverride})");
+                ConfigManager.WriteConsole($"{LogPrefix} covers resolved ({pagesFolderOverride})");
             }
             return;
         }
@@ -184,10 +184,10 @@ public class Magazine : MonoBehaviour
         if (string.IsNullOrEmpty(issueFolderName))
             return;
 
-        if (MRMagazineIssueDefinition.TryLoad(issueFolderName, out MRMagazineIssueDefinition definition))
+        if (MRMagazineIssueDefinition.TryResolve(issueFolderName, out MRMagazineIssueDefinition definition))
         {
             definition.ApplyTo(this);
-            ConfigManager.WriteConsole($"{LogPrefix} covers from {MRPaths.MagazineYamlFileName} ({issueFolderName})");
+            ConfigManager.WriteConsole($"{LogPrefix} covers resolved ({issueFolderName})");
         }
     }
 

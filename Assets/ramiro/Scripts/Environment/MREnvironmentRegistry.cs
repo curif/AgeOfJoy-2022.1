@@ -852,10 +852,10 @@ public class MREnvironmentRegistry : MonoBehaviour
         out GameObject spawnedRoot)
     {
         spawnedRoot = null;
-        if (string.IsNullOrEmpty(issueName) || !MRMagazineCatalog.IssueHasYaml(issueName))
+        if (string.IsNullOrEmpty(issueName) || !MRMagazineCatalog.IssueExists(issueName))
         {
-            ConfigManager.WriteConsoleError($"{LogPrefix} magazine issue missing yaml: {issueName}");
-            MRDebugLog.LogError($"Magazine issue missing {MRPaths.MagazineYamlFileName}: {issueName}");
+            ConfigManager.WriteConsoleError($"{LogPrefix} magazine issue missing page images: {issueName}");
+            MRDebugLog.LogError($"Magazine issue has no page images: {issueName}");
             return false;
         }
 
