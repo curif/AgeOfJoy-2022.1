@@ -57,6 +57,9 @@ public static class PdLibretro
     [DllImport(LIB, EntryPoint = "pdlr_frame_size")]
     static extern int _pdlr_frame_size(out int width, out int height);
 
+    [DllImport(LIB, EntryPoint = "pdlr_buffer_size")]
+    static extern int _pdlr_buffer_size(out int width, out int height);
+
     [DllImport(LIB, EntryPoint = "pdlr_frame_fps")]
     static extern double _pdlr_frame_fps();
 
@@ -238,12 +241,22 @@ public static class PdLibretro
     // underflow). Call from OnAudioFilterRead; zero-fill the remainder for silence.
     public static int AudioRead(float[] dst) => (Available && dst != null) ? _pdlr_audio_read(dst, dst.Length) : 0;
 
-    // Emulated frame dimensions from the core's video_refresh. False until the first frame.
+    // Emulated frame dimensions from the core's video_refresh — the ACTIVE region. False until the
+    // first frame. On the zero-copy path this is the sub-rect to crop within the fixed-size buffer.
     public static bool FrameSize(out int width, out int height)
     {
         width = 0; height = 0;
         if (!Available) return false;
         return _pdlr_frame_size(out width, out height) == 0;
+    }
+
+    // Fixed AHB/external-texture dimensions (the ceiling the buffers were allocated at). Size the
+    // external Texture2D to this; crop the active FrameSize within it. False before buffers exist.
+    public static bool BufferSize(out int width, out int height)
+    {
+        width = 0; height = 0;
+        if (!Available) return false;
+        return _pdlr_buffer_size(out width, out height) == 0;
     }
 
     // Native render-event callback for GL.IssuePluginEvent. Issue EVENT_IMPORT_AHB once (after

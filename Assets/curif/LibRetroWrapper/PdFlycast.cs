@@ -81,6 +81,8 @@ public class PdFlycast : MonoBehaviour
     string    _statusPath;
     bool      _importIssued;   // zero-copy: GL.IssuePluginEvent(IMPORT_AHB) sent
     bool      _extTexReady;    // zero-copy: external Texture2D created + bound
+    int       _bufW, _bufH;    // zero-copy: fixed AHB/external-texture size (the ceiling)
+    int       _cropActiveW = -1, _cropActiveH = -1;  // last active size the UV crop was applied for
     AudioSource _audio;        // 2D authored source; OnAudioFilterRead (this GO) generates its output
     AudioClip   _keepAlive;    // short silent looping clip — keeps the source "playing" so the DSP
                                // filter chain (OnAudioFilterRead) is pulled; we overwrite its output
@@ -223,28 +225,40 @@ public class PdFlycast : MonoBehaviour
 
         int idx = PdLibretro.ReadyBufferIndex;
         if (idx >= 0 && idx < _zcTexes.Length && _zcTexes[idx] != null) ShowBuffer(idx);
+
+        // The active frame can change mid-run (e.g. Metal Slug 6 boots 640x238 then switches to
+        // 640x480). Re-crop when it does — cheap and usually a no-op. The buffer size is fixed, so
+        // the external textures never need rebuilding.
+        if (_bufW > 0 && PdLibretro.FrameSize(out int aw, out int ah) && aw > 0 && ah > 0 &&
+            (aw != _cropActiveW || ah != _cropActiveH))
+            ApplyZeroCopyCrop(aw, ah, _bufW, _bufH);
     }
 
     // Build one external Texture2D per AHB buffer (each aliases that buffer's Unity-imported VkImage).
     void CreateExternalTextures()
     {
-        if (!PdLibretro.FrameSize(out int w, out int h) || w <= 0 || h <= 0) return;
+        // Size the external textures to the FIXED buffer (ceiling), not the active frame — the active
+        // frame is a sub-rect we UV-crop, and it may change over the run (the AHB import is one-shot).
+        if (!PdLibretro.BufferSize(out int bw, out int bh) || bw <= 0 || bh <= 0) return;
         int n = PdLibretro.BufferCount;
         if (n <= 0) return;
 
+        _bufW = bw; _bufH = bh;
         _zcTexes = new Texture2D[n];
         for (int i = 0; i < n; i++)
         {
             IntPtr img = PdLibretro.GetUnityImagePtr(i);
             if (img == IntPtr.Zero) { Status($"zero-copy: buffer {i} ptr null — abort"); return; }
-            var t = Texture2D.CreateExternalTexture(w, h, TextureFormat.RGBA32, false, false, img);
+            var t = Texture2D.CreateExternalTexture(bw, bh, TextureFormat.RGBA32, false, false, img);
             t.wrapMode = TextureWrapMode.Clamp; t.filterMode = FilterMode.Bilinear; t.name = $"PdFlycastAHB{i}";
             _zcTexes[i] = t;
         }
         BindTexture(_zcTexes[0]);   // sets emission keyword/color once; per-frame ShowBuffer just swaps textures
-        ApplyZeroCopyFlips();       // UV transform persists on the material across swaps
+        int aw = bw, ah = bh;
+        PdLibretro.FrameSize(out aw, out ah);
+        ApplyZeroCopyCrop(aw, ah, bw, bh);   // flip + crop; identity when active == buffer
         _extTexReady = true;
-        Status($"zero-copy: {n} external textures bound {w}x{h}");
+        Status($"zero-copy: {n} external textures bound buffer={bw}x{bh} active={aw}x{ah}");
     }
 
     // Per-frame: point the material at the ready buffer's texture (cheap — keyword/color already set).
@@ -419,12 +433,24 @@ public class PdFlycast : MonoBehaviour
         BindTexture(_tex);
     }
 
-    // Zero-copy: orient the sampled AHB texture via the material's UV transform — the external
-    // texture can't be flipped in memory like the CPU path. Applies to _MainTex and _EmissionMap.
-    void ApplyZeroCopyFlips()
+    // Zero-copy: orient AND crop the sampled AHB texture via the material's UV transform — the
+    // external texture can't be flipped/cropped in memory like the CPU path. The AHB buffer is the
+    // fixed ceiling (640x480); the core may emit a smaller active frame (e.g. Metal Slug 6's 640x238
+    // boot mode) that native blits into the top-left. This maps the quad's full UV range onto just
+    // the active sub-rect, composed with flipX/flipY. When active == buffer (DOA2, in-game Metal
+    // Slug) it reduces exactly to the old plain-flip transform — full-frame titles are unchanged.
+    //
+    // Convention (device-verified for the full frame at flipX=true, flipY=false): the Vulkan external
+    // texture samples V flipped (V'=1 → image row 0 = frame top) and U unflipped (U'=0 → col 0 =
+    // frame left); content sits at the top-left, so the active band is U'∈[0,au), V'∈[1-av,1].
+    void ApplyZeroCopyCrop(int activeW, int activeH, int bufW, int bufH)
     {
-        Vector2 scale  = new Vector2(flipX ? -1f : 1f, flipY ? -1f : 1f);
-        Vector2 offset = new Vector2(flipX ?  1f : 0f, flipY ?  1f : 0f);
+        float au = (bufW > 0) ? Mathf.Clamp01((float)activeW / bufW) : 1f;
+        float av = (bufH > 0) ? Mathf.Clamp01((float)activeH / bufH) : 1f;
+        if (au <= 0f) au = 1f;
+        if (av <= 0f) av = 1f;
+        Vector2 scale  = new Vector2(flipX ? -au : au, flipY ? -av : av);
+        Vector2 offset = new Vector2(flipX ?  au : 0f, flipY ?  1f  : 1f - av);
         _material.mainTextureScale  = scale;
         _material.mainTextureOffset = offset;
         if (_material.HasProperty("_EmissionMap"))
@@ -432,6 +458,8 @@ public class PdFlycast : MonoBehaviour
             _material.SetTextureScale("_EmissionMap", scale);
             _material.SetTextureOffset("_EmissionMap", offset);
         }
+        _cropActiveW = activeW; _cropActiveH = activeH;
+        Status($"zero-copy crop: active={activeW}x{activeH} buffer={bufW}x{bufH} au={au:F3} av={av:F3}");
     }
 
     // Bind a texture as both albedo and emission so the screen is lit regardless of room lighting.
