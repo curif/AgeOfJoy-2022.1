@@ -7,7 +7,15 @@ static handlers_t* handlers;
 
 // audio buffer ===============
 
-#define QUEST_AUDIO_FREQUENCY 48000
+// Rate the ring buffer content is resampled TO (what the consumer drains per
+// second of wall time). Historically hardcoded to 48000, but Unity's audio
+// thread on Quest measurably consumes fewer frames per second than the nominal
+// DSP rate (~84% on Quest 2 / Unity 2021.3: ~40320 of 48000). Producing at the
+// nominal rate permanently overflows the ring and drops chunks (audible
+// crackling). The C# side measures the real consumption rate and sets it here
+// via wrapper_audio_set_output_rate(); default keeps the legacy behavior.
+#define DEFAULT_OUTPUT_SAMPLE_RATE 48000.0
+static double OutputSampleRate = DEFAULT_OUTPUT_SAMPLE_RATE;
 #define MAX_AUDIO_BATCH_SIZE (1024 * 8)
 static float AudioBatch[MAX_AUDIO_BATCH_SIZE];		// Downsampled audio buffer
 static float inBufferL[MAX_AUDIO_BATCH_SIZE / 2];   // internal buffer for Left channel
@@ -60,7 +68,7 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 	double inputSampleRate = wrapper_environment_get_sample_rate();
 	size_t consumedFrames = 0;
 
-	if (inputSampleRate == QUEST_AUDIO_FREQUENCY) {
+	if (inputSampleRate == OutputSampleRate) {
 		// If sample rates match, directly copy the data to the output buffer
 		for (size_t i = 0; i < frames; i++) {
 			AudioBatch[AudioBatchOccupancy] = inBufferL[i];
@@ -80,7 +88,7 @@ static size_t wrapper_audio_sample_batch_cb(const int16_t* data,
 	}
 	else {
 		// Perform interpolation if sample rates do not match
-		double ratio = inputSampleRate / QUEST_AUDIO_FREQUENCY;
+		double ratio = inputSampleRate / OutputSampleRate;
 		size_t outSample = 0;
 
 		while (1) {
@@ -181,4 +189,17 @@ void wrapper_audio_free() {
 	AudioBufferLockCB(); // Lock the AudioBatch for synchronization
 	AudioBatchOccupancy = 0;
 	AudioBufferUnLockCB(); // Unlock the AudioBatch
+}
+
+// Set the rate the resampler produces for the consumer. Called by the C# side
+// with the MEASURED consumption rate (frames per wall-clock second) so that
+// production matches what Unity actually drains; 0 or out-of-range restores
+// the default. Call after wrapper_audio_init, before or during emulation
+// (takes effect on the next audio batch).
+void wrapper_audio_set_output_rate(double rate) {
+	if (rate < 8000.0 || rate > 192000.0)
+		rate = DEFAULT_OUTPUT_SAMPLE_RATE;
+	OutputSampleRate = rate;
+	wrapper_environment_log(RETRO_LOG_INFO,
+		"[wrapper_audio_set_output_rate] output rate: %f\n", OutputSampleRate);
 }

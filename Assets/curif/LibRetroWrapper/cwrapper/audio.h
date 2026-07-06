@@ -16,6 +16,10 @@ extern "C" {
 typedef void (*AudioBufferLock)();
 typedef void (*AudioBufferUnlock)();
 
+// See audio.c: sets the resampler output rate to the measured consumer
+// (Unity audio thread) drain rate so the ring buffer doesn't overflow.
+void wrapper_audio_set_output_rate(double rate);
+
 #ifdef __cplusplus
 }
 #endif
