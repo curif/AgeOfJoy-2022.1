@@ -98,7 +98,7 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
 ### Event Execution Rules
 1.  **Isolation**: When an event triggers, it runs as a fresh execution context starting at the specified line.
 2.  **Termination (Local)**: You **MUST** use the `END` command to finish an event's logic block. This stops the event code and returns the interpreter to an idle state, waiting for the next trigger.
-3.  **Termination (Global)**: Use the `STOP` command if you want to kill the entire program, including all registered background events.
+3.  **Termination (Global)**: Use the `SHUTDOWN` command if you want to kill the entire program, including all registered background events.
 4.  **Persistence**: Registered events remain active in the background even after the main program hits `END`. The main program should set up events and then terminate with `END` to allow the event loop to take over.
 5.  **Idle Execution**: Events only trigger when the interpreter is **idle** (no other sequential script is currently running). Use `SLEEP` in long-running scripts to allow events to process.
 
@@ -228,7 +228,7 @@ AGEBasic can inspect and change which cabinet game occupies each position in a r
 *   `CABDBASSIGN(room, position, cabinetName)`: Assigns `cabinetName` to `room`/`position`, creating the entry if it doesn't exist or overwriting it if it does.
 *   `CABDBDELETE(room, position)`: Removes the registry entry at `room`/`position`. Throws a runtime error if nothing is assigned there.
 *   `CABDBSAVE()`: Persists all in-memory registry changes (`CABDBADD`/`CABDBASSIGN`/`CABDBDELETE`) to `registry.yaml`. **Required** — those three only mutate memory; without a matching `CABDBSAVE()` the changes are lost the next time the room reloads.
-*   `CABDBRELOAD()`: Re-reads `registry.yaml` from disk into memory, discarding any unsaved in-memory changes, and re-scans the cabinet DB folder for unassigned cabinets. Use when the registry file was modified outside the running script (e.g. by another process or a manual edit) and the script needs to see the current on-disk state.
+*   `CABDBRELOAD()`: Re-reads `registry.yaml` from disk into memory, discarding any unsaved in-memory changes, and re-scans the cabinet DB folder for unassigned cabinets. **Also reconciles the currently loaded room**: any position whose live 3D cabinet no longer matches what the reloaded registry assigns is swapped in-place (same swap used by `CABROOMREPLACE`). Positions with no registry entry are left untouched. Use when the registry file was modified outside the running script (e.g. by another process or a manual edit) and the script needs to see the current on-disk state, including an immediately updated room.
 
 **Typical pattern to durably swap a cabinet from a script** (mirrors what the in-VR Configuration Room UI does internally):
 ```basic
