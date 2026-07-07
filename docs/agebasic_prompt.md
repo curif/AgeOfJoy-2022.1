@@ -196,6 +196,35 @@ AGEBasic can interact directly with the Age of Joy 3D environment.
 *   `CABPARTSEMISSION(part, bool)`
 *   `CABPARTSAUDIOPLAY(part)` / `CABPARTSAUDIOSTOP(part)`
 
+### Cabinet Registry & Replacement
+AGEBasic can inspect and change which cabinet game occupies each position in a room, and swap the live 3D cabinet without going through the in-VR Configuration Room UI.
+
+**Room-scoped (affects only the currently running room):**
+*   `CABROOMCOUNT()`: Number of cabinet positions in the current room.
+*   `CABROOMGETNAME(position)`: Cabinet DB name currently loaded at `position` in this room (`""` if none).
+*   `CABROOMREPLACE(position, cabinetName)`: Immediately swaps the **live 3D cabinet** at `position` in the current room to `cabinetName` (must exist in the cabinet DB). Runs asynchronously (fire-and-forget) — returns `1` once the swap has started, `0` if the room or cabinet name is invalid. **Does not persist the change** — the swap reverts the next time the room reloads unless you also call `CABDBASSIGN` + `CABDBSAVE` for the same room/position.
+
+**Registry-scoped (persisted database, `registry.yaml`, survives room reloads):**
+*   `CABDBCOUNT()`: Total number of cabinets available in the cabinet DB folder.
+*   `CABDBCOUNTINROOM(room)`: Number of registry entries assigned to `room`.
+*   `CABDBGETNAME(index)`: Cabinet directory name at `index` in the sorted list of all cabinets on disk (unrelated to room assignment).
+*   `CABDBSEARCH(namePart, separator)`: Cabinet names starting with `namePart`, joined with `separator`.
+*   `CABDBSEARCHARRAY(namePart)`: Same search, returned as an array.
+*   `CABDBGETASSIGNED(room, position)`: Cabinet name assigned to `room`/`position` in the registry (`""` if unassigned).
+*   `CABDBADD(room, position, cabinetName)`: Adds a **new** registry entry. Throws a runtime error if `room`/`position` is already occupied — use `CABDBASSIGN` to overwrite instead.
+*   `CABDBASSIGN(room, position, cabinetName)`: Assigns `cabinetName` to `room`/`position`, creating the entry if it doesn't exist or overwriting it if it does.
+*   `CABDBDELETE(room, position)`: Removes the registry entry at `room`/`position`. Throws a runtime error if nothing is assigned there.
+*   `CABDBSAVE()`: Persists all in-memory registry changes (`CABDBADD`/`CABDBASSIGN`/`CABDBDELETE`) to `registry.yaml`. **Required** — those three only mutate memory; without a matching `CABDBSAVE()` the changes are lost the next time the room reloads.
+
+**Typical pattern to durably swap a cabinet from a script** (mirrors what the in-VR Configuration Room UI does internally):
+```basic
+10 LET ROOM = ROOMNAME()
+20 CALL CABDBASSIGN(ROOM, 3, "SpaceInvaders")
+30 CALL CABDBSAVE()
+40 CALL CABROOMREPLACE(3, "SpaceInvaders")
+50 END
+```
+
 ### Emulation & System
 *   `GAMEISRUNNING()`: True if a ROM is currently loaded.
 *   `PEEK(offset [, region])` / `POKE(offset, val)`: Direct memory access to emulator memory. `region`: `0`=SAVE_RAM (default, backward-compatible), `1`=RTC, `2`=SYSTEM_RAM, `3`=VIDEO_RAM. Example: `PEEK(0x42, 2)` reads offset 0x42 from SYSTEM_RAM.
