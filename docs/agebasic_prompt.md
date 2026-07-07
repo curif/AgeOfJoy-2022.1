@@ -139,6 +139,19 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
     *   `REMOVEMEMBER(list, member, separator)`
     *   `ADDMEMBER(list, member, separator)`
 
+### File Management
+
+*   `FILEEXISTS(path)`: Returns `1` if the file exists, `0` otherwise.
+*   `FILEDELETE(path)`: Deletes a file. Returns `1` on success, `0` on failure.
+*   `FILECOPY(sourcePath, destPath)`: Copies a file, overwriting `destPath` if it already exists. Returns `1` on success, `0` on failure.
+*   `FILEOPEN(path, mode)`: Opens a file. `mode` is `"R"` (read), `"A"` (append), or `"W"` (write/overwrite). Returns a file handle (0-255) or `-1` on failure.
+*   `FILEREAD(fileHandle)`: Reads the next line from an open file. Returns `""` at end of file.
+*   `FILEWRITE(fileHandle, text)`: Writes a line to an open file.
+*   `FILEEOF(fileHandle)`: Returns `1` if the file pointer is at the end of the file.
+*   `FILECLOSE(fileHandle)`: Closes an open file handle.
+*   `GETFILES(path, separator, orderType)` / `GETFILESARRAY(path, orderType)`: List files in a directory. `orderType`: `0`=alphabetic, `1`=random, `2`=creation date old→new, `3`=creation date new→old.
+*   `COMBINEPATH(path1, path2)`: Joins two path segments into one, sandboxed to the app's base directory.
+
 ---
 
 ## 6. Screen & Drawing Commands
@@ -215,6 +228,7 @@ AGEBasic can inspect and change which cabinet game occupies each position in a r
 *   `CABDBASSIGN(room, position, cabinetName)`: Assigns `cabinetName` to `room`/`position`, creating the entry if it doesn't exist or overwriting it if it does.
 *   `CABDBDELETE(room, position)`: Removes the registry entry at `room`/`position`. Throws a runtime error if nothing is assigned there.
 *   `CABDBSAVE()`: Persists all in-memory registry changes (`CABDBADD`/`CABDBASSIGN`/`CABDBDELETE`) to `registry.yaml`. **Required** — those three only mutate memory; without a matching `CABDBSAVE()` the changes are lost the next time the room reloads.
+*   `CABDBRELOAD()`: Re-reads `registry.yaml` from disk into memory, discarding any unsaved in-memory changes, and re-scans the cabinet DB folder for unassigned cabinets. Use when the registry file was modified outside the running script (e.g. by another process or a manual edit) and the script needs to see the current on-disk state.
 
 **Typical pattern to durably swap a cabinet from a script** (mirrors what the in-VR Configuration Room UI does internally):
 ```basic
