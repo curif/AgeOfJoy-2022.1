@@ -88,8 +88,11 @@ public class MixedRealityManager : MonoBehaviour
         if (GetComponent<MRRoomInfoUI>() == null)
             gameObject.AddComponent<MRRoomInfoUI>();
 
-        if (GetComponent<MRModeInput>() == null)
-            gameObject.AddComponent<MRModeInput>();
+        // MRModeInput implements a button-hold VR<->MR toggle that is not part of the
+        // shipped UX (players switch modes via the phone booth). Left here disabled
+        // in case a developer needs the shortcut for debugging.
+        // if (GetComponent<MRModeInput>() == null)
+        //     gameObject.AddComponent<MRModeInput>();
 
         if (GetComponent<MREditMenuInput>() == null)
             gameObject.AddComponent<MREditMenuInput>();
