@@ -271,6 +271,10 @@ public class LibretroScreenController : MonoBehaviour
 
     private void OnApplicationPause(bool pauseStatus)
     {
+        //the emulator suspends with the app (headset off / system overlay) — RetroArch pauses too
+        if (FlycastCore.isRunning(ScreenName, GameFile))
+            FlycastCore.SetPaused(pauseStatus);
+
         if (pauseStatus)
         {
             //is pausing
@@ -324,7 +328,7 @@ public class LibretroScreenController : MonoBehaviour
             .Sequence("Start the game")
               .Condition("CoinSlot is present", () => CoinSlot != null)
               //.Condition("Is visible", () => display.isVisible)
-              .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
+              .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !FlycastCore.GameLoaded)
               .Condition("There are coins", () => CoinSlot.hasCoins())
               // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
               //.Condition("Player looking screen", () => isPlayerLookingAtScreen3()) if coinslot is present with coins is sufficient
@@ -339,8 +343,13 @@ public class LibretroScreenController : MonoBehaviour
                           screenGlowLight.gameObject.SetActive(true);
                   }
 
-                  //start mame
                   ConfigManager.WriteConsole($"[LibretroScreenController] Start game: {GameFile} in screen {name} +_+_+_+_+_+_+_+__+_+_+_+_+_+_+_+_+_+_+_+_");
+
+                  //hardware-rendered core (own Vulkan device, libpdlr) has its own start path
+                  if (isFlycast)
+                      return StartFlycastGame();
+
+                  //start mame
                   LibretroMameCore.Speaker = audioSource;
                   LibretroMameCore.SecondsToWaitToFinishLoad = SecondsToWaitToFinishLoad;
                   LibretroMameCore.Brightness = Brightness;
@@ -356,39 +365,7 @@ public class LibretroScreenController : MonoBehaviour
 #endif
 
                   //controllers
-                  cabinetReplace = cabinet.gameObject.GetComponent<CabinetReplace>();
-                  ControlMapConfiguration controlConf;
-                  if (CabinetControlMapConfig != null)
-                  {
-                      ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
-                      controlConf = new CustomControlMap(CabinetControlMapConfig);
-                  }
-                  else if (!string.IsNullOrEmpty(cabinetReplace?.game?.CabinetDBName) &&
-                             GameControlMap.ExistsConfiguration(cabinetReplace.game.CabinetDBName))
-                  {
-                      ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {cabinetReplace.game.CabinetDBName}");
-                      controlConf = new GameControlMap(cabinetReplace.game.CabinetDBName);
-                  }
-                  else if (!string.IsNullOrEmpty(cabinetReplace.cabinet?.ControlScheme) &&
-                             ControlSchemeControlMap.ExistsConfiguration(cabinetReplace.cabinet.ControlScheme))
-                  {
-                      ConfigManager.WriteConsole($"[LibretroScreenController] loading control scheme configuration, ControlSchemeControlMap: {cabinetReplace.cabinet.ControlScheme}");
-                      controlConf = new ControlSchemeControlMap(cabinetReplace.cabinet.ControlScheme);
-                  }
-                  else
-                  {
-                      ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
-                      controlConf = new GlobalControlMap();
-                  }
-#if UNITY_EDITOR
-                  controlConf.AddMap(LC.KEYB_UP, CM.KEYBOARD_W);
-                  controlConf.AddMap(LC.KEYB_DOWN, CM.KEYBOARD_S);
-                  controlConf.AddMap(LC.KEYB_LEFT, CM.KEYBOARD_A);
-                  controlConf.AddMap(LC.KEYB_RIGHT, CM.KEYBOARD_D);
-#endif
-                  //   ConfigManager.WriteConsole($"[LibretroScreenController] controller configuration as markdown in the next line:");
-                  //   ConfigManager.WriteConsole(controlConf.AsMarkdown());
-                  libretroControlMap.CreateFromConfiguration(controlConf);
+                  libretroControlMap.CreateFromConfiguration(BuildControlMapConfiguration());
                   LibretroMameCore.ControlMap = libretroControlMap;
                   // Light guns configuration
                   if (lightGunTarget != null && lightGunInformation != null)
@@ -512,7 +489,7 @@ public class LibretroScreenController : MonoBehaviour
 
             .Selector("Video/Audio Player control")
                 .Sequence()
-                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || !playerInTheZone)
+                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || FlycastCore.GameLoaded || !playerInTheZone)
                     .Do("Stop video and audio player", () =>
                     {
                         videoPlayer.Stop();
@@ -522,7 +499,7 @@ public class LibretroScreenController : MonoBehaviour
                 .End()
                 .Sequence()
                     .Condition("Player in the zone?", () => playerInTheZone)
-                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded)
+                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !FlycastCore.GameLoaded)
                     .Selector()
                         .Sequence()
                             .Condition("Is Player near enough to see video", () =>
@@ -565,6 +542,100 @@ public class LibretroScreenController : MonoBehaviour
         return GameFile != null && GameFile.Length > 0;
     }
 
+    //hardware-rendered core driven by FlycastCore/libpdlr instead of the software wrapper
+    private bool isFlycast
+    {
+        get { return Core == FlycastCore.CoreName; }
+    }
+
+    //select the control map by priority: cabinet yaml > per-game user config > control scheme > global
+    private ControlMapConfiguration BuildControlMapConfiguration()
+    {
+        cabinetReplace = cabinet.gameObject.GetComponent<CabinetReplace>();
+        ControlMapConfiguration controlConf;
+        if (CabinetControlMapConfig != null)
+        {
+            ConfigManager.WriteConsole($"[LibretroScreenController] map loaded with a CustomControlMap (usually cabinet configuration)");
+            controlConf = new CustomControlMap(CabinetControlMapConfig);
+        }
+        else if (!string.IsNullOrEmpty(cabinetReplace?.game?.CabinetDBName) &&
+                   GameControlMap.ExistsConfiguration(cabinetReplace.game.CabinetDBName))
+        {
+            ConfigManager.WriteConsole($"[LibretroScreenController] loading user controller configuration, GameControlMap: {cabinetReplace.game.CabinetDBName}");
+            controlConf = new GameControlMap(cabinetReplace.game.CabinetDBName);
+        }
+        else if (!string.IsNullOrEmpty(cabinetReplace.cabinet?.ControlScheme) &&
+                   ControlSchemeControlMap.ExistsConfiguration(cabinetReplace.cabinet.ControlScheme))
+        {
+            ConfigManager.WriteConsole($"[LibretroScreenController] loading control scheme configuration, ControlSchemeControlMap: {cabinetReplace.cabinet.ControlScheme}");
+            controlConf = new ControlSchemeControlMap(cabinetReplace.cabinet.ControlScheme);
+        }
+        else
+        {
+            ConfigManager.WriteConsole($"[LibretroScreenController] no controller user configuration, no cabinet configuration, using GlobalControlMap");
+            controlConf = new GlobalControlMap();
+        }
+#if UNITY_EDITOR
+        controlConf.AddMap(LC.KEYB_UP, CM.KEYBOARD_W);
+        controlConf.AddMap(LC.KEYB_DOWN, CM.KEYBOARD_S);
+        controlConf.AddMap(LC.KEYB_LEFT, CM.KEYBOARD_A);
+        controlConf.AddMap(LC.KEYB_RIGHT, CM.KEYBOARD_D);
+#endif
+        return controlConf;
+    }
+
+    //flycast branch of the "Start game" BT node: same cabinet lifecycle, hardware core underneath.
+    private TaskStatus StartFlycastGame()
+    {
+        libretroControlMap.CreateFromConfiguration(BuildControlMapConfiguration());
+
+        FlycastCore.Shader = shader;
+        FlycastCore.ControlMap = libretroControlMap;
+        FlycastCore.CoinSlot = CoinSlot;
+
+        bool insertCoinOnStartup = InsertCoinOnStartup.HasValue ?
+          InsertCoinOnStartup.Value : globalConfiguration.Configuration.cabinet.insertCoinOnStartup;
+        if (!insertCoinOnStartup)
+        {
+            CoinSlot.clean();
+        }
+
+#if !UNITY_EDITOR
+        if (isGameFilePresent())
+        {
+            if (!FlycastCore.Start(ScreenName, GameFile))
+            {
+                CoinSlot.clean();
+                return TaskStatus.Failure;
+            }
+        }
+#endif
+
+        PreparePlayerToPlayGame(true);
+
+        if (isGameFilePresent())
+        {
+            //stand-by texture until the first emulated frame is bound (the AHB import takes a moment)
+            shader.Activate(ShaderScreenBase.StandByTexture);
+            shader.Invert(GameInvertX, GameInvertY);
+
+            //audio mixer group
+            audioSource.outputAudioMixerGroup = audioMixerGame;
+            audioSource.spatialize = false;
+            audioSource.Play();
+        }
+
+        cabinet.PhyActivate();
+
+        // age basic Insert coin
+        if (ageBasicInformation != null && ageBasicInformation.active != false)
+            cabinetAGEBasic.ExecInsertCoinBas();
+
+        gameRunning = true;
+
+        return TaskStatus.Success;
+    }
+
     bool PlayerWantsToExit()
     {
         if (libretroControlMap.isActive(LC.MODIFIER) && libretroControlMap.isActive(LC.EXIT))
@@ -593,6 +664,7 @@ public class LibretroScreenController : MonoBehaviour
             videoPlayer.Play();
 
             LibretroMameCore.End(ScreenName, GameFile);
+            FlycastCore.End(ScreenName, GameFile);
         }
         timeToExit = DateTime.MinValue;
 
@@ -660,6 +732,10 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.UpdateTexture();
 
         }
+        else if (FlycastCore.isRunning(ScreenName, GameFile))
+        {
+            FlycastCore.Update();
+        }
 
         shader.Update();
 
@@ -695,14 +771,17 @@ public class LibretroScreenController : MonoBehaviour
     {
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
             LibretroMameCore.MoveAudioStreamTo(data);
+        else if (FlycastCore.isRunning(ScreenName, GameFile))
+            FlycastCore.MoveAudioStreamTo(data);
     }
 
     private void OnDestroy()
     {
-        if (LibretroMameCore.isRunning(ScreenName, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName, GameFile) || FlycastCore.isRunning(ScreenName, GameFile))
             PreparePlayerToPlayGame(false);
 
         LibretroMameCore.End(ScreenName, GameFile);
+        FlycastCore.End(ScreenName, GameFile);
     }
 
 #if UNITY_EDITOR

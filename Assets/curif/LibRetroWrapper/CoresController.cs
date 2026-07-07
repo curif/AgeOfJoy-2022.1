@@ -55,6 +55,11 @@ namespace Assets.curif.LibRetroWrapper
             AddInternalCore("mame2003+", "libmame2003_plus_libretro_android.so", Mame2003PlusConfig());
             AddInternalCore("mame2010", "libmame2010_libretro_android.so", Mame2010Config());
             AddInternalCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
+            // Hardware-rendered core: bundled as a native plugin (APK lib dir) and driven by
+            // FlycastCore/libpdlr on its own Vulkan device, not by the software wrapper. Registered
+            // here so `core: flycast` validates, downloads/flycast/ is created and the config
+            // cabinet lists it.
+            AddInternalCore(FlycastCore.CoreName, FlycastCore.CoreLibFileName, FlycastConfig());
         }
 
         public static CoreEnvironment Mame2003PlusConfig()
@@ -75,6 +80,13 @@ namespace Assets.curif.LibRetroWrapper
             Dictionary<string, string> properties = new Dictionary<string, string>();
             CoreEnvironment coreEnvironment = new CoreEnvironment("mame2010", properties);
             return coreEnvironment;
+        }
+
+        public static CoreEnvironment FlycastConfig()
+        {
+            // Core options come from a Flycast.opt file next to the game (libpdlr reads it);
+            // the wrapper-style environment properties don't apply to the hardware path.
+            return new CoreEnvironment(FlycastCore.CoreName, new Dictionary<string, string>());
         }
 
         public static CoreEnvironment FbNeoConfig()

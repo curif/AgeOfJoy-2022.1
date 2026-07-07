@@ -78,6 +78,11 @@ public abstract class ShaderScreenBase
     public abstract Texture Texture { get; set; }
     public abstract string TargetMaterialProperty { get; }
 
+    // The live (instanced) screen material. For callers that must rebind the texture every frame
+    // (hardware-rendered cores swap among triple-buffered external textures) — the Texture setter
+    // logs on each set. Only valid after Activate().
+    public Material ScreenMaterial { get { return material; } }
+
     public void ApplyConfiguration()
     {
         MaterialsUtils.ApplyCabinetConfiguration(material, configuration);
