@@ -315,6 +315,24 @@ class CommandFunctionCABDBSAVE : CommandFunctionNoExpressionBase
     }
 }
 
+class CommandFunctionCABDBRELOAD : CommandFunctionNoExpressionBase
+{
+    public CommandFunctionCABDBRELOAD(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBRELOAD";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.GameRegistry == null)
+            return BasicValue.False;
+
+        config.GameRegistry.Recover();
+        return BasicValue.True;
+    }
+}
+
 /*
 class CommandFunctionCABDBREPLACE : CommandFunctionExpressionListBase
 {
