@@ -73,14 +73,13 @@ public class CabinetsPosition
             .WithNamingConvention(CamelCaseNamingConvention.Instance)
             .Build();
 
-        string yaml;
         lock (registryLock)
         {
             Registry.Sort((x, y) => string.Compare(x.Room, y.Room, StringComparison.OrdinalIgnoreCase) * 1000 + x.Position - y.Position);
-            yaml = serializer.Serialize(this);
+            string yaml = serializer.Serialize(this);
+            File.WriteAllText(fileName, yaml);
+            dirty = false;
         }
-        File.WriteAllText(fileName, yaml);
-        dirty = false;
 
         return this;
     }
@@ -236,12 +235,21 @@ public class GameRegistry : MonoBehaviour
         return cabinetsPosition.Remove(g);
     }
 
-    public void Replace(CabinetPosition g, CabinetPosition by)
+    public bool Replace(CabinetPosition g, CabinetPosition by)
     {
-        if (g != null)
-            Remove(g);
-        Add(by);
-        Persist();
+        try
+        {
+            if (g != null)
+                Remove(g);
+            Add(by);
+            Persist();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleError($"[GameRegistry.Replace] failed to replace [{g}] by [{by}]: {ex}");
+            return false;
+        }
     }
 
     public CabinetPosition GetCabinetPositionInRoom(int position, string room)

@@ -538,8 +538,10 @@ public class CabinetsController : MonoBehaviour
             {
                 cabinet.GameObjectReplacement = newCab;
                 cabinet.CabinetReplace = newCab.GetComponent<CabinetReplace>();
+                return true;
             }
-            return true;
+            ConfigManager.WriteConsoleError($"[CabinetController.ReplaceInRoom] ReplaceWith failed for [{toAdd}]");
+            return false;
         }
         else
         {
@@ -566,7 +568,11 @@ public class CabinetsController : MonoBehaviour
 
         CabinetPosition toBeReplaced = gameRegistry.GetCabinetPositionInRoom(position, room);
         ConfigManager.WriteConsole($"[CabinetsController.Replace] [{toBeReplaced}] by [{toAdd}] ");
-        gameRegistry.Replace(toBeReplaced, toAdd); //persists changes
+        if (!gameRegistry.Replace(toBeReplaced, toAdd)) //persists changes
+        {
+            ConfigManager.WriteConsoleError($"[CabinetsController.Replace] registry update failed, aborting replace of [{toBeReplaced}] by [{toAdd}]");
+            return false;
+        }
 
         return await ReplaceInRoom(position, room, cabinetDBName);
     }
