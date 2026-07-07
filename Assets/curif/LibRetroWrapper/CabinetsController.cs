@@ -558,6 +558,26 @@ public class CabinetsController : MonoBehaviour
         return false;
     }
 
+    /// <summary> reconciles this room's live cabinets against the current in-memory registry,
+    /// swapping any position whose live cabinet no longer matches its registry assignment.
+    /// positions with no registry entry are left untouched. </summary>
+    public async Task SyncRoomFromRegistry()
+    {
+        for (int position = 0; position < Count(); position++)
+        {
+            CabinetPosition registryCab = gameRegistry.GetCabinetPositionInRoom(position, Room);
+            if (registryCab == null)
+                continue;
+
+            CabinetPosition liveCab = GetCabinetByPosition(position);
+            if (liveCab != null &&
+                string.Equals(liveCab.CabinetDBName, registryCab.CabinetDBName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            await ReplaceInRoom(position, Room, registryCab.CabinetDBName);
+        }
+    }
+
     public async Task<bool> Replace(int position, string room, string cabinetDBName)
     {
         //replace in the registry

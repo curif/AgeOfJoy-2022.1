@@ -329,6 +329,10 @@ class CommandFunctionCABDBRELOAD : CommandFunctionNoExpressionBase
             return BasicValue.False;
 
         config.GameRegistry.Recover();
+
+        if (config.CabinetsController != null)
+            _ = config.CabinetsController.SyncRoomFromRegistry();
+
         return BasicValue.True;
     }
 }
