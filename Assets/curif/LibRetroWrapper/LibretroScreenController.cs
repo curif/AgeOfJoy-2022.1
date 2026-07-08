@@ -593,6 +593,15 @@ public class LibretroScreenController : MonoBehaviour
         FlycastCore.ControlMap = libretroControlMap;
         FlycastCore.CoinSlot = CoinSlot;
 
+        // Light guns configuration (same wiring as the MAME path; must precede FlycastCore.Start,
+        // which declares the gun's maple port before the core loads the game)
+        if (lightGunTarget != null && lightGunInformation != null)
+        {
+            lightGunTarget.enabled = true;
+            lightGunTarget.Init(lightGunInformation, PathBase, player);
+            FlycastCore.lightGunTarget = lightGunTarget;
+        }
+
         bool insertCoinOnStartup = InsertCoinOnStartup.HasValue ?
           InsertCoinOnStartup.Value : globalConfiguration.Configuration.cabinet.insertCoinOnStartup;
         if (!insertCoinOnStartup)
@@ -612,6 +621,8 @@ public class LibretroScreenController : MonoBehaviour
 #endif
 
         PreparePlayerToPlayGame(true);
+        if (lightGunTarget != null)
+            changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
 
         if (isGameFilePresent())
         {

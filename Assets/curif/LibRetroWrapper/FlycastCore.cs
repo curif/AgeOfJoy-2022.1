@@ -30,6 +30,7 @@ public static class FlycastCore
     public static ShaderScreenBase Shader;
     public static LibretroControlMap ControlMap;
     public static CoinSlotController CoinSlot;
+    public static LightGunTarget lightGunTarget;   // null unless the cabinet declares light-gun
 
     // VR display refresh the native pump phase-locks to (rooms present at 72 Hz).
     public static float DisplayHz = 72f;
@@ -86,6 +87,11 @@ public static class FlycastCore
         try { Directory.CreateDirectory(saveDir); } catch { }
 
         ConfigManager.WriteConsole($"[FlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
+
+        // Gun cabinet: declare port 0 LIGHTGUN before Start() — Flycast builds its maple bus at
+        // load. Ports 1-3 stay JOYPAD (the 4-pad maple parity that gates NAOMI audio init).
+        if (lightGunTarget != null && lightGunTarget.Initialized())
+            PdLibretro.SetPortDevice(0, PdLibretro.DEVICE_LIGHTGUN);
 
         // Must be set before Start() — it decides which device extensions the core is asked to enable.
         PdLibretro.SetZeroCopy(true);
@@ -317,6 +323,30 @@ public static class FlycastCore
         }
 
         PdLibretro.SetInput(b, 0, 0);   // analog stick: not mapped yet (d-pad titles first)
+
+        // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls. In LIGHTGUN mode
+        // flycast reads ONLY lightgun ids on that port, so the coin must ride SELECT here too.
+        if (lightGunTarget != null)
+        {
+            uint gb = 0;
+            if (ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << PdLibretro.Lightgun.TRIGGER;
+            if (ControlMap.isActive(LC.LIGHTGUN_AUX_A)) gb |= 1u << PdLibretro.Lightgun.AUX_A;
+            if (ControlMap.isActive(LC.LIGHTGUN_AUX_B)) gb |= 1u << PdLibretro.Lightgun.AUX_B;
+            if (ControlMap.isActive(LC.LIGHTGUN_AUX_C)) gb |= 1u << PdLibretro.Lightgun.AUX_C;
+            if (ControlMap.isActive(LC.LIGHTGUN_START)) gb |= 1u << PdLibretro.Lightgun.START;
+            if (ControlMap.isActive(LC.LIGHTGUN_SELECT)) gb |= 1u << PdLibretro.Lightgun.SELECT;
+            if (ControlMap.isActive(LC.LIGHTGUN_RELOAD)) gb |= 1u << PdLibretro.Lightgun.RELOAD;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_UP)) gb |= 1u << PdLibretro.Lightgun.DPAD_UP;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_DOWN)) gb |= 1u << PdLibretro.Lightgun.DPAD_DOWN;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_LEFT)) gb |= 1u << PdLibretro.Lightgun.DPAD_LEFT;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_RIGHT)) gb |= 1u << PdLibretro.Lightgun.DPAD_RIGHT;
+            if (coinFrames > 0)
+                gb |= 1u << PdLibretro.Lightgun.SELECT;
+
+            lightGunTarget.GetLastHit(out int hitX, out int hitY);
+            bool offscreen = !lightGunTarget.PointingToTheScreen();
+            PdLibretro.SetLightgun((short)hitX, (short)hitY, offscreen, gb);
+        }
     }
 
     // Unity audio thread (OnAudioFilterRead on the screen's authored AudioSource): overwrite the
@@ -361,5 +391,6 @@ public static class FlycastCore
         Shader = null;
         ControlMap = null;
         CoinSlot = null;
+        lightGunTarget = null;
     }
 }

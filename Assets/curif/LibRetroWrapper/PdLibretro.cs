@@ -47,6 +47,12 @@ public static class PdLibretro
     [DllImport(LIB, EntryPoint = "pdlr_set_input")]
     static extern void _pdlr_set_input(uint buttons, short lx, short ly);
 
+    [DllImport(LIB, EntryPoint = "pdlr_set_port_device")]
+    static extern void _pdlr_set_port_device(uint port, uint device);
+
+    [DllImport(LIB, EntryPoint = "pdlr_set_lightgun")]
+    static extern void _pdlr_set_lightgun(short x, short y, int offscreen, uint buttons);
+
     // Stage 2c — zero-copy AHB handoff to Unity's device.
     [DllImport(LIB, EntryPoint = "pdlr_set_zero_copy")]
     static extern void _pdlr_set_zero_copy(int enabled);
@@ -203,6 +209,33 @@ public static class PdLibretro
     {
         if (!Available) return;
         _pdlr_set_input(buttons, lx, ly);
+    }
+
+    // libretro device types for SetPortDevice.
+    public const uint DEVICE_JOYPAD = 1;
+    public const uint DEVICE_LIGHTGUN = 4;
+
+    // Declare a core port's maple device. Call BEFORE Start() — Flycast builds the maple bus at
+    // load. Unset ports stay JOYPAD; native resets to all-JOYPAD on Shutdown().
+    public static void SetPortDevice(uint port, uint device)
+    {
+        if (!EnsureAvailable()) return;
+        _pdlr_set_port_device(port, device);
+    }
+
+    // Light-gun bit indices for SetLightgun's buttons mask (bit N == RETRO_DEVICE_ID_LIGHTGUN_N).
+    public static class Lightgun
+    {
+        public const int TRIGGER = 2, AUX_A = 3, AUX_B = 4, START = 6, SELECT = 7, AUX_C = 8;
+        public const int DPAD_UP = 9, DPAD_DOWN = 10, DPAD_LEFT = 11, DPAD_RIGHT = 12, RELOAD = 16;
+    }
+
+    // Push the gun state for port 0 (declared LIGHTGUN via SetPortDevice) for the next Run().
+    // x/y in libretro virtual screen coords [-0x7fff, 0x7fff]; SELECT doubles as NAOMI coin.
+    public static void SetLightgun(short x, short y, bool offscreen, uint buttons)
+    {
+        if (!Available) return;
+        _pdlr_set_lightgun(x, y, offscreen ? 1 : 0, buttons);
     }
 
     public static void Shutdown()
