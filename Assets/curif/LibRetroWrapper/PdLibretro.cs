@@ -50,6 +50,10 @@ public static class PdLibretro
     [DllImport(LIB, EntryPoint = "pdlr_set_port_device")]
     static extern void _pdlr_set_port_device(uint port, uint device);
 
+    [DllImport(LIB, EntryPoint = "pdlr_set_option")]
+    static extern void _pdlr_set_option([MarshalAs(UnmanagedType.LPStr)] string key,
+                                        [MarshalAs(UnmanagedType.LPStr)] string value);
+
     [DllImport(LIB, EntryPoint = "pdlr_set_lightgun")]
     static extern void _pdlr_set_lightgun(short x, short y, int offscreen, uint buttons);
 
@@ -222,6 +226,15 @@ public static class PdLibretro
     {
         if (!EnsureAvailable()) return;
         _pdlr_set_port_device(port, device);
+    }
+
+    // Override a libretro core option for the next Start() (from a cabinet's `environment:` block).
+    // Call BEFORE Start(); overlays the Flycast.opt defaults (this wins). Cleared on Shutdown().
+    public static void SetOption(string key, string value)
+    {
+        if (string.IsNullOrEmpty(key) || value == null) return;
+        if (!EnsureAvailable()) return;
+        _pdlr_set_option(key, value);
     }
 
     // Light-gun bit indices for SetLightgun's buttons mask (bit N == RETRO_DEVICE_ID_LIGHTGUN_N).

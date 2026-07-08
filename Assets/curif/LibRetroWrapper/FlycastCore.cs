@@ -36,6 +36,7 @@ public static class FlycastCore
     public static CoinSlotController CoinSlot;
     public static LightGunTarget lightGunTarget;   // null unless the cabinet declares light-gun
     public static bool AnalogStick;                // route thumbstick → DC analog stick + triggers (racing cabinets)
+    public static CoreEnvironment CabEnvironment;  // per-cabinet core-option overrides (description.yaml `environment:`)
 
     // VR display refresh the native pump phase-locks to (rooms present at 72 Hz).
     public static float DisplayHz = 72f;
@@ -103,6 +104,20 @@ public static class FlycastCore
         // load. Ports 1-3 stay JOYPAD (the 4-pad maple parity that gates NAOMI audio init).
         if (lightGunTarget != null && lightGunTarget.Initialized())
             PdLibretro.SetPortDevice(0, PdLibretro.DEVICE_LIGHTGUN);
+
+        // Per-cabinet core-option overrides (description.yaml `environment:`) — must be pushed before
+        // Start()/retro_load_game. Layered on top of the global Flycast.opt safe defaults inside
+        // libpdlr: YAML wins, any option it doesn't name keeps its default. Full key = prefix + "_" +
+        // property name (matching the software core), e.g. prefix "reicast" + "broadcast" → reicast_broadcast.
+        if (CabEnvironment?.properties != null)
+        {
+            foreach (var kv in CabEnvironment.properties)
+            {
+                string key = string.IsNullOrEmpty(CabEnvironment.prefix) ? kv.Key : $"{CabEnvironment.prefix}_{kv.Key}";
+                ConfigManager.WriteConsole($"[FlycastCore.Start] core-option override: {key} = {kv.Value}");
+                PdLibretro.SetOption(key, kv.Value);
+            }
+        }
 
         // Must be set before Start() — it decides which device extensions the core is asked to enable.
         PdLibretro.SetZeroCopy(true);

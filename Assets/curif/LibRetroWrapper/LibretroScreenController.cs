@@ -597,6 +597,7 @@ public class LibretroScreenController : MonoBehaviour
         FlycastCore.ControlMap = libretroControlMap;
         FlycastCore.CoinSlot = CoinSlot;
         FlycastCore.AnalogStick = AnalogStick;
+        FlycastCore.CabEnvironment = CabEnvironment;
 
         // Light guns configuration (same wiring as the MAME path; must precede FlycastCore.Start,
         // which declares the gun's maple port before the core loads the game)
