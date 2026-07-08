@@ -240,7 +240,7 @@ supplied by `prefix: reicast`). The **AoJ default** column is the current shippe
 - Light-gun cabinets (`light-gun:`) — see *controllers* docs; a gun cabinet does **not** need an
   `input:` block.
 - Engine internals for this core live in `docs/vulkan_cores_build.md` and the source in
-  `Assets/curif/LibRetroWrapper/FlycastCore.cs` / `PdLibretro.cs`.
+  `Assets/curif/LibRetroWrapper/LibretroFlycastCore.cs` / `LibretroHWBridge.cs`.
 
 > **Maintainers:** when you add or change a Flycast-specific YAML option, update this file. It is the
 > author-facing contract for `core: flycast`.

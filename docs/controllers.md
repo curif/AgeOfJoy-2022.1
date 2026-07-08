@@ -349,13 +349,13 @@ A numeric device ID can also be specified directly as `device_<uint>` for cores 
 
 Working since 2026-07-08 (device-verified with House of the Dead 2 on NAOMI). A flycast
 cabinet with a `light-gun:` section in its `description.yaml` needs no `devices:` entry:
-`FlycastCore.Start` declares port 0 as `RETRO_DEVICE_LIGHTGUN` via
-`PdLibretro.SetPortDevice` **before** the game loads (Flycast builds its maple bus at
+`LibretroFlycastCore.Start` declares port 0 as `RETRO_DEVICE_LIGHTGUN` via
+`LibretroHWBridge.SetPortDevice` **before** the game loads (Flycast builds its maple bus at
 `retro_load_game` — a post-load change is ignored). Ports 1–3 stay JOYPAD; single player
 only for now.
 
 The VR gun raycast (`LightGunTarget`, the same component the MAME path uses) is pushed
-each frame by `FlycastCore.PollInput` → `PdLibretro.SetLightgun(x, y, offscreen, buttons)`
+each frame by `LibretroFlycastCore.PollInput` → `LibretroHWBridge.SetLightgun(x, y, offscreen, buttons)`
 → `libpdlr`'s `input_state_cb`. Two flycast-specific rules:
 
 - In LIGHTGUN mode flycast reads **only** `LIGHTGUN_*` ids on that port — `JOYPAD_*`

@@ -24,26 +24,26 @@ public class PdLibretroProbe : MonoBehaviour
     {
         string path = !string.IsNullOrEmpty(coreAbsolutePath)
             ? coreAbsolutePath
-            : System.IO.Path.Combine(PdLibretro.NativeLibraryDir(), coreFileName);
+            : System.IO.Path.Combine(LibretroHWBridge.NativeLibraryDir(), coreFileName);
 
         ConfigManager.WriteConsole($"[PdLibretroProbe] probing core at '{path}'");
-        probed = PdLibretro.Probe(path);
+        probed = LibretroHWBridge.Probe(path);
 
         if (probed)
         {
-            coreName    = PdLibretro.CoreName;
-            coreVersion = PdLibretro.CoreVersion;
+            coreName    = LibretroHWBridge.CoreName;
+            coreVersion = LibretroHWBridge.CoreVersion;
             ConfigManager.WriteConsole($"[PdLibretroProbe] OK — core='{coreName}' version='{coreVersion}'");
         }
         else
         {
-            ConfigManager.WriteConsole($"[PdLibretroProbe] FAILED — Available={PdLibretro.Available} " +
-                                       $"preload='{PdLibretro.PreloadInfo}' lastError='{PdLibretro.LastError}'");
+            ConfigManager.WriteConsole($"[PdLibretroProbe] FAILED — Available={LibretroHWBridge.Available} " +
+                                       $"preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
         }
     }
 
     void OnDisable()
     {
-        PdLibretro.Shutdown();
+        LibretroHWBridge.Shutdown();
     }
 }

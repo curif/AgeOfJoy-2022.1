@@ -9,7 +9,7 @@ using System.IO;
 using UnityEngine;
 using LC = LibretroControlMapDictionnary;
 
-// FlycastCore — cabinet-lifecycle driver for the Flycast core on its own Vulkan device (libpdlr),
+// LibretroFlycastCore — cabinet-lifecycle driver for the Flycast core on its own Vulkan device (libpdlr),
 // the hardware-rendered counterpart of LibretroMameCore. A cabinet selects it with `core: flycast`
 // in description.yaml; LibretroScreenController branches to this class instead of LibretroMameCore.
 //
@@ -21,7 +21,7 @@ using LC = LibretroControlMapDictionnary;
 // debug driver (which stays as-is for quad testing).
 //
 // One game at a time, same as LibretroMameCore (libpdlr hosts a single core instance).
-public static class FlycastCore
+public static class LibretroFlycastCore
 {
     public const string CoreName = "flycast";
     public const string CoreLibFileName = "libflycast_libretro_android.so";
@@ -67,7 +67,7 @@ public static class FlycastCore
             path = ConfigManager.RomsDir + "/" + gameFileName;
         if (!File.Exists(path))
         {
-            ConfigManager.WriteConsoleError($"[FlycastCore] game not found: {ConfigManager.RomsDir}/{ContentDirName}/{gameFileName}");
+            ConfigManager.WriteConsoleError($"[LibretroFlycastCore] game not found: {ConfigManager.RomsDir}/{ContentDirName}/{gameFileName}");
             return null;
         }
         return path;
@@ -77,7 +77,7 @@ public static class FlycastCore
     {
         if (GameLoaded || !string.IsNullOrEmpty(GameFileName))
         {
-            ConfigManager.WriteConsoleError($"[FlycastCore.Start] a game is already loaded ({GameFileName} in {ScreenName}); End() first");
+            ConfigManager.WriteConsoleError($"[LibretroFlycastCore.Start] a game is already loaded ({GameFileName} in {ScreenName}); End() first");
             return false;
         }
 
@@ -85,7 +85,7 @@ public static class FlycastCore
         if (gamePath == null)
             return false;
 
-        string corePath = Path.Combine(PdLibretro.NativeLibraryDir(), CoreLibFileName);
+        string corePath = Path.Combine(LibretroHWBridge.NativeLibraryDir(), CoreLibFileName);
 
         // BIOS lives in AoJ's shared system folder (ConfigManager.SystemDir, the same root the
         // software cores use). Flycast forces a "/dc" subdir on its system dir and reads BIOS + nvmem
@@ -98,12 +98,12 @@ public static class FlycastCore
         string saveDir = Path.Combine(sysDir, ContentDirName, "saves");
         try { Directory.CreateDirectory(saveDir); } catch { }
 
-        ConfigManager.WriteConsole($"[FlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
+        ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
 
         // Gun cabinet: declare port 0 LIGHTGUN before Start() — Flycast builds its maple bus at
         // load. Ports 1-3 stay JOYPAD (the 4-pad maple parity that gates NAOMI audio init).
         if (lightGunTarget != null && lightGunTarget.Initialized())
-            PdLibretro.SetPortDevice(0, PdLibretro.DEVICE_LIGHTGUN);
+            LibretroHWBridge.SetPortDevice(0, LibretroHWBridge.DEVICE_LIGHTGUN);
 
         // Per-cabinet core-option overrides (description.yaml `environment:`) — must be pushed before
         // Start()/retro_load_game. Layered on top of the global Flycast.opt safe defaults inside
@@ -114,21 +114,21 @@ public static class FlycastCore
             foreach (var kv in CabEnvironment.properties)
             {
                 string key = string.IsNullOrEmpty(CabEnvironment.prefix) ? kv.Key : $"{CabEnvironment.prefix}_{kv.Key}";
-                ConfigManager.WriteConsole($"[FlycastCore.Start] core-option override: {key} = {kv.Value}");
-                PdLibretro.SetOption(key, kv.Value);
+                ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] core-option override: {key} = {kv.Value}");
+                LibretroHWBridge.SetOption(key, kv.Value);
             }
         }
 
         // Must be set before Start() — it decides which device extensions the core is asked to enable.
-        PdLibretro.SetZeroCopy(true);
-        if (!PdLibretro.Start(corePath, sysDir, saveDir, gamePath))
+        LibretroHWBridge.SetZeroCopy(true);
+        if (!LibretroHWBridge.Start(corePath, sysDir, saveDir, gamePath))
         {
-            ConfigManager.WriteConsoleError($"[FlycastCore.Start] pdlr_start FAILED — Available={PdLibretro.Available} preload='{PdLibretro.PreloadInfo}' lastError='{PdLibretro.LastError}'");
+            ConfigManager.WriteConsoleError($"[LibretroFlycastCore.Start] pdlr_start FAILED — Available={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
             return false;
         }
-        zeroCopy = PdLibretro.ZeroCopyActive;
+        zeroCopy = LibretroHWBridge.ZeroCopyActive;
         if (!zeroCopy)
-            ConfigManager.WriteConsole("[FlycastCore.Start] zero-copy unavailable on the core's device — using CPU read-back path");
+            ConfigManager.WriteConsole("[LibretroFlycastCore.Start] zero-copy unavailable on the core's device — using CPU read-back path");
 
         // Phase-lock the native pump to the VR display cadence; set after Start().
         // Pull the live headset refresh rather than trusting the 72 default — a Quest 3 (or a
@@ -137,17 +137,17 @@ public static class FlycastCore
         float liveHz = OVRPlugin.systemDisplayFrequency;
         if (liveHz > 1f)
             DisplayHz = liveHz;
-        ConfigManager.WriteConsole($"[FlycastCore.Start] display refresh = {DisplayHz:F1} Hz (live={liveHz:F1})");
-        PdLibretro.SetDisplayHz(DisplayHz);
-        PdLibretro.SetAudioOutputRate(AudioSettings.outputSampleRate);
+        ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] display refresh = {DisplayHz:F1} Hz (live={liveHz:F1})");
+        LibretroHWBridge.SetDisplayHz(DisplayHz);
+        LibretroHWBridge.SetAudioOutputRate(AudioSettings.outputSampleRate);
 
-        double coreFps = PdLibretro.FrameFps;
+        double coreFps = LibretroHWBridge.FrameFps;
         tickHz = coreFps > 1.0 ? (float)coreFps : 60f;
 
         GameLoaded = true;
         GameFileName = gameFileName;
         ScreenName = screenName;
-        ConfigManager.WriteConsole($"[FlycastCore.Start] running {gameFileName} in {screenName} zeroCopy={zeroCopy} coreFps={coreFps:F3} sampleRate={PdLibretro.SampleRate:F0}");
+        ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] running {gameFileName} in {screenName} zeroCopy={zeroCopy} coreFps={coreFps:F3} sampleRate={LibretroHWBridge.SampleRate:F0}");
         return true;
     }
 
@@ -160,7 +160,7 @@ public static class FlycastCore
     public static void SetPaused(bool paused)
     {
         if (GameLoaded)
-            PdLibretro.SetPaused(paused);
+            LibretroHWBridge.SetPaused(paused);
     }
 
     // Called once per rendered frame from LibretroScreenController.Update while running.
@@ -170,7 +170,7 @@ public static class FlycastCore
             return;
 
         // One tick per rendered VR frame: the pump paces retro_run off this (display-locked cadence).
-        PdLibretro.NotifyDisplayFrame();
+        LibretroHWBridge.NotifyDisplayFrame();
 
         PollInput();
 
@@ -182,17 +182,17 @@ public static class FlycastCore
         while (tickAccum >= period && ticks < 4) { tickAccum -= period; ticks++; }
         if (tickAccum > period) tickAccum = 0f;
         for (int i = 0; i < ticks; i++)
-            PdLibretro.Run();
+            LibretroHWBridge.Run();
 
         if (zeroCopy)
             UpdateZeroCopy();
-        else if (PdLibretro.GetFrame(out IntPtr pixels, out int w, out int h) && pixels != IntPtr.Zero && w > 0 && h > 0)
+        else if (LibretroHWBridge.GetFrame(out IntPtr pixels, out int w, out int h) && pixels != IntPtr.Zero && w > 0 && h > 0)
             BlitCpu(pixels, w, h);
 
         if (Time.unscaledTime >= nextStatusAt)
         {
             nextStatusAt = Time.unscaledTime + 5f;
-            ConfigManager.WriteConsole($"[FlycastCore] frames={PdLibretro.FrameCount} zc={zeroCopy} extTex={extTexReady} readyIdx={(zeroCopy ? PdLibretro.ReadyBufferIndex : -1)}");
+            ConfigManager.WriteConsole($"[LibretroFlycastCore] frames={LibretroHWBridge.FrameCount} zc={zeroCopy} extTex={extTexReady} readyIdx={(zeroCopy ? LibretroHWBridge.ReadyBufferIndex : -1)}");
         }
     }
 
@@ -204,21 +204,21 @@ public static class FlycastCore
     {
         if (!extTexReady)
         {
-            if (PdLibretro.ReadyBufferIndex >= 0 && !PdLibretro.UnityImagesReady)
+            if (LibretroHWBridge.ReadyBufferIndex >= 0 && !LibretroHWBridge.UnityImagesReady)
             {
-                IntPtr fn = PdLibretro.GetRenderEventFunc();
+                IntPtr fn = LibretroHWBridge.GetRenderEventFunc();
                 if (fn != IntPtr.Zero)
                 {
-                    GL.IssuePluginEvent(fn, PdLibretro.EVENT_IMPORT_AHB);
-                    if (!importIssued) { importIssued = true; ConfigManager.WriteConsole("[FlycastCore] zero-copy: issued AHB import event"); }
+                    GL.IssuePluginEvent(fn, LibretroHWBridge.EVENT_IMPORT_AHB);
+                    if (!importIssued) { importIssued = true; ConfigManager.WriteConsole("[LibretroFlycastCore] zero-copy: issued AHB import event"); }
                 }
             }
-            if (PdLibretro.UnityImagesReady)
+            if (LibretroHWBridge.UnityImagesReady)
                 CreateExternalTextures();
             return;
         }
 
-        int idx = PdLibretro.ReadyBufferIndex;
+        int idx = LibretroHWBridge.ReadyBufferIndex;
         if (idx >= 0 && idx < zcTexes.Length && zcTexes[idx] != null && idx != lastBoundIdx)
         {
             BindTexture(zcTexes[idx], false);
@@ -227,7 +227,7 @@ public static class FlycastCore
 
         // The active frame can change mid-run (NAOMI/AW resolution swaps). Re-crop when it does —
         // the buffer size is fixed, so the external textures never need rebuilding.
-        if (bufW > 0 && PdLibretro.FrameSize(out int aw, out int ah) && aw > 0 && ah > 0 &&
+        if (bufW > 0 && LibretroHWBridge.FrameSize(out int aw, out int ah) && aw > 0 && ah > 0 &&
             (aw != cropActiveW || ah != cropActiveH))
             ApplyZeroCopyCrop(aw, ah);
     }
@@ -236,18 +236,18 @@ public static class FlycastCore
     // frame is a sub-rect handled by the UV crop (the AHB import is one-shot).
     static void CreateExternalTextures()
     {
-        if (!PdLibretro.BufferSize(out int bw, out int bh) || bw <= 0 || bh <= 0) return;
-        int n = PdLibretro.BufferCount;
+        if (!LibretroHWBridge.BufferSize(out int bw, out int bh) || bw <= 0 || bh <= 0) return;
+        int n = LibretroHWBridge.BufferCount;
         if (n <= 0) return;
 
         bufW = bw; bufH = bh;
         zcTexes = new Texture2D[n];
         for (int i = 0; i < n; i++)
         {
-            IntPtr img = PdLibretro.GetUnityImagePtr(i);
+            IntPtr img = LibretroHWBridge.GetUnityImagePtr(i);
             if (img == IntPtr.Zero)
             {
-                ConfigManager.WriteConsoleError($"[FlycastCore] zero-copy: buffer {i} image ptr null — abort");
+                ConfigManager.WriteConsoleError($"[LibretroFlycastCore] zero-copy: buffer {i} image ptr null — abort");
                 zcTexes = null;
                 return;
             }
@@ -266,10 +266,10 @@ public static class FlycastCore
         BindTexture(zcTexes[0], true);
         lastBoundIdx = 0;
         int aw = bw, ah = bh;
-        PdLibretro.FrameSize(out aw, out ah);
+        LibretroHWBridge.FrameSize(out aw, out ah);
         ApplyZeroCopyCrop(aw, ah);
         extTexReady = true;
-        ConfigManager.WriteConsole($"[FlycastCore] zero-copy: {n} external textures bound buffer={bw}x{bh} active={aw}x{ah}");
+        ConfigManager.WriteConsole($"[LibretroFlycastCore] zero-copy: {n} external textures bound buffer={bw}x{bh} active={aw}x{ah}");
     }
 
     // Map the screen's UV range onto the active sub-rect of the fixed AHB buffer via the material's
@@ -289,7 +289,7 @@ public static class FlycastCore
         mat.SetTextureScale(Shader.TargetMaterialProperty, new Vector2(au, av));
         mat.SetTextureOffset(Shader.TargetMaterialProperty, new Vector2(0f, 1f - av));
         cropActiveW = activeW; cropActiveH = activeH;
-        ConfigManager.WriteConsole($"[FlycastCore] zero-copy crop: active={activeW}x{activeH} buffer={bufW}x{bufH}");
+        ConfigManager.WriteConsole($"[LibretroFlycastCore] zero-copy crop: active={activeW}x{activeH} buffer={bufW}x{bufH}");
     }
 
     static void BlitCpu(IntPtr pixels, int w, int h)
@@ -356,19 +356,23 @@ public static class FlycastCore
         }
 
         // Analog cabinets (input: { analog-stick: true }) drive the DC analog stick + analog
-        // triggers from the thumbstick and the L/R triggers (racing games). The digital d-pad bits
-        // in `b` still ride along — harmless, the standard DC pad exposes both. Default cabinets
-        // send a centered stick, so the game sees only the d-pad (fighting titles).
+        // triggers from the thumbstick and the L/R triggers (racing games). The thumbstick's digital
+        // d-pad bits (UP/DOWN/LEFT/RIGHT) are masked out of `b` here: the standard DC pad exposes the
+        // analog stick and the d-pad separately, and on an analog cabinet the same physical stick must
+        // NOT also fire the d-pad — otherwise pushing up hits both the analog axis and d-pad-UP (e.g.
+        // Daytona's change-view). Default cabinets send a centered stick, so the game sees only the
+        // d-pad (fighting titles).
         if (AnalogStick)
         {
+            b &= ~(0xFu << 4);   // analog means analog: drop UP/DOWN/LEFT/RIGHT, thumbstick is analog-only
             ControlMap.ReadStick(out short lx, out short ly);
             short lt = ControlMap.ReadTrigger(LC.JOYPAD_L);   // left trigger  → DC L2 (brake)
             short rt = ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → DC R2 (accelerate)
-            PdLibretro.SetInput(b, lx, ly, lt, rt);
+            LibretroHWBridge.SetInput(b, lx, ly, lt, rt);
         }
         else
         {
-            PdLibretro.SetInput(b, 0, 0);
+            LibretroHWBridge.SetInput(b, 0, 0);
         }
 
         // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls. In LIGHTGUN mode
@@ -376,23 +380,23 @@ public static class FlycastCore
         if (lightGunTarget != null)
         {
             uint gb = 0;
-            if (ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << PdLibretro.Lightgun.TRIGGER;
-            if (ControlMap.isActive(LC.LIGHTGUN_AUX_A)) gb |= 1u << PdLibretro.Lightgun.AUX_A;
-            if (ControlMap.isActive(LC.LIGHTGUN_AUX_B)) gb |= 1u << PdLibretro.Lightgun.AUX_B;
-            if (ControlMap.isActive(LC.LIGHTGUN_AUX_C)) gb |= 1u << PdLibretro.Lightgun.AUX_C;
-            if (ControlMap.isActive(LC.LIGHTGUN_START)) gb |= 1u << PdLibretro.Lightgun.START;
-            if (ControlMap.isActive(LC.LIGHTGUN_SELECT)) gb |= 1u << PdLibretro.Lightgun.SELECT;
-            if (ControlMap.isActive(LC.LIGHTGUN_RELOAD)) gb |= 1u << PdLibretro.Lightgun.RELOAD;
-            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_UP)) gb |= 1u << PdLibretro.Lightgun.DPAD_UP;
-            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_DOWN)) gb |= 1u << PdLibretro.Lightgun.DPAD_DOWN;
-            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_LEFT)) gb |= 1u << PdLibretro.Lightgun.DPAD_LEFT;
-            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_RIGHT)) gb |= 1u << PdLibretro.Lightgun.DPAD_RIGHT;
+            if (ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << LibretroHWBridge.Lightgun.TRIGGER;
+            if (ControlMap.isActive(LC.LIGHTGUN_AUX_A)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_A;
+            if (ControlMap.isActive(LC.LIGHTGUN_AUX_B)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_B;
+            if (ControlMap.isActive(LC.LIGHTGUN_AUX_C)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_C;
+            if (ControlMap.isActive(LC.LIGHTGUN_START)) gb |= 1u << LibretroHWBridge.Lightgun.START;
+            if (ControlMap.isActive(LC.LIGHTGUN_SELECT)) gb |= 1u << LibretroHWBridge.Lightgun.SELECT;
+            if (ControlMap.isActive(LC.LIGHTGUN_RELOAD)) gb |= 1u << LibretroHWBridge.Lightgun.RELOAD;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_UP)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_UP;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_DOWN)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_DOWN;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_LEFT)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_LEFT;
+            if (ControlMap.isActive(LC.LIGHTGUN_DPAD_RIGHT)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_RIGHT;
             if (coinFrames > 0)
-                gb |= 1u << PdLibretro.Lightgun.SELECT;
+                gb |= 1u << LibretroHWBridge.Lightgun.SELECT;
 
             lightGunTarget.GetLastHit(out int hitX, out int hitY);
             bool offscreen = !lightGunTarget.PointingToTheScreen();
-            PdLibretro.SetLightgun((short)hitX, (short)hitY, offscreen, gb);
+            LibretroHWBridge.SetLightgun((short)hitX, (short)hitY, offscreen, gb);
         }
     }
 
@@ -401,7 +405,7 @@ public static class FlycastCore
     public static void MoveAudioStreamTo(float[] audioData)
     {
         if (!GameLoaded) { Array.Clear(audioData, 0, audioData.Length); return; }
-        int n = PdLibretro.AudioRead(audioData);
+        int n = LibretroHWBridge.AudioRead(audioData);
         for (int i = n; i < audioData.Length; i++)
             audioData[i] = 0f;
     }
@@ -411,7 +415,7 @@ public static class FlycastCore
         if (!isRunning(screenName, gameFileName))
             return;
 
-        ConfigManager.WriteConsole($"[FlycastCore.End] {gameFileName} in {screenName}");
+        ConfigManager.WriteConsole($"[LibretroFlycastCore.End] {gameFileName} in {screenName}");
         // Stop the audio pull path first (GameLoaded gates MoveAudioStreamTo on the audio thread).
         GameLoaded = false;
 
@@ -424,7 +428,7 @@ public static class FlycastCore
                 if (t != null) UnityEngine.Object.Destroy(t);
             zcTexes = null;
         }
-        PdLibretro.Shutdown();
+        LibretroHWBridge.Shutdown();
 
         GameFileName = "";
         ScreenName = "";

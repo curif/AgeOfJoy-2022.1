@@ -4,7 +4,7 @@
 
 The Flycast-based Dreamcast/NAOMI/Atomiswave cores that drive the experimental
 Vulkan cabinets are **not** built from this repository. The C# bridge glue
-(`PdFlycast.cs`, `PdLibretro.cs`, `PdVk.cs`, `PdVkQuad.cs`, `PdLibretroProbe.cs`,
+(`PdFlycast.cs`, `LibretroHWBridge.cs`, `PdVk.cs`, `PdVkQuad.cs`, `PdLibretroProbe.cs`,
 `cwrapper/vulkan.*`, `libVulkanPlugin/`) lives here and is tracked on the
 `fix/v0.5-2` branch. The **native core source** lives in a separate repository.
 

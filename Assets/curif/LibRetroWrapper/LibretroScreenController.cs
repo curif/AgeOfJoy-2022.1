@@ -276,8 +276,8 @@ public class LibretroScreenController : MonoBehaviour
     private void OnApplicationPause(bool pauseStatus)
     {
         //the emulator suspends with the app (headset off / system overlay) — RetroArch pauses too
-        if (FlycastCore.isRunning(ScreenName, GameFile))
-            FlycastCore.SetPaused(pauseStatus);
+        if (LibretroFlycastCore.isRunning(ScreenName, GameFile))
+            LibretroFlycastCore.SetPaused(pauseStatus);
 
         if (pauseStatus)
         {
@@ -332,7 +332,7 @@ public class LibretroScreenController : MonoBehaviour
             .Sequence("Start the game")
               .Condition("CoinSlot is present", () => CoinSlot != null)
               //.Condition("Is visible", () => display.isVisible)
-              .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !FlycastCore.GameLoaded)
+              .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !LibretroFlycastCore.GameLoaded)
               .Condition("There are coins", () => CoinSlot.hasCoins())
               // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
               //.Condition("Player looking screen", () => isPlayerLookingAtScreen3()) if coinslot is present with coins is sufficient
@@ -493,7 +493,7 @@ public class LibretroScreenController : MonoBehaviour
 
             .Selector("Video/Audio Player control")
                 .Sequence()
-                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || FlycastCore.GameLoaded || !playerInTheZone)
+                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || LibretroFlycastCore.GameLoaded || !playerInTheZone)
                     .Do("Stop video and audio player", () =>
                     {
                         videoPlayer.Stop();
@@ -503,7 +503,7 @@ public class LibretroScreenController : MonoBehaviour
                 .End()
                 .Sequence()
                     .Condition("Player in the zone?", () => playerInTheZone)
-                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !FlycastCore.GameLoaded)
+                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !LibretroFlycastCore.GameLoaded)
                     .Selector()
                         .Sequence()
                             .Condition("Is Player near enough to see video", () =>
@@ -546,10 +546,10 @@ public class LibretroScreenController : MonoBehaviour
         return GameFile != null && GameFile.Length > 0;
     }
 
-    //hardware-rendered core driven by FlycastCore/libpdlr instead of the software wrapper
+    //hardware-rendered core driven by LibretroFlycastCore/libpdlr instead of the software wrapper
     private bool isFlycast
     {
-        get { return Core == FlycastCore.CoreName; }
+        get { return Core == LibretroFlycastCore.CoreName; }
     }
 
     //select the control map by priority: cabinet yaml > per-game user config > control scheme > global
@@ -593,19 +593,19 @@ public class LibretroScreenController : MonoBehaviour
     {
         libretroControlMap.CreateFromConfiguration(BuildControlMapConfiguration());
 
-        FlycastCore.Shader = shader;
-        FlycastCore.ControlMap = libretroControlMap;
-        FlycastCore.CoinSlot = CoinSlot;
-        FlycastCore.AnalogStick = AnalogStick;
-        FlycastCore.CabEnvironment = CabEnvironment;
+        LibretroFlycastCore.Shader = shader;
+        LibretroFlycastCore.ControlMap = libretroControlMap;
+        LibretroFlycastCore.CoinSlot = CoinSlot;
+        LibretroFlycastCore.AnalogStick = AnalogStick;
+        LibretroFlycastCore.CabEnvironment = CabEnvironment;
 
-        // Light guns configuration (same wiring as the MAME path; must precede FlycastCore.Start,
+        // Light guns configuration (same wiring as the MAME path; must precede LibretroFlycastCore.Start,
         // which declares the gun's maple port before the core loads the game)
         if (lightGunTarget != null && lightGunInformation != null)
         {
             lightGunTarget.enabled = true;
             lightGunTarget.Init(lightGunInformation, PathBase, player);
-            FlycastCore.lightGunTarget = lightGunTarget;
+            LibretroFlycastCore.lightGunTarget = lightGunTarget;
         }
 
         bool insertCoinOnStartup = InsertCoinOnStartup.HasValue ?
@@ -618,7 +618,7 @@ public class LibretroScreenController : MonoBehaviour
 #if !UNITY_EDITOR
         if (isGameFilePresent())
         {
-            if (!FlycastCore.Start(ScreenName, GameFile))
+            if (!LibretroFlycastCore.Start(ScreenName, GameFile))
             {
                 CoinSlot.clean();
                 return TaskStatus.Failure;
@@ -681,7 +681,7 @@ public class LibretroScreenController : MonoBehaviour
             videoPlayer.Play();
 
             LibretroMameCore.End(ScreenName, GameFile);
-            FlycastCore.End(ScreenName, GameFile);
+            LibretroFlycastCore.End(ScreenName, GameFile);
         }
         timeToExit = DateTime.MinValue;
 
@@ -749,9 +749,9 @@ public class LibretroScreenController : MonoBehaviour
             LibretroMameCore.UpdateTexture();
 
         }
-        else if (FlycastCore.isRunning(ScreenName, GameFile))
+        else if (LibretroFlycastCore.isRunning(ScreenName, GameFile))
         {
-            FlycastCore.Update();
+            LibretroFlycastCore.Update();
         }
 
         shader.Update();
@@ -788,17 +788,17 @@ public class LibretroScreenController : MonoBehaviour
     {
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
             LibretroMameCore.MoveAudioStreamTo(data);
-        else if (FlycastCore.isRunning(ScreenName, GameFile))
-            FlycastCore.MoveAudioStreamTo(data);
+        else if (LibretroFlycastCore.isRunning(ScreenName, GameFile))
+            LibretroFlycastCore.MoveAudioStreamTo(data);
     }
 
     private void OnDestroy()
     {
-        if (LibretroMameCore.isRunning(ScreenName, GameFile) || FlycastCore.isRunning(ScreenName, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName, GameFile) || LibretroFlycastCore.isRunning(ScreenName, GameFile))
             PreparePlayerToPlayGame(false);
 
         LibretroMameCore.End(ScreenName, GameFile);
-        FlycastCore.End(ScreenName, GameFile);
+        LibretroFlycastCore.End(ScreenName, GameFile);
     }
 
 #if UNITY_EDITOR

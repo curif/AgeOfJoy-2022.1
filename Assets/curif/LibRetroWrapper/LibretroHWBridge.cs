@@ -2,12 +2,12 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-// PdLibretro — managed binding for the embedded libretro frontend (libpdlr.so).
+// LibretroHWBridge — managed binding for the embedded libretro frontend (libpdlr.so).
 //
 // Stage 2a-lite: probe a libretro core (load + bind + init + system info). Later stages add the
 // Vulkan run loop and the AHB→Unity frame handoff. On-device only; no-op in the Windows editor.
 // See claudedocs/geometrizer_vulkan_cores.md.
-public static class PdLibretro
+public static class LibretroHWBridge
 {
     const string LIB = "pdlr";
 
@@ -119,7 +119,7 @@ public static class PdLibretro
 #else
         PreloadInfo = "(not Android — skipped)";
 #endif
-        ConfigManager.WriteConsole($"[PdLibretro.Preload] {PreloadInfo}");
+        ConfigManager.WriteConsole($"[LibretroHWBridge.Preload] {PreloadInfo}");
     }
 
     // The app's native library dir, where Unity packages plugin .so files (so a bundled Flycast
@@ -134,7 +134,7 @@ public static class PdLibretro
             using (var appInfo = activity.Call<AndroidJavaObject>("getApplicationInfo"))
                 return appInfo.Get<string>("nativeLibraryDir");
         }
-        catch (Exception e) { ConfigManager.WriteConsole($"[PdLibretro] nativeLibraryDir failed: {e.Message}"); }
+        catch (Exception e) { ConfigManager.WriteConsole($"[LibretroHWBridge] nativeLibraryDir failed: {e.Message}"); }
 #endif
         return "";
     }
@@ -152,7 +152,7 @@ public static class PdLibretro
         catch (DllNotFoundException e)   { Available = false; LastError = "DllNotFound: " + e.Message; }
         catch (EntryPointNotFoundException e) { Available = false; LastError = "EntryPointNotFound: " + e.Message; }
         _probed = true;
-        ConfigManager.WriteConsole($"[PdLibretro] Available={Available} lastError='{LastError}'");
+        ConfigManager.WriteConsole($"[LibretroHWBridge] Available={Available} lastError='{LastError}'");
         return Available;
     }
 

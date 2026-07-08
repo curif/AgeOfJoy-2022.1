@@ -19,7 +19,7 @@ using UnityEngine.InputSystem;
 public class PdFlycast : MonoBehaviour
 {
     [Tooltip("Deprecated / unused: BIOS + games now come from the shared production locations " +
-             "(system/dc and downloads/dc), same as FlycastCore. Kept only so existing scene " +
+             "(system/dc and downloads/dc), same as LibretroFlycastCore. Kept only so existing scene " +
              "serialization doesn't warn.")]
     public string dcSubDir = "dc";
     [Tooltip("Game file to load from downloads/dc/ (overridable at runtime via that folder's game.txt).")]
@@ -101,13 +101,13 @@ public class PdFlycast : MonoBehaviour
         _renderer = GetComponent<Renderer>();
         _material = _renderer.material;   // instance, safe to mutate
 
-        // Pull BIOS and games from the SAME on-device locations the production FlycastCore uses, so
-        // the debug quad and the real cabinets share one content layout (see FlycastCore.Start):
+        // Pull BIOS and games from the SAME on-device locations the production LibretroFlycastCore uses, so
+        // the debug quad and the real cabinets share one content layout (see LibretroFlycastCore.Start):
         //   BIOS + nvmem : <SystemDir>/dc/     (Flycast forces the /dc subdir on its system dir)
         //   games        : <RomsDir>/dc/<file> (downloads/dc/), falling back to downloads/
         string sysDir   = ConfigManager.SystemDir;
-        string saveDir  = Path.Combine(sysDir, FlycastCore.ContentDirName, "saves");
-        string romsDir  = Path.Combine(ConfigManager.RomsDir, FlycastCore.ContentDirName);
+        string saveDir  = Path.Combine(sysDir, LibretroFlycastCore.ContentDirName, "saves");
+        string romsDir  = Path.Combine(ConfigManager.RomsDir, LibretroFlycastCore.ContentDirName);
 
         // Per-device override: first non-empty line of <roms>/game.txt names the game file to load
         // (relative to the flycast roms dir), replacing the scene-serialized gameFile. Lets us swap
@@ -130,20 +130,20 @@ public class PdFlycast : MonoBehaviour
         }
         catch (Exception e) { Status("game.txt read failed (using default game): " + e.Message); }
 
-        // Resolve the game the same way FlycastCore.getPath does: downloads/flycast first, then downloads/.
+        // Resolve the game the same way LibretroFlycastCore.getPath does: downloads/flycast first, then downloads/.
         string gamePath = Path.Combine(romsDir, gameFile);
         if (!File.Exists(gamePath))
             gamePath = Path.Combine(ConfigManager.RomsDir, gameFile);
-        string corePath = Path.Combine(PdLibretro.NativeLibraryDir(), coreFileName);
+        string corePath = Path.Combine(LibretroHWBridge.NativeLibraryDir(), coreFileName);
         try { Directory.CreateDirectory(saveDir); } catch { }
 
         Status($"start core='{corePath}' sys='{sysDir}' roms='{romsDir}' game='{gamePath}' zeroCopy={zeroCopy}");
         if (!File.Exists(gamePath)) Status($"WARNING game not found at '{gamePath}' — push it to downloads/dc/ first");
 
         // Must be set before Start() — it decides which device extensions the core is asked to enable.
-        PdLibretro.SetZeroCopy(zeroCopy);
-        started = PdLibretro.Start(corePath, sysDir, saveDir, gamePath);
-        if (started && zeroCopy && !PdLibretro.ZeroCopyActive)
+        LibretroHWBridge.SetZeroCopy(zeroCopy);
+        started = LibretroHWBridge.Start(corePath, sysDir, saveDir, gamePath);
+        if (started && zeroCopy && !LibretroHWBridge.ZeroCopyActive)
         {
             // The core's device couldn't get the AHB extensions; native fell back to CPU readback.
             // Follow it so we actually display (otherwise we'd wait forever for an import that never comes).
@@ -152,12 +152,12 @@ public class PdFlycast : MonoBehaviour
         }
         // Phase-lock the native pump to the VR display cadence (removes the 60→72 beat/judder). Must
         // be set after Start(); the per-frame NotifyDisplayFrame() in Update drives the lock.
-        PdLibretro.SetDisplayHz(displayHz);
-        double coreFps = PdLibretro.FrameFps;
+        LibretroHWBridge.SetDisplayHz(displayHz);
+        double coreFps = LibretroHWBridge.FrameFps;
         _tickHz = (useCoreFrameRate && coreFps > 1.0) ? (float)coreFps : targetHz;
         Status(started
-            ? $"pdlr_start OK — running (zeroCopy={zeroCopy}, tick={_tickHz:F3}Hz, coreFps={coreFps:F3}, sampleRate={PdLibretro.SampleRate:F0})"
-            : $"pdlr_start FAILED — Available={PdLibretro.Available} preload='{PdLibretro.PreloadInfo}' lastError='{PdLibretro.LastError}'");
+            ? $"pdlr_start OK — running (zeroCopy={zeroCopy}, tick={_tickHz:F3}Hz, coreFps={coreFps:F3}, sampleRate={LibretroHWBridge.SampleRate:F0})"
+            : $"pdlr_start FAILED — Available={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
 
         if (started && audioEnabled) SetupAudio();
         _lastRunAt = Time.unscaledTime;
@@ -172,7 +172,7 @@ public class PdFlycast : MonoBehaviour
         // Phase-lock reference for the native pump: one tick per rendered VR frame. The pump paces
         // retro_run off this (display-locked 5:6 cadence) rather than a free-running wall clock, which
         // removes the 60→72 beat/judder. Cheap (atomic bump + condvar signal in native).
-        PdLibretro.NotifyDisplayFrame();
+        LibretroHWBridge.NotifyDisplayFrame();
 
         PollInput();   // push input once per rendered frame
 
@@ -187,19 +187,19 @@ public class PdFlycast : MonoBehaviour
         if (_tickAccum > period) _tickAccum = 0f;   // drop backlog after a hitch/pause (no catch-up spiral)
 
         for (int i = 0; i < ticks; i++)
-            PdLibretro.Run();
+            LibretroHWBridge.Run();
         if (audioEnabled) EnsureAudioPlaying();   // re-arm if a focus/HMD change stopped the source
 
         if (zeroCopy) UpdateZeroCopy();
-        else if (PdLibretro.GetFrame(out IntPtr pixels, out int w, out int h) && pixels != IntPtr.Zero && w > 0 && h > 0)
+        else if (LibretroHWBridge.GetFrame(out IntPtr pixels, out int w, out int h) && pixels != IntPtr.Zero && w > 0 && h > 0)
             Blit(pixels, w, h);
 
         if (now >= _nextStatusAt)
         {
             _nextStatusAt = now + 1f;
-            frameCount = PdLibretro.FrameCount;
-            res = PdLibretro.FrameSize(out int rw, out int rh) ? $"{rw}x{rh}" : "?";
-            Status($"running — core frames={frameCount} tex={res} zc={zeroCopy} extTex={_extTexReady} readyIdx={(zeroCopy ? PdLibretro.ReadyBufferIndex : -1)}");
+            frameCount = LibretroHWBridge.FrameCount;
+            res = LibretroHWBridge.FrameSize(out int rw, out int rh) ? $"{rw}x{rh}" : "?";
+            Status($"running — core frames={frameCount} tex={res} zc={zeroCopy} extTex={_extTexReady} readyIdx={(zeroCopy ? LibretroHWBridge.ReadyBufferIndex : -1)}");
         }
 
         if (_dumpBuf != null && !_dumpWritten && _dumpPos >= _dumpBuf.Length) WriteWavDump();
@@ -216,26 +216,26 @@ public class PdFlycast : MonoBehaviour
     {
         if (!_extTexReady)
         {
-            if (PdLibretro.ReadyBufferIndex >= 0 && !PdLibretro.UnityImagesReady)
+            if (LibretroHWBridge.ReadyBufferIndex >= 0 && !LibretroHWBridge.UnityImagesReady)
             {
-                IntPtr fn = PdLibretro.GetRenderEventFunc();
+                IntPtr fn = LibretroHWBridge.GetRenderEventFunc();
                 if (fn != IntPtr.Zero)
                 {
-                    GL.IssuePluginEvent(fn, PdLibretro.EVENT_IMPORT_AHB);
+                    GL.IssuePluginEvent(fn, LibretroHWBridge.EVENT_IMPORT_AHB);
                     if (!_importIssued) { _importIssued = true; Status("zero-copy: issued AHB import event"); }
                 }
             }
-            if (PdLibretro.UnityImagesReady) CreateExternalTextures();
+            if (LibretroHWBridge.UnityImagesReady) CreateExternalTextures();
             return;
         }
 
-        int idx = PdLibretro.ReadyBufferIndex;
+        int idx = LibretroHWBridge.ReadyBufferIndex;
         if (idx >= 0 && idx < _zcTexes.Length && _zcTexes[idx] != null) ShowBuffer(idx);
 
         // The active frame can change mid-run (e.g. Metal Slug 6 boots 640x238 then switches to
         // 640x480). Re-crop when it does — cheap and usually a no-op. The buffer size is fixed, so
         // the external textures never need rebuilding.
-        if (_bufW > 0 && PdLibretro.FrameSize(out int aw, out int ah) && aw > 0 && ah > 0 &&
+        if (_bufW > 0 && LibretroHWBridge.FrameSize(out int aw, out int ah) && aw > 0 && ah > 0 &&
             (aw != _cropActiveW || ah != _cropActiveH))
             ApplyZeroCopyCrop(aw, ah, _bufW, _bufH);
     }
@@ -245,15 +245,15 @@ public class PdFlycast : MonoBehaviour
     {
         // Size the external textures to the FIXED buffer (ceiling), not the active frame — the active
         // frame is a sub-rect we UV-crop, and it may change over the run (the AHB import is one-shot).
-        if (!PdLibretro.BufferSize(out int bw, out int bh) || bw <= 0 || bh <= 0) return;
-        int n = PdLibretro.BufferCount;
+        if (!LibretroHWBridge.BufferSize(out int bw, out int bh) || bw <= 0 || bh <= 0) return;
+        int n = LibretroHWBridge.BufferCount;
         if (n <= 0) return;
 
         _bufW = bw; _bufH = bh;
         _zcTexes = new Texture2D[n];
         for (int i = 0; i < n; i++)
         {
-            IntPtr img = PdLibretro.GetUnityImagePtr(i);
+            IntPtr img = LibretroHWBridge.GetUnityImagePtr(i);
             if (img == IntPtr.Zero) { Status($"zero-copy: buffer {i} ptr null — abort"); return; }
             var t = Texture2D.CreateExternalTexture(bw, bh, TextureFormat.RGBA32, false, false, img);
             t.wrapMode = TextureWrapMode.Clamp; t.filterMode = FilterMode.Bilinear; t.name = $"PdFlycastAHB{i}";
@@ -261,7 +261,7 @@ public class PdFlycast : MonoBehaviour
         }
         BindTexture(_zcTexes[0]);   // sets emission keyword/color once; per-frame ShowBuffer just swaps textures
         int aw = bw, ah = bh;
-        PdLibretro.FrameSize(out aw, out ah);
+        LibretroHWBridge.FrameSize(out aw, out ah);
         ApplyZeroCopyCrop(aw, ah, bw, bh);   // flip + crop; identity when active == buffer
         _extTexReady = true;
         Status($"zero-copy: {n} external textures bound buffer={bw}x{bh} active={aw}x{ah}");
@@ -281,20 +281,20 @@ public class PdFlycast : MonoBehaviour
     void PollInput()
     {
         var gp = Gamepad.current;
-        if (gp == null) { PdLibretro.SetInput(0, 0, 0); return; }
+        if (gp == null) { LibretroHWBridge.SetInput(0, 0, 0); return; }
 
         uint b = 0;
         // Physical A/B/X/Y → RetroPad A/B/X/Y directly. Flycast's internal DC order can make this
         // feel rotated on-device; remap here if so.
-        if (gp.buttonEast.isPressed)  b |= 1u << PdLibretro.Joypad.A;
-        if (gp.buttonSouth.isPressed) b |= 1u << PdLibretro.Joypad.B;
-        if (gp.buttonWest.isPressed)  b |= 1u << PdLibretro.Joypad.X;
-        if (gp.buttonNorth.isPressed) b |= 1u << PdLibretro.Joypad.Y;
-        if (gp.startButton.isPressed) b |= 1u << PdLibretro.Joypad.START;
-        if (gp.dpad.up.isPressed)     b |= 1u << PdLibretro.Joypad.UP;
-        if (gp.dpad.down.isPressed)   b |= 1u << PdLibretro.Joypad.DOWN;
-        if (gp.dpad.left.isPressed)   b |= 1u << PdLibretro.Joypad.LEFT;
-        if (gp.dpad.right.isPressed)  b |= 1u << PdLibretro.Joypad.RIGHT;
+        if (gp.buttonEast.isPressed)  b |= 1u << LibretroHWBridge.Joypad.A;
+        if (gp.buttonSouth.isPressed) b |= 1u << LibretroHWBridge.Joypad.B;
+        if (gp.buttonWest.isPressed)  b |= 1u << LibretroHWBridge.Joypad.X;
+        if (gp.buttonNorth.isPressed) b |= 1u << LibretroHWBridge.Joypad.Y;
+        if (gp.startButton.isPressed) b |= 1u << LibretroHWBridge.Joypad.START;
+        if (gp.dpad.up.isPressed)     b |= 1u << LibretroHWBridge.Joypad.UP;
+        if (gp.dpad.down.isPressed)   b |= 1u << LibretroHWBridge.Joypad.DOWN;
+        if (gp.dpad.left.isPressed)   b |= 1u << LibretroHWBridge.Joypad.LEFT;
+        if (gp.dpad.right.isPressed)  b |= 1u << LibretroHWBridge.Joypad.RIGHT;
 
         Vector2 s = gp.leftStick.ReadValue();
         if (Mathf.Abs(s.x) < 0.2f) s.x = 0f;
@@ -302,7 +302,7 @@ public class PdFlycast : MonoBehaviour
         // libretro analog: +X right, +Y down — Unity's stick Y is up-positive, so negate Y.
         short lx = (short)Mathf.Clamp(Mathf.RoundToInt(s.x * 32767f), -32767, 32767);
         short ly = (short)Mathf.Clamp(Mathf.RoundToInt(-s.y * 32767f), -32767, 32767);
-        PdLibretro.SetInput(b, lx, ly);
+        LibretroHWBridge.SetInput(b, lx, ly);
     }
 
     // 2D audio mirroring AoJ's proven MAME path (LibretroScreenController): an AUTHORED AudioSource
@@ -312,7 +312,7 @@ public class PdFlycast : MonoBehaviour
     // (isPlaying=true but the callback fired 0×) — the source was never pulled into the DSP graph.
     void SetupAudio()
     {
-        PdLibretro.SetAudioOutputRate(AudioSettings.outputSampleRate);
+        LibretroHWBridge.SetAudioOutputRate(AudioSettings.outputSampleRate);
         _audio = GetComponent<AudioSource>();   // RequireComponent guarantees an authored instance
         _audio.playOnAwake = false;
         _audio.loop        = true;
@@ -323,7 +323,7 @@ public class PdFlycast : MonoBehaviour
         _keepAlive = AudioClip.Create("_PdFlycastKeepAlive", sr, 2, sr, false);
         _audio.clip = _keepAlive;
         EnsureAudioPlaying();
-        Status($"audio: output rate {sr} Hz, core {PdLibretro.SampleRate:F0} Hz, isPlaying={_audio.isPlaying}");
+        Status($"audio: output rate {sr} Hz, core {LibretroHWBridge.SampleRate:F0} Hz, isPlaying={_audio.isPlaying}");
 
         if (dumpAudioWav)
         {
@@ -351,7 +351,7 @@ public class PdFlycast : MonoBehaviour
     void OnAudioFilterRead(float[] data, int channels)
     {
         if (!started || !audioEnabled) { System.Array.Clear(data, 0, data.Length); return; }
-        int n = (channels == 2) ? PdLibretro.AudioRead(data) : 0;   // only stereo layout matches the buffer
+        int n = (channels == 2) ? LibretroHWBridge.AudioRead(data) : 0;   // only stereo layout matches the buffer
         for (int i = n; i < data.Length; i++) data[i] = 0f;
 
         // Capture what Unity actually plays (post zero-fill) into the WAV buffer — audio-thread safe
@@ -495,7 +495,7 @@ public class PdFlycast : MonoBehaviour
     void OnApplicationPause(bool paused)
     {
         if (!started) return;
-        PdLibretro.SetPaused(paused);
+        LibretroHWBridge.SetPaused(paused);
         Status(paused ? "app paused — emu pump suspended" : "app resumed — emu pump running");
     }
 
@@ -514,7 +514,7 @@ public class PdFlycast : MonoBehaviour
         // Unity-side VkImages that Shutdown tears down.
         if (_tex != null) { Destroy(_tex); _tex = null; }
         if (_zcTexes != null) { foreach (var t in _zcTexes) if (t != null) Destroy(t); _zcTexes = null; }
-        PdLibretro.Shutdown();
+        LibretroHWBridge.Shutdown();
         _importIssued = false;
         _extTexReady = false;
     }
