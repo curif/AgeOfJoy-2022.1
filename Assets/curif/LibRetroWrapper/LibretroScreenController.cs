@@ -100,6 +100,10 @@ public class LibretroScreenController : MonoBehaviour
     [SerializeField]
     public string Core = "mame2003+";
 
+    // Flycast only: route the thumbstick to the DC analog stick + triggers (input.analog-stick).
+    [SerializeField]
+    public bool AnalogStick = false;
+
     [SerializeField]
     public bool? Persistent;
 
@@ -592,6 +596,7 @@ public class LibretroScreenController : MonoBehaviour
         FlycastCore.Shader = shader;
         FlycastCore.ControlMap = libretroControlMap;
         FlycastCore.CoinSlot = CoinSlot;
+        FlycastCore.AnalogStick = AnalogStick;
 
         // Light guns configuration (same wiring as the MAME path; must precede FlycastCore.Start,
         // which declares the gun's maple port before the core loads the game)

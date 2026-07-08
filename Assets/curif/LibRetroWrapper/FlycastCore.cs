@@ -25,12 +25,17 @@ public static class FlycastCore
 {
     public const string CoreName = "flycast";
     public const string CoreLibFileName = "libflycast_libretro_android.so";
+    // On-device content subfolder for this core's games + BIOS. Named "dc" to match Flycast's own
+    // forced <systemDir>/dc BIOS folder — the RetroArch-standard flycast layout — so the naming is
+    // consistent across both roots: BIOS in system/dc/, games in downloads/dc/.
+    public const string ContentDirName = "dc";
 
     // Set by LibretroScreenController before Start(), mirroring LibretroMameCore statics.
     public static ShaderScreenBase Shader;
     public static LibretroControlMap ControlMap;
     public static CoinSlotController CoinSlot;
     public static LightGunTarget lightGunTarget;   // null unless the cabinet declares light-gun
+    public static bool AnalogStick;                // route thumbstick → DC analog stick + triggers (racing cabinets)
 
     // VR display refresh the native pump phase-locks to (rooms present at 72 Hz).
     public static float DisplayHz = 72f;
@@ -52,15 +57,16 @@ public static class FlycastCore
     static int coinFrames;            // frames left to hold the SELECT (coin) bit
     static float nextStatusAt;
 
-    // Resolve the game file the same way LibretroMameCore.getPath does: per-core dir first.
+    // Resolve the game file the same way LibretroMameCore.getPath does: per-core dir first
+    // (downloads/dc/), then the downloads root as a fallback.
     public static string getPath(string gameFileName)
     {
-        string path = ConfigManager.RomsDir + "/" + CoreName + "/" + gameFileName;
+        string path = ConfigManager.RomsDir + "/" + ContentDirName + "/" + gameFileName;
         if (!File.Exists(path))
             path = ConfigManager.RomsDir + "/" + gameFileName;
         if (!File.Exists(path))
         {
-            ConfigManager.WriteConsoleError($"[FlycastCore] game not found: {ConfigManager.RomsDir}/{CoreName}/{gameFileName}");
+            ConfigManager.WriteConsoleError($"[FlycastCore] game not found: {ConfigManager.RomsDir}/{ContentDirName}/{gameFileName}");
             return null;
         }
         return path;
@@ -80,10 +86,15 @@ public static class FlycastCore
 
         string corePath = Path.Combine(PdLibretro.NativeLibraryDir(), CoreLibFileName);
 
-        // Flycast treats <systemDir>/dc as its Dreamcast root (BIOS at <systemDir>/dc/dc_boot.bin).
-        // persistentDataPath keeps the device-proven layout: BIOS/nvmem/VMU live under files/dc/.
-        string sysDir = Application.persistentDataPath;
-        string saveDir = Path.Combine(sysDir, "dc", "saves");
+        // BIOS lives in AoJ's shared system folder (ConfigManager.SystemDir, the same root the
+        // software cores use). Flycast forces a "/dc" subdir on its system dir and reads BIOS + nvmem
+        // there, so pointing it at SystemDir yields the RetroArch-standard system/dc/ layout. VMU +
+        // savestates go to the save dir we pass. Net on-device layout:
+        //   BIOS + nvmem     : <BaseDir>/system/dc/     (dc_boot.bin, dc_flash.bin,
+        //                                                naomi.zip/awbios.zip/…, dc_nvmem.bin)
+        //   VMU + savestates : <BaseDir>/system/dc/saves/
+        string sysDir = ConfigManager.SystemDir;
+        string saveDir = Path.Combine(sysDir, ContentDirName, "saves");
         try { Directory.CreateDirectory(saveDir); } catch { }
 
         ConfigManager.WriteConsole($"[FlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
@@ -105,6 +116,13 @@ public static class FlycastCore
             ConfigManager.WriteConsole("[FlycastCore.Start] zero-copy unavailable on the core's device — using CPU read-back path");
 
         // Phase-lock the native pump to the VR display cadence; set after Start().
+        // Pull the live headset refresh rather than trusting the 72 default — a Quest 3 (or a
+        // future model) may present at 90/120, and the pump's emulated:display pulldown ratio must
+        // match the real rate or ~60 Hz DC content judders. Getter returns 0 on failure → keep default.
+        float liveHz = OVRPlugin.systemDisplayFrequency;
+        if (liveHz > 1f)
+            DisplayHz = liveHz;
+        ConfigManager.WriteConsole($"[FlycastCore.Start] display refresh = {DisplayHz:F1} Hz (live={liveHz:F1})");
         PdLibretro.SetDisplayHz(DisplayHz);
         PdLibretro.SetAudioOutputRate(AudioSettings.outputSampleRate);
 
@@ -322,7 +340,21 @@ public static class FlycastCore
             coinFrames--;
         }
 
-        PdLibretro.SetInput(b, 0, 0);   // analog stick: not mapped yet (d-pad titles first)
+        // Analog cabinets (input: { analog-stick: true }) drive the DC analog stick + analog
+        // triggers from the thumbstick and the L/R triggers (racing games). The digital d-pad bits
+        // in `b` still ride along — harmless, the standard DC pad exposes both. Default cabinets
+        // send a centered stick, so the game sees only the d-pad (fighting titles).
+        if (AnalogStick)
+        {
+            ControlMap.ReadStick(out short lx, out short ly);
+            short lt = ControlMap.ReadTrigger(LC.JOYPAD_L);   // left trigger  → DC L2 (brake)
+            short rt = ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → DC R2 (accelerate)
+            PdLibretro.SetInput(b, lx, ly, lt, rt);
+        }
+        else
+        {
+            PdLibretro.SetInput(b, 0, 0);
+        }
 
         // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls. In LIGHTGUN mode
         // flycast reads ONLY lightgun ids on that port, so the coin must ride SELECT here too.

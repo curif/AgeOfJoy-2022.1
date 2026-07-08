@@ -45,7 +45,7 @@ public static class PdLibretro
     static extern int _pdlr_frame_count();
 
     [DllImport(LIB, EntryPoint = "pdlr_set_input")]
-    static extern void _pdlr_set_input(uint buttons, short lx, short ly);
+    static extern void _pdlr_set_input(uint buttons, short lx, short ly, short lt, short rt);
 
     [DllImport(LIB, EntryPoint = "pdlr_set_port_device")]
     static extern void _pdlr_set_port_device(uint port, uint device);
@@ -203,12 +203,13 @@ public static class PdLibretro
         public const int A = 8, X = 9, L = 10, R = 11, L2 = 12, R2 = 13, L3 = 14, R3 = 15;
     }
 
-    // DEBUG: push the current gamepad state (buttons bitmask + left analog stick) for the next Run().
+    // Push the current gamepad state for the next Run(): buttons bitmask + left analog stick
+    // (lx/ly, [-0x7fff, 0x7fff]) + analog triggers (lt/rt → Dreamcast L2/R2, [0, 0x7fff]).
     // No-op until the core is available. Call once per frame before Run().
-    public static void SetInput(uint buttons, short lx, short ly)
+    public static void SetInput(uint buttons, short lx, short ly, short lt = 0, short rt = 0)
     {
         if (!Available) return;
-        _pdlr_set_input(buttons, lx, ly);
+        _pdlr_set_input(buttons, lx, ly, lt, rt);
     }
 
     // libretro device types for SetPortDevice.

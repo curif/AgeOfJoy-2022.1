@@ -50,6 +50,20 @@ public class CabinetInformation
     [YamlMember(Alias = "light-gun", ApplyNamingConventions = false)]
     public LightGunInformation lightGunInformation = new();
 
+    [YamlMember(Alias = "input", ApplyNamingConventions = false)]
+    public InputInformation input = new();
+
+    // Per-cabinet input options. Currently consumed only by the Flycast HW core (core: flycast);
+    // the software cores (MAME/FBNeo) ignore it.
+    public class InputInformation
+    {
+        // Route the analog thumbstick to the Dreamcast analog stick + analog triggers instead of
+        // the digital d-pad. Off (default) = classic d-pad, right for fighting games; on = analog,
+        // right for racing games (Sega Rally 2, etc.). See docs/AOJ_FlycastCore.md.
+        [YamlMember(Alias = "analog-stick", ApplyNamingConventions = false)]
+        public bool analogStick = false;
+    }
+
     public CabinetAGEBasicInformation agebasic = new();
 
     [YamlMember(Alias = "debug-mode", ApplyNamingConventions = false)]

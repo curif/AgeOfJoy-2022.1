@@ -10,15 +10,19 @@ using UnityEngine.InputSystem;
 // Attach to a debug QUAD (e.g. the "FrameBuffer" object — disable PdVkQuad there first). On-device
 // only (no-op in editor). Watch logcat "pdlr"/"flycast". Remove before release.
 //
-// Setup (push BIOS + game once):
-//   adb push dc_boot.bin dc_flash.bin vf3.cdi /sdcard/Android/data/com.curif.AgeOfJoy/files/dc/
+// Setup (push BIOS + game once) — same layout as the shipping cabinets:
+//   adb push dc_boot.bin dc_flash.bin /sdcard/Android/data/com.curif.AgeOfJoy/system/dc/
+//   adb push vf3.cdi               /sdcard/Android/data/com.curif.AgeOfJoy/downloads/dc/
 [RequireComponent(typeof(Renderer))]
 [RequireComponent(typeof(AudioSource))]   // authored (NOT runtime-added) — runtime-added sources never
                                           // get pulled into the DSP graph on Quest/Meta XR (callbacks fire 0×)
 public class PdFlycast : MonoBehaviour
 {
-    [Tooltip("Folder (under persistentDataPath) holding dc_boot.bin, dc_flash.bin and the game.")]
+    [Tooltip("Deprecated / unused: BIOS + games now come from the shared production locations " +
+             "(system/dc and downloads/dc), same as FlycastCore. Kept only so existing scene " +
+             "serialization doesn't warn.")]
     public string dcSubDir = "dc";
+    [Tooltip("Game file to load from downloads/dc/ (overridable at runtime via that folder's game.txt).")]
     public string gameFile = "vf3.cdi";
     public string coreFileName = "libflycast_libretro_android.so";
 
@@ -97,20 +101,19 @@ public class PdFlycast : MonoBehaviour
         _renderer = GetComponent<Renderer>();
         _material = _renderer.material;   // instance, safe to mutate
 
-        // Flycast treats <systemDir>/dc as its Dreamcast root and looks for BIOS at
-        // <systemDir>/dc/dc_boot.bin. Pass persistentDataPath (not dcDir) so that resolves to
-        // <persistentDataPath>/dc — the dcSubDir folder where dc_boot.bin/dc_flash.bin already live.
-        // Passing dcDir made it look one level too deep (…/dc/dc/) and silently fall back to the HLE
-        // reios BIOS, which renders video but leaves AICA (sound) undriven → all-zero audio.
-        string sysDir   = Application.persistentDataPath;
-        string dcDir    = Path.Combine(sysDir, dcSubDir);
-        string saveDir  = Path.Combine(dcDir, "saves");
+        // Pull BIOS and games from the SAME on-device locations the production FlycastCore uses, so
+        // the debug quad and the real cabinets share one content layout (see FlycastCore.Start):
+        //   BIOS + nvmem : <SystemDir>/dc/     (Flycast forces the /dc subdir on its system dir)
+        //   games        : <RomsDir>/dc/<file> (downloads/dc/), falling back to downloads/
+        string sysDir   = ConfigManager.SystemDir;
+        string saveDir  = Path.Combine(sysDir, FlycastCore.ContentDirName, "saves");
+        string romsDir  = Path.Combine(ConfigManager.RomsDir, FlycastCore.ContentDirName);
 
-        // Per-device override: first non-empty line of <dc>/game.txt names the game file to load
-        // (relative to dcDir), replacing the scene-serialized gameFile. Lets us swap games (DC disc
-        // images, NAOMI/Atomiswave romsets — flycast auto-detects the platform from the content)
-        // with an adb push instead of a Unity rebuild.
-        string overridePath = Path.Combine(dcDir, "game.txt");
+        // Per-device override: first non-empty line of <roms>/game.txt names the game file to load
+        // (relative to the flycast roms dir), replacing the scene-serialized gameFile. Lets us swap
+        // games (DC disc images, NAOMI/Atomiswave romsets — flycast auto-detects the platform from
+        // the content) with an adb push instead of a Unity rebuild.
+        string overridePath = Path.Combine(romsDir, "game.txt");
         try
         {
             if (File.Exists(overridePath))
@@ -127,12 +130,15 @@ public class PdFlycast : MonoBehaviour
         }
         catch (Exception e) { Status("game.txt read failed (using default game): " + e.Message); }
 
-        string gamePath = Path.Combine(dcDir, gameFile);
+        // Resolve the game the same way FlycastCore.getPath does: downloads/flycast first, then downloads/.
+        string gamePath = Path.Combine(romsDir, gameFile);
+        if (!File.Exists(gamePath))
+            gamePath = Path.Combine(ConfigManager.RomsDir, gameFile);
         string corePath = Path.Combine(PdLibretro.NativeLibraryDir(), coreFileName);
         try { Directory.CreateDirectory(saveDir); } catch { }
 
-        Status($"start core='{corePath}' sys='{sysDir}' dc='{dcDir}' game='{gamePath}' zeroCopy={zeroCopy}");
-        if (!File.Exists(gamePath)) Status($"WARNING game not found at '{gamePath}' — push it first");
+        Status($"start core='{corePath}' sys='{sysDir}' roms='{romsDir}' game='{gamePath}' zeroCopy={zeroCopy}");
+        if (!File.Exists(gamePath)) Status($"WARNING game not found at '{gamePath}' — push it to downloads/dc/ first");
 
         // Must be set before Start() — it decides which device extensions the core is asked to enable.
         PdLibretro.SetZeroCopy(zeroCopy);

@@ -345,6 +345,25 @@ Supported device type names: `empty`, `gamepad`, `mouse`, `mouse_pointer`, `keyb
 
 A numeric device ID can also be specified directly as `device_<uint>` for cores that expose custom device subtypes.
 
+### Light guns on the Flycast HW core
+
+Working since 2026-07-08 (device-verified with House of the Dead 2 on NAOMI). A flycast
+cabinet with a `light-gun:` section in its `description.yaml` needs no `devices:` entry:
+`FlycastCore.Start` declares port 0 as `RETRO_DEVICE_LIGHTGUN` via
+`PdLibretro.SetPortDevice` **before** the game loads (Flycast builds its maple bus at
+`retro_load_game` — a post-load change is ignored). Ports 1–3 stay JOYPAD; single player
+only for now.
+
+The VR gun raycast (`LightGunTarget`, the same component the MAME path uses) is pushed
+each frame by `FlycastCore.PollInput` → `PdLibretro.SetLightgun(x, y, offscreen, buttons)`
+→ `libpdlr`'s `input_state_cb`. Two flycast-specific rules:
+
+- In LIGHTGUN mode flycast reads **only** `LIGHTGUN_*` ids on that port — `JOYPAD_*`
+  mappings never reach the game. Custom `controllers:` blocks for flycast gun cabinets
+  must remap `LIGHTGUN_TRIGGER`, `LIGHTGUN_START`, etc.
+- The coin is delivered as `LIGHTGUN_SELECT` (flycast's NAOMI coin id on a gun port),
+  wired automatically from the cabinet coin slot.
+
 ---
 
 ## User-Level Overrides (on the headset)
