@@ -32,6 +32,10 @@ public class MRRuntimeSettings : MonoBehaviour
     [Tooltip("Root object name for the payphone prefab instance.")]
     public string phoneBoothObjectName = DefaultPhoneBoothObjectName;
 
+    [Header("Feature gate")]
+    [Tooltip("When off, players cannot enter Mixed Reality (phone booth, auto-boot). Toggle via Custom → MR.")]
+    public bool mrFeatureEnabled = true;
+
     [Header("MRUK room / anchors")]
     [Tooltip("World-space canvas (MRRoomInfoUI) listing scanned room and anchor counts.")]
     public bool showRoomAnchorInfoCanvas = true;
@@ -178,6 +182,19 @@ public class MRRuntimeSettings : MonoBehaviour
 
     public static string PhoneBoothObject =>
         Instance != null ? Instance.phoneBoothObjectName : DefaultPhoneBoothObjectName;
+
+    public static bool MrFeatureEnabled =>
+        Instance == null || Instance.mrFeatureEnabled;
+
+    /// <summary>True when MR entry must be refused (logs once per call site).</summary>
+    public static bool IsMrEntryBlocked(string caller)
+    {
+        if (MrFeatureEnabled)
+            return false;
+
+        ConfigManager.WriteConsoleWarning($"[MRRuntimeSettings] MR feature disabled — {caller} blocked");
+        return true;
+    }
 
 #if UNITY_EDITOR
     /// <summary>Editor hides IntroGallery by default (missing YAML field must not disable this).</summary>

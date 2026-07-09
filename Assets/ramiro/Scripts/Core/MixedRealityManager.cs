@@ -88,9 +88,6 @@ public class MixedRealityManager : MonoBehaviour
         if (GetComponent<MRRoomInfoUI>() == null)
             gameObject.AddComponent<MRRoomInfoUI>();
 
-        if (GetComponent<MRModeInput>() == null)
-            gameObject.AddComponent<MRModeInput>();
-
         if (GetComponent<MREditMenuInput>() == null)
             gameObject.AddComponent<MREditMenuInput>();
 
@@ -205,6 +202,9 @@ public class MixedRealityManager : MonoBehaviour
 
     public void EnterMR()
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("EnterMR"))
+            return;
+
         MRTransitionLog.LogStep("EnterMR", "requested");
         MRTransitionLog.LogManagerState("EnterMR-begin");
         MRTransitionLog.LogScenes("EnterMR-begin");
@@ -228,6 +228,9 @@ public class MixedRealityManager : MonoBehaviour
 
     void EnterMRDirectFromBoot()
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("EnterMRDirectFromBoot"))
+            return;
+
         MRTransitionLog.LogStep("EnterMRDirectFromBoot", "requested");
         MRTransitionLog.LogManagerState("EnterMRDirectFromBoot-begin");
         MRTransitionLog.LogScenes("EnterMRDirectFromBoot-begin");
@@ -253,6 +256,9 @@ public class MixedRealityManager : MonoBehaviour
     /// </summary>
     public void EnterTestSceneMr(Vector3 originPosition, Quaternion originRotation)
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("EnterTestSceneMr"))
+            return;
+
         if (CurrentMode == ExperienceMode.MR || CurrentMode == ExperienceMode.MR_EDIT)
         {
             ConfigManager.WriteConsoleWarning($"{LogPrefix} EnterTestSceneMr ignored — already in MR mode");
@@ -269,6 +275,9 @@ public class MixedRealityManager : MonoBehaviour
     /// <summary>Immersive VR→MR via phone booth — player stays inside the rescued booth.</summary>
     public void EnterMRFromPhoneBooth(MRPhoneBoothPortal portal)
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("EnterMRFromPhoneBooth"))
+            return;
+
         MRTransitionLog.LogStep("EnterMRFromPhoneBooth", "requested");
         MRTransitionLog.LogManagerState("EnterMRFromPhoneBooth-begin");
 
@@ -300,6 +309,9 @@ public class MixedRealityManager : MonoBehaviour
     /// </summary>
     public void StartPhoneBoothVrToMrTravel(MRPhoneBoothPortal portal, PhoneBoothTravelState travelState)
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("StartPhoneBoothVrToMrTravel"))
+            return;
+
         if (portal == null)
             return;
 

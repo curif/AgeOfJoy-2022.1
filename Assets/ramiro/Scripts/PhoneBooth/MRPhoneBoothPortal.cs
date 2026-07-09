@@ -99,6 +99,9 @@ public class MRPhoneBoothPortal : MonoBehaviour
     /// <summary>Called by PayphoneHandsetGrab when the handset is grabbed.</summary>
     public void NotifyHandsetGrabbedForTravel()
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("NotifyHandsetGrabbedForTravel"))
+            return;
+
         if (TryDelegateHandsetTravelToMrTraveler())
             return;
 
@@ -121,6 +124,9 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
     public void BeginTravelToMR()
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("BeginTravelToMR"))
+            return;
+
         if (travelInProgress || MixedRealityManager.Instance == null)
             return;
 

@@ -129,17 +129,6 @@ public static class MREditorInput
 #endif
     }
 
-    public static bool MrModeToggleHeld()
-    {
-#if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
-        return IsAnyHeld(KeyCode.Return, KeyCode.KeypadEnter)
-            || IsGamepadButtonHeld(0)
-            || IsGamepadStartHeld();
-#else
-        return false;
-#endif
-    }
-
     public static bool YButtonHeld()
     {
 #if UNITY_EDITOR && ENABLE_INPUT_SYSTEM
@@ -235,8 +224,5 @@ public static class MREditorInput
             default: return false;
         }
     }
-
-    static bool IsGamepadStartHeld() =>
-        Gamepad.current != null && Gamepad.current.startButton.isPressed;
 #endif
 }

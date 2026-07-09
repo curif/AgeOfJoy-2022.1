@@ -25,7 +25,7 @@ public class MRConfigurationController : MonoBehaviour
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
     const int LightsAutoRowIndex = 0;
-    const int OfficialCategoryCount = 3;
+    const int OfficialCategoryCount = 2; // was 3 — Bookshelves/Magazines hidden from menu
     const int CustomCategoryCount = 3;
     const int ConfigCategoryCount = 3;
     const int ListRowNameWidth = 10;
@@ -638,15 +638,15 @@ public class MRConfigurationController : MonoBehaviour
         screen.PrintLine(1, false, '-');
 
         string lightsPrefix = selectedListIndex == 0 ? "> " : "  ";
-        string magazinesPrefix = selectedListIndex == 1 ? "> " : "  ";
-        string othersPrefix = selectedListIndex == 2 ? "> " : "  ";
+        // string magazinesPrefix = selectedListIndex == 1 ? "> " : "  ";
+        string othersPrefix = selectedListIndex == 1 ? "> " : "  ";
         screen.Print(1, 5, lightsPrefix + "Lights", selectedListIndex == 0);
-        screen.Print(1, 7, magazinesPrefix + "Bookshelves", selectedListIndex == 1);
-        screen.Print(1, 9, othersPrefix + "Others", selectedListIndex == 2);
+        // screen.Print(1, 7, magazinesPrefix + "Bookshelves", selectedListIndex == 1);
+        screen.Print(1, 7, othersPrefix + "Others", selectedListIndex == 1);
 
         screen.Print(1, 12, "Lights: ramiro/Lights/", false);
-        screen.Print(1, 13, "Bookshelves: MR/Magazines/", false);
-        screen.Print(1, 14, "Others: PrefabsEnvironment/", false);
+        // screen.Print(1, 13, "Bookshelves: MR/Magazines/", false);
+        screen.Print(1, 13, "Others: PrefabsEnvironment/", false);
         DrawFooter("A: open   B: back");
     }
 
@@ -1240,14 +1240,14 @@ public class MRConfigurationController : MonoBehaviour
         yield return "Wall placement. R-stick L/R spin Y";
         yield return "Tune on placed copy = YZ scale";
         yield return string.Empty;
-        yield return "OFFICIAL: BOOKSHELVES";
-        yield return "Folder: MR/Magazines/<issue>/";
-        yield return "Numbered page images (1st/2nd/last)";
-        yield return $"Prefab: Resources/{MREnvironmentCatalog.ResourcesPath}/";
-        yield return $"{MREnvironmentCatalog.BookshelfPrefabName}";
-        yield return "Auto groups up to 8 issues";
-        yield return "Floor placement. Grab magazines";
-        yield return string.Empty;
+        // yield return "OFFICIAL: BOOKSHELVES";
+        // yield return "Folder: MR/Magazines/<issue>/";
+        // yield return "Numbered page images (1st/2nd/last)";
+        // yield return $"Prefab: Resources/{MREnvironmentCatalog.ResourcesPath}/";
+        // yield return $"{MREnvironmentCatalog.BookshelfPrefabName}";
+        // yield return "Auto groups up to 8 issues";
+        // yield return "Floor placement. Grab magazines";
+        // yield return string.Empty;
         yield return "CUSTOM: ROOM SKIN";
         yield return "Folder: MR/Room Skins/";
         yield return "Textures on room scan mesh";
@@ -2599,13 +2599,13 @@ public class MRConfigurationController : MonoBehaviour
                 listScrollOffset = 0;
                 currentScreen = Screen.Lights;
                 break;
-            case 1:
-                RefreshMagazinesCatalog();
-                selectedListIndex = 0;
-                selectedColumnIndex = 0;
-                listScrollOffset = 0;
-                currentScreen = Screen.Magazines;
-                break;
+            // case 1: Bookshelves / magazines — hidden from Official Objects menu
+            //     RefreshMagazinesCatalog();
+            //     selectedListIndex = 0;
+            //     selectedColumnIndex = 0;
+            //     listScrollOffset = 0;
+            //     currentScreen = Screen.Magazines;
+            //     break;
             default:
                 RefreshObjectCatalogs();
                 selectedListIndex = 0;

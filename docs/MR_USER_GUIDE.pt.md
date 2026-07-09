@@ -343,7 +343,7 @@ Cada pacote contém:
 | **Cabo USB** (ou conexão ADB já configurada) | Transferir pacotes |
 | **Age of Joy** aberto pelo menos uma vez no Quest | Cria as pastas de dados do MR |
 
-Baixe o Studio na [última release](https://github.com/ramiro-github/aoj-mr-studio/releases/latest) (executável Windows, sem instalar Python).
+Baixe o zip da [última release](https://github.com/ramiro-github/aoj-mr-studio/releases/latest) (**não** clone o repositório). Extraia a pasta e execute **`AOJ MR Studio.exe`** — não é necessário instalar Python.
 
 #### Passo a passo — novo objeto
 
@@ -594,7 +594,7 @@ Assim, sua sala estará exatamente como você deixou na próxima vez que iniciar
 
 O **AOJ MR Studio** é a ferramenta oficial no **Windows** para criar e enviar conteúdo MR ao Quest pelo cabo USB (ADB). Não é necessário editar pastas do headset manualmente.
 
-**Download:** [última release](https://github.com/ramiro-github/aoj-mr-studio/releases/latest) — extraia a pasta e execute `AOJ MR Studio.exe`.
+**Download:** [última release](https://github.com/ramiro-github/aoj-mr-studio/releases/latest) — baixe o zip **`AOJ-MR-Studio-vX.Y.Z-win64.zip`**, extraia a pasta **`AOJ MR Studio`** e execute **`AOJ MR Studio.exe`**. **Não** use `git clone`; o código-fonte no GitHub é só para desenvolvedores.
 
 ### O que o Studio faz hoje
 
