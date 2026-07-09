@@ -66,6 +66,10 @@ sysinfo.txt
 *.so
 *.dll
 
+# Native bridge (nativebridge/): track source only; build/ holds regenerated
+# artifacts (.so already ignored above, plus SPIR-V .spv/.spv.h and objects).
+nativebridge/**/build/
+
 # Crashlytics generated file
 crashlytics-build.properties
 

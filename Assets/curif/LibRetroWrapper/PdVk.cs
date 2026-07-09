@@ -4,7 +4,7 @@ using UnityEngine;
 
 // PdVk — managed binding for the isolated Vulkan context plugin (libpdvk.so).
 //
-// Unity side of the C ABI in claudedocs/vulkanresearch/PDTooling/vulkan_plugin/pdvk.h. The
+// Unity side of the C ABI in nativebridge/vulkan_plugin/pdvk.h. The
 // native lib owns its OWN VkInstance/VkDevice (Option B — a separate Vulkan context, NOT Unity's
 // device), renders a rotating checkerboard offscreen, and reads it back to a CPU-visible buffer
 // we copy onto a quad. This is the Milestone-1 / CPU-blit bring-up path; the zero-copy
