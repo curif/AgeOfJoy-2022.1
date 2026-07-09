@@ -4,9 +4,11 @@
 
 The Flycast-based Dreamcast/NAOMI/Atomiswave cores that drive the experimental
 Vulkan cabinets are **not** built from this repository. The C# bridge glue
-(`PdFlycast.cs`, `LibretroHWBridge.cs`, `PdVk.cs`, `PdVkQuad.cs`, `PdLibretroProbe.cs`,
+(`PdFlycast.cs`, `LibretroHWBridge.cs`, `PdLibretroProbe.cs`,
 `cwrapper/vulkan.*`, `libVulkanPlugin/`) lives here and is tracked on the
-`fix/v0.5-2` branch. The **native core source** lives in a separate repository.
+`fix/v0.5-2` branch, as does the libretro host frontend source under
+`nativebridge/libretro_frontend/` (builds `libpdlr.so`). The **native core
+source** (the Flycast emulator itself) lives in a separate repository.
 
 ## Native source repository
 
@@ -57,8 +59,9 @@ Then copy into place and rename:
 build-android/flycast_libretro.so  ->  Assets/Plugins/Android64/libflycast_libretro_android.so
 ```
 
-The companion `libpdlr.so` / `libpdvk.so` / `libVulkanPlugin.so` bridge binaries
-are built from `libVulkanPlugin/` (in this repo) and the `cwrapper/` sources.
+The companion `libpdlr.so` bridge binary is built from
+`nativebridge/libretro_frontend/` (in this repo); `libVulkanPlugin.so` is built
+from `libVulkanPlugin/` and the `cwrapper/` sources.
 
 ## Binaries
 

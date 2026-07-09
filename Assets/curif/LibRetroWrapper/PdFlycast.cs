@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 // it, and show its emulated frame on this object's material (CPU read-back path). Proves the full
 // pipeline end-to-end (stock core → in-process Vulkan → quad). Zero-copy AHB is the later upgrade.
 //
-// Attach to a debug QUAD (e.g. the "FrameBuffer" object — disable PdVkQuad there first). On-device
+// Attach to a debug QUAD (e.g. the "FrameBuffer" object). On-device
 // only (no-op in editor). Watch logcat "pdlr"/"flycast". Remove before release.
 //
 // Setup (push BIOS + game once) — same layout as the shipping cabinets:
