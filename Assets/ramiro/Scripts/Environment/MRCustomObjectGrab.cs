@@ -47,6 +47,9 @@ public class MRCustomObjectGrab : MonoBehaviour
 
     Vector3 homeWorldPosition;
     Quaternion homeWorldRotation;
+    Transform homeParent;
+    Vector3 homeLocalPosition;
+    Quaternion homeLocalRotation;
     Vector3 homeLocalScale;
     Coroutine returnHomeCoroutine;
 
@@ -124,6 +127,11 @@ public class MRCustomObjectGrab : MonoBehaviour
             return;
 
         CaptureHomePose();
+    }
+
+    public void SetReturnOnRelease(bool enabled)
+    {
+        returnOnRelease = enabled;
     }
 
     void SetupOneHand()
@@ -292,8 +300,20 @@ public class MRCustomObjectGrab : MonoBehaviour
 
     void SnapHome()
     {
-        grabRoot.SetPositionAndRotation(homeWorldPosition, homeWorldRotation);
-        grabRoot.localScale = homeLocalScale;
+        if (homeParent != null)
+        {
+            grabRoot.SetParent(homeParent, worldPositionStays: false);
+            grabRoot.localPosition = homeLocalPosition;
+            grabRoot.localRotation = homeLocalRotation;
+            grabRoot.localScale = homeLocalScale;
+        }
+        else
+        {
+            grabRoot.SetParent(null, worldPositionStays: true);
+            grabRoot.SetPositionAndRotation(homeWorldPosition, homeWorldRotation);
+            grabRoot.localScale = homeLocalScale;
+        }
+
         SetDockedPhysics(true);
     }
 
@@ -301,6 +321,16 @@ public class MRCustomObjectGrab : MonoBehaviour
     {
         Vector3 startPos = grabRoot.position;
         Quaternion startRot = grabRoot.rotation;
+        Vector3 endPos = homeParent != null
+            ? homeParent.TransformPoint(homeLocalPosition)
+            : homeWorldPosition;
+        Quaternion endRot = homeParent != null
+            ? homeParent.rotation * homeLocalRotation
+            : homeWorldRotation;
+
+        if (homeParent != null)
+            grabRoot.SetParent(homeParent, worldPositionStays: true);
+
         float elapsed = 0f;
 
         while (elapsed < returnDurationSeconds)
@@ -308,8 +338,8 @@ public class MRCustomObjectGrab : MonoBehaviour
             elapsed += Time.deltaTime;
             float t = Mathf.SmoothStep(0f, 1f, elapsed / returnDurationSeconds);
             grabRoot.SetPositionAndRotation(
-                Vector3.Lerp(startPos, homeWorldPosition, t),
-                Quaternion.Slerp(startRot, homeWorldRotation, t));
+                Vector3.Lerp(startPos, endPos, t),
+                Quaternion.Slerp(startRot, endRot, t));
             yield return null;
         }
 
@@ -384,8 +414,11 @@ public class MRCustomObjectGrab : MonoBehaviour
 
     void CaptureHomePose()
     {
+        homeParent = grabRoot.parent;
         homeWorldPosition = grabRoot.position;
         homeWorldRotation = grabRoot.rotation;
+        homeLocalPosition = grabRoot.localPosition;
+        homeLocalRotation = grabRoot.localRotation;
         homeLocalScale = grabRoot.localScale;
     }
 

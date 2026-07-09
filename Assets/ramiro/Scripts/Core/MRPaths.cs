@@ -12,11 +12,13 @@ public static class MRPaths
     public const string MrFolderName = "MR";
     public const string CustomObjectsFolderName = "Custom Objects";
     public const string PostersFolderName = "Posters";
+    public const string MagazinesFolderName = "Magazines";
     public const string RoomSkinsFolderName = "Room Skins";
     public const string CabinetsLayoutFileName = "cabinets-layout.yaml";
     public const string ObjectsLayoutFileName = "objects-layout.yaml";
     public const string CustomObjectYamlFileName = "object.yaml";
     public const string RoomSkinYamlFileName = "roomskin.yaml";
+    public const string MagazineYamlFileName = "magazine.yaml";
     /// <summary>Default image filename when <c>texture</c> is omitted in roomskin.yaml.</summary>
     public const string RoomSkinDefaultTextureFileName = "texture.png";
 
@@ -26,6 +28,7 @@ public static class MRPaths
     public static string MrDir => Path.Combine(ConfigManager.BaseDir, MrFolderName);
     public static string CustomObjectsDir => Path.Combine(MrDir, CustomObjectsFolderName);
     public static string PostersDir => Path.Combine(MrDir, PostersFolderName);
+    public static string MagazinesDir => Path.Combine(MrDir, MagazinesFolderName);
     public static string RoomSkinsDir => Path.Combine(MrDir, RoomSkinsFolderName);
     public static string CabinetsLayoutPath => Path.Combine(MrDir, CabinetsLayoutFileName);
     public static string ObjectsLayoutPath => Path.Combine(MrDir, ObjectsLayoutFileName);
@@ -44,9 +47,12 @@ public static class MRPaths
         ConfigManager.CreateFolder(MrDir);
         ConfigManager.CreateFolder(CustomObjectsDir);
         ConfigManager.CreateFolder(PostersDir);
+        ConfigManager.CreateFolder(MagazinesDir);
         ConfigManager.CreateFolder(RoomSkinsDir);
         SeedExampleCustomObjectIfNeeded();
         SeedPostersReadmeIfNeeded();
+        SeedMagazineReadmeIfNeeded();
+        SeedExampleMagazineIfNeeded();
         MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
     }
 
@@ -101,6 +107,134 @@ public static class MRPaths
 
         return fullPath;
     }
+
+    public static string GetMagazineIssueDir(string issueName)
+    {
+        if (string.IsNullOrEmpty(issueName))
+            return null;
+
+        return Path.Combine(MagazinesDir, issueName);
+    }
+
+    public static string GetMagazineIssueYamlPath(string issueName)
+    {
+        string issueDir = GetMagazineIssueDir(issueName);
+        return string.IsNullOrEmpty(issueDir) ? null : Path.Combine(issueDir, MagazineYamlFileName);
+    }
+
+    public static string ResolveMagazinePagePath(string issueName, string pageFileName)
+    {
+        if (string.IsNullOrEmpty(issueName) || string.IsNullOrEmpty(pageFileName))
+            return null;
+
+        string issueDir = GetMagazineIssueDir(issueName);
+        string fullPath = Path.GetFullPath(Path.Combine(issueDir, pageFileName));
+        string magazineRoot = Path.GetFullPath(MagazinesDir);
+        if (!fullPath.StartsWith(magazineRoot, System.StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return fullPath;
+    }
+
+    /// <summary>Writes MR/Magazines/README.txt when the folder is new or empty.</summary>
+    public static void SeedMagazineReadmeIfNeeded()
+    {
+        if (!Directory.Exists(MagazinesDir))
+            return;
+
+        string readmePath = Path.Combine(MagazinesDir, "README.txt");
+        if (File.Exists(readmePath))
+            return;
+
+        if (HasAnyMagazineIssue())
+            return;
+
+        try
+        {
+            ConfigManager.CreateFolder(Path.Combine(MagazinesDir, ExamplePackageName));
+            File.WriteAllText(readmePath, MagazineReadmeText);
+            ConfigManager.WriteConsole($"[MRPaths] created magazine readme at {readmePath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {readmePath}", e);
+        }
+    }
+
+    /// <summary>Writes MR/Magazines/Example/magazine.yaml when missing.</summary>
+    public static void SeedExampleMagazineIfNeeded()
+    {
+        if (!Directory.Exists(MagazinesDir))
+            return;
+
+        string exampleDir = Path.Combine(MagazinesDir, ExamplePackageName);
+        string yamlPath = Path.Combine(exampleDir, MagazineYamlFileName);
+        if (File.Exists(yamlPath))
+            return;
+
+        try
+        {
+            ConfigManager.CreateFolder(exampleDir);
+            File.WriteAllText(yamlPath, ExampleMagazineYaml);
+            ConfigManager.WriteConsole($"[MRPaths] created example magazine yaml at {yamlPath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {yamlPath}", e);
+        }
+    }
+
+    static bool HasAnyMagazineIssue()
+    {
+        if (!Directory.Exists(MagazinesDir))
+            return false;
+
+        foreach (string issueDir in Directory.GetDirectories(MagazinesDir))
+        {
+            foreach (string file in Directory.GetFiles(issueDir, "*.*", SearchOption.TopDirectoryOnly))
+            {
+                if (MRPostersCatalog.IsSupportedImageFile(file))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    const string MagazineReadmeText = @"Age of Joy — MR magazines
+==============================
+
+Copy one folder per issue under MR/Magazines/ (Quest: Android/data/com.curif.AgeOfJoy/MR/Magazines/).
+
+Each issue folder must contain numbered page images (sorted by leading number):
+
+  MR/Magazines/MyIssue/1.jpg    — front cover (outside, left)
+  MR/Magazines/MyIssue/2.jpg    — inside front cover
+  MR/Magazines/MyIssue/3.jpg    — first interior page
+  ...
+  MR/Magazines/MyIssue/N-1.jpg  — inside back cover
+  MR/Magazines/MyIssue/N.jpg    — back cover (outside, right)
+
+Cover roles are inferred from sort order (1st, 2nd, penultimate, last).
+Optional magazine.yaml can override cover filenames.
+
+Supported formats: .png .jpg .jpeg .webp .bmp
+On Quest prefer .png or .jpg (.tif often does not load).
+
+Bookshelves in MR CONFIGURATION group up to 8 issues per shelf.
+";
+
+    const string ExampleMagazineYaml = @"# Optional override — covers are inferred from sorted page images when absent.
+# Copy numbered images into this folder (1.jpg, 2.jpg, ... N.jpg).
+
+version: 1
+
+covers:
+  front: 1.jpg
+  insideFront: 2.jpg
+  insideBack: 75.jpg
+  back: 76.jpg
+";
 
     const string PostersReadmeText = @"Age of Joy — MR wall posters
 ================================

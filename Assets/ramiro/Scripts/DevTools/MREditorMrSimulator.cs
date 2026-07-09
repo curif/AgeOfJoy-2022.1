@@ -46,7 +46,6 @@ public class MREditorMrSimulator : MonoBehaviour
             ConfigManager.WriteConsole($"{LogPrefix} FixedScene editor — P = viagem cabine (VR→MR se em VR, MR→VR se em MR)");
             ConfigManager.WriteConsole($"{LogPrefix} Shift+P = forçar VR→MR (precisa modo VR + PF_Payphone na exterior)");
             ConfigManager.WriteConsole($"{LogPrefix} B = toggle blackout imediato (camera cull teste)");
-            ConfigManager.WriteConsole($"{LogPrefix} VR genérico — Enter 3s | MR cabine: ver acima");
         }
 #endif
     }
@@ -120,6 +119,9 @@ public class MREditorMrSimulator : MonoBehaviour
 #if UNITY_EDITOR
     void TrySimulatePhoneBoothTravel()
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("MREditorMrSimulator.P"))
+            return;
+
         MixedRealityManager manager = MixedRealityManager.Instance;
         if (manager == null)
         {
@@ -173,6 +175,9 @@ public class MREditorMrSimulator : MonoBehaviour
 
     void TrySimulateVrToMrTravel()
     {
+        if (MRRuntimeSettings.IsMrEntryBlocked("MREditorMrSimulator.Shift+P"))
+            return;
+
         MixedRealityManager manager = MixedRealityManager.Instance;
         if (manager == null)
         {

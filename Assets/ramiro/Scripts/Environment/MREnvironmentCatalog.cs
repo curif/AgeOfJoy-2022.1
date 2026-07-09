@@ -15,6 +15,8 @@ public static class MREnvironmentCatalog
 {
     public const string ResourcesPath = "ramiro/PrefabsEnvironment";
     public const string ExcludedPrefabName = "ConfigurationCabinetMiniMR";
+    public const string MagazinePrefabName = "Magazine";
+    public const string BookshelfPrefabName = "Bookshelf";
 
     static List<string> cachedNames;
 
@@ -37,6 +39,12 @@ public static class MREnvironmentCatalog
             if (string.Equals(prefab.name, ExcludedPrefabName, StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            if (string.Equals(prefab.name, MagazinePrefabName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (string.Equals(prefab.name, BookshelfPrefabName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
             cachedNames.Add(prefab.name);
         }
 
@@ -52,8 +60,14 @@ public static class MREnvironmentCatalog
         if (string.Equals(prefabName, ExcludedPrefabName, StringComparison.OrdinalIgnoreCase))
             return null;
 
+        if (string.Equals(prefabName, MagazinePrefabName, StringComparison.OrdinalIgnoreCase))
+            return null;
+
         return Resources.Load<GameObject>($"{ResourcesPath}/{prefabName}");
     }
+
+    public static GameObject LoadMagazinePrefab() =>
+        Resources.Load<GameObject>($"{ResourcesPath}/{MagazinePrefabName}");
 
     public static string GetDisplayLabel(string prefabName)
     {

@@ -61,7 +61,19 @@ public class PayphoneHandsetGrab : MonoBehaviour
         EnsurePhoneBoothPortal();
         CaptureHomePose();
         SetDockedPhysics(true);
+        ApplyMrFeatureGate();
         LogSetup();
+    }
+
+    void ApplyMrFeatureGate()
+    {
+        if (MRRuntimeSettings.MrFeatureEnabled)
+            return;
+
+        if (grabInteractable != null)
+            grabInteractable.enabled = false;
+
+        ConfigManager.WriteConsole($"{LogPrefix} handset grab disabled — MR feature off");
     }
 
     void EnsurePhoneBoothPortal()

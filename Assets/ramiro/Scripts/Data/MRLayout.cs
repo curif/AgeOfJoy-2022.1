@@ -218,6 +218,10 @@ public class MREnvironmentPlacement
     public string PackageName;
     /// <summary>Image path relative to MR/Posters when Source is poster.</summary>
     public string TextureFile;
+    /// <summary>Issue folder under MR/Magazines when Source is magazine.</summary>
+    public string MagazineIssueName;
+    /// <summary>Issue folders under MR/Magazines when Source is bookshelf.</summary>
+    public List<string> BookshelfIssueNames;
     public MRVector3 Position;
     public MRQuaternion Rotation;
     public float Scale = 1f;
@@ -246,6 +250,12 @@ public class MREnvironmentPlacement
     public bool IsRoomSkinSource =>
         string.Equals(Source, "roomSkin", StringComparison.OrdinalIgnoreCase);
 
+    public bool IsMagazineSource =>
+        string.Equals(Source, "magazine", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsBookshelfSource =>
+        string.Equals(Source, "bookshelf", StringComparison.OrdinalIgnoreCase);
+
     public void NormalizeLegacySource()
     {
         if (!string.IsNullOrEmpty(Source))
@@ -266,6 +276,10 @@ public class MREnvironmentPlacement
             return !string.IsNullOrEmpty(TextureFile);
         if (IsRoomSkinSource)
             return !string.IsNullOrEmpty(PackageName);
+        if (IsMagazineSource)
+            return !string.IsNullOrEmpty(MagazineIssueName);
+        if (IsBookshelfSource)
+            return BookshelfIssueNames != null && BookshelfIssueNames.Count > 0;
         return !string.IsNullOrEmpty(PrefabName);
     }
 
@@ -282,6 +296,10 @@ public class MREnvironmentPlacement
                 return MRRoomSkinCatalog.GetDisplayLabel(PackageName);
             if (IsPosterSource && !string.IsNullOrEmpty(TextureFile))
                 return MRPostersCatalog.GetDisplayLabel(TextureFile);
+            if (IsMagazineSource && !string.IsNullOrEmpty(MagazineIssueName))
+                return MRMagazineCatalog.GetDisplayLabel(MagazineIssueName);
+            if (IsBookshelfSource && BookshelfIssueNames != null && BookshelfIssueNames.Count > 0)
+                return MRBookshelfCatalog.GetDisplayLabel(BookshelfIssueNames);
             if (!string.IsNullOrEmpty(PrefabName))
                 return PrefabName;
             return string.IsNullOrEmpty(Id) ? "(prop)" : Id;

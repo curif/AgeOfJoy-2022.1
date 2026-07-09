@@ -34,7 +34,6 @@ scene loading, MRUK scan flow, and player rig bridging.
 | `MRTransitionLog` | Structured log helper for mode-transition events |
 | `MRAgentPlayerPresence` | Keeps the player avatar consistent across mode switches |
 | `MRRoomInfoUI` | Overlay with room / anchor debug info |
-| `MRModeInput` | Input actions that switch VR↔MR mode |
 | `MREditMenuInput` | Input for the in-MR CRT configuration menus |
 | `MREditorInput` | Editor-only MR input helpers |
 | `MRPaths` | On-disk MR folder layout under `ConfigManager.BaseDir` |
