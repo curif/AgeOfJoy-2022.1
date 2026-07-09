@@ -58,6 +58,18 @@ public static class LibretroFlycastCore
     static int coinFrames;            // frames left to hold the SELECT (coin) bit
     static float nextStatusAt;
 
+    // Boot watchdog for the tester-facing flycast.log (see FlycastLog): time of the successful Start,
+    // plus one-shot latches for "first frame rendered" and the "loaded but no video" warning.
+    static float loadedAt;
+    static bool firstFrameLogged;
+    static bool noFrameWarned;
+
+    // Tee AoJ's normal console logging (logcat / in-app bug report) to the always-on, tester-facing
+    // flycast.log. File logging is Flycast-only; every WriteConsole call in this driver that matters to
+    // diagnosing a boot goes through these so testers see the same story without adb or debug mode.
+    static void Trace(string m)    { ConfigManager.WriteConsole(m);      FlycastLog.Line(m); }
+    static void TraceErr(string m) { ConfigManager.WriteConsoleError(m); FlycastLog.Err(m); }
+
     // Resolve the game file the same way LibretroMameCore.getPath does: per-core dir first
     // (downloads/dc/), then the downloads root as a fallback.
     public static string getPath(string gameFileName)
@@ -67,7 +79,7 @@ public static class LibretroFlycastCore
             path = ConfigManager.RomsDir + "/" + gameFileName;
         if (!File.Exists(path))
         {
-            ConfigManager.WriteConsoleError($"[LibretroFlycastCore] game not found: {ConfigManager.RomsDir}/{ContentDirName}/{gameFileName}");
+            TraceErr($"[LibretroFlycastCore] game not found: {ConfigManager.RomsDir}/{ContentDirName}/{gameFileName}");
             return null;
         }
         return path;
@@ -75,9 +87,11 @@ public static class LibretroFlycastCore
 
     public static bool Start(string screenName, string gameFileName)
     {
+        FlycastLog.Session($"Flycast boot: game='{gameFileName}' screen='{screenName}'");
+
         if (GameLoaded || !string.IsNullOrEmpty(GameFileName))
         {
-            ConfigManager.WriteConsoleError($"[LibretroFlycastCore.Start] a game is already loaded ({GameFileName} in {ScreenName}); End() first");
+            TraceErr($"[LibretroFlycastCore.Start] a game is already loaded ({GameFileName} in {ScreenName}); End() first");
             return false;
         }
 
@@ -98,7 +112,7 @@ public static class LibretroFlycastCore
         string saveDir = Path.Combine(sysDir, ContentDirName, "saves");
         try { Directory.CreateDirectory(saveDir); } catch { }
 
-        ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
+        Trace($"[LibretroFlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
 
         // Gun cabinet: declare port 0 LIGHTGUN before Start() — Flycast builds its maple bus at
         // load. Ports 1-3 stay JOYPAD (the 4-pad maple parity that gates NAOMI audio init).
@@ -114,7 +128,7 @@ public static class LibretroFlycastCore
             foreach (var kv in CabEnvironment.properties)
             {
                 string key = string.IsNullOrEmpty(CabEnvironment.prefix) ? kv.Key : $"{CabEnvironment.prefix}_{kv.Key}";
-                ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] core-option override: {key} = {kv.Value}");
+                Trace($"[LibretroFlycastCore.Start] core-option override: {key} = {kv.Value}");
                 LibretroHWBridge.SetOption(key, kv.Value);
             }
         }
@@ -123,12 +137,12 @@ public static class LibretroFlycastCore
         LibretroHWBridge.SetZeroCopy(true);
         if (!LibretroHWBridge.Start(corePath, sysDir, saveDir, gamePath))
         {
-            ConfigManager.WriteConsoleError($"[LibretroFlycastCore.Start] pdlr_start FAILED — Available={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
+            TraceErr($"[LibretroFlycastCore.Start] pdlr_start FAILED — Available={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
             return false;
         }
         zeroCopy = LibretroHWBridge.ZeroCopyActive;
         if (!zeroCopy)
-            ConfigManager.WriteConsole("[LibretroFlycastCore.Start] zero-copy unavailable on the core's device — using CPU read-back path");
+            Trace("[LibretroFlycastCore.Start] zero-copy unavailable on the core's device — using CPU read-back path");
 
         // Phase-lock the native pump to the VR display cadence; set after Start().
         // Pull the live headset refresh rather than trusting the 72 default — a Quest 3 (or a
@@ -137,7 +151,7 @@ public static class LibretroFlycastCore
         float liveHz = OVRPlugin.systemDisplayFrequency;
         if (liveHz > 1f)
             DisplayHz = liveHz;
-        ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] display refresh = {DisplayHz:F1} Hz (live={liveHz:F1})");
+        Trace($"[LibretroFlycastCore.Start] display refresh = {DisplayHz:F1} Hz (live={liveHz:F1})");
         LibretroHWBridge.SetDisplayHz(DisplayHz);
         LibretroHWBridge.SetAudioOutputRate(AudioSettings.outputSampleRate);
 
@@ -147,7 +161,10 @@ public static class LibretroFlycastCore
         GameLoaded = true;
         GameFileName = gameFileName;
         ScreenName = screenName;
-        ConfigManager.WriteConsole($"[LibretroFlycastCore.Start] running {gameFileName} in {screenName} zeroCopy={zeroCopy} coreFps={coreFps:F3} sampleRate={LibretroHWBridge.SampleRate:F0}");
+        loadedAt = Time.unscaledTime;
+        firstFrameLogged = false;
+        noFrameWarned = false;
+        Trace($"[LibretroFlycastCore.Start] pdlr_start OK — running {gameFileName} in {screenName} zeroCopy={zeroCopy} coreFps={coreFps:F3} sampleRate={LibretroHWBridge.SampleRate:F0}");
         return true;
     }
 
@@ -189,6 +206,22 @@ public static class LibretroFlycastCore
         else if (LibretroHWBridge.GetFrame(out IntPtr pixels, out int w, out int h) && pixels != IntPtr.Zero && w > 0 && h > 0)
             BlitCpu(pixels, w, h);
 
+        // Boot watchdog for the tester log: confirm the first rendered frame, and flag a core that
+        // loaded but never produced video (the "coin went in, screen stays black" case).
+        if (!firstFrameLogged)
+        {
+            if (LibretroHWBridge.FrameCount > 0)
+            {
+                firstFrameLogged = true;
+                FlycastLog.Line($"first frame rendered ({LibretroHWBridge.FrameCount} frames) — game is running");
+            }
+            else if (!noFrameWarned && Time.unscaledTime - loadedAt > 8f)
+            {
+                noFrameWarned = true;
+                FlycastLog.Err($"core loaded but produced NO frames after 8s — check BIOS in system/{ContentDirName}/ (dc_boot.bin, dc_flash.bin) and that '{GameFileName}' is a valid set");
+            }
+        }
+
         if (Time.unscaledTime >= nextStatusAt)
         {
             nextStatusAt = Time.unscaledTime + 5f;
@@ -210,7 +243,7 @@ public static class LibretroFlycastCore
                 if (fn != IntPtr.Zero)
                 {
                     GL.IssuePluginEvent(fn, LibretroHWBridge.EVENT_IMPORT_AHB);
-                    if (!importIssued) { importIssued = true; ConfigManager.WriteConsole("[LibretroFlycastCore] zero-copy: issued AHB import event"); }
+                    if (!importIssued) { importIssued = true; Trace("[LibretroFlycastCore] zero-copy: issued AHB import event"); }
                 }
             }
             if (LibretroHWBridge.UnityImagesReady)
@@ -247,7 +280,7 @@ public static class LibretroFlycastCore
             IntPtr img = LibretroHWBridge.GetUnityImagePtr(i);
             if (img == IntPtr.Zero)
             {
-                ConfigManager.WriteConsoleError($"[LibretroFlycastCore] zero-copy: buffer {i} image ptr null — abort");
+                TraceErr($"[LibretroFlycastCore] zero-copy: buffer {i} image ptr null — abort");
                 zcTexes = null;
                 return;
             }
@@ -269,7 +302,7 @@ public static class LibretroFlycastCore
         LibretroHWBridge.FrameSize(out aw, out ah);
         ApplyZeroCopyCrop(aw, ah);
         extTexReady = true;
-        ConfigManager.WriteConsole($"[LibretroFlycastCore] zero-copy: {n} external textures bound buffer={bw}x{bh} active={aw}x{ah}");
+        Trace($"[LibretroFlycastCore] zero-copy: {n} external textures bound buffer={bw}x{bh} active={aw}x{ah}");
     }
 
     // Map the screen's UV range onto the active sub-rect of the fixed AHB buffer via the material's
@@ -347,7 +380,10 @@ public static class LibretroFlycastCore
         if (ControlMap.isActive(LC.JOYPAD_L3)) b |= 1u << 14;
         if (ControlMap.isActive(LC.JOYPAD_R3)) b |= 1u << 15;
 
-        if ((CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT))
+        bool coinNow = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT);
+        if (coinNow && coinFrames == 0)
+            FlycastLog.Line("coin inserted (SELECT held to core)");
+        if (coinNow)
             coinFrames = 6;
         if (coinFrames > 0)
         {
@@ -415,7 +451,7 @@ public static class LibretroFlycastCore
         if (!isRunning(screenName, gameFileName))
             return;
 
-        ConfigManager.WriteConsole($"[LibretroFlycastCore.End] {gameFileName} in {screenName}");
+        Trace($"[LibretroFlycastCore.End] {gameFileName} in {screenName} (rendered {LibretroHWBridge.FrameCount} frames)");
         // Stop the audio pull path first (GameLoaded gates MoveAudioStreamTo on the audio thread).
         GameLoaded = false;
 
@@ -439,6 +475,8 @@ public static class LibretroFlycastCore
         lastBoundIdx = -1;
         coinFrames = 0;
         tickAccum = 0f;
+        firstFrameLogged = false;
+        noFrameWarned = false;
         Shader = null;
         ControlMap = null;
         CoinSlot = null;

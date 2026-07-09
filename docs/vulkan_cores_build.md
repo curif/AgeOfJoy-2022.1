@@ -12,20 +12,20 @@ source** (the Flycast emulator itself) lives in a separate repository.
 
 ## Native source repository
 
-- **Repo:** `https://github.com/mcwild77/flycast-aoj` (private)
+- **Repo:** `https://github.com/mcwild77/flycast-aoj`
 - **Branch:** `age-of-joy`
 - **AoJ modifications:** `8f7a90bc` — ARM7/AICA audio-race throttle (Dreamcast/NAOMI BGM)
 - **Upstream base:** flycast `7ec978e8521f75427ad38eb8f8f4f3cabaa891d0`
   (`flyinghead/flycast`, kept as the `upstream` remote for pulling fixes)
 
-It is a **private copy**, not a GitHub fork (fork visibility can't be made
-private). GPL-2 obligations trigger only on distribution — while this is
-internal R&D we owe no one source. When Age of Joy ships a Flycast-derived
-`.so` to end users, the corresponding source of the modified core must be
-offered to those users under GPL-2 (flip the repo public, or provide on
-request). The core is a separately-built `.so` loaded at runtime via P/Invoke —
-the standard libretro aggregation, which keeps GPL-2 (core) and GPL-3 (AoJ)
-compatible; do not statically link them into one binary.
+It is a **public copy**, not a GitHub fork (it began life private, and fork
+visibility can't be made private). Because Age of Joy ships a Flycast-derived
+`.so` to end users, GPL-2 requires that the corresponding source of the modified
+core be offered to those users — this repository is that offer, and it must stay
+public and in sync with whatever binary we distribute. The core is a
+separately-built `.so` loaded at runtime via P/Invoke — the standard libretro
+aggregation, which keeps GPL-2 (core) and GPL-3 (AoJ) compatible; do not
+statically link them into one binary.
 
 ## Building `libflycast_libretro_android.so`
 

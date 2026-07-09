@@ -46,7 +46,7 @@ namespace Assets.curif.LibRetroWrapper
         {
             foreach (var core in Cores.Values)
             {
-                ConfigManager.CreateFolder(Path.Combine(ConfigManager.RomsDir, core.Name));
+                ConfigManager.CreateFolder(Path.Combine(ConfigManager.RomsDir, core.ContentDirName));
             }
         }
 
@@ -57,9 +57,9 @@ namespace Assets.curif.LibRetroWrapper
             AddInternalCore("fbneo", "libfbneo_libretro_android.so", FbNeoConfig());
             // Hardware-rendered core: bundled as a native plugin (APK lib dir) and driven by
             // LibretroFlycastCore/libpdlr on its own Vulkan device, not by the software wrapper. Registered
-            // here so `core: flycast` validates, downloads/flycast/ is created and the config
-            // cabinet lists it.
-            AddInternalCore(LibretroFlycastCore.CoreName, LibretroFlycastCore.CoreLibFileName, FlycastConfig());
+            // here so `core: flycast` validates, downloads/dc/ is created and the config cabinet lists it.
+            AddInternalCore(LibretroFlycastCore.CoreName, LibretroFlycastCore.CoreLibFileName, FlycastConfig(),
+                            LibretroFlycastCore.ContentDirName);
         }
 
         public static CoreEnvironment Mame2003PlusConfig()
@@ -163,17 +163,24 @@ namespace Assets.curif.LibRetroWrapper
             Cores.Add(coreName, new Core(coreName, coreLib));
         }
 
-        private void AddInternalCore(string coreName, string coreLib, CoreEnvironment coreEnvironment)
+        // contentDirName: subfolder of downloads/ the core reads games from, when it isn't the core name.
+        private void AddInternalCore(string coreName, string coreLib, CoreEnvironment coreEnvironment,
+                                     string contentDirName = null)
         {
             if (Cores.ContainsKey(coreName))
             {
                 ConfigManager.WriteConsole($"[CoresController] Internal core {coreName} upgraded as a user core");
                 Cores[coreName].GlobalEnvironment = coreEnvironment;
+                if (contentDirName != null)
+                    Cores[coreName].ContentDirName = contentDirName;
             }
             else
             {
                 ConfigManager.WriteConsole($"[CoresController] Adding internal core {coreName}");
-                Cores.Add(coreName, new Core(coreName, coreLib, coreEnvironment));
+                Core core = new Core(coreName, coreLib, coreEnvironment);
+                if (contentDirName != null)
+                    core.ContentDirName = contentDirName;
+                Cores.Add(coreName, core);
             }
         }
 

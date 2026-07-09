@@ -130,7 +130,7 @@ public class PdFlycast : MonoBehaviour
         }
         catch (Exception e) { Status("game.txt read failed (using default game): " + e.Message); }
 
-        // Resolve the game the same way LibretroFlycastCore.getPath does: downloads/flycast first, then downloads/.
+        // Resolve the game the same way LibretroFlycastCore.getPath does: downloads/dc first, then downloads/.
         string gamePath = Path.Combine(romsDir, gameFile);
         if (!File.Exists(gamePath))
             gamePath = Path.Combine(ConfigManager.RomsDir, gameFile);

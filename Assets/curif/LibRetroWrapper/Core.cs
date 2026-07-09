@@ -7,11 +7,17 @@ public class Core
     public string Library { get; private set; }
     public CoreEnvironment GlobalEnvironment { get; set; }
 
+    // Subfolder of downloads/ this core reads its games from. Defaults to the core name
+    // (downloads/mame2003+/, downloads/fbneo/, ...). Flycast overrides it to "dc" so the games
+    // sit next to the BIOS layout the core forces on the system dir (system/dc/).
+    public string ContentDirName { get; set; }
+
     public Core(string _name, string _library, CoreEnvironment _coreEnvironment)
     {
         Name = _name;
         Library = _library;
         GlobalEnvironment = _coreEnvironment;
+        ContentDirName = _name;
     }
 
     public Core(string name, string library) : this(name, library, null)

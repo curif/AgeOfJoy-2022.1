@@ -1,3 +1,25 @@
+// Copyright (C) 2026 the Age of Joy project contributors.
+//
+// This file is part of Age of Joy.
+//
+// Age of Joy is free software: you can redistribute it and/or modify it under the terms of the
+// GNU General Public License as published by the Free Software Foundation, either version 2 of
+// the License, or (at your option) any later version.
+//
+// Age of Joy is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+// even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along with this program. If
+// not, see <https://www.gnu.org/licenses/>.
+//
+// libpdlr is deliberately GPL-2.0-or-later rather than GPL-3.0: it shares an address space with a
+// dlopen'd libretro core (Flycast, GPL-2.0-or-later), and v2-or-later keeps that combination
+// unambiguous while still folding cleanly into the GPL-3 Age of Joy work as a whole.
+//
+// libretro.h and libretro_vulkan.h are used under their own permissive (MIT-style) license.
+// See THIRD-PARTY-NOTICES.md.
+
 // libpdlr.cpp — embedded libretro frontend.
 // See libpdlr.h and claudedocs/geometrizer_vulkan_cores.md.
 //
