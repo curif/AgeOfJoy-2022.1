@@ -95,6 +95,14 @@ public abstract class ShaderScreenBase
 
     public void ApplyConfiguration()
     {
+        // `material` here is still one of the shared static Resources.Load() singletons (Low/Medium/High
+        // etc.) assigned by the subclass constructor, shared by every cabinet in the game. Cloning it
+        // before mutating avoids stomping the shared template's shader properties (e.g. _CRTTiling used
+        // for invert) for every other cabinet still to construct/Activate — that cross-contamination is
+        // what caused screens to intermittently render flipped depending on cabinet init order.
+        string originalName = material.name;
+        material = UnityEngine.Object.Instantiate(material);
+        material.name = originalName; // MaterialsUtils.ApplyConfiguration looks materials.yaml entries up by name
         MaterialsUtils.ApplyCabinetConfiguration(material, configuration);
         MaterialsUtils.ApplyConfiguration(material);
     }

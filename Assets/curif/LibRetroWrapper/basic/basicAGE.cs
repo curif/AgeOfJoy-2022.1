@@ -128,6 +128,12 @@ public class basicAGE : MonoBehaviour
     [SerializeField]
     public int DefaultMaxExecutionLines = 5000000;
 
+    [Tooltip("Minimum seconds between .debug file saves for the same program (throttles disk I/O when DebugMode is on). Error/shutdown saves bypass this.")]
+    [SerializeField]
+    public float DebugSaveMinIntervalSeconds = 3.0f;
+
+    private Dictionary<string, float> lastDebugSaveTime = new();
+
 #if UNITY_EDITOR
     [Tooltip("Displays the current execution speed (Lines Per Second) of the running program.")]
     [SerializeField]
@@ -311,7 +317,7 @@ public class basicAGE : MonoBehaviour
             );
 
             if (configCommands.DebugMode)
-                SaveDebug(name, ce);
+                SaveDebug(name, ce, bypassThrottle: true);
 
             Status = ProgramStatus.CompilationError;
 
@@ -539,7 +545,7 @@ public class basicAGE : MonoBehaviour
         if (lastRunning != null)
         {
             if (configCommands.DebugMode)
-                SaveDebug(lastRunning.Name, compEx: null, runEx: LastRuntimeException);
+                SaveDebug(lastRunning.Name, compEx: null, runEx: LastRuntimeException, bypassThrottle: true);
 
             ConfigManager.WriteConsole($"[ForceStop] {lastRunning.Name} forced to END. {lastRunning.ContLinesExecuted} lines executed. ERROR: {LastRuntimeException}");
             
@@ -597,34 +603,39 @@ public class basicAGE : MonoBehaviour
         }
     }
 
-    public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null)
+    public void SaveDebug(string prgName, CompilationException compEx = null, RuntimeException runEx = null, bool bypassThrottle = false)
     {
-        string filePathDebug = Path.Combine(ConfigManager.AGEBasicDir, prgName + ".debug");
-        ConfigManager.WriteConsole($"[BasicAGE.SaveDebug] {filePathDebug}");
-        try
+        if (!bypassThrottle)
         {
-            // Create a new StreamWriter instance to write to the file
-            using (StreamWriter writer = new StreamWriter(filePathDebug, false))
-            {
-                // Write the text to the file
-                writer.WriteLine($"Program: {prgName}");
-                if (compEx != null)
-                    writer.WriteLine(compEx.ToString());
-                if (runEx != null)
-                    writer.WriteLine(runEx.ToString());
+            float now = Time.realtimeSinceStartup;
+            if (lastDebugSaveTime.TryGetValue(prgName, out float last) && (now - last) < DebugSaveMinIntervalSeconds)
+                return;
+            lastDebugSaveTime[prgName] = now;
+        }
 
-                if (Exists(prgName))
-                {
-                    writer.WriteLine("---PROGRAM STATUS ---");
-                    writer.WriteLine(programs[prgName].Log());
-                    writer.WriteLine("---");
-                }
-            }
-        }
-        catch (Exception e)
+        string filePathDebug = Path.Combine(ConfigManager.AGEBasicDir, prgName + ".debug");
+
+        string content = $"Program: {prgName}\n";
+        if (compEx != null)
+            content += compEx.ToString();
+        if (runEx != null)
+            content += runEx.ToString();
+        if (Exists(prgName))
+            content += "---PROGRAM STATUS ---\n" + programs[prgName].Log() + "---\n";
+
+        ConfigManager.WriteConsole($"[BasicAGE.SaveDebug] {filePathDebug}");
+
+        System.Threading.Tasks.Task.Run(() =>
         {
-            ConfigManager.WriteConsoleException("Error writing to file: " + filePathDebug, e);
-        }
+            try
+            {
+                File.WriteAllText(filePathDebug, content);
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException("Error writing to file: " + filePathDebug, e);
+            }
+        });
     }
     public float CalculateDelay(double cpuPercentageDouble)
     {
@@ -803,7 +814,7 @@ public class basicAGE : MonoBehaviour
             }
 
             if (configCommands.DebugMode)
-                SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException);
+                SaveDebug(running.Name, compEx: null, runEx: LastRuntimeException, bypassThrottle: LastRuntimeException != null);
 
             ConfigManager.WriteConsole($"[BasicAGE.runNextLineCurrentProgram] {running.Name} #{configCommands.LineNumber} no more lines or END. {running.ContLinesExecuted} lines executed. ERROR: [{LastRuntimeException}]");
 

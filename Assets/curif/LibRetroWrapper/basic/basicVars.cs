@@ -170,7 +170,7 @@ public class BasicVars
         string str = "";
         foreach (KeyValuePair<string, BasicVar> var in vars)
         {
-            str += $"{var.Key}: {vars[var.Key]}\n";
+            str += $"{var.Key}: {var.Value.BasicValue}\n";
         }
         return str;
     }

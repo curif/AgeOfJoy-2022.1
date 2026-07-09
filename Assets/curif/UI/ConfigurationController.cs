@@ -911,8 +911,22 @@ public class ConfigurationController : MonoBehaviour
         CabinetsExtractNumberAndName(out position, out cabinetDBName); //the name doesn't care.
         cabinetDBName = cabinetReplaced.GetSelectedOption();
         ConfigManager.WriteConsole($"[SaveCabinetPositions] new replacement in pos:{position} by cabinet: {cabinetDBName} room: {room}");
-        // free cabinets dont have a CabinetReplace component but a CabinetController
-        await cabinetsController.Replace(position, room, cabinetDBName);
+
+        bool ok;
+        try
+        {
+            // free cabinets dont have a CabinetReplace component but a CabinetController
+            ok = await cabinetsController.Replace(position, room, cabinetDBName);
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleException("[SaveCabinetPositions]", ex);
+            ok = false;
+        }
+
+        cabinetReplacementSavedLabel.label = ok ? "cabinet replaced" : "error replacing - see log";
+        SetCabinetsReplacementWidgets();
+        cabinetReplacementSavedLabel.SetSecondsAndDraw(ok ? 2 : 5);
     }
 
     // ---------------------------------------------
@@ -2202,8 +2216,6 @@ public class ConfigurationController : MonoBehaviour
                       else if (w.name == "save")
                       {
                           SaveCabinetPositions();
-                          SetCabinetsReplacementWidgets();
-                          cabinetReplacementSavedLabel.SetSecondsAndDraw(2);
                       }
                   }
                   cabinetReplacementSavedLabel.Draw();

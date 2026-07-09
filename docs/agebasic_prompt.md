@@ -98,7 +98,7 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
 ### Event Execution Rules
 1.  **Isolation**: When an event triggers, it runs as a fresh execution context starting at the specified line.
 2.  **Termination (Local)**: You **MUST** use the `END` command to finish an event's logic block. This stops the event code and returns the interpreter to an idle state, waiting for the next trigger.
-3.  **Termination (Global)**: Use the `STOP` command if you want to kill the entire program, including all registered background events.
+3.  **Termination (Global)**: Use the `SHUTDOWN` command if you want to kill the entire program, including all registered background events.
 4.  **Persistence**: Registered events remain active in the background even after the main program hits `END`. The main program should set up events and then terminate with `END` to allow the event loop to take over.
 5.  **Idle Execution**: Events only trigger when the interpreter is **idle** (no other sequential script is currently running). Use `SLEEP` in long-running scripts to allow events to process.
 
@@ -138,6 +138,19 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
     *   `INDEXMEMBER(list, member, separator)`
     *   `REMOVEMEMBER(list, member, separator)`
     *   `ADDMEMBER(list, member, separator)`
+
+### File Management
+
+*   `FILEEXISTS(path)`: Returns `1` if the file exists, `0` otherwise.
+*   `FILEDELETE(path)`: Deletes a file. Returns `1` on success, `0` on failure.
+*   `FILECOPY(sourcePath, destPath)`: Copies a file, overwriting `destPath` if it already exists. Returns `1` on success, `0` on failure.
+*   `FILEOPEN(path, mode)`: Opens a file. `mode` is `"R"` (read), `"A"` (append), or `"W"` (write/overwrite). Returns a file handle (0-255) or `-1` on failure.
+*   `FILEREAD(fileHandle)`: Reads the next line from an open file. Returns `""` at end of file.
+*   `FILEWRITE(fileHandle, text)`: Writes a line to an open file.
+*   `FILEEOF(fileHandle)`: Returns `1` if the file pointer is at the end of the file.
+*   `FILECLOSE(fileHandle)`: Closes an open file handle.
+*   `GETFILES(path, separator, orderType)` / `GETFILESARRAY(path, orderType)`: List files in a directory. `orderType`: `0`=alphabetic, `1`=random, `2`=creation date old→new, `3`=creation date new→old.
+*   `COMBINEPATH(path1, path2)`: Joins two path segments into one, sandboxed to the app's base directory.
 
 ---
 
@@ -195,6 +208,36 @@ AGEBasic can interact directly with the Age of Joy 3D environment.
 *   `CABPARTSSETCOLOR(part, R, G, B)`
 *   `CABPARTSEMISSION(part, bool)`
 *   `CABPARTSAUDIOPLAY(part)` / `CABPARTSAUDIOSTOP(part)`
+
+### Cabinet Registry & Replacement
+AGEBasic can inspect and change which cabinet game occupies each position in a room, and swap the live 3D cabinet without going through the in-VR Configuration Room UI.
+
+**Room-scoped (affects only the currently running room):**
+*   `CABROOMCOUNT()`: Number of cabinet positions in the current room.
+*   `CABROOMGETNAME(position)`: Cabinet DB name currently loaded at `position` in this room (`""` if none).
+*   `CABROOMREPLACE(position, cabinetName)`: Immediately swaps the **live 3D cabinet** at `position` in the current room to `cabinetName` (must exist in the cabinet DB). Runs asynchronously (fire-and-forget) — returns `1` once the swap has started, `0` if the room or cabinet name is invalid. **Does not persist the change** — the swap reverts the next time the room reloads unless you also call `CABDBASSIGN` + `CABDBSAVE` for the same room/position.
+
+**Registry-scoped (persisted database, `registry.yaml`, survives room reloads):**
+*   `CABDBCOUNT()`: Total number of cabinets available in the cabinet DB folder.
+*   `CABDBCOUNTINROOM(room)`: Number of registry entries assigned to `room`.
+*   `CABDBGETNAME(index)`: Cabinet directory name at `index` in the sorted list of all cabinets on disk (unrelated to room assignment).
+*   `CABDBSEARCH(namePart, separator)`: Cabinet names starting with `namePart`, joined with `separator`.
+*   `CABDBSEARCHARRAY(namePart)`: Same search, returned as an array.
+*   `CABDBGETASSIGNED(room, position)`: Cabinet name assigned to `room`/`position` in the registry (`""` if unassigned).
+*   `CABDBADD(room, position, cabinetName)`: Adds a **new** registry entry. Throws a runtime error if `room`/`position` is already occupied — use `CABDBASSIGN` to overwrite instead.
+*   `CABDBASSIGN(room, position, cabinetName)`: Assigns `cabinetName` to `room`/`position`, creating the entry if it doesn't exist or overwriting it if it does.
+*   `CABDBDELETE(room, position)`: Removes the registry entry at `room`/`position`. Throws a runtime error if nothing is assigned there.
+*   `CABDBSAVE()`: Persists all in-memory registry changes (`CABDBADD`/`CABDBASSIGN`/`CABDBDELETE`) to `registry.yaml`. **Required** — those three only mutate memory; without a matching `CABDBSAVE()` the changes are lost the next time the room reloads.
+*   `CABDBRELOAD()`: Re-reads `registry.yaml` from disk into memory, discarding any unsaved in-memory changes, and re-scans the cabinet DB folder for unassigned cabinets. **Also reconciles the currently loaded room**: any position whose live 3D cabinet no longer matches what the reloaded registry assigns is swapped in-place (same swap used by `CABROOMREPLACE`). Positions with no registry entry are left untouched. Use when the registry file was modified outside the running script (e.g. by another process or a manual edit) and the script needs to see the current on-disk state, including an immediately updated room.
+
+**Typical pattern to durably swap a cabinet from a script** (mirrors what the in-VR Configuration Room UI does internally):
+```basic
+10 LET ROOM = ROOMNAME()
+20 CALL CABDBASSIGN(ROOM, 3, "SpaceInvaders")
+30 CALL CABDBSAVE()
+40 CALL CABROOMREPLACE(3, "SpaceInvaders")
+50 END
+```
 
 ### Emulation & System
 *   `GAMEISRUNNING()`: True if a ROM is currently loaded.

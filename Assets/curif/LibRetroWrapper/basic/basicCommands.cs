@@ -104,6 +104,7 @@ public static class Commands
         functions["FILEEOF"] = typeof(CommandFunctionFILEEOF);
         functions["FILEWRITE"] = typeof(CommandFunctionFILEWRITE);
         functions["FILEDELETE"] = typeof(CommandFunctionFILEDELETE);
+        functions["FILECOPY"] = typeof(CommandFunctionFILECOPY);
 
         //download manager
         //functions["DOWNLOAD"] = typeof(CommandFunctionDOWNLOAD);
@@ -149,6 +150,7 @@ public static class Commands
         functions["CABDBDELETE"] = typeof(CommandFunctionCABDBDELETE);
         functions["CABDBADD"] = typeof(CommandFunctionCABDBADD);
         functions["CABDBSAVE"] = typeof(CommandFunctionCABDBSAVE);
+        functions["CABDBRELOAD"] = typeof(CommandFunctionCABDBRELOAD);
         functions["CABDBGETASSIGNED"] = typeof(CommandFunctionCABDBGETASSIGNED);
         functions["CABDBASSIGN"] = typeof(CommandFunctionCABDBASSIGN);
         functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
