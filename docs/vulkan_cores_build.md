@@ -1,20 +1,25 @@
+# Vulkan Support
+
+Implementing Vulkan has long been a goal for the AOJ team. The original plan
+was to implement a one-size-fits-all Vulkan wrapper, similar to the way that
+AOJ can run most if not all software-rendered Retroarch cores in .so format.
+
+Unfortunately, Vulkan cores come with a large number of gotchas that require
+a tighter integration with AOJ and Unity, so for our first core integration,
+Flycast, we need to build a special binary.
+
+
 # Vulkan HW cores — native source & build
 
-**Status:** R&D. Not shipped, not runnable from a clean clone (see [Binaries](#binaries)).
+The Flycast-based Dreamcast/NAOMI/Atomiswave cores that drive the experimental Vulkan cabinets are **not** built from this repository. The C# side lives here and is tracked on the `fix/v0.5-2` branch: `LibretroFlycastCore.cs` (the runtime driver for Vulkan cabinets), `LibretroHWBridge.cs` (P/Invoke into `libpdlr.so`), `cwrapper/vulkan.*` and `libVulkanPlugin/`, plus the debug-only helpers `PdFlycast.cs` (flat-quad test driver) and `PdLibretroProbe.cs`. The libretro host frontend source under `nativebridge/libretro_frontend/` (builds `libpdlr.so`) is tracked here too. The **native core source** (the Flycast emulator itself) lives in a separate repository so we can easily update it when Flycast itself is updated.
 
-The Flycast-based Dreamcast/NAOMI/Atomiswave cores that drive the experimental
-Vulkan cabinets are **not** built from this repository. The C# bridge glue
-(`PdFlycast.cs`, `LibretroHWBridge.cs`, `PdLibretroProbe.cs`,
-`cwrapper/vulkan.*`, `libVulkanPlugin/`) lives here and is tracked on the
-`fix/v0.5-2` branch, as does the libretro host frontend source under
-`nativebridge/libretro_frontend/` (builds `libpdlr.so`). The **native core
-source** (the Flycast emulator itself) lives in a separate repository.
+
 
 ## Native source repository
 
 - **Repo:** `https://github.com/mcwild77/flycast-aoj`
 - **Branch:** `age-of-joy`
-- **AoJ modifications:** `8f7a90bc` — ARM7/AICA audio-race throttle (Dreamcast/NAOMI BGM)
+- **AoJ modifications:** three commits atop the upstream base — `8ed21550f` (ARM7/AICA audio-race throttle for Dreamcast/NAOMI BGM, plus CMake linking `log`/`android` so `ASharedMemory_create` resolves), `6d6c7c222` (GPLv2 §2(a) change notices + `AGE_OF_JOY.md`), `53a874ec7` (build-doc tweak; branch tip)
 - **Upstream base:** flycast `7ec978e8521f75427ad38eb8f8f4f3cabaa891d0`
   (`flyinghead/flycast`, kept as the `upstream` remote for pulling fixes)
 
@@ -43,37 +48,26 @@ Android NDK. Cache values from the working build tree:
 
 ```sh
 # from the flycast-aoj checkout (branch age-of-joy)
-cmake -S . -B build-android -G Ninja \
+cmake -S . -B build -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DLIBRETRO=ON \
   -DANDROID_ABI=arm64-v8a \
   -DANDROID_PLATFORM=android-29 \
   -DCMAKE_TOOLCHAIN_FILE="<path-to>/AndroidPlayer/NDK/build/cmake/android.toolchain.cmake"
-cmake --build build-android
-# output: build-android/flycast_libretro.so
+cmake --build build
+# output: build/flycast_libretro.so
 ```
 
 Then copy into place and rename:
 
 ```
-build-android/flycast_libretro.so  ->  Assets/Plugins/Android64/libflycast_libretro_android.so
+build/flycast_libretro.so  ->  Assets/Plugins/Android64/libflycast_libretro_android.so
 ```
 
 The companion `libpdlr.so` bridge binary is built from
-`nativebridge/libretro_frontend/` (in this repo); `libVulkanPlugin.so` is built
-from `libVulkanPlugin/` and the `cwrapper/` sources.
+`nativebridge/libretro_frontend/` (in this repo) via `build_libpdlr_win.sh`;
+`libVulkanPlugin.so` is built from `libVulkanPlugin/` and the `cwrapper/` sources.
 
 ## Binaries
 
-`*.so` and `*.dll` are gitignored (see `.gitignore`), so the compiled cores in
-`Assets/Plugins/Android64/` are **not** in version control and a clean clone
-cannot run the Vulkan cabinets. Rebuild them from `flycast-aoj` + `libVulkanPlugin`
-and drop them into `Assets/Plugins/Android64/`. This is intentional while the
-feature is R&D; revisit (e.g. git-lfs or a release artifact) if/when it ships.
-
-## Never commit
-
-BIOS, ROMs, and CHDs stay out of git entirely. During R&D they live under the
-gitignored `claudedocs/` (`claudedocs/bios`, `claudedocs/rom`, …) alongside the
-untracked working notes. Do not add them to the repo or to the `flycast-aoj`
-repo.
+`*.so` and `*.dll` are gitignored (see `.gitignore`), with one exception: `Assets/Plugins/Android64/libVulkanPlugin.so` (and its `.meta`) is tracked in git. A clean clone is therefore missing `libflycast_libretro_android.so` and `libpdlr.so` and cannot run the Vulkan cabinets until both are rebuilt — the core from `flycast-aoj` (above), the bridge via `nativebridge/libretro_frontend/build_libpdlr_win.sh` — and dropped into `Assets/Plugins/Android64/`.
