@@ -60,6 +60,25 @@ PDLR_API const char* pdlr_core_version(void);
 PDLR_API int pdlr_start(const char* core_path, const char* system_dir,
                         const char* save_dir, const char* game_path);
 
+// --- diagnostics: why did the boot fail? -------------------------------------------------------
+// A core reports a refused load on two channels — its log callback and RETRO_ENVIRONMENT_SET_MESSAGE
+// — both of which reach only logcat, which a headset-wearing tester cannot read. We capture both.
+
+// The most specific reason the last pdlr_start() failed, e.g.
+//   "retro_load_game('…/toyfight.zip') failed — the core said: Error: cannot load BIOS naomi.zip"
+// Empty string if the last start succeeded (or none ran). Valid until the next call.
+PDLR_API const char* pdlr_last_error(void);
+
+// The captured boot trace: the core's log lines at/above the capture level, its SET_MESSAGE texts,
+// and our own errors — one per line, oldest first, cleared at each pdlr_start. Valid until the next
+// call. Intended for dumping into the tester-facing flycast.log when a boot fails.
+PDLR_API const char* pdlr_recent_log(void);
+
+// How much of the core's log to capture: 0=DEBUG 1=INFO 2=WARN 3=ERROR. Default 2 (WARN and above),
+// which keeps the ring off any per-frame path. A `verbose.txt` next to the game overrides this at
+// pdlr_start. Safe to call any time.
+PDLR_API void pdlr_set_log_verbosity(int min_level);
+
 // One retro_run tick (call per frame). 0 on success, -1 if not started.
 PDLR_API int pdlr_run(void);
 

@@ -100,7 +100,19 @@ public static class LibretroHWBridge
     [DllImport(LIB, EntryPoint = "pdlr_shutdown")]
     static extern void _pdlr_shutdown();
 
+    // Diagnostics: the reason a boot failed, straight out of the core (see libpdlr.h).
+    [DllImport(LIB, EntryPoint = "pdlr_last_error")]
+    static extern IntPtr _pdlr_last_error();
+
+    [DllImport(LIB, EntryPoint = "pdlr_recent_log")]
+    static extern IntPtr _pdlr_recent_log();
+
+    [DllImport(LIB, EntryPoint = "pdlr_set_log_verbosity")]
+    static extern void _pdlr_set_log_verbosity(int minLevel);
+
     public static bool   Available { get; private set; }
+    // Only ever set by EnsureAvailable, for a libpdlr.so that would not load or bind at all. It says
+    // nothing about a failed Start() — ask NativeLastError for that.
     public static string LastError { get; private set; } = "";
     public static string PreloadInfo { get; private set; } = "(not run)";
 
@@ -166,11 +178,49 @@ public static class LibretroHWBridge
     public static string CoreName    => Available ? Marshal.PtrToStringAnsi(_pdlr_core_name())    : null;
     public static string CoreVersion => Available ? Marshal.PtrToStringAnsi(_pdlr_core_version()) : null;
 
-    // Stage 2b: load + negotiate Vulkan + load the game. Returns true on success.
+    // Stage 2b: load + negotiate Vulkan + load the game. Returns true on success; on failure ask
+    // NativeLastError why, and RecentLog() for the surrounding boot trace.
     public static bool Start(string corePath, string systemDir, string saveDir, string gamePath)
     {
         if (!EnsureAvailable()) return false;
         return _pdlr_start(corePath, systemDir, saveDir, gamePath) == 0;
+    }
+
+    // --- diagnostics -----------------------------------------------------------------------------
+    // These three are the newest exports in libpdlr.so. A stale .so (an APK built before they landed)
+    // still loads and runs, so resolve them defensively: the P/Invoke throws EntryPointNotFound on
+    // first call, and a missing boot reason must never be what takes the emulator down.
+
+    // Why the last Start() failed, as reported by the core itself. "" when there is nothing to say.
+    public static string NativeLastError
+    {
+        get
+        {
+            if (!Available) return "";
+            try { return Marshal.PtrToStringAnsi(_pdlr_last_error()) ?? ""; }
+            catch (EntryPointNotFoundException) { return "(libpdlr.so predates pdlr_last_error)"; }
+        }
+    }
+
+    // The captured boot trace — core log lines at/above the capture level, its notifications, and
+    // libpdlr's own errors. Oldest first; empty array when there is nothing captured.
+    public static string[] RecentLog()
+    {
+        if (!Available) return Array.Empty<string>();
+        string blob;
+        try { blob = Marshal.PtrToStringAnsi(_pdlr_recent_log()); }
+        catch (EntryPointNotFoundException) { return Array.Empty<string>(); }
+        if (string.IsNullOrEmpty(blob)) return Array.Empty<string>();
+        return blob.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    // How much of the core's log to capture: 0=DEBUG 1=INFO 2=WARN 3=ERROR (default 2). A verbose.txt
+    // beside the game overrides this at Start(). Capturing INFO is only worth it while diagnosing.
+    public static void SetLogVerbosity(int minLevel)
+    {
+        if (!EnsureAvailable()) return;
+        try { _pdlr_set_log_verbosity(minLevel); }
+        catch (EntryPointNotFoundException) { }
     }
 
     // One retro_run tick. Returns true on success.

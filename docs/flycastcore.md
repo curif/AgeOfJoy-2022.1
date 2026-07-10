@@ -233,6 +233,27 @@ Every option below can be set under `environment: properties:` (drop the `reicas
 - `vmu_sound` — disabled / enabled · `linked_vmu_storage` — disabled / enabled
 - On-screen VMU overlay family (per index 1-4): `vmu{n}_screen_display`, `vmu{n}_screen_position` (Upper/Lower Left/Right), `vmu{n}_screen_size_mult` (1x-5x), `vmu{n}_screen_opacity` (10%-100%), `vmu{n}_pixel_on_color` / `vmu{n}_pixel_off_color` (29 named colors, e.g. `DEFAULT_ON 00`, `WHITE 28`), plus `show_vmu_screen_settings`.
 
+## When a cabinet doesn't boot
+
+Every flycast boot writes to `Logs/flycast.log` under the app data folder, whether or not debug mode is on. If the game refuses to load, that file now carries the reason the **core itself** gave, followed by the tail of the native boot trace and a listing of `system/dc/`. A missing arcade BIOS, for instance, reads:
+
+```
+ERROR  [LibretroFlycastCore.Start] pdlr_start FAILED — retro_load_game('…/toyfight.zip') failed — the core said: Error: cannot load BIOS naomi
+```
+
+Note that each arcade game names **its own** BIOS set — `toyfight` wants `naomi.zip`, `hotd2` wants `hod2bios.zip` — so having `naomi.zip` installed does not cover every NAOMI cabinet. Flycast looks for the BIOS ROMs inside the game's own zip first, then a parent romset zip beside it, and only then `system/dc/<set>.zip`; a merged romset that carries its own BIOS therefore needs no separate file at all.
+
+By default only warnings and errors from the core are captured. To capture its full boot chatter (every `INFO` line — ROM loading, region detection, cart mapping), drop a file named `verbose.txt` next to the game in `downloads/dc/` containing a single digit:
+
+| `verbose.txt` | Captures |
+|---|---|
+| `0` | everything, including `DEBUG` |
+| `1` | `INFO` and above — the full boot trace |
+| `2` | `WARN` and above (the default) |
+| `3` | errors only |
+
+This needs no rebuild, and it's the same trick as the pacing knobs (`displaylock.txt`, `backpressure.txt`, `governor.txt`) that live in the same folder. Turning on the app's debug mode raises the capture level to `INFO` on its own.
+
 ## Related
 
 - Light-gun cabinets (`light-gun:`) — see *controllers* docs; a gun cabinet does **not** need an `input:` block.

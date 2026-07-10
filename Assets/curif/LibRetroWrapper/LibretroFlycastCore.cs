@@ -70,6 +70,66 @@ public static class LibretroFlycastCore
     static void Trace(string m)    { ConfigManager.WriteConsole(m);      FlycastLog.Line(m); }
     static void TraceErr(string m) { ConfigManager.WriteConsoleError(m); FlycastLog.Err(m); }
 
+    // Flycast's phrasing when it can't find an arcade BIOS. What follows is the BIOS *set* name.
+    const string CannotLoadBios = "cannot load BIOS ";
+
+    // A failed load that blames a BIOS earns one extra line naming the file to install and where.
+    //
+    // A hint on failure, not a pre-flight check, and deliberately so. Each arcade game declares which
+    // BIOS set it needs (naomi, hod2bios, awbios, f355bios, …), and Flycast's loadBios() hunts for
+    // that set's ROM blobs in the game's own zip, then a parent romset zip beside it, and only then
+    // <system>/dc/<set>.zip. So a merged romset boots with no separate BIOS file at all, and one
+    // naomi.zip does not cover every NAOMI cabinet. Nothing outside the core can predict either fact
+    // — but the core says exactly which set it wanted, so we repeat that.
+    static void TraceBiosHint(string nativeReason, string sysDir)
+    {
+        if (string.IsNullOrEmpty(nativeReason)) return;
+        int at = nativeReason.IndexOf(CannotLoadBios, StringComparison.OrdinalIgnoreCase);
+        if (at < 0) return;
+
+        string bios = nativeReason.Substring(at + CannotLoadBios.Length).Trim();
+        int end = bios.IndexOfAny(new[] { ' ', '\t' });
+        if (end > 0) bios = bios.Substring(0, end);
+        if (bios.Length == 0) return;
+        if (!bios.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) bios += ".zip";
+
+        string wanted = Path.Combine(Path.Combine(sysDir, ContentDirName), bios);
+        Trace($"[LibretroFlycastCore] hint: this game needs the '{bios}' arcade BIOS. Flycast looks for its ROMs " +
+              $"inside the game's own zip, then a parent romset zip beside it, then {wanted}. Install {bios} there, " +
+              $"or use a romset that carries its own BIOS. Each arcade game names its own BIOS set, so naomi.zip " +
+              $"alone does not cover every cabinet.");
+    }
+
+    // Written to flycast.log whenever a boot fails: what the core could actually see on disk. A
+    // directory listing settles "but the ROM is right there" in one line.
+    static void TraceBootEnvironment(string gamePath, string sysDir)
+    {
+        const int maxListed = 40;
+        try
+        {
+            var game = new FileInfo(gamePath);
+            Trace($"[LibretroFlycastCore] game file {gamePath} — {(game.Exists ? $"{game.Length:N0} bytes" : "MISSING")}");
+
+            string dcDir = Path.Combine(sysDir, ContentDirName);
+            if (!Directory.Exists(dcDir))
+            {
+                Trace($"[LibretroFlycastCore] BIOS directory {dcDir} does not exist");
+                return;
+            }
+
+            string[] files = Directory.GetFiles(dcDir);
+            Trace($"[LibretroFlycastCore] BIOS directory {dcDir} holds {files.Length} file(s):");
+            for (int i = 0; i < files.Length && i < maxListed; i++)
+                Trace($"    {Path.GetFileName(files[i])} — {new FileInfo(files[i]).Length:N0} bytes");
+            if (files.Length > maxListed)
+                Trace($"    … and {files.Length - maxListed} more");
+        }
+        catch (Exception e)
+        {
+            TraceErr($"[LibretroFlycastCore] could not inspect the boot environment: {e.Message}");
+        }
+    }
+
     // Resolve the game file the same way LibretroMameCore.getPath does: per-core dir first
     // (downloads/dc/), then the downloads root as a fallback.
     public static string getPath(string gameFileName)
@@ -114,6 +174,11 @@ public static class LibretroFlycastCore
 
         Trace($"[LibretroFlycastCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
 
+        // In debug mode capture the core's INFO chatter too, not just WARN and above — the whole boot
+        // trace lands in flycast.log. A verbose.txt next to the game overrides this on-device.
+        if (ConfigManager.DebugActive)
+            LibretroHWBridge.SetLogVerbosity(1);   // RETRO_LOG_INFO
+
         // Gun cabinet: declare port 0 LIGHTGUN before Start() — Flycast builds its maple bus at
         // load. Ports 1-3 stay JOYPAD (the 4-pad maple parity that gates NAOMI audio init).
         if (lightGunTarget != null && lightGunTarget.Initialized())
@@ -137,7 +202,24 @@ public static class LibretroFlycastCore
         LibretroHWBridge.SetZeroCopy(true);
         if (!LibretroHWBridge.Start(corePath, sysDir, saveDir, gamePath))
         {
-            TraceErr($"[LibretroFlycastCore.Start] pdlr_start FAILED — Available={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
+            // The reason comes from libpdlr, which captures it off the core's own log callback and
+            // SET_MESSAGE. Everything else here is context for a tester who can't run adb logcat.
+            string why = LibretroHWBridge.NativeLastError;
+            if (string.IsNullOrEmpty(why))
+                why = LibretroHWBridge.Available
+                    ? "(libpdlr gave no reason)"
+                    : $"libpdlr.so unavailable: {LibretroHWBridge.LastError} preload='{LibretroHWBridge.PreloadInfo}'";
+            TraceErr($"[LibretroFlycastCore.Start] pdlr_start FAILED — {why}");
+
+            string[] captured = LibretroHWBridge.RecentLog();
+            if (captured.Length > 0)
+            {
+                Trace($"[LibretroFlycastCore.Start] last {captured.Length} line(s) of the native boot trace:");
+                foreach (string line in captured)
+                    Trace($"    {line}");
+            }
+            TraceBiosHint(why, sysDir);
+            TraceBootEnvironment(gamePath, sysDir);
             return false;
         }
         zeroCopy = LibretroHWBridge.ZeroCopyActive;

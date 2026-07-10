@@ -45,6 +45,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <map>
+#include <deque>
 #include <string>
 #include <fstream>
 #include <cstdint>
@@ -64,8 +65,13 @@
 #include "IUnityGraphics.h"
 #include "IUnityGraphicsVulkan.h"
 
+// LOGE also feeds the diagnostic ring (see the "diagnostics" block at the top of the anonymous
+// namespace), so the frontend can read a failed boot's reason back out of the .so instead of the
+// tester having to attach `adb logcat`.
+namespace { void diag_errf(const char* fmt, ...) __attribute__((format(printf, 1, 2))); }
+
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO,  "pdlr", __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, "pdlr", __VA_ARGS__)
+#define LOGE(...) do { __android_log_print(ANDROID_LOG_ERROR, "pdlr", __VA_ARGS__); diag_errf(__VA_ARGS__); } while (0)
 
 // --- ASharedMemory_create shim (Flycast nvmem fix) ---------------------------------------------
 // The Flycast core has a WEAK undefined ASharedMemory_create and does NOT link libandroid, so in
@@ -88,6 +94,83 @@ int ASharedMemory_create(const char* name, size_t size)
 }
 
 namespace {
+
+// --- diagnostics: keep the reason a boot failed ------------------------------------------------
+// A libretro core reports why it refused to load on two channels, and both used to be discarded
+// here: its log callback (RETRO_ENVIRONMENT_GET_LOG_INTERFACE → core_log) and
+// RETRO_ENVIRONMENT_SET_MESSAGE. Flycast's loadGame() uses BOTH for the same text, so a missing
+// arcade BIOS arrives twice as "Error: cannot load BIOS naomi.zip" and used to reach only logcat —
+// which a beta tester wearing a headset cannot read. We now keep the last kDiagLines of core output
+// (plus our own LOGE lines) in a ring the frontend drains with pdlr_recent_log(), and the single
+// most specific reason in pdlr_last_error(). At the default capture level (WARN and above) nothing
+// here runs per frame, so the std::string churn is off any hot path.
+constexpr size_t kDiagLines = 64;
+
+std::mutex              s_diagMx;
+std::deque<std::string> s_diagRing;        // oldest first, capped at kDiagLines
+std::string             s_diagLastError;   // set at every pdlr_start failure point
+std::string             s_diagCoreError;   // last RETRO_LOG_ERROR line from the core
+std::string             s_diagCoreMsg;     // last SET_MESSAGE text (may be benign — see below)
+std::string             s_diagJoined;      // stable backing store for pdlr_recent_log()'s char*
+std::atomic<int>        s_diagMinLevel{(int)RETRO_LOG_WARN};   // capture this level and above
+
+void diag_trim(std::string& s)
+{
+    while (!s.empty() && (s.back() == '\n' || s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
+        s.pop_back();
+}
+
+void diag_push(const char* tag, const char* text)
+{
+    if (!text) return;
+    std::string s(text);
+    diag_trim(s);
+    if (s.empty()) return;
+    std::lock_guard<std::mutex> lk(s_diagMx);
+    s_diagRing.push_back(std::string(tag) + s);
+    while (s_diagRing.size() > kDiagLines) s_diagRing.pop_front();
+}
+
+void diag_errf(const char* fmt, ...)
+{
+    char buf[1024];
+    va_list ap; va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    diag_push("pdlr E: ", buf);
+}
+
+void diag_set_error(const char* fmt, ...)
+{
+    char buf[1024];
+    va_list ap; va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    std::lock_guard<std::mutex> lk(s_diagMx);
+    s_diagLastError = buf;
+}
+
+// Every `return -1` out of pdlr_start goes through this: record the specific reason AND log it
+// (LOGE also lands it in the ring, so the one-line reason keeps its position in the boot trace).
+#define SET_ERR(...) do { diag_set_error(__VA_ARGS__); LOGE(__VA_ARGS__); } while (0)
+
+// What the core last told us went wrong.
+//
+// An ERROR log line beats a SET_MESSAGE, because a core also pushes benign notices through
+// SET_MESSAGE (Flycast sends "Please upgrade to MAME romsets" that way) and reporting one of those
+// as the cause of a failed boot would send a tester the wrong way. The exception: Flycast logs
+// "path:line E[TAG]: <text>" and then notifies the bare <text>, so when the notification is exactly
+// the tail of the log line the two are the same message and we report the clean one.
+std::string diag_core_reason()
+{
+    std::lock_guard<std::mutex> lk(s_diagMx);
+    if (s_diagCoreError.empty()) return s_diagCoreMsg;
+    if (!s_diagCoreMsg.empty() && s_diagCoreError.size() >= s_diagCoreMsg.size() &&
+        s_diagCoreError.compare(s_diagCoreError.size() - s_diagCoreMsg.size(),
+                                s_diagCoreMsg.size(), s_diagCoreMsg) == 0)
+        return s_diagCoreMsg;
+    return s_diagCoreError;
+}
 
 // libretro.h typedefs the *callback* types but NOT the core's exported entry points.
 typedef void     (*fp_set_environment)(retro_environment_t);
@@ -593,9 +676,27 @@ void RETRO_CALLCONV core_log(enum retro_log_level level, const char* fmt, ...)
 {
     int prio = (level == RETRO_LOG_ERROR) ? ANDROID_LOG_ERROR
              : (level == RETRO_LOG_WARN)  ? ANDROID_LOG_WARN : ANDROID_LOG_INFO;
+
+    // Formatted once, then reused for logcat and the diagnostic ring.
+    char buf[1024];
     va_list ap; va_start(ap, fmt);
-    __android_log_vprint(prio, "flycast", fmt, ap);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
+    __android_log_write(prio, "flycast", buf);
+
+    if ((int)level >= s_diagMinLevel.load(std::memory_order_relaxed))
+        diag_push(level == RETRO_LOG_ERROR ? "core E: "
+                : level == RETRO_LOG_WARN  ? "core W: "
+                : level == RETRO_LOG_INFO  ? "core I: " : "core D: ", buf);
+
+    // The channel Flycast's loadGame() reports a FlycastException on, right before returning false
+    // from retro_load_game — this is where "Error: cannot load BIOS naomi.zip" comes from.
+    if (level == RETRO_LOG_ERROR) {
+        std::string s(buf);
+        diag_trim(s);
+        std::lock_guard<std::mutex> lk(s_diagMx);
+        s_diagCoreError = s;
+    }
 }
 
 bool RETRO_CALLCONV environment_cb(unsigned cmd, void* data)
@@ -607,6 +708,26 @@ bool RETRO_CALLCONV environment_cb(unsigned cmd, void* data)
         case RETRO_ENVIRONMENT_GET_CAN_DUPE:
             if (data) *(bool*)data = true;
             return true;
+
+        // The core's user-facing notification channel. We have no OSD, but the text is exactly what
+        // a tester needs: Flycast routes its FlycastException here via os_notify() when a game
+        // refuses to boot. Returning false (the old default-case behaviour) discarded it.
+        case RETRO_ENVIRONMENT_SET_MESSAGE: {
+            const struct retro_message* m = (const struct retro_message*)data;
+            if (!m || !m->msg) return false;
+            LOGI("[env] SET_MESSAGE: %s", m->msg);
+            diag_push("core msg: ", m->msg);
+            { std::string s(m->msg); diag_trim(s); std::lock_guard<std::mutex> lk(s_diagMx); s_diagCoreMsg = s; }
+            return true;
+        }
+        case RETRO_ENVIRONMENT_SET_MESSAGE_EXT: {
+            const struct retro_message_ext* m = (const struct retro_message_ext*)data;
+            if (!m || !m->msg) return false;
+            LOGI("[env] SET_MESSAGE_EXT level=%d: %s", (int)m->level, m->msg);
+            diag_push("core msg: ", m->msg);
+            { std::string s(m->msg); diag_trim(s); std::lock_guard<std::mutex> lk(s_diagMx); s_diagCoreMsg = s; }
+            return true;
+        }
 
         // Polled every frame — handle silently (no per-frame logcat traffic).
         case RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE:
@@ -873,7 +994,7 @@ int16_t  RETRO_CALLCONV input_state_cb(unsigned port, unsigned device, unsigned 
 bool load_and_bind(const char* core_path)
 {
     if (g.handle) return true;
-    if (!core_path || !*core_path) { LOGE("load_and_bind: null/empty core_path"); return false; }
+    if (!core_path || !*core_path) { SET_ERR("load_and_bind: null/empty core_path"); return false; }
 
     // Flycast resolves ASharedMemory_create (modern Android shared memory, API 26+) as a WEAK
     // symbol. If it's null when the core loads, Flycast falls back to legacy /dev/ashmem, which
@@ -885,7 +1006,7 @@ bool load_and_bind(const char* core_path)
     LOGI("load_and_bind: preload libandroid=%p ASharedMemory_create=%p", la, ashmemFn);
 
     g.handle = dlopen(core_path, RTLD_NOW | RTLD_LOCAL);
-    if (!g.handle) { LOGE("load_and_bind: dlopen FAILED: %s", dlerror()); return false; }
+    if (!g.handle) { SET_ERR("load_and_bind: dlopen('%s') FAILED: %s", core_path, dlerror()); return false; }
     LOGI("load_and_bind: dlopen OK (%p)", g.handle);
 
     bool ok = true;
@@ -916,7 +1037,7 @@ bool load_and_bind(const char* core_path)
     if (!g.retro_serialize_size || !g.retro_serialize || !g.retro_unserialize)
         LOGE("load_and_bind: savestate fns missing (size=%p ser=%p unser=%p) — transplant disabled",
              (void*)g.retro_serialize_size, (void*)g.retro_serialize, (void*)g.retro_unserialize);
-    if (!ok) { LOGE("load_and_bind: missing symbols"); return false; }
+    if (!ok) { SET_ERR("load_and_bind: '%s' is missing required retro_* symbols", core_path); return false; }
 
     struct retro_system_info info; memset(&info, 0, sizeof(info));
     g.retro_get_system_info(&info);
@@ -1341,7 +1462,14 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
     LOGI("pdlr_start begin: core='%s' sys='%s' save='%s' game='%s'  [build %s %s]",
          core_path ? core_path : "(null)", system_dir ? system_dir : "", save_dir ? save_dir : "",
          game_path ? game_path : "(null)", __DATE__, __TIME__);
-    if (!game_path || !*game_path) { LOGE("pdlr_start: null game_path"); return -1; }
+
+    // Fresh diagnostics per boot — a reason left over from the previous attempt must never be
+    // reported as this one's. Nothing clears these on the way out: pdlr_start may call
+    // pdlr_shutdown() before returning -1, and the frontend reads the reason back afterwards.
+    { std::lock_guard<std::mutex> lk(s_diagMx);
+      s_diagRing.clear(); s_diagLastError.clear(); s_diagCoreError.clear(); s_diagCoreMsg.clear(); }
+
+    if (!game_path || !*game_path) { SET_ERR("pdlr_start: null game_path"); return -1; }
     if (!load_and_bind(core_path)) { pdlr_shutdown(); return -1; }
 
     if (system_dir) snprintf(s_systemDir, sizeof(s_systemDir), "%s", system_dir);
@@ -1411,6 +1539,17 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
              (s_displayLock && !backpressureKnobSet) ? " (auto-off: display-lock is the pacer)" : "");
         LOGI("[aica-probe] force_mvol=%d disable_arm7=%d backpressure=%dms",
              s_forceMvol, (int)s_disableArm7, s_backpressureMs);
+
+        // How much of the core's log to capture into the ring the frontend drains — verbose.txt
+        // holding 0=DEBUG 1=INFO 2=WARN 3=ERROR. Absent leaves whatever the frontend set via
+        // pdlr_set_log_verbosity (default WARN+). A tester chasing a boot failure can drop a
+        // verbose.txt next to the game and get the core's whole boot chatter in flycast.log, with
+        // no rebuild — the same trick as the pacing knobs above.
+        snprintf(fpath, sizeof(fpath), "%s/verbose.txt", optDir);
+        FILE* vf = fopen(fpath, "r");
+        if (vf) { int v = -1; if (fscanf(vf, "%d", &v) == 1) pdlr_set_log_verbosity(v); fclose(vf); }
+        LOGI("[diag] core-log capture level=%d (0=DEBUG 1=INFO 2=WARN 3=ERROR), ring=%zu lines",
+             s_diagMinLevel.load(), kDiagLines);
     }
 
     install_callbacks();
@@ -1438,7 +1577,14 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
     LOGI("pdlr_start: retro_load_game('%s')", game_path);
     bool loaded = g.retro_load_game(&gi);
     if (oldcwd[0]) { chdir(oldcwd); LOGI("pdlr_start: restored cwd '%s'", oldcwd); }
-    if (!loaded) { LOGE("pdlr_start: retro_load_game FAILED"); return -1; }
+    if (!loaded) {
+        // The core already told us why, on its log callback and/or SET_MESSAGE — surface it instead
+        // of the bare "FAILED" that used to be the only trace of a missing BIOS or a bad romset.
+        std::string reason = diag_core_reason();
+        if (!reason.empty()) SET_ERR("retro_load_game('%s') failed — the core said: %s", game_path, reason.c_str());
+        else                 SET_ERR("retro_load_game('%s') failed and the core gave no reason", game_path);
+        return -1;
+    }
     g.gameLoaded = true;
     LOGI("pdlr_start: retro_load_game OK; haveHwcb=%d haveNego=%d", vk.haveHwcb, vk.haveNego);
 
@@ -1470,7 +1616,7 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
              s_portDevice[0], s_portDevice[1], s_portDevice[2], s_portDevice[3]);
     }
 
-    if (create_vulkan_context() != 0) { LOGE("pdlr_start: Vulkan context setup FAILED"); return -1; }
+    if (create_vulkan_context() != 0) { SET_ERR("pdlr_start: Vulkan context setup FAILED (see the [vk] lines in the captured log)"); return -1; }
 
     // Boot-race transplant: unless <gameDir>/no_state.txt exists, restore a captured good boot state
     // so the ARM7 sound driver comes up pre-initialized (SCIEB!=0 = music) instead of rolling the
@@ -1878,6 +2024,35 @@ void pdlr_notify_display_frame(void)
 }
 // Unity's actual display refresh (Hz) — sets the display-lock ratio. Call once at start (default 72).
 void pdlr_set_display_hz(double hz) { if (hz > 1.0) s_displayHz = hz; }
+
+// --- diagnostics accessors (see the diagnostics block at the top) -------------------------------
+
+// The most specific reason the last pdlr_start failed. "" if it succeeded or was never called.
+// The returned pointer stays valid until the next pdlr_last_error() call.
+const char* pdlr_last_error(void)
+{
+    static std::string out;
+    std::lock_guard<std::mutex> lk(s_diagMx);
+    out = s_diagLastError;
+    return out.c_str();
+}
+
+// The captured boot trace: core log lines at/above the capture level plus our own errors, one per
+// line, oldest first. Valid until the next pdlr_recent_log() call.
+const char* pdlr_recent_log(void)
+{
+    std::lock_guard<std::mutex> lk(s_diagMx);
+    s_diagJoined.clear();
+    for (const auto& l : s_diagRing) { s_diagJoined += l; s_diagJoined += '\n'; }
+    return s_diagJoined.c_str();
+}
+
+void pdlr_set_log_verbosity(int min_level)
+{
+    if (min_level < RETRO_LOG_DEBUG) min_level = RETRO_LOG_DEBUG;
+    if (min_level > RETRO_LOG_ERROR) min_level = RETRO_LOG_ERROR;
+    s_diagMinLevel.store(min_level, std::memory_order_relaxed);
+}
 
 void pdlr_set_zero_copy(int enabled) { s_zeroCopy = (enabled != 0); }
 int  pdlr_zero_copy_active(void)     { return s_zeroCopy ? 1 : 0; }   // false if pdlr_start auto-fell-back

@@ -157,7 +157,7 @@ public class PdFlycast : MonoBehaviour
         _tickHz = (useCoreFrameRate && coreFps > 1.0) ? (float)coreFps : targetHz;
         Status(started
             ? $"pdlr_start OK — running (zeroCopy={zeroCopy}, tick={_tickHz:F3}Hz, coreFps={coreFps:F3}, sampleRate={LibretroHWBridge.SampleRate:F0})"
-            : $"pdlr_start FAILED — Available={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}' lastError='{LibretroHWBridge.LastError}'");
+            : $"pdlr_start FAILED — {LibretroHWBridge.NativeLastError}");
 
         if (started && audioEnabled) SetupAudio();
         _lastRunAt = Time.unscaledTime;
