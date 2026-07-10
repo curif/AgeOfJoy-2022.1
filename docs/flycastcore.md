@@ -102,7 +102,23 @@ For a `core: flycast` cabinet, files are located in three places under the app d
 
 Both roots use the same `dc/` folder name (matching the RetroArch-standard flycast BIOS layout). The BIOS is **global**, shared by every flycast cabinet — it is *not* part of a cabinet's own folder; a cabinet directory (`cabinetsdb/<name>/`) only holds the model, textures, video and `description.yaml`. Every flycast platform (Dreamcast, NAOMI, Atomiswave) reads its BIOS from `system/dc/`.
 
-Note that the emulator's settings have been set to "safe" defaults that work with most tested games. It's also set to use HLE BIOS emulation, so no Dreamcast BIOS file is needed for Dreamcast games. This can be changed to use the official bios; see the section below.
+Dreamcast games use the HLE bios and do not require a BIOS file. Naomi and Atomiswave games do require one, however. Note that some games (HOTD2) require a secondary bios file that should also be placed in /system/dc.
+
+The emulator's settings have been set to "safe" defaults that work with most tested games. It's also set to use HLE BIOS emulation, so no Dreamcast BIOS file is needed for Dreamcast games. This can be changed to use the official bios; see the section below.
+
+---
+
+## SOMETHING WENT WRONG!
+
+If you're testing on the Flycast (Dreamcast / NAOMI) cores and something misbehaves — the screen stays black after you drop a coin, or the game never
+starts — there's an automatic log that tells you what goofed.
+
+**Where it is:** on the headset, browse to
+
+```
+Android/data/<the app>/Logs/flycast.log
+```
+
 
 ---
 

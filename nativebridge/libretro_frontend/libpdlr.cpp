@@ -234,16 +234,6 @@ static std::map<std::string, std::string> s_coreOptions;
 // the Flycast.opt defaults load, so YAML wins and any option it doesn't name keeps its default.
 static std::map<std::string, std::string> s_optOverrides;
 
-// DEBUG (audio silence hunt): if >= 0, force the AICA master volume (MVOL) to this value (0..15)
-// every frame, overriding the emulated game. Set from <gameDir>/force_mvol.txt. -1 = leave alone.
-static int s_forceMvol = -1;
-
-// DEBUG (audio silence hunt): if <gameDir>/disable_arm7.txt exists, hold the ARM7 sound CPU off
-// (aica::arm::Arm7Enabled=false every frame). Discriminator: if channel keying / SFX SURVIVE with
-// the ARM7 dead, all the AICA activity we see is the SH4 writing registers directly and the ARM
-// driver is a zombie; if they stop, the ARM driver really is doing the keying.
-static bool s_disableArm7 = false;
-
 // Parse <dir>/Flycast.opt into s_coreOptions. Lines look like: reicast_enable_dsp = "enabled".
 // Missing file is fine (we just fall through to the core's built-in defaults).
 static void load_core_options(const char* dir)
@@ -323,18 +313,10 @@ double   s_paceCredit = 0.0;          // accumulated emulated-frame credit (pump
 uint64_t s_paceLastDisplay = 0;       // last observed s_displayFrame (pump thread only)
 std::atomic<bool> s_paceResync{true}; // set on resume → re-anchor the credit window
 
-// Cumulative audio frames delivered by the core (audio_sample_batch). The watcher logs the per-second
-// delta — ground truth for guest speed: ≈44100/s = real-time, more = fast-forward, less = stalled.
+// Cumulative audio frames delivered by the core (audio_sample_batch). The pump's [speed] log prints
+// the per-second delta — ground truth for guest speed: ≈44100/s = real-time, more = fast-forward,
+// less = stalled.
 std::atomic<uint64_t> s_prodFrames{0};
-
-// --- 1 kHz AICA watcher thread (debug, audio-silence hunt) ---------------------------------------
-// Samples MVOL, the 64-channel key-on mask and SCIEB every ~1 ms and logs TRANSITIONS with
-// timestamps. The per-frame probe proved too coarse: the BIOS boot free-runs (no frames presented →
-// nothing paces the emu thread), so a chime key-on + MVOL write lasting ~0.5 s of guest time can
-// flash by between two retro_runs. At 1 kHz nothing guest-visible can hide.
-volatile bool s_watchStop   = false;
-bool          s_watchActive = false;
-pthread_t     s_watchThread;
 
 // --- Audio: interleaved-stereo float buffer, fed by the core's audio_sample_batch (producer = core
 // thread during retro_run), drained by Unity's OnAudioFilterRead (consumer = audio thread) → mutex.
@@ -1402,7 +1384,6 @@ void UNITY_INTERFACE_API OnRenderEvent(int eventId)
 } // namespace
 
 static void* pump_thread_fn(void*);    // dedicated retro_run loop (defined below pdlr_start)
-static void* watch_thread_fn(void*);   // 1 kHz AICA transition watcher (defined below pdlr_start)
 
 // --- Savestate transplant (boot-race workaround) -------------------------------------------------
 // VF3's ARM7 sound-driver init is a boot race: some boots come up SCIEB!=0 (music), some stay 0
@@ -1504,17 +1485,9 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
             LOGI("[opt] override %s = \"%s\" (from yaml environment)", kv.first.c_str(), kv.second.c_str());
         }
 
-        // DEBUG: optional forced AICA master volume — <optDir>/force_mvol.txt containing 0..15.
-        char fpath[1088]; snprintf(fpath, sizeof(fpath), "%s/force_mvol.txt", optDir);
-        FILE* mf = fopen(fpath, "r");
-        if (mf) { int v = -1; if (fscanf(mf, "%d", &v) == 1 && v >= 0 && v <= 15) s_forceMvol = v; fclose(mf); }
-        // DEBUG: hold the ARM7 sound CPU in reset if <optDir>/disable_arm7.txt exists (see decl).
-        snprintf(fpath, sizeof(fpath), "%s/disable_arm7.txt", optDir);
-        FILE* df = fopen(fpath, "r");
-        if (df) { s_disableArm7 = true; fclose(df); }
         // Audio back-pressure target in ms — knob <optDir>/backpressure.txt (a number 0..500; 0 = off).
         // Absent = built-in default. Lets us A/B the RA-style pacing on device without a rebuild.
-        snprintf(fpath, sizeof(fpath), "%s/backpressure.txt", optDir);
+        char fpath[1088]; snprintf(fpath, sizeof(fpath), "%s/backpressure.txt", optDir);
         FILE* bf = fopen(fpath, "r");
         bool backpressureKnobSet = false;
         if (bf) { int v = -1; if (fscanf(bf, "%d", &v) == 1 && v >= 0 && v <= 500) { s_backpressureMs = v; backpressureKnobSet = true; } fclose(bf); }
@@ -1537,8 +1510,6 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
         LOGI("[pace] display-lock %s (knob displaylock.txt), displayHz=%.2f, back-pressure=%dms%s",
              s_displayLock ? "ON" : "OFF", s_displayHz, s_backpressureMs,
              (s_displayLock && !backpressureKnobSet) ? " (auto-off: display-lock is the pacer)" : "");
-        LOGI("[aica-probe] force_mvol=%d disable_arm7=%d backpressure=%dms",
-             s_forceMvol, (int)s_disableArm7, s_backpressureMs);
 
         // How much of the core's log to capture into the ring the frontend drains — verbose.txt
         // holding 0=DEBUG 1=INFO 2=WARN 3=ERROR. Absent leaves whatever the frontend set via
@@ -1629,182 +1600,13 @@ int pdlr_start(const char* core_path, const char* system_dir, const char* save_d
         else { char sp[1088]; snprintf(sp, sizeof(sp), "%s/boot.state", s_gameDir); do_load_state(sp); }
     }
 
-    // Start the dedicated emu pump + 1 kHz AICA watcher (declarations near the top explain both).
-    s_pumpStop = false; s_watchStop = false; s_pumpPaused = false;
+    // Start the dedicated emu pump (declaration near the top explains it).
+    s_pumpStop = false; s_pumpPaused = false;
     if (pthread_create(&s_pumpThread, nullptr, pump_thread_fn, nullptr) == 0) s_pumpActive = true;
     else LOGE("pdlr_start: pump thread create FAILED — falling back to C#-driven pdlr_run ticks");
-    if (pthread_create(&s_watchThread, nullptr, watch_thread_fn, nullptr) == 0) s_watchActive = true;
 
-    LOGI("pdlr_start OK — Flycast running on its own Vulkan device (pump=%d watch=%d)",
-         (int)s_pumpActive, (int)s_watchActive);
+    LOGI("pdlr_start OK — Flycast running on its own Vulkan device (pump=%d)", (int)s_pumpActive);
     return 0;
-}
-
-// DEBUG (audio silence hunt): the prebuilt Flycast core is unstripped, so we can read its internal
-// AICA state by dlsym on g.handle — no core rebuild needed. Decisive values:
-//   aica::arm::Arm7Enabled — is the AICA's ARM7 sound CPU running the game's sound driver? (the
-//     game releases it from reset by writing AICA reg 0x2C00; if this stays 0, no channel is keyed
-//     → the mix is silence.)
-//   aica::CommonData->MVOL  — master volume (low 4 bits of CommonData[0]); 0 = fully muted.
-//   aica::aica_reg[0x8000]  — the raw AICA register block. Per channel (64, stride 0x80) the first
-//     u32 holds KYONB (bit14 = "play this channel") and LPCTL (bit9 = looping). We count keyed-on
-//     channels and, of those, how many loop. A persistently keyed LOOPING channel is how streamed
-//     BGM (ADX/Sofdec double-buffered into ARAM) plays — vs one-shot SFX (keyed, non-looping,
-//     transient). So after the controller fix this disambiguates the "MVOL rose but no music" case:
-//       keyed=0            → sound driver isn't playing anything (init/driver still broken)
-//       keyed>0, loop=0    → only SFX-style one-shots; streamed BGM never started
-//       keyed>0, loop>0    → BGM channel IS live; if still silent, the SH4 isn't filling its ARAM
-//                            buffer (decode/G2-DMA path) or it's a mix/output issue, not key-on.
-// Logged ~1/sec from pdlr_run. Remove once audio works.
-static void debug_tick_aica()
-{
-    static bool*           arm7     = nullptr;   // &aica::arm::Arm7Enabled (written by the kill switch)
-    static uint32_t**      commonPP = nullptr;   // &aica::CommonData (address of the struct pointer)
-    static const uint8_t*  aicaReg  = nullptr;   // &aica::aica_reg[0] (0x8000-byte register block)
-    static const uint8_t*  dspEnP   = nullptr;   // &config::DSPEnabled (Option<bool>; value byte at +32)
-    static const uint32_t* armRegs  = nullptr;   // &aica::arm::arm_Reg[0] (reg_pair = one u32 each)
-    static const uint8_t*  aram     = nullptr;   // aica_ram.data — the 2 MB AICA sample RAM
-    static uint32_t        aramSize = 0;
-    static bool resolved = false;
-    if (!resolved) {
-        resolved = true;
-        if (g.handle) {
-            arm7     = (bool*)          dlsym(g.handle, "_ZN4aica3arm11Arm7EnabledE");
-            commonPP = (uint32_t**)     dlsym(g.handle, "_ZN4aica10CommonDataE");
-            aicaReg  = (const uint8_t*) dlsym(g.handle, "_ZN4aica8aica_regE");
-            dspEnP   = (const uint8_t*) dlsym(g.handle, "_ZN6config10DSPEnabledE");
-            armRegs  = (const uint32_t*)dlsym(g.handle, "_ZN4aica3arm7arm_RegE");
-            // aica_ram is a RamRegion (older cores: VArray2) — both start { u8* data; u32/size_t size; },
-            // so the data pointer is at +0 and a u32 read at +8 gives the (low bits of the) size.
-            const uint8_t* ramObj = (const uint8_t*)dlsym(g.handle, "_ZN4aica8aica_ramE");
-            if (ramObj) {
-                aram     = *(const uint8_t* const*)ramObj;
-                aramSize = *(const uint32_t*)(ramObj + 8);
-                if (aramSize < 0x100000 || aramSize > 0x1000000 || (aramSize & (aramSize - 1)))
-                    aramSize = 0x200000;   // implausible → assume the DC's 2 MB
-            }
-        }
-        LOGI("[aica-probe] symbols: Arm7Enabled=%p CommonData=%p aica_reg=%p DSPEnabled=%p arm_Reg=%p "
-             "aram=%p size=0x%x forceMvol=%d",
-             (const void*)arm7, (void*)commonPP, (const void*)aicaReg, (const void*)dspEnP,
-             (const void*)armRegs, (const void*)aram, aramSize, s_forceMvol);
-    }
-
-    uint32_t* cd = commonPP ? *commonPP : nullptr;   // aica::CommonData → the AICA register block
-
-    // MVOL transition watch (per frame, BEFORE the force write): catches transient guest writes that
-    // 1 Hz sampling would miss. With the force active, a guest write shows up as forced->X then X->forced.
-    static int lastMvol = -1;
-    if (cd) {
-        int raw = (int)(*(const volatile uint32_t*)cd & 0xF);
-        if (raw != lastMvol) {
-            LOGI("[aica-probe] MVOL %d -> %d%s", lastMvol, raw, s_forceMvol >= 0 ? " (force active)" : "");
-            lastMvol = raw;
-        }
-    }
-    // Force MVOL (bits 0-3 of the first reg u32) every frame, overriding whatever the game left there.
-    if (s_forceMvol >= 0 && cd)
-        *cd = (*cd & ~0xFu) | ((uint32_t)s_forceMvol & 0xF);
-
-    // Kill switch: hold the ARM7 sound CPU off (see s_disableArm7 declaration for the rationale).
-    if (s_disableArm7 && arm7)
-        *arm7 = false;
-
-    // ARM7 PC sampling (per frame, summarized 1/sec). R15_ARM_NEXT = arm_Reg[46] in this core; the
-    // dynarec stores the guest PC at block boundaries, so cross-thread samples are block-granular —
-    // enough to tell "executing varied driver code" from "parked in a tiny idle loop" (or dead at 0).
-    // Legit values live inside the 2 MB ARAM; anything else means the reg-layout guess is wrong.
-    static uint32_t pcSeen[6]; static int pcDistinct = 0; static uint32_t pcMin = ~0u, pcMax = 0;
-    if (armRegs) {
-        uint32_t pc = armRegs[46];
-        if (pc < pcMin) pcMin = pc;
-        if (pc > pcMax) pcMax = pc;
-        bool known = false;
-        for (int i = 0; i < pcDistinct && i < 6; ++i) if (pcSeen[i] == pc) { known = true; break; }
-        if (!known) { if (pcDistinct < 6) pcSeen[pcDistinct] = pc; pcDistinct++; }
-    }
-
-    static int n = 0;
-    if ((n++ % 60) == 0) {   // ~1/sec at ~60 Hz
-        int mvol = cd ? (int)(*(const volatile uint32_t*)cd & 0xF) : -1;
-        // config::DSPEnabled is Option<bool>: vtable(8) + std::string name(24, libc++) → value at +32.
-        // Best-effort (layout-dependent); a value other than 0/1 means the offset guess is off.
-        int dsp = dspEnP ? (int)dspEnP[32] : -1;
-
-        // For each keyed channel read its output routing to explain "keyed but silent":
-        //   DISDL (direct send, reg+0x24 bits 8-11): >0 = audible on the direct mix.
-        //   IMXL  (DSP send,    reg+0x20 bits 4-7):  >0 = routed to the AICA DSP.
-        //   TL    (total level, reg+0x28 bits 8-15): 0=loudest, 255=silent (channel-level attenuation).
-        // Plus the decisive bit for "keyed at full volume yet silent": SA (sample start address,
-        // bits 22:16 in w0 bits 6:0, bits 15:0 in reg+0x04) — peek the ARAM bytes the channel actually
-        // plays. dataCh = keyed channels whose sample data is nonzero; silentCh = keyed but all-zero
-        // data (the Sega driver's parked idle loops). Music playing would show dataCh loopers.
-        int keyed = 0, loopKeyed = 0, direct = 0, dspOnly = 0, minTL = 255; uint32_t mask = 0;
-        int dataCh = 0, silentCh = 0;
-        char ex[96]; int exn = 0; ex[0] = 0;
-        if (aicaReg) {
-            for (int ch = 0; ch < 64; ++ch) {
-                const uint8_t* c = aicaReg + ch * 0x80;
-                uint32_t w0 = *(const volatile uint32_t*)(c + 0x00);
-                if ((w0 >> 14) & 1u) {                      // KYONB — channel commanded to play
-                    keyed++;
-                    if (ch < 32) mask |= (1u << ch);
-                    if ((w0 >> 9) & 1u) loopKeyed++;        // LPCTL — looping (streamed BGM)
-                    uint32_t imxl  = (*(const volatile uint32_t*)(c + 0x20) >> 4) & 0xF;
-                    uint32_t disdl = (*(const volatile uint32_t*)(c + 0x24) >> 8) & 0xF;
-                    uint32_t tl    = (*(const volatile uint32_t*)(c + 0x28) >> 8) & 0xFF;
-                    if (disdl > 0) direct++; else if (imxl > 0) dspOnly++;
-                    if ((int)tl < minTL) minTL = (int)tl;
-                    if (aram) {
-                        uint32_t sa = (((w0 & 0x7Fu) << 16) |
-                                       (*(const volatile uint32_t*)(c + 0x04) & 0xFFFFu)) & (aramSize - 1);
-                        int nz = 0;
-                        for (uint32_t b = 0; b < 64; ++b) nz += (aram[(sa + b) & (aramSize - 1)] != 0);
-                        if (nz > 0) dataCh++; else silentCh++;
-                        if (nz > 0 && exn < (int)sizeof(ex) - 16)
-                            exn += snprintf(ex + exn, sizeof(ex) - exn, " ch%d@%05x:%d", ch, sa, nz);
-                    }
-                }
-            }
-        }
-        LOGI("[aica-probe] Arm7=%d MVOL=%d%s DSP=%d  keyed=%d loop=%d direct=%d dspOnly=%d minTL=%d "
-             "dataCh=%d silentCh=%d mask=0x%08x ex:%s",
-             arm7 ? (int)*arm7 : -1, mvol, s_forceMvol >= 0 ? " (forced)" : "", dsp,
-             keyed, loopKeyed, direct, dspOnly, minTL, dataCh, silentCh, mask, ex);
-
-        // ARAM forensics: did the guest upload anything (driver at the bottom, samples above), and is
-        // it still being written? Cheap sum fingerprints, race-tolerant (the emu thread writes as we
-        // read — we only care about zero/nonzero and changed/unchanged). '*' = changed since last log.
-        // During the BIOS swirl this answers "was the BIOS sound driver ever uploaded to ARAM?".
-        if (aram) {
-            uint32_t f1 = 0, f2 = 0; int nzPages = 0;
-            const uint32_t* p = (const uint32_t*)aram;
-            for (uint32_t i = 0; i < 0x8000 / 4; ++i)           f1 = f1 * 31 + p[i];   // [0,0x8000) driver
-            for (uint32_t i = 0x8000 / 4; i < 0x20000 / 4; ++i) f2 = f2 * 31 + p[i];   // [0x8000,0x20000)
-            for (uint32_t pg = 0; pg < aramSize; pg += 4096) {
-                const uint64_t* q = (const uint64_t*)(aram + pg);
-                for (int i = 0; i < 4096 / 8; ++i) if (q[i]) { nzPages++; break; }
-            }
-            static uint32_t lastF1 = 0, lastF2 = 0;
-            // Interrupt/timer heartbeat: the driver's scheduler runs off Timer-A IRQs. TIMA counting,
-            // SCIPD/MCIPD bits pending = the ARM7 is being ticked; all-static = interrupt path dead.
-            uint32_t tima  = aicaReg ? *(const volatile uint32_t*)(aicaReg + 0x2890) : 0;
-            uint32_t scieb = aicaReg ? *(const volatile uint32_t*)(aicaReg + 0x289C) : 0;
-            uint32_t scipd = aicaReg ? *(const volatile uint32_t*)(aicaReg + 0x28A0) : 0;
-            uint32_t mcieb = aicaReg ? *(const volatile uint32_t*)(aicaReg + 0x28B4) : 0;
-            uint32_t mcipd = aicaReg ? *(const volatile uint32_t*)(aicaReg + 0x28B8) : 0;
-            LOGI("[aica-probe2] pc n=%d min=%05x max=%05x s=[%05x %05x %05x %05x]  aramNZpg=%d/%d "
-                 "drv=%08x%s wrk=%08x%s  TIMA=%03x SCIEB=%03x SCIPD=%03x MCIEB=%03x MCIPD=%03x",
-                 pcDistinct, pcMin == ~0u ? 0 : pcMin, pcMax,
-                 pcSeen[0], pcDistinct > 1 ? pcSeen[1] : 0, pcDistinct > 2 ? pcSeen[2] : 0,
-                 pcDistinct > 3 ? pcSeen[3] : 0,
-                 nzPages, (int)(aramSize / 4096),
-                 f1, f1 != lastF1 ? "*" : "", f2, f2 != lastF2 ? "*" : "",
-                 tima & 0x7FF, scieb & 0x7FF, scipd & 0x7FF, mcieb & 0x7FF, mcipd & 0x7FF);
-            lastF1 = f1; lastF2 = f2;
-        }
-        pcDistinct = 0; pcMin = ~0u; pcMax = 0;
-    }
 }
 
 static double ms_since(const struct timespec& a, const struct timespec& b)
@@ -1843,6 +1645,17 @@ static void* pump_thread_fn(void*)
     pthread_setname_np(pthread_self(), "pdlr-pump");
     LOGI("[pump] emu pump thread up");
     struct timespec next; clock_gettime(CLOCK_MONOTONIC, &next);
+
+    // Per-session state — locals, not statics. This thread is created by pdlr_start and joined by
+    // pdlr_shutdown, so a local is scoped to exactly one game. Statics would survive into the next
+    // game while the counters they track (vk.imageCount, s_prodFrames) are reset by pdlr_shutdown,
+    // making the first delta of every 2nd+ game a huge unsigned underflow.
+    time_t   lastChk = 0;                                // save_now.txt poll gate (1 Hz)
+    double   accRun = 0, accBlit = 0, maxRun = 0;        // [speed] accumulators
+    int      calls = 0;
+    time_t   lastLog = 0;
+    uint64_t lastImg = 0, lastProd = 0;
+
     while (!s_pumpStop) {
         if (s_pumpPaused.load(std::memory_order_relaxed)) {
             struct timespec ts { 0, 10000000 };   // 10 ms poll while paused
@@ -1860,13 +1673,12 @@ static void* pump_thread_fn(void*)
         if (s_zeroCopy) blit_frame();   // GPU copy core frame -> AHB (Unity samples it)
         else            readback_frame();
         clock_gettime(CLOCK_MONOTONIC, &t2);
-        debug_tick_aica();   // force MVOL (if enabled) + probe logs
 
         // Capture trigger: if <gameDir>/save_now.txt appears, serialize the current (hopefully
         // music-alive) state to boot.state and consume the knob. Runs BETWEEN retro_run calls on this
         // same thread → safe. Lets us grab a good boot headlessly (drop the knob when SCIEB!=0).
         {
-            static time_t lastChk = 0; time_t nowt = time(nullptr);
+            time_t nowt = time(nullptr);
             if (nowt != lastChk && s_gameDir[0]) {
                 lastChk = nowt;
                 char kp[1088]; snprintf(kp, sizeof(kp), "%s/save_now.txt", s_gameDir);
@@ -1883,8 +1695,6 @@ static void* pump_thread_fn(void*)
         // realtime = audioFrames/s ÷ sample_rate: 1.00 = real time, >1 = the guest runs fast (and by
         // how much). coreFrames/s outrunning pump/s would mean the core's emu thread free-runs ahead
         // of our retro_run pacing. The three together localize any overspeed.
-        static double accRun = 0, accBlit = 0, maxRun = 0; static int calls = 0; static time_t lastLog = 0;
-        static uint64_t lastImg = 0, lastProd = 0;
         double runMs = ms_since(t0, t1), blitMs = ms_since(t1, t2);
         accRun += runMs; accBlit += blitMs; if (runMs > maxRun) maxRun = runMs; calls++;
         if (t2.tv_sec != lastLog) {
@@ -1917,65 +1727,6 @@ static void* pump_thread_fn(void*)
     return nullptr;
 }
 
-// 1 kHz AICA watcher (see declarations near the top): logs MVOL / key-on-mask / SCIEB TRANSITIONS
-// with timestamps (edge log, ≥20 ms apart — oscillation coalesces against the last LOGGED state),
-// plus a 1/s audio-production rate = guest speed ground truth (44100 frames/s = real time).
-static void* watch_thread_fn(void*)
-{
-    pthread_setname_np(pthread_self(), "pdlr-watch");
-    uint32_t**      commonPP = g.handle ? (uint32_t**)dlsym(g.handle, "_ZN4aica10CommonDataE") : nullptr;
-    const uint8_t*  aicaReg  = g.handle ? (const uint8_t*)dlsym(g.handle, "_ZN4aica8aica_regE") : nullptr;
-    const uint32_t* armRegs  = g.handle ? (const uint32_t*)dlsym(g.handle, "_ZN4aica3arm7arm_RegE") : nullptr;
-    LOGI("[aica-watch] up (1 kHz) CommonData=%p aica_reg=%p arm_Reg=%p",
-         (void*)commonPP, (const void*)aicaReg, (const void*)armRegs);
-
-    struct timespec start; clock_gettime(CLOCK_MONOTONIC, &start);
-    int lastMvol = -1; uint64_t lastMask = 0; uint32_t lastScieb = 0;
-    uint64_t lastProd = 0; long lastProdMs = 0, lastChangeLogMs = -1000;
-    // CPSR discriminator, accumulated across the second: RN_CPSR = arm_Reg[16], low byte =
-    // mode[4:0] + F(bit6, FIQ *disable*) + I(bit7). cpsrAnd bit6 == 1 → the driver NEVER had FIQs
-    // enabled at any sampled instant (polling driver → SCIEB=0 is normal, chase the SH4 side);
-    // cpsrAnd bit6 == 0 → the driver DOES run with FIQs enabled → its SCIEB write is getting lost.
-    // INTR_PEND = arm_Reg[47]: OR-accumulated — did the emulator ever assert an ARM7 interrupt?
-    uint32_t cpsrAnd = 0xFF, cpsrOr = 0, intrOr = 0;
-    while (!s_watchStop) {
-        struct timespec now; clock_gettime(CLOCK_MONOTONIC, &now);
-        long ms = (long)ms_since(start, now);
-
-        uint32_t* cd = commonPP ? *commonPP : nullptr;
-        int mvol = cd ? (int)(*(const volatile uint32_t*)cd & 0xF) : -1;
-        uint64_t mask = 0; uint32_t scieb = 0;
-        if (aicaReg) {
-            for (int ch = 0; ch < 64; ++ch)
-                if ((*(const volatile uint32_t*)(aicaReg + ch * 0x80) >> 14) & 1u) mask |= 1ULL << ch;
-            scieb = *(const volatile uint32_t*)(aicaReg + 0x289C) & 0x7FF;
-        }
-        if (armRegs) {
-            uint32_t cpsr = armRegs[16] & 0xFF;
-            cpsrAnd &= cpsr; cpsrOr |= cpsr; intrOr |= armRegs[47];
-        }
-        if ((mvol != lastMvol || mask != lastMask || scieb != lastScieb) && ms - lastChangeLogMs >= 20) {
-            LOGI("[aica-watch] t=%ld.%03lds MVOL %d->%d keyed %016llx->%016llx SCIEB %03x->%03x",
-                 ms / 1000, ms % 1000, lastMvol, mvol,
-                 (unsigned long long)lastMask, (unsigned long long)mask, lastScieb, scieb);
-            lastMvol = mvol; lastMask = mask; lastScieb = scieb; lastChangeLogMs = ms;
-        }
-        if (ms - lastProdMs >= 1000) {
-            uint64_t prod = s_prodFrames.load(std::memory_order_relaxed);
-            LOGI("[aica-watch] t=%ld.%03lds audio prod=%llu frames/s (44100=realtime) MVOL=%d keyed=%d "
-                 "cpsrAnd=%02x cpsrOr=%02x intr=%x",
-                 ms / 1000, ms % 1000, (unsigned long long)(prod - lastProd), mvol,
-                 __builtin_popcountll(mask), cpsrAnd, cpsrOr, intrOr);
-            lastProd = prod; lastProdMs = ms;
-            cpsrAnd = 0xFF; cpsrOr = 0; intrOr = 0;
-        }
-        struct timespec ts { 0, 1000000 };   // ~1 ms
-        nanosleep(&ts, nullptr);
-    }
-    LOGI("[aica-watch] down");
-    return nullptr;
-}
-
 int pdlr_run(void)
 {
     if (!g.inited || !g.gameLoaded) return -1;
@@ -2004,8 +1755,6 @@ int pdlr_run(void)
              calls, accRun / (calls ? calls : 1), maxRun, accBlit / (calls ? calls : 1));
         calls = 0; accRun = accBlit = maxRun = 0;
     }
-
-    debug_tick_aica();   // force MVOL (if enabled) every frame; logs ~1/sec
     return 0;
 }
 
@@ -2185,7 +1934,6 @@ void pdlr_shutdown(void)
 {
     // Stop the pump first — it drives retro_run and touches the Vk resources torn down below.
     if (s_pumpActive)  { s_pumpStop = true;  s_audioSpaceCv.notify_all(); s_displayCv.notify_all(); pthread_join(s_pumpThread,  nullptr); s_pumpActive  = false; }
-    if (s_watchActive) { s_watchStop = true; pthread_join(s_watchThread, nullptr); s_watchActive = false; }
     s_prodFrames.store(0, std::memory_order_relaxed);
 
     // Step B: free the Unity-device imports first — they live on Unity's VkDevice, not the core's.
@@ -2246,6 +1994,7 @@ void pdlr_shutdown(void)
     memset(&vk.iface, 0, sizeof(vk.iface));
     memset(&vk.lastImage, 0, sizeof(vk.lastImage));
     vk.haveImage = false; vk.imageCount = 0;
+    lastBlitImageCount = 0; lastRbImageCount = 0;   // "seen" marks derived from imageCount — reset with it
     vk.semaphores = nullptr; vk.numSemaphores = 0; vk.srcQueueFamily = 0;
 
     s_systemDir[0] = 0; s_saveDir[0] = 0; s_gameDir[0] = 0;
