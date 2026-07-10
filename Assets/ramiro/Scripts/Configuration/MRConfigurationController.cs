@@ -3318,7 +3318,7 @@ public class MRConfigurationController : MonoBehaviour
         Vector3 footprint = Vector3.one * 0.45f;
         float nearDistance = Mathf.Min(spawnDistanceMeters, 1.25f);
 
-        // Always start near the player, inside the room (walls checked), slightly toward center.
+        // Always start near the player, inside the room (no room-center / random teleport).
         if (surfaces == null
             || !surfaces.TryGetInRoomPoseNearPlayer(
                 player,
@@ -3326,7 +3326,7 @@ public class MRConfigurationController : MonoBehaviour
                 footprint,
                 out worldPos,
                 out worldRot,
-                towardRoomCenterBlend: 0.35f))
+                towardRoomCenterBlend: 0f))
         {
             ComputeSpawnPoseInFrontOfPlayer(player, nearDistance, out worldPos, out worldRot);
         }

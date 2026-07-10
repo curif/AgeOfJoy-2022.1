@@ -371,7 +371,8 @@ public class MRPlacementRayController : MonoBehaviour
             case PlacementSurfaceType.Floor:
             default:
                 if (surfaces != null && surfaces.TryGetFloorPointFromRay(
-                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 floorPoint, out Meta.XR.MRUtilityKit.MRUKAnchor floorAnchor))
+                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 floorPoint, out Meta.XR.MRUtilityKit.MRUKAnchor floorAnchor)
+                    && IsFloorHitInFrontOfViewer(floorPoint, viewerPosition, rayDir))
                 {
                     MRAnchorPoseResolver.TryGetUuid(floorAnchor, out hitAnchorUuid);
                     worldPos = floorPoint;
@@ -474,6 +475,26 @@ public class MRPlacementRayController : MonoBehaviour
         placementId = null;
         anchorPoint = null;
         return false;
+    }
+
+    /// <summary>
+    /// Reject floor hits clearly behind the viewer so the first placement-ray snap
+    /// cannot yank the object through/behind a wall when the controller points down-back.
+    /// </summary>
+    static bool IsFloorHitInFrontOfViewer(Vector3 floorPoint, Vector3 viewerPosition, Vector3 rayDir)
+    {
+        Vector3 toHit = floorPoint - viewerPosition;
+        toHit.y = 0f;
+        if (toHit.sqrMagnitude < 0.01f)
+            return true;
+
+        Vector3 forward = rayDir;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        return Vector3.Dot(forward, toHit.normalized) >= -0.15f;
     }
 
     Vector3 ResolvePreviewSurfaceNormal(Quaternion worldRot)
