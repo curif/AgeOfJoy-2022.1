@@ -369,6 +369,59 @@ collision:
         return ObjectsLayoutPath;
     }
 
+    /// <summary>
+    /// Deletes every <c>.yaml</c>/<c>.yml</c> under <c>MR/</c> plus legacy layout files in CabinetsDB.
+    /// Re-seeds default example packages afterward. Returns how many files were removed.
+    /// </summary>
+    public static int DeleteAllYamlFiles()
+    {
+        EnsureFolders();
+        int deleted = 0;
+
+        if (Directory.Exists(MrDir))
+        {
+            try
+            {
+                foreach (string path in Directory.GetFiles(MrDir, "*.yaml", SearchOption.AllDirectories))
+                    deleted += TryDeleteFile(path);
+                foreach (string path in Directory.GetFiles(MrDir, "*.yml", SearchOption.AllDirectories))
+                    deleted += TryDeleteFile(path);
+            }
+            catch (System.Exception e)
+            {
+                ConfigManager.WriteConsoleException($"[MRPaths] failed scanning YAML under {MrDir}", e);
+            }
+        }
+
+        deleted += TryDeleteFile(Path.Combine(ConfigManager.CabinetsDB, LegacyCabinetsLayoutFileName));
+        deleted += TryDeleteFile(Path.Combine(ConfigManager.CabinetsDB, LegacyObjectsLayoutFileName));
+
+        // Allow EnsureFolders seeds to run again after wipe.
+        foldersEnsured = false;
+        EnsureFolders();
+
+        ConfigManager.WriteConsole($"[MRPaths] deleted {deleted} YAML file(s) under MR/");
+        return deleted;
+    }
+
+    static int TryDeleteFile(string path)
+    {
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+            return 0;
+
+        try
+        {
+            File.Delete(path);
+            ConfigManager.WriteConsole($"[MRPaths] deleted YAML {path}");
+            return 1;
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to delete {path}", e);
+            return 0;
+        }
+    }
+
     public static string GetCustomObjectPackageDir(string packageName)
     {
         if (string.IsNullOrEmpty(packageName))

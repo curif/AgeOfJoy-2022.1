@@ -64,6 +64,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     public bool IsEditOpen => isEditOpen;
     public bool HasCabinet => cabinetInstance != null;
+    public GameObject CabinetInstance => cabinetInstance;
 
 #if UNITY_EDITOR
     public bool IsUsingCabinetCamera { get; private set; }
@@ -343,6 +344,42 @@ public class MRConfigurationCabinetController : MonoBehaviour
 #endif
         ConfigManager.WriteConsole(
             $"{LogPrefix} spawned (floor) at {cabinetInstance.transform.position} rot={cabinetInstance.transform.eulerAngles}");
+    }
+
+    /// <summary>
+    /// Clear saved pose and start the placement ray so the player repositions the config cabinet.
+    /// Returns true when the ray is active.
+    /// </summary>
+    public bool ResetPlacementAfterConfigWipe()
+    {
+        ClearSavedPose();
+        initialPlacementRequested = false;
+
+        if (MixedRealityManager.Instance == null)
+            return false;
+
+        ExperienceMode mode = MixedRealityManager.Instance.CurrentMode;
+        if (mode != ExperienceMode.MR && mode != ExperienceMode.MR_EDIT)
+            return false;
+
+        if (cabinetInstance == null)
+            SpawnAtMrOrigin();
+
+        if (cabinetInstance == null)
+            return false;
+
+        if (!cabinetInstance.activeInHierarchy)
+            cabinetInstance.SetActive(true);
+
+        PlaceCabinetNearViewForInitialRay(cabinetInstance);
+
+        bool started = BeginRepositionWithRay(isInitialPlacement: true);
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} placement reset after config wipe rayStarted={started}");
+        MRTransitionLog.LogStep(
+            "MRConfigurationCabinetController",
+            started ? "ResetPlacementAfterConfigWipe-ray" : "ResetPlacementAfterConfigWipe-failed");
+        return started;
     }
 
     /// <summary>Instantly re-place the cabinet in front of the player without opening a placement ray.</summary>

@@ -27,7 +27,7 @@ public class MRConfigurationController : MonoBehaviour
     const int LightsAutoRowIndex = 0;
     const int OfficialCategoryCount = 2; // was 3 — Bookshelves/Magazines hidden from menu
     const int CustomCategoryCount = 3;
-    const int ConfigCategoryCount = 3;
+    const int ConfigCategoryCount = 4;
     const int ListRowNameWidth = 10;
     const int CabinetListRowNameWidth = 18;
     const int RoomSkinListRowNameWidth = 22;
@@ -72,7 +72,9 @@ public class MRConfigurationController : MonoBehaviour
         Debug,
         DebugDetail,
         Help,
-        ScanInProgress
+        ScanInProgress,
+        DeleteConfigsConfirm,
+        DeleteConfigsDone
     }
 
     [SerializeField] string systemSkin = DefaultSkin;
@@ -136,6 +138,7 @@ public class MRConfigurationController : MonoBehaviour
     bool pendingReturnToPlacedInstances;
     GameObject pendingAddRoot;
     bool scanRequestInProgress;
+    int lastDeletedYamlCount;
     Coroutine scanRoomCoroutine;
     string scanStatusLine = "";
 
@@ -353,6 +356,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("CONFIG", "Move cabinet, scale, EffectMesh");
         navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls + objects guide");
+        navMenu.AddOption("QUICK TRAVEL TO VR", "Exit MR to VR start point (no phone booth)");
         navMenu.AddOption("EXIT", "Close panel");
     }
 
@@ -447,6 +451,12 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Config:
                 DrawConfigCategoryPage();
+                break;
+            case Screen.DeleteConfigsConfirm:
+                DrawDeleteConfigsConfirmPage();
+                break;
+            case Screen.DeleteConfigsDone:
+                DrawDeleteConfigsDonePage();
                 break;
             case Screen.CustomObjectsOthers:
             case Screen.OfficialObjectsOthers:
@@ -604,14 +614,44 @@ public class MRConfigurationController : MonoBehaviour
         string movePrefix = selectedListIndex == 0 ? "> " : "  ";
         string adjustPrefix = selectedListIndex == 1 ? "> " : "  ";
         string meshPrefix = selectedListIndex == 2 ? "> " : "  ";
-        screen.Print(1, 5, movePrefix + "Move Config", selectedListIndex == 0);
-        screen.Print(1, 7, adjustPrefix + "Adjustments", selectedListIndex == 1);
-        screen.Print(1, 9, meshPrefix + "Mesh", selectedListIndex == 2);
+        string deletePrefix = selectedListIndex == 3 ? "> " : "  ";
+        screen.Print(1, 4, movePrefix + "Move Config", selectedListIndex == 0);
+        screen.Print(1, 6, adjustPrefix + "Adjustments", selectedListIndex == 1);
+        screen.Print(1, 8, meshPrefix + "Mesh", selectedListIndex == 2);
+        screen.Print(1, 10, deletePrefix + "Delete Configs", selectedListIndex == 3);
 
-        screen.Print(1, 12, "Move: reposition this cabinet", false);
-        screen.Print(1, 13, "Adjust: scale + floor Y", false);
-        screen.Print(1, 14, "Mesh: EffectMesh debug", false);
+        screen.Print(1, 13, "Move: reposition this cabinet", false);
+        screen.Print(1, 14, "Adjust: scale + floor Y", false);
+        screen.Print(1, 15, "Mesh: EffectMesh debug", false);
+        screen.Print(1, 16, "Delete: erase all MR YAML", false);
         DrawFooter("A: open   B: back");
+    }
+
+    void DrawDeleteConfigsConfirmPage()
+    {
+        screen.PrintCentered(0, "DELETE CONFIGS", true);
+        screen.PrintLine(1, false, '-');
+        screen.PrintCentered(4, "Erase ALL YAML under MR/?", true);
+        screen.PrintCentered(6, "layouts, custom objects,", false);
+        screen.PrintCentered(7, "room skins, magazines", false);
+        screen.PrintCentered(9, "This cannot be undone", true);
+
+        string yesPrefix = selectedListIndex == 0 ? "> " : "  ";
+        string noPrefix = selectedListIndex == 1 ? "> " : "  ";
+        screen.Print(1, 12, yesPrefix + "Yes, delete", selectedListIndex == 0);
+        screen.Print(1, 14, noPrefix + "No, cancel", selectedListIndex == 1);
+        DrawFooter("A: confirm   B: back");
+    }
+
+    void DrawDeleteConfigsDonePage()
+    {
+        screen.PrintCentered(0, "DELETE CONFIGS", true);
+        screen.PrintLine(1, false, '-');
+        screen.PrintCentered(7, "Done", true);
+        screen.PrintCentered(9, $"Deleted {lastDeletedYamlCount} YAML file(s)", false);
+        screen.PrintCentered(11, "MR objects despawned", false);
+        screen.PrintCentered(12, "Place config with ray", false);
+        DrawFooter("A/B: back");
     }
 
     void DrawCustomObjectsCategoryPage()
@@ -2055,6 +2095,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.CustomObjectsOthers => customCatalogEntries.Count,
             Screen.OfficialObjects => OfficialCategoryCount,
             Screen.Config => ConfigCategoryCount,
+            Screen.DeleteConfigsConfirm => 2,
             Screen.OfficialObjectsOthers => officialCatalogEntries.Count,
             Screen.Lights => Mathf.Max(1, 1 + lightsCatalogEntries.Count),
             Screen.Posters => postersCatalogEntries.Count,
@@ -2084,6 +2125,15 @@ public class MRConfigurationController : MonoBehaviour
                 if (selectedListIndex < 0)
                     selectedListIndex = ConfigCategoryCount - 1;
                 else if (selectedListIndex >= ConfigCategoryCount)
+                    selectedListIndex = 0;
+                DrawCurrentScreen();
+                break;
+
+            case Screen.DeleteConfigsConfirm:
+                selectedListIndex += delta;
+                if (selectedListIndex < 0)
+                    selectedListIndex = 1;
+                else if (selectedListIndex > 1)
                     selectedListIndex = 0;
                 DrawCurrentScreen();
                 break;
@@ -2220,6 +2270,19 @@ public class MRConfigurationController : MonoBehaviour
                 OpenConfigCategory();
                 break;
 
+            case Screen.DeleteConfigsConfirm:
+                HandleDeleteConfigsConfirmChoice();
+                break;
+
+            case Screen.DeleteConfigsDone:
+                currentScreen = Screen.Config;
+                selectedListIndex = 3;
+                navCooldown = navRepeatDelay;
+                SyncConfirmControlEdgeState();
+                SyncBackControlEdgeState();
+                DrawCurrentScreen();
+                break;
+
             case Screen.CustomObjects:
                 OpenCustomObjectsCategory();
                 break;
@@ -2303,6 +2366,9 @@ public class MRConfigurationController : MonoBehaviour
                 BuildHelpWrappedLines();
                 currentScreen = Screen.Help;
                 break;
+            case "QUICK TRAVEL TO VR":
+                MixedRealityManager.Instance?.EnterVRQuickTravel();
+                return;
             case "EXIT":
                 MRConfigurationCabinetController.Instance?.CloseEdit();
                 return;
@@ -2491,6 +2557,15 @@ public class MRConfigurationController : MonoBehaviour
                 SyncBackControlEdgeState();
                 DrawCurrentScreen();
                 break;
+            case Screen.DeleteConfigsConfirm:
+            case Screen.DeleteConfigsDone:
+                currentScreen = Screen.Config;
+                selectedListIndex = 3;
+                navCooldown = navRepeatDelay;
+                SyncConfirmControlEdgeState();
+                SyncBackControlEdgeState();
+                DrawCurrentScreen();
+                break;
             case Screen.Cabinets:
             case Screen.PhoneBooth:
             case Screen.Config:
@@ -2528,14 +2603,66 @@ public class MRConfigurationController : MonoBehaviour
                 selectedColumnIndex = 0;
                 currentScreen = Screen.Adjustments;
                 break;
-            default:
+            case 2:
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.Mesh;
                 break;
+            default:
+                // Default selection to "No, cancel" so A alone cannot wipe by accident.
+                selectedListIndex = 1;
+                currentScreen = Screen.DeleteConfigsConfirm;
+                break;
         }
 
+        navCooldown = navRepeatDelay;
+        SyncConfirmControlEdgeState();
+        SyncBackControlEdgeState();
+        DrawCurrentScreen();
+    }
+
+    void HandleDeleteConfigsConfirmChoice()
+    {
+        if (selectedListIndex != 0)
+        {
+            currentScreen = Screen.Config;
+            selectedListIndex = 3;
+            navCooldown = navRepeatDelay;
+            SyncConfirmControlEdgeState();
+            SyncBackControlEdgeState();
+            DrawCurrentScreen();
+            return;
+        }
+
+        ExecuteDeleteAllLayoutConfigs();
+    }
+
+    void ExecuteDeleteAllLayoutConfigs()
+    {
+        lastDeletedYamlCount = MRPaths.DeleteAllYamlFiles();
+        registry?.ClearLayoutAndDespawn();
+        envRegistry?.ClearLayoutAndDespawn();
+        RefreshObjectCatalogs();
+        RefreshLightsCatalog();
+        RefreshPostersCatalog();
+        RefreshMagazinesCatalog();
+        RefreshRoomSkinsCatalog();
+
+        ConfigManager.WriteConsole($"{LogPrefix} deleted {lastDeletedYamlCount} YAML file(s) and despawned MR objects");
+        MRDebugLog.LogWarning($"Deleted {lastDeletedYamlCount} MR YAML file(s)");
+        MRTransitionLog.LogStep("DeleteConfigs", $"deletedFiles={lastDeletedYamlCount}");
+
+        // Start config-cabinet placement ray (CRT suspends). Skip Done screen when ray is active.
+        if (MRConfigurationCabinetController.Instance != null
+            && MRConfigurationCabinetController.Instance.ResetPlacementAfterConfigWipe())
+        {
+            currentScreen = Screen.Idle;
+            return;
+        }
+
+        currentScreen = Screen.DeleteConfigsDone;
+        selectedListIndex = 0;
         navCooldown = navRepeatDelay;
         SyncConfirmControlEdgeState();
         SyncBackControlEdgeState();
@@ -2713,7 +2840,11 @@ public class MRConfigurationController : MonoBehaviour
 
         MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
 
-        ComputeInitialPlacementPose(PlacementSurfaceType.Wall, out Vector3 worldPos, out Quaternion worldRot);
+        ComputeInitialPlacementPose(
+            PlacementSurfaceType.Wall,
+            out Vector3 worldPos,
+            out Quaternion worldRot,
+            PlacementFacingAxis.NegativeX);
 
         if (!envRegistry.TrySpawnTransientCatalogEntry(entry, mrSpaceOrigin, worldPos, worldRot, out GameObject root))
         {
@@ -3176,18 +3307,62 @@ public class MRConfigurationController : MonoBehaviour
         ComputeInitialPlacementPose(PlacementSurfaceType.Floor, out worldPos, out worldRot);
     }
 
-    void ComputeInitialPlacementPose(PlacementSurfaceType surfaceType, out Vector3 worldPos, out Quaternion worldRot)
+    void ComputeInitialPlacementPose(
+        PlacementSurfaceType surfaceType,
+        out Vector3 worldPos,
+        out Quaternion worldRot,
+        PlacementFacingAxis wallFacingAxis = PlacementFacingAxis.NegativeX)
     {
-        ComputeSpawnPose(out worldPos, out worldRot);
-
+        Transform player = Camera.main != null ? Camera.main.transform : transform;
         MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
+        Vector3 footprint = Vector3.one * 0.45f;
+        float nearDistance = Mathf.Min(spawnDistanceMeters, 1.25f);
+
+        // Always start near the player, inside the room (walls checked), slightly toward center.
+        if (surfaces == null
+            || !surfaces.TryGetInRoomPoseNearPlayer(
+                player,
+                nearDistance,
+                footprint,
+                out worldPos,
+                out worldRot,
+                towardRoomCenterBlend: 0.35f))
+        {
+            ComputeSpawnPoseInFrontOfPlayer(player, nearDistance, out worldPos, out worldRot);
+        }
+
+        if (Mathf.Abs(spawnYOffsetMeters) > 0.0001f)
+            worldPos.y += spawnYOffsetMeters;
+
         if (surfaces == null)
             return;
+
+        if (surfaceType == PlacementSurfaceType.Wall)
+        {
+            if (surfaces.TryGetWallMountedFramePose(
+                    player,
+                    spawnDistanceMeters,
+                    0.05f,
+                    out Vector3 wallPos,
+                    out Quaternion wallRot,
+                    wallFacingAxis))
+            {
+                worldPos = wallPos;
+                worldRot = wallRot;
+            }
+            else
+            {
+                worldPos.y = player.position.y;
+            }
+
+            return;
+        }
 
         if (surfaceType == PlacementSurfaceType.Ceiling)
         {
             if (surfaces.TryGetCeilingPointAt(worldPos, out Vector3 ceilingPoint))
                 worldPos = ceilingPoint;
+            worldRot = RotationFacingPlayer(worldPos, player.position);
             return;
         }
 
@@ -3195,39 +3370,44 @@ public class MRConfigurationController : MonoBehaviour
         {
             if (surfaces.TryGetTablePointAt(worldPos, out Vector3 tablePoint))
                 worldPos = tablePoint;
-            return;
+            else if (surfaces.TryGetFloorPointAt(worldPos, out Vector3 floorUnderTable))
+                worldPos = floorUnderTable + Vector3.up * 0.75f;
+            worldRot = RotationFacingPlayer(worldPos, player.position);
         }
-
-        if (surfaceType == PlacementSurfaceType.Wall)
-        {
-            Transform player = Camera.main != null ? Camera.main.transform : transform;
-            if (surfaces.TryGetWallMountedFramePose(
-                    player,
-                    spawnDistanceMeters,
-                    0.05f,
-                    out worldPos,
-                    out worldRot,
-                    PlacementFacingAxis.NegativeX))
-                return;
-        }
-
-        if (surfaces.TryGetFloorPointAt(worldPos, out Vector3 floorPoint))
-            worldPos = floorPoint;
     }
 
     void ComputeSpawnPose(out Vector3 worldPos, out Quaternion worldRot)
     {
-        Transform view = Camera.main != null ? Camera.main.transform : transform;
+        Transform player = Camera.main != null ? Camera.main.transform : transform;
+        ComputeSpawnPoseInFrontOfPlayer(player, spawnDistanceMeters, out worldPos, out worldRot);
+    }
 
-        Vector3 forward = view.forward;
+    static void ComputeSpawnPoseInFrontOfPlayer(
+        Transform player,
+        float distanceMeters,
+        out Vector3 worldPos,
+        out Quaternion worldRot)
+    {
+        Vector3 forward = player != null ? player.forward : Vector3.forward;
         forward.y = 0f;
         if (forward.sqrMagnitude < 0.001f)
             forward = Vector3.forward;
         forward.Normalize();
 
-        worldPos = view.position + forward * spawnDistanceMeters;
-        worldPos.y = (mrSpaceOrigin != null ? mrSpaceOrigin.position.y : 0f) + spawnYOffsetMeters;
-        worldRot = Quaternion.LookRotation(-forward, Vector3.up);
+        Vector3 eye = player != null ? player.position : Vector3.zero;
+        float distance = distanceMeters > 0.1f ? distanceMeters : 1.5f;
+        worldPos = eye + forward * distance;
+        worldPos.y = eye.y;
+        worldRot = RotationFacingPlayer(worldPos, eye);
+    }
+
+    static Quaternion RotationFacingPlayer(Vector3 objectPosition, Vector3 playerPosition)
+    {
+        Vector3 face = playerPosition - objectPosition;
+        face.y = 0f;
+        if (face.sqrMagnitude < 0.001f)
+            face = Vector3.forward;
+        return Quaternion.LookRotation(face.normalized, Vector3.up);
     }
 
     void setupActionMap()

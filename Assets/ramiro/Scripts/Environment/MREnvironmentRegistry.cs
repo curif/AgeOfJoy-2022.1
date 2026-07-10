@@ -136,6 +136,14 @@ public class MREnvironmentRegistry : MonoBehaviour
         MRRoomSurfaceSkin.Clear();
     }
 
+    /// <summary>Delete in-memory layout and despawn all props (after layout YAML wipe).</summary>
+    public void ClearLayoutAndDespawn()
+    {
+        DespawnAll();
+        layout = MREnvironmentLayout.LoadOrCreate(LayoutFilePath);
+        ConfigManager.WriteConsole($"{LogPrefix} layout cleared ({LayoutFilePath})");
+    }
+
     public int HideAllImmediateCount()
     {
         int hidden = 0;
@@ -210,6 +218,70 @@ public class MREnvironmentRegistry : MonoBehaviour
             layout.Save(LayoutFilePath);
             MRTransitionLog.Log($"SnapshotSpawnedWorldPosesToLayout env count={spawnedById.Count}");
         }
+    }
+
+    /// <summary>
+    /// Re-resolve layout poses after tracking discontinuity (e.g. Meta system menu).
+    /// Pass 1: MRUK/world anchors. Pass 2: object-anchored props (need parent pose first).
+    /// </summary>
+    public void RefreshAllSpawnedPosesFromLayout(bool anchorsOnly = false)
+    {
+        if (layout == null)
+            return;
+
+        EnsureLayoutLoaded();
+        int refreshed = RefreshSpawnedPosesPass(objectAnchorsOnly: false, anchorsOnly);
+        refreshed += RefreshSpawnedPosesPass(objectAnchorsOnly: true, anchorsOnly);
+
+        if (refreshed > 0)
+            ConfigManager.WriteConsole($"{LogPrefix} refreshed {refreshed} env prop pose(s)");
+    }
+
+    public void ForEachSpawnedRoot(System.Action<Transform> action)
+    {
+        if (action == null)
+            return;
+
+        foreach (GameObject root in spawnedById.Values)
+        {
+            if (root != null)
+                action(root.transform);
+        }
+    }
+
+    int RefreshSpawnedPosesPass(bool objectAnchorsOnly, bool anchorsOnly)
+    {
+        int refreshed = 0;
+        foreach (MREnvironmentPlacement placement in layout.GetProps())
+        {
+            if (placement == null || string.IsNullOrEmpty(placement.Id))
+                continue;
+
+            bool isObjectAnchor = placement.SurfaceType == PlacementSurfaceType.Object
+                && !string.IsNullOrEmpty(placement.AnchorPlacementId);
+            if (objectAnchorsOnly != isObjectAnchor)
+                continue;
+
+            if (!TryGetSpawnedRoot(placement.Id, out GameObject root) || root == null)
+                continue;
+
+            if (!TryReadWorldPose(placement, out Vector3 worldPos, out Quaternion worldRot, anchorsOnly))
+                continue;
+
+            Vector3 before = root.transform.position;
+            root.transform.SetPositionAndRotation(worldPos, worldRot);
+            ApplyRootScaleAfterSpawn(root, placement);
+            NotifyPortableGamesPlacementUpdated(root);
+            if (Vector3.Distance(before, worldPos) > 0.02f)
+            {
+                MRTransitionLog.Log(
+                    $"Refresh env {placement.DisplayLabel} {before} -> {worldPos} anchor={placement.AnchorUuid ?? placement.AnchorPlacementId ?? "none"}");
+            }
+
+            refreshed++;
+        }
+
+        return refreshed;
     }
 
     public MREnvironmentPlacement FindPlacementById(string placementId)
@@ -1278,7 +1350,11 @@ public class MREnvironmentRegistry : MonoBehaviour
         placement.Rotation = MRQuaternion.From(worldRotation);
     }
 
-    static bool TryReadWorldPose(MREnvironmentPlacement placement, out Vector3 worldPosition, out Quaternion worldRotation)
+    static bool TryReadWorldPose(
+        MREnvironmentPlacement placement,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation,
+        bool anchorsOnly = false)
     {
         worldPosition = Vector3.zero;
         worldRotation = Quaternion.identity;
@@ -1301,6 +1377,9 @@ public class MREnvironmentRegistry : MonoBehaviour
                     out worldPosition,
                     out worldRotation))
                 return true;
+
+            if (anchorsOnly)
+                return false;
 
             if (TryReadWorldFallback(placement, out worldPosition, out worldRotation))
             {
@@ -1327,11 +1406,17 @@ public class MREnvironmentRegistry : MonoBehaviour
                     out worldRotation))
                 return true;
 
+            if (anchorsOnly)
+                return false;
+
             if (TryReadWorldFallback(placement, out worldPosition, out worldRotation))
                 return true;
 
             return false;
         }
+
+        if (anchorsOnly)
+            return false;
 
         if (TryReadWorldFallback(placement, out worldPosition, out worldRotation))
             return true;

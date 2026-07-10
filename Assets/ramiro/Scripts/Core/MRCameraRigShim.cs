@@ -13,7 +13,9 @@ using UnityEngine;
 ///   - resolve the current room via _cameraRig.centerEyeAnchor.position.
 /// Age of Joy uses XROrigin (XRI), not OVRCameraRig. We subclass OVRCameraRig and disable
 /// its lifecycle so no MainCamera is spawned, then keep trackingSpace + centerEyeAnchor
-/// aligned with the XROrigin. When MRUK WorldLock is active, trackingSpace is owned by MRUK.
+/// aligned with the XROrigin. When MRUK WorldLock is active, trackingSpace is owned by MRUK
+/// and that correction is pushed back onto XROrigin.CameraFloorOffsetObject so scene anchors
+/// (walls/floor) stay locked to passthrough after Meta Reset View.
 /// </summary>
 public static class MRCameraRigShim
 {
@@ -148,11 +150,25 @@ public class MRUKCameraRigStub : OVRCameraRig
 
         if (cachedOrigin != null)
         {
+            Transform xrTracking = ResolveTrackingTransform(cachedOrigin);
+
             if (!worldLockActive)
             {
-                Transform originTracking = ResolveTrackingTransform(cachedOrigin);
-                if (originTracking != null && trackingSpace != null)
-                    trackingSpace.SetPositionAndRotation(originTracking.position, originTracking.rotation);
+                // XROrigin drives the shim (no WorldLock correction yet).
+                if (xrTracking != null && trackingSpace != null)
+                    trackingSpace.SetPositionAndRotation(xrTracking.position, xrTracking.rotation);
+            }
+            else if (trackingSpace != null && xrTracking != null)
+            {
+                // MRUK WorldLock already adjusted shim trackingSpace this frame.
+                // Push that same correction onto XROrigin so EffectMesh walls/floor and
+                // passthrough stay colocated after Meta Reset View / tracking jumps.
+                // (OVRCameraRig keeps the real camera under TrackingSpace; we emulate that.)
+                if ((xrTracking.position - trackingSpace.position).sqrMagnitude > 1e-8f
+                    || Quaternion.Angle(xrTracking.rotation, trackingSpace.rotation) > 0.01f)
+                {
+                    xrTracking.SetPositionAndRotation(trackingSpace.position, trackingSpace.rotation);
+                }
             }
 
             if (cachedOrigin.Camera != null && centerEyeAnchor != null)

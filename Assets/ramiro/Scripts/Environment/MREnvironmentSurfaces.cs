@@ -295,6 +295,83 @@ public class MREnvironmentSurfaces : MonoBehaviour
 #endif
 
     /// <summary>
+    /// Pose near the player, pulled slightly toward room center, clamped inside MRUK walls.
+    /// Used as the initial spawn for placement-ray objects so they are never hidden outside the room.
+    /// </summary>
+    public bool TryGetInRoomPoseNearPlayer(
+        Transform player,
+        float distanceMeters,
+        Vector3 footprint,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation,
+        float towardRoomCenterBlend = 0.35f)
+    {
+        worldPosition = Vector3.zero;
+        worldRotation = Quaternion.identity;
+
+        if (player == null)
+            return false;
+
+        Vector3 forward = player.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        float distance = Mathf.Clamp(distanceMeters > 0.1f ? distanceMeters : 1.2f, 0.8f, 2.0f);
+        Vector3 nearPlayer = player.position + forward * distance;
+        Vector3 roomCenter = ResolveRoomCenterHorizontal(player.position.y);
+        float blend = Mathf.Clamp01(towardRoomCenterBlend);
+        Vector3 target = Vector3.Lerp(nearPlayer, roomCenter, blend);
+        target.y = nearPlayer.y;
+
+        if (!TryGetFloorPointAt(target, out Vector3 floorPoint))
+            floorPoint = new Vector3(
+                target.x,
+                HasFloor ? FloorHeight : (player.position.y - editorEstimatedEyeHeightMeters),
+                target.z);
+
+        Vector3 placement = floorPoint;
+        placement = NudgeAwayFromWalls(placement, footprint);
+        placement = ClampInsideRoom(placement, footprint);
+
+        if (TryGetFloorPointAt(placement, out Vector3 finalFloor))
+            placement.y = finalFloor.y;
+        else if (HasFloor)
+            placement.y = FloorHeight;
+
+        // If still outside, fall back to room center on floor.
+        if (room != null && !room.IsPositionInRoom(placement, testVerticalBounds: false))
+        {
+            Vector3 center = ResolveRoomCenterHorizontal(placement.y);
+            if (TryGetFloorPointAt(center, out Vector3 centerFloor))
+                placement = centerFloor;
+            else
+                placement = center;
+            placement = NudgeAwayFromWalls(placement, footprint);
+            placement = ClampInsideRoom(placement, footprint);
+        }
+
+        worldPosition = placement;
+        worldRotation = RotationFacingPlayer(worldPosition, player.position);
+        return true;
+    }
+
+    Vector3 ResolveRoomCenterHorizontal(float y)
+    {
+        if (HasFloor)
+            return new Vector3(PlayerFloorPoint.x, HasFloor ? FloorHeight : y, PlayerFloorPoint.z);
+
+        if (room != null && room.FloorAnchor != null)
+        {
+            Vector3 c = room.FloorAnchor.GetAnchorCenter();
+            return new Vector3(c.x, y, c.z);
+        }
+
+        return new Vector3(0f, y, 0f);
+    }
+
+    /// <summary>
     /// Compute full pose (X, Y, Z + rotation facing the player) for ConfigurationCabinet.
     /// Step 1: target = player + forward*distance.
     /// Step 2: project target VERTICALLY onto floor of current MRUK room (or physics fallback).
@@ -309,39 +386,13 @@ public class MREnvironmentSurfaces : MonoBehaviour
         out Vector3 worldPosition,
         out Quaternion worldRotation)
     {
-        worldPosition = Vector3.zero;
-        worldRotation = Quaternion.identity;
-
-        if (player == null)
-            return false;
-
-        Vector3 forward = player.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.001f)
-            forward = Vector3.forward;
-        forward.Normalize();
-
-        Vector3 target = player.position + forward * distanceMeters;
-
-        if (!TryGetFloorPointAt(target, out Vector3 floorPoint))
-            floorPoint = new Vector3(target.x, HasFloor ? FloorHeight : (player.position.y - editorEstimatedEyeHeightMeters), target.z);
-
-        Vector3 placement = floorPoint;
-        placement = NudgeAwayFromWalls(placement, cabinetFootprint);
-        placement = ClampInsideRoom(placement, cabinetFootprint);
-
-        if (TryGetFloorPointAt(placement, out Vector3 finalFloor))
-            placement.y = finalFloor.y;
-        else if (HasFloor)
-            placement.y = FloorHeight;
-
-        worldPosition = placement;
-        worldRotation = RotationFacingPlayer(worldPosition, player.position);
-
-        ConfigManager.WriteConsole(
-            $"{LogPrefix} cabinet pose target={target} placement={worldPosition} " +
-            $"hasFloor={HasFloor} floorY={FloorHeight:F2} room={(room != null ? room.gameObject.name : "null")}");
-        return true;
+        return TryGetInRoomPoseNearPlayer(
+            player,
+            distanceMeters,
+            cabinetFootprint,
+            out worldPosition,
+            out worldRotation,
+            towardRoomCenterBlend: 0.2f);
     }
 
     /// <summary>
@@ -584,9 +635,12 @@ public class MREnvironmentSurfaces : MonoBehaviour
         out Vector3 worldPosition,
         out Quaternion worldRotation)
     {
+        // Flush to the wall using the surface normal; flip if MRUK points outward.
+        // Do not use viewpoint-wall as the facing axis — that tilts objects off the wall
+        // when the ray hits at an angle (placement ray / stick fine-adjust).
         Vector3 intoRoom = HorizontalNormal(wallNormal);
         if (intoRoom.sqrMagnitude < 0.001f)
-            intoRoom = Vector3.forward;
+            intoRoom = HorizontalNormal(viewpoint - wallPoint);
         intoRoom = EnsureHorizontalNormalTowardViewpoint(wallPoint, intoRoom, viewpoint);
 
         float halfDepth = Mathf.Max(0f, frameDepthMeters) * 0.5f;
@@ -648,13 +702,17 @@ public class MREnvironmentSurfaces : MonoBehaviour
                 rayDistance,
                 WallLabelFilter,
                 out hitAnchor,
-                out _,
+                out Vector3 surfaceNormal,
                 MRUK.PositioningMethod.DEFAULT);
 
             if (hitAnchor != null)
             {
+                // Use MRUK hit normal — pose.rotation*forward is a placement forward that can
+                // diverge from the true wall plane (especially after LookRotation orthonormalize).
                 wallPoint = pose.position;
-                wallNormal = pose.rotation * Vector3.forward;
+                wallNormal = surfaceNormal.sqrMagnitude > 0.001f
+                    ? surfaceNormal
+                    : pose.rotation * Vector3.forward;
                 if (wallNormal.sqrMagnitude < 0.001f)
                     wallNormal = HorizontalNormal(hitAnchor.transform.forward);
                 return true;

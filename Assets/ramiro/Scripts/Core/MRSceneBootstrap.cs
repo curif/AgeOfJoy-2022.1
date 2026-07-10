@@ -501,7 +501,7 @@ public class MRSceneBootstrap : MonoBehaviour
         target.SceneSettings.DataSource = MRUK.SceneDataSource.Device;
         target.SceneSettings.LoadSceneOnStartup = false;
         // Quest: WorldLock keeps scene anchors aligned with passthrough (table, walls, …).
-        // Disable only when using XROrigin shim without WorldLock breaks colocation.
+        // MRCameraRigShim pushes WorldLock trackingSpace onto XROrigin.CameraFloorOffsetObject.
         target.EnableWorldLock = true;
     }
 
