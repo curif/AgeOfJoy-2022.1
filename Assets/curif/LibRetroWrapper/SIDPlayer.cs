@@ -47,10 +47,11 @@ public class SIDPlayer : MonoBehaviour
         audioSource.spatialBlend      = 0f;   // pure 2D, no 3D rolloff
     }
 
-    void Start()
-    {
-        EnsureAudioRunning();
-    }
+    // Note: no EnsureAudioRunning() here. Forcing the shared cabinet AudioSource
+    // into a permanently-playing state on startup put dozens of always-on voices
+    // through the mixer (one per alive cabinet), overloading the audio thread.
+    // Play()/Resume()/CreateInstance() call EnsureAudioRunning() when SID music
+    // actually needs the source running.
 
     void Update()
     {

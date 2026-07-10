@@ -1,0 +1,22 @@
+# MR Custom Object v1 — copy folder to: {BaseDir}/MR/Custom Objects/Lamp/
+# Requires: lamp.glb
+
+version: 1
+
+name: Lamp
+displayName: Candeeiro
+
+model:
+  file: lamp.glb
+  scale: 1.0
+  offset: { x: 0, y: 0, z: 0 }
+
+placement:
+  surfaceType: 2
+  facingAxis: 1
+  allowStickRotation: true
+  stickRotationAxis: 0
+  stickRotationSpeed: 45
+
+collision:
+  mode: box

@@ -55,12 +55,18 @@ public class CabinetsController : MonoBehaviour
         public GameObject GameObjectOutOfOrder;
         public CabinetController CabinetController;
 
-        //the real one assigned
+        //the real one assigned - once created, stays instantiated and visible for the
+        //room's lifetime; "unloading" suspends its runtime logic instead of hiding it
+        //(see SuspendReplacement), since caches never free it anyway.
         public GameObject GameObjectReplacement;
         public CabinetReplace CabinetReplace;
 
-        //true: the OutOfOrder cab is active, else is the replacement
+        //true until the replacement is created for the first time; stays false forever after
         public bool IsOutOfOrderActive = true;
+
+        //true when the replacement exists but its runtime logic (BT/video/game) is
+        //suspended because the player walked away
+        public bool IsSuspended = false;
 
         public bool IsLoading = false;
 
@@ -88,20 +94,36 @@ public class CabinetsController : MonoBehaviour
             return CabinetReplace.game;
         }
 
+        //first-time activation: show the freshly instantiated replacement and retire the
+        //out-of-order object for good (it is never shown again).
         public void ActivateReplacement()
         {
             if (isFaulty)
                 return;
             IsOutOfOrderActive = false;
+            IsSuspended = false;
             GameObjectOutOfOrder.SetActive(false);
             GameObjectReplacement?.SetActive(true);
         }
 
-        public void ActivateOutOfOrder()
+        //player returned: the replacement is already visible, just resume its suspended
+        //runtime logic (BT/video/game) - no GameObject is toggled, so nothing pops in/out.
+        public void ResumeReplacement()
         {
-            IsOutOfOrderActive = true;
-            GameObjectOutOfOrder.SetActive(true);
-            GameObjectReplacement?.SetActive(false);
+            IsSuspended = false;
+            foreach (ISuspendableCabinetScreen screen in GameObjectReplacement.GetComponentsInChildren<ISuspendableCabinetScreen>(true))
+                screen.EnsureAttractLoopRunning();
+        }
+
+        //player walked away: suspend the replacement's runtime logic instead of hiding the
+        //GameObject - hiding it never actually freed memory (textures/model stay pinned
+        //until Destroy(), which SetActive(false) never called), so the only real win here
+        //is stopping BT ticking / video / a running game, which suspend already achieves.
+        public void SuspendReplacement()
+        {
+            IsSuspended = true;
+            foreach (ISuspendableCabinetScreen screen in GameObjectReplacement.GetComponentsInChildren<ISuspendableCabinetScreen>(true))
+                screen.SuspendAttractAndPlaybackForTransition();
         }
     }
 
@@ -516,8 +538,10 @@ public class CabinetsController : MonoBehaviour
             {
                 cabinet.GameObjectReplacement = newCab;
                 cabinet.CabinetReplace = newCab.GetComponent<CabinetReplace>();
+                return true;
             }
-            return true;
+            ConfigManager.WriteConsoleError($"[CabinetController.ReplaceInRoom] ReplaceWith failed for [{toAdd}]");
+            return false;
         }
         else
         {
@@ -534,6 +558,26 @@ public class CabinetsController : MonoBehaviour
         return false;
     }
 
+    /// <summary> reconciles this room's live cabinets against the current in-memory registry,
+    /// swapping any position whose live cabinet no longer matches its registry assignment.
+    /// positions with no registry entry are left untouched. </summary>
+    public async Task SyncRoomFromRegistry()
+    {
+        for (int position = 0; position < Count(); position++)
+        {
+            CabinetPosition registryCab = gameRegistry.GetCabinetPositionInRoom(position, Room);
+            if (registryCab == null)
+                continue;
+
+            CabinetPosition liveCab = GetCabinetByPosition(position);
+            if (liveCab != null &&
+                string.Equals(liveCab.CabinetDBName, registryCab.CabinetDBName, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            await ReplaceInRoom(position, Room, registryCab.CabinetDBName);
+        }
+    }
+
     public async Task<bool> Replace(int position, string room, string cabinetDBName)
     {
         //replace in the registry
@@ -544,14 +588,23 @@ public class CabinetsController : MonoBehaviour
 
         CabinetPosition toBeReplaced = gameRegistry.GetCabinetPositionInRoom(position, room);
         ConfigManager.WriteConsole($"[CabinetsController.Replace] [{toBeReplaced}] by [{toAdd}] ");
-        gameRegistry.Replace(toBeReplaced, toAdd); //persists changes
+        if (!gameRegistry.Replace(toBeReplaced, toAdd)) //persists changes
+        {
+            ConfigManager.WriteConsoleError($"[CabinetsController.Replace] registry update failed, aborting replace of [{toBeReplaced}] by [{toAdd}]");
+            return false;
+        }
 
         return await ReplaceInRoom(position, room, cabinetDBName);
     }
 
     async void checkAndLoadCabinet(CabinetControllerInformation cci)
     {
-        if (!cci.IsOutOfOrderActive || cci.IsFaulty || cci.IsLoading)
+
+         if (!MixedRealityManager.IsVrExperience)
+            return;
+
+
+        if (cci.IsFaulty || cci.IsLoading)
             return;
 
         //check conditions to load the cabinet.
@@ -559,12 +612,16 @@ public class CabinetsController : MonoBehaviour
 
         if (cci.GameObjectReplacement != null)
         {
+            //already loaded this session; nothing to do unless it's currently suspended.
+            if (!cci.IsSuspended)
+                return;
+
             if (!cc.ReloadIsAllowed())
                 return;
 
-            //replacement exists. Only activate it.
+            //replacement already visible. Just resume its suspended runtime logic.
             // don't wait player static.
-            cci.ActivateReplacement();
+            cci.ResumeReplacement();
             return;
         }
 
@@ -692,16 +749,16 @@ public class CabinetsController : MonoBehaviour
 
     void checkAndUnloadCabinet(CabinetControllerInformation cabCtrlInfo)
     {
-        if (cabCtrlInfo.IsOutOfOrderActive || cabCtrlInfo.IsFaulty)
+        if (!MixedRealityManager.IsVrExperience)
+            return;
+
+        if (cabCtrlInfo.GameObjectReplacement == null || cabCtrlInfo.IsSuspended || cabCtrlInfo.IsFaulty)
             return;
 
         if (!cabCtrlInfo.CabinetReplace.playerIsNotInAnyUnloadPosition())
             return;
 
-        cabCtrlInfo.ActivateOutOfOrder();
-
-        // outOfOrderCabinet.SetActive(true); //reactivate the out of order cabinet before destruction
-        // Destroy(gameObject); //destroy me
+        cabCtrlInfo.SuspendReplacement();
     }
 
     IEnumerator run()

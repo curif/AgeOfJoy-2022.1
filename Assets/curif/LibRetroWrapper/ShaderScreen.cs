@@ -8,6 +8,7 @@ public abstract class ShaderScreenBase
     protected int position;
     protected Renderer display;
     protected Material material;
+    Material instantiatedMaterial; // material instance created by a previous Activate() call, owned by this object
     Dictionary<string, string> configuration;
     CabinetMaterials.MaterialPropertyTranslator translator;
 
@@ -68,10 +69,24 @@ public abstract class ShaderScreenBase
         Material[] mats = display.materials;
         mats[position] = material;
         display.materials = mats;
-        material = display.materials[position];
-        
+        Material newInstance = display.materials[position];
+
+        if (instantiatedMaterial != null && instantiatedMaterial != newInstance)
+            UnityEngine.Object.Destroy(instantiatedMaterial);
+
+        material = newInstance;
+        instantiatedMaterial = newInstance;
+
         if (texture != null)
             Texture = texture; //child should change it in render material by position
+    }
+
+    // releases the material instance created by Activate(), if any; call from owning MonoBehaviour's OnDestroy
+    public void ReleaseMaterialInstance()
+    {
+        if (instantiatedMaterial != null)
+            UnityEngine.Object.Destroy(instantiatedMaterial);
+        instantiatedMaterial = null;
     }
     public virtual void Refresh(Texture texture) { }
 
@@ -85,6 +100,14 @@ public abstract class ShaderScreenBase
 
     public void ApplyConfiguration()
     {
+        // `material` here is still one of the shared static Resources.Load() singletons (Low/Medium/High
+        // etc.) assigned by the subclass constructor, shared by every cabinet in the game. Cloning it
+        // before mutating avoids stomping the shared template's shader properties (e.g. _CRTTiling used
+        // for invert) for every other cabinet still to construct/Activate — that cross-contamination is
+        // what caused screens to intermittently render flipped depending on cabinet init order.
+        string originalName = material.name;
+        material = UnityEngine.Object.Instantiate(material);
+        material.name = originalName; // MaterialsUtils.ApplyConfiguration looks materials.yaml entries up by name
         MaterialsUtils.ApplyCabinetConfiguration(material, configuration);
         MaterialsUtils.ApplyConfiguration(material);
     }

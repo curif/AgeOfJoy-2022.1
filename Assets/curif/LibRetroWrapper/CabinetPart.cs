@@ -25,9 +25,18 @@ public class CabinetPart : MonoBehaviour
 
     Renderer rendererComponent;
 
+    private readonly List<string> pinnedTexturePaths = new List<string>();
+
     private void Awake()
     {
         rendererComponent = GetComponent<Renderer>();
+    }
+
+    private void OnDestroy()
+    {
+        foreach (string path in pinnedTexturePaths)
+            CabinetTextureCache.UnpinTexture(path);
+        pinnedTexturePaths.Clear();
     }
 
     void Start()
@@ -470,6 +479,8 @@ public class CabinetPart : MonoBehaviour
                 {
                     // assign to material, UI, etc.
                     mat.SetTexture("_EmissionMap", tex);
+                    CabinetTextureCache.PinTexture(textureFile);
+                    pinnedTexturePaths.Add(textureFile);
                 }
                 else
                 {
@@ -588,6 +599,8 @@ public class CabinetPart : MonoBehaviour
                 {
                     // assign to material, UI, etc.
                     m.SetTexture("_MainTex", tex);
+                    CabinetTextureCache.PinTexture(textureFile);
+                    pinnedTexturePaths.Add(textureFile);
                 }
                 else
                 {

@@ -177,6 +177,42 @@ class CommandFunctionFILEDELETE : CommandFunctionSingleExpressionBase
     }
 }
 
+class CommandFunctionFILECOPY : CommandFunctionExpressionListBase
+{
+    public CommandFunctionFILECOPY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "FILECOPY";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - source file path");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - destination file path");
+
+        string srcPath = FunctionHelper.FileTraversalFree(vals[0].GetValueAsString(), ConfigManager.BaseDir);
+        string destPath = FunctionHelper.FileTraversalFree(vals[1].GetValueAsString(), ConfigManager.BaseDir);
+
+        try
+        {
+            File.Copy(srcPath, destPath, true);
+            return new BasicValue(1);
+        }
+        catch (Exception ex)
+        {
+            AGEBasicDebug.WriteConsole($"[{CmdToken}] Error: {ex.Message}");
+            return new BasicValue(0);
+        }
+    }
+}
+
 class CommandFunctionCOMBINEPATH : CommandFunctionExpressionListBase
 {
     public CommandFunctionCOMBINEPATH(ConfigurationCommands config) : base(config)

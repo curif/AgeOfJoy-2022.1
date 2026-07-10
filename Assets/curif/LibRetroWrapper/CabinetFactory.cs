@@ -619,4 +619,17 @@ public static class CabinetFactory
 
         return cabinet;
     }
+
+    // MR: synchronous spawn with world pose (MRLayoutRegistry); wraps fromInformationAsync on main thread.
+    public static Cabinet fromInformation(CabinetInformation cbinfo, string room, int number,
+                                             Vector3 position, Quaternion rotation, Transform parent,
+                                            List<AgentScenePosition> agentPlayerPositions,
+                                            BackgroundSoundController backgroundSoundController,
+                                            bool cacheGlbModels = true)
+    {
+        return fromInformationAsync(cbinfo, room, number, position, rotation, parent,
+                                    agentPlayerPositions, backgroundSoundController, cacheGlbModels)
+            .GetAwaiter()
+            .GetResult();
+    }
 }

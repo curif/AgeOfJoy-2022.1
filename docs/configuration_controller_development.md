@@ -389,6 +389,8 @@ Never write directly to disk from a Process node.
 ### Async operations
 `GenerateBugReport()` and `SaveCabinetPositions()` are `async void`. They update a `GenericTimedLabel` on completion. The BT continues ticking while they run — the Process node simply redisplays the timed label each tick until it auto-clears.
 
+`SaveCabinetPositions()` wraps its work in try/catch and sets the timed label text based on the actual `bool` result of `CabinetsController.Replace()` (which itself propagates failures from `GameRegistry.Replace()`/`ReplaceInRoom()` instead of assuming success). Do not go back to firing it and unconditionally showing a "saved" label immediately after the call — that hides real failures (e.g. a registry persist error) behind a false-positive UI, which previously caused cabinet swaps to silently fail to persist.
+
 ### Controller mapping menu input
 The controller mapping sequence reads `ControlActive(LC.KEYB_UP/DOWN)` directly alongside `inputDictionary`, giving it a keyboard fallback that other menus do not have. This is intentional for usability during controller remapping but means the pattern is not uniform across all sequences.
 

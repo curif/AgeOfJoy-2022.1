@@ -5,7 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 //#define _debug_fps_
-//#define _debug_audio_
+//#define _debug_audio_ // capture ~15s of game audio to a WAV on game start, see FlushAudioCaptureIfReady()
 #define _debug_
 //#define _serialize_
 
@@ -186,9 +186,73 @@ public static unsafe class LibretroMameCore
     [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
     private static extern void wrapper_audio_consume_buffer(int consumeSize);
 
+    [DllImport("__Internal", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void wrapper_audio_set_output_rate(double rate);
+
 
     static object AudioBufferLock = new();
     static int QuestAudioFrequency = 48000; //Quest 2 standar, can change at start
+
+    // Rate the ring-buffer content actually carries (frames/s). Unity's audio thread
+    // on Quest drains fewer frames per wall-clock second than the nominal DSP rate
+    // (measured ~84%: 40320 of 48000 on Quest 2 / Unity 2021.3, ~4us lost per frame;
+    // see docs/libretro_audio_system.md). We measure the real drain rate while games
+    // run, persist it, and tell the wrapper to resample to it so production matches
+    // consumption (no ring overflow = no crackling). Nominal until calibrated.
+    const string AudioCalibrationPrefKey = "AudioCalibratedOutputRate";
+    static double wrapperOutputRate = 48000;
+    static double calibConsumedFloats = 0;
+    static double calibSeconds = 0;
+
+    // audio stats (all fields touched only under AudioBufferLock, except wrapperRuns
+    // which is incremented from the run thread via Interlocked)
+    static long audioCallbacks = 0;
+    static long audioUnderruns = 0;
+    static long audioMissingSamples = 0;
+    static long audioCopiedFloats = 0;
+    static int audioMinOccupancy = int.MaxValue;
+    static int audioMaxOccupancy = 0;
+    static long wrapperRuns = 0;
+    static float expectedFps = 0;
+    static DateTime audioStatsSince = DateTime.MinValue;
+    // gap detection: if the DSP suspends our filter (voice virtualized / effect
+    // bypassed while "silent"), callbacks pause while the wrapper keeps producing
+    // and the ring buffer overflows. A gap is a callback arriving much later than
+    // the buffer duration it delivers.
+    static long audioLastCallbackTimestamp = 0;
+    static long audioGaps = 0;
+    static float audioMaxGapMs = 0;
+    // lock contention: how long the Unity audio thread waits to acquire
+    // AudioBufferLock while the native wrapper (run thread) holds it. Long waits
+    // stall the DSP mixer itself - the OS output underruns and the whole audio
+    // timeline loses blocks. Misses are callbacks that gave up waiting.
+    static float audioMaxLockWaitMs = 0;
+    static float audioTotalLockWaitMs = 0;
+    static long audioLockMisses = 0;
+    // Observed capacity of the wrapper's ring buffer (floats). When occupancy reaches
+    // it, the native side is about to drop samples uncontrolled; we recenter to half
+    // so scheduling jitter has headroom in both directions. If a wrapper build uses a
+    // different capacity the check simply never triggers (harmless).
+    const int AudioRingCapacityFloats = 8192;
+    static long audioRecenters = 0;
+    static long audioDiscardedFloats = 0;
+    // occupancy at the first and last callback of the stats interval, to derive the
+    // true production rate: produced = consumed + discarded + (endOcc - startOcc)
+    static int audioIntervalStartOccupancy = -1;
+    static int audioIntervalEndOccupancy = 0;
+
+#if _debug_audio_
+    // Debug capture: records exactly what MoveAudioStreamTo hands to Unity so the
+    // stream can be pulled off the device and listened to in isolation. If the WAV
+    // fries, the wrapper/core side is producing bad samples; if it's clean, the
+    // corruption happens after our filter (FMOD mixer / spatializer).
+    // Buffer fields are touched only under AudioBufferLock; flushing happens on the
+    // main thread via FlushAudioCaptureIfReady().
+    const int AudioCaptureSeconds = 15;
+    static float[] audioCaptureBuffer = null;
+    static int audioCapturePos = 0;
+    static bool audioCaptureDone = false;
+#endif
 
     #endregion
 
@@ -232,6 +296,20 @@ public static unsafe class LibretroMameCore
 
 
     static ManualResetEventSlim GameTextureBufferSem = new ManualResetEventSlim(false);
+
+    // Native callback delegates must be kept alive for as long as native code may call
+    // them, otherwise the GC can collect them while a P/Invoke still holds the function
+    // pointer (random native crash). Root them here instead of passing `new Handler(...)`
+    // inline at the call site.
+    static wrapperLogHandler wrapperLogDelegate;
+    static inputStateHandler inputStateDelegate;
+    static EnvironmentHandler environmentDelegate;
+    static CreateTextureHandler createTextureDelegate;
+    static TextureLockHandler textureLockDelegate;
+    static TextureUnlockHandler textureUnlockDelegate;
+    static TextureBufferSemAvailableHandler textureBufferSemAvailableDelegate;
+    static AudioLockHandler audioLockDelegate;
+    static AudioUnlockHandler audioUnlockDelegate;
 
     //parameters ================
 
@@ -475,6 +553,32 @@ public static unsafe class LibretroMameCore
         deviceIdsLightGun.controlMap = ControlMap;
     }
 
+    /// <summary>
+    /// Logs the ACTUAL Android audio device properties (not what Unity was configured
+    /// for): the hardware output sample rate and the native burst size. Ground truth
+    /// for diagnosing rate mismatches between Unity's DSP and the OS stream.
+    /// </summary>
+    private static void LogAndroidAudioProperties()
+    {
+#if UNITY_ANDROID && !UNITY_EDITOR
+        try
+        {
+            using (var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+            using (var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity"))
+            using (var audioManager = activity.Call<AndroidJavaObject>("getSystemService", "audio"))
+            {
+                string deviceRate = audioManager.Call<string>("getProperty", "android.media.property.OUTPUT_SAMPLE_RATE");
+                string burstFrames = audioManager.Call<string>("getProperty", "android.media.property.OUTPUT_FRAMES_PER_BUFFER");
+                ConfigManager.WriteConsole($"[LibRetroMameCore] ANDROID AUDIO DEVICE outputSampleRate: {deviceRate} framesPerBuffer: {burstFrames}");
+            }
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleError($"[LibRetroMameCore] ANDROID AUDIO DEVICE query failed: {e.Message}");
+        }
+#endif
+    }
+
     public static bool Start(string screenName, string gameFileName, List<string> playList)
     {
         if (GameLoaded)
@@ -502,6 +606,16 @@ public static unsafe class LibretroMameCore
         var audioConfig = AudioSettings.GetConfiguration();
         QuestAudioFrequency = audioConfig.sampleRate;
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
+        LogAndroidAudioProperties();
+
+        // Calibrated output rate: the core generates at the nominal DSP rate (best
+        // quality for the resampler) and the wrapper resamples to the drain rate
+        // measured in previous sessions. Falls back to nominal when uncalibrated.
+        wrapperOutputRate = PlayerPrefs.GetFloat(AudioCalibrationPrefKey, 0f);
+        if (wrapperOutputRate < QuestAudioFrequency * 0.5 || wrapperOutputRate > QuestAudioFrequency)
+            wrapperOutputRate = QuestAudioFrequency;
+        ConfigManager.WriteConsole($"[LibRetroMameCore.Start] AUDIO wrapper output rate: {wrapperOutputRate:F0} (nominal {QuestAudioFrequency})");
+
         WriteConsole("[LibRetroMameCore.Start] Init environment and call retro_init()");
 
         Core core = CoresController.GetCore(Core);
@@ -518,14 +632,18 @@ public static unsafe class LibretroMameCore
 
         WriteConsole($"[LibRetroMameCore.Start] Persistent:{Persistent}/{persistentSaveState}");
 
-        int result = wrapper_environment_open(new wrapperLogHandler(WrapperPrintf),
+        wrapperLogDelegate = new wrapperLogHandler(WrapperPrintf);
+        inputStateDelegate = new inputStateHandler(inputStateCB);
+        environmentDelegate = new EnvironmentHandler(EnvironmentHandlerCB);
+
+        int result = wrapper_environment_open(wrapperLogDelegate,
                                                 MinLogLevel,
                                                 ConfigManager.GameSaveDir,
                                                 ConfigManager.SystemDir,
                                                 QuestAudioFrequency.ToString(),
-                                                new inputStateHandler(inputStateCB),
+                                                inputStateDelegate,
                                                 core.Library,
-                                                new EnvironmentHandler(EnvironmentHandlerCB)
+                                                environmentDelegate
                                                 );
         if (result != 0)
         {
@@ -570,12 +688,30 @@ public static unsafe class LibretroMameCore
         activePlayerSlot = 0;  // Default back to Player 1 on cab startup
 
         // Do all at the latest possible moment. The core may have had a change of heart and decide to change settings
-        wrapper_image_init(new CreateTextureHandler(CreateTextureCB),
-                            new TextureLockHandler(TextureLockCB),
-                            new TextureUnlockHandler(TextureUnlockCB),
-                            new TextureBufferSemAvailableHandler(TextureBufferSemAvailable));
-        wrapper_audio_init(new AudioLockHandler(AudioLockCB),
-                            new AudioUnlockHandler(AudioUnlockCB));
+        createTextureDelegate = new CreateTextureHandler(CreateTextureCB);
+        textureLockDelegate = new TextureLockHandler(TextureLockCB);
+        textureUnlockDelegate = new TextureUnlockHandler(TextureUnlockCB);
+        textureBufferSemAvailableDelegate = new TextureBufferSemAvailableHandler(TextureBufferSemAvailable);
+        audioLockDelegate = new AudioLockHandler(AudioLockCB);
+        audioUnlockDelegate = new AudioUnlockHandler(AudioUnlockCB);
+
+        wrapper_image_init(createTextureDelegate,
+                            textureLockDelegate,
+                            textureUnlockDelegate,
+                            textureBufferSemAvailableDelegate);
+        wrapper_audio_init(audioLockDelegate,
+                            audioUnlockDelegate);
+        try
+        {
+            wrapper_audio_set_output_rate(wrapperOutputRate);
+        }
+        catch (EntryPointNotFoundException)
+        {
+            // wrapper built before the calibrated-output-rate change: it resamples to
+            // its hardcoded 48000. Keep running with the legacy (overflowing) behavior.
+            ConfigManager.WriteConsoleWarning("[LibRetroMameCore.Start] wrapper without wrapper_audio_set_output_rate, audio calibration inactive");
+            wrapperOutputRate = QuestAudioFrequency;
+        }
         wrapper_input_init();
 
         /* It's impossible to change the Sample Rate, fixed in 48000
@@ -584,7 +720,22 @@ public static unsafe class LibretroMameCore
         audioConfig = AudioSettings.GetConfiguration();
         WriteConsole($"[LibRetroMameCore.Start] New audio Sample Rate:{audioConfig.sampleRate}");
         */
+        // Highest priority (0): with all cabinets alive the scene has many playing
+        // AudioSources competing for 32 real voices; if FMOD virtualizes this one,
+        // OnAudioFilterRead stops firing while the wrapper keeps producing, the ring
+        // buffer overflows and drops chunks (crackling + time-compressed audio).
+        Speaker.priority = 0;
         Speaker.Play();
+
+#if _debug_audio_
+        lock (AudioBufferLock)
+        {
+            audioCaptureBuffer = new float[QuestAudioFrequency * 2 * AudioCaptureSeconds];
+            audioCapturePos = 0;
+            audioCaptureDone = false;
+        }
+        ConfigManager.WriteConsole($"[LibRetroMameCore.Start] audio capture armed: {AudioCaptureSeconds}s at {QuestAudioFrequency}Hz stereo");
+#endif
 
         WriteConsole($"[LibRetroMameCore.Start] Game Loaded: {GameLoaded} in {GameFileName} in {ScreenName} ");
 
@@ -1106,24 +1257,48 @@ public static unsafe class LibretroMameCore
 
         ConfigManager.WriteConsole($"[StartRunThread] -------------------------");
 
-        FPSControlNoUnity = new((float)GetFps());
+        expectedFps = (float)GetFps();
+        Interlocked.Exchange(ref wrapperRuns, 0);
+        FPSControlNoUnity = new(expectedFps);
 
         retroRunTaskCancellationToken = new();
-        retroRunTask = Task.Run(() =>
+        // LongRunning gets this its own dedicated thread instead of a thread-pool worker,
+        // and we raise its priority: previously this loop busy-spun at 100% of a core,
+        // which the Android scheduler penalizes (preferred preemption victim). If it got
+        // preempted while wrapper_audio holds AudioBufferLock mid-write, Unity's audio
+        // thread stalled inside MoveAudioStreamTo waiting on the same lock - a glitch
+        // even though the ring buffer had data. Sleeping when there's slack removes the
+        // spin and the priority reduces how often this thread gets bumped.
+        retroRunTask = Task.Factory.StartNew(() =>
         {
+            Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest;
+
+            var fpsControl = FPSControlNoUnity;
             ConfigManager.WriteConsole($"[StartRunThread.retroRunTask]task start running IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status}");
             while (!retroRunTaskCancellationToken.IsCancellationRequested)
             {
-                FPSControlNoUnity.CountTimeFrame();
-                if (FPSControlNoUnity.isTime())
+                fpsControl.CountTimeFrame();
+                if (fpsControl.isTime())
                 {
                     // ConfigManager.WriteConsole($"[StartRunThread.retroRunTask] wrapper_run -------------------------");
                     wrapper_run();
+                    Interlocked.Increment(ref wrapperRuns);
                     // ConfigManager.WriteConsole($"[retroRunTask] wrapper_run end IsCancellationRequested: {retroRunTaskCancellationToken.IsCancellationRequested} status: {retroRunTask.Status} -------------------------");
                     handleSpecialInputs();
                 }
+                else
+                {
+                    float secondsLeft = fpsControl.SecondsUntilNextFrame;
+                    if (secondsLeft > 0.002f)
+                        Thread.Sleep(1);
+                    else
+                        Thread.Yield();
+                }
             }
-        }
+        },
+        retroRunTaskCancellationToken.Token,
+        TaskCreationOptions.LongRunning,
+        TaskScheduler.Default
         );
     }
 
@@ -1257,9 +1432,59 @@ public static unsafe class LibretroMameCore
         wrapper_retro_deinit();
 #endif
 
+        // save whatever was captured even if the 15s buffer didn't fill
+        FlushAudioCaptureIfReady(force: true);
+
+        SaveAudioCalibration();
+
         ClearAll();
 
         WriteConsole("[LibRetroMameCore.End] END  *************************************************");
+    }
+
+     /// <summary>Unload when the owning screen was destroyed before End() (e.g. MR DespawnAllAsync).</summary>
+    public static void ForceEndActiveGame()
+    {
+        if (!GameLoaded && string.IsNullOrEmpty(GameFileName))
+            return;
+
+        if (!string.IsNullOrEmpty(GameFileName) && !string.IsNullOrEmpty(ScreenName))
+        {
+            WriteConsole($"[LibRetroMameCore.ForceEndActiveGame] {GameFileName} on {ScreenName}");
+            End(ScreenName, GameFileName);
+            return;
+        }
+
+        WriteConsole("[LibRetroMameCore.ForceEndActiveGame] clearing stale GameLoaded flag");
+        ClearAll();
+    }
+
+    /// <summary>
+    /// Persists the measured audio drain rate (frames/s Unity actually consumed)
+    /// so the next game session resamples to it from the start. Needs at least 15s
+    /// of healthy playback to be trustworthy. Main thread only (PlayerPrefs).
+    /// </summary>
+    private static void SaveAudioCalibration()
+    {
+        double floats, seconds;
+        lock (AudioBufferLock)
+        {
+            floats = calibConsumedFloats;
+            seconds = calibSeconds;
+            calibConsumedFloats = 0;
+            calibSeconds = 0;
+        }
+
+        if (seconds < 15)
+            return;
+
+        float measuredRate = (float)(floats / 2.0 / seconds);
+        if (measuredRate < QuestAudioFrequency * 0.5f || measuredRate > QuestAudioFrequency)
+            return; // implausible measurement, keep previous calibration
+
+        PlayerPrefs.SetFloat(AudioCalibrationPrefKey, measuredRate);
+        PlayerPrefs.Save();
+        ConfigManager.WriteConsole($"[LibRetroMameCore] AUDIO calibration saved: {measuredRate:F0} frames/s over {seconds:F0}s (nominal {QuestAudioFrequency})");
     }
 
     private static void ClearAll()
@@ -1278,19 +1503,48 @@ public static unsafe class LibretroMameCore
         RecreateTexture = true;
         Shader = null;
 
-        AudioBufferLock = new();
+        // AudioBufferLock is intentionally never reassigned: it must stay the same
+        // object for the process lifetime since native code can still be mid-callback
+        // via the lock/unlock handlers around a ClearAll().
+        lock (AudioBufferLock)
+        {
+            audioCallbacks = 0;
+            audioUnderruns = 0;
+            audioMissingSamples = 0;
+            audioCopiedFloats = 0;
+            audioMinOccupancy = int.MaxValue;
+            audioMaxOccupancy = 0;
+            audioGaps = 0;
+            audioMaxGapMs = 0;
+            audioLastCallbackTimestamp = 0;
+            audioLockMisses = 0;
+            audioMaxLockWaitMs = 0;
+            audioTotalLockWaitMs = 0;
+            audioRecenters = 0;
+            audioDiscardedFloats = 0;
+            audioIntervalStartOccupancy = -1;
+            audioIntervalEndOccupancy = 0;
+            audioStatsSince = DateTime.MinValue;
+            calibConsumedFloats = 0;
+            calibSeconds = 0;
+        }
+        Interlocked.Exchange(ref wrapperRuns, 0);
 
         if (Speaker != null && Speaker.isPlaying)
         {
             WriteConsole("[LibRetroMameCore.ClearAll] Pause Speaker");
             Speaker.Pause();
         }
+        if (Speaker != null)
+            Speaker.priority = 128; // restore default for attract-mode duty
         Speaker = null;
 
         GameFileName = "";
         ScreenName = "";
         GameLoaded = false;
+#if !UNITY_EDITOR
         wrapper_led_reset();
+#endif
 
         CoinSlot?.clean();
         CoinSlot = null;
@@ -1632,16 +1886,85 @@ public static unsafe class LibretroMameCore
         // ConfigManager.WriteConsole($"[AudioUnlockCB]");
         Monitor.Exit(AudioBufferLock);
     }
-    public static void MoveAudioStreamTo(float[] audioData)
+    public static void MoveAudioStreamTo(float[] audioData, int channels)
     {
 #if !UNITY_EDITOR
-        lock (AudioBufferLock)
+        // Never let the DSP mixer thread stall on the producer: if the wrapper (run
+        // thread) holds AudioBufferLock too long, waiting here delays the whole audio
+        // mix and the OS output underruns. Measure the wait; on timeout output one
+        // silent block instead of blocking.
+        long waitStart = Stopwatch.GetTimestamp();
+        bool acquired = Monitor.TryEnter(AudioBufferLock, 4);
+        float lockWaitMs = (Stopwatch.GetTimestamp() - waitStart) * 1000f / Stopwatch.Frequency;
+        if (!acquired)
         {
+            Array.Clear(audioData, 0, audioData.Length);
+            // diagnostic-only fields; racing the lock holder here is acceptable
+            audioLockMisses++;
+            if (lockWaitMs > audioMaxLockWaitMs)
+                audioMaxLockWaitMs = lockWaitMs;
+            return;
+        }
+        try
+        {
+            audioTotalLockWaitMs += lockWaitMs;
+            if (lockWaitMs > audioMaxLockWaitMs)
+                audioMaxLockWaitMs = lockWaitMs;
+
             // Call the C functions to access the audio data
             IntPtr audioBufferPtr = wrapper_audio_get_audio_buffer_pointer();
             int audioBufferOccupancy = wrapper_audio_get_audio_buffer_occupancy();
+
+            // Ring full (typically after the silent game boot fills it): skip ahead to
+            // half occupancy in one controlled jump. One audible seam now instead of a
+            // continuous stream of tiny uncontrolled drops at every scheduling hiccup.
+            if (audioBufferOccupancy >= AudioRingCapacityFloats)
+            {
+                int discard = audioBufferOccupancy / 2;
+                if (channels > 0)
+                    discard -= discard % channels;
+                wrapper_audio_consume_buffer(discard);
+                audioBufferOccupancy -= discard;
+                audioBufferPtr = wrapper_audio_get_audio_buffer_pointer();
+                audioRecenters++;
+                audioDiscardedFloats += discard;
+            }
+
+            if (audioIntervalStartOccupancy < 0)
+                audioIntervalStartOccupancy = audioBufferOccupancy;
+            audioIntervalEndOccupancy = audioBufferOccupancy;
+
             int toCopy = audioBufferOccupancy >= audioData.Length ? audioData.Length : audioBufferOccupancy;
-            // WriteConsole($"[MoveAudioStreamTo] toCopy: {toCopy}");
+
+            // Never split a stereo/multi-channel frame across the copy boundary:
+            // an odd toCopy would permanently shift the L/R interleave from here on.
+            if (channels > 0)
+                toCopy -= toCopy % channels;
+
+            audioCallbacks++;
+            audioCopiedFloats += toCopy;
+            if (audioBufferOccupancy < audioMinOccupancy)
+                audioMinOccupancy = audioBufferOccupancy;
+            if (audioBufferOccupancy > audioMaxOccupancy)
+                audioMaxOccupancy = audioBufferOccupancy;
+            if (toCopy < audioData.Length)
+            {
+                audioUnderruns++;
+                audioMissingSamples += audioData.Length - toCopy;
+            }
+
+            long nowTs = Stopwatch.GetTimestamp();
+            if (audioLastCallbackTimestamp != 0)
+            {
+                float deltaMs = (nowTs - audioLastCallbackTimestamp) * 1000f / Stopwatch.Frequency;
+                // nominal spacing is the buffer duration; 1.5x tolerates jitter
+                float nominalMs = (audioData.Length / 2f) / QuestAudioFrequency * 1000f;
+                if (deltaMs > nominalMs * 1.5f)
+                    audioGaps++;
+                if (deltaMs > audioMaxGapMs)
+                    audioMaxGapMs = deltaMs;
+            }
+            audioLastCallbackTimestamp = nowTs;
 
             if (toCopy > 0)
             {
@@ -1651,8 +1974,204 @@ public static unsafe class LibretroMameCore
                 // Consume the data in the C buffer
                 wrapper_audio_consume_buffer(toCopy);
             }
+
+            // On underrun, zero the unfilled tail instead of leaving stale samples in
+            // place: a waveform that jumps mid-cycle is an audible pop, dozens of which
+            // per second is what "frying" sounds like. Silence is far less objectionable.
+            if (toCopy < audioData.Length)
+                Array.Clear(audioData, toCopy, audioData.Length - toCopy);
+
+#if _debug_audio_
+            if (audioCaptureBuffer != null && !audioCaptureDone)
+            {
+                // Don't waste the capture window on the (long, silent) game boot:
+                // recording starts at the first audible sample.
+                bool startCapture = audioCapturePos > 0;
+                if (!startCapture)
+                {
+                    for (int i = 0; i < audioData.Length; i++)
+                    {
+                        if (audioData[i] > 0.01f || audioData[i] < -0.01f)
+                        {
+                            startCapture = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (startCapture)
+                {
+                    int n = Math.Min(audioData.Length, audioCaptureBuffer.Length - audioCapturePos);
+                    Array.Copy(audioData, 0, audioCaptureBuffer, audioCapturePos, n);
+                    audioCapturePos += n;
+                    if (audioCapturePos >= audioCaptureBuffer.Length)
+                        audioCaptureDone = true;
+                }
+            }
+#endif
+        }
+        finally
+        {
+            Monitor.Exit(AudioBufferLock);
         }
 #endif
+    }
+
+    /// <summary>
+    /// Call from the main thread (e.g. LibretroScreenController.Update). When the
+    /// capture buffer is full, writes it as a 16-bit PCM stereo WAV on a background
+    /// task and logs the path so it can be pulled with adb and listened to.
+    /// No-op unless _debug_audio_ is defined at the top of this file.
+    /// </summary>
+    public static void FlushAudioCaptureIfReady(bool force = false)
+    {
+#if _debug_audio_
+        float[] buffer;
+        int length;
+        lock (AudioBufferLock)
+        {
+            if (audioCaptureBuffer == null || (!audioCaptureDone && !force) || audioCapturePos == 0)
+                return;
+            buffer = audioCaptureBuffer;
+            length = audioCapturePos;
+            audioCaptureBuffer = null;
+            audioCapturePos = 0;
+            audioCaptureDone = false;
+        }
+
+        int sampleRate = (int)wrapperOutputRate; // rate the ring content actually carries
+        string path = $"{ConfigManager.GameSaveDir}/audio_capture.wav";
+        Task.Run(() =>
+        {
+            try
+            {
+                WriteWav(path, buffer, length, sampleRate, 2);
+                ConfigManager.WriteConsole($"[LibRetroMameCore] AUDIO CAPTURE saved: {path} ({length} samples, {length / 2 / sampleRate}s at {sampleRate}Hz)");
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleError($"[LibRetroMameCore] AUDIO CAPTURE failed: {e.Message}");
+            }
+        });
+#endif
+    }
+
+#if _debug_audio_
+    private static void WriteWav(string path, float[] samples, int length, int sampleRate, int channels)
+    {
+        using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+        using (var bw = new BinaryWriter(fs))
+        {
+            int dataBytes = length * 2; // 16-bit PCM
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+            bw.Write(36 + dataBytes);
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+            bw.Write(16);
+            bw.Write((short)1); // PCM
+            bw.Write((short)channels);
+            bw.Write(sampleRate);
+            bw.Write(sampleRate * channels * 2); // byte rate
+            bw.Write((short)(channels * 2)); // block align
+            bw.Write((short)16); // bits per sample
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+            bw.Write(dataBytes);
+            for (int i = 0; i < length; i++)
+            {
+                float clamped = samples[i] < -1f ? -1f : (samples[i] > 1f ? 1f : samples[i]);
+                bw.Write((short)(clamped * 32767f));
+            }
+        }
+    }
+#endif
+
+    /// <summary>
+    /// Formats and resets the audio underrun/occupancy counters accumulated since the
+    /// last call. Returns null when there were no audio callbacks to report (e.g. no
+    /// game currently running audio through MoveAudioStreamTo).
+    /// </summary>
+    public static string GetAndResetAudioStats()
+    {
+        long callbacks, underruns, missing, copied, gaps, lockMisses, recenters;
+        int minOccupancy, maxOccupancy;
+        float maxGapMs, maxLockWaitMs, totalLockWaitMs;
+        DateTime since;
+        DateTime now = DateTime.Now;
+        long discarded;
+        int startOcc, endOcc;
+        lock (AudioBufferLock)
+        {
+            recenters = audioRecenters;
+            audioRecenters = 0;
+            discarded = audioDiscardedFloats;
+            audioDiscardedFloats = 0;
+            startOcc = audioIntervalStartOccupancy;
+            endOcc = audioIntervalEndOccupancy;
+            audioIntervalStartOccupancy = -1;
+            callbacks = audioCallbacks;
+            underruns = audioUnderruns;
+            missing = audioMissingSamples;
+            copied = audioCopiedFloats;
+            minOccupancy = audioMinOccupancy;
+            maxOccupancy = audioMaxOccupancy;
+            gaps = audioGaps;
+            maxGapMs = audioMaxGapMs;
+            lockMisses = audioLockMisses;
+            maxLockWaitMs = audioMaxLockWaitMs;
+            totalLockWaitMs = audioTotalLockWaitMs;
+            since = audioStatsSince;
+
+            audioCallbacks = 0;
+            audioUnderruns = 0;
+            audioMissingSamples = 0;
+            audioCopiedFloats = 0;
+            audioMinOccupancy = int.MaxValue;
+            audioMaxOccupancy = 0;
+            audioGaps = 0;
+            audioMaxGapMs = 0;
+            audioLockMisses = 0;
+            audioMaxLockWaitMs = 0;
+            audioTotalLockWaitMs = 0;
+            audioStatsSince = now;
+        }
+        long runs = Interlocked.Exchange(ref wrapperRuns, 0);
+
+        if (callbacks == 0)
+            return null;
+        if (since == DateTime.MinValue)
+            return null; // first interval has no reliable start time, skip it
+
+        float elapsed = (float)(now - since).TotalSeconds;
+        if (elapsed <= 0f)
+            return null;
+
+        // consumption is what Unity actually pulled; production is what the emulator
+        // should generate at the requested output rate (stereo floats). If produced/s
+        // exceeds consumed/s the native ring buffer overflows and drops chunks:
+        // crackling plus time-compressed (fast) audio.
+        float consumedPerSec = copied / elapsed;
+        float expectedPerSec = (float)wrapperOutputRate * 2;
+        float runsPerSec = runs / elapsed;
+
+        // accumulate healthy windows for the persistent drain-rate calibration
+        // (underruns mean consumption was production-limited: not a valid sample)
+        if (underruns == 0 && callbacks > 0 && elapsed >= 1f)
+        {
+            calibConsumedFloats += copied;
+            calibSeconds += elapsed;
+        }
+        // conservation: everything that entered the ring this interval either got
+        // copied to Unity, discarded by recenters, or is still sitting in the ring.
+        // Missing term: whatever the NATIVE side dropped on its own (invisible to us).
+        float producedPerSec = (copied + discarded + (startOcc >= 0 ? endOcc - startOcc : 0)) / elapsed;
+
+        return $"[AudioStats] elapsed: {elapsed:F1}s callbacks/s: {callbacks / elapsed:F1} " +
+               $"consumed floats/s: {consumedPerSec:F0} expected: {expectedPerSec:F0} ({(consumedPerSec / expectedPerSec * 100f):F1}%) " +
+               $"underruns: {underruns} missing: {missing} occupancy min/max: {(minOccupancy == int.MaxValue ? 0 : minOccupancy)}/{maxOccupancy} " +
+               $"gaps: {gaps} maxGap: {maxGapMs:F1}ms " +
+               $"lockWait avg/max: {(totalLockWaitMs / callbacks):F2}/{maxLockWaitMs:F2}ms lockMisses: {lockMisses} " +
+               $"recenters: {recenters} discarded/s: {discarded / elapsed:F0} produced floats/s: {producedPerSec:F0} " +
+               $"runs/s: {runsPerSec:F2} expectedFps: {expectedFps:F2}";
     }
 
 #if _serialize_
@@ -1756,6 +2275,14 @@ public static unsafe class LibretroMameCore
         public float DelayedFrames()
         {
             return timeBalance / timePerFrame;
+        }
+
+        /// <summary>Seconds remaining until isTime() would next return true, based on the
+        /// balance as of the last CountTimeFrame() call. Used by the run thread to sleep
+        /// instead of busy-spinning when there's slack before the next frame is due.</summary>
+        public float SecondsUntilNextFrame
+        {
+            get { return timePerFrame - timeBalance; }
         }
 
         public override string ToString()

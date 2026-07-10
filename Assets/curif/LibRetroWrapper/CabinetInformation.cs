@@ -269,7 +269,14 @@ public class CabinetInformation
         CabinetInformation cabInfo = null;
         cabInfo = parseYaml(cabPath, yamlPath, yaml);
         if (cache && cabInfo != null)
-            ConfigManager.CabinetInformationCache.Add(cabPath, cabInfo, 1f); //cant know object size, using 1mb per object and allow N on cache creation (Max N objects allowed).
+        {
+            // We can't reflect the exact in-memory size of the parsed object graph, but unlike a GLB's
+            // GPU expansion, a deserialized YAML object stays the same order of magnitude as its source
+            // text (a few small fields/lists per line), so the source length is a reasonable proxy.
+            // The x2 factor accounts for per-field/list/string object overhead over the raw UTF-8 text.
+            float sizeInMB = Math.Max(0.01f, (yaml.Length * 2f) / (1024f * 1024f));
+            ConfigManager.CabinetInformationCache.Add(cabPath, cabInfo, sizeInMB);
+        }
         return cabInfo;
     }
 
