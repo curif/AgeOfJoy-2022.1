@@ -2051,6 +2051,10 @@ void pdlr_shutdown(void)
     rbMapped = nullptr; rbReady = false; rbW = rbH = 0; frameW = frameH = 0;
 
     if (g.gameLoaded && g.retro_unload_game) { LOGI("pdlr_shutdown: retro_unload_game"); g.retro_unload_game(); }
+    // HW-render contract: fire the core's context_destroy while the VkDevice is still alive so it
+    // releases its Vulkan objects now. Skipping this leaves them inside the core's statics, and the
+    // dlclose-time destructors then call vkDestroy* on a dead device → SIGSEGV in the driver.
+    if (vk.contextReady && vk.hwcb.context_destroy) { LOGI("pdlr_shutdown: context_destroy"); vk.hwcb.context_destroy(); }
     if (vk.haveNego && vk.nego.destroy_device) vk.nego.destroy_device();
     if (vk.device   != VK_NULL_HANDLE) { vkDeviceWaitIdle(vk.device); vkDestroyDevice(vk.device, nullptr); }
     if (vk.instance != VK_NULL_HANDLE) vkDestroyInstance(vk.instance, nullptr);
