@@ -13,9 +13,10 @@ using UnityEngine;
 ///   - resolve the current room via _cameraRig.centerEyeAnchor.position.
 /// Age of Joy uses XROrigin (XRI), not OVRCameraRig. We subclass OVRCameraRig and disable
 /// its lifecycle so no MainCamera is spawned, then keep trackingSpace + centerEyeAnchor
-/// aligned with the XROrigin. When MRUK WorldLock is active, trackingSpace is owned by MRUK
-/// and that correction is pushed back onto XROrigin.CameraFloorOffsetObject so scene anchors
-/// (walls/floor) stay locked to passthrough after Meta Reset View.
+/// aligned with the XROrigin. When MRUK WorldLock is active in MR mode, trackingSpace is
+/// owned by MRUK and that correction is pushed onto XROrigin.CameraFloorOffsetObject so
+/// scene anchors stay locked to passthrough after Meta Reset View. Push is skipped in VR
+/// so stick locomotion is not fighting CameraFloorOffset every LateUpdate.
 /// </summary>
 public static class MRCameraRigShim
 {
@@ -23,6 +24,17 @@ public static class MRCameraRigShim
     const string ShimRootName = "MRUKCameraRigShim";
 
     static MRUKCameraRigStub shimRig;
+
+    /// <summary>WorldLock→XROrigin push only while the experience mode is MR / MR_EDIT.</summary>
+    public static bool ShouldPushWorldLockOntoXrOrigin()
+    {
+        MixedRealityManager manager = MixedRealityManager.Instance;
+        if (manager == null)
+            return false;
+
+        return manager.CurrentMode == ExperienceMode.MR
+            || manager.CurrentMode == ExperienceMode.MR_EDIT;
+    }
 
     public static Transform ResolveXrTrackingOrigin(XROrigin origin)
     {
@@ -147,14 +159,15 @@ public class MRUKCameraRigStub : OVRCameraRig
             cachedOrigin = Object.FindObjectOfType<XROrigin>();
 
         bool worldLockActive = MRUK.Instance != null && MRUK.Instance.IsWorldLockActive;
+        bool pushOntoXr = worldLockActive && MRCameraRigShim.ShouldPushWorldLockOntoXrOrigin();
 
         if (cachedOrigin != null)
         {
             Transform xrTracking = ResolveTrackingTransform(cachedOrigin);
 
-            if (!worldLockActive)
+            if (!pushOntoXr)
             {
-                // XROrigin drives the shim (no WorldLock correction yet).
+                // XROrigin drives the shim (VR, or WorldLock not applying to the rig).
                 if (xrTracking != null && trackingSpace != null)
                     trackingSpace.SetPositionAndRotation(xrTracking.position, xrTracking.rotation);
             }
@@ -163,7 +176,6 @@ public class MRUKCameraRigStub : OVRCameraRig
                 // MRUK WorldLock already adjusted shim trackingSpace this frame.
                 // Push that same correction onto XROrigin so EffectMesh walls/floor and
                 // passthrough stay colocated after Meta Reset View / tracking jumps.
-                // (OVRCameraRig keeps the real camera under TrackingSpace; we emulate that.)
                 if ((xrTracking.position - trackingSpace.position).sqrMagnitude > 1e-8f
                     || Quaternion.Angle(xrTracking.rotation, trackingSpace.rotation) > 0.01f)
                 {
@@ -179,7 +191,7 @@ public class MRUKCameraRigStub : OVRCameraRig
             }
 
             MRCameraRigAlignLog.LogSnapshot(
-                worldLockActive ? "SyncWithXrOrigin-worldLock" : "SyncWithXrOrigin",
+                pushOntoXr ? "SyncWithXrOrigin-worldLock" : "SyncWithXrOrigin",
                 cachedOrigin,
                 this);
             return;
@@ -189,7 +201,7 @@ public class MRUKCameraRigStub : OVRCameraRig
         if (main == null || centerEyeAnchor == null)
             return;
 
-        if (!worldLockActive && trackingSpace != null)
+        if (!pushOntoXr && trackingSpace != null)
             trackingSpace.SetPositionAndRotation(main.transform.position, main.transform.rotation);
 
         centerEyeAnchor.SetPositionAndRotation(main.transform.position, main.transform.rotation);

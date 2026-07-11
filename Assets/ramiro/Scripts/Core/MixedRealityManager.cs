@@ -1342,9 +1342,13 @@ public class MixedRealityManager : MonoBehaviour
                 break;
 
             case MRPhoneBoothTransitionSequence.MrToVrReturnStep.EnableVrModeAndLocomotion:
+                // Stop WorldLock→CameraFloorOffset push before stick resume (match EnterVR handoff,
+                // but do NOT restore app-start player pose — that teleports outside the booth).
                 passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
                 ResetLegacyPassthroughFlags();
                 SetMode(ExperienceMode.VR);
+                MRSceneHost.SuspendForVr();
+                RestoreXrOriginTrackingOffsetFromAppStart();
                 MRVrSystemsGate.ResumeVrSystemsExceptLocomotion();
                 if (ctx.scenePortal == null)
                     ctx.scenePortal = MRPhoneBoothPortal.FindSceneBoothPortal();
@@ -1360,6 +1364,7 @@ public class MixedRealityManager : MonoBehaviour
                 }
 
                 MRVrSystemsGate.ResumePlayerLocomotionForVr();
+                MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", "EnableVrModeAndLocomotion done");
                 break;
 
             case MRPhoneBoothTransitionSequence.MrToVrReturnStep.MrEnvironmentCleanup:

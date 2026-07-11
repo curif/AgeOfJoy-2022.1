@@ -233,7 +233,10 @@ public static class MRVrSystemsGate
     {
         ChangeControls changeControls = FindChangeControls();
         if (changeControls == null)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} ChangeControls not found — VR locomotion not restored");
             return;
+        }
 
         changeControls.SetMrLocomotionSuspended(false);
         ConfigManager.WriteConsole($"{LogPrefix} player locomotion restored for VR");
