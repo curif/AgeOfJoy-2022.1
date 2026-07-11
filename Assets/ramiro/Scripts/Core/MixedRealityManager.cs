@@ -45,11 +45,9 @@ public class MixedRealityManager : MonoBehaviour
 
     Vector3? savedVrPlayerPosition;
     Quaternion? savedVrPlayerRotation;
-    Vector3? appStartPlayerPosition;
-    Quaternion? appStartPlayerRotation;
     /// <summary>
     /// XROrigin CameraFloorOffset local pose at app start. WorldLock pushes this transform in MR;
-    /// Quick Travel must restore it or the player floats above the VR floor.
+    /// restore it on VR exit or the player floats above the VR floor.
     /// </summary>
     Vector3? appStartCameraFloorLocalPosition;
     Quaternion? appStartCameraFloorLocalRotation;
@@ -143,44 +141,25 @@ public class MixedRealityManager : MonoBehaviour
         if (OVRPlugin.initialized)
             lastTrackingRecenterCount = OVRPlugin.GetLocalTrackingSpaceRecenterCount();
 
-        CaptureAppStartPlayerPoseIfNeeded();
         CaptureAppStartTrackingOffsetIfNeeded();
-        if (!appStartPlayerPosition.HasValue)
-            StartCoroutine(CaptureAppStartPlayerPoseWhenReady());
+        if (!appStartCameraFloorLocalPosition.HasValue)
+            StartCoroutine(CaptureAppStartTrackingOffsetWhenReady());
 
         if (ShouldAutoEnterMrOnFixedSceneBoot())
             StartCoroutine(AutoEnterMrOnFixedSceneBootRoutine());
     }
 
-    IEnumerator CaptureAppStartPlayerPoseWhenReady()
+    IEnumerator CaptureAppStartTrackingOffsetWhenReady()
     {
         float timeout = 5f;
-        while ((!appStartPlayerPosition.HasValue || !appStartCameraFloorLocalPosition.HasValue) && timeout > 0f)
+        while (!appStartCameraFloorLocalPosition.HasValue && timeout > 0f)
         {
-            CaptureAppStartPlayerPoseIfNeeded();
             CaptureAppStartTrackingOffsetIfNeeded();
-            if (appStartPlayerPosition.HasValue && appStartCameraFloorLocalPosition.HasValue)
+            if (appStartCameraFloorLocalPosition.HasValue)
                 yield break;
             timeout -= Time.unscaledDeltaTime;
             yield return null;
         }
-    }
-
-    void CaptureAppStartPlayerPoseIfNeeded()
-    {
-        if (appStartPlayerPosition.HasValue)
-            return;
-
-        Transform player = FindPlayerTransform();
-        if (player == null)
-            return;
-
-        appStartPlayerPosition = player.position;
-        appStartPlayerRotation = player.rotation;
-        CaptureAppStartTrackingOffsetIfNeeded();
-        MRTransitionLog.Log(
-            $"captured app start player pose pos={appStartPlayerPosition.Value} rotY={appStartPlayerRotation.Value.eulerAngles.y:F1}");
-        ConfigManager.WriteConsole($"{LogPrefix} app start player pose {appStartPlayerPosition.Value}");
     }
 
     void CaptureAppStartTrackingOffsetIfNeeded()
@@ -763,18 +742,7 @@ public class MixedRealityManager : MonoBehaviour
 
     public void EnterVR()
     {
-        EnterVR(teleportToAppStart: false);
-    }
-
-    /// <summary>Exit MR and reload VR, teleporting the player to the app session start pose.</summary>
-    public void EnterVRQuickTravel()
-    {
-        EnterVR(teleportToAppStart: true);
-    }
-
-    void EnterVR(bool teleportToAppStart)
-    {
-        MRTransitionLog.LogStep("EnterVR", $"requested teleportToAppStart={teleportToAppStart}");
+        MRTransitionLog.LogStep("EnterVR", "requested");
         MRTransitionLog.LogManagerState("EnterVR-begin");
         MRTransitionLog.LogScenes("EnterVR-begin");
         MRTransitionLog.LogPassthrough("EnterVR-begin", passthrough);
@@ -798,7 +766,7 @@ public class MixedRealityManager : MonoBehaviour
         BeginMrExitImmediateSync();
 
         MRTransitionLog.LogPassthrough("EnterVR-after-immediate-disable", passthrough);
-        BeginTransition(EnterVRCoroutine(teleportToAppStart));
+        BeginTransition(EnterVRCoroutine());
     }
 
     /// <summary>Fast sync hide only — Destroy deferred to EnterVRCoroutine (Libretro may block).</summary>
@@ -1516,15 +1484,15 @@ public class MixedRealityManager : MonoBehaviour
         }
     }
 
-    IEnumerator EnterVRCoroutine(bool teleportToAppStart = false)
+    IEnumerator EnterVRCoroutine()
     {
         int generation = transitionGeneration;
         MRTransitionLog.LogStep(
             "EnterVRCoroutine",
-            $"start generation={generation} mode={CurrentMode} teleportToAppStart={teleportToAppStart}");
+            $"start generation={generation} mode={CurrentMode}");
         MRTransitionLog.LogManagerState("EnterVRCoroutine-start");
         MRTransitionLog.LogScenes("EnterVRCoroutine-start");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterVR coroutine (mode={CurrentMode} teleportToAppStart={teleportToAppStart})");
+        ConfigManager.WriteConsole($"{LogPrefix} EnterVR coroutine (mode={CurrentMode})");
 
         if (CurrentMode == ExperienceMode.MR_EDIT)
         {
@@ -1544,14 +1512,10 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogScenes("EnterVRCoroutine-after-reload");
         MRTransitionLog.LogManagerState("EnterVRCoroutine-after-reload");
 
-        if (teleportToAppStart)
-            RestoreAppStartPlayerPose();
-        else if (MRRuntimeSettings.RestoreVrPoseOnStandardEnterVr)
+        if (MRRuntimeSettings.RestoreVrPoseOnStandardEnterVr)
             RestoreVrPlayerPose();
 
-        MRTransitionLog.LogStep(
-            "EnterVRCoroutine",
-            teleportToAppStart ? "after RestoreAppStartPlayerPose" : "after RestoreVrPlayerPose");
+        MRTransitionLog.LogStep("EnterVRCoroutine", "after RestoreVrPlayerPose");
 
         passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
         ResetLegacyPassthroughFlags();
@@ -1589,14 +1553,14 @@ public class MixedRealityManager : MonoBehaviour
         environmentSurfaces?.ClearMrukScene();
         MRRoomInfoUI.Instance?.Hide();
         DestroyMRSpaceOrigin();
-        // Phone-booth return destroys the DDOL traveler; Quick Travel / standard EnterVR must too
+        // Phone-booth return destroys the DDOL traveler; standard EnterVR must too
         // or its solid colliders block the reloaded gallery booth.
         CleanupPhoneBoothTravelerForStandardVrExit();
         MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
         MRTransitionLog.LogStep("EnterVRCoroutine", "after MR cleanup");
 
         // WorldLock may have shoved CameraFloorOffsetObject; reset after MRUK is gone.
-        RestoreVrHeightAfterMrExit(teleportToAppStart);
+        RestoreVrHeightAfterMrExit();
         MRTransitionLog.LogStep("EnterVRCoroutine", "after RestoreVrHeightAfterMrExit");
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "before config cabinet ReleaseForVr");
@@ -1634,14 +1598,10 @@ public class MixedRealityManager : MonoBehaviour
 
     /// <summary>
     /// After MRUK/WorldLock teardown: restore CameraFloorOffset local pose and VR camera height.
-    /// Quick Travel also re-applies the app-start root pose so feet sit on the gallery floor.
     /// </summary>
-    void RestoreVrHeightAfterMrExit(bool teleportToAppStart)
+    void RestoreVrHeightAfterMrExit()
     {
         RestoreXrOriginTrackingOffsetFromAppStart();
-
-        if (teleportToAppStart)
-            RestoreAppStartPlayerPose();
 
         if (appStartPlayerControllerLocalPosition.HasValue)
         {
@@ -1750,39 +1710,6 @@ public class MixedRealityManager : MonoBehaviour
 
     void RestoreVrPlayerPose()
     {
-        TryRestoreVrPlayerPose();
-    }
-
-    bool TryRestoreAppStartPlayerPose()
-    {
-        CaptureAppStartPlayerPoseIfNeeded();
-        if (!appStartPlayerPosition.HasValue)
-        {
-            MRTransitionLog.LogWarning("RestoreAppStartPlayerPose skipped — no app start pose");
-            return false;
-        }
-
-        Transform player = FindPlayerTransform();
-        if (player == null)
-        {
-            MRTransitionLog.LogError("RestoreAppStartPlayerPose failed — player transform null");
-            return false;
-        }
-
-        Quaternion rotation = appStartPlayerRotation ?? player.rotation;
-        player.SetPositionAndRotation(appStartPlayerPosition.Value, rotation);
-        MRTransitionLog.Log(
-            $"restored app start player pose pos={appStartPlayerPosition.Value} rotY={rotation.eulerAngles.y:F1}");
-        ConfigManager.WriteConsole($"{LogPrefix} restored app start player pose {appStartPlayerPosition.Value}");
-        return true;
-    }
-
-    void RestoreAppStartPlayerPose()
-    {
-        if (TryRestoreAppStartPlayerPose())
-            return;
-
-        // Fallback: last remembered gallery pose if start pose was never captured.
         TryRestoreVrPlayerPose();
     }
 

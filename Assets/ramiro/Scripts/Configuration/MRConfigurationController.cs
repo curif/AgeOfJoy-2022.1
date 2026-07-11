@@ -356,7 +356,6 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("CONFIG", "Move cabinet, scale, EffectMesh");
         navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls + objects guide");
-        navMenu.AddOption("QUICK TRAVEL TO VR", "Exit MR to VR start point (no phone booth)");
         navMenu.AddOption("EXIT", "Close panel");
     }
 
@@ -2366,9 +2365,6 @@ public class MRConfigurationController : MonoBehaviour
                 BuildHelpWrappedLines();
                 currentScreen = Screen.Help;
                 break;
-            case "QUICK TRAVEL TO VR":
-                MixedRealityManager.Instance?.EnterVRQuickTravel();
-                return;
             case "EXIT":
                 MRConfigurationCabinetController.Instance?.CloseEdit();
                 return;
