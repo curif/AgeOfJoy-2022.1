@@ -1371,16 +1371,17 @@ public class MixedRealityManager : MonoBehaviour
 
                 Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
                 head = Camera.main != null ? Camera.main.transform : null;
-                if (player != null && savedHeadPos.HasValue)
+                if (player != null && savedHeadPos.HasValue && head != null)
                 {
                     CharacterController cc = player.GetComponent<CharacterController>();
                     if (cc != null)
                         cc.enabled = false;
 
-                    if (head != null)
-                        player.position += savedHeadPos.Value - head.position;
-                    else
-                        player.position = savedHeadPos.Value;
+                    // XZ only: full XYZ would lock MR-era head height and float above the VR floor
+                    // after RestoreVrScale / CameraFloorOffset restore.
+                    Vector3 delta = savedHeadPos.Value - head.position;
+                    delta.y = 0f;
+                    player.position += delta;
 
                     if (ctx.goodPlayerWorldRotation.HasValue)
                         player.rotation = ctx.goodPlayerWorldRotation.Value;
@@ -1388,15 +1389,16 @@ public class MixedRealityManager : MonoBehaviour
                     if (cc != null)
                         cc.enabled = true;
 
+                    // Refresh snapshot with post-VR-scale height so late reapply does not lift again.
                     ctx.goodPlayerWorldPosition = player.position;
                     ctx.goodPlayerWorldRotation = player.rotation;
                     MRTransitionLog.LogStep(
                         "EnterVRFromPhoneBoothCoroutine",
-                        $"reapplied good pose (after offset restore) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
+                        $"reapplied good pose (after offset restore, xz) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
                 }
                 else
                 {
-                    ApplyGoodVrPlayerPose(ctx, "after offset restore");
+                    ApplyGoodVrPlayerPose(ctx, "after offset restore", preserveHeight: true);
                 }
 
                 MRVrSystemsGate.ResumeVrSystemsExceptLocomotion();
@@ -1418,11 +1420,11 @@ public class MixedRealityManager : MonoBehaviour
                 for (int i = 0; i < 3; i++)
                 {
                     yield return null;
-                    ApplyGoodVrPlayerPose(ctx, $"after locomotion resume frame {i}");
+                    ApplyGoodVrPlayerPose(ctx, $"after locomotion resume frame {i}", preserveHeight: true);
                 }
 
                 yield return new WaitForSecondsRealtime(1f);
-                ApplyGoodVrPlayerPose(ctx, "after 1s settle");
+                ApplyGoodVrPlayerPose(ctx, "after 1s settle", preserveHeight: true);
                 MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", "EnableVrModeAndLocomotion done");
                 break;
 
@@ -1492,7 +1494,10 @@ public class MixedRealityManager : MonoBehaviour
             $"snapshot good pose ({reason}) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
     }
 
-    static void ApplyGoodVrPlayerPose(PhoneBoothMrToVrContext ctx, string reason)
+    static void ApplyGoodVrPlayerPose(
+        PhoneBoothMrToVrContext ctx,
+        string reason,
+        bool preserveHeight = false)
     {
         if (ctx == null || !ctx.goodPlayerWorldPosition.HasValue || !ctx.goodPlayerWorldRotation.HasValue)
             return;
@@ -1508,7 +1513,10 @@ public class MixedRealityManager : MonoBehaviour
         if (cc != null)
             cc.enabled = false;
 
-        player.position = ctx.goodPlayerWorldPosition.Value;
+        Vector3 target = ctx.goodPlayerWorldPosition.Value;
+        if (preserveHeight)
+            target.y = player.position.y;
+        player.position = target;
         player.rotation = ctx.goodPlayerWorldRotation.Value;
 
         if (cc != null)

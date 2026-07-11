@@ -32,8 +32,8 @@ After walking in MR, booth return can look correct briefly then shove position/r
 1. After arrival explosion: snapshot locomotion-root world pos/rot (`snapshot good pose`)
 2. Before offset restore: snapshot **head** world position (root XZ alone is wrong after room-scale walk)
 3. `SuspendForVr` + `RestoreXrOriginTrackingOffsetFromAppStart`
-4. Translate root so the head returns; restore snapshotted root rotation (not head look yaw)
-5. After locomotion resume: reapply for 3 frames; again after **1s** (`reapplied good pose (*)`)
+4. Translate root by head delta **XZ only** (full XYZ locked MR-era head height → float above VR floor after 0.9 scale / offset restore); restore snapshotted root rotation
+5. After locomotion resume: reapply XZ+rot for 3 frames; again after **1s** (`preserveHeight`)
 
 **Do not** force `OrientPlayerYawToFacePhone` on return — preserve natural facing.
 
@@ -67,6 +67,7 @@ Physical walking / HMD tracking may still work.
 - [ ] MR → VR via handset: player inside/near gallery booth (not exterior spawn)  
 - [ ] **Left stick move works** within ~1s of arrival  
 - [ ] Walk in MR then return: pose stays correct after ~1s (no late shove)  
+- [ ] Feet on gallery floor (not floating above) after VR return  
 - [ ] Facing matches natural orientation (backs to phone in MR → backs in VR)  
 - [ ] Snap / continuous turn works as before MR  
 - [ ] Log contains `locomotion restored move=True`  
