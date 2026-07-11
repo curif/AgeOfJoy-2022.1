@@ -1223,6 +1223,9 @@ public class MixedRealityManager : MonoBehaviour
         public MRPhoneBoothPortal scenePortal;
         public AudioClip arrivalExplosionClip;
         public bool restoredGalleryPose;
+        /// <summary>World pose that looked correct on VR arrival; reapplied after handoff / late settle.</summary>
+        public Vector3? goodPlayerWorldPosition;
+        public Quaternion? goodPlayerWorldRotation;
     }
 
     IEnumerator EnterVRFromPhoneBoothCoroutine(MRPhoneBoothPortal travelerPortal)
@@ -1339,16 +1342,63 @@ public class MixedRealityManager : MonoBehaviour
                         MRPhoneBoothPortal.ResolveExplosionClip(ctx.scenePortal, null);
                 yield return MRPhoneBoothPortal.PlayArrivalExplosionForVrReturnAndRestoreGlassDoor(
                     ctx.scenePortal, ctx.arrivalExplosionClip);
+                // Pose is usually correct here; remember it before EnableVrMode handoff shoves it.
+                SnapshotGoodVrPlayerPose(ctx, "after arrival explosion");
                 break;
 
             case MRPhoneBoothTransitionSequence.MrToVrReturnStep.EnableVrModeAndLocomotion:
-                // Stop WorldLock→CameraFloorOffset push before stick resume (match EnterVR handoff,
-                // but do NOT restore app-start player pose — that teleports outside the booth).
+                // Snapshot correct pose → handoff (CameraFloorOffset) → put pose back → reapply ~1s later.
+                // Do not force OrientPlayerYawToFacePhone — preserve natural facing from travel.
                 passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
                 ResetLegacyPassthroughFlags();
+
+                if (!ctx.goodPlayerWorldPosition.HasValue)
+                    SnapshotGoodVrPlayerPose(ctx, "before handoff (fallback)");
+
+                // Capture head world position before offset restore; root XZ alone is unreliable after walk.
+                // Keep snapshotted root rotation (natural facing) — do not rewrite yaw from head look.
+                Transform head = Camera.main != null ? Camera.main.transform : null;
+                Vector3? savedHeadPos = head != null ? head.position : (Vector3?)null;
+                if (savedHeadPos.HasValue)
+                {
+                    MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine",
+                        $"snapshot head pos={savedHeadPos.Value}");
+                }
+
                 SetMode(ExperienceMode.VR);
                 MRSceneHost.SuspendForVr();
                 RestoreXrOriginTrackingOffsetFromAppStart();
+
+                Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
+                head = Camera.main != null ? Camera.main.transform : null;
+                if (player != null && savedHeadPos.HasValue)
+                {
+                    CharacterController cc = player.GetComponent<CharacterController>();
+                    if (cc != null)
+                        cc.enabled = false;
+
+                    if (head != null)
+                        player.position += savedHeadPos.Value - head.position;
+                    else
+                        player.position = savedHeadPos.Value;
+
+                    if (ctx.goodPlayerWorldRotation.HasValue)
+                        player.rotation = ctx.goodPlayerWorldRotation.Value;
+
+                    if (cc != null)
+                        cc.enabled = true;
+
+                    ctx.goodPlayerWorldPosition = player.position;
+                    ctx.goodPlayerWorldRotation = player.rotation;
+                    MRTransitionLog.LogStep(
+                        "EnterVRFromPhoneBoothCoroutine",
+                        $"reapplied good pose (after offset restore) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
+                }
+                else
+                {
+                    ApplyGoodVrPlayerPose(ctx, "after offset restore");
+                }
+
                 MRVrSystemsGate.ResumeVrSystemsExceptLocomotion();
                 if (ctx.scenePortal == null)
                     ctx.scenePortal = MRPhoneBoothPortal.FindSceneBoothPortal();
@@ -1364,6 +1414,15 @@ public class MixedRealityManager : MonoBehaviour
                 }
 
                 MRVrSystemsGate.ResumePlayerLocomotionForVr();
+
+                for (int i = 0; i < 3; i++)
+                {
+                    yield return null;
+                    ApplyGoodVrPlayerPose(ctx, $"after locomotion resume frame {i}");
+                }
+
+                yield return new WaitForSecondsRealtime(1f);
+                ApplyGoodVrPlayerPose(ctx, "after 1s settle");
                 MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", "EnableVrModeAndLocomotion done");
                 break;
 
@@ -1404,6 +1463,60 @@ public class MixedRealityManager : MonoBehaviour
     static void RestorePhoneBoothTravelGlass(MRPhoneBoothPortal portal)
     {
         portal?.RestoreTravelGlassAndDoor();
+    }
+
+    static Transform ResolveLocomotionRootForPose()
+    {
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        if (pc != null && pc.PlayerControllerGameObject != null)
+            return pc.PlayerControllerGameObject.transform;
+        return FindPlayerTransform();
+    }
+
+    static void SnapshotGoodVrPlayerPose(PhoneBoothMrToVrContext ctx, string reason)
+    {
+        if (ctx == null)
+            return;
+
+        Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
+        if (player == null)
+        {
+            MRTransitionLog.LogWarning($"snapshot good pose skipped ({reason}) — no player");
+            return;
+        }
+
+        ctx.goodPlayerWorldPosition = player.position;
+        ctx.goodPlayerWorldRotation = player.rotation;
+        MRTransitionLog.LogStep(
+            "EnterVRFromPhoneBoothCoroutine",
+            $"snapshot good pose ({reason}) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
+    }
+
+    static void ApplyGoodVrPlayerPose(PhoneBoothMrToVrContext ctx, string reason)
+    {
+        if (ctx == null || !ctx.goodPlayerWorldPosition.HasValue || !ctx.goodPlayerWorldRotation.HasValue)
+            return;
+
+        Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
+        if (player == null)
+        {
+            MRTransitionLog.LogWarning($"reapplied good pose skipped ({reason}) — no player");
+            return;
+        }
+
+        CharacterController cc = player.GetComponent<CharacterController>();
+        if (cc != null)
+            cc.enabled = false;
+
+        player.position = ctx.goodPlayerWorldPosition.Value;
+        player.rotation = ctx.goodPlayerWorldRotation.Value;
+
+        if (cc != null)
+            cc.enabled = true;
+
+        MRTransitionLog.LogStep(
+            "EnterVRFromPhoneBoothCoroutine",
+            $"reapplied good pose ({reason}) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
     }
 
     IEnumerator RefreshMrPosesWhenReady(int generation, Transform player)

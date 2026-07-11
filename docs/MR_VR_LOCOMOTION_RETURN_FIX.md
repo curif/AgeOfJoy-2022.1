@@ -26,6 +26,17 @@ Order now mirrors safe parts of `EnterVRCoroutine`:
 ### 3. `MRCameraRigShim` push gate
 WorldLock → `CameraFloorOffset` push only while `CurrentMode` is `MR` or `MR_EDIT`. In VR the shim follows XROrigin again.
 
+### 4. Snapshot correct pose → reapply after handoff (VR return displacement)
+After walking in MR, booth return can look correct briefly then shove position/rotation ~1s later (dirty `CameraFloorOffset` + late handoff). Fix:
+
+1. After arrival explosion: snapshot locomotion-root world pos/rot (`snapshot good pose`)
+2. Before offset restore: snapshot **head** world position (root XZ alone is wrong after room-scale walk)
+3. `SuspendForVr` + `RestoreXrOriginTrackingOffsetFromAppStart`
+4. Translate root so the head returns; restore snapshotted root rotation (not head look yaw)
+5. After locomotion resume: reapply for 3 frames; again after **1s** (`reapplied good pose (*)`)
+
+**Do not** force `OrientPlayerYawToFacePhone` on return — preserve natural facing.
+
 ---
 
 ## Symptom (original)
@@ -55,6 +66,8 @@ Physical walking / HMD tracking may still work.
 - [ ] Meta Reset View in MR: walls/floor stay colocated (WorldLock)  
 - [ ] MR → VR via handset: player inside/near gallery booth (not exterior spawn)  
 - [ ] **Left stick move works** within ~1s of arrival  
+- [ ] Walk in MR then return: pose stays correct after ~1s (no late shove)  
+- [ ] Facing matches natural orientation (backs to phone in MR → backs in VR)  
 - [ ] Snap / continuous turn works as before MR  
 - [ ] Log contains `locomotion restored move=True`  
 - [ ] Placement ray / config cabinet still OK on next MR entry  
@@ -65,6 +78,7 @@ Physical walking / HMD tracking may still work.
 - `[ChangeControls] locomotion restored move=True continuousTurn=…`  
 - `MRVrSystemsGate.ResumePlayerLocomotionForVr`  
 - `EnterVRFromPhoneBoothCoroutine` / `EnableVrModeAndLocomotion done`  
+- `snapshot good pose` / `reapplied good pose (*)`  
 - `restored CameraFloorOffset localPos=…`  
 - `SuspendForVr — MR children disabled`  
 
