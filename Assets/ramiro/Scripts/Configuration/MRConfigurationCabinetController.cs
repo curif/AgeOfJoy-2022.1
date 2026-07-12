@@ -28,6 +28,9 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     public static MRConfigurationCabinetController Instance { get; private set; }
 
+    /// <summary>Editor sandbox scene for CRT menu UX (Assets/ramiro/CabinetConfiguration.unity).</summary>
+    public const string CabinetConfigurationSceneName = "CabinetConfiguration";
+
     [SerializeField] GameObject configurationCabinetPrefab;
     [SerializeField] float spawnDistanceMeters = 1.4f;
     [SerializeField] float spawnYawOffsetDegrees = 0f;
@@ -215,7 +218,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
             MixedRealityManager.Instance.EnterMREdit();
 
 #if UNITY_EDITOR
-        if (IsTestConfigScene())
+        if (IsTestConfigScene() || IsCabinetConfigurationScene())
             EnableTestConfigCabinetCamera();
 #endif
 
@@ -237,7 +240,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
             MixedRealityManager.Instance.ExitMREdit();
 
 #if UNITY_EDITOR
-        if (IsTestConfigScene())
+        if (IsTestConfigScene() || IsCabinetConfigurationScene())
             RestoreTestConfigSceneCamera();
 #endif
 
@@ -260,7 +263,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
             MixedRealityManager.Instance.ExitMREdit();
 
 #if UNITY_EDITOR
-        if (IsTestConfigScene())
+        if (IsTestConfigScene() || IsCabinetConfigurationScene())
             RestoreTestConfigSceneCamera();
 #endif
 
@@ -787,8 +790,13 @@ public class MRConfigurationCabinetController : MonoBehaviour
     static bool IsCabinetAutoSpawnTestScene()
     {
         string scene = SceneManager.GetActiveScene().name;
-        return scene == "TestMRmanager" || scene == "TestUI";
+        return scene == "TestMRmanager"
+            || scene == "TestUI"
+            || scene == CabinetConfigurationSceneName;
     }
+
+    static bool IsCabinetConfigurationScene() =>
+        SceneManager.GetActiveScene().name == CabinetConfigurationSceneName;
 
     static bool IsTestConfigScene() =>
         SceneManager.GetActiveScene().name == MRTestConfigSceneLoader.TestSceneName;

@@ -148,7 +148,7 @@ The **configuration cabinet** is the control center of Mixed Reality.
 
 Through it you add, remove, move, and configure every object in your room. The cabinet is mounted on a **wall** and has a small CRT screen that shows all MR menus.
 
-All **Add**, **Rem**, **Move**, and **Opts** actions are done on the **configuration cabinet CRT** — not on arcade machines or props placed in your room.
+All **Add**, **Remove**, **Move**, and **Tune** actions are done on the **configuration cabinet CRT** — not on arcade machines or props placed in your room.
 
 ### Opening the menu
 
@@ -173,30 +173,33 @@ While the [placement ray](#9-placement-ray) is active (Add or Move), the panel c
 | Button | Function |
 |--------|----------|
 | **Up / Down** | Navigate menu options |
-| **L / R** | Switch between available actions (Add, Rem, Move, …) |
+| **L / R** | Switch actions when a row shows more than one (e.g. Move/Tune, or +/- in Adjustments) |
 | **A** | Confirm the selected option |
 | **B** | Go back to the previous menu or cancel the current action |
 
 ### Adding, moving, and removing objects
 
-Regardless of object type (machines, posters, lights, or custom objects), the flow is always the same:
+Most decoration categories use the same pattern:
 
 1. Open the configuration cabinet (insert a coin).
-2. Enter the category you want (**A**).
-3. Choose the object with **Up** and **Down**.
-4. Use **L** or **R** to select the action.
-5. Press **A** to confirm.
+2. Enter the category (**A**).
+3. Choose an item with **Up** / **Down**.
+4. If the list says **Press A to enter**, open that object’s copy screen.
+5. Use filter tabs when shown:
+   - **Show All** — **A** adds a new copy (placement ray). Does not list existing copies.
+   - **Show Added** — one row per placed copy; stick **Up** / **Down** selects the copy (`>>`), then **A** removes it. Only some types (lights, custom packages, posters) also offer **Tune**: use **L** / **R** to move `>>` onto **REMOVE** or **TUNE**, then **A**. Fans and other official props have remove only. There is no Move — remove and add again to reposition.
+6. **Cabinets** — **Show All** / **Show Added** on the cabinets catalog (Add / Remove; one machine per game).
+7. **Posters** — from **CUSTOM OBJECTS → Posters**: **Show All** adds; **Show Added** lists **one row per copy** (pick which to remove). No Move/Tune on this list.
+8. **Room Skin** — **A** toggles Add or Remove; no placement ray.
 
 | Action | Description |
 |--------|-------------|
-| **Add** | Adds a new copy of the object to the room |
-| **Rem** | Removes the object from the room |
-| **Move** | Repositions an object already placed |
-| **Opts** | Shows all copies of that object for individual actions (move or adjust) |
+| **Add** | Places a new copy (opens the [placement ray](#9-placement-ray)) |
+| **Remove** | Removes one placed copy |
+| **Move** | Repositions a copy already in the room |
+| **Tune** | Adjusts one copy (e.g. scale or light settings) |
 
-Whenever an object is added or moved, the **placement ray** opens automatically.
-
-The number next to the object name shows how many copies are already in your room.
+The number next to a name (or `xN`) shows how many copies are already in your room.
 
 ### Menu structure
 
@@ -206,7 +209,7 @@ MR CONFIGURATION
 ├── CABINETS        → arcade game catalog in MR
 ├── CUSTOM OBJECTS  → custom objects, posters, and room skins
 ├── OFFICIAL OBJECTS→ lights and official props
-├── CONFIG          → move cabinet, global adjustments, effect mesh
+├── CONFIG          → move cabinet, adjustments, mesh, delete YAML
 ├── DEBUG           → MR errors by date
 ├── HELP            → controls and in-headset guide
 └── EXIT            → close panel
@@ -230,7 +233,7 @@ Contains official Age of Joy objects, such as lighting, fans, Portable Games, an
 
 #### CONFIG
 
-Brings together general Mixed Reality settings: reposition the cabinet, adjust global machine scale, and view the environment mesh (Effect Mesh).
+Brings together general Mixed Reality settings: reposition the cabinet, adjust global machine scale, Effect Mesh, and delete YAML layouts.
 
 #### DEBUG
 
@@ -292,29 +295,24 @@ Each game can have one machine in your room, and all work normally after placeme
 
 1. Open the configuration cabinet.
 2. Enter **CABINETS**.
-3. Choose the game.
-4. Select **Add** with **L** or **R**.
-5. Press **A**.
-6. Place the machine with the [placement ray](#9-placement-ray).
-7. Rotate with the **right thumbstick** if you want.
-8. Press **A** to finish.
+3. Choose the game (**Show All**).
+4. Press **A** to **Add**.
+5. Place the machine with the [placement ray](#9-placement-ray).
+6. Rotate with the **right thumbstick** if you want.
+7. Press **A** to finish.
 
 ### Removing a machine
 
-1. Select the machine in the list.
-2. Choose **Rem**.
-3. Press **A**.
+1. Open **CABINETS**.
+2. Switch to **Show Added** (**L** / **R** on the filter row), or stay on **Show All** if that game is already placed.
+3. Select the machine.
+4. Press **A** to **Remove**.
 
-### Moving a machine
+One machine per game: after it is placed, **Show All** also offers **Remove** for that entry (no separate Move on the cabinets list). To reposition, remove and **Add** again with the placement ray.
 
-To change the position of an installed machine:
+### Moving props and custom objects
 
-- Select **Move**, or
-- Open **Opts** to see all copies of that machine, pick the copy you want, and use **Move** to reposition it.
-
-### Individual adjustments
-
-Inside **Opts**, you can also use **Tune** to make small specific adjustments to that machine, without changing the others.
+There is no **Move** on **Show Added**. To reposition: **Show Added** → remove the copy → **Show All** → **Add** again with the placement ray. Use **Tune** on **Show Added** (**L** / **R**) when available (lights, custom packages).
 
 ---
 
@@ -322,7 +320,7 @@ Inside **Opts**, you can also use **Tune** to make small specific adjustments to
 
 Besides official objects, Mixed Reality supports **3D packages** created by you or the community.
 
-On the headset they appear under **CUSTOM OBJECTS → Others** on the configuration cabinet CRT. Once created, use **Add**, **Rem**, **Move**, **Opts**, and **Tune** like any other category ([section 8](#8-configuration-cabinet-crt)). **Tune** adjusts the scale of one placed copy without affecting the others.
+On the headset they appear under **CUSTOM OBJECTS** on the configuration cabinet CRT as a plain list (with **Posters** and **Room Skin** at the top). Select a package → **Press A to enter** → **Show All** to add, **Show Added** to pick a copy with `>>` and **A** to remove (**Tune** via **L** / **R** when available) ([section 8](#8-configuration-cabinet-crt)).
 
 ### Creating packages with AOJ MR Studio
 
@@ -355,7 +353,7 @@ Download the zip from the [latest release](https://github.com/ramiro-github/aoj-
 6. Adjust **Placement** (MR placement) — see table below.
 7. Add **Components** (behaviours) if needed — see table below. Use **Add component**, pick a type, and fill the fields; the Studio suggests GLB child names when possible.
 8. Click **Save to Meta Quest**. The updated `object.yaml` is written to the package on the headset.
-9. In MR, open the configuration cabinet → **CUSTOM OBJECTS → Others** → select the package → **Add** → place with the [placement ray](#9-placement-ray).
+9. In MR, open the configuration cabinet → **CUSTOM OBJECTS** → select the package → **enter** → **Show All** → **Add** → place with the [placement ray](#9-placement-ray).
 
 To edit an existing package: **Open Custom Objects** → double-click the folder → change Placement/Components → **Save to Meta Quest**.
 
@@ -394,8 +392,8 @@ Components are behaviours attached when the object spawns in MR. In the Studio, 
 #### In the game (after creating the package)
 
 1. Insert a coin in the configuration cabinet.
-2. **CUSTOM OBJECTS → Others** → pick the package.
-3. **Add** / **Rem** / **Move** / **Opts** / **Tune** — same flow as [section 8](#8-configuration-cabinet-crt).
+2. **CUSTOM OBJECTS** → pick the package → **enter**.
+3. **Show All** = Add; **Show Added** = stick select (`>>`) + **A** remove (**Tune** with **L** / **R** when available) — [section 8](#8-configuration-cabinet-crt).
 
 The game may include an example package on first use so you can try the workflow.
 
@@ -403,13 +401,14 @@ The game may include an example package on first use so you can try the workflow
 
 ## 12. Posters
 
-Posters work similarly to custom objects.
+Posters use **Show All** / **Show Added** on the Posters catalog (after **CUSTOM OBJECTS → Posters**).
 
 Place images in `MR/Posters/`. They then appear under **CUSTOM OBJECTS → Posters**.
 
-Posters can be added, removed, repositioned, and resized.
+- **Show All** — **A** adds a poster (wall placement ray)
+- **Show Added** — one row per placed copy (no count column); **A** removes the selected copy
 
-Size adjustments are done through **Tune**, letting you change a poster’s scale individually without affecting the others.
+Unlike packages and official props, the Posters list does not open a per-copy screen for Move/Tune — Add and Remove stay on these filters.
 
 ---
 
@@ -421,7 +420,7 @@ Apply different materials to create custom environments without manually editing
 
 Room skins are under **CUSTOM OBJECTS → Room Skin**. Files go in `MR/Room Skins/`.
 
-Select a room skin and press **A** to apply it.
+There is no **Show All** / **Show Added** filter. **A** toggles **Add** (apply) or **Remove** for the selected skin. One skin is active per surface.
 
 Unlike other objects, a room skin applies directly to the room mesh — it does **not** use the placement ray.
 
@@ -431,21 +430,9 @@ Unlike other objects, a room skin applies directly to the room mesh — it does 
 
 **Official objects** are items created and shipped with Age of Joy. They are under **OFFICIAL OBJECTS** on the configuration cabinet CRT.
 
-The menu has two categories.
+The home screen is a **plain list** (lights and built-in props together — no Lights/Others submenu). Select an item → **Press A to enter** → same filters as packages: **Show All** adds; **Show Added** lists each copy (`>>` + **A** remove; **Tune** for lights).
 
-### Lights
-
-Contains all lamps available for Mixed Reality.
-
-Besides adding or removing lamps, you can configure **automatic lighting** when entering MR.
-
-Available actions: **Add**, **Rem**, **Move**.
-
-### Others
-
-Brings together the other official objects in the game, such as fans (**PF_Fan**), **Portable Games**, and other props added in future updates.
-
-These objects use the same placement flow as the other categories.
+Includes ceiling/wall lights, fans (**PF_Fan**), **Portable Games**, and other props added in future updates.
 
 ---
 
@@ -458,9 +445,9 @@ These objects use the same placement flow as the other categories.
 To add the device to your room:
 
 1. Open the configuration cabinet.
-2. Go to **OFFICIAL OBJECTS → Others**.
-3. Select **Portable Games**.
-4. Choose **Add** and press **A**.
+2. Go to **OFFICIAL OBJECTS**.
+3. Select **Portable Games** → **enter**.
+4. On **Show All**, press **A** to **Add**.
 5. Place the stand on a **table** with the [placement ray](#9-placement-ray).
 
 After installation, the console rests on the stand until you use it.
@@ -539,15 +526,19 @@ Lets you change the configuration cabinet position. When you select this option,
 Lets you adjust **all** arcade machines in the room at once:
 
 - **Global scale** of the machines
-- **Height (Offset Y)**
+- **Floor height (Offset Y)**
 
-Default scale is **1.00**. Use these adjustments if machines look larger or smaller than expected in your environment.
+Default scale is **1.00**. Use **Up** / **Down** for the row, **L** / **R** to select **+** / **-**, and **A** to apply a step.
 
 ### Mesh
 
-Shows the mesh Quest created during room mapping (floor = green, wall = orange, table = yellow, ceiling = blue).
+Shows the mesh Quest created during room mapping (floor = green, wall = orange, table = yellow, ceiling = blue). Use **A** to enable or disable Effect Mesh options.
 
 This view is useful to check that all surfaces were detected correctly. If a surface is missing or wrong, run [Space Setup](#6-setting-up-your-room-space-setup) again.
+
+### Delete Configs
+
+Erases Mixed Reality **YAML** layout files under `MR/` (cabinets, objects, package layouts). **Assets stay** (GLB, images, skins). Placed objects despawn until you add them again. This cannot be undone — confirm **Yes** only if you want a clean layout.
 
 ---
 
