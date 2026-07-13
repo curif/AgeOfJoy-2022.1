@@ -70,7 +70,11 @@ public class MRTestPosterSpawn : MonoBehaviour
         EnsureSpawnRoot();
         ResolveWallFrame(out Vector3 wallCenter, out Quaternion wallRotation, out Vector3 wallRight, out Vector3 wallUp);
         if (createReferenceWall)
-            EnsureReferenceWall(wallCenter, wallRotation);
+        {
+            // Unity Quad faces +Z; build a simple into-room rotation for the reference plane.
+            Vector3 intoRoom = wallRotation * PlacementOrientation.LocalForward(PlacementFacingAxis.NegativeX);
+            EnsureReferenceWall(wallCenter, Quaternion.LookRotation(intoRoom, Vector3.up));
+        }
 
         int columnCount = Mathf.Max(1, columns);
         ConfigManager.WriteConsole(
@@ -85,10 +89,13 @@ public class MRTestPosterSpawn : MonoBehaviour
             float colOffset = (col - (columnCount - 1) * 0.5f) * columnSpacingMeters;
             float rowOffset = row * rowSpacingMeters;
 
+            Vector3 faceOffset = wallRotation
+                * PlacementOrientation.LocalForward(PlacementFacingAxis.NegativeX)
+                * surfaceOffsetMeters;
             Vector3 worldPos = wallCenter
                 + wallRight * colOffset
                 + wallUp * rowOffset
-                + wallRotation * Vector3.forward * surfaceOffsetMeters;
+                + faceOffset;
             Quaternion worldRot = wallRotation;
 
             if (!MRPosterFactory.TryInstantiate(relativePath, worldPos, worldRot, out GameObject root))
@@ -155,8 +162,10 @@ public class MRTestPosterSpawn : MonoBehaviour
         forward.Normalize();
 
         Vector3 intoRoom = -forward;
-        wallRotation = Quaternion.LookRotation(intoRoom, Vector3.up);
-        wallRight = wallRotation * Vector3.right;
+        wallRotation = PlacementOrientation.LookRotationWithFacing(
+            intoRoom, PlacementFacingAxis.NegativeX, Vector3.up);
+        // NegativeX facing: local +Z runs along the wall horizontally; local +Y is up.
+        wallRight = wallRotation * Vector3.forward;
         wallUp = Vector3.up;
 
         Vector3 origin = view != null ? view.position : Vector3.zero;

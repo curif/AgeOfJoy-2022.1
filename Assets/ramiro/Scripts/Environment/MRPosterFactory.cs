@@ -46,7 +46,8 @@ public static class MRPosterFactory
             profile = root.AddComponent<MRPlacementProfile>();
 
         profile.surfaceType = PlacementSurfaceType.Wall;
-        profile.facingAxis = PlacementFacingAxis.PositiveZ;
+        // Poster.fbx is authored in the YZ plane (scale Y/Z in MRWallPoster) — front is -X.
+        profile.facingAxis = PlacementFacingAxis.NegativeX;
         profile.displayName = "Wall poster";
         profile.wallMountDepthMeters = WallMountDepthMeters;
         profile.allowStickRotation = true;

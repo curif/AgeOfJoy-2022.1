@@ -30,12 +30,28 @@ public class MixedRealityManager : MonoBehaviour
     Coroutine runningTransition;
     Coroutine mrukEnvironmentRefreshRoutine;
     Coroutine phoneBoothVrToMrScanRoutine;
+    Coroutine reapplyPosesAfterFocusRoutine;
     int transitionGeneration;
+    int focusReturnGeneration;
+    int lastTrackingRecenterCount = -1;
+    OVRDisplay subscribedDisplay;
+    bool hasFloorAnchorCache;
+    Vector3 cachedFloorAnchorPosition;
+    Quaternion cachedFloorAnchorRotation = Quaternion.identity;
+    const float FloorAnchorJumpMeters = 0.12f;
+    int lastDiscontinuityFrame = -1;
 
     const float MrukEnvironmentRefreshDebounceSeconds = 0.75f;
 
     Vector3? savedVrPlayerPosition;
     Quaternion? savedVrPlayerRotation;
+    /// <summary>
+    /// XROrigin CameraFloorOffset local pose at app start. WorldLock pushes this transform in MR;
+    /// restore it on VR exit or the player floats above the VR floor.
+    /// </summary>
+    Vector3? appStartCameraFloorLocalPosition;
+    Quaternion? appStartCameraFloorLocalRotation;
+    Vector3? appStartPlayerControllerLocalPosition;
 
     const string SavedMrPlayerPositionKey = "MR.LastSession.PlayerPosition";
     const string SavedMrPlayerRotationKey = "MR.LastSession.PlayerRotation";
@@ -105,10 +121,226 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.Log($"MixedRealityManager ready logFile={MRTransitionLog.LogFilePath}");
     }
 
+    void OnEnable()
+    {
+        OVRManager.HMDMounted += OnHmdMounted;
+        OVRManager.InputFocusAcquired += OnInputFocusAcquired;
+        SubscribeDisplayRecenter();
+    }
+
+    void OnDisable()
+    {
+        OVRManager.HMDMounted -= OnHmdMounted;
+        OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
+        UnsubscribeDisplayRecenter();
+    }
+
     void Start()
     {
+        SubscribeDisplayRecenter();
+        if (OVRPlugin.initialized)
+            lastTrackingRecenterCount = OVRPlugin.GetLocalTrackingSpaceRecenterCount();
+
+        CaptureAppStartTrackingOffsetIfNeeded();
+        if (!appStartCameraFloorLocalPosition.HasValue)
+            StartCoroutine(CaptureAppStartTrackingOffsetWhenReady());
+
         if (ShouldAutoEnterMrOnFixedSceneBoot())
             StartCoroutine(AutoEnterMrOnFixedSceneBootRoutine());
+    }
+
+    IEnumerator CaptureAppStartTrackingOffsetWhenReady()
+    {
+        float timeout = 5f;
+        while (!appStartCameraFloorLocalPosition.HasValue && timeout > 0f)
+        {
+            CaptureAppStartTrackingOffsetIfNeeded();
+            if (appStartCameraFloorLocalPosition.HasValue)
+                yield break;
+            timeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+    }
+
+    void CaptureAppStartTrackingOffsetIfNeeded()
+    {
+        if (appStartCameraFloorLocalPosition.HasValue)
+            return;
+
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        if (pc == null)
+            return;
+
+        if (pc.PlayerControllerGameObject != null)
+            appStartPlayerControllerLocalPosition = pc.PlayerControllerGameObject.transform.localPosition;
+
+        Transform floor = ResolveCameraFloorOffsetTransform(pc);
+        if (floor == null)
+            return;
+
+        appStartCameraFloorLocalPosition = floor.localPosition;
+        appStartCameraFloorLocalRotation = floor.localRotation;
+        MRTransitionLog.Log(
+            $"captured app start CameraFloorOffset localPos={appStartCameraFloorLocalPosition.Value}");
+    }
+
+    static Transform ResolveCameraFloorOffsetTransform(PlayerController pc)
+    {
+        if (pc == null)
+            return null;
+        if (pc.xrorigin != null && pc.xrorigin.CameraFloorOffsetObject != null)
+            return pc.xrorigin.CameraFloorOffsetObject.transform;
+        return pc.cameraOffset;
+    }
+
+    void LateUpdate()
+    {
+        if (!IsMrEnvironmentActive() || transitionInProgress)
+        {
+            hasFloorAnchorCache = false;
+            return;
+        }
+
+        bool recenteredByCount = false;
+        if (OVRPlugin.initialized)
+        {
+            int recenterCount = OVRPlugin.GetLocalTrackingSpaceRecenterCount();
+            if (lastTrackingRecenterCount < 0)
+                lastTrackingRecenterCount = recenterCount;
+            else if (recenterCount != lastTrackingRecenterCount)
+            {
+                lastTrackingRecenterCount = recenterCount;
+                recenteredByCount = true;
+            }
+        }
+
+        if (!TryGetFloorAnchorPose(out Vector3 floorPos, out Quaternion floorRot))
+        {
+            if (recenteredByCount)
+                HandleTrackingDiscontinuity("TrackingSpaceRecenterCount", applyFloorDelta: false);
+            return;
+        }
+
+        bool floorJumped = hasFloorAnchorCache
+            && Vector3.Distance(floorPos, cachedFloorAnchorPosition) >= FloorAnchorJumpMeters;
+
+        if (recenteredByCount || floorJumped)
+        {
+            string reason = recenteredByCount ? "TrackingSpaceRecenterCount" : "FloorAnchorJump";
+            HandleTrackingDiscontinuity(reason, applyFloorDelta: hasFloorAnchorCache, floorPos, floorRot);
+        }
+
+        cachedFloorAnchorPosition = floorPos;
+        cachedFloorAnchorRotation = floorRot;
+        hasFloorAnchorCache = true;
+    }
+
+    void HandleTrackingDiscontinuity(
+        string reason,
+        bool applyFloorDelta,
+        Vector3 newFloorPos = default,
+        Quaternion newFloorRot = default)
+    {
+        bool alreadyHandledThisFrame = lastDiscontinuityFrame == Time.frameCount;
+        lastDiscontinuityFrame = Time.frameCount;
+
+        // With WorldLock driving XROrigin, floor/wall anchors should stay colocated with
+        // passthrough. Do not also shove spawned props by floor delta — that double-corrects.
+        bool worldLockActive = MRUK.Instance != null && MRUK.Instance.IsWorldLockActive;
+        if (applyFloorDelta && hasFloorAnchorCache && !alreadyHandledThisFrame && !worldLockActive)
+        {
+            ApplyFloorAnchorDeltaToMrContent(
+                cachedFloorAnchorPosition,
+                cachedFloorAnchorRotation,
+                newFloorPos,
+                newFloorRot);
+            MRTransitionLog.LogStep(
+                "TrackingDiscontinuity",
+                $"{reason} applied floor delta move={Vector3.Distance(cachedFloorAnchorPosition, newFloorPos):F3}m");
+        }
+        else if (!alreadyHandledThisFrame)
+        {
+            MRTransitionLog.LogStep(
+                "TrackingDiscontinuity",
+                $"{reason} worldLockActive={worldLockActive} (skip floor delta, reapply anchors)");
+        }
+
+        // Let WorldLock settle on XROrigin, then re-resolve props from anchors only.
+        MRCameraRigShim.Align();
+        ScheduleReapplyMrPosesAfterFocusReturn(reason, settleSeconds: 0.45f, retryCount: 4, anchorsOnly: true);
+    }
+
+    static bool TryGetFloorAnchorPose(out Vector3 position, out Quaternion rotation)
+    {
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+
+        MRUKRoom room = MREnvironmentSurfaces.Instance?.CurrentRoom;
+        if (room == null && MRUK.Instance != null)
+            room = MRUK.Instance.GetCurrentRoom();
+
+        MRUKAnchor floor = room != null ? room.FloorAnchor : null;
+        if (floor == null)
+            return false;
+
+        position = floor.transform.position;
+        rotation = floor.transform.rotation;
+        return true;
+    }
+
+    void ApplyFloorAnchorDeltaToMrContent(
+        Vector3 oldFloorPos,
+        Quaternion oldFloorRot,
+        Vector3 newFloorPos,
+        Quaternion newFloorRot)
+    {
+        Quaternion deltaRot = newFloorRot * Quaternion.Inverse(oldFloorRot);
+
+        void TransformRoot(Transform root)
+        {
+            if (root == null)
+                return;
+
+            Vector3 local = Quaternion.Inverse(oldFloorRot) * (root.position - oldFloorPos);
+            root.SetPositionAndRotation(
+                newFloorPos + deltaRot * local,
+                deltaRot * root.rotation);
+        }
+
+        ActiveRegistry()?.ForEachSpawnedRoot(TransformRoot);
+        ActiveEnvironmentRegistry()?.ForEachSpawnedRoot(TransformRoot);
+
+        GameObject configCabinet = MRConfigurationCabinetController.Instance != null
+            ? MRConfigurationCabinetController.Instance.CabinetInstance
+            : null;
+        if (configCabinet != null)
+            TransformRoot(configCabinet.transform);
+
+        MRPhoneBoothPortal booth = MRPhoneBoothPortal.FindMrTravelerInstance(includeInactive: false);
+        if (booth != null)
+            TransformRoot(booth.transform);
+    }
+
+    void SubscribeDisplayRecenter()
+    {
+        if (subscribedDisplay != null)
+            return;
+
+        OVRDisplay display = OVRManager.display;
+        if (display == null)
+            return;
+
+        subscribedDisplay = display;
+        subscribedDisplay.RecenteredPose += OnTrackingRecentered;
+    }
+
+    void UnsubscribeDisplayRecenter()
+    {
+        if (subscribedDisplay == null)
+            return;
+
+        subscribedDisplay.RecenteredPose -= OnTrackingRecentered;
+        subscribedDisplay = null;
     }
 
     static bool ShouldAutoEnterMrOnFixedSceneBoot()
@@ -135,14 +367,51 @@ public class MixedRealityManager : MonoBehaviour
 
     void OnDestroy()
     {
+        OVRManager.HMDMounted -= OnHmdMounted;
+        OVRManager.InputFocusAcquired -= OnInputFocusAcquired;
+        UnsubscribeDisplayRecenter();
         if (Instance == this)
             Instance = null;
     }
 
+    void OnTrackingRecentered()
+    {
+        if (OVRPlugin.initialized)
+            lastTrackingRecenterCount = OVRPlugin.GetLocalTrackingSpaceRecenterCount();
+
+        if (TryGetFloorAnchorPose(out Vector3 floorPos, out Quaternion floorRot) && hasFloorAnchorCache)
+        {
+            HandleTrackingDiscontinuity("RecenteredPose", applyFloorDelta: true, floorPos, floorRot);
+            cachedFloorAnchorPosition = floorPos;
+            cachedFloorAnchorRotation = floorRot;
+            return;
+        }
+
+        ScheduleReapplyMrPosesAfterFocusReturn("RecenteredPose", settleSeconds: 0.35f, retryCount: 4, anchorsOnly: true);
+    }
+
+    void OnHmdMounted()
+    {
+        ScheduleReapplyMrPosesAfterFocusReturn("HMDMounted", settleSeconds: 0.55f, retryCount: 4, anchorsOnly: true);
+    }
+
+    void OnInputFocusAcquired()
+    {
+        ScheduleReapplyMrPosesAfterFocusReturn("InputFocusAcquired", settleSeconds: 0.25f, retryCount: 2, anchorsOnly: true);
+    }
+
     void OnApplicationPause(bool paused)
     {
-        if (paused)
-            PersistMrLayoutPoses("OnApplicationPause");
+        // Do not snapshot on pause: Meta system menu / HMD remove / tracking discontinuity
+        // can bake drifted world poses into YAML. Placement edits already save on confirm.
+        if (!paused)
+            ScheduleReapplyMrPosesAfterFocusReturn("OnApplicationPause-resume", settleSeconds: 0.4f, retryCount: 3, anchorsOnly: true);
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        if (hasFocus)
+            ScheduleReapplyMrPosesAfterFocusReturn("OnApplicationFocus", settleSeconds: 0.25f, retryCount: 2, anchorsOnly: true);
     }
 
     void OnApplicationQuit()
@@ -150,7 +419,7 @@ public class MixedRealityManager : MonoBehaviour
         PersistMrLayoutPoses("OnApplicationQuit");
     }
 
-    /// <summary>Write live transforms to MR/cabinets-layout.yaml and MR/objects-layout.yaml (MR exit, app pause, or quit).</summary>
+    /// <summary>Write live transforms to MR/cabinets-layout.yaml and MR/objects-layout.yaml (MR exit or quit).</summary>
     public void PersistMrLayoutPoses(string reason)
     {
         if (CurrentMode != ExperienceMode.MR && CurrentMode != ExperienceMode.MR_EDIT)
@@ -159,6 +428,85 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogStep("PersistMrLayoutPoses", reason);
         ActiveRegistry()?.SnapshotSpawnedWorldPosesToLayout();
         ActiveEnvironmentRegistry()?.SnapshotSpawnedWorldPosesToLayout();
+    }
+
+    void ScheduleReapplyMrPosesAfterFocusReturn(
+        string reason,
+        float settleSeconds = 0.25f,
+        int retryCount = 2,
+        bool anchorsOnly = false)
+    {
+        if (!IsMrEnvironmentActive() || transitionInProgress)
+            return;
+
+        focusReturnGeneration++;
+        if (reapplyPosesAfterFocusRoutine != null)
+            StopCoroutine(reapplyPosesAfterFocusRoutine);
+        reapplyPosesAfterFocusRoutine = StartCoroutine(
+            ReapplyMrPosesAfterFocusReturn(focusReturnGeneration, reason, settleSeconds, retryCount, anchorsOnly));
+    }
+
+    IEnumerator ReapplyMrPosesAfterFocusReturn(
+        int generation,
+        string reason,
+        float settleSeconds,
+        int retryCount,
+        bool anchorsOnly)
+    {
+        // Let MRUK WorldLock / tracking settle after Meta Reset View or HMD remount.
+        float waited = 0f;
+        while (waited < settleSeconds)
+        {
+            if (generation != focusReturnGeneration)
+            {
+                reapplyPosesAfterFocusRoutine = null;
+                yield break;
+            }
+
+            waited += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        int attempts = Mathf.Max(1, retryCount);
+        for (int attempt = 0; attempt < attempts; attempt++)
+        {
+            if (generation != focusReturnGeneration || !IsMrEnvironmentActive() || transitionInProgress)
+                break;
+
+            MRTransitionLog.LogStep(
+                "ReapplyMrPosesAfterFocusReturn",
+                $"{reason} attempt={attempt + 1}/{attempts} anchorsOnly={anchorsOnly}");
+            MRCameraRigShim.Align();
+            ActiveRegistry()?.RefreshAllSpawnedPosesFromLayout(floorOnly: false, anchorsOnly: anchorsOnly);
+            ActiveEnvironmentRegistry()?.RefreshAllSpawnedPosesFromLayout(anchorsOnly: anchorsOnly);
+            MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
+
+            if (TryGetFloorAnchorPose(out Vector3 floorPos, out Quaternion floorRot))
+            {
+                cachedFloorAnchorPosition = floorPos;
+                cachedFloorAnchorRotation = floorRot;
+                hasFloorAnchorCache = true;
+            }
+
+            if (attempt + 1 >= attempts)
+                break;
+
+            float retryWait = 0f;
+            while (retryWait < 0.35f)
+            {
+                if (generation != focusReturnGeneration)
+                {
+                    reapplyPosesAfterFocusRoutine = null;
+                    yield break;
+                }
+
+                retryWait += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
+        ConfigManager.WriteConsole($"{LogPrefix} reapplied MR poses after focus return ({reason})");
+        reapplyPosesAfterFocusRoutine = null;
     }
 
     public bool CanToggleMode() => !transitionInProgress && (sceneTransition == null || !sceneTransition.IsTransitionRunning);
@@ -875,6 +1223,9 @@ public class MixedRealityManager : MonoBehaviour
         public MRPhoneBoothPortal scenePortal;
         public AudioClip arrivalExplosionClip;
         public bool restoredGalleryPose;
+        /// <summary>World pose that looked correct on VR arrival; reapplied after handoff / late settle.</summary>
+        public Vector3? goodPlayerWorldPosition;
+        public Quaternion? goodPlayerWorldRotation;
     }
 
     IEnumerator EnterVRFromPhoneBoothCoroutine(MRPhoneBoothPortal travelerPortal)
@@ -991,12 +1342,65 @@ public class MixedRealityManager : MonoBehaviour
                         MRPhoneBoothPortal.ResolveExplosionClip(ctx.scenePortal, null);
                 yield return MRPhoneBoothPortal.PlayArrivalExplosionForVrReturnAndRestoreGlassDoor(
                     ctx.scenePortal, ctx.arrivalExplosionClip);
+                // Pose is usually correct here; remember it before EnableVrMode handoff shoves it.
+                SnapshotGoodVrPlayerPose(ctx, "after arrival explosion");
                 break;
 
             case MRPhoneBoothTransitionSequence.MrToVrReturnStep.EnableVrModeAndLocomotion:
+                // Snapshot correct pose → handoff (CameraFloorOffset) → put pose back → reapply ~1s later.
+                // Do not force OrientPlayerYawToFacePhone — preserve natural facing from travel.
                 passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
                 ResetLegacyPassthroughFlags();
+
+                if (!ctx.goodPlayerWorldPosition.HasValue)
+                    SnapshotGoodVrPlayerPose(ctx, "before handoff (fallback)");
+
+                // Capture head world position before offset restore; root XZ alone is unreliable after walk.
+                // Keep snapshotted root rotation (natural facing) — do not rewrite yaw from head look.
+                Transform head = Camera.main != null ? Camera.main.transform : null;
+                Vector3? savedHeadPos = head != null ? head.position : (Vector3?)null;
+                if (savedHeadPos.HasValue)
+                {
+                    MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine",
+                        $"snapshot head pos={savedHeadPos.Value}");
+                }
+
                 SetMode(ExperienceMode.VR);
+                MRSceneHost.SuspendForVr();
+                RestoreXrOriginTrackingOffsetFromAppStart();
+
+                Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
+                head = Camera.main != null ? Camera.main.transform : null;
+                if (player != null && savedHeadPos.HasValue && head != null)
+                {
+                    CharacterController cc = player.GetComponent<CharacterController>();
+                    if (cc != null)
+                        cc.enabled = false;
+
+                    // XZ only: full XYZ would lock MR-era head height and float above the VR floor
+                    // after RestoreVrScale / CameraFloorOffset restore.
+                    Vector3 delta = savedHeadPos.Value - head.position;
+                    delta.y = 0f;
+                    player.position += delta;
+
+                    if (ctx.goodPlayerWorldRotation.HasValue)
+                        player.rotation = ctx.goodPlayerWorldRotation.Value;
+
+                    if (cc != null)
+                        cc.enabled = true;
+
+                    // Refresh snapshot with post-VR-scale height so late reapply does not lift again.
+                    ctx.goodPlayerWorldPosition = player.position;
+                    ctx.goodPlayerWorldRotation = player.rotation;
+                    MRTransitionLog.LogStep(
+                        "EnterVRFromPhoneBoothCoroutine",
+                        $"reapplied good pose (after offset restore, xz) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
+                }
+                else
+                {
+                    ApplyGoodVrPlayerPose(ctx, "after offset restore", preserveHeight: true);
+                }
+
                 MRVrSystemsGate.ResumeVrSystemsExceptLocomotion();
                 if (ctx.scenePortal == null)
                     ctx.scenePortal = MRPhoneBoothPortal.FindSceneBoothPortal();
@@ -1012,6 +1416,16 @@ public class MixedRealityManager : MonoBehaviour
                 }
 
                 MRVrSystemsGate.ResumePlayerLocomotionForVr();
+
+                for (int i = 0; i < 3; i++)
+                {
+                    yield return null;
+                    ApplyGoodVrPlayerPose(ctx, $"after locomotion resume frame {i}", preserveHeight: true);
+                }
+
+                yield return new WaitForSecondsRealtime(1f);
+                ApplyGoodVrPlayerPose(ctx, "after 1s settle", preserveHeight: true);
+                MRTransitionLog.LogStep("EnterVRFromPhoneBoothCoroutine", "EnableVrModeAndLocomotion done");
                 break;
 
             case MRPhoneBoothTransitionSequence.MrToVrReturnStep.MrEnvironmentCleanup:
@@ -1051,6 +1465,66 @@ public class MixedRealityManager : MonoBehaviour
     static void RestorePhoneBoothTravelGlass(MRPhoneBoothPortal portal)
     {
         portal?.RestoreTravelGlassAndDoor();
+    }
+
+    static Transform ResolveLocomotionRootForPose()
+    {
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        if (pc != null && pc.PlayerControllerGameObject != null)
+            return pc.PlayerControllerGameObject.transform;
+        return FindPlayerTransform();
+    }
+
+    static void SnapshotGoodVrPlayerPose(PhoneBoothMrToVrContext ctx, string reason)
+    {
+        if (ctx == null)
+            return;
+
+        Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
+        if (player == null)
+        {
+            MRTransitionLog.LogWarning($"snapshot good pose skipped ({reason}) — no player");
+            return;
+        }
+
+        ctx.goodPlayerWorldPosition = player.position;
+        ctx.goodPlayerWorldRotation = player.rotation;
+        MRTransitionLog.LogStep(
+            "EnterVRFromPhoneBoothCoroutine",
+            $"snapshot good pose ({reason}) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
+    }
+
+    static void ApplyGoodVrPlayerPose(
+        PhoneBoothMrToVrContext ctx,
+        string reason,
+        bool preserveHeight = false)
+    {
+        if (ctx == null || !ctx.goodPlayerWorldPosition.HasValue || !ctx.goodPlayerWorldRotation.HasValue)
+            return;
+
+        Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
+        if (player == null)
+        {
+            MRTransitionLog.LogWarning($"reapplied good pose skipped ({reason}) — no player");
+            return;
+        }
+
+        CharacterController cc = player.GetComponent<CharacterController>();
+        if (cc != null)
+            cc.enabled = false;
+
+        Vector3 target = ctx.goodPlayerWorldPosition.Value;
+        if (preserveHeight)
+            target.y = player.position.y;
+        player.position = target;
+        player.rotation = ctx.goodPlayerWorldRotation.Value;
+
+        if (cc != null)
+            cc.enabled = true;
+
+        MRTransitionLog.LogStep(
+            "EnterVRFromPhoneBoothCoroutine",
+            $"reapplied good pose ({reason}) pos={player.position} rotY={player.rotation.eulerAngles.y:F1}");
     }
 
     IEnumerator RefreshMrPosesWhenReady(int generation, Transform player)
@@ -1139,7 +1613,9 @@ public class MixedRealityManager : MonoBehaviour
     IEnumerator EnterVRCoroutine()
     {
         int generation = transitionGeneration;
-        MRTransitionLog.LogStep("EnterVRCoroutine", $"start generation={generation} mode={CurrentMode}");
+        MRTransitionLog.LogStep(
+            "EnterVRCoroutine",
+            $"start generation={generation} mode={CurrentMode}");
         MRTransitionLog.LogManagerState("EnterVRCoroutine-start");
         MRTransitionLog.LogScenes("EnterVRCoroutine-start");
         ConfigManager.WriteConsole($"{LogPrefix} EnterVR coroutine (mode={CurrentMode})");
@@ -1203,7 +1679,15 @@ public class MixedRealityManager : MonoBehaviour
         environmentSurfaces?.ClearMrukScene();
         MRRoomInfoUI.Instance?.Hide();
         DestroyMRSpaceOrigin();
+        // Phone-booth return destroys the DDOL traveler; standard EnterVR must too
+        // or its solid colliders block the reloaded gallery booth.
+        CleanupPhoneBoothTravelerForStandardVrExit();
+        MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
         MRTransitionLog.LogStep("EnterVRCoroutine", "after MR cleanup");
+
+        // WorldLock may have shoved CameraFloorOffsetObject; reset after MRUK is gone.
+        RestoreVrHeightAfterMrExit();
+        MRTransitionLog.LogStep("EnterVRCoroutine", "after RestoreVrHeightAfterMrExit");
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "before config cabinet ReleaseForVr");
         MRConfigurationCabinetController.Instance?.ReleaseForVrTransition();
@@ -1218,6 +1702,76 @@ public class MixedRealityManager : MonoBehaviour
 
         ConfigManager.WriteConsole($"{LogPrefix} EnterVR done");
         MRTransitionLog.LogStep("EnterVRCoroutine", "DONE");
+    }
+
+    /// <summary>
+    /// Non-booth EnterVR (Quick Travel / hold-A): remove the MR traveler payphone so it does not
+    /// leave solid colliders over the gallery after scenes reload.
+    /// </summary>
+    static void CleanupPhoneBoothTravelerForStandardVrExit()
+    {
+        MRPhoneBoothPortal traveler = MRPhoneBoothPortal.FindMrTravelerInstance(includeInactive: true);
+        if (traveler == null)
+            return;
+
+        if (traveler.IsTravelerInstance)
+            MRPhoneBoothSettings.SaveMrPose(traveler.transform.position, traveler.transform.rotation);
+
+        MRPhoneBoothPortal.DestroyTravelerInstance();
+        MRTransitionLog.LogStep("EnterVRCoroutine", "destroyed MR traveler phone booth");
+        ConfigManager.WriteConsole($"{LogPrefix} destroyed MR traveler phone booth for standard VR exit");
+    }
+
+    /// <summary>
+    /// After MRUK/WorldLock teardown: restore CameraFloorOffset local pose and VR camera height.
+    /// </summary>
+    void RestoreVrHeightAfterMrExit()
+    {
+        RestoreXrOriginTrackingOffsetFromAppStart();
+
+        if (appStartPlayerControllerLocalPosition.HasValue)
+        {
+            PlayerController pc = FindObjectOfType<PlayerController>();
+            if (pc != null && pc.PlayerControllerGameObject != null)
+            {
+                pc.PlayerControllerGameObject.transform.localPosition =
+                    appStartPlayerControllerLocalPosition.Value;
+            }
+        }
+
+        RefreshPlayerControllerCameraOffset();
+        RestoreVrScale();
+    }
+
+    void RestoreXrOriginTrackingOffsetFromAppStart()
+    {
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        Transform floor = ResolveCameraFloorOffsetTransform(pc);
+        if (floor == null)
+        {
+            MRTransitionLog.LogWarning("RestoreXrOriginTrackingOffset skipped — no CameraFloorOffset");
+            return;
+        }
+
+        if (appStartCameraFloorLocalPosition.HasValue)
+        {
+            floor.localPosition = appStartCameraFloorLocalPosition.Value;
+            floor.localRotation = appStartCameraFloorLocalRotation ?? Quaternion.identity;
+            MRTransitionLog.Log(
+                $"restored CameraFloorOffset localPos={floor.localPosition}");
+        }
+        else
+        {
+            // Fallback when capture missed: strip WorldLock XZ/rotation; keep configured Y.
+            float y = pc != null && pc.xrorigin != null ? pc.xrorigin.CameraYOffset : 0f;
+            floor.localPosition = new Vector3(0f, y, 0f);
+            floor.localRotation = Quaternion.identity;
+            MRTransitionLog.LogWarning(
+                $"RestoreXrOriginTrackingOffset fallback localPos={floor.localPosition}");
+        }
+
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} restored CameraFloorOffset localPos={floor.localPosition}");
     }
 
     static void ResetLegacyPassthroughFlags()

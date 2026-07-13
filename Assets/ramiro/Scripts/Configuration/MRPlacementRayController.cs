@@ -128,8 +128,8 @@ public class MRPlacementRayController : MonoBehaviour
         isActive = true;
         s_activeCount++;
 
-        if (placementSurfaceType == PlacementSurfaceType.Wall && allowStickRotation)
-            SeedWallStickOffsetFromStartRotation();
+        // Wall stick yaw always starts at 0 (see userYawOffsetDegrees reset above). Seeding from
+        // startRotation caused ~30–40° errors on Add (spawn facing/ray ≠ live controller hit).
 
         MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
         MRTransitionLog.LogStep("PlacementRay", $"begin {target.name} surface={surfaceType}");
@@ -137,6 +137,11 @@ public class MRPlacementRayController : MonoBehaviour
             $"{LogPrefix} begin move target={target.name} surface={surfaceType} facing={facingAxis} " +
             $"stickRot={allowStickRotation} stickAxis={stickRotationAxis} " +
             $"mrukReady={(surfaces != null && surfaces.IsReady)} mrukAnchors={(surfaces != null && surfaces.UsesMrukAnchors)}");
+
+        // Snap immediately so the object is not left at a stale/off-screen start pose for a frame.
+        UpdatePreviewPose();
+        if (hasValidPreview && movingTarget != null)
+            movingTarget.transform.SetPositionAndRotation(previewPosition, previewRotation);
     }
 
     public bool AllowsStickRotation => isActive && allowStickRotation;
@@ -153,7 +158,8 @@ public class MRPlacementRayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Prefab profile wins when present. Floor objects without profile (game cabinets) default to world-Y stick rotation.
+    /// Prefab profile wins when present. Objects without profile default to world-Y stick rotation
+    /// on Floor/Wall/Ceiling/Table/Object (fine yaw during placement ray).
     /// </summary>
     void ResolveStickRotation(
         MRPlacementProfile profile,
@@ -164,7 +170,10 @@ public class MRPlacementRayController : MonoBehaviour
     {
         if (profile != null)
         {
-            stickEnabled = profile.allowStickRotation;
+            // Wall mounts: always allow R-stick yaw for fine adjust on top of auto wall facing.
+            // Other surfaces respect the authored profile flag (e.g. PF_Fan ceiling = no spin).
+            stickEnabled = profile.allowStickRotation
+                || placementSurface == PlacementSurfaceType.Wall;
             rotationAxis = profile.stickRotationAxis;
             rotationSpeed = profile.stickRotationSpeed > 0f
                 ? profile.stickRotationSpeed
@@ -172,8 +181,9 @@ public class MRPlacementRayController : MonoBehaviour
             return;
         }
 
-        // Game cabinets are not prefabs — floor/ceiling placement defaults to yaw on world Y.
+        // Game cabinets / no profile — stick yaw on supported surfaces including wall.
         stickEnabled = placementSurface == PlacementSurfaceType.Floor
+            || placementSurface == PlacementSurfaceType.Wall
             || placementSurface == PlacementSurfaceType.Ceiling
             || placementSurface == PlacementSurfaceType.Table
             || placementSurface == PlacementSurfaceType.Object;
@@ -184,8 +194,9 @@ public class MRPlacementRayController : MonoBehaviour
     public static bool ExpectsStickRotationHint(MRPlacementProfile profile, PlacementSurfaceType placementSurface)
     {
         if (profile != null)
-            return profile.allowStickRotation;
+            return profile.allowStickRotation || placementSurface == PlacementSurfaceType.Wall;
         return placementSurface == PlacementSurfaceType.Floor
+            || placementSurface == PlacementSurfaceType.Wall
             || placementSurface == PlacementSurfaceType.Ceiling
             || placementSurface == PlacementSurfaceType.Table
             || placementSurface == PlacementSurfaceType.Object;
@@ -360,7 +371,8 @@ public class MRPlacementRayController : MonoBehaviour
             case PlacementSurfaceType.Floor:
             default:
                 if (surfaces != null && surfaces.TryGetFloorPointFromRay(
-                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 floorPoint, out Meta.XR.MRUtilityKit.MRUKAnchor floorAnchor))
+                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 floorPoint, out Meta.XR.MRUtilityKit.MRUKAnchor floorAnchor)
+                    && IsFloorHitInFrontOfViewer(floorPoint, viewerPosition, rayDir))
                 {
                     MRAnchorPoseResolver.TryGetUuid(floorAnchor, out hitAnchorUuid);
                     worldPos = floorPoint;
@@ -463,6 +475,26 @@ public class MRPlacementRayController : MonoBehaviour
         placementId = null;
         anchorPoint = null;
         return false;
+    }
+
+    /// <summary>
+    /// Reject floor hits clearly behind the viewer so the first placement-ray snap
+    /// cannot yank the object through/behind a wall when the controller points down-back.
+    /// </summary>
+    static bool IsFloorHitInFrontOfViewer(Vector3 floorPoint, Vector3 viewerPosition, Vector3 rayDir)
+    {
+        Vector3 toHit = floorPoint - viewerPosition;
+        toHit.y = 0f;
+        if (toHit.sqrMagnitude < 0.01f)
+            return true;
+
+        Vector3 forward = rayDir;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        return Vector3.Dot(forward, toHit.normalized) >= -0.15f;
     }
 
     Vector3 ResolvePreviewSurfaceNormal(Quaternion worldRot)
@@ -1149,8 +1181,15 @@ public class MRPlacementRayController : MonoBehaviour
         return profile != null ? profile.GetWallMountDepthMeters() : 0.25f;
     }
 
+    /// <summary>
+    /// Preserve prior fine yaw when moving an already wall-mounted object.
+    /// Skip when start facing is not already wall-aligned for this facingAxis
+    /// (config cabinet floor spawn, poster spawn with wrong initial facing, etc.).
+    /// </summary>
     void SeedWallStickOffsetFromStartRotation()
     {
+        const float minFacingAlign = 0.96f; // ~16°
+
         MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
         if (surfaces == null)
             return;
@@ -1176,6 +1215,12 @@ public class MRPlacementRayController : MonoBehaviour
             return;
 
         autoRot = PlacementOrientation.EnsureFacingViewer(autoRot, facingAxis, startPosition, eye);
-        userYawOffsetDegrees = Mathf.DeltaAngle(autoRot.eulerAngles.y, startRotation.eulerAngles.y);
+
+        Vector3 autoForward = PlacementOrientation.WorldForward(autoRot, facingAxis);
+        Vector3 startForward = PlacementOrientation.WorldForward(startRotation, facingAxis);
+        if (Vector3.Dot(autoForward, startForward) < minFacingAlign)
+            return;
+
+        userYawOffsetDegrees = Vector3.SignedAngle(autoForward, startForward, Vector3.up);
     }
 }

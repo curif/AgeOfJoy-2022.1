@@ -26,7 +26,7 @@ public class MRWallPoster : MonoBehaviour
 
     [SerializeField] string textureRelativePath;
     [SerializeField] Renderer targetRenderer;
-    [SerializeField] bool flipTextureX = true;
+    [SerializeField] bool flipTextureX = false;
 
     Material runtimeMaterial;
     Texture2D ownedTexture;
@@ -170,29 +170,25 @@ public class MRWallPoster : MonoBehaviour
         if (runtimeMaterial.HasProperty("_BaseMap"))
             runtimeMaterial.SetTexture("_BaseMap", texture);
 
-        if (flipTextureX)
-        {
-            if (runtimeMaterial.HasProperty("_MainTex"))
-            {
-                runtimeMaterial.SetTextureScale("_MainTex", new Vector2(-1f, 1f));
-                runtimeMaterial.SetTextureOffset("_MainTex", new Vector2(1f, 0f));
-            }
+        // NegativeX wall facing mirrors U vs the old PositiveZ path — keep UV unflipped by default.
+        // Always write every scale/offset channel (template mats may ship with -1 on _MainTex).
+        Vector2 scale = flipTextureX ? new Vector2(-1f, 1f) : Vector2.one;
+        Vector2 offset = flipTextureX ? new Vector2(1f, 0f) : Vector2.zero;
 
-            if (runtimeMaterial.HasProperty("_BaseMap"))
-            {
-                runtimeMaterial.SetTextureScale("_BaseMap", new Vector2(-1f, 1f));
-                runtimeMaterial.SetTextureOffset("_BaseMap", new Vector2(1f, 0f));
-            }
-
-            runtimeMaterial.mainTextureScale = new Vector2(-1f, 1f);
-            runtimeMaterial.mainTextureOffset = new Vector2(1f, 0f);
-        }
-        else
+        if (runtimeMaterial.HasProperty("_MainTex"))
         {
-            runtimeMaterial.mainTextureScale = Vector2.one;
-            runtimeMaterial.mainTextureOffset = Vector2.zero;
+            runtimeMaterial.SetTextureScale("_MainTex", scale);
+            runtimeMaterial.SetTextureOffset("_MainTex", offset);
         }
 
+        if (runtimeMaterial.HasProperty("_BaseMap"))
+        {
+            runtimeMaterial.SetTextureScale("_BaseMap", scale);
+            runtimeMaterial.SetTextureOffset("_BaseMap", offset);
+        }
+
+        runtimeMaterial.mainTextureScale = scale;
+        runtimeMaterial.mainTextureOffset = offset;
         runtimeMaterial.color = Color.white;
     }
 
@@ -204,6 +200,7 @@ public class MRWallPoster : MonoBehaviour
             baseZ = LandscapeScaleZ;
 
         float scale = UserScale;
-        transform.localScale = new Vector3(1f, baseY * scale, baseZ * scale);
+        // Mirror along wall horizontal (local Z for YZ poster plane) so left/right matches the file.
+        transform.localScale = new Vector3(1f, baseY * scale, -baseZ * scale);
     }
 }

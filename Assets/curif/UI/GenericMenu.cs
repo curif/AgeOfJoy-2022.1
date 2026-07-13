@@ -21,6 +21,15 @@ public class GenericMenu
     // The character to use for highlighting the selected option
     public char highlightChar = '*';
 
+    /// <summary>When true, options start under the title (top) instead of vertically centered.</summary>
+    public bool alignTop;
+
+    /// <summary>When true with alignTop, options are left-aligned with &gt;&gt; cursor (MR home style).</summary>
+    public bool leftAlign;
+
+    /// <summary>Blinking selection cursor for leftAlign menus (">>" or "  ").</summary>
+    public string selectionCursor = ">>";
+
     // The constructor of the class
     public GenericMenu(ScreenGenerator screen, string title, string[] options = null, string[] helpText = null)
     {
@@ -45,25 +54,16 @@ public class GenericMenu
         // Print a horizontal line below the title
         screen.PrintLine(1, false, '-');
 
-        // Calculate the vertical center of the screen
-        int centerY = screen.CharactersYCount / 2;
+        int row = alignTop ? 3 : (screen.CharactersYCount / 2 - options.Count / 2) + 2;
+        if (row < 2)
+            row = 2;
 
-        // Calculate the top row of the menu
-        int topRow = centerY - options.Count / 2;
-
-        // Print the options in the center of the screen
-        int row = topRow + 2;
         for (int i = 0; i < options.Count; i++)
         {
             if (i == selectedIndex)
-            {
-                // Highlight the selected option with an inverted text and a character on both sides
-                screen.PrintCentered(row, highlightChar + " " + options[i] + " " + highlightChar, true);
-            }
+                DrawSelectedOption(row, options[i]);
             else
-            {
-                screen.PrintCentered(row, "  " + options[i] + "  ", false);
-            }
+                DrawUnselectedOption(row, options[i]);
             row++;
         }
         row++;
@@ -72,9 +72,57 @@ public class GenericMenu
         if (selectedIndex >= 0 && selectedIndex < helpTexts.Count && !string.IsNullOrEmpty(helpTexts[selectedIndex]))
         {
             screen.BackgroundColorString = "blue";
-            screen.PrintCentered(row, helpTexts[selectedIndex], false);
+            if (alignTop && leftAlign)
+                screen.Print(1, row, helpTexts[selectedIndex], false);
+            else
+                screen.PrintCentered(row, helpTexts[selectedIndex], false);
             screen.ResetColors();
         }
+    }
+
+    void DrawSelectedOption(int row, string option)
+    {
+        int width = screen.CharactersXCount;
+        string inner;
+        string label;
+
+        if (alignTop && leftAlign)
+        {
+            string cursor = string.IsNullOrEmpty(selectionCursor) ? ">>" : selectionCursor;
+            if (cursor.Length < 2)
+                cursor = cursor.PadRight(2);
+            inner = cursor + option;
+            label = (" " + inner).PadRight(width);
+            if (label.Length > width)
+                label = label.Substring(0, width);
+
+            screen.ForegroundColorString = "black";
+            screen.BackgroundColorString = "yellow";
+            screen.Print(0, row, label, false);
+            screen.ResetColors();
+            return;
+        }
+
+        inner = highlightChar + " " + option + " " + highlightChar;
+        int pad = Mathf.Max(0, (width - inner.Length) / 2);
+        label = new string(' ', pad) + inner;
+        if (label.Length < width)
+            label = label.PadRight(width);
+        else if (label.Length > width)
+            label = label.Substring(0, width);
+
+        screen.ForegroundColorString = "black";
+        screen.BackgroundColorString = "yellow";
+        screen.Print(0, row, label, false);
+        screen.ResetColors();
+    }
+
+    void DrawUnselectedOption(int row, string option)
+    {
+        if (alignTop && leftAlign)
+            screen.Print(1, row, "  " + option, false);
+        else
+            screen.PrintCentered(row, "  " + option + "  ", false);
     }
 
     // A method to move to the next option

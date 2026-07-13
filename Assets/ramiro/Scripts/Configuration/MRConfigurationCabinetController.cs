@@ -28,6 +28,9 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     public static MRConfigurationCabinetController Instance { get; private set; }
 
+    /// <summary>Editor sandbox scene for CRT menu UX (Assets/ramiro/CabinetConfiguration.unity).</summary>
+    public const string CabinetConfigurationSceneName = "CabinetConfiguration";
+
     [SerializeField] GameObject configurationCabinetPrefab;
     [SerializeField] float spawnDistanceMeters = 1.4f;
     [SerializeField] float spawnYawOffsetDegrees = 0f;
@@ -64,6 +67,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
 
     public bool IsEditOpen => isEditOpen;
     public bool HasCabinet => cabinetInstance != null;
+    public GameObject CabinetInstance => cabinetInstance;
 
 #if UNITY_EDITOR
     public bool IsUsingCabinetCamera { get; private set; }
@@ -214,7 +218,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
             MixedRealityManager.Instance.EnterMREdit();
 
 #if UNITY_EDITOR
-        if (IsTestConfigScene())
+        if (IsTestConfigScene() || IsCabinetConfigurationScene())
             EnableTestConfigCabinetCamera();
 #endif
 
@@ -236,7 +240,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
             MixedRealityManager.Instance.ExitMREdit();
 
 #if UNITY_EDITOR
-        if (IsTestConfigScene())
+        if (IsTestConfigScene() || IsCabinetConfigurationScene())
             RestoreTestConfigSceneCamera();
 #endif
 
@@ -259,7 +263,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
             MixedRealityManager.Instance.ExitMREdit();
 
 #if UNITY_EDITOR
-        if (IsTestConfigScene())
+        if (IsTestConfigScene() || IsCabinetConfigurationScene())
             RestoreTestConfigSceneCamera();
 #endif
 
@@ -343,6 +347,42 @@ public class MRConfigurationCabinetController : MonoBehaviour
 #endif
         ConfigManager.WriteConsole(
             $"{LogPrefix} spawned (floor) at {cabinetInstance.transform.position} rot={cabinetInstance.transform.eulerAngles}");
+    }
+
+    /// <summary>
+    /// Clear saved pose and start the placement ray so the player repositions the config cabinet.
+    /// Returns true when the ray is active.
+    /// </summary>
+    public bool ResetPlacementAfterConfigWipe()
+    {
+        ClearSavedPose();
+        initialPlacementRequested = false;
+
+        if (MixedRealityManager.Instance == null)
+            return false;
+
+        ExperienceMode mode = MixedRealityManager.Instance.CurrentMode;
+        if (mode != ExperienceMode.MR && mode != ExperienceMode.MR_EDIT)
+            return false;
+
+        if (cabinetInstance == null)
+            SpawnAtMrOrigin();
+
+        if (cabinetInstance == null)
+            return false;
+
+        if (!cabinetInstance.activeInHierarchy)
+            cabinetInstance.SetActive(true);
+
+        PlaceCabinetNearViewForInitialRay(cabinetInstance);
+
+        bool started = BeginRepositionWithRay(isInitialPlacement: true);
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} placement reset after config wipe rayStarted={started}");
+        MRTransitionLog.LogStep(
+            "MRConfigurationCabinetController",
+            started ? "ResetPlacementAfterConfigWipe-ray" : "ResetPlacementAfterConfigWipe-failed");
+        return started;
     }
 
     /// <summary>Instantly re-place the cabinet in front of the player without opening a placement ray.</summary>
@@ -750,8 +790,13 @@ public class MRConfigurationCabinetController : MonoBehaviour
     static bool IsCabinetAutoSpawnTestScene()
     {
         string scene = SceneManager.GetActiveScene().name;
-        return scene == "TestMRmanager" || scene == "TestUI";
+        return scene == "TestMRmanager"
+            || scene == "TestUI"
+            || scene == CabinetConfigurationSceneName;
     }
+
+    static bool IsCabinetConfigurationScene() =>
+        SceneManager.GetActiveScene().name == CabinetConfigurationSceneName;
 
     static bool IsTestConfigScene() =>
         SceneManager.GetActiveScene().name == MRTestConfigSceneLoader.TestSceneName;

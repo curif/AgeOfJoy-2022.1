@@ -218,22 +218,34 @@ public class ChangeControls : MonoBehaviour
 
       public void SetMrLocomotionSuspended(bool suspended)
     {
-        if (mrLocomotionSuspended == suspended)
+        if (suspended)
+        {
+            // Entering suspend once — preserve saved snap/teleport from the first call.
+            if (mrLocomotionSuspended)
+                return;
+
+            mrLocomotionSuspended = true;
+            ConfigManager.WriteConsole($"[ChangeControls] MR locomotion suspended=True isPlaying={isPlaying}");
+
+            if (isPlaying)
+                return;
+
+            DisableLocomotionForMr();
             return;
+        }
 
-        mrLocomotionSuspended = suspended;
-        ConfigManager.WriteConsole($"[ChangeControls] MR locomotion suspended={suspended} isPlaying={isPlaying}");
-
-        if (isPlaying && !suspended)
-            PlayerMode(false);
+        // Resume: always re-apply providers/actions even if the flag was already false
+        // (desync left stick dead after phone-booth MR→VR).
+        mrLocomotionSuspended = false;
+        ConfigManager.WriteConsole($"[ChangeControls] MR locomotion suspended=False isPlaying={isPlaying}");
 
         if (isPlaying)
+        {
+            PlayerMode(false);
             return;
+        }
 
-        if (suspended)
-            DisableLocomotionForMr();
-        else
-            RestoreLocomotionAfterMr();
+        RestoreLocomotionAfterMr();
     }
 
     void DisableLocomotionForMr()
@@ -258,7 +270,16 @@ public class ChangeControls : MonoBehaviour
     void RestoreLocomotionAfterMr()
     {
         if (actionBasedContinuousMoveProvider != null)
+        {
             actionBasedContinuousMoveProvider.enabled = true;
+            CharacterController cc = actionBasedContinuousMoveProvider.GetComponent<CharacterController>();
+            if (cc != null && !cc.enabled)
+                cc.enabled = true;
+        }
+
+        // DisableLocomotionForMr turns continuous turn off; must re-enable before SnapTurnActive.
+        if (actionBasedContinuousTurnProvider != null)
+            actionBasedContinuousTurnProvider.enabled = true;
         if (actionBasedSnapTurnProvider != null)
             actionBasedSnapTurnProvider.enabled = true;
 
@@ -270,6 +291,11 @@ public class ChangeControls : MonoBehaviour
 
         if (beamController != null)
             beamController.enabled = mrSavedTeleportEnabled;
+
+        bool moveOn = actionBasedContinuousMoveProvider != null && actionBasedContinuousMoveProvider.enabled;
+        bool turnOn = actionBasedContinuousTurnProvider != null && actionBasedContinuousTurnProvider.enabled;
+        ConfigManager.WriteConsole(
+            $"[ChangeControls] locomotion restored move={moveOn} continuousTurn={turnOn} snap={mrSavedSnapTurnActive}");
     }
 
 
