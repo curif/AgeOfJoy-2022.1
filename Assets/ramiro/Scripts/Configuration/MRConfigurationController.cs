@@ -80,8 +80,6 @@ public class MRConfigurationController : MonoBehaviour
         RoomSkins,
         PlacedInstances,
         LightTune,
-        PosterTune,
-        CustomObjectTune,
         Debug,
         DebugDetail,
         Help,
@@ -159,8 +157,6 @@ public class MRConfigurationController : MonoBehaviour
     MREnvironmentCatalogEntry instancesCatalogEntry;
     Screen instancesReturnScreen;
     string lightTunePlacementId;
-    string posterTunePlacementId;
-    string customObjectTunePlacementId;
     bool pendingReturnToPlacedInstances;
     GameObject pendingAddRoot;
     bool scanRequestInProgress;
@@ -774,12 +770,6 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.LightTune:
                 DrawLightTunePage();
-                break;
-            case Screen.PosterTune:
-                DrawPosterTunePage();
-                break;
-            case Screen.CustomObjectTune:
-                DrawCustomObjectTunePage();
                 break;
             case Screen.Debug:
                 DrawDebugPage();
@@ -1562,36 +1552,6 @@ public class MRConfigurationController : MonoBehaviour
         DrawFooter("Up/Down: row   L/R: +/-   A: change");
     }
 
-    void DrawPosterTunePage()
-    {
-        string label = Truncate(instancesCatalogEntry.MenuLabel, 18);
-        int instanceNumber = FindPlacedInstanceIndex(posterTunePlacementId) + 1;
-
-        float scale = MRPosterPlacement.DefaultScale;
-        if (envRegistry != null)
-            envRegistry.TryGetPosterScale(posterTunePlacementId, out scale);
-
-        int row = BeginListTable($"POSTER SCALE {label} #{instanceNumber}", "ITEM", null, TuneListRowNameWidth, startRow: 0);
-        row = DrawListRow(row, 0, 0, $"YZ {scale:F2}", AdjustmentValueActions, nameWidth: TuneListRowNameWidth);
-        EndListTable(row, "Uniform Y+Z  step 0.1");
-        DrawFooter("Up/Down: row   L/R: +/-   A: change");
-    }
-
-    void DrawCustomObjectTunePage()
-    {
-        string label = Truncate(instancesCatalogEntry.MenuLabel, 18);
-        int instanceNumber = FindPlacedInstanceIndex(customObjectTunePlacementId) + 1;
-
-        float scale = MRCustomObjectPlacement.DefaultScale;
-        if (envRegistry != null)
-            envRegistry.TryGetCustomObjectScale(customObjectTunePlacementId, out scale);
-
-        int row = BeginListTable($"OBJECT SCALE {label} #{instanceNumber}", "ITEM", null, TuneListRowNameWidth, startRow: 0);
-        row = DrawListRow(row, 0, 0, $"XYZ {scale:F2}", AdjustmentValueActions, nameWidth: TuneListRowNameWidth);
-        EndListTable(row, "Uniform XYZ  step 0.1");
-        DrawFooter("Up/Down: row   L/R: +/-   A: change");
-    }
-
     int FindPlacedInstanceIndex(string placementId)
     {
         for (int i = 0; i < placedInstances.Count; i++)
@@ -1751,7 +1711,7 @@ public class MRConfigurationController : MonoBehaviour
         yield return "CONTROLS (CRT)";
         yield return "Up/Down: move in lists";
         yield return "L/R: switch action when shown";
-        yield return "  (e.g. +/- or REMOVE/TUNE)";
+        yield return "  (e.g. +/- or REMOVE/REPOS)";
         yield return "A: confirm   B: go back";
         yield return "Coin in slot: open panel";
         yield return "EXIT + A: close panel";
@@ -1764,9 +1724,11 @@ public class MRConfigurationController : MonoBehaviour
         yield return "4) Show All: A = Add (ray)";
         yield return "5) Show Added: Up/Down + A";
         yield return "   removes selected copy";
-        yield return "   Some items also L/R Tune";
-        yield return "6) Ray: A place  B cancel";
+        yield return "   Lights also L/R Tune";
+        yield return "6) Ray: trigger place  B cancel";
         yield return "   R-stick L/R = rotate";
+        yield return "   grip + R-stick L/R = scale";
+        yield return "     (posters / custom objs)";
         yield return "Green = OK   Red = blocked";
         yield return string.Empty;
         yield return "MENU";
@@ -1795,16 +1757,16 @@ public class MRConfigurationController : MonoBehaviour
         yield return "Home: Posters, Room Skin,";
         yield return "  then packages (enter each)";
         yield return "Posters: Show All Add /";
-        yield return "  Show Added = one row per copy";
-        yield return "  (pick which to Remove)";
+        yield return "  Show Added = Remove / Repos";
+        yield return "  Scale on ray: grip+R-stick";
         yield return "  Folder MR/Posters/ wall";
         yield return "Room Skin: A Add or Remove";
         yield return "  No ray — room mesh only";
         yield return "  Folder MR/Room Skins/";
         yield return "Packages: enter → filters";
         yield return "  Show All: Add only";
-        yield return "  Show Added: Up/Down + A";
-        yield return "  (L/R Tune on some pkgs)";
+        yield return "  Show Added: Remove / Repos";
+        yield return "  Scale on ray: grip+R-stick";
         yield return "  Folder MR/Custom Objects/";
         yield return "Make packages: AOJ MR Studio";
         yield return "  (Windows USB) — see guide";
@@ -1926,15 +1888,11 @@ public class MRConfigurationController : MonoBehaviour
         || screen == Screen.Mesh
         || screen == Screen.Adjustments
         || screen == Screen.LightTune
-        || screen == Screen.PosterTune
-        || screen == Screen.CustomObjectTune
         || screen == Screen.Debug;
 
     static bool UsesPlusMinusActionCursor(Screen screen) =>
         screen == Screen.Adjustments
-        || screen == Screen.LightTune
-        || screen == Screen.PosterTune
-        || screen == Screen.CustomObjectTune;
+        || screen == Screen.LightTune;
 
     /// <summary>
     /// Show Added copy rows with Remove + Tune: L/R moves >> on the ACTION option (like Adjustments +/-).
@@ -2364,8 +2322,6 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Mesh => GetMeshRowActions(selectedListIndex),
             Screen.Adjustments => AdjustmentValueActions,
             Screen.LightTune => AdjustmentValueActions,
-            Screen.PosterTune => AdjustmentValueActions,
-            Screen.CustomObjectTune => AdjustmentValueActions,
             Screen.PhoneBooth => GetPhoneBoothRowActions(),
             Screen.Debug => GetDebugRowActions(selectedListIndex),
             _ => System.Array.Empty<RowActionKind>()
@@ -2515,19 +2471,20 @@ public class MRConfigurationController : MonoBehaviour
             return actions;
 
         actions.Add(RowActionKind.Remove);
-        // Tune exists only for lights / posters / custom scale — not fans, Portable Games, etc.
-        if (SupportsPlacedInstanceTune(instancesCatalogEntry.Source))
+        // Lights: CRT Tune (intensity/range/temp). Poster/custom: Repos ray (grip + L/R scale).
+        if (instancesCatalogEntry.Source == MREnvironmentObjectSource.Light)
             actions.Add(RowActionKind.Tune);
+        else if (MRPlacementRayController.ExpectsStickScale(instancesCatalogEntry.Source))
+            actions.Add(RowActionKind.Move);
         return actions;
     }
 
     static bool SupportsPlacedInstanceTune(MREnvironmentObjectSource source) =>
-        source == MREnvironmentObjectSource.Light
-        || source == MREnvironmentObjectSource.Poster
-        || source == MREnvironmentObjectSource.Custom;
+        source == MREnvironmentObjectSource.Light;
 
     bool PlacedInstanceShowAddedHasTune() =>
-        SupportsPlacedInstanceTune(instancesCatalogEntry.Source);
+        SupportsPlacedInstanceTune(instancesCatalogEntry.Source)
+        || MRPlacementRayController.ExpectsStickScale(instancesCatalogEntry.Source);
 
     List<RowActionKind> GetMeshRowActions(int index)
     {
@@ -2611,12 +2568,6 @@ public class MRConfigurationController : MonoBehaviour
                 return true;
             case Screen.LightTune:
                 ExecuteLightTuneRowAction(action);
-                return true;
-            case Screen.PosterTune:
-                ExecutePosterTuneRowAction(action);
-                return true;
-            case Screen.CustomObjectTune:
-                ExecuteCustomObjectTuneRowAction(action);
                 return true;
             case Screen.PhoneBooth:
                 ExecutePhoneBoothRowAction(action);
@@ -2871,15 +2822,7 @@ public class MRConfigurationController : MonoBehaviour
                 return false;
             case RowActionKind.Tune:
                 if (selectedListIndex < placedInstances.Count)
-                {
-                    string placementId = placedInstances[selectedListIndex].Id;
-                    if (instancesCatalogEntry.Source == MREnvironmentObjectSource.Poster)
-                        OpenPosterTuneForPlacement(placementId);
-                    else if (instancesCatalogEntry.Source == MREnvironmentObjectSource.Custom)
-                        OpenCustomObjectTuneForPlacement(placementId);
-                    else
-                        OpenLightTuneForPlacement(placementId);
-                }
+                    OpenLightTuneForPlacement(placedInstances[selectedListIndex].Id);
                 return true;
             case RowActionKind.Remove:
                 if (selectedListIndex >= placedInstances.Count)
@@ -2973,32 +2916,6 @@ public class MRConfigurationController : MonoBehaviour
         envRegistry.TryUpdateLightSettings(lightTunePlacementId, intensity, range, temperature);
     }
 
-    void ExecutePosterTuneRowAction(RowActionKind action)
-    {
-        int direction = action == RowActionKind.Increase ? 1 : action == RowActionKind.Decrease ? -1 : 0;
-        if (direction == 0 || envRegistry == null || string.IsNullOrEmpty(posterTunePlacementId))
-            return;
-
-        if (!envRegistry.TryGetPosterScale(posterTunePlacementId, out float scale))
-            return;
-
-        scale = MRPosterPlacement.SnapScale(scale + direction * MRPosterPlacement.TuneStep);
-        envRegistry.TryUpdatePosterScale(posterTunePlacementId, scale);
-    }
-
-    void ExecuteCustomObjectTuneRowAction(RowActionKind action)
-    {
-        int direction = action == RowActionKind.Increase ? 1 : action == RowActionKind.Decrease ? -1 : 0;
-        if (direction == 0 || envRegistry == null || string.IsNullOrEmpty(customObjectTunePlacementId))
-            return;
-
-        if (!envRegistry.TryGetCustomObjectScale(customObjectTunePlacementId, out float scale))
-            return;
-
-        scale = MRCustomObjectPlacement.SnapScale(scale + direction * MRCustomObjectPlacement.TuneStep);
-        envRegistry.TryUpdateCustomObjectScale(customObjectTunePlacementId, scale);
-    }
-
     void ExecutePhoneBoothRowAction(RowActionKind action)
     {
         switch (action)
@@ -3035,22 +2952,6 @@ public class MRConfigurationController : MonoBehaviour
         selectedLightTuneIndex = 0;
         selectedColumnIndex = 0;
         currentScreen = Screen.LightTune;
-        DrawCurrentScreen();
-    }
-
-    void OpenPosterTuneForPlacement(string placementId)
-    {
-        posterTunePlacementId = placementId;
-        selectedColumnIndex = 0;
-        currentScreen = Screen.PosterTune;
-        DrawCurrentScreen();
-    }
-
-    void OpenCustomObjectTuneForPlacement(string placementId)
-    {
-        customObjectTunePlacementId = placementId;
-        selectedColumnIndex = 0;
-        currentScreen = Screen.CustomObjectTune;
         DrawCurrentScreen();
     }
 
@@ -3518,8 +3419,6 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Mesh:
             case Screen.Adjustments:
             case Screen.LightTune:
-            case Screen.PosterTune:
-            case Screen.CustomObjectTune:
             case Screen.PhoneBooth:
             case Screen.Debug:
                 if (ExecuteSelectedRowAction())
@@ -3730,20 +3629,6 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
             case Screen.LightTune:
-                currentScreen = Screen.PlacedInstances;
-                navCooldown = navRepeatDelay;
-                SyncConfirmControlEdgeState();
-                SyncBackControlEdgeState();
-                DrawCurrentScreen();
-                break;
-            case Screen.PosterTune:
-                currentScreen = Screen.PlacedInstances;
-                navCooldown = navRepeatDelay;
-                SyncConfirmControlEdgeState();
-                SyncBackControlEdgeState();
-                DrawCurrentScreen();
-                break;
-            case Screen.CustomObjectTune:
                 currentScreen = Screen.PlacedInstances;
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
@@ -4252,7 +4137,8 @@ public class MRConfigurationController : MonoBehaviour
             {
                 CancelPendingAdd(destroyProp: true);
                 ShowIdleAfterExternalPlacement();
-            });
+            },
+            allowStickScale: MRPlacementRayController.ExpectsStickScale(entry.Source));
     }
 
     void BeginMoveEnvByPlacementId(string placementId)
@@ -4304,7 +4190,8 @@ public class MRConfigurationController : MonoBehaviour
                 placementEnvMoveActive = false;
                 movingEnvPlacementId = null;
                 ShowIdleAfterExternalPlacement();
-            });
+            },
+            allowStickScale: MRPlacementRayController.ExpectsStickScale(placement));
 
         ConfigManager.WriteConsole($"{LogPrefix} env move begin {placement.DisplayLabel} ({placement.Id})");
     }

@@ -19,6 +19,7 @@ public class MRPlacementRayController : MonoBehaviour
     [Range(-30f, 30f)]
     [SerializeField] float wallMountYawOffsetDegrees = 0f;
     [SerializeField] float defaultStickRotationSpeed = 90f;
+    [SerializeField] float defaultStickScaleSpeed = 0.5f;
     [SerializeField] float stickDeadZone = 0.15f;
     [SerializeField] Color validColor = new Color(0.25f, 1f, 0.55f, 1f);
     [SerializeField] Color invalidColor = new Color(1f, 0.3f, 0.2f, 1f);
@@ -53,10 +54,23 @@ public class MRPlacementRayController : MonoBehaviour
     bool allowStickRotation;
     PlacementStickRotationAxis stickRotationAxis = PlacementStickRotationAxis.WorldYaw;
     float stickRotationSpeed;
+    bool allowStickScale;
+    PlacementStickScaleKind stickScaleKind = PlacementStickScaleKind.None;
+    float stickScaleSpeed;
+    float startScale = 1f;
+    float userScale = 1f;
+    float userScaleRaw = 1f;
     float initialYawDegrees;
     float userYawOffsetDegrees;
     Action<Vector3, Quaternion, MRPlacementConfirmAnchor> onConfirmPose;
     Action onCancel;
+
+    enum PlacementStickScaleKind
+    {
+        None,
+        Poster,
+        Custom
+    }
 
     MeshRenderer beamRenderer;
     Mesh beamMesh;
@@ -92,7 +106,8 @@ public class MRPlacementRayController : MonoBehaviour
         PlacementSurfaceType placementSurfaceType,
         PlacementFacingAxis objectFacingAxis,
         Action<Vector3, Quaternion, MRPlacementConfirmAnchor> confirmCallback,
-        Action cancelCallback = null)
+        Action cancelCallback = null,
+        bool allowStickScale = false)
     {
         if (target == null || confirmCallback == null)
             return;
@@ -104,6 +119,10 @@ public class MRPlacementRayController : MonoBehaviour
         facingAxis = objectFacingAxis;
         placeByPivot = profile != null;
         ResolveStickRotation(profile, placementSurfaceType, out allowStickRotation, out stickRotationAxis, out stickRotationSpeed);
+        ResolveStickScale(target, allowStickScale, out this.allowStickScale, out stickScaleKind, out startScale);
+        userScale = startScale;
+        userScaleRaw = startScale;
+        stickScaleSpeed = defaultStickScaleSpeed;
         onConfirmPose = confirmCallback;
         onCancel = cancelCallback;
 
@@ -136,6 +155,7 @@ public class MRPlacementRayController : MonoBehaviour
         ConfigManager.WriteConsole(
             $"{LogPrefix} begin move target={target.name} surface={surfaceType} facing={facingAxis} " +
             $"stickRot={allowStickRotation} stickAxis={stickRotationAxis} " +
+            $"stickScale={this.allowStickScale} scaleKind={stickScaleKind} " +
             $"mrukReady={(surfaces != null && surfaces.IsReady)} mrukAnchors={(surfaces != null && surfaces.UsesMrukAnchors)}");
 
         // Snap immediately so the object is not left at a stale/off-screen start pose for a frame.
@@ -145,6 +165,7 @@ public class MRPlacementRayController : MonoBehaviour
     }
 
     public bool AllowsStickRotation => isActive && allowStickRotation;
+    public bool AllowsStickScale => isActive && allowStickScale;
 
     public void CancelActive()
     {
@@ -152,10 +173,50 @@ public class MRPlacementRayController : MonoBehaviour
             return;
 
         if (movingTarget != null)
+        {
             movingTarget.transform.SetPositionAndRotation(startPosition, startRotation);
+            RestoreStartScale();
+        }
 
         StopMove(cancelled: true, reason: "external");
     }
+
+    static void ResolveStickScale(
+        GameObject target,
+        bool requested,
+        out bool scaleEnabled,
+        out PlacementStickScaleKind kind,
+        out float initialScale)
+    {
+        scaleEnabled = false;
+        kind = PlacementStickScaleKind.None;
+        initialScale = 1f;
+        if (!requested || target == null)
+            return;
+
+        if (MRPosterPlacement.TryReadUserScale(target, out float posterScale))
+        {
+            scaleEnabled = true;
+            kind = PlacementStickScaleKind.Poster;
+            initialScale = posterScale;
+            return;
+        }
+
+        // Caller only requests scale for poster/custom; non-poster = uniform XYZ custom scale.
+        if (MRCustomObjectPlacement.TryReadUserScale(target, out float customScale))
+        {
+            scaleEnabled = true;
+            kind = PlacementStickScaleKind.Custom;
+            initialScale = customScale;
+        }
+    }
+
+    public static bool ExpectsStickScale(MREnvironmentObjectSource source) =>
+        source == MREnvironmentObjectSource.Poster
+        || source == MREnvironmentObjectSource.Custom;
+
+    public static bool ExpectsStickScale(MREnvironmentPlacement placement) =>
+        placement != null && (placement.IsPosterSource || placement.IsCustomSource);
 
     /// <summary>
     /// Prefab profile wins when present. Objects without profile default to world-Y stick rotation
@@ -207,7 +268,9 @@ public class MRPlacementRayController : MonoBehaviour
         if (!isActive || movingTarget == null)
             return;
 
-        if (allowStickRotation)
+        if (allowStickScale && IsScaleModifierHeld())
+            ApplyStickScaleInput();
+        else if (allowStickRotation)
             ApplyStickRotationInput();
 
         UpdatePreviewPose();
@@ -216,7 +279,8 @@ public class MRPlacementRayController : MonoBehaviour
         if (Time.unscaledTime >= ignoreCancelUntilUnscaledTime && WasCancelPressed())
         {
             movingTarget.transform.SetPositionAndRotation(startPosition, startRotation);
-            StopMove(cancelled: true, reason: "grip");
+            RestoreStartScale();
+            StopMove(cancelled: true, reason: "B");
             return;
         }
 
@@ -680,6 +744,11 @@ public class MRPlacementRayController : MonoBehaviour
         movingTarget = null;
         onConfirmPose = null;
         onCancel = null;
+        allowStickScale = false;
+        stickScaleKind = PlacementStickScaleKind.None;
+        startScale = 1f;
+        userScale = 1f;
+        userScaleRaw = 1f;
         hasValidPreview = false;
         previewAnchorUuid = Guid.Empty;
         previewObjectPlacementId = null;
@@ -744,6 +813,70 @@ public class MRPlacementRayController : MonoBehaviour
             return;
 
         userYawOffsetDegrees += stickX * stickRotationSpeed * Time.deltaTime;
+    }
+
+    void ApplyStickScaleInput()
+    {
+        if (movingTarget == null || stickScaleKind == PlacementStickScaleKind.None)
+            return;
+
+        float stickX = ReadRightStickX();
+        if (Mathf.Abs(stickX) <= stickDeadZone)
+            return;
+
+        userScaleRaw += stickX * stickScaleSpeed * Time.deltaTime;
+        if (stickScaleKind == PlacementStickScaleKind.Custom)
+        {
+            userScaleRaw = Mathf.Clamp(
+                userScaleRaw,
+                MRCustomObjectPlacement.MinScale,
+                MRCustomObjectPlacement.MaxScale);
+        }
+        else
+        {
+            userScaleRaw = Mathf.Max(MRPosterPlacement.TuneStep, userScaleRaw);
+        }
+
+        float next = stickScaleKind == PlacementStickScaleKind.Poster
+            ? MRPosterPlacement.SnapScale(userScaleRaw)
+            : MRCustomObjectPlacement.SnapScale(userScaleRaw);
+
+        if (Mathf.Approximately(next, userScale))
+            return;
+
+        userScale = next;
+        ApplyUserScale(movingTarget, stickScaleKind, userScale);
+    }
+
+    void RestoreStartScale()
+    {
+        if (movingTarget == null || stickScaleKind == PlacementStickScaleKind.None)
+            return;
+
+        ApplyUserScale(movingTarget, stickScaleKind, startScale);
+        userScale = startScale;
+        userScaleRaw = startScale;
+    }
+
+    static void ApplyUserScale(GameObject target, PlacementStickScaleKind kind, float scale)
+    {
+        if (target == null)
+            return;
+
+        if (kind == PlacementStickScaleKind.Poster)
+            MRPosterPlacement.ApplyUserScale(target, scale);
+        else if (kind == PlacementStickScaleKind.Custom)
+            MRCustomObjectPlacement.ApplyUserScale(target, scale);
+    }
+
+    static bool IsScaleModifierHeld()
+    {
+#if UNITY_EDITOR
+        // Grip stand-in (Quest: R hand trigger). KeyCode.A is already stick-left.
+        return MREditorInput.IsHeld(KeyCode.LeftShift) || MREditorInput.IsHeld(KeyCode.RightShift);
+#else
+        return OVRInput.Get(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
+#endif
     }
 
     static float ReadRightStickX()
@@ -1170,8 +1303,8 @@ public class MRPlacementRayController : MonoBehaviour
 #if UNITY_EDITOR
         return MREditorInput.WasAnyPressed(KeyCode.Escape, KeyCode.Backspace);
 #else
-        // Right Y (Button.Two) is CRT back / menu — grip only avoids accidental cancel.
-        return OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
+        // Placement suspends CRT — B (Button.Two) on RTouch is free for abort.
+        return OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.RTouch);
 #endif
     }
 
