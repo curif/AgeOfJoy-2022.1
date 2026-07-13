@@ -66,6 +66,10 @@ sysinfo.txt
 *.so
 *.dll
 
+# Native bridge (nativebridge/): track source only; build/ holds regenerated
+# artifacts (.so already ignored above, plus SPIR-V .spv/.spv.h and objects).
+nativebridge/**/build/
+
 # Crashlytics generated file
 crashlytics-build.properties
 
@@ -99,6 +103,9 @@ crashlytics-build.properties
 **/[Aa]ssets/Resources/Eflatun/SceneReference/SceneGuidToPathMap.generated.json
 **/[Aa]ssets/Resources/Eflatun/SceneReference/SceneGuidToPathMap.generated.json.meta
 *Assets/TextMesh*
+
+# Claude AI working documents (not for repo)
+/claudedocs/
 *build.log*
 *AgeOfJoy.apk*
 *AgeOfJoy_*

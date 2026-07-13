@@ -36,3 +36,7 @@ To build and contribute to the core simulation, please refer to the [Contributin
 ## License
 
 This project is licensed under the [GNU General Public License v3.0 (GPL-3)](./gpl-3.0.md).
+
+Age of Joy bundles third-party software, including the emulation cores it loads at runtime. See
+[THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for copyright notices, licenses, and links to
+the corresponding source of the cores we distribute.
