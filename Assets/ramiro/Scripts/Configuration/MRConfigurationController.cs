@@ -222,6 +222,10 @@ public class MRConfigurationController : MonoBehaviour
         MRPhoneBoothSettings.EnsureLoaded();
         MREffectMeshSettings.EnsureLoaded();
         MRAutoLightingSettings.EnsureLoaded();
+        if (MixedRealityManager.Instance != null)
+            MixedRealityManager.Instance.EnsureLayoutPathsBoundForEditSession();
+        else
+            MRActiveRoom.TryBindFromDevice();
         registry.EnsureLayoutLoaded();
         envRegistry.EnsureLayoutLoaded();
         // MR entry already spawned layout + props; respawning here destroys and recreates everything

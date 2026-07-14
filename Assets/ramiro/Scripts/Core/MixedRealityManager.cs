@@ -31,6 +31,8 @@ public class MixedRealityManager : MonoBehaviour
     Coroutine mrukEnvironmentRefreshRoutine;
     Coroutine phoneBoothVrToMrScanRoutine;
     Coroutine reapplyPosesAfterFocusRoutine;
+    Coroutine roomLayoutSwitchRoutine;
+    bool roomLayoutSwitchInProgress;
     int transitionGeneration;
     int focusReturnGeneration;
     int lastTrackingRecenterCount = -1;
@@ -40,8 +42,10 @@ public class MixedRealityManager : MonoBehaviour
     Quaternion cachedFloorAnchorRotation = Quaternion.identity;
     const float FloorAnchorJumpMeters = 0.12f;
     int lastDiscontinuityFrame = -1;
+    float nextRoomLayoutPollTime;
 
     const float MrukEnvironmentRefreshDebounceSeconds = 0.75f;
+    const float RoomLayoutPollIntervalSeconds = 0.5f;
 
     Vector3? savedVrPlayerPosition;
     Quaternion? savedVrPlayerRotation;
@@ -233,6 +237,93 @@ public class MixedRealityManager : MonoBehaviour
         cachedFloorAnchorPosition = floorPos;
         cachedFloorAnchorRotation = floorRot;
         hasFloorAnchorCache = true;
+
+        PollActiveRoomLayoutSwitch();
+    }
+
+    /// <summary>
+    /// Phase A: when the headset moves into another MRUK room, swap layout files and respawn.
+    /// </summary>
+    void PollActiveRoomLayoutSwitch()
+    {
+        if (Time.unscaledTime < nextRoomLayoutPollTime)
+            return;
+
+        nextRoomLayoutPollTime = Time.unscaledTime + RoomLayoutPollIntervalSeconds;
+
+        if (roomLayoutSwitchRoutine != null || roomLayoutSwitchInProgress || transitionInProgress)
+            return;
+
+        if (MRPlacementRayController.AnyActive)
+            return;
+
+        if (!MRRoomIdentity.TryGetCurrentRoomId(out string roomId))
+            return;
+
+        if (string.Equals(roomId, MRActiveRoom.BoundRoomId, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        roomLayoutSwitchRoutine = StartCoroutine(SwitchActiveRoomLayoutCoroutine(roomId));
+    }
+
+    IEnumerator SwitchActiveRoomLayoutCoroutine(string roomId)
+    {
+        if (roomLayoutSwitchInProgress)
+            yield break;
+
+        roomLayoutSwitchInProgress = true;
+        try
+        {
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} room layout switch {MRActiveRoom.BoundRoomId ?? "(none)"} -> {roomId}");
+
+            ActiveRegistry()?.SnapshotSpawnedWorldPosesToLayout();
+            ActiveEnvironmentRegistry()?.SnapshotSpawnedWorldPosesToLayout();
+
+            if (!MRActiveRoom.Bind(roomId))
+                yield break;
+
+            CancelActivePlacementRay();
+
+            MRLayoutRegistry layout = ActiveRegistry();
+            if (layout != null)
+                yield return layout.SpawnAllAsync(MRSpaceOrigin);
+
+            MREnvironmentRegistry environment = ActiveEnvironmentRegistry();
+            if (environment != null)
+                yield return environment.SpawnAllAsync(MRSpaceOrigin);
+
+            layout?.EnsureAttractPlaybackOnSpawned();
+            MRRoomInfoUI.Instance?.RefreshContent();
+        }
+        finally
+        {
+            roomLayoutSwitchInProgress = false;
+            roomLayoutSwitchRoutine = null;
+        }
+    }
+
+    /// <summary>Bind cabinets/objects YAML paths to the current scanned room (Phase A).</summary>
+    public void EnsureLayoutPathsBoundForEditSession() => BindLayoutPathsToCurrentRoom();
+
+    void BindLayoutPathsToCurrentRoom()
+    {
+        if (MRActiveRoom.TryBindFromDevice())
+        {
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} layout paths bound to room {MRActiveRoom.BoundRoomId}");
+            return;
+        }
+
+        if (MRActiveRoom.HasBoundRoom)
+        {
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} keeping bound room {MRActiveRoom.BoundRoomId} (device room id unavailable)");
+            return;
+        }
+
+        ConfigManager.WriteConsoleWarning(
+            $"{LogPrefix} no room id — using global MR layout paths");
     }
 
     void HandleTrackingDiscontinuity(
@@ -1000,6 +1091,7 @@ public class MixedRealityManager : MonoBehaviour
 
         mrLighting?.Spawn(MRSpaceOrigin);
         mrEffectMesh?.Spawn();
+        BindLayoutPathsToCurrentRoom();
         MRLayoutRegistry layoutRegistry = ActiveRegistry();
         if (layoutRegistry != null)
             yield return layoutRegistry.SpawnAllAsync(MRSpaceOrigin);
@@ -1062,6 +1154,7 @@ public class MixedRealityManager : MonoBehaviour
 
         SetMode(ExperienceMode.MR);
 
+        BindLayoutPathsToCurrentRoom();
         MRLayoutRegistry layout = ActiveRegistry();
         if (layout != null)
             yield return layout.SpawnAllAsync(MRSpaceOrigin);
@@ -1137,6 +1230,7 @@ public class MixedRealityManager : MonoBehaviour
             // Match 0.5.0 order: spawn MR layout + config cabinet and refresh poses *before*
             // phone-booth explosion. Spawning config first then exploding caused the initial
             // placement ray to cancel (~1s) and confused MOVE CONFIG on device.
+            BindLayoutPathsToCurrentRoom();
             MRLayoutRegistry layoutRegistry = ActiveRegistry();
             MRTransitionLog.LogStep("EnterMRFromPhoneBoothCoroutine", "before layout SpawnAllAsync");
             if (layoutRegistry != null)
@@ -1672,6 +1766,7 @@ public class MixedRealityManager : MonoBehaviour
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "after DespawnAllAsync");
         MRTransitionLog.LogManagerState("EnterVRCoroutine-after-despawn");
+        MRActiveRoom.Clear();
 
         MRVrSystemsGate.StopActiveLibretroGames();
         MRTransitionLog.LogStep("EnterVRCoroutine", "after StopActiveLibretroGames-final");
@@ -1976,6 +2071,19 @@ public class MixedRealityManager : MonoBehaviour
 
         if (environmentSurfaces != null && player != null)
             yield return environmentSurfaces.ProbeWhenReady(player);
+
+        // New/updated scan may change room UUIDs — rebind and respawn if needed.
+        if (MRRoomIdentity.TryGetCurrentRoomId(out string roomId)
+            && !string.Equals(roomId, MRActiveRoom.BoundRoomId, StringComparison.OrdinalIgnoreCase)
+            && !roomLayoutSwitchInProgress
+            && !transitionInProgress)
+        {
+            yield return SwitchActiveRoomLayoutCoroutine(roomId);
+        }
+        else
+        {
+            BindLayoutPathsToCurrentRoom();
+        }
 
         mrEffectMesh?.ApplySettings();
         MREffectMeshVisibility.ApplySavedSettings();

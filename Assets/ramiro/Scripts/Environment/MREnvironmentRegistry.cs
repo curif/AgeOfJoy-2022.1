@@ -52,7 +52,14 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         MRPaths.EnsureFolders();
         layout = MREnvironmentLayout.LoadOrCreate(LayoutFilePath);
-        ConfigManager.WriteConsole($"{LogPrefix} layout loaded ({layout.Props.Count} entries)");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} layout loaded ({layout.Props.Count} entries, room={MRActiveRoom.BoundRoomId ?? "global"}) path={LayoutFilePath}");
+    }
+
+    /// <summary>Drop in-memory layout so the next EnsureLayoutLoaded reads the current path (per-room bind).</summary>
+    public void UnloadLayoutMemory()
+    {
+        layout = null;
     }
 
     public void SpawnAll(Transform mrSpaceOrigin)
