@@ -203,6 +203,60 @@ public class LibretroControlMap : MonoBehaviour
     }
 
 
+    // --- Raw analog reads for the Flycast HW core (core: flycast) -------------------------------
+    // Active() thresholds axis actions into digital presses (the d-pad path). These helpers instead
+    // return the raw, proportional value of the same existing actions so a cabinet with
+    // `input: { analog-stick: true }` can drive the Dreamcast analog stick + analog triggers. Purely
+    // additive: Active() and every existing (MAME/FBNeo) caller are unchanged.
+
+    // Raw value of an axis/trigger action, without the digital thresholding Active() applies.
+    // Vector2 for a thumbstick binding (InvertX/Y honored); a trigger/button binding reports its
+    // 0..1 actuation mirrored into both components. Vector2.zero if the action is missing/disabled.
+    public Vector2 ReadAxisRaw(string mameControl, int port = 0)
+    {
+        if (actionMap == null || !actionMap.enabled)
+            return Vector2.zero;
+
+        InputAction action = actionMap.FindAction(mameControl + "_" + port.ToString());
+        if (action == null)
+            return Vector2.zero;
+
+        if (!action.enabled)
+        {
+            try { action.Enable(); }
+            catch { return Vector2.zero; }
+        }
+
+        var result = action.ReadValueAsObject();
+        if (result is Vector2 v)
+        {
+            if (InvertX) v.x = -v.x;
+            if (InvertY) v.y = -v.y;
+            return v;
+        }
+        if (result is float f)
+            return new Vector2(f, f); // trigger/button actuation (invert is meaningless here)
+
+        return Vector2.zero;
+    }
+
+    // Left thumbstick as libretro analog-stick values [-0x7fff, 0x7fff]. Y is negated: Unity stick-up
+    // is +y, libretro/Dreamcast analog-up is -y.
+    public void ReadStick(out short x, out short y, int port = 0)
+    {
+        Vector2 v = ReadAxisRaw(LibretroControlMapDictionnary.JOYPAD_UP, port);
+        x = (short)Mathf.Clamp(Mathf.RoundToInt(v.x * 0x7fff), -0x7fff, 0x7fff);
+        y = (short)Mathf.Clamp(Mathf.RoundToInt(-v.y * 0x7fff), -0x7fff, 0x7fff);
+    }
+
+    // Analog trigger actuation as a libretro ANALOG_BUTTON value [0, 0x7fff]. Pass JOYPAD_L (left
+    // trigger) or JOYPAD_R (right trigger) — the actions the default map binds to the triggers.
+    public short ReadTrigger(string mameControl, int port = 0)
+    {
+        float t = Mathf.Clamp01(Mathf.Abs(ReadAxisRaw(mameControl, port).x));
+        return (short)Mathf.RoundToInt(t * 0x7fff);
+    }
+
     public void Enable(bool enable)
     {
         if (enable)
