@@ -162,6 +162,8 @@ public class MRPlacementRayController : MonoBehaviour
         UpdatePreviewPose();
         if (hasValidPreview && movingTarget != null)
             movingTarget.transform.SetPositionAndRotation(previewPosition, previewRotation);
+
+        ShowPlacementInfoHud();
     }
 
     public bool AllowsStickRotation => isActive && allowStickRotation;
@@ -275,6 +277,7 @@ public class MRPlacementRayController : MonoBehaviour
 
         UpdatePreviewPose();
         DrawRay();
+        RefreshPlacementInfoHud();
 
         if (Time.unscaledTime >= ignoreCancelUntilUnscaledTime && WasCancelPressed())
         {
@@ -740,6 +743,7 @@ public class MRPlacementRayController : MonoBehaviour
             onCancel?.Invoke();
 
         SetRayVisualVisible(false);
+        HidePlacementInfoHud();
         isActive = false;
         movingTarget = null;
         onConfirmPose = null;
@@ -759,6 +763,68 @@ public class MRPlacementRayController : MonoBehaviour
             $"end cancelled={cancelled} reason={reason} hadPreview={hadValidPreviewThisSession}");
         ConfigManager.WriteConsole(
             $"{LogPrefix} end move cancelled={cancelled} reason={reason} hadPreview={hadValidPreviewThisSession}");
+    }
+
+    void ShowPlacementInfoHud()
+    {
+        MRPlacementInfoHUD.Ensure().Show(
+            surfaceType,
+            ResolveHudScale(),
+            ResolveHudRotationDegrees(),
+            allowStickRotation,
+            allowStickScale,
+            hasValidPreview,
+            ResolveHudObjectName());
+    }
+
+    void RefreshPlacementInfoHud()
+    {
+        if (MRPlacementInfoHUD.Instance == null)
+            return;
+
+        MRPlacementInfoHUD.Instance.Refresh(
+            surfaceType,
+            ResolveHudScale(),
+            ResolveHudRotationDegrees(),
+            allowStickRotation,
+            allowStickScale,
+            hasValidPreview,
+            ResolveHudObjectName());
+    }
+
+    void HidePlacementInfoHud()
+    {
+        if (MRPlacementInfoHUD.Instance != null)
+            MRPlacementInfoHUD.Instance.Hide();
+    }
+
+    float ResolveHudScale()
+    {
+        if (allowStickScale)
+            return userScale > 0f ? userScale : 1f;
+
+        if (movingTarget != null)
+        {
+            if (MRPosterPlacement.TryReadUserScale(movingTarget, out float posterScale))
+                return posterScale;
+            float s = movingTarget.transform.localScale.x;
+            if (s > 0f)
+                return s;
+        }
+
+        return 1f;
+    }
+
+    float ResolveHudRotationDegrees()
+    {
+        if (movingTarget != null)
+            return movingTarget.transform.eulerAngles.y;
+        return NormalizeYaw(initialYawDegrees + userYawOffsetDegrees);
+    }
+
+    string ResolveHudObjectName()
+    {
+        return movingTarget != null ? movingTarget.name : "OBJECT";
     }
 
     static void ApplyFloorPivotOffset(GameObject target, ref Vector3 floorPoint, Quaternion worldRotation)
@@ -872,7 +938,7 @@ public class MRPlacementRayController : MonoBehaviour
     static bool IsScaleModifierHeld()
     {
 #if UNITY_EDITOR
-        // Grip stand-in (Quest: R hand trigger). KeyCode.A is already stick-left.
+        // Grip stand-in (Quest: R hand trigger). KeyCode.A already drives stick-left.
         return MREditorInput.IsHeld(KeyCode.LeftShift) || MREditorInput.IsHeld(KeyCode.RightShift);
 #else
         return OVRInput.Get(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
