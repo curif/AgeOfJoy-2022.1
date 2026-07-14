@@ -24,10 +24,10 @@ public class MRConfigurationController : MonoBehaviour
     const int HelpWrapWidth = 38;
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
-    const int LightsAutoRowIndex = 0;
     const int OfficialCategoryCount = 2; // was 3 — Bookshelves/Magazines hidden from menu
     const int CustomCategoryCount = 2; // Posters + Room Skin (Others packages listed on home)
-    const int ConfigCategoryCount = 4;
+    const int ConfigCategoryCount = 5;
+    const int GlobalLightOptionCount = 2;
     const int ListRowNameWidth = 10;
     const int CabinetListRowNameWidth = 18;
     const int RoomSkinListRowNameWidth = 22;
@@ -67,6 +67,7 @@ public class MRConfigurationController : MonoBehaviour
         NavMain,
         Cabinets,
         Adjustments,
+        GlobalLight,
         PhoneBooth,
         Config,
         CustomObjects,
@@ -445,7 +446,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
         navMenu.AddOption("OFFICIAL OBJECTS", "Lights + PrefabsEnvironment catalog");
-        navMenu.AddOption("CONFIG", "Move cabinet, scale, EffectMesh");
+        navMenu.AddOption("CONFIG", "Move, scale, global light, mesh");
         navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls + objects guide");
         navMenu.AddOption("EXIT", "Close panel");
@@ -728,6 +729,9 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Adjustments:
                 DrawAdjustmentsPage();
                 break;
+            case Screen.GlobalLight:
+                DrawGlobalLightPage();
+                break;
             case Screen.PhoneBooth:
                 DrawPhoneBoothPage();
                 break;
@@ -939,6 +943,34 @@ public class MRConfigurationController : MonoBehaviour
         DrawFooter("Up/Down: row   L/R: +/-   A: change");
     }
 
+    void DrawGlobalLightPage()
+    {
+        MRAutoLightingSettings.EnsureLoaded();
+        bool on = MRAutoLightingSettings.Enabled;
+        float intensity = MRAutoLightingSettings.Intensity;
+
+        const int nameWidth = 22;
+        int row = BeginListTable("GLOBAL LIGHT", "ITEM", null, nameWidth, startRow: 0);
+        row = DrawListRow(
+            row,
+            0,
+            selectedListIndex,
+            Truncate("Fill (all objects)", nameWidth),
+            on
+                ? new List<RowActionKind> { RowActionKind.ToggleOff }
+                : new List<RowActionKind> { RowActionKind.ToggleOn },
+            nameWidth: nameWidth);
+        row = DrawListRow(
+            row,
+            1,
+            selectedListIndex,
+            $"Int {intensity:F1}",
+            AdjustmentValueActions,
+            nameWidth: nameWidth);
+        EndListTable(row);
+        DrawFooter("Up/Down: row   L/R: +/-   A: on/off or step");
+    }
+
     void DrawConfigCategoryPage()
     {
         screen.PrintCentered(0, "CONFIG", true);
@@ -948,6 +980,7 @@ public class MRConfigurationController : MonoBehaviour
         {
             "Move Config (Press A to enter)",
             "Adjustments (Press A to enter)",
+            "Global Light (Press A to enter)",
             "Mesh (Press A to enter)",
             "Delete Configs (Press A to enter)"
         };
@@ -1343,32 +1376,24 @@ public class MRConfigurationController : MonoBehaviour
         int rowSelected = envListFocusOnFilter ? -1 : selectedListIndex;
         int row = BeginListTable(null, "NAME", null, CabinetListRowNameWidth, startRow: 3);
 
-        row = DrawListRow(
-            row,
-            LightsAutoRowIndex,
-            rowSelected,
-            Truncate(MRAutoLightingVisibility.AutoLightLabel, CabinetListRowNameWidth),
-            GetAutoLightRowActions());
-
         if (lightsCatalogEntries.Count == 0)
         {
             EndListTable(row, "No light prefabs in ramiro/Lights/");
             return;
         }
 
-        int catalogVisibleRows = Mathf.Max(1, VisibleCabinetRows - 1);
+        int catalogVisibleRows = Mathf.Max(1, VisibleCabinetRows);
         for (int i = 0; i < catalogVisibleRows; i++)
         {
             int catalogIdx = listScrollOffset + i;
             if (catalogIdx >= filteredEnvCatalogEntries.Count)
                 break;
 
-            int listIdx = catalogIdx + 1;
             MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[catalogIdx];
             string label = Truncate(entry.MenuLabel, CabinetListRowNameWidth);
             row = DrawListRow(
                 row,
-                listIdx,
+                catalogIdx,
                 rowSelected,
                 label,
                 GetLightsFilteredRowActions(catalogIdx),
@@ -1380,7 +1405,7 @@ public class MRConfigurationController : MonoBehaviour
             : $"Stick Up to filters  {GetLightsListCount()} items");
     }
 
-    int GetLightsListCount() => 1 + filteredEnvCatalogEntries.Count;
+    int GetLightsListCount() => filteredEnvCatalogEntries.Count;
 
     List<RowActionKind> GetLightsFilteredRowActions(int filteredCatalogIndex)
     {
@@ -1738,8 +1763,8 @@ public class MRConfigurationController : MonoBehaviour
         yield return "  posters, room skins";
         yield return "OFFICIAL OBJECTS - lights +";
         yield return "  built-in props";
-        yield return "CONFIG - move, scale, mesh,";
-        yield return "  delete YAML";
+        yield return "CONFIG - move, scale, light,";
+        yield return "  mesh, delete YAML";
         yield return "DEBUG - MR error log";
         yield return "HELP - this guide";
         yield return "EXIT - close CRT";
@@ -1799,6 +1824,8 @@ public class MRConfigurationController : MonoBehaviour
         yield return "  scale + floor Y";
         yield return "  Up/Down row  L/R +/-";
         yield return "  A applies step";
+        yield return "Global Light: cool fill all";
+        yield return "  objects  ON/OFF + intens";
         yield return "Mesh: enable/disable mesh";
         yield return "Delete Configs: erase";
         yield return "  MR/*.yaml (assets kept)";
@@ -1887,11 +1914,13 @@ public class MRConfigurationController : MonoBehaviour
             && PlacedInstanceShowAddedHasTune())
         || screen == Screen.Mesh
         || screen == Screen.Adjustments
+        || screen == Screen.GlobalLight
         || screen == Screen.LightTune
         || screen == Screen.Debug;
 
     static bool UsesPlusMinusActionCursor(Screen screen) =>
         screen == Screen.Adjustments
+        || screen == Screen.GlobalLight
         || screen == Screen.LightTune;
 
     /// <summary>
@@ -2321,6 +2350,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.PlacedInstances => GetPlacedInstanceRowActions(selectedListIndex),
             Screen.Mesh => GetMeshRowActions(selectedListIndex),
             Screen.Adjustments => AdjustmentValueActions,
+            Screen.GlobalLight => GetGlobalLightRowActions(selectedListIndex),
             Screen.LightTune => AdjustmentValueActions,
             Screen.PhoneBooth => GetPhoneBoothRowActions(),
             Screen.Debug => GetDebugRowActions(selectedListIndex),
@@ -2374,15 +2404,11 @@ public class MRConfigurationController : MonoBehaviour
 
     List<RowActionKind> GetLightsRowActions(int index)
     {
-        if (index == LightsAutoRowIndex)
-            return GetAutoLightRowActions();
-
         var actions = new List<RowActionKind>();
-        int catalogIdx = index - 1;
-        if (catalogIdx < 0 || catalogIdx >= lightsCatalogEntries.Count || envRegistry == null)
+        if (index < 0 || index >= lightsCatalogEntries.Count || envRegistry == null)
             return actions;
 
-        MREnvironmentCatalogEntry entry = lightsCatalogEntries[catalogIdx];
+        MREnvironmentCatalogEntry entry = lightsCatalogEntries[index];
         int count = envRegistry.GetInstanceCount(entry);
         if (count > 0)
             actions.Add(RowActionKind.Options);
@@ -2453,6 +2479,15 @@ public class MRConfigurationController : MonoBehaviour
         else
             actions.Add(RowActionKind.ToggleOn);
         return actions;
+    }
+
+    List<RowActionKind> GetGlobalLightRowActions(int index)
+    {
+        if (index == 0)
+            return GetAutoLightRowActions();
+        if (index == 1)
+            return new List<RowActionKind>(AdjustmentValueActions);
+        return new List<RowActionKind>();
     }
 
     List<RowActionKind> GetPlacedInstanceRowActions(int index)
@@ -2565,6 +2600,9 @@ public class MRConfigurationController : MonoBehaviour
                 return true;
             case Screen.Adjustments:
                 ExecuteAdjustmentRowAction(action);
+                return true;
+            case Screen.GlobalLight:
+                ExecuteGlobalLightRowAction(action);
                 return true;
             case Screen.LightTune:
                 ExecuteLightTuneRowAction(action);
@@ -2723,17 +2761,10 @@ public class MRConfigurationController : MonoBehaviour
 
     bool ExecuteLightsRowAction(RowActionKind action)
     {
-        if (selectedListIndex == LightsAutoRowIndex)
-        {
-            ExecuteAutoLightRowAction(action);
-            return true;
-        }
-
-        int catalogIdx = selectedListIndex - 1;
-        if (catalogIdx < 0 || catalogIdx >= filteredEnvCatalogEntries.Count || envRegistry == null)
+        if (selectedListIndex < 0 || selectedListIndex >= filteredEnvCatalogEntries.Count || envRegistry == null)
             return false;
 
-        MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[catalogIdx];
+        MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[selectedListIndex];
         switch (action)
         {
             case RowActionKind.Add:
@@ -2771,10 +2802,7 @@ public class MRConfigurationController : MonoBehaviour
 
     List<RowActionKind> GetLightsRowActionsForSelection()
     {
-        if (selectedListIndex == LightsAutoRowIndex)
-            return GetAutoLightRowActions();
-
-        return GetLightsFilteredRowActions(selectedListIndex - 1);
+        return GetLightsFilteredRowActions(selectedListIndex);
     }
 
     bool ExecuteMagazinesRowAction(RowActionKind action)
@@ -2803,6 +2831,24 @@ public class MRConfigurationController : MonoBehaviour
             MRAutoLightingVisibility.SetEnabled(true);
         else if (action == RowActionKind.ToggleOff)
             MRAutoLightingVisibility.SetEnabled(false);
+    }
+
+    void ExecuteGlobalLightRowAction(RowActionKind action)
+    {
+        if (selectedListIndex == 0)
+        {
+            ExecuteAutoLightRowAction(action);
+            return;
+        }
+
+        if (selectedListIndex != 1)
+            return;
+
+        int direction = action == RowActionKind.Increase ? 1 : action == RowActionKind.Decrease ? -1 : 0;
+        if (direction == 0)
+            return;
+
+        MRAutoLightingVisibility.AdjustIntensity(direction);
     }
 
     bool ExecutePlacedInstanceRowAction(RowActionKind action)
@@ -2982,6 +3028,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.RoomSkins => filteredEnvCatalogEntries.Count,
             Screen.PlacedInstances => GetPlacedInstancesListCount(),
             Screen.Mesh => MeshOptionCount,
+            Screen.GlobalLight => GlobalLightOptionCount,
             Screen.Debug => debugDisplayLines.Count,
             _ => 0
         };
@@ -3335,6 +3382,16 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
 
+            case Screen.GlobalLight:
+                selectedListIndex += delta;
+                if (selectedListIndex < 0)
+                    selectedListIndex = GlobalLightOptionCount - 1;
+                else if (selectedListIndex >= GlobalLightOptionCount)
+                    selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                DrawCurrentScreen();
+                break;
+
             case Screen.LightTune:
                 selectedLightTuneIndex += delta;
                 if (selectedLightTuneIndex < 0)
@@ -3367,7 +3424,7 @@ public class MRConfigurationController : MonoBehaviour
 
             case Screen.DeleteConfigsDone:
                 currentScreen = Screen.Config;
-                selectedListIndex = 3;
+                selectedListIndex = 4;
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
                 SyncBackControlEdgeState();
@@ -3418,6 +3475,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Magazines:
             case Screen.Mesh:
             case Screen.Adjustments:
+            case Screen.GlobalLight:
             case Screen.LightTune:
             case Screen.PhoneBooth:
             case Screen.Debug:
@@ -3670,6 +3728,7 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
             case Screen.Adjustments:
+            case Screen.GlobalLight:
             case Screen.Mesh:
                 currentScreen = Screen.Config;
                 navCooldown = navRepeatDelay;
@@ -3680,7 +3739,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.DeleteConfigsConfirm:
             case Screen.DeleteConfigsDone:
                 currentScreen = Screen.Config;
-                selectedListIndex = 3;
+                selectedListIndex = 4;
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
                 SyncBackControlEdgeState();
@@ -3726,6 +3785,11 @@ public class MRConfigurationController : MonoBehaviour
             case 2:
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
+                currentScreen = Screen.GlobalLight;
+                break;
+            case 3:
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.Mesh;
                 break;
@@ -3747,7 +3811,7 @@ public class MRConfigurationController : MonoBehaviour
         if (selectedListIndex != 0)
         {
             currentScreen = Screen.Config;
-            selectedListIndex = 3;
+            selectedListIndex = 4;
             navCooldown = navRepeatDelay;
             SyncConfirmControlEdgeState();
             SyncBackControlEdgeState();
@@ -4394,23 +4458,22 @@ public class MRConfigurationController : MonoBehaviour
 
     void ClampLightsScroll()
     {
-        int count = Mathf.Max(1, GetLightsListCount());
-        selectedListIndex = Mathf.Clamp(selectedListIndex, 0, count - 1);
-
-        int catalogCount = filteredEnvCatalogEntries.Count;
-        int catalogVisibleRows = Mathf.Max(1, VisibleCabinetRows - 1);
-        if (selectedListIndex == LightsAutoRowIndex || catalogCount == 0)
+        int count = Mathf.Max(0, GetLightsListCount());
+        if (count == 0)
         {
+            selectedListIndex = 0;
             listScrollOffset = 0;
             return;
         }
 
-        int catalogIdx = selectedListIndex - 1;
-        int maxOffset = Mathf.Max(0, catalogCount - catalogVisibleRows);
-        if (catalogIdx < listScrollOffset)
-            listScrollOffset = catalogIdx;
-        else if (catalogIdx >= listScrollOffset + catalogVisibleRows)
-            listScrollOffset = catalogIdx - catalogVisibleRows + 1;
+        selectedListIndex = Mathf.Clamp(selectedListIndex, 0, count - 1);
+
+        int catalogVisibleRows = Mathf.Max(1, VisibleCabinetRows);
+        int maxOffset = Mathf.Max(0, count - catalogVisibleRows);
+        if (selectedListIndex < listScrollOffset)
+            listScrollOffset = selectedListIndex;
+        else if (selectedListIndex >= listScrollOffset + catalogVisibleRows)
+            listScrollOffset = selectedListIndex - catalogVisibleRows + 1;
         listScrollOffset = Mathf.Clamp(listScrollOffset, 0, maxOffset);
     }
 

@@ -116,9 +116,9 @@ posters, MRUK effect mesh, and MR lighting.
 |--------|------|
 | `MRLightsCatalog` | MR light prop catalog |
 | `MRLightPlacement` | Spawn / tune placed lamps |
-| `MRAutoLightingSettings` | Auto-light on MR entry (toggle in CRT **LIGHTS**) |
-| `MRAutoLightingVisibility` | Applies auto-lighting without affecting manual lamps |
-| `MRMrEnvironmentLighting` | Ambient lighting tuned to the real room |
+| `MRAutoLightingSettings` | Global sun on/off + intensity (PlayerPrefs; CRT **CONFIG → GLOBAL LIGHT**) |
+| `MRAutoLightingVisibility` | Applies global sun without affecting manual lamps |
+| `MRMrEnvironmentLighting` | Cool white global fill (ambient + key/fill directionals) |
 
 ---
 

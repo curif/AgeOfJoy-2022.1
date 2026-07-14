@@ -5,24 +5,26 @@ This program is free software: you can redistribute it and/or modify it under th
 using UnityEngine;
 using UnityEngine.Rendering;
 
-/// <summary>MR room lighting — point lights only (no 3D lamp mesh) for passthrough visibility.</summary>
+/// <summary>
+/// MR global fill lighting — cool white wrap so every virtual object is lit from all sides.
+/// Uses strong ambient + two opposite directionals (key with soft shadows, fill without).
+/// Toggle + intensity via CONFIG → GLOBAL LIGHT. Catalog point lights stay separate.
+/// </summary>
 public class MRMrEnvironmentLighting : MonoBehaviour
 {
     const string LogPrefix = "[MRMrEnvironmentLighting]";
 
-    [SerializeField] float defaultCeilingHeightMeters = 2.6f;
-    [SerializeField] float ceilingLampDropMeters = 0.18f;
-    [SerializeField] float lampForwardOffsetMeters = 0.6f;
-    [SerializeField] float ceilingLightRange = 5f;
-    [SerializeField] float ceilingLightIntensity = 1.6f;
-    [SerializeField] Color ceilingLightColor = new Color(0.82f, 0.93f, 1f);
-    [SerializeField] float handFillLightHeightMeters = 1.85f;
-    [SerializeField] float handFillLightIntensity = 1.35f;
-    [SerializeField] float handFillLightRange = 3.5f;
-    [SerializeField] Color handFillLightColor = new Color(1f, 0.95f, 0.88f);
-    [SerializeField] Color ambientFillColor = new Color(0.32f, 0.32f, 0.36f);
+    /// <summary>Key “sun” angle — cool daylight, not yellow.</summary>
+    [SerializeField] Vector3 keyEulerAngles = new Vector3(55f, -40f, 0f);
+    [SerializeField] Color lightColor = new Color(0.90f, 0.95f, 1f);
+    [SerializeField] Color ambientColor = new Color(0.72f, 0.76f, 0.82f);
+    [SerializeField] float ambientBase = 0.85f;
+    [SerializeField] float keyRelative = 0.55f;
+    [SerializeField] float fillRelative = 0.40f;
 
     GameObject lightingRoot;
+    Light keyLight;
+    Light fillLight;
     AmbientMode savedAmbientMode;
     Color savedAmbientLight;
     float savedAmbientIntensity;
@@ -46,38 +48,20 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         }
 
         if (lightingRoot != null)
+        {
+            ApplyIntensity(MRAutoLightingSettings.Intensity);
             return;
-
-        ApplyAmbientFill();
+        }
 
         lightingRoot = new GameObject("MRLighting");
         lightingRoot.transform.SetParent(mrSpaceOrigin, false);
         lightingRoot.transform.localPosition = Vector3.zero;
         lightingRoot.transform.localRotation = Quaternion.identity;
 
-        Vector3 localCenter = ResolveLocalCenter(mrSpaceOrigin);
-        Vector3 worldProbe = mrSpaceOrigin.TransformPoint(
-            new Vector3(localCenter.x, 0f, localCenter.z + lampForwardOffsetMeters));
-
-        float lampLocalY = defaultCeilingHeightMeters - ceilingLampDropMeters;
-        MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
-        if (surfaces != null && surfaces.TryGetCeilingPointAt(worldProbe, out Vector3 ceilingWorld))
-        {
-            lampLocalY = mrSpaceOrigin.InverseTransformPoint(ceilingWorld).y - ceilingLampDropMeters;
-        }
-        else if (surfaces != null && surfaces.HasFloor && surfaces.HasCeiling)
-        {
-            lampLocalY = surfaces.CeilingHeight - surfaces.FloorHeight - ceilingLampDropMeters;
-        }
-
-        lampLocalY = Mathf.Max(lampLocalY, handFillLightHeightMeters + 0.35f);
-
-        Vector3 lampLocalPos = new Vector3(localCenter.x, lampLocalY, localCenter.z + lampForwardOffsetMeters);
-        Vector3 fillLocalPos = new Vector3(localCenter.x, handFillLightHeightMeters, localCenter.z + lampForwardOffsetMeters * 0.5f);
-
-        CreateCeilingLight(lampLocalPos);
-        CreateHandFillLight(fillLocalPos);
-        ConfigManager.WriteConsole($"{LogPrefix} spawned lights only localY={lampLocalY:F2}");
+        CreateWrapLights();
+        ApplyIntensity(MRAutoLightingSettings.Intensity);
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} spawned global cool fill intensity={MRAutoLightingSettings.Intensity:F1}");
     }
 
     public void Despawn(bool restoreAmbient = false)
@@ -88,6 +72,8 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         if (lightingRoot != null)
             Destroy(lightingRoot);
         lightingRoot = null;
+        keyLight = null;
+        fillLight = null;
     }
 
     /// <summary>Called when leaving MR — remove runtime lights and undo ambient fill.</summary>
@@ -96,18 +82,32 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         Despawn(restoreAmbient: true);
     }
 
-    void ApplyAmbientFill()
+    public void ApplyIntensity(float intensity)
     {
-        if (ambientSaved)
-            return;
+        intensity = Mathf.Max(0f, intensity);
 
-        savedAmbientMode = RenderSettings.ambientMode;
-        savedAmbientLight = RenderSettings.ambientLight;
-        savedAmbientIntensity = RenderSettings.ambientIntensity;
-        ambientSaved = true;
+        if (keyLight != null)
+            keyLight.intensity = intensity * keyRelative;
+        if (fillLight != null)
+            fillLight.intensity = intensity * fillRelative;
 
+        ApplyAmbientFill(intensity);
+    }
+
+    void ApplyAmbientFill(float intensity)
+    {
+        if (!ambientSaved)
+        {
+            savedAmbientMode = RenderSettings.ambientMode;
+            savedAmbientLight = RenderSettings.ambientLight;
+            savedAmbientIntensity = RenderSettings.ambientIntensity;
+            ambientSaved = true;
+        }
+
+        // Ambient is what truly wraps every surface — scale it with the Global Light intensity.
+        float ambientScale = ambientBase * Mathf.Clamp(intensity, 0.1f, 5f);
         RenderSettings.ambientMode = AmbientMode.Flat;
-        RenderSettings.ambientLight = ambientFillColor;
+        RenderSettings.ambientLight = ambientColor * ambientScale;
         RenderSettings.ambientIntensity = 1f;
     }
 
@@ -122,53 +122,25 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         ambientSaved = false;
     }
 
-    static Vector3 ResolveLocalCenter(Transform mrSpaceOrigin)
+    void CreateWrapLights()
     {
-        Transform player = FindPlayerTransform();
-        if (player == null)
-            return Vector3.zero;
+        // Key + fill opposite each other, no shadows — models receive light from both hemispheres.
+        var keyGo = new GameObject("MRGlobalKey");
+        keyGo.transform.SetParent(lightingRoot.transform, false);
+        keyGo.transform.localRotation = Quaternion.Euler(keyEulerAngles);
+        keyLight = keyGo.AddComponent<Light>();
+        keyLight.type = LightType.Directional;
+        keyLight.color = lightColor;
+        keyLight.shadows = LightShadows.Soft;
 
-        return mrSpaceOrigin.InverseTransformPoint(player.position);
-    }
-
-    void CreateCeilingLight(Vector3 localPos)
-    {
-        var lampGo = new GameObject("MRCeilingLight");
-        lampGo.transform.SetParent(lightingRoot.transform, false);
-        lampGo.transform.localPosition = localPos;
-        lampGo.transform.localRotation = Quaternion.identity;
-
-        Light light = lampGo.AddComponent<Light>();
-        light.type = LightType.Point;
-        light.range = ceilingLightRange;
-        light.intensity = ceilingLightIntensity;
-        light.color = ceilingLightColor;
-        light.shadows = LightShadows.Soft;
-    }
-
-    void CreateHandFillLight(Vector3 localPos)
-    {
-        var fillGo = new GameObject("MRHandFillLight");
+        var fillGo = new GameObject("MRGlobalFill");
         fillGo.transform.SetParent(lightingRoot.transform, false);
-        fillGo.transform.localPosition = localPos;
-
-        Light light = fillGo.AddComponent<Light>();
-        light.type = LightType.Point;
-        light.range = handFillLightRange;
-        light.intensity = handFillLightIntensity;
-        light.color = handFillLightColor;
-        light.shadows = LightShadows.None;
-    }
-
-    static Transform FindPlayerTransform()
-    {
-        var pc = FindObjectOfType<PlayerController>();
-        if (pc != null && pc.PlayerControllerGameObject != null)
-            return pc.PlayerControllerGameObject.transform;
-        if (pc != null)
-            return pc.transform;
-
-        var tagged = GameObject.FindGameObjectWithTag("Player");
-        return tagged != null ? tagged.transform : null;
+        fillGo.transform.localRotation = Quaternion.Euler(keyEulerAngles) * Quaternion.Euler(0f, 180f, 0f);
+        fillLight = fillGo.AddComponent<Light>();
+        fillLight.type = LightType.Directional;
+        fillLight.color = lightColor;
+        // Fill only softens the dark side — keep shadows on the key so cabinets cast contact shadows.
+        fillLight.shadows = LightShadows.None;
     }
 }
+
