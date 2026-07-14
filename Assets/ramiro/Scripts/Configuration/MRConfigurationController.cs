@@ -16,7 +16,7 @@ public class MRConfigurationController : MonoBehaviour
 {
     const string LogPrefix = "[MRConfigurationController]";
     const string DefaultSkin = "c64";
-    const int VisibleCabinetRows = 11;
+    const int VisibleCabinetRows = 8;
     const int VisibleDebugRows = 10;
     const int VisibleDebugDetailRows = 16;
     const int VisibleHelpRows = 18;
@@ -871,8 +871,9 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         int rowSelected = cabinetFocusOnFilter ? -1 : selectedListIndex;
+        int visibleRows = GetFilterListVisibleRows();
         int row = BeginListTable(null, "NAME", null, CabinetListRowNameWidth, startRow: 3);
-        for (int i = 0; i < VisibleCabinetRows; i++)
+        for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
             if (idx >= filteredCabinetNames.Count)
@@ -1053,6 +1054,23 @@ public class MRConfigurationController : MonoBehaviour
     int GetOfficialObjectsVisibleRows() =>
         Mathf.Max(1, (screen.CharactersYCount - 3 - 3) / 2);
 
+    /// <summary>
+    /// Catalog/filter list data rows that fit (Show All + Show Added).
+    /// Keep in sync with draw loops and ClampListScroll — too many rows clips the last posters on CRT.
+    /// </summary>
+    int GetFilterListVisibleRows(int tableStartRow = 3)
+    {
+        if (screen == null)
+            return Mathf.Max(1, VisibleCabinetRows);
+
+        // BeginListTable: top + header + rule = 3 rows before first data line.
+        int firstDataRow = tableStartRow + 3;
+        // After data: EndListTable footer (3) + SEL/hint/back (3). Extra -2 for CRT bezel crop.
+        int lastDataExclusive = screen.CharactersYCount - 3 - 3 - 2;
+        int fit = lastDataExclusive - firstDataRow;
+        return Mathf.Max(1, Mathf.Min(VisibleCabinetRows, fit));
+    }
+
     void DrawMenuSeparatorLine(int y)
     {
         if (screen == null || y < 0 || y >= screen.CharactersYCount - 1)
@@ -1227,8 +1245,9 @@ public class MRConfigurationController : MonoBehaviour
             }
 
             int rowSelectedAdded = envListFocusOnFilter ? -1 : selectedListIndex;
+            int addedVisibleRows = GetFilterListVisibleRows();
             int rowAdded = BeginListTable(null, "COPY", null, nameWidth, startRow: 3);
-            for (int i = 0; i < VisibleCabinetRows; i++)
+            for (int i = 0; i < addedVisibleRows; i++)
             {
                 int idx = listScrollOffset + i;
                 if (idx >= showAddedEnvPlacements.Count)
@@ -1266,6 +1285,7 @@ public class MRConfigurationController : MonoBehaviour
         int rowSelected = envListFocusOnFilter ? -1 : selectedListIndex;
         // Show All for multi-copy catalogs: no count column (copies are listed in Show Added).
         bool hideCountColumn = UsesShowAllAddedAddRemove(currentScreen);
+        int visibleRows = GetFilterListVisibleRows();
         int row = BeginListTable(
             null,
             "NAME",
@@ -1273,7 +1293,7 @@ public class MRConfigurationController : MonoBehaviour
             nameWidth,
             startRow: 3,
             flagWidth: flagWidth);
-        for (int i = 0; i < VisibleCabinetRows; i++)
+        for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
             if (idx >= filteredEnvCatalogEntries.Count)
@@ -1336,7 +1356,8 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         int row = BeginListTable(null, "NAME", null, RoomSkinListRowNameWidth, startRow: 2);
-        for (int i = 0; i < VisibleCabinetRows; i++)
+        int visibleRows = GetFilterListVisibleRows(2);
+        for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
             if (idx >= filteredEnvCatalogEntries.Count)
@@ -1382,7 +1403,7 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
-        int catalogVisibleRows = Mathf.Max(1, VisibleCabinetRows);
+        int catalogVisibleRows = GetFilterListVisibleRows();
         for (int i = 0; i < catalogVisibleRows; i++)
         {
             int catalogIdx = listScrollOffset + i;
@@ -1438,7 +1459,9 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         int row = BeginListTable("BOOKSHELVES", "NAME", "#", ListRowNameWidth, startRow: 0);
-        for (int i = 0; i < VisibleCabinetRows; i++)
+        // Title row in table (+2 chrome vs filter lists); first data = 0+3+2 = 5.
+        int visibleRows = GetFilterListVisibleRows(tableStartRow: 2);
+        for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
             if (idx >= magazinesCatalogEntries.Count)
@@ -1476,8 +1499,9 @@ public class MRConfigurationController : MonoBehaviour
 
         int rowSelected = envListFocusOnFilter ? -1 : selectedListIndex;
         string nameCol = showAdded ? "COPY" : "NAME";
+        int visibleRows = GetFilterListVisibleRows();
         int row = BeginListTable(null, nameCol, null, ListRowNameWidth, startRow: 3);
-        for (int i = 0; i < VisibleCabinetRows; i++)
+        for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
             if (idx >= listCount)
@@ -3133,7 +3157,8 @@ public class MRConfigurationController : MonoBehaviour
 
         if (envListFocusOnFilter)
         {
-            if (delta > 0 && filteredEnvCatalogEntries.Count > 0)
+            // Posters Show Added: list length is placement copies, not unique catalog rows.
+            if (delta > 0 && GetListCount() > 0)
             {
                 envListFocusOnFilter = false;
                 selectedListIndex = 0;
@@ -3145,7 +3170,7 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
-        int count = filteredEnvCatalogEntries.Count;
+        int count = GetListCount();
         if (count == 0)
         {
             envListFocusOnFilter = true;
@@ -4448,6 +4473,17 @@ public class MRConfigurationController : MonoBehaviour
             visibleRows = GetCustomHomePackageVisibleRows();
         else if (currentScreen == Screen.OfficialObjects)
             visibleRows = GetOfficialObjectsVisibleRows();
+        else if (currentScreen == Screen.Cabinets
+            || currentScreen == Screen.Posters
+            || currentScreen == Screen.CustomObjectsOthers
+            || currentScreen == Screen.OfficialObjectsOthers
+            || currentScreen == Screen.RoomSkins
+            || currentScreen == Screen.Magazines
+            || currentScreen == Screen.PlacedInstances)
+            visibleRows = GetFilterListVisibleRows(
+                currentScreen == Screen.RoomSkins || currentScreen == Screen.Magazines ? 2 : 3);
+        else if (currentScreen == Screen.Debug)
+            visibleRows = VisibleDebugRows;
         int maxOffset = Mathf.Max(0, count - visibleRows);
         if (selectedListIndex < listScrollOffset)
             listScrollOffset = selectedListIndex;
@@ -4468,7 +4504,7 @@ public class MRConfigurationController : MonoBehaviour
 
         selectedListIndex = Mathf.Clamp(selectedListIndex, 0, count - 1);
 
-        int catalogVisibleRows = Mathf.Max(1, VisibleCabinetRows);
+        int catalogVisibleRows = GetFilterListVisibleRows();
         int maxOffset = Mathf.Max(0, count - catalogVisibleRows);
         if (selectedListIndex < listScrollOffset)
             listScrollOffset = selectedListIndex;

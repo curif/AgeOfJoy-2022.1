@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Retro terminal HUD during MR placement ray (green phosphor + rounded black panel).
+/// Retro Turbo Vision–style HUD during MR placement ray (white/cyan/yellow on blue panel).
 /// Prototype in Assets/ramiro/UIInformation; driven live by MRPlacementRayController.
 /// </summary>
 public class MRPlacementInfoHUD : MonoBehaviour
@@ -16,6 +16,10 @@ public class MRPlacementInfoHUD : MonoBehaviour
     const string LogPrefix = "[MRPlacementInfoHUD]";
     // Fits ~380px panel @ mono 14–16px (keep short so content stays inside the chrome).
     const int InnerWidth = 34;
+    // Classic Turbo Vision / VGA text palette.
+    const string ColorTitle = "FFFF55";
+    const string ColorHeader = "55FFFF";
+    const string ColorBody = "FFFFFF";
 
     public static MRPlacementInfoHUD Instance { get; private set; }
 
@@ -42,10 +46,11 @@ public class MRPlacementInfoHUD : MonoBehaviour
         }
     }
     [SerializeField] float borderThicknessPixels = 4f;
-    [SerializeField] float cornerRadiusPixels = 24f;
-    [SerializeField] Color backgroundColor = Color.black;
-    [SerializeField] Color borderColor = new Color(0.35f, 1f, 0.45f, 1f);
-    [SerializeField] Color textColor = new Color(0.35f, 1f, 0.45f, 1f);
+    [SerializeField] float cornerRadiusPixels = 8f;
+    // Classic TV window blue (#0000AA family).
+    [SerializeField] Color backgroundColor = new Color(0f, 0f, 0.67f, 1f);
+    [SerializeField] Color borderColor = new Color(0.33f, 1f, 1f, 1f);
+    [SerializeField] Color textColor = Color.white;
     [SerializeField] int fontSize = 16;
 
     Canvas canvas;
@@ -209,50 +214,59 @@ public class MRPlacementInfoHUD : MonoBehaviour
 
     string BuildPanelText()
     {
-        // ASCII-only frame (Legacy/OS fonts often miss ╔║═ glyphs and blow the layout).
-        // Visual green rounded Image is the outer chrome; this is the inner terminal frame.
+        // ASCII frame only — Quest/Android OS fonts miss CP437 box glyphs and substitute
+        // proportional fallbacks, which shifts the whole panel content to the right.
         string bar = "+" + new string('-', InnerWidth) + "+";
-        string mid = "|" + new string('-', InnerWidth) + "|";
+        string mid = "+" + new string('-', InnerWidth) + "+";
         string divider = "  " + new string('-', InnerWidth - 2);
 
         int scalePercent = Mathf.RoundToInt(Mathf.Max(0.01f, scaleValue) * 100f);
         float rot = Mathf.Repeat(rotationDegrees, 360f);
-        string rotLabel = Mathf.RoundToInt(rot).ToString("000") + "\u00B0";
-        string displayName = string.IsNullOrEmpty(objectLabel) ? "OBJECT" : objectLabel;
+        string rotLabel = Mathf.RoundToInt(rot).ToString("000") + " deg";
+        string displayName = string.IsNullOrEmpty(objectLabel) ? "OBJECT" : objectLabel.ToUpperInvariant();
         if (displayName.Length > InnerWidth - 2)
             displayName = displayName.Substring(0, InnerWidth - 2);
 
-        var sb = new System.Text.StringBuilder(768);
-        sb.Append(bar).Append('\n');
-        sb.Append(Row(Center(displayName))).Append('\n');
-        sb.Append(mid).Append('\n');
-        sb.Append(Row(PadColumns("CONTROLS", "ACTION", 20))).Append('\n');
-        sb.Append(Row(divider)).Append('\n');
+        string surface = string.IsNullOrEmpty(surfaceLabel) ? "FLOOR" : surfaceLabel.ToUpperInvariant();
+
+        var sb = new System.Text.StringBuilder(1024);
+        sb.Append(Paint(bar, ColorHeader)).Append('\n');
+        sb.Append(Row(Center(displayName), ColorTitle)).Append('\n');
+        sb.Append(Paint(mid, ColorHeader)).Append('\n');
+        sb.Append(Row(PadColumns("CONTROLS", "ACTION", 20), ColorHeader)).Append('\n');
+        sb.Append(Row(divider, ColorHeader)).Append('\n');
         if (showRotateControl)
-            sb.Append(Row(PadColumns("[STICK L/R]", "ROTATE", 20))).Append('\n');
+            sb.Append(Row(PadColumns("[STICK L/R]", "ROTATE", 20), ColorBody)).Append('\n');
         if (showScaleControl)
-            sb.Append(Row(PadColumns("[GRIP]+[L/R]", "SCALE", 20))).Append('\n');
-        sb.Append(Row(PadColumns("[TRIGGER]", "CONFIRM", 20))).Append('\n');
-        sb.Append(Row(PadColumns("[B]", "CANCEL", 20))).Append('\n');
-        sb.Append(Row("")).Append('\n');
-        sb.Append(mid).Append('\n');
-        sb.Append(Row(Dotted("OBJECT", displayName))).Append('\n');
-        sb.Append(Row(Dotted("SURFACE", surfaceLabel))).Append('\n');
+            sb.Append(Row(PadColumns("[GRIP]+[L/R]", "SCALE", 20), ColorBody)).Append('\n');
+        sb.Append(Row(PadColumns("[TRIGGER]", "CONFIRM", 20), ColorBody)).Append('\n');
+        sb.Append(Row(PadColumns("[B]", "CANCEL", 20), ColorBody)).Append('\n');
+        sb.Append(Row("", ColorBody)).Append('\n');
+        sb.Append(Paint(mid, ColorHeader)).Append('\n');
+        sb.Append(Row(Dotted("OBJECT", displayName), ColorBody)).Append('\n');
+        sb.Append(Row(Dotted("SURFACE", surface), ColorBody)).Append('\n');
         if (showScaleControl)
-            sb.Append(Row(Dotted("SCALE", scalePercent + "%"))).Append('\n');
+            sb.Append(Row(Dotted("SCALE", scalePercent + "%"), ColorBody)).Append('\n');
         if (showRotateControl)
-            sb.Append(Row(Dotted("ROTATION", rotLabel))).Append('\n');
-        sb.Append(bar);
+            sb.Append(Row(Dotted("ROTATION", rotLabel), ColorBody)).Append('\n');
+        sb.Append(Paint(bar, ColorHeader));
         return sb.ToString();
     }
 
-    static string Row(string content)
+    static string Paint(string content, string hex)
+    {
+        return "<color=#" + hex + ">" + content + "</color>";
+    }
+
+    static string Row(string content, string hex)
     {
         if (content == null)
             content = string.Empty;
         if (content.Length > InnerWidth)
             content = content.Substring(0, InnerWidth);
-        return "|" + content.PadRight(InnerWidth) + "|";
+        content = content.PadRight(InnerWidth);
+        // Frame in cyan, content in title/body color (classic TV dialog).
+        return Paint("|", ColorHeader) + Paint(content, hex) + Paint("|", ColorHeader);
     }
 
     static string Center(string content)
@@ -393,18 +407,19 @@ public class MRPlacementInfoHUD : MonoBehaviour
         RectTransform textRect = textGo.AddComponent<RectTransform>();
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(16f, 10f);
-        textRect.offsetMax = new Vector2(-4f, -18f);
+        // Symmetric insets so the TV box is centered in the blue panel (was 16/-4 → content shifted right).
+        textRect.offsetMin = new Vector2(10f, 12f);
+        textRect.offsetMax = new Vector2(-10f, -12f);
 
         bodyText = textGo.AddComponent<Text>();
         bodyText.font = ResolveMonospaceFont();
         bodyText.fontSize = fontSize;
-        bodyText.fontStyle = FontStyle.Bold;
+        bodyText.fontStyle = FontStyle.Normal;
         bodyText.color = textColor;
         bodyText.alignment = TextAnchor.UpperLeft;
         bodyText.horizontalOverflow = HorizontalWrapMode.Overflow;
         bodyText.verticalOverflow = VerticalWrapMode.Truncate;
-        bodyText.supportRichText = false;
+        bodyText.supportRichText = true;
         bodyText.lineSpacing = 0.95f;
         bodyText.resizeTextForBestFit = false;
 
@@ -413,17 +428,29 @@ public class MRPlacementInfoHUD : MonoBehaviour
 
     static Font ResolveMonospaceFont()
     {
-        // Proportional LegacyRuntime + Unicode box glyphs = broken overflow in UIInformation.
+        // Prefer fonts that exist on the target OS. Consolas is Editor/Windows-only;
+        // Quest/Android typically has Droid Sans Mono / Noto Sans Mono.
         string[] candidates =
+#if UNITY_ANDROID && !UNITY_EDITOR
+        {
+            "Droid Sans Mono",
+            "Noto Sans Mono",
+            "DroidSansMono",
+            "Courier",
+            "monospace"
+        };
+#else
         {
             "Consolas",
             "Courier New",
             "Lucida Console",
+            "Fixedsys",
             "Liberation Mono",
             "DejaVu Sans Mono",
             "Droid Sans Mono",
             "Courier"
         };
+#endif
 
         Font font = Font.CreateDynamicFontFromOSFont(candidates, 18);
         if (font != null)
