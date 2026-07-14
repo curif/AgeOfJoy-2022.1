@@ -119,10 +119,27 @@ public class GenericMenu
 
     void DrawUnselectedOption(int row, string option)
     {
+        int width = screen.CharactersXCount;
+        screen.ResetColors();
+
         if (alignTop && leftAlign)
-            screen.Print(1, row, "  " + option, false);
+        {
+            string label = ("  " + option).PadRight(width);
+            if (label.Length > width)
+                label = label.Substring(0, width);
+            screen.Print(0, row, label, false);
+        }
         else
-            screen.PrintCentered(row, "  " + option + "  ", false);
+        {
+            string inner = "  " + option + "  ";
+            int pad = Mathf.Max(0, (width - inner.Length) / 2);
+            string label = new string(' ', pad) + inner;
+            if (label.Length < width)
+                label = label.PadRight(width);
+            else if (label.Length > width)
+                label = label.Substring(0, width);
+            screen.Print(0, row, label, false);
+        }
     }
 
     // A method to move to the next option
