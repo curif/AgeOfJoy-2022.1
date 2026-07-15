@@ -29,6 +29,8 @@ public class MRCustomObjectGrab : MonoBehaviour
     Vector3 handleColliderSize = new Vector3(0.045f, 0.055f, 0.07f);
 
     Transform grabRoot;
+    /// <summary>Authored grip pivot — aligned to the hand while held (grab.target or grabRoot).</summary>
+    Transform grabPivot;
     Rigidbody body;
     XRGrabInteractable oneHandGrab;
     XRSimpleInteractable leftHandle;
@@ -39,11 +41,14 @@ public class MRCustomObjectGrab : MonoBehaviour
     bool leftHeld;
     bool rightHeld;
     bool dualHeld;
+    Transform oneHandFollow;
     Transform leftFollow;
     Transform rightFollow;
     Vector3 lockedWorldScale;
     Vector3 lastStableForward = Vector3.forward;
     Vector3 lastStableRightDir = Vector3.right;
+    Vector3 pivotLocalPosition;
+    Quaternion pivotLocalRotation = Quaternion.identity;
 
     Vector3 homeWorldPosition;
     Quaternion homeWorldRotation;
@@ -69,13 +74,28 @@ public class MRCustomObjectGrab : MonoBehaviour
         if (config.ReturnDurationSeconds >= 0f)
             returnDurationSeconds = config.ReturnDurationSeconds;
 
-        grabRoot = ResolveGrabRoot(searchRoot, config.Target);
+        if (twoHands)
+        {
+            grabRoot = ResolveGrabRoot(searchRoot, config.Target);
+            grabPivot = grabRoot;
+        }
+        else
+        {
+            // One-hand: move the package root; snap authored pivot (target or root) to the hand.
+            grabRoot = searchRoot;
+            grabPivot = ResolveGrabPivot(searchRoot, config.Target);
+        }
+
         if (grabRoot == null)
         {
             ConfigManager.WriteConsoleWarning($"{LogPrefix} grab root not found on {searchRoot?.name}");
             return;
         }
 
+        if (grabPivot == null)
+            grabPivot = grabRoot;
+
+        CachePivotLocalPose();
         EnsureNotStatic(grabRoot);
         body = EnsureRigidbody(grabRoot);
 
@@ -87,14 +107,17 @@ public class MRCustomObjectGrab : MonoBehaviour
         CaptureHomePose();
         SetDockedPhysics(true);
         ConfigManager.WriteConsole(
-            $"{LogPrefix} configured on '{grabRoot.name}' twoHands={twoHands} returnOnRelease={returnOnRelease}");
+            $"{LogPrefix} configured on '{grabRoot.name}' pivot='{grabPivot.name}' "
+            + $"twoHands={twoHands} returnOnRelease={returnOnRelease}");
     }
 
     void Start() => CaptureHomePose();
 
     void LateUpdate()
     {
-        if (twoHands && dualHeld)
+        if (!twoHands && oneHandFollow != null && oneHandGrab != null && oneHandGrab.isSelected)
+            FollowOneHandPivot();
+        else if (twoHands && dualHeld)
             FollowTwoHands();
         else if (twoHands)
             SnapHandlesToOffsets();
@@ -142,10 +165,12 @@ public class MRCustomObjectGrab : MonoBehaviour
 
         oneHandGrab.throwOnDetach = false;
         oneHandGrab.movementType = XRBaseInteractable.MovementType.Instantaneous;
-        oneHandGrab.trackPosition = true;
-        oneHandGrab.trackRotation = true;
+        // Pose owned by FollowOneHandPivot so the authored pivot snaps to the hand (L/R safe).
+        oneHandGrab.trackPosition = false;
+        oneHandGrab.trackRotation = false;
         oneHandGrab.trackScale = false;
         oneHandGrab.retainTransformParent = false;
+        oneHandGrab.useDynamicAttach = true;
 
         int physicsLayer = LayerMask.NameToLayer(GrabPhysicsLayerName);
         if (physicsLayer >= 0)
@@ -178,21 +203,59 @@ public class MRCustomObjectGrab : MonoBehaviour
         }
 
         lockedWorldScale = grabRoot.lossyScale;
+        CachePivotLocalPose();
+        oneHandFollow = ResolveHandControllerTransform(args.interactorObject);
         if (body != null)
         {
             body.isKinematic = true;
             body.WakeUp();
         }
 
+        FollowOneHandPivot();
+
         if (hideHands)
-            StartCoroutine(HideHandVisualsNextFrame(args.interactorObject, true));
+        {
+            bool isLeft = IsLeftInteractor(args.interactorObject);
+            StartCoroutine(HideHandVisualsNextFrame(args.interactorObject, isLeft));
+        }
     }
 
     void OnOneHandReleased(SelectExitEventArgs _)
     {
+        oneHandFollow = null;
         PayphoneHandsetGrab.ForceShowPlayerHands();
+        RestoreHandVisuals(true);
+        RestoreHandVisuals(false);
         if (returnOnRelease)
             ReturnHome();
+    }
+
+    void FollowOneHandPivot()
+    {
+        if (oneHandFollow == null || grabRoot == null || grabPivot == null)
+            return;
+
+        // Align authored pivot pose to the hand controller (position + rotation).
+        Quaternion rootRotation = oneHandFollow.rotation * Quaternion.Inverse(pivotLocalRotation);
+        Vector3 rootPosition = oneHandFollow.position - rootRotation * pivotLocalPosition;
+        grabRoot.SetPositionAndRotation(rootPosition, rootRotation);
+        ApplyLockedWorldScale();
+    }
+
+    void CachePivotLocalPose()
+    {
+        if (grabRoot == null || grabPivot == null)
+            return;
+
+        if (grabPivot == grabRoot)
+        {
+            pivotLocalPosition = Vector3.zero;
+            pivotLocalRotation = Quaternion.identity;
+            return;
+        }
+
+        pivotLocalPosition = grabRoot.InverseTransformPoint(grabPivot.position);
+        pivotLocalRotation = Quaternion.Inverse(grabRoot.rotation) * grabPivot.rotation;
     }
 
     void OnHandleGrabbed(bool isLeft, SelectEnterEventArgs args)
@@ -450,6 +513,48 @@ public class MRCustomObjectGrab : MonoBehaviour
         return rb != null ? rb.transform : searchRoot;
     }
 
+    static Transform ResolveGrabPivot(Transform searchRoot, string targetName)
+    {
+        if (searchRoot == null)
+            return null;
+
+        if (!string.IsNullOrEmpty(targetName))
+        {
+            Transform named = FindChildByName(searchRoot, targetName);
+            if (named != null)
+                return named;
+
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} grab.target '{targetName}' not found — using package root as pivot");
+        }
+
+        return searchRoot;
+    }
+
+    /// <summary>Hand/controller root — never CoinPosition (Right DI attach used by the coin).</summary>
+    static Transform ResolveHandControllerTransform(IXRSelectInteractor interactor)
+    {
+        var interactorBehaviour = interactor as MonoBehaviour;
+        if (interactorBehaviour == null)
+            return null;
+
+        ActionBasedController controller = interactorBehaviour.GetComponentInParent<ActionBasedController>();
+        if (controller != null)
+            return controller.transform;
+
+        ChangeControls controls = UnityEngine.Object.FindObjectOfType<ChangeControls>();
+        if (controls != null)
+        {
+            Transform t = interactorBehaviour.transform;
+            if (controls.leftHandXRControl != null && t.IsChildOf(controls.leftHandXRControl.transform))
+                return controls.leftHandXRControl.transform;
+            if (controls.rightHandXRControl != null && t.IsChildOf(controls.rightHandXRControl.transform))
+                return controls.rightHandXRControl.transform;
+        }
+
+        return interactorBehaviour.transform;
+    }
+
     static Transform FindChildByName(Transform root, string childName)
     {
         if (root == null || string.IsNullOrEmpty(childName))
@@ -636,6 +741,29 @@ public class MRCustomObjectGrab : MonoBehaviour
         }
 
         list.Clear();
+    }
+
+    static bool IsLeftInteractor(IXRSelectInteractor interactor)
+    {
+        var interactorBehaviour = interactor as MonoBehaviour;
+        if (interactorBehaviour == null)
+            return false;
+
+        ChangeControls controls = UnityEngine.Object.FindObjectOfType<ChangeControls>();
+        if (controls != null)
+        {
+            Transform interactorTransform = interactorBehaviour.transform;
+            if (controls.leftHandXRControl != null
+                && interactorTransform.IsChildOf(controls.leftHandXRControl.transform))
+                return true;
+
+            if (controls.rightHandXRControl != null
+                && interactorTransform.IsChildOf(controls.rightHandXRControl.transform))
+                return false;
+        }
+
+        string lower = interactorBehaviour.name.ToLowerInvariant();
+        return lower.Contains("left");
     }
 
     static GameObject ResolveHandModel(IXRSelectInteractor interactor)

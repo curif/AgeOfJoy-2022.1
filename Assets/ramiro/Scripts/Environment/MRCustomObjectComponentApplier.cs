@@ -31,6 +31,9 @@ public static class MRCustomObjectComponentApplier
             if (string.Equals(componentId, "animator", System.StringComparison.OrdinalIgnoreCase))
                 continue;
 
+            if (string.Equals(componentId, "light", System.StringComparison.OrdinalIgnoreCase))
+                continue;
+
             ConfigManager.WriteConsoleWarning(
                 $"{LogPrefix} {definition.PackageName}: unknown component '{componentId}'");
         }
@@ -46,6 +49,9 @@ public static class MRCustomObjectComponentApplier
 
         if (definition.HasAnimatorComponent())
             ApplyAnimator(root, definition);
+
+        if (definition.HasLightComponent())
+            ApplyLight(root, definition);
     }
 
     static void ApplyGrab(GameObject root, MRCustomObjectDefinition definition)
@@ -149,6 +155,34 @@ public static class MRCustomObjectComponentApplier
             animator = root.AddComponent<MRCustomObjectAnimator>();
 
         animator.Configure(definition.PackageName, config, target, clipHolder.Clips);
+    }
+
+    static void ApplyLight(GameObject root, MRCustomObjectDefinition definition)
+    {
+        MRCustomObjectLightYaml config = definition.Light ?? new MRCustomObjectLightYaml();
+
+        Transform attachParent = root.transform;
+        if (!string.IsNullOrEmpty(config.Target))
+        {
+            Transform target = FindChildByName(root.transform, config.Target);
+            if (target == null)
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"{LogPrefix} {definition.PackageName}: light target not found '{config.Target}', using root");
+                MRDebugLog.LogError(
+                    $"Custom object '{definition.PackageName}': light target not found '{config.Target}'");
+            }
+            else
+            {
+                attachParent = target;
+            }
+        }
+
+        MRCustomObjectLight lightBehaviour = root.GetComponent<MRCustomObjectLight>();
+        if (lightBehaviour == null)
+            lightBehaviour = root.AddComponent<MRCustomObjectLight>();
+
+        lightBehaviour.Configure(definition.PackageName, config, attachParent);
     }
 
     static Transform ResolveAnimatorTarget(Transform searchRoot, string targetName)
