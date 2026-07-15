@@ -31,6 +31,9 @@ public class MRPassthroughController : MonoBehaviour
     bool initialized;
     bool passthroughSystemReady;
     bool insightPassthroughEnabledBeforeMr;
+    bool boundaryVisibilitySuppressedBeforeMr;
+    bool boundarySuppressionOwnedByMr;
+    bool boundaryVisibilityChangedSubscribed;
 
     public bool IsPassthroughEnabled => passthroughLayer != null && passthroughLayer.enabled;
 
@@ -177,6 +180,10 @@ public class MRPassthroughController : MonoBehaviour
 
         yield return WaitUntilPassthroughLayerVisible();
 
+        // Re-request after the layer is actually visible — Meta only suppresses Guardian
+        // while a passthrough layer is rendering. May take a few frames for the OS to accept.
+        yield return RequestBoundarySuppressionUntilAccepted();
+
         MRPhoneBoothTravelHeadFade.ReassertActiveTravelBlackout();
 #if UNITY_EDITOR
         if (MRPhoneBoothTravelHeadFade.IsTravelBlackoutActive)
@@ -190,6 +197,11 @@ public class MRPassthroughController : MonoBehaviour
     {
         MRTransitionLog.LogStep("MRPassthroughController.DisablePassthrough", $"playFadeOut={playFadeOut}");
         RebindXRCamera(createPassthroughLayerIfMissing: false);
+
+        // Restore Guardian while Insight Passthrough is still considered enabled — OVRManager only
+        // issues RequestBoundaryVisibility when isInsightPassthroughEnabled is true.
+        if (OVRManager.instance != null)
+            SetBoundaryVisibilitySuppressed(false);
 
         if (passthroughLayer != null)
         {
@@ -324,6 +336,9 @@ public class MRPassthroughController : MonoBehaviour
 
         if (EventManager.Instance != null)
             EventManager.Instance.IsPassthrough = true;
+
+        // Guardian/boundaryless: only valid while a passthrough layer is rendering (Meta Boundary API).
+        SetBoundaryVisibilitySuppressed(true);
 
         ConfigManager.WriteConsole($"{LogPrefix} passthrough ON (underlay, hands on top)");
     }
@@ -482,9 +497,126 @@ public class MRPassthroughController : MonoBehaviour
         bool failed = OVRManager.HasInsightPassthroughInitFailed();
         bool managerEnabled = OVRManager.instance != null && OVRManager.instance.isInsightPassthroughEnabled;
         bool layerEnabled = passthroughLayer != null && passthroughLayer.enabled;
+        bool wantBoundarySuppressed = OVRManager.instance != null
+            && OVRManager.instance.shouldBoundaryVisibilityBeSuppressed;
+        bool boundarySuppressed = OVRManager.instance != null
+            && OVRManager.instance.isBoundaryVisibilitySuppressed;
 
         ConfigManager.WriteConsole(
-            $"{LogPrefix} diag [{stage}] supported={supported} init={initialized} pending={pending} failed={failed} manager={managerEnabled} layer={layerEnabled}");
+            $"{LogPrefix} diag [{stage}] supported={supported} init={initialized} pending={pending} failed={failed} " +
+            $"manager={managerEnabled} layer={layerEnabled} boundaryWant={wantBoundarySuppressed} boundary={boundarySuppressed}");
+    }
+
+    void SetBoundaryVisibilitySuppressed(bool suppress)
+    {
+        if (!IsPassthroughRuntimeAvailable() || OVRManager.instance == null)
+            return;
+
+        EnsureBoundaryVisibilityChangedSubscription();
+
+        if (suppress)
+        {
+            if (!boundarySuppressionOwnedByMr)
+            {
+                boundaryVisibilitySuppressedBeforeMr = OVRManager.instance.shouldBoundaryVisibilityBeSuppressed;
+                boundarySuppressionOwnedByMr = true;
+            }
+
+            OVRManager.instance.shouldBoundaryVisibilityBeSuppressed = true;
+            RequestBoundaryVisibilityNow(OVRPlugin.BoundaryVisibility.Suppressed);
+            return;
+        }
+
+        if (!boundarySuppressionOwnedByMr)
+            return;
+
+        boundarySuppressionOwnedByMr = false;
+        OVRManager.instance.shouldBoundaryVisibilityBeSuppressed = boundaryVisibilitySuppressedBeforeMr;
+        RequestBoundaryVisibilityNow(
+            boundaryVisibilitySuppressedBeforeMr
+                ? OVRPlugin.BoundaryVisibility.Suppressed
+                : OVRPlugin.BoundaryVisibility.NotSuppressed);
+    }
+
+    IEnumerator RequestBoundarySuppressionUntilAccepted()
+    {
+        SetBoundaryVisibilitySuppressed(true);
+
+        if (!IsPassthroughRuntimeAvailable() || OVRManager.instance == null)
+            yield break;
+
+        const float timeoutSeconds = 3f;
+        float elapsed = 0f;
+        while (elapsed < timeoutSeconds)
+        {
+            if (OVRManager.instance.isBoundaryVisibilitySuppressed)
+            {
+                ConfigManager.WriteConsole($"{LogPrefix} guardian boundary confirmed suppressed by system");
+                yield break;
+            }
+
+            // Keep desired flag true; OVRManager.UpdateBoundary retries while PT is ready.
+            OVRManager.instance.shouldBoundaryVisibilityBeSuppressed = true;
+            RequestBoundaryVisibilityNow(OVRPlugin.BoundaryVisibility.Suppressed);
+
+            elapsed += Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        ConfigManager.WriteConsoleWarning(
+            $"{LogPrefix} guardian still visible after {timeoutSeconds:F0}s — " +
+            "rebuild with Boundary Visibility Support (OculusProjectConfig) + " +
+            "com.oculus.permission.BOUNDARY_VISIBILITY. Standalone Quest APK required (Link ignores this). " +
+            $"want={OVRManager.instance.shouldBoundaryVisibilityBeSuppressed} " +
+            $"system={OVRManager.instance.isBoundaryVisibilitySuppressed}");
+    }
+
+    void RequestBoundaryVisibilityNow(OVRPlugin.BoundaryVisibility desired)
+    {
+        if (!IsPassthroughRuntimeAvailable())
+            return;
+
+        OVRPlugin.Result result = OVRPlugin.RequestBoundaryVisibility(desired);
+        if (result == OVRPlugin.Result.Success)
+        {
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} RequestBoundaryVisibility({desired})=Success " +
+                $"(systemSuppressed={OVRManager.instance != null && OVRManager.instance.isBoundaryVisibilitySuppressed})");
+            return;
+        }
+
+        if (result == OVRPlugin.Result.Warning_BoundaryVisibilitySuppressionNotAllowed)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} RequestBoundaryVisibility not allowed — passthrough layer must be rendering, " +
+                "and Boundary Visibility Support must be enabled in the APK");
+            return;
+        }
+
+        ConfigManager.WriteConsoleWarning($"{LogPrefix} RequestBoundaryVisibility({desired})={result}");
+    }
+
+    void EnsureBoundaryVisibilityChangedSubscription()
+    {
+        if (boundaryVisibilityChangedSubscribed || OVRManager.instance == null)
+            return;
+
+        OVRManager.BoundaryVisibilityChanged += OnBoundaryVisibilityChanged;
+        boundaryVisibilityChangedSubscribed = true;
+    }
+
+    void OnBoundaryVisibilityChanged(OVRPlugin.BoundaryVisibility visibility)
+    {
+        ConfigManager.WriteConsole($"{LogPrefix} BoundaryVisibilityChanged -> {visibility}");
+    }
+
+    void OnDestroy()
+    {
+        if (!boundaryVisibilityChangedSubscribed)
+            return;
+
+        OVRManager.BoundaryVisibilityChanged -= OnBoundaryVisibilityChanged;
+        boundaryVisibilityChangedSubscribed = false;
     }
 
     static void EnsureInsightPassthroughEnabled()

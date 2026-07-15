@@ -52,7 +52,14 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         MRPaths.EnsureFolders();
         layout = MREnvironmentLayout.LoadOrCreate(LayoutFilePath);
-        ConfigManager.WriteConsole($"{LogPrefix} layout loaded ({layout.Props.Count} entries)");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} layout loaded ({layout.Props.Count} entries, room={MRActiveRoom.BoundRoomId ?? "global"}) path={LayoutFilePath}");
+    }
+
+    /// <summary>Drop in-memory layout so the next EnsureLayoutLoaded reads the current path (per-room bind).</summary>
+    public void UnloadLayoutMemory()
+    {
+        layout = null;
     }
 
     public void SpawnAll(Transform mrSpaceOrigin)
@@ -765,12 +772,21 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         if (TryGetSpawnedRoot(placementId, out GameObject root))
         {
+            if (placement.IsPosterSource || placement.IsCustomSource)
+            {
+                float liveScale = ResolveScaleFromRoot(root);
+                placement.Scale = placement.IsPosterSource
+                    ? MRPosterPlacement.SnapScale(liveScale)
+                    : MRCustomObjectPlacement.SnapScale(liveScale);
+            }
+
             root.transform.SetPositionAndRotation(worldPosition, worldRotation);
             ApplyRootScaleAfterSpawn(root, placement);
             NotifyPortableGamesPlacementUpdated(root);
         }
 
-        ConfigManager.WriteConsole($"{LogPrefix} updated pose {placement.DisplayLabel} ({placementId})");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} updated pose {placement.DisplayLabel} ({placementId}) scale={placement.Scale:F2}");
         return true;
     }
 

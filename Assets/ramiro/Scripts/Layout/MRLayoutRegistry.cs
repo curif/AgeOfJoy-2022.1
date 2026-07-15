@@ -58,7 +58,14 @@ public class MRLayoutRegistry : MonoBehaviour
 
         layout = MRLayout.LoadOrCreate(LayoutFilePath);
         MigrateLayoutWorldFallback(layout, LayoutFilePath);
-        ConfigManager.WriteConsole($"{LogPrefix} layout loaded ({layout.Cabinets.Count} entries)");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} layout loaded ({layout.Cabinets.Count} entries, room={MRActiveRoom.BoundRoomId ?? "global"}) path={LayoutFilePath}");
+    }
+
+    /// <summary>Drop in-memory layout so the next EnsureLayoutLoaded reads the current path (per-room bind).</summary>
+    public void UnloadLayoutMemory()
+    {
+        layout = null;
     }
 
     /// <summary>Cache live world transforms before MR→VR hide/destroy (anchor UUID may not resolve on next entry).</summary>
