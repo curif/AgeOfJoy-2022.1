@@ -203,26 +203,30 @@ core's output back to hardcoded 48000. So:
 > overflows the ring buffer and every dropped chunk is a crackle. This was true in every
 > historical configuration; only the surplus percentage varied.
 
-### The fix: calibrated output rate
+### The fix: calibrated output rate (v1, superseded — see §5b)
 
 The Unity-side tax can't be removed from app code, so production is matched to measured
 consumption:
 
 - **`cwrapper/audio.c`**: `QUEST_AUDIO_FREQUENCY` replaced by a runtime-settable
   `OutputSampleRate` (new export `wrapper_audio_set_output_rate(double)`, declared in
-  `audio.h`). Default 48000 = legacy behavior.
-- **`LibretroMameCore.cs`**: measures the real drain rate from healthy stats windows
-  (underruns == 0), persists it in `PlayerPrefs["AudioCalibratedOutputRate"]` on game exit
-  (`SaveAudioCalibration()`, needs ≥15 s of playback), and applies it at every game start.
-  First-ever session runs uncalibrated (legacy frying); every session after is matched.
-  Old core builds without the export are tolerated (EntryPointNotFound → legacy behavior).
+  `audio.h`). Default 48000 = legacy behavior. This native change is permanent and still
+  in place — only the C# side that decides *what rate* to set was later reworked (§5b).
+- **`LibretroMameCore.cs`** (v1, since replaced): measured the real drain rate from
+  healthy stats windows (underruns == 0), persisted it in
+  `PlayerPrefs["AudioCalibratedOutputRate"]` on game exit (`SaveAudioCalibration()`, needs
+  ≥15 s of playback), and applied it once at every game start. First-ever session ran
+  uncalibrated (legacy frying); every session after was matched — **until the measured
+  environment changed, see §5b.**
 - The ring **recenter** (§3 additions) plus underrun **zero-fill** guard both ends against
-  residual jitter drift.
+  residual jitter drift — both still in place, orthogonal to the rate-selection mechanism.
 
 **Deployment caveat: the core `.so` and the APK must be rebuilt together** — cwrapper
 changes ship inside the core, and cores are sideloaded per-device (`CoresDir` →
 `InternalCoresDir`), so a stale core on the device silently reverts to legacy behavior
-(the C# logs a warning).
+(the C# logs a warning). This caveat only applied to the native `audio.c` change; it does
+**not** apply to rate-selection changes on the C# side (§5b onward) — those need only the
+APK rebuilt.
 
 **Why not just read the game's declared sample rate instead of measuring?** `audio.c`
 already reads `wrapper_environment_get_sample_rate()` (`av_info.timing.sample_rate`, the
@@ -239,14 +243,68 @@ mspacman, starforce, and gyruss all declare the generic MAME default `sample_rat
 luck while leaving every other game overflowing at their real declared 48000 — the
 calibration has to be measured from actual consumption, not read from game metadata.
 
+## 5b. The one-shot calibration wasn't enough (found 2026-07-15)
+
+The frying came back in a later build with the v1 fix (§5) still fully in place — no code
+had reverted. The stats told a different story than before:
+
+```
+callbacks/s: 46.9   (= 48000/1024, i.e. Unity is calling back at the FULL nominal rate)
+consumed floats/s: 80811   expected: 80672 (100.2%)   underruns: 167   missing: 76134
+```
+
+**The ~4 µs/frame tax that motivated the v1 fix had disappeared.** Unity's audio thread was
+now consuming at exactly nominal rate — not the ~84% measured throughout the original
+investigation. The persisted calibration (40,336 frames/s, from a previous session under
+the old tax) was now stale and **too low**: Unity demanded `46.9 × 2048 = 96,051` floats/s
+but the wrapper, obeying the stale calibration, only produced `80,672`/s. The deficit,
+`15,240` floats/s, matches the logged `missing: 76,134/5s = 15,227/s` almost exactly — this
+is the arithmetic signature of a stale-low calibration, the mirror image of the original
+overflow bug: now too little is produced instead of too much, and the shortfall is filled
+with the underrun zero-fill (§3), heard as ~30 crackles/s.
+
+**Why calibration couldn't self-correct:** v1 only accumulated measurement in windows with
+`underruns == 0` (the "healthy window" gate). That gate is one-directional — it lets the
+rate adapt *downward* (an overflowing window still has `underruns == 0`, so it measures and
+lowers the rate) but can never adapt it back *upward*, because the moment the rate is too
+low, every window has underruns and is excluded from measurement. Once stale-low, it stays
+stale-low forever, across app restarts (PlayerPrefs), until manually cleared.
+
+**Lesson:** the drain rate is not a fixed hardware constant to calibrate once — it is an
+environmental property (Unity/Meta SDK/OS build) that can and did change, in either
+direction, between builds on the *same* physical Quest. A persisted one-shot value is the
+wrong solution class for a moving target.
+
+### The fix: closed-loop rate control (current)
+
+`LibretroMameCore.GetAndResetAudioStats()` now recomputes real demand **every 5 s window,
+continuously, for the life of the session** — no gating, no one-shot save:
+
+- `demand = (copied + missing) / 2 / elapsed` (frames/s). This is valid in *both* regimes:
+  under starvation, `copied + missing` equals exactly what Unity asked for; when healthy,
+  `missing == 0` and `copied` already is the full demand. No conditional exclusion needed.
+- An EMA (`smoothedDemandRate`, α=0.5) smooths window-to-window noise; a small proportional
+  term steers ring occupancy toward mid-ring (extra headroom against producer jitter without
+  drifting the rate). The combined rate is pushed to the wrapper via the same
+  `wrapper_audio_set_output_rate()` from v1 whenever it moves by more than a 0.1% deadband.
+- `PlayerPrefs["AudioCalibratedOutputRate"]` is now only a **warm start** for the first
+  window of a session (saved from `smoothedDemandRate` on exit) — a wrong guess there costs
+  a few seconds of convergence, not a stuck session.
+- The `[AudioStats]` log line gained `demand:` and `rate:` fields so convergence is directly
+  observable in logcat.
+
+This tracks the tax appearing, disappearing, or changing magnitude, on any build, without
+needing a new fix each time it moves.
+
 ### Open questions
 
-- The ~4 µs/frame output tax itself: Unity version dependent? (project: 2021.3.22f1 — an
-  LTS patch upgrade may change it; the calibration self-corrects either way, including back
-  to 48000 if the tax ever disappears.)
+- What removed the ~4 µs/frame tax between builds — a Meta SDK/MRUK update, a Quest OS
+  update, an AudioManager setting, or the newly-added Flycast core's presence — is still
+  unknown, but is no longer load-bearing: the closed-loop controller tracks whichever
+  regime is currently true rather than assuming one.
 - Whether the OS inserts audible silence at the FMOD→AAudio boundary independent of our
-  ring drops. If frying persists after calibration with clean stats (`recenters: 0`,
-  `underruns: 0`, WAV clean), the definitive escalation is **native AAudio output in the
+  ring drops. If frying persists with clean stats (`recenters: 0`, `underruns: 0`, `rate:`
+  tracking `demand:`, WAV clean), the definitive escalation is **native AAudio output in the
   wrapper** (bypass Unity audio for game sound entirely, like RetroArch — which is clean on
   the same device).
 
