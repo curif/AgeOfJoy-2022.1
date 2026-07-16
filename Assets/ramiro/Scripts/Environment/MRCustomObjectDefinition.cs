@@ -31,9 +31,12 @@ public class MRCustomObjectDefinition
     public MRCustomObjectGrabYaml Grab;
     public MRCustomObjectVideoYaml Video;
     public MRCustomObjectAnimatorYaml Animator;
+    public MRCustomObjectLightYaml Light;
 
     public string PackageName { get; private set; }
     public string PackageDir { get; private set; }
+    /// <summary>When set (dev / test load), GLB is loaded from this absolute path instead of PackageDir + model.file.</summary>
+    public string AbsoluteModelPath { get; private set; }
 
     public string GetDisplayName() =>
         !string.IsNullOrEmpty(DisplayName) ? DisplayName
@@ -42,6 +45,18 @@ public class MRCustomObjectDefinition
 
     public string GetModelFileName() =>
         Model != null && !string.IsNullOrEmpty(Model.File) ? Model.File : null;
+
+    public string GetResolvedModelPath()
+    {
+        if (!string.IsNullOrEmpty(AbsoluteModelPath))
+            return AbsoluteModelPath;
+
+        string modelFile = GetModelFileName();
+        if (string.IsNullOrEmpty(modelFile) || string.IsNullOrEmpty(PackageDir))
+            return null;
+
+        return Path.Combine(PackageDir, modelFile);
+    }
 
     public float GetModelScale() =>
         Model != null && Model.Scale > 0f ? Model.Scale : 1f;
@@ -107,6 +122,8 @@ public class MRCustomObjectDefinition
 
     public bool HasAnimatorComponent() => HasComponent("animator");
 
+    public bool HasLightComponent() => HasComponent("light");
+
     public static bool TryLoad(string packageName, out MRCustomObjectDefinition definition)
     {
         definition = null;
@@ -118,11 +135,70 @@ public class MRCustomObjectDefinition
         }
 
         string yamlPath = Path.Combine(packageDir, MRPaths.CustomObjectYamlFileName);
-        if (!File.Exists(yamlPath))
+        return TryLoadFromPaths(
+            yamlPath,
+            glbAbsolutePath: null,
+            packageNameOverride: packageName,
+            requireModelFile: true,
+            out definition);
+    }
+
+    /// <summary>
+    /// Load from explicit YAML + optional absolute GLB (dev / Inspector drag-drop test).
+    /// <paramref name="glbAbsolutePath"/> overrides <c>model.file</c> when set.
+    /// </summary>
+    public static bool TryLoadFromPaths(
+        string yamlPath,
+        string glbAbsolutePath,
+        out MRCustomObjectDefinition definition)
+    {
+        return TryLoadFromPaths(
+            yamlPath,
+            glbAbsolutePath,
+            packageNameOverride: null,
+            requireModelFile: true,
+            out definition);
+    }
+
+    /// <summary>
+    /// Parse <c>object.yaml</c> without requiring <c>model.file</c> / GLB on disk
+    /// (apply components onto an existing scene object).
+    /// </summary>
+    public static bool TryLoadYamlOnly(string yamlPath, out MRCustomObjectDefinition definition)
+    {
+        return TryLoadFromPaths(
+            yamlPath,
+            glbAbsolutePath: null,
+            packageNameOverride: null,
+            requireModelFile: false,
+            out definition);
+    }
+
+    static bool TryLoadFromPaths(
+        string yamlPath,
+        string glbAbsolutePath,
+        string packageNameOverride,
+        bool requireModelFile,
+        out MRCustomObjectDefinition definition)
+    {
+        definition = null;
+
+        if (string.IsNullOrEmpty(yamlPath) || !File.Exists(yamlPath))
         {
-            MRDebugLog.LogError($"Custom object '{packageName}': object.yaml not found");
+            MRDebugLog.LogError($"Custom object: object.yaml not found ({yamlPath})");
             return false;
         }
+
+        string packageDir = Path.GetDirectoryName(yamlPath);
+        if (string.IsNullOrEmpty(packageDir))
+        {
+            MRDebugLog.LogError($"Custom object: invalid yaml path '{yamlPath}'");
+            return false;
+        }
+
+        string packageName = !string.IsNullOrEmpty(packageNameOverride)
+            ? packageNameOverride
+            : new DirectoryInfo(packageDir).Name;
 
         try
         {
@@ -150,77 +226,41 @@ public class MRCustomObjectDefinition
             if (string.IsNullOrEmpty(definition.Name))
                 definition.Name = packageName;
 
-            string modelFile = definition.GetModelFileName();
-            if (string.IsNullOrEmpty(modelFile))
+            if (!string.IsNullOrEmpty(glbAbsolutePath))
             {
-                ConfigManager.WriteConsoleWarning($"[MRCustomObjectDefinition] {packageName}: model.file missing");
-                MRDebugLog.LogError($"Custom object '{packageName}': model.file missing in object.yaml");
-                return false;
-            }
-
-            if (!File.Exists(Path.Combine(packageDir, modelFile)))
-            {
-                ConfigManager.WriteConsoleWarning($"[MRCustomObjectDefinition] {packageName}: model not found ({modelFile})");
-                MRDebugLog.LogError($"Custom object '{packageName}': model not found ({modelFile})");
-                return false;
-            }
-
-            if (definition.Audio != null && !string.IsNullOrEmpty(definition.Audio.File))
-            {
-                string audioPath = Path.Combine(packageDir, definition.Audio.File);
-                if (!File.Exists(audioPath))
+                if (!File.Exists(glbAbsolutePath))
                 {
                     ConfigManager.WriteConsoleWarning(
-                        $"[MRCustomObjectDefinition] {packageName}: audio file missing ({definition.Audio.File})");
+                        $"[MRCustomObjectDefinition] {packageName}: GLB not found ({glbAbsolutePath})");
+                    MRDebugLog.LogError($"Custom object '{packageName}': GLB not found ({glbAbsolutePath})");
+                    return false;
                 }
-            }
 
-            if (definition.HasComponent("rotator")
-                && (definition.Rotator == null || string.IsNullOrEmpty(definition.Rotator.Target)))
-            {
-                ConfigManager.WriteConsoleWarning(
-                    $"[MRCustomObjectDefinition] {packageName}: components lists rotator but rotator.target is missing");
+                definition.AbsoluteModelPath = Path.GetFullPath(glbAbsolutePath);
+                if (definition.Model == null)
+                    definition.Model = new MRCustomObjectModelYaml();
+                if (string.IsNullOrEmpty(definition.Model.File))
+                    definition.Model.File = Path.GetFileName(glbAbsolutePath);
             }
-
-            if (definition.HasGrabComponent() && definition.Grab == null)
+            else if (requireModelFile)
             {
-                ConfigManager.WriteConsoleWarning(
-                    $"[MRCustomObjectDefinition] {packageName}: components lists grab but grab: block is missing — using defaults");
-            }
-
-            if (definition.HasVideoComponent())
-            {
-                if (definition.Video == null || string.IsNullOrEmpty(definition.Video.File))
+                string modelFile = definition.GetModelFileName();
+                if (string.IsNullOrEmpty(modelFile))
                 {
-                    ConfigManager.WriteConsoleWarning(
-                        $"[MRCustomObjectDefinition] {packageName}: components lists video but video.file is missing");
-                    MRDebugLog.LogError($"Custom object '{packageName}': video.file missing in object.yaml");
+                    ConfigManager.WriteConsoleWarning($"[MRCustomObjectDefinition] {packageName}: model.file missing");
+                    MRDebugLog.LogError($"Custom object '{packageName}': model.file missing in object.yaml");
+                    return false;
                 }
-                else if (string.IsNullOrEmpty(definition.Video.Target))
+
+                if (!File.Exists(Path.Combine(packageDir, modelFile)))
                 {
-                    ConfigManager.WriteConsoleWarning(
-                        $"[MRCustomObjectDefinition] {packageName}: components lists video but video.target is missing");
-                    MRDebugLog.LogError($"Custom object '{packageName}': video.target missing (screen mesh name)");
-                }
-                else
-                {
-                    string videoPath = Path.Combine(packageDir, definition.Video.File);
-                    if (!File.Exists(videoPath))
-                    {
-                        ConfigManager.WriteConsoleWarning(
-                            $"[MRCustomObjectDefinition] {packageName}: video file missing ({definition.Video.File})");
-                        MRDebugLog.LogError($"Custom object '{packageName}': video file missing ({definition.Video.File})");
-                    }
+                    ConfigManager.WriteConsoleWarning($"[MRCustomObjectDefinition] {packageName}: model not found ({modelFile})");
+                    MRDebugLog.LogError($"Custom object '{packageName}': model not found ({modelFile})");
+                    return false;
                 }
             }
 
-            if (definition.HasAnimatorComponent()
-                && (definition.Animator == null || string.IsNullOrEmpty(definition.Animator.Clip)))
-            {
-                ConfigManager.WriteConsoleWarning(
-                    $"[MRCustomObjectDefinition] {packageName}: components lists animator but animator.clip is missing");
-            }
-
+            ValidateOptionalAssets(definition);
             return true;
         }
         catch (Exception e)
@@ -228,6 +268,82 @@ public class MRCustomObjectDefinition
             ConfigManager.WriteConsoleException($"[MRCustomObjectDefinition] load {yamlPath}", e);
             MRDebugLog.LogError($"Custom object '{packageName}': object.yaml parse failed ({e.Message})");
             return false;
+        }
+    }
+
+    static void ValidateOptionalAssets(MRCustomObjectDefinition definition)
+    {
+        string packageName = definition.PackageName;
+        string packageDir = definition.PackageDir;
+
+        if (definition.Audio != null && !string.IsNullOrEmpty(definition.Audio.File))
+        {
+            string audioPath = Path.Combine(packageDir, definition.Audio.File);
+            if (!File.Exists(audioPath))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"[MRCustomObjectDefinition] {packageName}: audio file missing ({definition.Audio.File})");
+            }
+        }
+
+        if (definition.HasComponent("rotator")
+            && (definition.Rotator == null || string.IsNullOrEmpty(definition.Rotator.Target)))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"[MRCustomObjectDefinition] {packageName}: components lists rotator but rotator.target is missing");
+        }
+
+        if (definition.HasGrabComponent() && definition.Grab == null)
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"[MRCustomObjectDefinition] {packageName}: components lists grab but grab: block is missing — using defaults");
+        }
+
+        if (definition.HasVideoComponent())
+        {
+            if (definition.Video == null || string.IsNullOrEmpty(definition.Video.File))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"[MRCustomObjectDefinition] {packageName}: components lists video but video.file is missing");
+                MRDebugLog.LogError($"Custom object '{packageName}': video.file missing in object.yaml");
+            }
+            else if (string.IsNullOrEmpty(definition.Video.Target))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"[MRCustomObjectDefinition] {packageName}: components lists video but video.target is missing");
+                MRDebugLog.LogError($"Custom object '{packageName}': video.target missing (screen mesh name)");
+            }
+            else
+            {
+                string videoPath = Path.Combine(packageDir, definition.Video.File);
+                if (!File.Exists(videoPath))
+                {
+                    ConfigManager.WriteConsoleWarning(
+                        $"[MRCustomObjectDefinition] {packageName}: video file missing ({definition.Video.File})");
+                    MRDebugLog.LogError($"Custom object '{packageName}': video file missing ({definition.Video.File})");
+                }
+            }
+        }
+
+        if (definition.HasAnimatorComponent()
+            && (definition.Animator == null || string.IsNullOrEmpty(definition.Animator.Clip)))
+        {
+            ConfigManager.WriteConsoleWarning(
+                $"[MRCustomObjectDefinition] {packageName}: components lists animator but animator.clip is missing");
+        }
+
+        if (definition.HasLightComponent())
+        {
+            if (definition.Light == null)
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"[MRCustomObjectDefinition] {packageName}: components lists light but light: block is missing — using defaults");
+            }
+            else if (!MRCustomObjectLightYaml.IsSupportedType(definition.Light.Type))
+            {
+                ConfigManager.WriteConsoleWarning(
+                    $"[MRCustomObjectDefinition] {packageName}: unknown light.type '{definition.Light.Type}' (use point or spot)");
+            }
         }
     }
 }
@@ -293,7 +409,7 @@ public class MRCustomObjectGrabYaml
     public bool TwoHands;
     public bool ReturnOnRelease = true;
     public bool HideHands = true;
-    /// <summary>Optional child name to attach grab; default = package root.</summary>
+    /// <summary>One-hand: optional GLB child used as grip pivot (pose snaps to hand). Two-hands: grab root.</summary>
     public string Target;
     public float ReturnDurationSeconds = 0.15f;
 }
@@ -334,4 +450,33 @@ public class MRCustomObjectAnimatorYaml
     public bool PlayOnAwake = true;
     /// <summary>Playback speed multiplier (default 1).</summary>
     public float Speed = 1f;
+}
+
+[Serializable]
+public class MRCustomObjectLightYaml
+{
+    public const string TypePoint = "point";
+    public const string TypeSpot = "spot";
+
+    /// <summary>Optional GLB child for the light transform; omit = package root. Spot uses local +Z as beam direction.</summary>
+    public string Target;
+    /// <summary><c>point</c> or <c>spot</c>.</summary>
+    public string Type = TypePoint;
+    public float Intensity = 2f;
+    public float Range = 4f;
+    public MRColor Color;
+    /// <summary>Outer cone angle in degrees (spot only).</summary>
+    public float SpotAngle = 60f;
+    /// <summary>Inner cone angle in degrees (spot only).</summary>
+    public float InnerSpotAngle = 30f;
+    public bool Shadows;
+
+    public static bool IsSupportedType(string type)
+    {
+        if (string.IsNullOrEmpty(type))
+            return true;
+
+        return string.Equals(type, TypePoint, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(type, TypeSpot, StringComparison.OrdinalIgnoreCase);
+    }
 }

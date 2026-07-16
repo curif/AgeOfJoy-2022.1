@@ -377,10 +377,11 @@ Componentes são comportamentos ligados ao objeto quando ele aparece no MR. No S
 
 | Componente | Para que serve | Campos principais |
 |--------------|----------------|-------------------|
-| **grab** | Pegar o objeto com as mãos no VR | **twoHands** — uma ou duas mãos; **returnOnRelease** — volta ao lugar ao soltar; **hideHands** — esconde as mãos ao pegar; **target** — parte do GLB (opcional) |
+| **grab** | Pegar o objeto com as mãos no VR | **twoHands** — uma ou duas mãos; **returnOnRelease** — volta ao lugar ao soltar; **hideHands** — esconde as mãos ao pegar; **target** — pivô de grip no GLB (posição/rotação na mão; opcional = raiz) |
 | **video** | Reproduz vídeo numa tela do modelo | **file** — `.mp4` no pacote; **target** — malha filha do GLB (ex.: `Screen`); **loop**, **volume** |
 | **rotator** | Gira uma parte do modelo continuamente | **target** — filho do GLB (ex.: `Blades`); **axis** — eixo x/y/z; **speed** — graus por segundo |
 | **animator** | Toca animação embutida no GLB | **clip** — nome da animação no arquivo; **target** — osso/malha (opcional); **loop**, **speed** |
+| **light** | Luz point ou spot no objeto | **type** — `point` ou `spot`; **intensity**, **range**; **color** — `{ r, g, b }`; **target** — filho do GLB (opcional); spot também **spotAngle** / **innerSpotAngle** |
 
 **Dicas:**
 
@@ -595,7 +596,7 @@ O **AOJ MR Studio** é a ferramenta oficial no **Windows** para criar e enviar c
 | **Custom Objects** | Criar pastas de pacote, enviar `.glb`, editar colocação e componentes, salvar `object.yaml` no Quest |
 | **Conexão Quest** | **Reconnect** na Home; **Check device** na lista de pacotes para testar ADB |
 
-O fluxo completo para **objetos personalizados** está na [seção 11](#11-objetos-personalizados) (Placement, Components **grab** / **video** / **rotator** / **animator**).
+O fluxo completo para **objetos personalizados** está na [seção 11](#11-objetos-personalizados) (Placement, Components **grab** / **video** / **rotator** / **animator** / **light**).
 
 Posters e Room Skins continuam sendo adicionados pelo jogo ou por fluxos específicos nas [seções 12](#12-posters) e [13](#13-room-skin); suporte ampliado no Studio pode chegar em versões futuras.
 

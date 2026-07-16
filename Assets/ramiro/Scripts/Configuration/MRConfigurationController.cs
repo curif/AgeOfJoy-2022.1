@@ -25,14 +25,21 @@ public class MRConfigurationController : MonoBehaviour
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
     const int OfficialCategoryCount = 2; // was 3 — Bookshelves/Magazines hidden from menu
-    const int CustomCategoryCount = 2; // Posters + Room Skin (Others packages listed on home)
-    const int ConfigCategoryCount = 5;
+    const int CustomCategoryCount = 2; // Posters + Room Skin rows before packages on home table
+    const int ConfigCategoryCount = 4;
     const int GlobalLightOptionCount = 2;
     const int ListRowNameWidth = 10;
     const int CabinetListRowNameWidth = 18;
     const int RoomSkinListRowNameWidth = 22;
     const int TuneListRowNameWidth = 22;
     const int TableFlagWidth = 3;
+    const int CabinetAlphabetCount = 27; // ALL + A-Z
+    const int LightsGlobalShortcutCount = 1; // Global Light row above placeable lights
+    /// <summary>CABINETS / POSTERS table below Show All/Added + separator + two alphabet rows.</summary>
+    const int CabinetsTableStartRow = 6;
+    const int PostersTableStartRow = 6;
+    /// <summary>Unified CUSTOM OBJECTS home table (Posters + Room Skin + packages).</summary>
+    const int CustomHomeTableStartRow = 2;
     int tableNameWidth = ListRowNameWidth;
     int tableFlagWidth = TableFlagWidth;
     bool tableShowFlag;
@@ -107,10 +114,17 @@ public class MRConfigurationController : MonoBehaviour
     readonly List<string> filteredCabinetNames = new List<string>();
     CabinetListFilter cabinetListFilter = CabinetListFilter.ShowAll;
     bool cabinetFocusOnFilter = true;
+    /// <summary>When <see cref="cabinetFocusOnFilter"/>, true = alphabet row, false = Show All/Added.</summary>
+    bool cabinetFocusOnAlphabet;
+    /// <summary>0 = ALL, 1 = A … 26 = Z.</summary>
+    int cabinetLetterFilter;
     readonly List<MREnvironmentCatalogEntry> filteredEnvCatalogEntries = new List<MREnvironmentCatalogEntry>();
     CabinetListFilter envListFilter = CabinetListFilter.ShowAll;
     bool envListFocusOnFilter = true;
-    bool customHomeOnShortcuts = true; // Posters / Room Skin vs Others package table
+    /// <summary>When filter-focused on Posters: true = alphabet, false = Show All/Added.</summary>
+    bool envFocusOnAlphabet;
+    /// <summary>0 = ALL, 1 = A … 26 = Z (Posters letter filter).</summary>
+    int envLetterFilter;
     readonly List<MREnvironmentCatalogEntry> officialHomeCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> customHomeCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> customCatalogEntries = new List<MREnvironmentCatalogEntry>();
@@ -350,18 +364,23 @@ public class MRConfigurationController : MonoBehaviour
                 int filterDir = ReadHorizontalNavDirection();
                 if (filterDir != 0)
                 {
-                    CycleCabinetListFilter(filterDir);
+                    if (cabinetFocusOnAlphabet)
+                        CycleCabinetLetterFilter(filterDir);
+                    else
+                        CycleCabinetListFilter(filterDir);
                     navCooldown = navRepeatDelay;
                     return;
                 }
             }
-            else if (UsesEnvListFilterFocus(currentScreen) && envListFocusOnFilter
-                     && !(currentScreen == Screen.CustomObjects && customHomeOnShortcuts))
+            else if (UsesEnvListFilterFocus(currentScreen) && envListFocusOnFilter)
             {
                 int filterDir = ReadHorizontalNavDirection();
                 if (filterDir != 0)
                 {
-                    CycleEnvListFilter(filterDir);
+                    if (UsesAlphabetLetterFilter(currentScreen) && envFocusOnAlphabet)
+                        CycleEnvLetterFilter(filterDir);
+                    else
+                        CycleEnvListFilter(filterDir);
                     navCooldown = navRepeatDelay;
                     return;
                 }
@@ -449,8 +468,9 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("PHONE BOOTH", "Show/hide MR travel booth");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
-        navMenu.AddOption("OFFICIAL OBJECTS", "Lights + PrefabsEnvironment catalog");
-        navMenu.AddOption("CONFIG", "Move, scale, global light, mesh");
+        navMenu.AddOption("OFFICIAL OBJECTS", "PrefabsEnvironment catalog");
+        navMenu.AddOption("OFFICIAL LIGHTS", "Placeable lights + global fill");
+        navMenu.AddOption("CONFIG", "Move, scale, mesh, delete");
         navMenu.AddOption("DEBUG", "MR errors by date");
         navMenu.AddOption("HELP", "Controls + objects guide");
         navMenu.AddOption("EXIT", "Close panel");
@@ -472,12 +492,26 @@ public class MRConfigurationController : MonoBehaviour
             string name = catalogNames[i];
             if (cabinetListFilter == CabinetListFilter.ShowAdded)
             {
-                if (registry != null && registry.IsCabinetInScene(name))
-                    filteredCabinetNames.Add(name);
+                if (registry == null || !registry.IsCabinetInScene(name))
+                    continue;
             }
-            else
-                filteredCabinetNames.Add(name);
+
+            if (!CabinetNameMatchesLetterFilter(name))
+                continue;
+
+            filteredCabinetNames.Add(name);
         }
+    }
+
+    bool CabinetNameMatchesLetterFilter(string name)
+    {
+        if (cabinetLetterFilter <= 0)
+            return true;
+        if (string.IsNullOrEmpty(name))
+            return false;
+
+        char want = (char)('A' + cabinetLetterFilter - 1);
+        return char.ToUpperInvariant(name[0]) == want;
     }
 
     void SetCabinetListFilter(CabinetListFilter filter)
@@ -490,8 +524,9 @@ public class MRConfigurationController : MonoBehaviour
         selectedListIndex = 0;
         selectedColumnIndex = 0;
         listScrollOffset = 0;
-        // Keep focus on the filter tabs when switching with L/R.
+        // Keep focus on the Show All / Show Added tabs when switching with L/R.
         cabinetFocusOnFilter = true;
+        cabinetFocusOnAlphabet = false;
         ResetSelectionCursorBlink();
         DrawCurrentScreen();
     }
@@ -500,6 +535,29 @@ public class MRConfigurationController : MonoBehaviour
     {
         int next = ((int)cabinetListFilter + direction + 2) % 2;
         SetCabinetListFilter((CabinetListFilter)next);
+    }
+
+    void SetCabinetLetterFilter(int letterIndex)
+    {
+        int next = Mathf.Clamp(letterIndex, 0, CabinetAlphabetCount - 1);
+        if (cabinetLetterFilter == next)
+            return;
+
+        cabinetLetterFilter = next;
+        RebuildFilteredCabinetNames();
+        selectedListIndex = 0;
+        selectedColumnIndex = 0;
+        listScrollOffset = 0;
+        cabinetFocusOnFilter = true;
+        cabinetFocusOnAlphabet = true;
+        ResetSelectionCursorBlink();
+        DrawCurrentScreen();
+    }
+
+    void CycleCabinetLetterFilter(int direction)
+    {
+        int next = (cabinetLetterFilter + direction + CabinetAlphabetCount) % CabinetAlphabetCount;
+        SetCabinetLetterFilter(next);
     }
 
     static bool IsCustomObjectsListScreen(Screen screen) =>
@@ -531,6 +589,9 @@ public class MRConfigurationController : MonoBehaviour
         screen == Screen.Posters
         || screen == Screen.PlacedInstances;
 
+    static bool UsesAlphabetLetterFilter(Screen screen) =>
+        screen == Screen.Posters;
+
     void RebuildOfficialHomeCatalog()
     {
         officialHomeCatalogEntries.Clear();
@@ -554,7 +615,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.CustomObjectsOthers => customCatalogEntries,
             Screen.Posters => postersCatalogEntries,
             Screen.RoomSkins => roomSkinsCatalogEntries,
-            Screen.OfficialObjects => officialHomeCatalogEntries,
+            Screen.OfficialObjects => officialCatalogEntries,
             Screen.OfficialObjectsOthers => officialCatalogEntries,
             Screen.Lights => lightsCatalogEntries,
             _ => System.Array.Empty<MREnvironmentCatalogEntry>()
@@ -570,11 +631,15 @@ public class MRConfigurationController : MonoBehaviour
             MREnvironmentCatalogEntry entry = source[i];
             if (envListFilter == CabinetListFilter.ShowAdded)
             {
-                if (envRegistry != null && envRegistry.GetInstanceCount(entry) > 0)
-                    filteredEnvCatalogEntries.Add(entry);
+                if (envRegistry == null || envRegistry.GetInstanceCount(entry) <= 0)
+                    continue;
             }
-            else
-                filteredEnvCatalogEntries.Add(entry);
+
+            if (UsesAlphabetLetterFilter(currentScreen)
+                && !EnvNameMatchesLetterFilter(entry.DisplayLabel, entry.MenuLabel))
+                continue;
+
+            filteredEnvCatalogEntries.Add(entry);
         }
 
         if (UsesShowAllAddedAddRemove(currentScreen) && envListFilter == CabinetListFilter.ShowAdded)
@@ -600,6 +665,10 @@ public class MRConfigurationController : MonoBehaviour
         for (int i = 0; i < source.Count; i++)
         {
             MREnvironmentCatalogEntry entry = source[i];
+            if (UsesAlphabetLetterFilter(currentScreen)
+                && !EnvNameMatchesLetterFilter(entry.DisplayLabel, entry.MenuLabel))
+                continue;
+
             IReadOnlyList<MREnvironmentPlacement> placements = envRegistry.FindAllPlacementsByCatalogEntry(entry);
             for (int p = 0; p < placements.Count; p++)
             {
@@ -617,10 +686,25 @@ public class MRConfigurationController : MonoBehaviour
         return filteredEnvCatalogEntries.Count;
     }
 
+    bool EnvNameMatchesLetterFilter(string menuLabel, string displayLabel)
+    {
+        if (envLetterFilter <= 0)
+            return true;
+
+        string name = !string.IsNullOrEmpty(menuLabel) ? menuLabel : displayLabel;
+        if (string.IsNullOrEmpty(name))
+            return false;
+
+        char want = (char)('A' + envLetterFilter - 1);
+        return char.ToUpperInvariant(name[0]) == want;
+    }
+
     void ResetEnvListFilterUi()
     {
         envListFilter = CabinetListFilter.ShowAll;
         envListFocusOnFilter = true;
+        envFocusOnAlphabet = false;
+        envLetterFilter = 0;
         selectedListIndex = 0;
         selectedColumnIndex = 0;
         listScrollOffset = 0;
@@ -639,6 +723,7 @@ public class MRConfigurationController : MonoBehaviour
         selectedColumnIndex = 0;
         listScrollOffset = 0;
         envListFocusOnFilter = true;
+        envFocusOnAlphabet = false;
         ResetSelectionCursorBlink();
         DrawCurrentScreen();
     }
@@ -647,6 +732,29 @@ public class MRConfigurationController : MonoBehaviour
     {
         int next = ((int)envListFilter + direction + 2) % 2;
         SetEnvListFilter((CabinetListFilter)next);
+    }
+
+    void SetEnvLetterFilter(int letterIndex)
+    {
+        int next = Mathf.Clamp(letterIndex, 0, CabinetAlphabetCount - 1);
+        if (envLetterFilter == next)
+            return;
+
+        envLetterFilter = next;
+        RebuildFilteredEnvCatalogEntries();
+        selectedListIndex = 0;
+        selectedColumnIndex = 0;
+        listScrollOffset = 0;
+        envListFocusOnFilter = true;
+        envFocusOnAlphabet = true;
+        ResetSelectionCursorBlink();
+        DrawCurrentScreen();
+    }
+
+    void CycleEnvLetterFilter(int direction)
+    {
+        int next = (envLetterFilter + direction + CabinetAlphabetCount) % CabinetAlphabetCount;
+        SetEnvLetterFilter(next);
     }
 
     void RefreshObjectCatalogs()
@@ -859,24 +967,36 @@ public class MRConfigurationController : MonoBehaviour
         screen.PrintCentered(0, "CABINETS", true);
         screen.PrintLine(1, false, '-');
         DrawCabinetFilterTabs(2);
+        DrawMenuSeparatorLine(3);
+        DrawCabinetAlphabetTabs(4);
 
         if (catalogNames.Count == 0)
         {
-            screen.PrintCentered(8, "Not Found Cabinet", true);
-            screen.PrintCentered(10, "Check cabinetsdb/", false);
+            screen.PrintCentered(10, "Not Found Cabinet", true);
+            screen.PrintCentered(12, "Check cabinetsdb/", false);
             DrawFooter("B: back");
             return;
         }
 
         if (filteredCabinetNames.Count == 0)
         {
-            screen.PrintCentered(8, "No added cabinets", true);
+            string emptyMsg = cabinetListFilter == CabinetListFilter.ShowAdded
+                ? "No added cabinets"
+                : cabinetLetterFilter > 0
+                    ? $"No cabinets for {(char)('A' + cabinetLetterFilter - 1)}"
+                    : "No cabinets";
+            screen.PrintCentered(10, emptyMsg, true);
+            DrawFooter(cabinetFocusOnFilter
+                ? (cabinetFocusOnAlphabet
+                    ? "Stick L/R: letter   Down: list"
+                    : "Stick L/R: filter   Down: letter")
+                : "Stick Up/Down: move");
             return;
         }
 
         int rowSelected = cabinetFocusOnFilter ? -1 : selectedListIndex;
-        int visibleRows = GetFilterListVisibleRows();
-        int row = BeginListTable(null, "NAME", null, CabinetListRowNameWidth, startRow: 3);
+        int visibleRows = GetFilterListVisibleRows(CabinetsTableStartRow);
+        int row = BeginListTable(null, "NAME", null, CabinetListRowNameWidth, startRow: CabinetsTableStartRow);
         for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
@@ -887,16 +1007,70 @@ public class MRConfigurationController : MonoBehaviour
             row = DrawListRow(row, idx, rowSelected, name, GetCabinetRowActions(idx), nameWidth: CabinetListRowNameWidth);
         }
 
-        EndListTable(row, cabinetFocusOnFilter
-            ? $"Stick L/R to filter  Down: list ({filteredCabinetNames.Count})"
-            : $"Stick Up to filters  {filteredCabinetNames.Count} items");
+        string tableFooter;
+        if (cabinetFocusOnFilter)
+        {
+            tableFooter = cabinetFocusOnAlphabet
+                ? $"Stick L/R: letter  Down: list ({filteredCabinetNames.Count})"
+                : $"Stick L/R: filter  Down: letter ({filteredCabinetNames.Count})";
+        }
+        else
+            tableFooter = $"Stick Up to alphabet  {filteredCabinetNames.Count} items";
+
+        EndListTable(row, tableFooter);
+        DrawFooter(cabinetFocusOnFilter
+            ? (cabinetFocusOnAlphabet
+                ? "Stick L/R: letter   Down: list"
+                : "Stick L/R: filter   Down: letter")
+            : "Stick Up/Down: move");
     }
 
     void DrawCabinetFilterTabs(int y) =>
-        DrawShowAllAddedFilterTabs(y, cabinetFocusOnFilter, cabinetListFilter);
+        DrawShowAllAddedFilterTabs(y, cabinetFocusOnFilter && !cabinetFocusOnAlphabet, cabinetListFilter);
+
+    void DrawCabinetAlphabetTabs(int y) =>
+        DrawAlphabetFilterTabs(y, cabinetFocusOnFilter && cabinetFocusOnAlphabet, cabinetLetterFilter);
+
+    void DrawEnvAlphabetTabs(int y) =>
+        DrawAlphabetFilterTabs(y, envListFocusOnFilter && envFocusOnAlphabet, envLetterFilter);
+
+    void DrawAlphabetFilterTabs(int y, bool focusActive, int letterFilter)
+    {
+        // Two lines so ALL + A-Z fit on the 40-col CRT.
+        DrawAlphabetFilterLine(y, 0, 13, focusActive, letterFilter);     // ALL A … M
+        DrawAlphabetFilterLine(y + 1, 14, 26, focusActive, letterFilter); // N … Z
+    }
+
+    void DrawAlphabetFilterLine(int y, int fromIdx, int toIdx, bool focusActive, int letterFilter)
+    {
+        int x = 0;
+        screen.Print(x, y, "|", false);
+        x += 1;
+
+        for (int idx = fromIdx; idx <= toIdx; idx++)
+        {
+            string label = idx == 0 ? "ALL" : ((char)('A' + idx - 1)).ToString();
+            bool lit = focusActive && letterFilter == idx;
+            if (idx > fromIdx)
+            {
+                screen.Print(x, y, " ", false);
+                x += 1;
+            }
+
+            string token = lit ? SelectionCursorPrefix + label : label;
+            PrintSelectionSegment(x, y, token, lit);
+            x += token.Length;
+        }
+
+        if (x < screen.CharactersXCount)
+            screen.Print(x, y, "|", false);
+    }
 
     void DrawEnvFilterTabs(int y) =>
-        DrawShowAllAddedFilterTabs(y, envListFocusOnFilter, envListFilter);
+        DrawShowAllAddedFilterTabs(
+            y,
+            envListFocusOnFilter && !(UsesAlphabetLetterFilter(currentScreen) && envFocusOnAlphabet),
+            envListFilter);
 
     void DrawShowAllAddedFilterTabs(int y, bool focusOnFilter, CabinetListFilter activeFilter)
     {
@@ -983,26 +1157,25 @@ public class MRConfigurationController : MonoBehaviour
 
         string[] labels =
         {
-            "Move Config (Press A to enter)",
-            "Adjustments (Press A to enter)",
-            "Global Light (Press A to enter)",
-            "Mesh (Press A to enter)",
-            "Delete Configs (Press A to enter)"
+            "Move Config",
+            "Adjustments",
+            "Mesh",
+            "Delete Configs"
         };
 
+        int row = BeginListTable(null, "NAME", null, CabinetListRowNameWidth, startRow: 2);
         for (int i = 0; i < ConfigCategoryCount; i++)
         {
-            int y = 3 + i * 2;
-            bool selected = selectedListIndex == i;
-            PrintSelectionLine(
-                1,
-                y,
-                (selected ? SelectionCursorPrefix : "  ") + labels[i],
-                selected);
-            if (i < ConfigCategoryCount - 1)
-                DrawMenuSeparatorLine(y + 1);
+            row = DrawListRow(
+                row,
+                i,
+                selectedListIndex,
+                Truncate(labels[i], CabinetListRowNameWidth),
+                GetConfigCategoryRowActions(i),
+                nameWidth: CabinetListRowNameWidth);
         }
 
+        EndListTable(row, $"{ConfigCategoryCount} items");
         DrawFooter("Stick Up/Down: move");
     }
 
@@ -1052,27 +1225,42 @@ public class MRConfigurationController : MonoBehaviour
         DrawFooter("Press A or B to go back");
     }
 
-    int GetCustomHomePackageVisibleRows() =>
-        Mathf.Max(1, (screen.CharactersYCount - 3 - 7) / 2);
+    int GetCustomHomeVisibleRows() =>
+        GetFilterListVisibleRows(CustomHomeTableStartRow);
+
+    int GetCustomHomeListCount() =>
+        CustomCategoryCount + filteredEnvCatalogEntries.Count;
+
+    int SumCatalogInstanceCounts(IReadOnlyList<MREnvironmentCatalogEntry> entries)
+    {
+        if (envRegistry == null || entries == null)
+            return 0;
+
+        int total = 0;
+        for (int i = 0; i < entries.Count; i++)
+            total += envRegistry.GetInstanceCount(entries[i]);
+        return total;
+    }
 
     int GetOfficialObjectsVisibleRows() =>
-        Mathf.Max(1, (screen.CharactersYCount - 3 - 3) / 2);
+        GetFilterListVisibleRows(2);
 
     /// <summary>
-    /// Catalog/filter list data rows that fit (Show All + Show Added).
-    /// Keep in sync with draw loops and ClampListScroll — too many rows clips the last posters on CRT.
+    /// Catalog/filter list data rows that fit above the in-box footer and page footer.
+    /// Keep in sync with draw loops, EndListTable padding, and ClampListScroll.
     /// </summary>
     int GetFilterListVisibleRows(int tableStartRow = 3)
     {
         if (screen == null)
             return Mathf.Max(1, VisibleCabinetRows);
 
-        // BeginListTable: top + header + rule = 3 rows before first data line.
+        // BeginListTable (no in-box title): top + header + rule = 3 rows before first data line.
+        // Pass tableStartRow+2 when the table includes an in-box title (e.g. Magazines/Debug).
         int firstDataRow = tableStartRow + 3;
-        // After data: EndListTable footer (3) + SEL/hint/back (3). Extra -2 for CRT bezel crop.
-        int lastDataExclusive = screen.CharactersYCount - 3 - 3 - 2;
+        // EndListTable with footer strip (3) + page footer zone SEL/hint/B (3).
+        int lastDataExclusive = screen.CharactersYCount - 3 - 3;
         int fit = lastDataExclusive - firstDataRow;
-        return Mathf.Max(1, Mathf.Min(VisibleCabinetRows, fit));
+        return Mathf.Max(1, fit);
     }
 
     void DrawMenuSeparatorLine(int y)
@@ -1084,80 +1272,87 @@ public class MRConfigurationController : MonoBehaviour
 
     void DrawCustomObjectsCategoryPage()
     {
-        // First screen: plain menu lines (like Posters shortcut). Table is after enter.
+        // Unified table: Posters + Room Skin + packages (no Show All / Add).
         envListFilter = CabinetListFilter.ShowAll;
+        envListFocusOnFilter = false;
         RebuildFilteredEnvCatalogEntries();
 
         screen.PrintCentered(0, "CUSTOM OBJECTS", true);
         screen.PrintLine(1, false, '-');
 
-        bool shortcutsLit = customHomeOnShortcuts;
-        PrintSelectionLine(
-            1,
-            3,
-            (shortcutsLit && selectedListIndex == 0 ? SelectionCursorPrefix : "  ") + "Posters (Press A to enter)",
-            shortcutsLit && selectedListIndex == 0);
-        DrawMenuSeparatorLine(4);
-        PrintSelectionLine(
-            1,
-            5,
-            (shortcutsLit && selectedListIndex == 1 ? SelectionCursorPrefix : "  ") + "Room Skin (Press A to enter)",
-            shortcutsLit && selectedListIndex == 1);
-        DrawMenuSeparatorLine(6);
-
-        if (customCatalogEntries.Count == 0)
-        {
-            screen.PrintCentered(10, "No custom packages", true);
-            screen.PrintCentered(11, "MR/Custom Objects/", false);
-            DrawFooter("Stick Up/Down: move");
-            return;
-        }
-
-        bool listLit = !customHomeOnShortcuts;
-        int visibleRows = GetCustomHomePackageVisibleRows();
+        int listCount = GetCustomHomeListCount();
+        int visibleRows = GetCustomHomeVisibleRows();
+        int row = BeginListTable(
+            null,
+            "NAME",
+            "#",
+            CabinetListRowNameWidth,
+            startRow: CustomHomeTableStartRow);
         for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
-            if (idx >= filteredEnvCatalogEntries.Count)
+            if (idx >= listCount)
                 break;
 
-            MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx];
-            int copies = envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0;
-            string copiesTag = copies > 0 ? $" x{copies}" : string.Empty;
-            string label = Truncate(entry.DisplayLabel, Mathf.Max(8, screen.CharactersXCount - 22 - copiesTag.Length));
-            bool selected = listLit && selectedListIndex == idx;
-            int y = 7 + i * 2;
-            PrintSelectionLine(
-                1,
-                y,
-                (selected ? SelectionCursorPrefix : "  ") + label + copiesTag + " (Press A to enter)",
-                selected);
-            if (idx < filteredEnvCatalogEntries.Count - 1 || i < visibleRows - 1)
-                DrawMenuSeparatorLine(y + 1);
+            string label;
+            string flag;
+            if (idx == 0)
+            {
+                label = "Posters";
+                flag = SumCatalogInstanceCounts(postersCatalogEntries).ToString();
+            }
+            else if (idx == 1)
+            {
+                label = "Room Skin";
+                flag = SumCatalogInstanceCounts(roomSkinsCatalogEntries).ToString();
+            }
+            else
+            {
+                MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx - CustomCategoryCount];
+                label = Truncate(entry.DisplayLabel, CabinetListRowNameWidth);
+                flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
+            }
+
+            row = DrawListRow(
+                row,
+                idx,
+                selectedListIndex,
+                Truncate(label, CabinetListRowNameWidth),
+                GetCustomHomeRowActions(idx),
+                flag,
+                nameWidth: CabinetListRowNameWidth);
         }
 
+        EndListTable(row, $"{listCount} items");
         DrawFooter("Stick Up/Down: move");
     }
 
     void DrawOfficialObjectsCategoryPage()
     {
-        // First screen: plain menu lines. Enter opens copies table (Poster-style Add/Remove).
-        RebuildOfficialHomeCatalog();
+        // PrefabsEnvironment packages only (Official Lights is on the main nav).
+        RefreshObjectCatalogs();
         envListFilter = CabinetListFilter.ShowAll;
+        envListFocusOnFilter = false;
         RebuildFilteredEnvCatalogEntries();
 
         screen.PrintCentered(0, "OFFICIAL OBJECTS", true);
         screen.PrintLine(1, false, '-');
 
-        if (officialHomeCatalogEntries.Count == 0)
+        if (filteredEnvCatalogEntries.Count == 0)
         {
             screen.PrintCentered(8, "No official objects found", true);
-            screen.PrintCentered(10, "Lights + PrefabsEnvironment/", false);
+            screen.PrintCentered(10, "PrefabsEnvironment/", false);
             DrawFooter("Stick Up/Down: move");
             return;
         }
 
         int visibleRows = GetOfficialObjectsVisibleRows();
+        int row = BeginListTable(
+            null,
+            "NAME",
+            "#",
+            CabinetListRowNameWidth,
+            startRow: 2);
         for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
@@ -1165,20 +1360,19 @@ public class MRConfigurationController : MonoBehaviour
                 break;
 
             MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx];
-            int copies = envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0;
-            string copiesTag = copies > 0 ? $" x{copies}" : string.Empty;
-            string label = Truncate(entry.DisplayLabel, Mathf.Max(8, screen.CharactersXCount - 22 - copiesTag.Length));
-            bool selected = selectedListIndex == idx;
-            int y = 3 + i * 2;
-            PrintSelectionLine(
-                1,
-                y,
-                (selected ? SelectionCursorPrefix : "  ") + label + copiesTag + " (Press A to enter)",
-                selected);
-            if (idx < filteredEnvCatalogEntries.Count - 1 || i < visibleRows - 1)
-                DrawMenuSeparatorLine(y + 1);
+            string label = Truncate(entry.DisplayLabel, CabinetListRowNameWidth);
+            string flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
+            row = DrawListRow(
+                row,
+                idx,
+                selectedListIndex,
+                label,
+                GetCustomEnvCatalogRowActions(idx),
+                flag,
+                nameWidth: CabinetListRowNameWidth);
         }
 
+        EndListTable(row, $"{filteredEnvCatalogEntries.Count} items");
         DrawFooter("Stick Up/Down: move");
     }
 
@@ -1227,15 +1421,23 @@ public class MRConfigurationController : MonoBehaviour
     {
         RebuildFilteredEnvCatalogEntries();
 
+        bool useAlphabet = UsesAlphabetLetterFilter(currentScreen);
+        int tableStartRow = useAlphabet ? PostersTableStartRow : 3;
+
         screen.PrintCentered(0, title, true);
         screen.PrintLine(1, false, '-');
         DrawEnvFilterTabs(2);
+        if (useAlphabet)
+        {
+            DrawMenuSeparatorLine(3);
+            DrawEnvAlphabetTabs(4);
+        }
 
         IReadOnlyList<MREnvironmentCatalogEntry> source = GetEnvCatalogSourceEntries();
         if (source.Count == 0)
         {
-            screen.PrintCentered(8, emptyCatalogMessage, true);
-            screen.PrintCentered(10, emptyCatalogHint, false);
+            screen.PrintCentered(useAlphabet ? 10 : 8, emptyCatalogMessage, true);
+            screen.PrintCentered(useAlphabet ? 12 : 10, emptyCatalogHint, false);
             DrawFooter("B: back");
             return;
         }
@@ -1244,13 +1446,21 @@ public class MRConfigurationController : MonoBehaviour
         {
             if (showAddedEnvPlacements.Count == 0)
             {
-                screen.PrintCentered(8, "No added objects", true);
+                string emptyAdded = useAlphabet && envLetterFilter > 0
+                    ? $"No added for {(char)('A' + envLetterFilter - 1)}"
+                    : "No added objects";
+                screen.PrintCentered(useAlphabet ? 10 : 8, emptyAdded, true);
+                DrawFooter(useAlphabet && envListFocusOnFilter
+                    ? (envFocusOnAlphabet
+                        ? "Stick L/R: letter   Down: list"
+                        : "Stick L/R: filter   Down: letter")
+                    : "Stick L/R: filter   Down: list");
                 return;
             }
 
             int rowSelectedAdded = envListFocusOnFilter ? -1 : selectedListIndex;
-            int addedVisibleRows = GetFilterListVisibleRows();
-            int rowAdded = BeginListTable(null, "COPY", null, nameWidth, startRow: 3);
+            int addedVisibleRows = GetFilterListVisibleRows(tableStartRow);
+            int rowAdded = BeginListTable(null, "COPY", null, nameWidth, startRow: tableStartRow);
             for (int i = 0; i < addedVisibleRows; i++)
             {
                 int idx = listScrollOffset + i;
@@ -1271,31 +1481,56 @@ public class MRConfigurationController : MonoBehaviour
                     nameWidth: nameWidth);
             }
 
-            EndListTable(rowAdded, envListFocusOnFilter
-                ? $"Stick L/R to filter  Down: list ({showAddedEnvPlacements.Count})"
-                : $"Stick Up to filters  {showAddedEnvPlacements.Count} copies");
+            string addedFooter;
+            if (envListFocusOnFilter && useAlphabet)
+            {
+                addedFooter = envFocusOnAlphabet
+                    ? $"Stick L/R: letter  Down: list ({showAddedEnvPlacements.Count})"
+                    : $"Stick L/R: filter  Down: letter ({showAddedEnvPlacements.Count})";
+            }
+            else
+            {
+                addedFooter = envListFocusOnFilter
+                    ? $"Stick L/R to filter  Down: list ({showAddedEnvPlacements.Count})"
+                    : useAlphabet
+                        ? $"Stick Up to alphabet  {showAddedEnvPlacements.Count} copies"
+                        : $"Stick Up to filters  {showAddedEnvPlacements.Count} copies";
+            }
+
+            EndListTable(rowAdded, addedFooter);
             DrawFooter(envListFocusOnFilter
-                ? "Stick L/R: filter   Down: list"
+                ? (useAlphabet
+                    ? (envFocusOnAlphabet
+                        ? "Stick L/R: letter   Down: list"
+                        : "Stick L/R: filter   Down: letter")
+                    : "Stick L/R: filter   Down: list")
                 : "Stick Up/Down: move   A: remove");
             return;
         }
 
         if (filteredEnvCatalogEntries.Count == 0)
         {
-            screen.PrintCentered(8, "No added objects", true);
+            string emptyMsg = useAlphabet && envLetterFilter > 0
+                ? $"No posters for {(char)('A' + envLetterFilter - 1)}"
+                : "No added objects";
+            screen.PrintCentered(useAlphabet ? 10 : 8, emptyMsg, true);
+            DrawFooter(useAlphabet && envListFocusOnFilter
+                ? (envFocusOnAlphabet
+                    ? "Stick L/R: letter   Down: list"
+                    : "Stick L/R: filter   Down: letter")
+                : "Stick L/R: filter   Down: list");
             return;
         }
 
         int rowSelected = envListFocusOnFilter ? -1 : selectedListIndex;
-        // Show All for multi-copy catalogs: no count column (copies are listed in Show Added).
-        bool hideCountColumn = UsesShowAllAddedAddRemove(currentScreen);
-        int visibleRows = GetFilterListVisibleRows();
+        // Middle column: how many copies of that catalog entry are already placed.
+        int visibleRows = GetFilterListVisibleRows(tableStartRow);
         int row = BeginListTable(
             null,
             "NAME",
-            hideCountColumn ? null : "#",
+            "#",
             nameWidth,
-            startRow: 3,
+            startRow: tableStartRow,
             flagWidth: flagWidth);
         for (int i = 0; i < visibleRows; i++)
         {
@@ -1305,9 +1540,7 @@ public class MRConfigurationController : MonoBehaviour
 
             MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx];
             string label = Truncate(useMenuLabel ? entry.MenuLabel : entry.DisplayLabel, nameWidth);
-            string flag = hideCountColumn
-                ? null
-                : (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
+            string flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
             row = DrawListRow(
                 row,
                 idx,
@@ -1320,11 +1553,29 @@ public class MRConfigurationController : MonoBehaviour
                 nameWidth: nameWidth);
         }
 
-        EndListTable(row, envListFocusOnFilter
-            ? $"Stick L/R to filter  Down: list ({filteredEnvCatalogEntries.Count})"
-            : $"Stick Up to filters  {filteredEnvCatalogEntries.Count} items");
+        string listFooter;
+        if (envListFocusOnFilter && useAlphabet)
+        {
+            listFooter = envFocusOnAlphabet
+                ? $"Stick L/R: letter  Down: list ({filteredEnvCatalogEntries.Count})"
+                : $"Stick L/R: filter  Down: letter ({filteredEnvCatalogEntries.Count})";
+        }
+        else
+        {
+            listFooter = envListFocusOnFilter
+                ? $"Stick L/R to filter  Down: list ({filteredEnvCatalogEntries.Count})"
+                : useAlphabet
+                    ? $"Stick Up to alphabet  {filteredEnvCatalogEntries.Count} items"
+                    : $"Stick Up to filters  {filteredEnvCatalogEntries.Count} items";
+        }
+
+        EndListTable(row, listFooter);
         DrawFooter(envListFocusOnFilter
-            ? "Stick L/R: filter   Down: list"
+            ? (useAlphabet
+                ? (envFocusOnAlphabet
+                    ? "Stick L/R: letter   Down: list"
+                    : "Stick L/R: filter   Down: letter")
+                : "Stick L/R: filter   Down: list")
             : UsesShowAllAddedAddRemove(currentScreen)
                 ? "Stick Up/Down: move   A: add"
                 : "Stick Up/Down: move");
@@ -1359,7 +1610,7 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
-        int row = BeginListTable(null, "NAME", null, RoomSkinListRowNameWidth, startRow: 2);
+        int row = BeginListTable(null, "NAME", "#", RoomSkinListRowNameWidth, startRow: 2);
         int visibleRows = GetFilterListVisibleRows(2);
         for (int i = 0; i < visibleRows; i++)
         {
@@ -1369,12 +1620,14 @@ public class MRConfigurationController : MonoBehaviour
 
             MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx];
             string label = Truncate(entry.DisplayLabel, RoomSkinListRowNameWidth);
+            string flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
             row = DrawListRow(
                 row,
                 idx,
                 selectedListIndex,
                 label,
                 GetRoomSkinsRowActions(idx),
+                flag,
                 nameWidth: RoomSkinListRowNameWidth);
         }
 
@@ -1386,7 +1639,7 @@ public class MRConfigurationController : MonoBehaviour
     {
         RebuildFilteredEnvCatalogEntries();
 
-        screen.PrintCentered(0, "LIGHTS", true);
+        screen.PrintCentered(0, "OFFICIAL LIGHTS", true);
         screen.PrintLine(1, false, '-');
         DrawEnvFilterTabs(2);
 
@@ -1398,54 +1651,94 @@ public class MRConfigurationController : MonoBehaviour
             return;
         }
 
+        int listCount = GetLightsListCount();
         int rowSelected = envListFocusOnFilter ? -1 : selectedListIndex;
-        int row = BeginListTable(null, "NAME", null, CabinetListRowNameWidth, startRow: 3);
+        int row = BeginListTable(null, "NAME", "#", CabinetListRowNameWidth, startRow: 3);
 
-        if (lightsCatalogEntries.Count == 0)
+        if (lightsCatalogEntries.Count == 0 && listCount <= LightsGlobalShortcutCount)
         {
+            // Still show Global Light shortcut even if no placeable prefabs.
+            row = DrawListRow(
+                row,
+                0,
+                rowSelected,
+                "Global Light",
+                GetLightsListRowActions(0),
+                "-",
+                nameWidth: CabinetListRowNameWidth);
             EndListTable(row, "No light prefabs in ramiro/Lights/");
+            DrawFooter(envListFocusOnFilter
+                ? "Stick L/R: filter   Down: list"
+                : "Stick Up/Down: move");
             return;
         }
 
         int catalogVisibleRows = GetFilterListVisibleRows();
         for (int i = 0; i < catalogVisibleRows; i++)
         {
-            int catalogIdx = listScrollOffset + i;
-            if (catalogIdx >= filteredEnvCatalogEntries.Count)
+            int idx = listScrollOffset + i;
+            if (idx >= listCount)
+                break;
+
+            if (idx == 0)
+            {
+                row = DrawListRow(
+                    row,
+                    idx,
+                    rowSelected,
+                    "Global Light",
+                    GetLightsListRowActions(idx),
+                    "-",
+                    nameWidth: CabinetListRowNameWidth);
+                continue;
+            }
+
+            int catalogIdx = idx - LightsGlobalShortcutCount;
+            if (catalogIdx < 0 || catalogIdx >= filteredEnvCatalogEntries.Count)
                 break;
 
             MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[catalogIdx];
             string label = Truncate(entry.MenuLabel, CabinetListRowNameWidth);
+            string flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
             row = DrawListRow(
                 row,
-                catalogIdx,
+                idx,
                 rowSelected,
                 label,
-                GetLightsFilteredRowActions(catalogIdx),
+                GetLightsListRowActions(idx),
+                flag,
                 nameWidth: CabinetListRowNameWidth);
         }
 
         EndListTable(row, envListFocusOnFilter
-            ? $"Stick L/R to filter  Down: list ({GetLightsListCount()})"
-            : $"Stick Up to filters  {GetLightsListCount()} items");
+            ? $"Stick L/R to filter  Down: list ({listCount})"
+            : $"Stick Up to filters  {listCount} items");
+        DrawFooter(envListFocusOnFilter
+            ? "Stick L/R: filter   Down: list"
+            : "Stick Up/Down: move");
     }
 
-    int GetLightsListCount() => filteredEnvCatalogEntries.Count;
+    int GetLightsListCount() =>
+        LightsGlobalShortcutCount + filteredEnvCatalogEntries.Count;
+
+    List<RowActionKind> GetLightsListRowActions(int listIndex)
+    {
+        var actions = new List<RowActionKind>();
+        if (listIndex < 0 || listIndex >= GetLightsListCount())
+            return actions;
+
+        // Global Light shortcut + each placeable light: enter detail (Add / Remove / Tune).
+        actions.Add(RowActionKind.OpenDetail);
+        return actions;
+    }
 
     List<RowActionKind> GetLightsFilteredRowActions(int filteredCatalogIndex)
     {
         var actions = new List<RowActionKind>();
-        if (filteredCatalogIndex < 0
-            || filteredCatalogIndex >= filteredEnvCatalogEntries.Count
-            || envRegistry == null)
+        if (filteredCatalogIndex < 0 || filteredCatalogIndex >= filteredEnvCatalogEntries.Count)
             return actions;
 
-        MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[filteredCatalogIndex];
-        if (envRegistry.GetInstanceCount(entry) > 0)
-            actions.Add(RowActionKind.Remove);
-        else
-            actions.Add(RowActionKind.Add);
-
+        actions.Add(RowActionKind.OpenDetail);
         return actions;
     }
 
@@ -1504,7 +1797,14 @@ public class MRConfigurationController : MonoBehaviour
         int rowSelected = envListFocusOnFilter ? -1 : selectedListIndex;
         string nameCol = showAdded ? "COPY" : "NAME";
         int visibleRows = GetFilterListVisibleRows();
-        int row = BeginListTable(null, nameCol, null, ListRowNameWidth, startRow: 3);
+        // Show All: middle column = how many copies of this object are placed.
+        // Show Added: per-copy list — no count column (each row is one instance).
+        int row = BeginListTable(
+            null,
+            nameCol,
+            showAdded ? null : "#",
+            ListRowNameWidth,
+            startRow: 3);
         for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
@@ -1513,7 +1813,13 @@ public class MRConfigurationController : MonoBehaviour
 
             if (!showAdded)
             {
-                row = DrawListRow(row, idx, rowSelected, "+ Add", GetPlacedInstanceRowActions(idx));
+                row = DrawListRow(
+                    row,
+                    idx,
+                    rowSelected,
+                    "+ Add",
+                    GetPlacedInstanceRowActions(idx),
+                    count.ToString());
                 continue;
             }
 
@@ -1680,7 +1986,9 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         int row = BeginListTable("DEBUG", "LOG", null, ListRowNameWidth, startRow: 0);
-        for (int i = 0; i < VisibleDebugRows; i++)
+        // In-box title adds +2 chrome vs untitled tables (same as Magazines).
+        int visibleRows = GetFilterListVisibleRows(tableStartRow: 2);
+        for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
             if (idx >= debugDisplayLines.Count)
@@ -2013,11 +2321,27 @@ public class MRConfigurationController : MonoBehaviour
         return r;
     }
 
-    /// <summary>Closes the Clipper table with optional footer strip (like "Registros: 003").</summary>
+    /// <summary>Closes the Clipper table with optional footer strip (like "Registros: 003").
+    /// Pads empty data rows so the box stretches down to just above the page footer.</summary>
     void EndListTable(int rowAfterData, string footer = null)
     {
         if (!tableGridActive)
             return;
+
+        int chromeRows = string.IsNullOrEmpty(footer) ? 1 : 3;
+        const int pageFooterRows = 3; // SEL / hint / Press B
+        int maxDataExclusive = screen.CharactersYCount - pageFooterRows - chromeRows;
+        if (maxDataExclusive < rowAfterData)
+            maxDataExclusive = rowAfterData;
+
+        string emptyName = new string(' ', tableNameWidth);
+        string emptyFlag = tableShowFlag ? new string(' ', tableFlagWidth) : null;
+        string emptyAct = new string(' ', tableActWidth);
+        while (rowAfterData < maxDataExclusive)
+        {
+            screen.Print(0, rowAfterData, BuildTableRow(emptyName, emptyFlag, emptyAct), false);
+            rowAfterData++;
+        }
 
         if (string.IsNullOrEmpty(footer))
         {
@@ -2138,20 +2462,20 @@ public class MRConfigurationController : MonoBehaviour
             && actions.Count == 1
             && (actions[0] == RowActionKind.Add || actions[0] == RowActionKind.Remove)
             && !(currentScreen == Screen.Cabinets && cabinetFocusOnFilter)
-            && !(UsesShowAllAddedAddRemove(currentScreen) && envListFocusOnFilter)
-            && !(currentScreen == Screen.CustomObjects && customHomeOnShortcuts))
+            && !(UsesShowAllAddedAddRemove(currentScreen) && envListFocusOnFilter))
         {
             string verb = actions[0] == RowActionKind.Remove ? "REMOVE" : "ADD";
             return $"Press A to {verb}";
         }
 
-        // Env catalog lists: Press A to enter copies table.
-        if (IsFilteredEnvCatalogListScreen(currentScreen)
-            && currentScreen != Screen.Posters
-            && currentScreen != Screen.RoomSkins
+        // Env catalog lists / CONFIG: Press A to enter.
+        if ((currentScreen == Screen.Config
+                || currentScreen == Screen.CustomObjects
+                || (IsFilteredEnvCatalogListScreen(currentScreen)
+                    && currentScreen != Screen.Posters
+                    && currentScreen != Screen.RoomSkins))
             && actions.Count == 1
             && !envListFocusOnFilter
-            && !(currentScreen == Screen.CustomObjects && customHomeOnShortcuts)
             && actions[0] == RowActionKind.OpenDetail)
         {
             return "Press A to enter";
@@ -2159,6 +2483,9 @@ public class MRConfigurationController : MonoBehaviour
 
         if (currentScreen == Screen.Lights && actions.Count == 1 && !envListFocusOnFilter)
         {
+            if (actions[0] == RowActionKind.OpenDetail)
+                return "Press A to enter";
+
             string verb = actions[0] switch
             {
                 RowActionKind.Remove => "REMOVE",
@@ -2365,9 +2692,8 @@ public class MRConfigurationController : MonoBehaviour
         return currentScreen switch
         {
             Screen.Cabinets => GetCabinetRowActions(selectedListIndex),
-            Screen.CustomObjects => customHomeOnShortcuts
-                ? System.Array.Empty<RowActionKind>()
-                : GetCustomEnvCatalogRowActions(selectedListIndex),
+            Screen.Config => GetConfigCategoryRowActions(selectedListIndex),
+            Screen.CustomObjects => GetCustomHomeRowActions(selectedListIndex),
             Screen.CustomObjectsOthers => GetCustomEnvCatalogRowActions(selectedListIndex),
             Screen.OfficialObjectsOthers => GetCustomEnvCatalogRowActions(selectedListIndex),
             Screen.OfficialObjects => GetCustomEnvCatalogRowActions(selectedListIndex),
@@ -2392,6 +2718,16 @@ public class MRConfigurationController : MonoBehaviour
         RowActionKind.Increase
     };
 
+    List<RowActionKind> GetConfigCategoryRowActions(int index)
+    {
+        var actions = new List<RowActionKind>();
+        if (index < 0 || index >= ConfigCategoryCount)
+            return actions;
+
+        actions.Add(RowActionKind.OpenDetail);
+        return actions;
+    }
+
     List<RowActionKind> GetCabinetRowActions(int index)
     {
         var actions = new List<RowActionKind>();
@@ -2403,6 +2739,16 @@ public class MRConfigurationController : MonoBehaviour
         else
             actions.Add(RowActionKind.Add);
 
+        return actions;
+    }
+
+    List<RowActionKind> GetCustomHomeRowActions(int index)
+    {
+        var actions = new List<RowActionKind>();
+        if (index < 0 || index >= GetCustomHomeListCount())
+            return actions;
+
+        actions.Add(RowActionKind.OpenDetail);
         return actions;
     }
 
@@ -2534,9 +2880,12 @@ public class MRConfigurationController : MonoBehaviour
             return actions;
 
         actions.Add(RowActionKind.Remove);
-        // Lights: CRT Tune (intensity/range/temp). Poster/custom: Repos ray (grip + L/R scale).
+        // Lights: Tune (intensity/range/temp) + Move to reposition.
         if (instancesCatalogEntry.Source == MREnvironmentObjectSource.Light)
+        {
             actions.Add(RowActionKind.Tune);
+            actions.Add(RowActionKind.Move);
+        }
         else if (MRPlacementRayController.ExpectsStickScale(instancesCatalogEntry.Source))
             actions.Add(RowActionKind.Move);
         return actions;
@@ -2609,6 +2958,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Cabinets:
                 return ExecuteCabinetRowAction(action);
             case Screen.CustomObjects:
+                return ExecuteCustomObjectsHomeRowAction(action);
             case Screen.CustomObjectsOthers:
             case Screen.OfficialObjects:
             case Screen.OfficialObjectsOthers:
@@ -2670,6 +3020,25 @@ public class MRConfigurationController : MonoBehaviour
             default:
                 return false;
         }
+    }
+
+    bool ExecuteCustomObjectsHomeRowAction(RowActionKind action)
+    {
+        if (action != RowActionKind.OpenDetail)
+            return false;
+
+        if (selectedListIndex < CustomCategoryCount)
+        {
+            OpenCustomObjectsCategory();
+            return false;
+        }
+
+        int packageIndex = selectedListIndex - CustomCategoryCount;
+        if (packageIndex < 0 || packageIndex >= filteredEnvCatalogEntries.Count || envRegistry == null)
+            return false;
+
+        OpenPlacedInstances(filteredEnvCatalogEntries[packageIndex], Screen.CustomObjects);
+        return false;
     }
 
     bool ExecuteCustomEnvCatalogRowAction(RowActionKind action)
@@ -2789,48 +3158,26 @@ public class MRConfigurationController : MonoBehaviour
 
     bool ExecuteLightsRowAction(RowActionKind action)
     {
-        if (selectedListIndex < 0 || selectedListIndex >= filteredEnvCatalogEntries.Count || envRegistry == null)
+        if (action != RowActionKind.OpenDetail)
             return false;
 
-        MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[selectedListIndex];
-        switch (action)
+        if (selectedListIndex < LightsGlobalShortcutCount)
         {
-            case RowActionKind.Add:
-                QueueReturnToPlacedInstances(entry, currentScreen);
-                BeginAddEnvironmentWithRay(entry);
-                return false;
-            case RowActionKind.Remove:
-            {
-                IReadOnlyList<MREnvironmentPlacement> placements =
-                    envRegistry.FindAllPlacementsByCatalogEntry(entry);
-                if (placements.Count == 0)
-                    return false;
-
-                bool removedAny = false;
-                for (int i = placements.Count - 1; i >= 0; i--)
-                {
-                    if (envRegistry.RemovePlacement(placements[i].Id))
-                        removedAny = true;
-                }
-
-                if (!removedAny)
-                    return false;
-
-                ConfigManager.WriteConsole($"{LogPrefix} removed {entry}");
-                RebuildFilteredEnvCatalogEntries();
-                if (selectedListIndex >= GetLightsListCount())
-                    selectedListIndex = Mathf.Max(0, GetLightsListCount() - 1);
-                ClampColumnIndexForCurrentRow();
-                return true;
-            }
-            default:
-                return false;
+            OpenGlobalLight();
+            return false;
         }
+
+        int catalogIndex = selectedListIndex - LightsGlobalShortcutCount;
+        if (catalogIndex < 0 || catalogIndex >= filteredEnvCatalogEntries.Count || envRegistry == null)
+            return false;
+
+        OpenPlacedInstances(filteredEnvCatalogEntries[catalogIndex], Screen.Lights);
+        return false;
     }
 
     List<RowActionKind> GetLightsRowActionsForSelection()
     {
-        return GetLightsFilteredRowActions(selectedListIndex);
+        return GetLightsListRowActions(selectedListIndex);
     }
 
     bool ExecuteMagazinesRowAction(RowActionKind action)
@@ -3044,7 +3391,7 @@ public class MRConfigurationController : MonoBehaviour
         return currentScreen switch
         {
             Screen.Cabinets => filteredCabinetNames.Count,
-            Screen.CustomObjects => customHomeOnShortcuts ? CustomCategoryCount : filteredEnvCatalogEntries.Count,
+            Screen.CustomObjects => GetCustomHomeListCount(),
             Screen.CustomObjectsOthers => filteredEnvCatalogEntries.Count,
             Screen.OfficialObjects => filteredEnvCatalogEntries.Count,
             Screen.Config => ConfigCategoryCount,
@@ -3100,68 +3447,50 @@ public class MRConfigurationController : MonoBehaviour
         DrawCurrentScreen();
     }
 
-    void MoveCustomObjectsHomeSelection(int delta)
-    {
-        ResetSelectionCursorBlink();
-
-        if (customHomeOnShortcuts)
-        {
-            if (delta > 0 && selectedListIndex >= CustomCategoryCount - 1
-                && filteredEnvCatalogEntries.Count > 0)
-            {
-                customHomeOnShortcuts = false;
-                selectedListIndex = 0;
-                selectedColumnIndex = 0;
-                listScrollOffset = 0;
-                DrawCurrentScreen();
-                return;
-            }
-
-            selectedListIndex += delta;
-            if (selectedListIndex < 0)
-                selectedListIndex = 0;
-            else if (selectedListIndex >= CustomCategoryCount)
-                selectedListIndex = CustomCategoryCount - 1;
-            DrawCurrentScreen();
-            return;
-        }
-
-        if (delta < 0 && selectedListIndex == 0)
-        {
-            customHomeOnShortcuts = true;
-            selectedListIndex = CustomCategoryCount - 1;
-            DrawCurrentScreen();
-            return;
-        }
-
-        int count = filteredEnvCatalogEntries.Count;
-        if (count == 0)
-        {
-            customHomeOnShortcuts = true;
-            selectedListIndex = CustomCategoryCount - 1;
-            DrawCurrentScreen();
-            return;
-        }
-
-        selectedListIndex += delta;
-        if (selectedListIndex < 0)
-            selectedListIndex = 0;
-        else if (selectedListIndex >= count)
-            selectedListIndex = count - 1;
-
-        selectedColumnIndex = 0;
-        ClampColumnIndexForCurrentRow();
-        ClampListScroll();
-        DrawCurrentScreen();
-    }
-
     void MoveEnvCatalogSelection(int delta)
     {
         ResetSelectionCursorBlink();
 
+        bool useAlphabet = UsesAlphabetLetterFilter(currentScreen);
+
         if (envListFocusOnFilter)
         {
-            // Posters Show Added: list length is placement copies, not unique catalog rows.
+            if (useAlphabet && !envFocusOnAlphabet)
+            {
+                // Show All / Show Added row
+                if (delta > 0)
+                {
+                    envFocusOnAlphabet = true;
+                    DrawCurrentScreen();
+                }
+
+                return;
+            }
+
+            if (useAlphabet && envFocusOnAlphabet)
+            {
+                // Alphabet row
+                if (delta < 0)
+                {
+                    envFocusOnAlphabet = false;
+                    DrawCurrentScreen();
+                    return;
+                }
+
+                if (delta > 0 && GetListCount() > 0)
+                {
+                    envListFocusOnFilter = false;
+                    envFocusOnAlphabet = false;
+                    selectedListIndex = 0;
+                    selectedColumnIndex = 0;
+                    listScrollOffset = 0;
+                    DrawCurrentScreen();
+                }
+
+                return;
+            }
+
+            // Non-alphabet screens: filter row → list
             if (delta > 0 && GetListCount() > 0)
             {
                 envListFocusOnFilter = false;
@@ -3178,6 +3507,8 @@ public class MRConfigurationController : MonoBehaviour
         if (count == 0)
         {
             envListFocusOnFilter = true;
+            if (useAlphabet)
+                envFocusOnAlphabet = true;
             DrawCurrentScreen();
             return;
         }
@@ -3185,6 +3516,8 @@ public class MRConfigurationController : MonoBehaviour
         if (delta < 0 && selectedListIndex == 0)
         {
             envListFocusOnFilter = true;
+            if (useAlphabet)
+                envFocusOnAlphabet = true;
             DrawCurrentScreen();
             return;
         }
@@ -3252,9 +3585,30 @@ public class MRConfigurationController : MonoBehaviour
 
         if (cabinetFocusOnFilter)
         {
+            if (!cabinetFocusOnAlphabet)
+            {
+                // Show All / Show Added row
+                if (delta > 0)
+                {
+                    cabinetFocusOnAlphabet = true;
+                    DrawCurrentScreen();
+                }
+
+                return;
+            }
+
+            // Alphabet row
+            if (delta < 0)
+            {
+                cabinetFocusOnAlphabet = false;
+                DrawCurrentScreen();
+                return;
+            }
+
             if (delta > 0 && filteredCabinetNames.Count > 0)
             {
                 cabinetFocusOnFilter = false;
+                cabinetFocusOnAlphabet = false;
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
@@ -3268,6 +3622,7 @@ public class MRConfigurationController : MonoBehaviour
         if (count == 0)
         {
             cabinetFocusOnFilter = true;
+            cabinetFocusOnAlphabet = true;
             DrawCurrentScreen();
             return;
         }
@@ -3275,6 +3630,7 @@ public class MRConfigurationController : MonoBehaviour
         if (delta < 0 && selectedListIndex == 0)
         {
             cabinetFocusOnFilter = true;
+            cabinetFocusOnAlphabet = true;
             DrawCurrentScreen();
             return;
         }
@@ -3323,23 +3679,6 @@ public class MRConfigurationController : MonoBehaviour
                 break;
 
             case Screen.CustomObjects:
-                MoveCustomObjectsHomeSelection(delta);
-                break;
-
-            case Screen.Cabinets:
-                MoveCabinetSelection(delta);
-                break;
-
-            case Screen.Lights:
-                MoveLightsSelection(delta);
-                break;
-
-            case Screen.CustomObjectsOthers:
-            case Screen.OfficialObjectsOthers:
-            case Screen.Posters:
-                MoveEnvCatalogSelection(delta);
-                break;
-
             case Screen.OfficialObjects:
             case Screen.RoomSkins:
             case Screen.Magazines:
@@ -3358,6 +3697,20 @@ public class MRConfigurationController : MonoBehaviour
                 ClampColumnIndexForCurrentRow();
                 ClampListScroll();
                 DrawCurrentScreen();
+                break;
+
+            case Screen.Cabinets:
+                MoveCabinetSelection(delta);
+                break;
+
+            case Screen.Lights:
+                MoveLightsSelection(delta);
+                break;
+
+            case Screen.CustomObjectsOthers:
+            case Screen.OfficialObjectsOthers:
+            case Screen.Posters:
+                MoveEnvCatalogSelection(delta);
                 break;
 
             case Screen.PlacedInstances:
@@ -3453,7 +3806,7 @@ public class MRConfigurationController : MonoBehaviour
 
             case Screen.DeleteConfigsDone:
                 currentScreen = Screen.Config;
-                selectedListIndex = 4;
+                selectedListIndex = 3;
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
                 SyncBackControlEdgeState();
@@ -3461,12 +3814,6 @@ public class MRConfigurationController : MonoBehaviour
                 break;
 
             case Screen.CustomObjects:
-                if (customHomeOnShortcuts)
-                {
-                    OpenCustomObjectsCategory();
-                    break;
-                }
-
                 if (ExecuteSelectedRowAction())
                     DrawCurrentScreen();
                 break;
@@ -3529,7 +3876,9 @@ public class MRConfigurationController : MonoBehaviour
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 cabinetListFilter = CabinetListFilter.ShowAll;
+                cabinetLetterFilter = 0;
                 cabinetFocusOnFilter = true;
+                cabinetFocusOnAlphabet = false;
                 RebuildFilteredCabinetNames();
                 currentScreen = Screen.Cabinets;
                 break;
@@ -3544,25 +3893,28 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case "CUSTOM OBJECTS":
                 RefreshObjectCatalogs();
+                RefreshPostersCatalog();
+                RefreshRoomSkinsCatalog();
                 envListFilter = CabinetListFilter.ShowAll;
                 RebuildFilteredEnvCatalogEntries();
-                customHomeOnShortcuts = true;
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.CustomObjects;
                 break;
             case "OFFICIAL OBJECTS":
-                RefreshLightsCatalog();
                 RefreshObjectCatalogs();
-                RebuildOfficialHomeCatalog();
                 envListFilter = CabinetListFilter.ShowAll;
+                envListFocusOnFilter = false;
                 RebuildFilteredEnvCatalogEntries();
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.OfficialObjects;
                 break;
+            case "OFFICIAL LIGHTS":
+                OpenOfficialLights();
+                return;
             case "CONFIG":
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
@@ -3732,32 +4084,55 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.CustomObjectsOthers:
             case Screen.Posters:
             case Screen.RoomSkins:
+            {
+                int returnRow = currentScreen == Screen.RoomSkins ? 1 : 0;
                 currentScreen = Screen.CustomObjects;
-                ResetEnvListFilterUi();
-                customHomeOnShortcuts = true;
-                selectedListIndex = 0;
+                envListFilter = CabinetListFilter.ShowAll;
+                envListFocusOnFilter = false;
+                RebuildFilteredEnvCatalogEntries();
+                selectedListIndex = returnRow;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
                 SyncBackControlEdgeState();
                 DrawCurrentScreen();
                 break;
+            }
             case Screen.Lights:
+                currentScreen = Screen.NavMain;
+                navMenu.selectedIndex = 0;
+                navCooldown = navRepeatDelay;
+                SyncConfirmControlEdgeState();
+                SyncBackControlEdgeState();
+                DrawCurrentScreen();
+                break;
             case Screen.Magazines:
             case Screen.OfficialObjectsOthers:
                 currentScreen = Screen.OfficialObjects;
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
-                envListFocusOnFilter = true;
-                RebuildOfficialHomeCatalog();
+                envListFocusOnFilter = false;
+                RefreshObjectCatalogs();
                 RebuildFilteredEnvCatalogEntries();
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
                 SyncBackControlEdgeState();
                 DrawCurrentScreen();
                 break;
-            case Screen.Adjustments:
             case Screen.GlobalLight:
+                currentScreen = Screen.Lights;
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                envListFocusOnFilter = false;
+                navCooldown = navRepeatDelay;
+                SyncConfirmControlEdgeState();
+                SyncBackControlEdgeState();
+                DrawCurrentScreen();
+                break;
+            case Screen.Adjustments:
             case Screen.Mesh:
                 currentScreen = Screen.Config;
                 navCooldown = navRepeatDelay;
@@ -3768,7 +4143,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.DeleteConfigsConfirm:
             case Screen.DeleteConfigsDone:
                 currentScreen = Screen.Config;
-                selectedListIndex = 4;
+                selectedListIndex = 3;
                 navCooldown = navRepeatDelay;
                 SyncConfirmControlEdgeState();
                 SyncBackControlEdgeState();
@@ -3814,11 +4189,6 @@ public class MRConfigurationController : MonoBehaviour
             case 2:
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
-                currentScreen = Screen.GlobalLight;
-                break;
-            case 3:
-                selectedListIndex = 0;
-                selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 currentScreen = Screen.Mesh;
                 break;
@@ -3840,7 +4210,7 @@ public class MRConfigurationController : MonoBehaviour
         if (selectedListIndex != 0)
         {
             currentScreen = Screen.Config;
-            selectedListIndex = 4;
+            selectedListIndex = 3;
             navCooldown = navRepeatDelay;
             SyncConfirmControlEdgeState();
             SyncBackControlEdgeState();
@@ -3922,22 +4292,33 @@ public class MRConfigurationController : MonoBehaviour
         DrawCurrentScreen();
     }
 
+    void OpenOfficialLights()
+    {
+        RefreshLightsCatalog();
+        ResetEnvListFilterUi();
+        currentScreen = Screen.Lights;
+        navCooldown = navRepeatDelay;
+        SyncConfirmControlEdgeState();
+        SyncBackControlEdgeState();
+        DrawCurrentScreen();
+    }
+
+    void OpenGlobalLight()
+    {
+        selectedListIndex = 0;
+        selectedColumnIndex = 0;
+        currentScreen = Screen.GlobalLight;
+        navCooldown = navRepeatDelay;
+        SyncConfirmControlEdgeState();
+        SyncBackControlEdgeState();
+        DrawCurrentScreen();
+    }
+
     void OpenOfficialObjectsCategory()
     {
-        switch (selectedListIndex)
-        {
-            case 0:
-                RefreshLightsCatalog();
-                ResetEnvListFilterUi();
-                currentScreen = Screen.Lights;
-                break;
-            default:
-                RefreshObjectCatalogs();
-                ResetEnvListFilterUi();
-                currentScreen = Screen.OfficialObjectsOthers;
-                break;
-        }
-
+        RefreshObjectCatalogs();
+        ResetEnvListFilterUi();
+        currentScreen = Screen.OfficialObjectsOthers;
         navCooldown = navRepeatDelay;
         SyncConfirmControlEdgeState();
         SyncBackControlEdgeState();
@@ -4473,13 +4854,15 @@ public class MRConfigurationController : MonoBehaviour
 
         selectedListIndex = Mathf.Clamp(selectedListIndex, 0, count - 1);
         int visibleRows = VisibleCabinetRows;
-        if (currentScreen == Screen.CustomObjects && !customHomeOnShortcuts)
-            visibleRows = GetCustomHomePackageVisibleRows();
+        if (currentScreen == Screen.CustomObjects)
+            visibleRows = GetCustomHomeVisibleRows();
         else if (currentScreen == Screen.OfficialObjects)
             visibleRows = GetOfficialObjectsVisibleRows();
-        else if (currentScreen == Screen.Cabinets
-            || currentScreen == Screen.Posters
-            || currentScreen == Screen.CustomObjectsOthers
+        else if (currentScreen == Screen.Cabinets)
+            visibleRows = GetFilterListVisibleRows(CabinetsTableStartRow);
+        else if (currentScreen == Screen.Posters)
+            visibleRows = GetFilterListVisibleRows(PostersTableStartRow);
+        else if (currentScreen == Screen.CustomObjectsOthers
             || currentScreen == Screen.OfficialObjectsOthers
             || currentScreen == Screen.RoomSkins
             || currentScreen == Screen.Magazines
@@ -4487,7 +4870,7 @@ public class MRConfigurationController : MonoBehaviour
             visibleRows = GetFilterListVisibleRows(
                 currentScreen == Screen.RoomSkins || currentScreen == Screen.Magazines ? 2 : 3);
         else if (currentScreen == Screen.Debug)
-            visibleRows = VisibleDebugRows;
+            visibleRows = GetFilterListVisibleRows(tableStartRow: 2);
         int maxOffset = Mathf.Max(0, count - visibleRows);
         if (selectedListIndex < listScrollOffset)
             listScrollOffset = selectedListIndex;

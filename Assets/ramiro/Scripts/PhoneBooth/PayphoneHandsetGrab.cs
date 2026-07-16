@@ -346,10 +346,13 @@ public class PayphoneHandsetGrab : MonoBehaviour
     {
         grabInteractable.throwOnDetach = false;
         grabInteractable.movementType = XRBaseInteractable.MovementType.Instantaneous;
-        grabInteractable.trackPosition = true;
-        grabInteractable.trackRotation = true;
+        // Handset pose is owned by FollowHand (offset captured on grab). Disable XR tracking so the
+        // Right Direct Interactor's CoinPosition attach does not reorient the handset (coin keeps that attach).
+        grabInteractable.trackPosition = false;
+        grabInteractable.trackRotation = false;
         grabInteractable.trackScale = false;
         grabInteractable.retainTransformParent = false;
+        grabInteractable.useDynamicAttach = true;
     }
 
     void ConfigureGrabLayers()
@@ -562,7 +565,30 @@ public class PayphoneHandsetGrab : MonoBehaviour
             return;
 
         followLocalGrabOffset = followTransform.InverseTransformPoint(grabRoot.position);
-        followLocalGrabRotationOffset = Quaternion.Inverse(followTransform.rotation) * grabRoot.rotation;
+
+        // Hand-specific local X so the handset sits naturally when held.
+        // Right +90°, left -90°.
+        Quaternion handsetGrabTwist = Quaternion.Euler(GetGrabHandsetXDegrees(), 0f, 0f);
+        followLocalGrabRotationOffset =
+            Quaternion.Inverse(followTransform.rotation) * (grabRoot.rotation * handsetGrabTwist);
+    }
+
+    float GetGrabHandsetXDegrees() => IsFollowingLeftHand() ? -90f : 90f;
+
+    bool IsFollowingLeftHand()
+    {
+        if (followTransform == null)
+            return false;
+
+        ChangeControls controls = FindObjectOfType<ChangeControls>();
+        if (controls == null)
+            return false;
+
+        if (controls.leftHandXRControl != null
+            && followTransform.IsChildOf(controls.leftHandXRControl.transform))
+            return true;
+
+        return false;
     }
 
     void EndVirtualGrabFromTravel()
@@ -1150,7 +1176,25 @@ public class PayphoneHandsetGrab : MonoBehaviour
     static Transform ResolveFollowTransform(IXRSelectInteractor interactor)
     {
         var interactorBehaviour = interactor as MonoBehaviour;
-        return interactorBehaviour != null ? interactorBehaviour.transform : null;
+        if (interactorBehaviour == null)
+            return null;
+
+        // Follow the hand/controller root — not GetAttachTransform (Right DI attach is CoinPosition).
+        ActionBasedController controller = interactorBehaviour.GetComponentInParent<ActionBasedController>();
+        if (controller != null)
+            return controller.transform;
+
+        ChangeControls controls = FindObjectOfType<ChangeControls>();
+        if (controls != null)
+        {
+            Transform t = interactorBehaviour.transform;
+            if (controls.leftHandXRControl != null && t.IsChildOf(controls.leftHandXRControl.transform))
+                return controls.leftHandXRControl.transform;
+            if (controls.rightHandXRControl != null && t.IsChildOf(controls.rightHandXRControl.transform))
+                return controls.rightHandXRControl.transform;
+        }
+
+        return interactorBehaviour.transform;
     }
 
     static GameObject ResolveHandModel(IXRSelectInteractor interactor)

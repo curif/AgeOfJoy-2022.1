@@ -1,0 +1,32 @@
+# Age of Joy — MR custom object (schema v1)
+# Edited with AOJ MR Studio
+
+version: 1
+name: flashlight
+displayName: flashlight
+model:
+  file: flashlight.glb
+placement:
+  surfaceType: 4
+  facingAxis: 0
+  allowStickRotation: true
+  stickRotationAxis: 0
+light:
+  target: Light
+  type: spot
+  intensity: 5.0
+  range: 8.0
+  spotAngle: 70
+  innerSpotAngle: 20
+  color:
+    r: 1.0
+    g: 0.78
+    b: 0.28
+  shadows: true
+components:
+- grab
+- light
+grab:
+  twoHands: false
+  returnOnRelease: true
+  hideHands: true

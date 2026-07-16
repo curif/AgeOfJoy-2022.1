@@ -2,12 +2,15 @@
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 */
 
-// Built-in RP: invisible depth occluder + optional transparent shadow receive (no cast).
-// Default _ShadowIntensity 0 = fully invisible except depth occlusion.
+// Built-in RP: invisible depth occluder + point/spot light tint + shadow receive (no cast).
+// Directional lights only cast/receive shadows here — tinting a whole flat face looks painted.
+// Default intensities 0 = fully invisible except depth occlusion.
 Shader "AgeOfJoy/MR/OccluderAndShadow"
 {
     Properties
     {
+        _LightIntensity ("Light Intensity", Range(0, 1)) = 0
+        _LightFalloff ("Light Falloff", Range(1, 8)) = 2.5
         _ShadowIntensity ("Shadow Intensity", Range(0, 1)) = 0
         _ShadowColor ("Shadow Color", Color) = (0, 0, 0, 1)
         _TintEnabled ("Tint Enabled", Float) = 0
@@ -104,6 +107,7 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
 
         Pass
         {
+            // Directional: shadows only (no light tint — flat faces would look solid-painted).
             Name "DirectionalShadowReceive"
             Tags { "LightMode" = "ForwardBase" }
             Blend SrcAlpha OneMinusSrcAlpha
@@ -151,12 +155,11 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
                 if (_ShadowIntensity <= 0.001)
                     return 0;
 
-                // ForwardBase here is for directional lights only (MR ceiling uses ForwardAdd).
                 if (_WorldSpaceLightPos0.w > 0.0)
                     return 0;
 
                 float3 lightDir = normalize(_WorldSpaceLightPos0.xyz);
-                float ndotl = dot(normalize(i.worldNormal), lightDir);
+                float ndotl = saturate(dot(normalize(i.worldNormal), lightDir));
                 if (ndotl <= 0.0)
                     return 0;
 
@@ -170,9 +173,10 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
 
         Pass
         {
-            Name "PointShadowReceive"
+            // Point/Spot: light-colour hotspot with distance falloff + optional shadow darkening.
+            Name "PointLightAndShadow"
             Tags { "LightMode" = "ForwardAdd" }
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend One OneMinusSrcAlpha
             ZWrite Off
             ZTest LEqual
             Cull Back
@@ -183,10 +187,11 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
             #pragma multi_compile_fwdadd_fullshadows
             #pragma skip_variants DIRECTIONAL DIRECTIONAL_COOKIE
             #include "UnityCG.cginc"
+            #include "Lighting.cginc"
             #include "AutoLight.cginc"
 
-            float _ShadowIntensity;
-            fixed4 _ShadowColor;
+            float _LightIntensity;
+            float _LightFalloff;
 
             struct appdata
             {
@@ -214,7 +219,7 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                if (_ShadowIntensity <= 0.001)
+                if (_LightIntensity <= 0.001)
                     return 0;
 
 #if defined(DIRECTIONAL) || defined(DIRECTIONAL_COOKIE)
@@ -223,7 +228,7 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
                 float3 toLight = _WorldSpaceLightPos0.xyz - i.worldPos;
                 float dist = length(toLight);
                 float3 lightDir = toLight / max(dist, 0.0001);
-                float ndotl = dot(normalize(i.worldNormal), lightDir);
+                float ndotl = saturate(dot(normalize(i.worldNormal), lightDir));
                 if (ndotl <= 0.0)
                     return 0;
 
@@ -242,16 +247,29 @@ Shader "AgeOfJoy/MR/OccluderAndShadow"
                 distAtten = tex2D(_LightTextureB0, dot(worldLightCoord.xyz, worldLightCoord.xyz).xx).r;
 #if defined(SPOT_COOKIE)
                 distAtten *= tex2D(_LightTexture0, worldLightCoord.xy / worldLightCoord.w + 0.5).w;
+#else
+                // Spot cookie uses the same projective UVs in the non-cookie variant on Built-in.
+                distAtten *= tex2D(_LightTexture0, worldLightCoord.xy / worldLightCoord.w + 0.5).w;
 #endif
 #endif
 
                 if (distAtten <= 0.001h)
                     return 0;
 
+                // Concentrate the hotspot: range falloff + soft angle (not a flat Lambert wash).
+                float falloff = max(_LightFalloff, 1.0);
+                float radial = pow(saturate((float)distAtten), falloff);
+                float angled = pow(ndotl, falloff);
+                float hotspot = radial * angled;
+
+                // Occlusion only removes coloured light (object silhouette), never paints
+                // an extra black disc — (1-shadow)*hotspot looked like a "spot-shaped shadow".
                 half shadow = saturate((half)UNITY_SHADOW_ATTENUATION(i, i.worldPos));
-                float alpha = (1.0 - shadow) * _ShadowIntensity * ndotl;
-                alpha *= _ShadowColor.a;
-                return fixed4(_ShadowColor.rgb, alpha);
+                float litAmt = _LightIntensity * hotspot * shadow;
+                if (litAmt <= 0.001)
+                    return 0;
+
+                return fixed4(_LightColor0.rgb * litAmt, litAmt);
 #endif
             }
             ENDCG

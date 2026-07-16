@@ -502,6 +502,7 @@ collision:
 #  - rotator
 #  - grab
 #  - animator
+#  - light
 #
 #rotator:
 #  target: Blades
@@ -518,6 +519,14 @@ collision:
 #  twoHands: false
 #  returnOnRelease: true
 #  hideHands: true
+#
+#light:
+#  target: Bulb
+#  type: point
+#  intensity: 1.5
+#  range: 3.5
+#  color: { r: 1.0, g: 0.85, b: 0.6 }
+#  shadows: false
 ";
 
     public static string ResolveCabinetsLayoutPath()
