@@ -86,10 +86,11 @@ public static class MRPostersCatalog
         try
         {
             byte[] bytes = File.ReadAllBytes(fullPath);
-            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            if (!texture.LoadImage(bytes))
+            // LoadImage does not build a mip chain — decode first, then copy into a mipmapped texture.
+            var decoded = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            if (!decoded.LoadImage(bytes))
             {
-                UnityEngine.Object.Destroy(texture);
+                UnityEngine.Object.Destroy(decoded);
                 string extension = Path.GetExtension(fullPath);
                 ConfigManager.WriteConsoleError(
                     $"[MRPostersCatalog] LoadImage failed for {relativePath} ({extension}). " +
@@ -97,8 +98,18 @@ public static class MRPostersCatalog
                 return null;
             }
 
+            var texture = new Texture2D(
+                decoded.width,
+                decoded.height,
+                TextureFormat.RGBA32,
+                mipChain: true);
+            texture.SetPixels32(decoded.GetPixels32());
+            texture.Apply(updateMipmaps: true, makeNoLongerReadable: true);
+            UnityEngine.Object.Destroy(decoded);
+
             texture.name = Path.GetFileNameWithoutExtension(fullPath);
-            texture.filterMode = FilterMode.Bilinear;
+            texture.filterMode = FilterMode.Trilinear;
+            texture.anisoLevel = 8;
             texture.wrapMode = TextureWrapMode.Clamp;
             return texture;
         }
