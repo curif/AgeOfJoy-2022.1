@@ -111,6 +111,7 @@ public class PortableGames : MonoBehaviour
     int selectedListIndex;
     int listScrollOffset;
     float navCooldown;
+    DateTime lastAudioStatsReport = DateTime.MinValue;
     bool sessionActive;
     bool gameRunning;
     bool confirmControlWasActive;
@@ -501,6 +502,17 @@ public class PortableGames : MonoBehaviour
     {
         if (gameShader == null)
             return;
+
+        // Ticks the closed-loop audio-rate controller (LibretroMameCore.GetAndResetAudioStats) -
+        // without this call the portable session's audio rate stays frozen at its warm-start
+        // guess. Cabinet screens tick it from LibretroScreenController.Update instead.
+        if (DateTime.Now >= lastAudioStatsReport)
+        {
+            string stats = LibretroMameCore.GetAndResetAudioStats();
+            if (stats != null)
+                ConfigManager.WriteConsole($"{LogPrefix} {stats}");
+            lastAudioStatsReport = DateTime.Now.AddSeconds(5);
+        }
 
 #if UNITY_EDITOR
         if (editorVideoActive)
