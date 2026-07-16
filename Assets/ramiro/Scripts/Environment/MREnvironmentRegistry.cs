@@ -729,6 +729,9 @@ public class MREnvironmentRegistry : MonoBehaviour
         layout.Save(LayoutFilePath);
 
         ApplyRootScaleAfterFinalize(root, placement);
+        // Placement ray moves the root after grab Configure/Start captured home — refresh dock pose
+        // so returnOnRelease snaps to the confirmed position, not the initial spawn pose.
+        NotifyPortableGamesPlacementUpdated(root);
 
         MRPlacedEnvironment marker = root.GetComponent<MRPlacedEnvironment>();
         if (marker == null)

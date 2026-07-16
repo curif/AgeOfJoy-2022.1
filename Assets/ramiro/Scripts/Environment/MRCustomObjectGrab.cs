@@ -53,8 +53,6 @@ public class MRCustomObjectGrab : MonoBehaviour
     Vector3 homeWorldPosition;
     Quaternion homeWorldRotation;
     Transform homeParent;
-    Vector3 homeLocalPosition;
-    Quaternion homeLocalRotation;
     Vector3 homeLocalScale;
     Coroutine returnHomeCoroutine;
 
@@ -169,7 +167,8 @@ public class MRCustomObjectGrab : MonoBehaviour
         oneHandGrab.trackPosition = false;
         oneHandGrab.trackRotation = false;
         oneHandGrab.trackScale = false;
-        oneHandGrab.retainTransformParent = false;
+        // Keep original dock parent so Drop() does not leave the object under the controller.
+        oneHandGrab.retainTransformParent = true;
         oneHandGrab.useDynamicAttach = true;
 
         int physicsLayer = LayerMask.NameToLayer(GrabPhysicsLayerName);
@@ -211,6 +210,8 @@ public class MRCustomObjectGrab : MonoBehaviour
             body.WakeUp();
         }
 
+        // Detach from dock parent while held so world follow is stable; ReturnHome re-parents.
+        grabRoot.SetParent(null, worldPositionStays: true);
         FollowOneHandPivot();
 
         if (hideHands)
@@ -228,6 +229,8 @@ public class MRCustomObjectGrab : MonoBehaviour
         RestoreHandVisuals(false);
         if (returnOnRelease)
             ReturnHome();
+        else
+            SetDockedPhysics(true);
     }
 
     void FollowOneHandPivot()
@@ -363,17 +366,21 @@ public class MRCustomObjectGrab : MonoBehaviour
 
     void SnapHome()
     {
+        if (grabRoot == null)
+            return;
+
+        // Prefer stored world pose (stable if homeParent moved or was momentarily lost),
+        // then restore the dock parent + authored local scale.
+        grabRoot.SetParent(null, worldPositionStays: true);
+        grabRoot.SetPositionAndRotation(homeWorldPosition, homeWorldRotation);
+
         if (homeParent != null)
         {
-            grabRoot.SetParent(homeParent, worldPositionStays: false);
-            grabRoot.localPosition = homeLocalPosition;
-            grabRoot.localRotation = homeLocalRotation;
+            grabRoot.SetParent(homeParent, worldPositionStays: true);
             grabRoot.localScale = homeLocalScale;
         }
         else
         {
-            grabRoot.SetParent(null, worldPositionStays: true);
-            grabRoot.SetPositionAndRotation(homeWorldPosition, homeWorldRotation);
             grabRoot.localScale = homeLocalScale;
         }
 
@@ -384,15 +391,11 @@ public class MRCustomObjectGrab : MonoBehaviour
     {
         Vector3 startPos = grabRoot.position;
         Quaternion startRot = grabRoot.rotation;
-        Vector3 endPos = homeParent != null
-            ? homeParent.TransformPoint(homeLocalPosition)
-            : homeWorldPosition;
-        Quaternion endRot = homeParent != null
-            ? homeParent.rotation * homeLocalRotation
-            : homeWorldRotation;
+        Vector3 endPos = homeWorldPosition;
+        Quaternion endRot = homeWorldRotation;
 
-        if (homeParent != null)
-            grabRoot.SetParent(homeParent, worldPositionStays: true);
+        // Lerp in world space unparented — avoids fighting a moving controller attach parent.
+        grabRoot.SetParent(null, worldPositionStays: true);
 
         float elapsed = 0f;
 
@@ -480,8 +483,6 @@ public class MRCustomObjectGrab : MonoBehaviour
         homeParent = grabRoot.parent;
         homeWorldPosition = grabRoot.position;
         homeWorldRotation = grabRoot.rotation;
-        homeLocalPosition = grabRoot.localPosition;
-        homeLocalRotation = grabRoot.localRotation;
         homeLocalScale = grabRoot.localScale;
     }
 
