@@ -565,7 +565,30 @@ public class PayphoneHandsetGrab : MonoBehaviour
             return;
 
         followLocalGrabOffset = followTransform.InverseTransformPoint(grabRoot.position);
-        followLocalGrabRotationOffset = Quaternion.Inverse(followTransform.rotation) * grabRoot.rotation;
+
+        // Hand-specific local X so the handset sits naturally when held.
+        // Right +90°, left -90°.
+        Quaternion handsetGrabTwist = Quaternion.Euler(GetGrabHandsetXDegrees(), 0f, 0f);
+        followLocalGrabRotationOffset =
+            Quaternion.Inverse(followTransform.rotation) * (grabRoot.rotation * handsetGrabTwist);
+    }
+
+    float GetGrabHandsetXDegrees() => IsFollowingLeftHand() ? -90f : 90f;
+
+    bool IsFollowingLeftHand()
+    {
+        if (followTransform == null)
+            return false;
+
+        ChangeControls controls = FindObjectOfType<ChangeControls>();
+        if (controls == null)
+            return false;
+
+        if (controls.leftHandXRControl != null
+            && followTransform.IsChildOf(controls.leftHandXRControl.transform))
+            return true;
+
+        return false;
     }
 
     void EndVirtualGrabFromTravel()
