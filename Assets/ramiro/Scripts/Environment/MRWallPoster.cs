@@ -3,6 +3,7 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 using UnityEngine;
+using UnityEngine.Rendering;
 
 /// <summary>MR wall poster — applies MR/Posters textures onto Resources/ramiro/Poster.fbx.</summary>
 [DisallowMultipleComponent]
@@ -78,6 +79,7 @@ public class MRWallPoster : MonoBehaviour
 
         ownedTexture = MRPostersCatalog.LoadTexture(textureRelativePath);
         EnsureRuntimeMaterial();
+        ApplyLightingPolicy();
 
         if (ownedTexture == null)
         {
@@ -151,15 +153,32 @@ public class MRWallPoster : MonoBehaviour
             runtimeMaterial = new Material(template);
         else
         {
-            Shader shader = Shader.Find("Unlit/Texture");
+            Shader shader = Shader.Find("Standard");
+            if (shader == null)
+                shader = Shader.Find("Unlit/Texture");
             if (shader == null)
                 shader = Shader.Find("Sprites/Default");
 
             runtimeMaterial = new Material(shader);
         }
 
-        runtimeMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+        if (runtimeMaterial.HasProperty("_Metallic"))
+            runtimeMaterial.SetFloat("_Metallic", 0f);
+        if (runtimeMaterial.HasProperty("_Glossiness"))
+            runtimeMaterial.SetFloat("_Glossiness", 0.15f);
+
         targetRenderer.material = runtimeMaterial;
+        ApplyLightingPolicy();
+    }
+
+    void ApplyLightingPolicy()
+    {
+        if (targetRenderer == null)
+            return;
+
+        // Receive global/local light + shadows; do not cast (thin wall cards).
+        targetRenderer.shadowCastingMode = ShadowCastingMode.Off;
+        targetRenderer.receiveShadows = true;
     }
 
     void ApplyTextureToMaterial(Texture2D texture)
@@ -200,7 +219,7 @@ public class MRWallPoster : MonoBehaviour
             baseZ = LandscapeScaleZ;
 
         float scale = UserScale;
-        // Mirror along wall horizontal (local Z for YZ poster plane) so left/right matches the file.
-        transform.localScale = new Vector3(1f, baseY * scale, -baseZ * scale);
+        // Two negatives keep winding so Standard front faces the room (-X), while -Z mirrors L/R.
+        transform.localScale = new Vector3(-1f, baseY * scale, -baseZ * scale);
     }
 }
