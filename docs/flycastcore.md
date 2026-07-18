@@ -39,10 +39,12 @@ All the normal buttons (A/B/X/Y, Start, coin) keep working as usual in both mode
 
 ### Notes & behavior
 
-- **External gamepads (Xbox / Bluetooth) ignore this flag entirely.** A real gamepad has all the DC controls at once, so it always maps the standard flycast way, in both modes: d-pad → DC d-pad, left stick → DC analog stick, triggers → analog L2/R2, face buttons positional (pad A → DC A, B → DC B, X → DC X, Y → DC Y), shoulders → C/Z, Start → Start, Select → coin, left stick click → TEST, right stick click → SERVICE (arcade). This gamepad layout is fixed — a custom `controllers:` block remaps the Quest controllers only.
+- **External gamepads (Xbox / Bluetooth) ignore this flag entirely.** A real gamepad has all the DC controls at once, so it always maps the standard flycast way, in both modes: d-pad → DC d-pad, left stick → DC analog stick, triggers → analog L2/R2, face buttons positional (pad A → DC A, B → DC B, X → DC X, Y → DC Y), shoulders → C/Z, Start → Start, Select → coin, **both stick clicks + left trigger → TEST**, **both stick clicks + right trigger → SERVICE** (arcade). This gamepad layout is fixed — a custom `controllers:` block remaps the Quest controllers only.
 - With `analog-stick: true` the Quest left stick is analog-only: its digital d-pad output is masked so pushing up can't fire both the analog axis and d-pad-UP at once (Daytona's change-view, for example). Menus stay navigable via the right stick.
 - The Quest triggers only produce an analog value in `analog-stick: true` mode. In the default mode they act as their normal digital buttons; a gamepad's triggers are always analog.
-- **Arcade TEST/SERVICE menus (NAOMI / Atomiswave):** universal on every cabinet, pad and gun alike — **left stick click = TEST**, **right stick click = SERVICE**. No chords. `reicast_allow_service_buttons` is enabled automatically on every flycast cabinet (override via `environment:` if a game misbehaves); Dreamcast games have no service buttons and ignore the stick clicks. On a gun cabinet the right stick is the gun model, but the physical thumbstick press still registers.
+- **Arcade TEST/SERVICE menus (NAOMI / Atomiswave):** This is critical for games where you have to enter the TEST menu to calibrate a gun. Also useful for if you want to change difficulty level. This is universal on every cabinet, pad and gun alike — a deliberately awkward double chord so it can't fire by accident: hold **both stick clicks** (L3 + R3) together, then squeeze a trigger: **L3+R3 + left trigger = TEST**, **L3+R3 + right trigger = SERVICE**. 
+
+`reicast_allow_service_buttons` is enabled automatically on every flycast cabinet (override via `environment:` if a game misbehaves); Dreamcast games have no service buttons and ignore the chord. On a gun cabinet the trigger also fires/reloads the gun — harmless while opening the service menu.
 
 ### Example — a racing cabinet
 
@@ -85,10 +87,10 @@ Default gun controls (the real DC gun had a trigger, a B button, Start, and a d-
 | Left-controller **menu** button | **Start** |
 | LEFT thumbstick | the gun's **d-pad** |
 | Left trigger | forced reload (offscreen shot) — aiming off the screen also works |
-| LEFT **stick click** | arcade **TEST** menu (NAOMI & Atomiswave) |
-| RIGHT **stick click** | arcade **SERVICE** menu (NAOMI & Atomiswave) |
+| **Both stick clicks + left trigger** | arcade **TEST** menu (NAOMI & Atomiswave) |
+| **Both stick clicks + right trigger** | arcade **SERVICE** menu (NAOMI & Atomiswave) |
 
-The TEST and SERVICE buttons (`reicast_allow_service_buttons`, enabled automatically on every flycast cabinet, overridable via `environment:`) matter here because NAOMI gun games need them for their one-time in-game gun calibration; on a Dreamcast game the stick clicks do nothing. The stick clicks are the same everywhere — pad cabinets use them too (left = TEST, right = SERVICE); there are no chords.
+The TEST and SERVICE buttons (`reicast_allow_service_buttons`, enabled automatically on every flycast cabinet, overridable via `environment:`) matter here because NAOMI gun games need them for their one-time in-game gun calibration; on a Dreamcast game the chord does nothing. The chord is the same everywhere — pad cabinets use it too. On a gun cabinet the trigger squeeze also fires/reloads the gun, which is harmless while reaching the service menu.
 
 Two flycast-specific caveats:
 

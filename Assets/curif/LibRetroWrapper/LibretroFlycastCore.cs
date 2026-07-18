@@ -186,9 +186,10 @@ public static class LibretroFlycastCore
         if (lightGunTarget != null && lightGunTarget.Initialized())
             LibretroHWBridge.SetPortDevice(0, LibretroHWBridge.DEVICE_LIGHTGUN);
 
-        // The arcade TEST + SERVICE buttons are always reachable in AoJ via the stick clicks —
-        // left stick = TEST, right stick = SERVICE — on every cabinet, pad and gun alike (a gun
-        // cabinet's one-time gun calibration lives in the TEST menu). So the core option is
+        // The arcade TEST + SERVICE buttons are always reachable in AoJ via the double chord —
+        // both stick clicks (L3+R3) held, plus left trigger = TEST / right trigger = SERVICE — on
+        // every cabinet, pad and gun alike (a gun cabinet's one-time gun calibration lives in the
+        // TEST menu). So the core option is
         // enabled for every flycast cabinet; the `environment:` loop below can still override it
         // per cabinet. Dreamcast games have no service buttons and ignore L3/R3 entirely. Note:
         // on NAOMI pad games this repurposes R3 from the core's "Button 9" fallback to real
@@ -500,13 +501,6 @@ public static class LibretroFlycastCore
         if (ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 11;
         if (ControlMap.isActive(LC.JOYPAD_L2)) b |= 1u << 12;
         if (ControlMap.isActive(LC.JOYPAD_R2)) b |= 1u << 13;
-        // Stick clicks are the universal arcade TEST/SERVICE — no chord, every NAOMI/Atomiswave
-        // cabinet (pad and gun) the same. flycast's arcade map hardcodes RetroPad L3=TEST,
-        // R3=SERVICE (libretro.cpp nao_joymap/aw_joymap), which is exactly the layout we want:
-        // LEFT stick = TEST, RIGHT stick = SERVICE. Dreamcast games never read L3/R3, and
-        // NAOMI/DC games don't use a stick click as a game button, so this is safe everywhere.
-        if (ControlMap.isActive(LC.JOYPAD_L3)) b |= 1u << 14;   // left  stick → L3 → TEST
-        if (ControlMap.isActive(LC.JOYPAD_R3)) b |= 1u << 15;   // right stick → R3 → SERVICE
 
         bool coinNow = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT);
         if (coinNow && coinFrames == 0)
@@ -517,6 +511,25 @@ public static class LibretroFlycastCore
         {
             b |= 1u << 2;   // SELECT
             coinFrames--;
+        }
+
+        // Arcade TEST/SERVICE double chord — universal (pad and gun). Deliberately awkward so it
+        // can't fire by accident: hold BOTH stick clicks (L3 + R3) together, then squeeze a
+        // trigger. L3+R3 + LEFT trigger = TEST, L3+R3 + RIGHT trigger = SERVICE. The stick clicks
+        // are only the modifier — they never reach the game as L3/R3 on their own (nothing else
+        // sets bits 14/15) — and the chord swallows the squeezed trigger's JOYPAD_L/R bit so a pad
+        // game doesn't see it underneath. Both triggers at once fires nothing. On a gun cabinet the
+        // trigger also fires/reloads via the LIGHTGUN_* path, which is harmless while opening the
+        // menu. Dreamcast games never read L3/R3, so the chord is inert on a DC cabinet.
+        if (ControlMap.isActive(LC.JOYPAD_L3) && ControlMap.isActive(LC.JOYPAD_R3))
+        {
+            bool leftTrig = ControlMap.isActive(LC.JOYPAD_L);    // left  trigger
+            bool rightTrig = ControlMap.isActive(LC.JOYPAD_R);   // right trigger
+            if (leftTrig ^ rightTrig)
+            {
+                b |= leftTrig ? (1u << 14) : (1u << 15);          // TEST : SERVICE
+                b &= ~((1u << 10) | (1u << 11));                  // swallow the trigger bits
+            }
         }
 
 
@@ -580,7 +593,7 @@ public static class LibretroFlycastCore
     // A physical gamepad maps to the Dreamcast exactly as standalone flycast maps a RetroPad —
     // positional face buttons (south→DC A, east→DC B, west→DC X, north→DC Y through the core's
     // dc_joymap), d-pad→d-pad, left stick→analog stick, triggers→analog L2/R2, shoulders→C/Z,
-    // stick clicks→arcade TEST (left) / SERVICE (right), matching the Quest path — in both
+    // L3+R3+trigger→arcade TEST (left) / SERVICE (right), matching the Quest chord — in both
     // cabinet modes. Merges with the Quest-derived state: bits OR, stick sums clamp, triggers take
     // the max. AdjustControlMap stripped gamepad-* from the JOYPAD_* action maps, so this is the
     // only path a pad reaches the joypad state through. Reads are allocation-free.
@@ -601,15 +614,24 @@ public static class LibretroFlycastCore
         if (pad.buttonNorth.isPressed) b |= 1u << 9;        // retropad X → DC Y
         if (pad.leftShoulder.isPressed) b |= 1u << 10;      // retropad L → DC C
         if (pad.rightShoulder.isPressed) b |= 1u << 11;     // retropad R → DC Z
-        if (pad.leftStickButton.isPressed) b |= 1u << 14;   // left  stick → L3 → TEST
-        if (pad.rightStickButton.isPressed) b |= 1u << 15;  // right stick → R3 → SERVICE
-
         Vector2 stick = pad.leftStick.ReadValue();
         lx = ClampAxis(lx + Mathf.RoundToInt(stick.x * 0x7fff));
         ly = ClampAxis(ly + Mathf.RoundToInt(-stick.y * 0x7fff));   // libretro/DC analog-up is -y
 
         float l = Mathf.Clamp01(pad.leftTrigger.ReadValue());
         float r = Mathf.Clamp01(pad.rightTrigger.ReadValue());
+
+        // Arcade TEST/SERVICE double chord — the pad counterpart of the PollInput chord. Hold both
+        // stick clicks (L3 + R3), then a trigger: L3+R3+LEFT = TEST, L3+R3+RIGHT = SERVICE; both
+        // triggers at once fires nothing. Zero the squeezed trigger so a pad game sees neither its
+        // analog value nor its L2/R2 shadow (below) underneath.
+        bool lTrig = l > 0.5f, rTrig = r > 0.5f;
+        if (pad.leftStickButton.isPressed && pad.rightStickButton.isPressed && (lTrig ^ rTrig))
+        {
+            b |= lTrig ? (1u << 14) : (1u << 15);   // TEST : SERVICE
+            if (lTrig) l = 0f; else r = 0f;         // swallow the squeezed trigger (analog + shadow)
+        }
+
         lt = (short)Mathf.Max(lt, (short)Mathf.RoundToInt(l * 0x7fff));
         rt = (short)Mathf.Max(rt, (short)Mathf.RoundToInt(r * 0x7fff));
         if (l > 0.5f) b |= 1u << 12;   // digital L2/R2 shadow — keeps reicast_digital_triggers usable
