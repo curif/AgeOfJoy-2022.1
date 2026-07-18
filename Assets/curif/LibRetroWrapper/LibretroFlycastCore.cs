@@ -186,12 +186,13 @@ public static class LibretroFlycastCore
         if (lightGunTarget != null && lightGunTarget.Initialized())
             LibretroHWBridge.SetPortDevice(0, LibretroHWBridge.DEVICE_LIGHTGUN);
 
-        // The arcade TEST + SERVICE buttons are always reachable in AoJ — grip+Start chords on pad
-        // cabinets, stick clicks on gun cabinets (whose one-time gun calibration lives in the TEST
-        // menu) — so the core option is enabled for every flycast cabinet; the `environment:` loop
-        // below can still override it per cabinet. Dreamcast games have no service buttons and
-        // ignore L3/R3 entirely. Note: on NAOMI pad games this repurposes R3 from the core's
-        // "Button 9" fallback to real SERVICE.
+        // The arcade TEST + SERVICE buttons are always reachable in AoJ via the stick clicks —
+        // left stick = TEST, right stick = SERVICE — on every cabinet, pad and gun alike (a gun
+        // cabinet's one-time gun calibration lives in the TEST menu). So the core option is
+        // enabled for every flycast cabinet; the `environment:` loop below can still override it
+        // per cabinet. Dreamcast games have no service buttons and ignore L3/R3 entirely. Note:
+        // on NAOMI pad games this repurposes R3 from the core's "Button 9" fallback to real
+        // SERVICE.
         LibretroHWBridge.SetOption("reicast_allow_service_buttons", "enabled");
 
         // Per-cabinet core-option overrides (description.yaml `environment:`) — must be pushed before
@@ -499,8 +500,13 @@ public static class LibretroFlycastCore
         if (ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 11;
         if (ControlMap.isActive(LC.JOYPAD_L2)) b |= 1u << 12;
         if (ControlMap.isActive(LC.JOYPAD_R2)) b |= 1u << 13;
-        if (ControlMap.isActive(LC.JOYPAD_L3)) b |= 1u << 14;
-        if (ControlMap.isActive(LC.JOYPAD_R3)) b |= 1u << 15;
+        // Stick clicks are the universal arcade TEST/SERVICE — no chord, every NAOMI/Atomiswave
+        // cabinet (pad and gun) the same. flycast's arcade map hardcodes RetroPad L3=TEST,
+        // R3=SERVICE (libretro.cpp nao_joymap/aw_joymap), which is exactly the layout we want:
+        // LEFT stick = TEST, RIGHT stick = SERVICE. Dreamcast games never read L3/R3, and
+        // NAOMI/DC games don't use a stick click as a game button, so this is safe everywhere.
+        if (ControlMap.isActive(LC.JOYPAD_L3)) b |= 1u << 14;   // left  stick → L3 → TEST
+        if (ControlMap.isActive(LC.JOYPAD_R3)) b |= 1u << 15;   // right stick → R3 → SERVICE
 
         bool coinNow = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT);
         if (coinNow && coinFrames == 0)
@@ -513,23 +519,6 @@ public static class LibretroFlycastCore
             coinFrames--;
         }
 
-        // Arcade TEST/SERVICE chords, pad cabinets only: hold a grip, then tap Start —
-        // R-grip+Start = TEST (L3), L-grip+Start = SERVICE (R3). The chord swallows the Start
-        // press and the grips' own L2/R2 bits so the game never sees them underneath (pressed
-        // grip-first, nothing leaks at all). Both grips held = the exit gesture, so no chord
-        // fires then. Gun cabinets are excluded — the right grip doubles as LIGHTGUN_AUX_B
-        // there, and they already reach TEST/SERVICE via the stick clicks. Dreamcast games
-        // never read L3/R3, so chords are inert on a DC cabinet.
-        if (lightGunTarget == null && (b & (1u << 3)) != 0)
-        {
-            bool leftGrip = ControlMap.isActive(LC.MODIFIER);
-            bool rightGrip = ControlMap.isActive(LC.JOYPAD_R2);
-            if (leftGrip ^ rightGrip)
-            {
-                b |= rightGrip ? (1u << 14) : (1u << 15);          // TEST : SERVICE
-                b &= ~((1u << 3) | (1u << 12) | (1u << 13));       // swallow Start + grip bits
-            }
-        }
 
         // The standard DC pad exposes the analog stick and the d-pad separately, so each Quest
         // thumbstick drives exactly one of them and the roles swap with the cabinet's flag:
@@ -591,7 +580,7 @@ public static class LibretroFlycastCore
     // A physical gamepad maps to the Dreamcast exactly as standalone flycast maps a RetroPad —
     // positional face buttons (south→DC A, east→DC B, west→DC X, north→DC Y through the core's
     // dc_joymap), d-pad→d-pad, left stick→analog stick, triggers→analog L2/R2, shoulders→C/Z,
-    // stick clicks→L3/R3 (NAOMI TEST/SERVICE when reicast_allow_service_buttons is on) — in both
+    // stick clicks→arcade TEST (left) / SERVICE (right), matching the Quest path — in both
     // cabinet modes. Merges with the Quest-derived state: bits OR, stick sums clamp, triggers take
     // the max. AdjustControlMap stripped gamepad-* from the JOYPAD_* action maps, so this is the
     // only path a pad reaches the joypad state through. Reads are allocation-free.
@@ -612,8 +601,8 @@ public static class LibretroFlycastCore
         if (pad.buttonNorth.isPressed) b |= 1u << 9;        // retropad X → DC Y
         if (pad.leftShoulder.isPressed) b |= 1u << 10;      // retropad L → DC C
         if (pad.rightShoulder.isPressed) b |= 1u << 11;     // retropad R → DC Z
-        if (pad.leftStickButton.isPressed) b |= 1u << 14;
-        if (pad.rightStickButton.isPressed) b |= 1u << 15;
+        if (pad.leftStickButton.isPressed) b |= 1u << 14;   // left  stick → L3 → TEST
+        if (pad.rightStickButton.isPressed) b |= 1u << 15;  // right stick → R3 → SERVICE
 
         Vector2 stick = pad.leftStick.ReadValue();
         lx = ClampAxis(lx + Mathf.RoundToInt(stick.x * 0x7fff));
