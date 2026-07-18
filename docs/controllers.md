@@ -345,6 +345,44 @@ Supported device type names: `empty`, `gamepad`, `mouse`, `mouse_pointer`, `keyb
 
 A numeric device ID can also be specified directly as `device_<uint>` for cores that expose custom device subtypes.
 
+### Pads and sticks on the Flycast HW core
+
+The flycast path (`core: flycast`) diverges from the shared `DefaultControlMap` table above
+in two ways, both applied at game start by `LibretroFlycastCore.AdjustControlMap` (never to
+the shared defaults — MAME/FBNeo cabinets are unaffected):
+
+- **Quest thumbstick roles swap with the cabinet's `input: analog-stick` flag.** The DC pad
+  has a digital d-pad *and* an analog stick, both always live. Default: LEFT stick = DC
+  d-pad, RIGHT stick = DC analog stick. `analog-stick: true` (racing cabinets): LEFT stick =
+  DC analog stick + Quest triggers = DC analog triggers (L2 brake / R2 accelerate), d-pad on
+  the RIGHT stick. The right stick reaches `PollInput` through the port-1 `JOYPAD_UP/…`
+  actions the default map already binds.
+- **Quest triggers = DC L/R triggers; grips are free.** The Quest triggers drive `DC_BTN_L2`/`R2`
+  (the DC's real analog triggers) in both modes — the analog value in `analog-stick: true`, a
+  digital full-press otherwise. The Quest **grips** are left unmapped on the DC (reserved for the
+  cabinet-exit gesture), and `DC_BTN_C`/`Z` (RetroPad L/R) go unused — no retail DC pad has them;
+  bind them via a `controllers:` block if a game needs them.
+- **Physical (Bluetooth/USB) gamepads bypass the control map entirely.** Every `gamepad-*`
+  binding is stripped from the `JOYPAD_*` ids and `LibretroFlycastCore.PollGamepad` polls
+  `Gamepad.current` directly with the fixed standard flycast layout: d-pad → DC d-pad, left
+  stick → DC analog stick, triggers → analog L2/R2, positional face buttons (south → DC A,
+  east → DC B, west → DC X, north → DC Y), shoulders → C/Z, start/select → Start/coin, **both
+  stick clicks + left trigger → TEST**, **both stick clicks + right trigger → SERVICE** (arcade,
+  when `reicast_allow_service_buttons` is enabled). The `analog-stick` flag never affects a
+  gamepad, and `controllers:` YAML remaps only apply to the Quest controllers on flycast
+  cabinets. `LIGHTGUN_*`, `INSERT`, `EXIT` and keyboard bindings keep working through the map as usual.
+- **TEST/SERVICE (universal double chord):** a deliberately awkward combo so it can't fire by
+  accident — hold **both stick clicks** (L3 + R3) together, then squeeze a trigger, on every
+  flycast cabinet, pad and gun alike — **L3+R3 + left trigger = TEST** (L3 out), **L3+R3 + right
+  trigger = SERVICE** (R3 out). `PollInput` (Quest) and `PollGamepad` (physical pad) both use the
+  stick clicks as a modifier only (they never reach the game as L3/R3 on their own) and swallow
+  the squeezed trigger so the game never sees it underneath; both triggers at once fires nothing.
+  A stick-click chord, not a grip chord — the grips are reserved for the cabinet-exit gesture.
+  `reicast_allow_service_buttons` is auto-enabled on every flycast cabinet (YAML `environment:`
+  overrides; note this repurposes NAOMI R3 from the core's "Button 9" fallback to real SERVICE).
+  Dreamcast games never read L3/R3, so the chord is inert there. On a gun cabinet the triggers
+  stay live as fire/reload — harmless while opening the service menu.
+
 ### Light guns on the Flycast HW core
 
 Working since 2026-07-08 (device-verified with House of the Dead 2 on NAOMI). A flycast
@@ -356,13 +394,26 @@ only for now.
 
 The VR gun raycast (`LightGunTarget`, the same component the MAME path uses) is pushed
 each frame by `LibretroFlycastCore.PollInput` → `LibretroHWBridge.SetLightgun(x, y, offscreen, buttons)`
-→ `libpdlr`'s `input_state_cb`. Two flycast-specific rules:
+→ `libpdlr`'s `input_state_cb`. Flycast-specific rules:
 
 - In LIGHTGUN mode flycast reads **only** `LIGHTGUN_*` ids on that port — `JOYPAD_*`
   mappings never reach the game. Custom `controllers:` blocks for flycast gun cabinets
   must remap `LIGHTGUN_TRIGGER`, `LIGHTGUN_START`, etc.
 - The coin is delivered as `LIGHTGUN_SELECT` (flycast's NAOMI coin id on a gun port),
   wired automatically from the cabinet coin slot.
+- `AdjustControlMap` reshapes the gun defaults to match the real DC gun (trigger, B, Start,
+  d-pad): `LIGHTGUN_AUX_A` (the gun's B button) moves from Quest A to Quest **B** (and
+  `quest-b` leaves `LIGHTGUN_AUX_B` so one press can't hit NAOMI BTN1+BTN2 at once), and
+  `LIGHTGUN_RELOAD` moves from START to the free **left trigger** — sharing START meant every
+  game start also fired a forced offscreen shot. `LIGHTGUN_START` stays on the left
+  controller's menu button, the gun d-pad on the LEFT thumbstick. Each rebind only applies
+  while the merged map still equals the stock default, so custom `LIGHTGUN_*` remaps win.
+- **TEST/SERVICE:** `reicast_allow_service_buttons` is auto-enabled on every flycast cabinet
+  (a cabinet's `environment:` can override), and the AoJ core patch polls the joypad L3/R3
+  bits on the gun port too — so the universal double chord (**both stick clicks + left trigger =
+  NAOMI/AW TEST**, **both stick clicks + right trigger = SERVICE**) reaches a gun game's one-time
+  aim calibration. The trigger squeeze also fires/reloads the gun, which is harmless while opening
+  the menu. Dreamcast games never read L3/R3, so the chord is a no-op there.
 
 ---
 
