@@ -1,7 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEngine.SceneManagement;
 
 class CommandFunctionCABDBCOUNT : CommandFunctionNoExpressionBase
@@ -66,6 +68,125 @@ class CommandFunctionCABDBGETNAME : CommandFunctionSingleExpressionBase
     }
 }
 
+
+// CABDBGETINFO(name$, "path") -> reads description.yaml for cabinet "name" and returns
+// the value at the field path, e.g. CABDBGETINFO("pacman", "crt.type"),
+// CABDBGETINFO("pacman", "year"), CABDBGETINFO("pacman", "parts[3].art.file")
+// (list indices accept either "parts[3]" or "parts.3").
+// Unlike most CABDB* functions, an invalid cabinet name or path does NOT stop the running
+// AGEBasic program: the problem is logged to console and "" is returned instead.
+class CommandFunctionCABDBGETINFO : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABDBGETINFO(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBGETINFO";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - cabinet name");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - property path, e.g. \"crt.type\"");
+
+        string cabName = vals[0].GetString();
+        string path = vals[1].GetString();
+
+        try
+        {
+            string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+            CabinetInformation info = CabinetInformation.fromYaml(cabPath);
+            if (info == null)
+                throw new Exception($"cabinet '{cabName}' not found or its description.yaml couldn't be parsed");
+
+            object value = CabinetInfoReflection.Resolve(info, path);
+            return CabinetInfoReflection.ToBasicValue(value, path);
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[{CmdToken}] cab:'{cabName}' path:'{path}' ", e);
+            return new BasicValue("", forceType: BasicValue.BasicValueType.String);
+        }
+    }
+}
+
+static class CabinetInfoReflection
+{
+    const BindingFlags Flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase;
+
+    public static object Resolve(object root, string path)
+    {
+        // normalize bracket indices ("parts[3]") to dotted indices ("parts.3")
+        string normalizedPath = System.Text.RegularExpressions.Regex.Replace(path, @"\[(\d+)\]", ".$1");
+
+        object current = root;
+        foreach (string segment in normalizedPath.Split('.'))
+        {
+            if (string.IsNullOrEmpty(segment))
+                throw new Exception($"invalid property path: '{path}'");
+
+            if (current == null)
+                return null;
+
+            if (current is IList list && int.TryParse(segment, out int index))
+            {
+                if (index < 0 || index >= list.Count)
+                    throw new Exception($"index {index} out of range in path '{path}'");
+                current = list[index];
+                continue;
+            }
+
+            Type type = current.GetType();
+            FieldInfo field = type.GetField(segment, Flags);
+            if (field != null)
+            {
+                current = field.GetValue(current);
+                continue;
+            }
+
+            PropertyInfo prop = type.GetProperty(segment, Flags);
+            if (prop != null)
+            {
+                current = prop.GetValue(current);
+                continue;
+            }
+
+            throw new Exception($"'{segment}' not found on {type.Name} (path: '{path}')");
+        }
+        return current;
+    }
+
+    public static BasicValue ToBasicValue(object value, string path)
+    {
+        switch (value)
+        {
+            case null:
+                return new BasicValue("", forceType: BasicValue.BasicValueType.String);
+            case bool b:
+                return new BasicValue(b);
+            case int i:
+                return new BasicValue((double)i);
+            case uint ui:
+                return new BasicValue((double)ui);
+            case float f:
+                return new BasicValue((double)f);
+            case double d:
+                return new BasicValue(d);
+            case string s:
+                return new BasicValue(s, forceType: BasicValue.BasicValueType.String);
+            case IList list:
+                throw new Exception($"path '{path}' resolves to a list of {list.Count} item(s), not a value - " +
+                    $"append an index, e.g. '{path}[0]' or '{path}.0'");
+            default:
+                throw new Exception($"path '{path}' resolves to a {value.GetType().Name} object, not a value - " +
+                    $"append a field name, e.g. '{path}.<field>'");
+        }
+    }
+}
 
 class CommandFunctionCABDBSEARCH : CommandFunctionExpressionListBase
 {

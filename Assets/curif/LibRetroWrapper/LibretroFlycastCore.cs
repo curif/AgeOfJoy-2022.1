@@ -7,6 +7,8 @@ You should have received a copy of the GNU General Public License along with thi
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using CM = ControlMapPathDictionary;
 using LC = LibretroControlMapDictionnary;
 
 // LibretroFlycastCore — cabinet-lifecycle driver for the Flycast core on its own Vulkan device (libpdlr),
@@ -183,6 +185,16 @@ public static class LibretroFlycastCore
         // load. Ports 1-3 stay JOYPAD (the 4-pad maple parity that gates NAOMI audio init).
         if (lightGunTarget != null && lightGunTarget.Initialized())
             LibretroHWBridge.SetPortDevice(0, LibretroHWBridge.DEVICE_LIGHTGUN);
+
+        // The arcade TEST + SERVICE buttons are always reachable in AoJ via the double chord —
+        // both stick clicks (L3+R3) held, plus left trigger = TEST / right trigger = SERVICE — on
+        // every cabinet, pad and gun alike (a gun cabinet's one-time gun calibration lives in the
+        // TEST menu). So the core option is
+        // enabled for every flycast cabinet; the `environment:` loop below can still override it
+        // per cabinet. Dreamcast games have no service buttons and ignore L3/R3 entirely. Note:
+        // on NAOMI pad games this repurposes R3 from the core's "Button 9" fallback to real
+        // SERVICE.
+        LibretroHWBridge.SetOption("reicast_allow_service_buttons", "enabled");
 
         // Per-cabinet core-option overrides (description.yaml `environment:`) — must be pushed before
         // Start()/retro_load_game. Layered on top of the global Flycast.opt safe defaults inside
@@ -436,31 +448,65 @@ public static class LibretroFlycastCore
             Shader.ScreenMaterial?.SetTexture(Shader.TargetMaterialProperty, t);
     }
 
+    // Flycast-only adjustments to the merged control map, applied by LibretroScreenController just
+    // before the map is instantiated (never to DefaultControlMap itself — MAME/FBNeo cabinets keep
+    // today's bindings):
+    //  - Bluetooth/USB gamepads are polled directly in PollGamepad with the fixed standard flycast
+    //    layout, so every gamepad-* binding is stripped from the JOYPAD_* ids to avoid double
+    //    delivery with conflicting semantics (e.g. Xbox A firing both DC A and DC B). LIGHTGUN_*,
+    //    INSERT/EXIT/MODIFIER and the keyboard/mouse bindings stay.
+    //  - Gun cabinets get Dreamcast-gun-shaped defaults: the gun's B button (LIGHTGUN_AUX_A) on the
+    //    Quest B button, and the dedicated reload off START — sharing START meant every game start
+    //    also fired a forced offscreen shot — onto the free left trigger. Each rebind only applies
+    //    while the merged map still equals the stock default, so `controllers:` YAML remaps of
+    //    LIGHTGUN_* ids win.
+    public static void AdjustControlMap(ControlMapConfiguration conf, bool lightGun)
+    {
+        if (conf == null) return;
+
+        conf.RemoveControlsByPrefix("JOYPAD_", "gamepad-");
+        if (!lightGun)
+            return;
+
+        if (conf.MapEquals(LC.LIGHTGUN_AUX_A, 0, new[] { CM.VR_CONTROLLER_A, CM.GAMEPAD_A }))
+            conf.ReplaceMap(LC.LIGHTGUN_AUX_A, 0, new[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_A });
+        // quest-b must then leave AUX_B, or one press would hit NAOMI BTN1+BTN2 at once.
+        if (conf.MapEquals(LC.LIGHTGUN_AUX_B, 0, new[] { CM.VR_CONTROLLER_B, CM.GAMEPAD_B, CM.VR_CONTROLLER_RIGHT_GRIP, CM.KEYBOARD_ENTER }))
+            conf.RemoveControl(LC.LIGHTGUN_AUX_B, 0, CM.VR_CONTROLLER_B);
+        if (conf.MapEquals(LC.LIGHTGUN_RELOAD, 0, new[] { CM.GAMEPAD_START, CM.VR_CONTROLLER_START }))
+            conf.ReplaceMap(LC.LIGHTGUN_RELOAD, 0, new[] { CM.VR_CONTROLLER_LEFT_TRIGGER, CM.GAMEPAD_START });
+    }
+
     // Push the cabinet's mapped controls to the core before its next retro_run: the RetroPad bitmask
-    // (bit N == RETRO_DEVICE_ID_JOYPAD_N) read from the same LibretroControlMap the software path
-    // uses. Coin: a taken coin (or the INSERT control) holds the SELECT bit a few frames — flycast
+    // (bit N == RETRO_DEVICE_ID_JOYPAD_N) plus the analog stick/trigger values. Two sources merge
+    // here every frame:
+    //  - the Quest controllers (and keyboard), via the cabinet's LibretroControlMap — the cabinet's
+    //    `analog-stick` flag decides which thumbstick is the DC d-pad and which the DC analog stick;
+    //  - a physical Bluetooth/USB gamepad, polled directly (PollGamepad) with the fixed standard
+    //    flycast layout — a real pad has all the DC controls at once, so the flag never applies.
+    // Coin: a taken coin (or the INSERT control) holds the SELECT bit a few frames — flycast
     // maps SELECT to coin-insert on NAOMI/Atomiswave; Dreamcast pads have no SELECT, so it's inert.
     static void PollInput()
     {
         if (ControlMap == null) return;
 
         uint b = 0;
-        if (ControlMap.isActive(LC.JOYPAD_B)) b |= 1u << 0;
-        if (ControlMap.isActive(LC.JOYPAD_Y)) b |= 1u << 1;
+        // Face buttons: label-matched to the Dreamcast, so Quest A→DC A, B→DC B, X→DC X, Y→DC Y.
+        // flycast's dc_joymap swaps RetroPad A/B and X/Y (RetroPad B→DC_BTN_A, A→DC_BTN_B, Y→DC_BTN_X,
+        // X→DC_BTN_Y), so we cross the Quest buttons onto the opposite RetroPad bit to undo that:
+        // Quest A→RetroPad B (bit 0), Quest B→RetroPad A (bit 8), Quest X→RetroPad Y (bit 1),
+        // Quest Y→RetroPad X (bit 9). (PollGamepad is already positional and needs no crossing.)
+        if (ControlMap.isActive(LC.JOYPAD_A)) b |= 1u << 0;   // Quest A → RetroPad B → DC A
+        if (ControlMap.isActive(LC.JOYPAD_X)) b |= 1u << 1;   // Quest X → RetroPad Y → DC X
         if (ControlMap.isActive(LC.JOYPAD_SELECT)) b |= 1u << 2;
         if (ControlMap.isActive(LC.JOYPAD_START)) b |= 1u << 3;
-        if (ControlMap.isActive(LC.JOYPAD_UP)) b |= 1u << 4;
-        if (ControlMap.isActive(LC.JOYPAD_DOWN)) b |= 1u << 5;
-        if (ControlMap.isActive(LC.JOYPAD_LEFT)) b |= 1u << 6;
-        if (ControlMap.isActive(LC.JOYPAD_RIGHT)) b |= 1u << 7;
-        if (ControlMap.isActive(LC.JOYPAD_A)) b |= 1u << 8;
-        if (ControlMap.isActive(LC.JOYPAD_X)) b |= 1u << 9;
-        if (ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 10;
-        if (ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 11;
-        if (ControlMap.isActive(LC.JOYPAD_L2)) b |= 1u << 12;
-        if (ControlMap.isActive(LC.JOYPAD_R2)) b |= 1u << 13;
-        if (ControlMap.isActive(LC.JOYPAD_L3)) b |= 1u << 14;
-        if (ControlMap.isActive(LC.JOYPAD_R3)) b |= 1u << 15;
+        if (ControlMap.isActive(LC.JOYPAD_B)) b |= 1u << 8;   // Quest B → RetroPad A → DC B
+        if (ControlMap.isActive(LC.JOYPAD_Y)) b |= 1u << 9;   // Quest Y → RetroPad X → DC Y
+        // DC L/R triggers (DC_BTN_L2/R2 = bits 12/13) are driven by the Quest TRIGGERS, set in the
+        // analog/default branch below — analog value in analog-stick mode, digital full-press
+        // otherwise. The Quest GRIPS stay unmapped here (reserved for the cabinet-exit gesture), and
+        // DC_BTN_C/Z (bits 10/11) go unused — no retail DC pad has them; a `controllers:` block can
+        // bind them if a game needs it.
 
         bool coinNow = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT);
         if (coinNow && coinFrames == 0)
@@ -473,25 +519,62 @@ public static class LibretroFlycastCore
             coinFrames--;
         }
 
-        // Analog cabinets (input: { analog-stick: true }) drive the DC analog stick + analog
-        // triggers from the thumbstick and the L/R triggers (racing games). The thumbstick's digital
-        // d-pad bits (UP/DOWN/LEFT/RIGHT) are masked out of `b` here: the standard DC pad exposes the
-        // analog stick and the d-pad separately, and on an analog cabinet the same physical stick must
-        // NOT also fire the d-pad — otherwise pushing up hits both the analog axis and d-pad-UP (e.g.
-        // Daytona's change-view). Default cabinets send a centered stick, so the game sees only the
-        // d-pad (fighting titles).
+        // Arcade TEST/SERVICE double chord — universal (pad and gun). Deliberately awkward so it
+        // can't fire by accident: hold BOTH stick clicks (L3 + R3) together, then squeeze a
+        // trigger. L3+R3 + LEFT trigger = TEST, L3+R3 + RIGHT trigger = SERVICE. The stick clicks
+        // are only the modifier — they never reach the game as L3/R3 on their own (nothing else
+        // sets bits 14/15) — and the consumed trigger is kept off DC L2/R2 below (chordTrig) so a
+        // pad game doesn't see it underneath. Both triggers at once fires nothing. On a gun cabinet
+        // the trigger also fires/reloads via the LIGHTGUN_* path, which is harmless while opening the
+        // menu. Dreamcast games never read L3/R3, so the chord is inert on a DC cabinet.
+        int chordTrig = 0;   // trigger consumed by the chord: 1 = left, 2 = right (kept off DC L2/R2)
+        if (ControlMap.isActive(LC.JOYPAD_L3) && ControlMap.isActive(LC.JOYPAD_R3))
+        {
+            bool leftTrig = ControlMap.isActive(LC.JOYPAD_L);    // left  trigger
+            bool rightTrig = ControlMap.isActive(LC.JOYPAD_R);   // right trigger
+            if (leftTrig ^ rightTrig)
+            {
+                b |= leftTrig ? (1u << 14) : (1u << 15);          // TEST : SERVICE
+                chordTrig = leftTrig ? 1 : 2;
+            }
+        }
+
+
+        // The standard DC pad exposes the analog stick and the d-pad separately, so each Quest
+        // thumbstick drives exactly one of them and the roles swap with the cabinet's flag:
+        //  - default: LEFT stick = DC d-pad (fighting titles), RIGHT stick = DC analog stick;
+        //  - analog-stick true: LEFT stick = DC analog stick + L/R triggers = DC analog triggers
+        //    (racing), and the d-pad moves to the RIGHT stick. One physical stick must never fire
+        //    both the analog axis and d-pad-UP (e.g. Daytona's change-view).
+        // The RIGHT stick is read through port 1, where the default map binds it.
+        short lx, ly;
+        short lt = 0, rt = 0;
         if (AnalogStick)
         {
-            b &= ~(0xFu << 4);   // analog means analog: drop UP/DOWN/LEFT/RIGHT, thumbstick is analog-only
-            ControlMap.ReadStick(out short lx, out short ly);
-            short lt = ControlMap.ReadTrigger(LC.JOYPAD_L);   // left trigger  → DC L2 (brake)
-            short rt = ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → DC R2 (accelerate)
-            LibretroHWBridge.SetInput(b, lx, ly, lt, rt);
+            ControlMap.ReadStick(out lx, out ly);
+            lt = chordTrig == 1 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_L);   // left trigger  → DC L2 (brake)
+            rt = chordTrig == 2 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → DC R2 (accelerate)
+            if (ControlMap.isActive(LC.JOYPAD_UP, 1)) b |= 1u << 4;
+            if (ControlMap.isActive(LC.JOYPAD_DOWN, 1)) b |= 1u << 5;
+            if (ControlMap.isActive(LC.JOYPAD_LEFT, 1)) b |= 1u << 6;
+            if (ControlMap.isActive(LC.JOYPAD_RIGHT, 1)) b |= 1u << 7;
         }
         else
         {
-            LibretroHWBridge.SetInput(b, 0, 0);
+            if (ControlMap.isActive(LC.JOYPAD_UP)) b |= 1u << 4;
+            if (ControlMap.isActive(LC.JOYPAD_DOWN)) b |= 1u << 5;
+            if (ControlMap.isActive(LC.JOYPAD_LEFT)) b |= 1u << 6;
+            if (ControlMap.isActive(LC.JOYPAD_RIGHT)) b |= 1u << 7;
+            ControlMap.ReadStick(out lx, out ly, 1);
+            // Quest triggers → DC L/R triggers as a digital full-press (analog value only in
+            // analog-stick mode above). The chord-consumed trigger is held off.
+            if (chordTrig != 1 && ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 12;   // left  trigger → DC L2
+            if (chordTrig != 2 && ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 13;   // right trigger → DC R2
         }
+
+        PollGamepad(ref b, ref lx, ref ly, ref lt, ref rt);
+
+        LibretroHWBridge.SetInput(b, lx, ly, lt, rt);
 
         // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls. In LIGHTGUN mode
         // flycast reads ONLY lightgun ids on that port, so the coin must ride SELECT here too.
@@ -516,6 +599,59 @@ public static class LibretroFlycastCore
             bool offscreen = !lightGunTarget.PointingToTheScreen();
             LibretroHWBridge.SetLightgun((short)hitX, (short)hitY, offscreen, gb);
         }
+    }
+
+    // A physical gamepad maps to the Dreamcast exactly as standalone flycast maps a RetroPad —
+    // positional face buttons (south→DC A, east→DC B, west→DC X, north→DC Y through the core's
+    // dc_joymap), d-pad→d-pad, left stick→analog stick, triggers→analog L2/R2, shoulders→C/Z,
+    // L3+R3+trigger→arcade TEST (left) / SERVICE (right), matching the Quest chord — in both
+    // cabinet modes. Merges with the Quest-derived state: bits OR, stick sums clamp, triggers take
+    // the max. AdjustControlMap stripped gamepad-* from the JOYPAD_* action maps, so this is the
+    // only path a pad reaches the joypad state through. Reads are allocation-free.
+    static void PollGamepad(ref uint b, ref short lx, ref short ly, ref short lt, ref short rt)
+    {
+        Gamepad pad = Gamepad.current;
+        if (pad == null) return;
+
+        if (pad.buttonSouth.isPressed) b |= 1u << 0;        // retropad B → DC A
+        if (pad.buttonWest.isPressed) b |= 1u << 1;         // retropad Y → DC X
+        if (pad.selectButton.isPressed) b |= 1u << 2;       // coin on NAOMI/Atomiswave
+        if (pad.startButton.isPressed) b |= 1u << 3;
+        if (pad.dpad.up.isPressed) b |= 1u << 4;
+        if (pad.dpad.down.isPressed) b |= 1u << 5;
+        if (pad.dpad.left.isPressed) b |= 1u << 6;
+        if (pad.dpad.right.isPressed) b |= 1u << 7;
+        if (pad.buttonEast.isPressed) b |= 1u << 8;         // retropad A → DC B
+        if (pad.buttonNorth.isPressed) b |= 1u << 9;        // retropad X → DC Y
+        if (pad.leftShoulder.isPressed) b |= 1u << 10;      // retropad L → DC C
+        if (pad.rightShoulder.isPressed) b |= 1u << 11;     // retropad R → DC Z
+        Vector2 stick = pad.leftStick.ReadValue();
+        lx = ClampAxis(lx + Mathf.RoundToInt(stick.x * 0x7fff));
+        ly = ClampAxis(ly + Mathf.RoundToInt(-stick.y * 0x7fff));   // libretro/DC analog-up is -y
+
+        float l = Mathf.Clamp01(pad.leftTrigger.ReadValue());
+        float r = Mathf.Clamp01(pad.rightTrigger.ReadValue());
+
+        // Arcade TEST/SERVICE double chord — the pad counterpart of the PollInput chord. Hold both
+        // stick clicks (L3 + R3), then a trigger: L3+R3+LEFT = TEST, L3+R3+RIGHT = SERVICE; both
+        // triggers at once fires nothing. Zero the squeezed trigger so a pad game sees neither its
+        // analog value nor its L2/R2 shadow (below) underneath.
+        bool lTrig = l > 0.5f, rTrig = r > 0.5f;
+        if (pad.leftStickButton.isPressed && pad.rightStickButton.isPressed && (lTrig ^ rTrig))
+        {
+            b |= lTrig ? (1u << 14) : (1u << 15);   // TEST : SERVICE
+            if (lTrig) l = 0f; else r = 0f;         // swallow the squeezed trigger (analog + shadow)
+        }
+
+        lt = (short)Mathf.Max(lt, (short)Mathf.RoundToInt(l * 0x7fff));
+        rt = (short)Mathf.Max(rt, (short)Mathf.RoundToInt(r * 0x7fff));
+        if (l > 0.5f) b |= 1u << 12;   // digital L2/R2 shadow — keeps reicast_digital_triggers usable
+        if (r > 0.5f) b |= 1u << 13;
+    }
+
+    static short ClampAxis(int v)
+    {
+        return (short)Mathf.Clamp(v, -0x7fff, 0x7fff);
     }
 
     // Unity audio thread (OnAudioFilterRead on the screen's authored AudioSource): overwrite the

@@ -221,6 +221,7 @@ AGEBasic can inspect and change which cabinet game occupies each position in a r
 *   `CABDBCOUNT()`: Total number of cabinets available in the cabinet DB folder.
 *   `CABDBCOUNTINROOM(room)`: Number of registry entries assigned to `room`.
 *   `CABDBGETNAME(index)`: Cabinet directory name at `index` in the sorted list of all cabinets on disk (unrelated to room assignment).
+*   `CABDBGETINFO(cabinetName, path)`: Reads a field from `cabinetName`'s `description.yaml` at the given dotted/bracketed field `path` (case-insensitive), e.g. `CABDBGETINFO("pacman", "year")`, `CABDBGETINFO("pacman", "crt.type")`, `CABDBGETINFO("pacman", "parts[3].art.file")` (list indices accept either `[n]` or `.n`). **Fails soft, unlike other `CABDB*` functions**: if the cabinet doesn't exist, the path doesn't match a field, or the path resolves to a list/object instead of a leaf value, it logs the problem to the console and returns `""` — it does NOT throw and does NOT stop the running program. Note: `description.yaml` currently has no `author`/`description` metadata field — this function only exposes fields that actually exist on `CabinetInformation` (`name`, `year`, `style`, `core`, `crt.*`, `model.*`, `parts[n].*`, etc.).
 *   `CABDBSEARCH(namePart, separator)`: Cabinet names starting with `namePart`, joined with `separator`.
 *   `CABDBSEARCHARRAY(namePart)`: Same search, returned as an array.
 *   `CABDBGETASSIGNED(room, position)`: Cabinet name assigned to `room`/`position` in the registry (`""` if unassigned).
