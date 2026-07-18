@@ -357,6 +357,11 @@ the shared defaults — MAME/FBNeo cabinets are unaffected):
   DC analog stick + Quest triggers = DC analog triggers (L2 brake / R2 accelerate), d-pad on
   the RIGHT stick. The right stick reaches `PollInput` through the port-1 `JOYPAD_UP/…`
   actions the default map already binds.
+- **Quest triggers = DC L/R triggers; grips are free.** The Quest triggers drive `DC_BTN_L2`/`R2`
+  (the DC's real analog triggers) in both modes — the analog value in `analog-stick: true`, a
+  digital full-press otherwise. The Quest **grips** are left unmapped on the DC (reserved for the
+  cabinet-exit gesture), and `DC_BTN_C`/`Z` (RetroPad L/R) go unused — no retail DC pad has them;
+  bind them via a `controllers:` block if a game needs them.
 - **Physical (Bluetooth/USB) gamepads bypass the control map entirely.** Every `gamepad-*`
   binding is stripped from the `JOYPAD_*` ids and `LibretroFlycastCore.PollGamepad` polls
   `Gamepad.current` directly with the fixed standard flycast layout: d-pad → DC d-pad, left

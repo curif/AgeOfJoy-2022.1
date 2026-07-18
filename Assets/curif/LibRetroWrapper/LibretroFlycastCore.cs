@@ -491,16 +491,22 @@ public static class LibretroFlycastCore
         if (ControlMap == null) return;
 
         uint b = 0;
-        if (ControlMap.isActive(LC.JOYPAD_B)) b |= 1u << 0;
-        if (ControlMap.isActive(LC.JOYPAD_Y)) b |= 1u << 1;
+        // Face buttons: label-matched to the Dreamcast, so Quest A→DC A, B→DC B, X→DC X, Y→DC Y.
+        // flycast's dc_joymap swaps RetroPad A/B and X/Y (RetroPad B→DC_BTN_A, A→DC_BTN_B, Y→DC_BTN_X,
+        // X→DC_BTN_Y), so we cross the Quest buttons onto the opposite RetroPad bit to undo that:
+        // Quest A→RetroPad B (bit 0), Quest B→RetroPad A (bit 8), Quest X→RetroPad Y (bit 1),
+        // Quest Y→RetroPad X (bit 9). (PollGamepad is already positional and needs no crossing.)
+        if (ControlMap.isActive(LC.JOYPAD_A)) b |= 1u << 0;   // Quest A → RetroPad B → DC A
+        if (ControlMap.isActive(LC.JOYPAD_X)) b |= 1u << 1;   // Quest X → RetroPad Y → DC X
         if (ControlMap.isActive(LC.JOYPAD_SELECT)) b |= 1u << 2;
         if (ControlMap.isActive(LC.JOYPAD_START)) b |= 1u << 3;
-        if (ControlMap.isActive(LC.JOYPAD_A)) b |= 1u << 8;
-        if (ControlMap.isActive(LC.JOYPAD_X)) b |= 1u << 9;
-        if (ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 10;
-        if (ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 11;
-        if (ControlMap.isActive(LC.JOYPAD_L2)) b |= 1u << 12;
-        if (ControlMap.isActive(LC.JOYPAD_R2)) b |= 1u << 13;
+        if (ControlMap.isActive(LC.JOYPAD_B)) b |= 1u << 8;   // Quest B → RetroPad A → DC B
+        if (ControlMap.isActive(LC.JOYPAD_Y)) b |= 1u << 9;   // Quest Y → RetroPad X → DC Y
+        // DC L/R triggers (DC_BTN_L2/R2 = bits 12/13) are driven by the Quest TRIGGERS, set in the
+        // analog/default branch below — analog value in analog-stick mode, digital full-press
+        // otherwise. The Quest GRIPS stay unmapped here (reserved for the cabinet-exit gesture), and
+        // DC_BTN_C/Z (bits 10/11) go unused — no retail DC pad has them; a `controllers:` block can
+        // bind them if a game needs it.
 
         bool coinNow = (CoinSlot != null && CoinSlot.takeCoin()) || ControlMap.isActive(LC.INSERT);
         if (coinNow && coinFrames == 0)
@@ -517,10 +523,11 @@ public static class LibretroFlycastCore
         // can't fire by accident: hold BOTH stick clicks (L3 + R3) together, then squeeze a
         // trigger. L3+R3 + LEFT trigger = TEST, L3+R3 + RIGHT trigger = SERVICE. The stick clicks
         // are only the modifier — they never reach the game as L3/R3 on their own (nothing else
-        // sets bits 14/15) — and the chord swallows the squeezed trigger's JOYPAD_L/R bit so a pad
-        // game doesn't see it underneath. Both triggers at once fires nothing. On a gun cabinet the
-        // trigger also fires/reloads via the LIGHTGUN_* path, which is harmless while opening the
+        // sets bits 14/15) — and the consumed trigger is kept off DC L2/R2 below (chordTrig) so a
+        // pad game doesn't see it underneath. Both triggers at once fires nothing. On a gun cabinet
+        // the trigger also fires/reloads via the LIGHTGUN_* path, which is harmless while opening the
         // menu. Dreamcast games never read L3/R3, so the chord is inert on a DC cabinet.
+        int chordTrig = 0;   // trigger consumed by the chord: 1 = left, 2 = right (kept off DC L2/R2)
         if (ControlMap.isActive(LC.JOYPAD_L3) && ControlMap.isActive(LC.JOYPAD_R3))
         {
             bool leftTrig = ControlMap.isActive(LC.JOYPAD_L);    // left  trigger
@@ -528,7 +535,7 @@ public static class LibretroFlycastCore
             if (leftTrig ^ rightTrig)
             {
                 b |= leftTrig ? (1u << 14) : (1u << 15);          // TEST : SERVICE
-                b &= ~((1u << 10) | (1u << 11));                  // swallow the trigger bits
+                chordTrig = leftTrig ? 1 : 2;
             }
         }
 
@@ -545,8 +552,8 @@ public static class LibretroFlycastCore
         if (AnalogStick)
         {
             ControlMap.ReadStick(out lx, out ly);
-            lt = ControlMap.ReadTrigger(LC.JOYPAD_L);   // left trigger  → DC L2 (brake)
-            rt = ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → DC R2 (accelerate)
+            lt = chordTrig == 1 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_L);   // left trigger  → DC L2 (brake)
+            rt = chordTrig == 2 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → DC R2 (accelerate)
             if (ControlMap.isActive(LC.JOYPAD_UP, 1)) b |= 1u << 4;
             if (ControlMap.isActive(LC.JOYPAD_DOWN, 1)) b |= 1u << 5;
             if (ControlMap.isActive(LC.JOYPAD_LEFT, 1)) b |= 1u << 6;
@@ -559,6 +566,10 @@ public static class LibretroFlycastCore
             if (ControlMap.isActive(LC.JOYPAD_LEFT)) b |= 1u << 6;
             if (ControlMap.isActive(LC.JOYPAD_RIGHT)) b |= 1u << 7;
             ControlMap.ReadStick(out lx, out ly, 1);
+            // Quest triggers → DC L/R triggers as a digital full-press (analog value only in
+            // analog-stick mode above). The chord-consumed trigger is held off.
+            if (chordTrig != 1 && ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 12;   // left  trigger → DC L2
+            if (chordTrig != 2 && ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 13;   // right trigger → DC R2
         }
 
         PollGamepad(ref b, ref lx, ref ly, ref lt, ref rt);

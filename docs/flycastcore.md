@@ -28,7 +28,7 @@ The Dreamcast controller has **both** a digital d-pad and an analog stick, and t
 
 | Mode | Left thumbstick | Right thumbstick | Triggers |
 |---|---|---|---|
-| `false` *(default)* | DC **d-pad** | DC **analog stick** | normal digital buttons |
+| `false` *(default)* | DC **d-pad** | DC **analog stick** | DC **L/R triggers** (digital) |
 | `true` | DC **analog stick** (steering) | DC **d-pad** | **analog** — right = accelerate, left = brake |
 
 **When to use `true`:** racing / driving / flying games (Sega Rally 2, Daytona USA 2, F355) — anything you'd steer. These want proportional steering on your dominant movement stick *and* analog gas/brake pedals on the triggers. NAOMI wheel games **require** it: the wheel is an analog axis with no digital fallback, so without it the game cannot steer at all.
@@ -41,7 +41,7 @@ All the normal buttons (A/B/X/Y, Start, coin) keep working as usual in both mode
 
 - **External gamepads (Xbox / Bluetooth) ignore this flag entirely.** A real gamepad has all the DC controls at once, so it always maps the standard flycast way, in both modes: d-pad → DC d-pad, left stick → DC analog stick, triggers → analog L2/R2, face buttons positional (pad A → DC A, B → DC B, X → DC X, Y → DC Y), shoulders → C/Z, Start → Start, Select → coin, **both stick clicks + left trigger → TEST**, **both stick clicks + right trigger → SERVICE** (arcade). This gamepad layout is fixed — a custom `controllers:` block remaps the Quest controllers only.
 - With `analog-stick: true` the Quest left stick is analog-only: its digital d-pad output is masked so pushing up can't fire both the analog axis and d-pad-UP at once (Daytona's change-view, for example). Menus stay navigable via the right stick.
-- The Quest triggers only produce an analog value in `analog-stick: true` mode. In the default mode they act as their normal digital buttons; a gamepad's triggers are always analog.
+- The Quest triggers are the **DC L/R triggers** in both modes — an analog value in `analog-stick: true` mode, a digital full-press otherwise. The Quest **grips** are left unmapped on the DC (reserved for the cabinet-exit gesture), and `DC_BTN_C`/`Z` go unused (no retail DC pad has them). A gamepad's triggers are always analog.
 - **Arcade TEST/SERVICE menus (NAOMI / Atomiswave):** This is critical for games where you have to enter the TEST menu to calibrate a gun. Also useful for if you want to change difficulty level. This is universal on every cabinet, pad and gun alike — a deliberately awkward double chord so it can't fire by accident: hold **both stick clicks** (L3 + R3) together, then squeeze a trigger: **L3+R3 + left trigger = TEST**, **L3+R3 + right trigger = SERVICE**. 
 
 `reicast_allow_service_buttons` is enabled automatically on every flycast cabinet (override via `environment:` if a game misbehaves); Dreamcast games have no service buttons and ignore the chord. On a gun cabinet the trigger also fires/reloads the gun — harmless while opening the service menu.
