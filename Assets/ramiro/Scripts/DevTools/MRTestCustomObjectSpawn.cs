@@ -97,6 +97,8 @@ public class MRTestCustomObjectSpawn : MonoBehaviour
             }
 
             result.Root.transform.SetParent(spawnRoot, true);
+            MRCustomObjectGrab grab = result.Root.GetComponentInChildren<MRCustomObjectGrab>(true);
+            grab?.NotifyPlacementPoseUpdated();
             spawned++;
             ConfigManager.WriteConsole(
                 $"{LogPrefix} [{spawned}/{packages.Count}] {packageName} at {worldPos}");

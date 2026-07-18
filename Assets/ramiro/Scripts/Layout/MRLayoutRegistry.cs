@@ -58,7 +58,14 @@ public class MRLayoutRegistry : MonoBehaviour
 
         layout = MRLayout.LoadOrCreate(LayoutFilePath);
         MigrateLayoutWorldFallback(layout, LayoutFilePath);
-        ConfigManager.WriteConsole($"{LogPrefix} layout loaded ({layout.Cabinets.Count} entries)");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} layout loaded ({layout.Cabinets.Count} entries, room={MRActiveRoom.BoundRoomId ?? "global"}) path={LayoutFilePath}");
+    }
+
+    /// <summary>Drop in-memory layout so the next EnsureLayoutLoaded reads the current path (per-room bind).</summary>
+    public void UnloadLayoutMemory()
+    {
+        layout = null;
     }
 
     /// <summary>Cache live world transforms before MR→VR hide/destroy (anchor UUID may not resolve on next entry).</summary>
@@ -221,6 +228,14 @@ public class MRLayoutRegistry : MonoBehaviour
 
         spawnedById.Clear();
         ConfigManager.WriteConsole($"{LogPrefix} DespawnAll done (stopLibretro={stopLibretroFirst})");
+    }
+
+    /// <summary>Delete in-memory layout and despawn all cabinets (after layout YAML wipe).</summary>
+    public void ClearLayoutAndDespawn()
+    {
+        DespawnAll(stopLibretroFirst: true);
+        layout = MRLayout.LoadOrCreate(LayoutFilePath);
+        ConfigManager.WriteConsole($"{LogPrefix} layout cleared ({LayoutFilePath})");
     }
 
     /// <summary>Instant hide for every MR cabinet (registered, transient, validation).</summary>
@@ -973,7 +988,7 @@ public class MRLayoutRegistry : MonoBehaviour
     }
 
     /// <summary>Re-resolve layout poses after MRUK anchors register (e.g. second MR entry).</summary>
-    public void RefreshAllSpawnedPosesFromLayout(bool floorOnly = false)
+    public void RefreshAllSpawnedPosesFromLayout(bool floorOnly = false, bool anchorsOnly = false)
     {
         MRAdjustmentsSettings.EnsureLoaded();
         if (layout == null)
@@ -991,7 +1006,7 @@ public class MRLayoutRegistry : MonoBehaviour
             if (floorOnly && placement.SurfaceType != PlacementSurfaceType.Floor)
                 continue;
 
-            if (!TryReadWorldPose(placement, out Vector3 worldPos, out Quaternion worldRot))
+            if (!TryReadWorldPose(placement, out Vector3 worldPos, out Quaternion worldRot, anchorsOnly))
                 continue;
 
             ApplyFloorCabinetDisplayOffset(placement.SurfaceType, ref worldPos);
@@ -1011,6 +1026,9 @@ public class MRLayoutRegistry : MonoBehaviour
                 continue;
             }
 
+            if (anchorsOnly)
+                continue;
+
             int index = spawnedById.Count;
             if (TrySpawnPlacement(placement, MixedRealityManager.Instance?.MRSpaceOrigin, index))
                 spawned++;
@@ -1018,6 +1036,18 @@ public class MRLayoutRegistry : MonoBehaviour
 
         if (refreshed > 0 || spawned > 0)
             ConfigManager.WriteConsole($"{LogPrefix} refreshed {refreshed} spawned {spawned} cabinet pose(s)");
+    }
+
+    public void ForEachSpawnedRoot(System.Action<Transform> action)
+    {
+        if (action == null)
+            return;
+
+        foreach (GameObject root in spawnedById.Values)
+        {
+            if (root != null)
+                action(root.transform);
+        }
     }
 
     public static float GetEffectiveCabinetScale(MRCabinetPlacement placement)
@@ -1086,7 +1116,11 @@ public class MRLayoutRegistry : MonoBehaviour
         return true;
     }
 
-    static bool TryReadWorldPose(MRCabinetPlacement placement, out Vector3 worldPosition, out Quaternion worldRotation)
+    static bool TryReadWorldPose(
+        MRCabinetPlacement placement,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation,
+        bool anchorsOnly = false)
     {
         worldPosition = Vector3.zero;
         worldRotation = Quaternion.identity;
@@ -1109,6 +1143,9 @@ public class MRLayoutRegistry : MonoBehaviour
                     out worldRotation))
                 return true;
 
+            if (anchorsOnly)
+                return false;
+
             if (TryReadWorldFallback(placement, out worldPosition, out worldRotation))
             {
                 ConfigManager.WriteConsoleWarning(
@@ -1120,6 +1157,9 @@ public class MRLayoutRegistry : MonoBehaviour
             MRTransitionLog.LogWarning($"{placement.DisplayLabel} pose unresolved (no anchor, no fallback)");
             return false;
         }
+
+        if (anchorsOnly)
+            return false;
 
         if (TryReadWorldFallback(placement, out worldPosition, out worldRotation))
             return true;

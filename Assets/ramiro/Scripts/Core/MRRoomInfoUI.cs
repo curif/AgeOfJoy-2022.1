@@ -135,12 +135,22 @@ public class MRRoomInfoUI : MonoBehaviour
         return
             $"Nome: {roomName}\n" +
             permissionLine +
+            $"RoomId: {FormatBoundRoomId()}\n" +
             $"Carregamento: {MRSceneLoadState.LastLoadMessage}\n" +
             $"Anchors: {anchorCount}\n" +
             $"Paredes: {wallCount}\n" +
             $"Chão: {floor}\n" +
             $"Teto: {ceiling}\n" +
             $"Fonte: {source}";
+    }
+
+    static string FormatBoundRoomId()
+    {
+        if (!MRActiveRoom.HasBoundRoom)
+            return "(global / unbound)";
+
+        string id = MRActiveRoom.BoundRoomId;
+        return id.Length <= 12 ? id : id.Substring(0, 8) + "…";
     }
 
     static bool IsRoomFound(MRUKRoom room, MREnvironmentSurfaces surfaces) =>

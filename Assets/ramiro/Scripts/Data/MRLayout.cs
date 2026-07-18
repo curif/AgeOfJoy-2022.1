@@ -21,6 +21,21 @@ public class MRVector3
     public static MRVector3 From(Vector3 v) => new MRVector3 { X = v.x, Y = v.y, Z = v.z };
 }
 
+/// <summary>RGB colour for YAML (0–1). Alpha is not used by Unity Lights.</summary>
+[Serializable]
+public class MRColor
+{
+    public float R = 1f;
+    public float G = 1f;
+    public float B = 1f;
+
+    public Color ToColor() => new Color(R, G, B, 1f);
+
+    public static MRColor From(Color c) => new MRColor { R = c.r, G = c.g, B = c.b };
+
+    public static MRColor White => new MRColor { R = 1f, G = 1f, B = 1f };
+}
+
 [Serializable]
 public class MRQuaternion
 {

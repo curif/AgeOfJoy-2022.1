@@ -77,6 +77,7 @@ components:
   - rotator
   # - video
   # - grab
+  # - light
 
 rotator:
   target: Blades
@@ -88,6 +89,13 @@ rotator:
 #   target: Screen
 #   loop: true
 #   volume: 0.8
+
+# light:
+#   target: Bulb
+#   type: point
+#   intensity: 2.0
+#   range: 4.0
+#   color: { r: 1.0, g: 0.75, b: 0.4 }
 ```
 
 ---
@@ -102,6 +110,7 @@ List of behaviour ids to attach when the object spawns. Each id has a **root-lev
 | `grab` | `grab:` | XR grab — one hand or two hands |
 | `video` | `video:` | Play a video file on a child screen mesh |
 | `animator` | `animator:` | Play an embedded GLB glTF animation clip |
+| `light` | `light:` | Attach a Unity point or spot light |
 
 Unknown ids in `components` log a warning.
 
@@ -138,10 +147,10 @@ Enables VR grab on the object (XRI). When released, can snap back to the MR plac
 | `twoHands` | bool | `false` | `true` = both hands on left/right handles; `false` = single-hand grab on the object |
 | `returnOnRelease` | bool | `true` | Return to placement pose when grab ends |
 | `hideHands` | bool | `true` | Hide controller/hand mesh while grabbing |
-| `target` | string | — | Optional child name for grab root; omit = package root |
+| `target` | string | — | One-hand: optional GLB child used as **grip pivot** (position + rotation snap to the hand). Omit = package root. Two-hands: grab root for handles. |
 | `returnDurationSeconds` | float | `0.15` | Ease-back duration; `0` = instant snap |
 
-**One hand** (e.g. TV, phone):
+**One hand** (e.g. TV, flashlight). While held, the pivot’s pose matches the hand:
 
 ```yaml
 components:
@@ -150,6 +159,7 @@ components:
 grab:
   twoHands: false
   returnOnRelease: true
+  # target: Grip   # optional — GLB empty/node oriented for how it sits in the hand
 ```
 
 **Two hands** (e.g. handheld console — like PortableGames):
@@ -223,6 +233,60 @@ animator:
 ```
 
 The GLB must contain an animation named `Walk` (case-insensitive). This is **not** the same as `rotator` (continuous spin) or `placement.allowStickRotation` (right stick before placement).
+
+### `light`
+
+Adds a runtime Unity `Light` when the object spawns. Independent of CRT **GLOBAL LIGHT** (auto sun). Prefer soft values on Quest (`shadows: false`).
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `target` | string | — | Optional GLB child for the light transform; omit = package root |
+| `type` | string | `point` | `point` or `spot` |
+| `intensity` | float | `2` | Light intensity |
+| `range` | float | `4` | Reach in metres (`point` / `spot`) |
+| `color` | RGB | white | `{ r, g, b }` in 0–1 |
+| `spotAngle` | float | `60` | Outer cone degrees (`spot` only) |
+| `innerSpotAngle` | float | `30` | Inner cone degrees (`spot` only) |
+| `shadows` | bool | `false` | Soft shadows when `true` (costly on Quest) |
+
+**Spot direction:** local **+Z** of `target` (empty/node in the GLB). For a handheld flashlight, combine with `grab` and aim `target` along the beam.
+
+Example (ceiling lamp — point):
+
+```yaml
+components:
+  - light
+
+light:
+  target: Bulb
+  type: point
+  intensity: 1.5
+  range: 3.5
+  color: { r: 1.0, g: 0.85, b: 0.6 }
+  shadows: false
+```
+
+Example (flashlight — spot + grab):
+
+```yaml
+components:
+  - grab
+  - light
+
+grab:
+  twoHands: false
+  returnOnRelease: true
+
+light:
+  target: BeamOrigin
+  type: spot
+  intensity: 3.0
+  range: 8.0
+  spotAngle: 35
+  innerSpotAngle: 20
+  color: { r: 1.0, g: 0.95, b: 0.85 }
+  shadows: false
+```
 
 #### Recommended video format (Quest + Windows Editor)
 

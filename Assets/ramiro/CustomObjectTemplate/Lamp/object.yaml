@@ -1,5 +1,6 @@
 # MR Custom Object v1 — copy folder to: {BaseDir}/MR/Custom Objects/Lamp/
 # Requires: lamp.glb
+# Optional: rename the light emitter node in the GLB to Bulb (or change light.target)
 
 version: 1
 
@@ -20,3 +21,15 @@ placement:
 
 collision:
   mode: box
+
+components:
+  - light
+
+light:
+  # omit target to attach at package root if the GLB has no Bulb node
+  target: Bulb
+  type: point
+  intensity: 1.5
+  range: 3.5
+  color: { r: 1.0, g: 0.85, b: 0.6 }
+  shadows: false

@@ -148,7 +148,7 @@ O **armário de configuração** é o centro de controle do Mixed Reality.
 
 É por meio dele que você adiciona, remove, move e configura todos os objetos da sua sala. O armário fica preso a uma **parede** e possui uma pequena tela CRT que exibe todos os menus do MR.
 
-Todas as ações **Add**, **Rem**, **Move** e **Opts** são feitas no **CRT do armário de configuração** — não nas máquinas ou props colocados no quarto.
+Todas as ações **Add**, **Remove**, **Move** e **Tune** são feitas no **CRT do armário de configuração** — não nas máquinas ou props colocados no quarto.
 
 ### Abrindo o menu
 
@@ -173,30 +173,33 @@ Enquanto o [raio de posicionamento](#9-raio-de-posicionamento) estiver ativo (Ad
 | Botão | Função |
 |-------|--------|
 | **Cima / Baixo** | Navega pelas opções do menu |
-| **L / R** | Alterna entre as ações disponíveis (Add, Rem, Move, …) |
+| **L / R** | Alterna ações quando a linha mostra mais de uma (ex.: Move/Tune, ou +/- em Adjustments) |
 | **A** | Confirma a opção selecionada |
 | **B** | Volta para o menu anterior ou cancela a ação atual |
 
 ### Como adicionar, mover e remover objetos
 
-Independentemente do tipo de objeto (máquinas, posters, luzes ou objetos personalizados), o funcionamento é sempre o mesmo:
+A maioria das categorias de decoração usa o mesmo padrão:
 
 1. Abra o armário de configuração (insira uma moeda).
-2. Entre na categoria desejada (**A**).
-3. Escolha o objeto usando **Cima** e **Baixo**.
-4. Utilize **L** ou **R** para selecionar a ação.
-5. Pressione **A** para confirmar.
+2. Entre na categoria (**A**).
+3. Escolha um item com **Cima** / **Baixo**.
+4. Se a lista disser **Press A to enter**, abra a tela de cópias desse objeto.
+5. Use as abas de filtro quando aparecerem:
+   - **Show All** — **A** adiciona uma nova cópia (raio de posicionamento). Não lista cópias existentes.
+   - **Show Added** — uma linha por cópia; stick **Cima** / **Baixo** escolhe a cópia (`>>`), depois **A** remove. Só alguns tipos (luzes, pacotes custom, posters) têm **Tune**: use **L** / **R** para mover o `>>` em **REMOVE** ou **TUNE**, depois **A**. Ventiladores e outros props oficiais têm só remove. Não há Move — remova e adicione de novo para reposicionar.
+6. **Cabinets** — **Show All** / **Show Added** no catálogo de máquinas (Add / Remove; uma máquina por jogo).
+7. **Posters** — em **CUSTOM OBJECTS → Posters**: **Show All** adiciona; **Show Added** lista **uma linha por cópia** (escolha qual remover). Sem Move/Tune nesta lista.
+8. **Room Skin** — **A** alterna Add ou Remove; sem raio de posicionamento.
 
 | Ação | Descrição |
 |------|-----------|
-| **Add** | Adiciona uma nova cópia do objeto ao ambiente |
-| **Rem** | Remove o objeto da sala |
-| **Move** | Reposiciona um objeto que já foi colocado |
-| **Opts** | Exibe todas as cópias daquele objeto para ações individuais (mover ou ajustar) |
+| **Add** | Coloca uma nova cópia (abre o [raio de posicionamento](#9-raio-de-posicionamento)) |
+| **Remove** | Remove uma cópia já colocada |
+| **Move** | Reposiciona uma cópia já na sala |
+| **Tune** | Ajusta uma cópia (ex.: escala ou luz) |
 
-Sempre que um objeto for adicionado ou movido, será aberto automaticamente o **Raio de Posicionamento**.
-
-O número exibido ao lado do nome do objeto indica quantas cópias dele já existem na sua sala.
+O número ao lado do nome (ou `xN`) mostra quantas cópias já existem na sua sala.
 
 ### Estrutura dos menus
 
@@ -206,7 +209,7 @@ MR CONFIGURATION
 ├── CABINETS        → catálogo de jogos arcade no MR
 ├── CUSTOM OBJECTS  → objetos personalizados, posters e room skins
 ├── OFFICIAL OBJECTS→ luzes e props oficiais
-├── CONFIG          → mover armário, ajustes globais, effect mesh
+├── CONFIG          → mover armário, ajustes, mesh, apagar YAML
 ├── DEBUG           → erros MR por data
 ├── HELP            → controles e guia no headset
 └── EXIT            → fechar painel
@@ -230,7 +233,7 @@ Contém os objetos oficiais do Age of Joy, como iluminação, ventiladores, Port
 
 #### CONFIG
 
-Reúne as configurações gerais do Mixed Reality: reposicionar o armário, ajustar a escala global das máquinas e visualizar a malha do ambiente (Effect Mesh).
+Reúne as configurações gerais do Mixed Reality: reposicionar o armário, escala global das máquinas, Effect Mesh e apagar layouts YAML.
 
 #### DEBUG
 
@@ -292,29 +295,24 @@ Cada jogo pode possuir uma máquina instalada em sua sala, e todas funcionam nor
 
 1. Abra o armário de configuração.
 2. Entre em **CABINETS**.
-3. Escolha o jogo desejado.
-4. Selecione **Add** usando **L** ou **R**.
-5. Pressione **A**.
-6. Posicione a máquina utilizando o [raio](#9-raio-de-posicionamento).
-7. Gire a máquina com o **analógico direito**, se desejar.
-8. Pressione **A** para finalizar.
+3. Escolha o jogo (**Show All**).
+4. Pressione **A** para **Add**.
+5. Posicione a máquina com o [raio](#9-raio-de-posicionamento).
+6. Gire com o **analógico direito**, se desejar.
+7. Pressione **A** para finalizar.
 
 ### Removendo uma máquina
 
-1. Selecione a máquina na lista.
-2. Escolha **Rem**.
-3. Pressione **A**.
+1. Abra **CABINETS**.
+2. Vá para **Show Added** (**L** / **R** na linha de filtros), ou fique em **Show All** se o jogo já estiver colocado.
+3. Selecione a máquina.
+4. Pressione **A** para **Remove**.
 
-### Movendo uma máquina
+Uma máquina por jogo: depois de colocada, **Show All** também oferece **Remove** nessa entrada (não há Move na lista de cabinets). Para reposicionar, remova e faça **Add** de novo com o raio.
 
-Para alterar a posição de uma máquina já instalada:
+### Mover props e objetos personalizados
 
-- Selecione **Move**, **ou**
-- Abra **Opts** para visualizar todas as cópias daquela máquina, escolha a cópia desejada e utilize **Move** para reposicioná-la.
-
-### Ajustes individuais
-
-Dentro de **Opts**, também é possível utilizar **Tune** para realizar pequenos ajustes específicos naquela máquina, sem alterar as demais.
+Não há **Move** no **Show Added**. Para reposicionar: **Show Added** → remova a cópia → **Show All** → **Add** de novo com o raio. Use **Tune** no **Show Added** (**L** / **R**) quando disponível (luzes, pacotes custom).
 
 ---
 
@@ -322,7 +320,7 @@ Dentro de **Opts**, também é possível utilizar **Tune** para realizar pequeno
 
 Além dos objetos oficiais, o Mixed Reality permite adicionar **pacotes 3D** criados por você ou pela comunidade.
 
-No headset, eles aparecem em **CUSTOM OBJECTS → Others** no CRT do armário de configuração. Depois de criados, use **Add**, **Rem**, **Move**, **Opts** e **Tune** como em qualquer outra categoria ([seção 8](#8-armário-de-configuração-crt)). O **Tune** ajusta a escala de uma cópia já colocada, sem afetar as outras.
+No headset, eles aparecem em **CUSTOM OBJECTS** no CRT como lista simples (**Posters** e **Room Skin** no topo). Selecione o pacote → **Press A to enter** → **Show All** para adicionar, **Show Added** para escolher a cópia com `>>` e **A** para remover (**Tune** com **L** / **R** quando disponível) ([seção 8](#8-armário-de-configuração-crt)).
 
 ### Criar pacotes com o AOJ MR Studio
 
@@ -355,7 +353,7 @@ Baixe o zip da [última release](https://github.com/ramiro-github/aoj-mr-studio/
 6. Ajuste **Placement** (colocação no MR) — ver tabela abaixo.
 7. Adicione **Components** (comportamentos) se precisar — ver tabela abaixo. Use **Add component**, escolha o tipo e preencha os campos; o Studio sugere nomes de partes do GLB quando possível.
 8. Clique em **Save to Meta Quest**. O `object.yaml` atualizado é gravado no pacote do headset.
-9. No MR, abra o armário de configuração → **CUSTOM OBJECTS → Others** → selecione o pacote → **Add** → posicione com o [raio](#9-raio-de-posicionamento).
+9. No MR, abra o armário de configuração → **CUSTOM OBJECTS** → selecione o pacote → **enter** → **Show All** → **Add** → posicione com o [raio](#9-raio-de-posicionamento).
 
 Para editar um pacote existente: **Open Custom Objects** → duplo clique na pasta → altere Placement/Components → **Save to Meta Quest**.
 
@@ -379,10 +377,11 @@ Componentes são comportamentos ligados ao objeto quando ele aparece no MR. No S
 
 | Componente | Para que serve | Campos principais |
 |--------------|----------------|-------------------|
-| **grab** | Pegar o objeto com as mãos no VR | **twoHands** — uma ou duas mãos; **returnOnRelease** — volta ao lugar ao soltar; **hideHands** — esconde as mãos ao pegar; **target** — parte do GLB (opcional) |
+| **grab** | Pegar o objeto com as mãos no VR | **twoHands** — uma ou duas mãos; **returnOnRelease** — volta ao lugar ao soltar; **hideHands** — esconde as mãos ao pegar; **target** — pivô de grip no GLB (posição/rotação na mão; opcional = raiz) |
 | **video** | Reproduz vídeo numa tela do modelo | **file** — `.mp4` no pacote; **target** — malha filha do GLB (ex.: `Screen`); **loop**, **volume** |
 | **rotator** | Gira uma parte do modelo continuamente | **target** — filho do GLB (ex.: `Blades`); **axis** — eixo x/y/z; **speed** — graus por segundo |
 | **animator** | Toca animação embutida no GLB | **clip** — nome da animação no arquivo; **target** — osso/malha (opcional); **loop**, **speed** |
+| **light** | Luz point ou spot no objeto | **type** — `point` ou `spot`; **intensity**, **range**; **color** — `{ r, g, b }`; **target** — filho do GLB (opcional); spot também **spotAngle** / **innerSpotAngle** |
 
 **Dicas:**
 
@@ -394,8 +393,8 @@ Componentes são comportamentos ligados ao objeto quando ele aparece no MR. No S
 #### No jogo (após criar o pacote)
 
 1. Insira moeda no armário de configuração.
-2. **CUSTOM OBJECTS → Others** → escolha o pacote.
-3. **Add** / **Rem** / **Move** / **Opts** / **Tune** — mesmo fluxo da [seção 8](#8-armário-de-configuração-crt).
+2. **CUSTOM OBJECTS** → escolha o pacote → **enter**.
+3. **Show All** = Add; **Show Added** = stick seleciona (`>>`) + **A** remove (**Tune** com **L** / **R** quando disponível) — [seção 8](#8-armário-de-configuração-crt).
 
 O jogo pode incluir um pacote de exemplo na primeira utilização para você testar o fluxo.
 
@@ -403,13 +402,14 @@ O jogo pode incluir um pacote de exemplo na primeira utilização para você tes
 
 ## 12. Posters
 
-Os posters funcionam de maneira semelhante aos objetos personalizados.
+Os posters usam **Show All** / **Show Added** no catálogo de Posters (após **CUSTOM OBJECTS → Posters**).
 
 As imagens devem ser colocadas na pasta `MR/Posters/`. Depois disso, estarão disponíveis em **CUSTOM OBJECTS → Posters**.
 
-Os posters podem ser adicionados, removidos, reposicionados e redimensionados.
+- **Show All** — **A** adiciona um poster (raio na parede)
+- **Show Added** — uma linha por cópia colocada (sem coluna de contagem); **A** remove a cópia selecionada
 
-O ajuste de tamanho é feito através da opção **Tune**, permitindo alterar individualmente a escala do poster sem afetar os demais.
+Diferente dos pacotes e props oficiais, a lista de Posters **não** abre tela por cópia para Move/Tune — Add e Remove ficam nesses filtros.
 
 ---
 
@@ -421,7 +421,7 @@ Você pode aplicar diferentes materiais para criar ambientes personalizados sem 
 
 As Room Skins ficam disponíveis em **CUSTOM OBJECTS → Room Skin**. Os arquivos devem ser colocados na pasta `MR/Room Skins/`.
 
-Depois de selecionar uma Room Skin, pressione **A** para aplicá-la.
+Não há filtro **Show All** / **Show Added**. **A** alterna **Add** (aplicar) ou **Remove** na skin selecionada. Uma skin ativa por superfície.
 
 Ao contrário dos demais objetos, a Room Skin é aplicada diretamente sobre a malha da sala — portanto **não** utiliza o Raio de Posicionamento.
 
@@ -431,21 +431,9 @@ Ao contrário dos demais objetos, a Room Skin é aplicada diretamente sobre a ma
 
 Os **Objetos Oficiais** são itens criados e distribuídos junto com o Age of Joy. Ficam disponíveis em **OFFICIAL OBJECTS** no CRT do armário de configuração.
 
-O menu é dividido em duas categorias.
+A tela inicial é uma **lista simples** (luzes e props embutidos juntos — sem submenu Lights/Others). Selecione um item → **Press A to enter** → mesmos filtros dos pacotes: **Show All** adiciona; **Show Added** lista cada cópia (`>>` + **A** remove; **Tune** nas luzes).
 
-### Lights
-
-Contém todas as luminárias disponíveis para o Mixed Reality.
-
-Além de adicionar ou remover luminárias, também é possível configurar a **iluminação automática** ao entrar no MR.
-
-Ações disponíveis: **Add**, **Rem**, **Move**.
-
-### Others
-
-Reúne os demais objetos oficiais do jogo, como ventiladores (**PF_Fan**), **Portable Games** e outros props adicionados em futuras atualizações.
-
-Esses objetos utilizam o mesmo fluxo de posicionamento encontrado nas demais categorias.
+Inclui luminárias de teto/parede, ventiladores (**PF_Fan**), **Portable Games** e outros props em futuras atualizações.
 
 ---
 
@@ -458,9 +446,9 @@ O **Portable Games** é um console portátil que permite jogar, diretamente nas 
 Para adicionar o aparelho ao ambiente:
 
 1. Abra o armário de configuração.
-2. Acesse **OFFICIAL OBJECTS → Others**.
-3. Selecione **Portable Games**.
-4. Escolha **Add** e pressione **A**.
+2. Acesse **OFFICIAL OBJECTS**.
+3. Selecione **Portable Games** → **enter**.
+4. Em **Show All**, pressione **A** para **Add**.
 5. Posicione o suporte sobre uma **mesa** utilizando o [Raio de Posicionamento](#9-raio-de-posicionamento).
 
 Depois de instalado, o console permanecerá apoiado sobre o suporte até ser utilizado.
@@ -539,15 +527,19 @@ Permite alterar a posição do armário de configuração. Ao selecionar essa op
 Permite ajustar **todas** as máquinas arcade do ambiente de uma só vez:
 
 - **Escala global** das máquinas
-- **Altura (Offset Y)**
+- **Altura do chão (Offset Y)**
 
-O valor padrão de escala é **1,00**. Utilize esses ajustes caso as máquinas pareçam maiores ou menores do que o esperado no seu ambiente.
+O valor padrão de escala é **1,00**. Use **Cima** / **Baixo** para a linha, **L** / **R** para selecionar **+** / **-**, e **A** para aplicar o passo.
 
 ### Mesh
 
-Exibe a malha criada pelo Quest durante o mapeamento da sala (chão = verde, parede = laranja, mesa = amarelo, teto = azul).
+Exibe a malha criada pelo Quest durante o mapeamento da sala (chão = verde, parede = laranja, mesa = amarelo, teto = azul). Use **A** para ativar ou desativar opções do Effect Mesh.
 
 Essa visualização é útil para conferir se todas as superfícies foram reconhecidas corretamente. Caso alguma superfície esteja ausente ou incorreta, execute novamente o [Space Setup](#6-configurando-sua-sala-space-setup).
+
+### Delete Configs
+
+Apaga os arquivos **YAML** de layout do Mixed Reality em `MR/` (cabinets, objetos, layouts de pacotes). **Os assets permanecem** (GLB, imagens, skins). Objetos colocados despawnam até você adicioná-los de novo. Não tem volta — confirme **Yes** só se quiser um layout limpo.
 
 ---
 
@@ -604,7 +596,7 @@ O **AOJ MR Studio** é a ferramenta oficial no **Windows** para criar e enviar c
 | **Custom Objects** | Criar pastas de pacote, enviar `.glb`, editar colocação e componentes, salvar `object.yaml` no Quest |
 | **Conexão Quest** | **Reconnect** na Home; **Check device** na lista de pacotes para testar ADB |
 
-O fluxo completo para **objetos personalizados** está na [seção 11](#11-objetos-personalizados) (Placement, Components **grab** / **video** / **rotator** / **animator**).
+O fluxo completo para **objetos personalizados** está na [seção 11](#11-objetos-personalizados) (Placement, Components **grab** / **video** / **rotator** / **animator** / **light**).
 
 Posters e Room Skins continuam sendo adicionados pelo jogo ou por fluxos específicos nas [seções 12](#12-posters) e [13](#13-room-skin); suporte ampliado no Studio pode chegar em versões futuras.
 

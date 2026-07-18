@@ -294,6 +294,121 @@ public class MREnvironmentSurfaces : MonoBehaviour
     }
 #endif
 
+    /// <summary>True when <paramref name="worldPosition"/> is inside the current MRUK room (XZ).</summary>
+    public bool IsInsideRoom(Vector3 worldPosition, bool testVerticalBounds = false)
+    {
+        return room != null && room.IsPositionInRoom(worldPosition, testVerticalBounds);
+    }
+
+    /// <summary>
+    /// Pose near the player, clamped inside MRUK walls.
+    /// Used as the initial spawn for placement-ray objects so they stay in front of the player.
+    /// </summary>
+    public bool TryGetInRoomPoseNearPlayer(
+        Transform player,
+        float distanceMeters,
+        Vector3 footprint,
+        out Vector3 worldPosition,
+        out Quaternion worldRotation,
+        float towardRoomCenterBlend = 0f)
+    {
+        worldPosition = Vector3.zero;
+        worldRotation = Quaternion.identity;
+
+        if (player == null)
+            return false;
+
+        Vector3 forward = player.forward;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        float distance = Mathf.Clamp(distanceMeters > 0.1f ? distanceMeters : 1.2f, 0.8f, 2.0f);
+        Vector3 nearPlayer = player.position + forward * distance;
+        float blend = Mathf.Clamp01(towardRoomCenterBlend);
+        Vector3 target = nearPlayer;
+        if (blend > 0.001f)
+        {
+            Vector3 roomCenter = ResolveRoomCenterHorizontal(player.position.y);
+            target = Vector3.Lerp(nearPlayer, roomCenter, blend);
+            target.y = nearPlayer.y;
+        }
+
+        if (!TryGetPlayerFloorPoint(player, out Vector3 playerFloor))
+        {
+            playerFloor = new Vector3(
+                player.position.x,
+                HasFloor ? FloorHeight : (player.position.y - editorEstimatedEyeHeightMeters),
+                player.position.z);
+        }
+
+        // Prefer the forward target; if outside/blocked, walk back toward the player's feet
+        // instead of jumping to room center or a random floor sample.
+        Vector3 placement = ResolveNearPlayerFloorPlacement(playerFloor, target, footprint);
+
+        worldPosition = placement;
+        worldRotation = RotationFacingPlayer(worldPosition, player.position);
+        return true;
+    }
+
+    Vector3 ResolveNearPlayerFloorPlacement(Vector3 playerFloor, Vector3 preferredTarget, Vector3 footprint)
+    {
+        // Try preferred distance first, then pull back toward the player in steps.
+        for (float t = 1f; t >= 0f; t -= 0.2f)
+        {
+            Vector3 candidate = Vector3.Lerp(playerFloor, preferredTarget, t);
+            if (!TryGetFloorPointAt(candidate, out Vector3 floorPoint))
+            {
+                floorPoint = new Vector3(
+                    candidate.x,
+                    HasFloor ? FloorHeight : candidate.y,
+                    candidate.z);
+            }
+
+            floorPoint = NudgeAwayFromWalls(floorPoint, footprint);
+            floorPoint = ClampInsideRoomNear(floorPoint, footprint, playerFloor);
+
+            if (TryGetFloorPointAt(floorPoint, out Vector3 finalFloor))
+                floorPoint = finalFloor;
+            else if (HasFloor)
+                floorPoint.y = FloorHeight;
+
+            if (room == null || IsValidFreeFloorPoint(floorPoint))
+                return floorPoint;
+        }
+
+        // Last resort: under the player, still clamped near them (never random / room-center teleport).
+        Vector3 underPlayer = playerFloor;
+        underPlayer = NudgeAwayFromWalls(underPlayer, footprint);
+        underPlayer = ClampInsideRoomNear(underPlayer, footprint, playerFloor);
+        if (TryGetFloorPointAt(underPlayer, out Vector3 underFloor))
+            underPlayer = underFloor;
+        return underPlayer;
+    }
+
+    bool TryGetPlayerFloorPoint(Transform player, out Vector3 floorPoint)
+    {
+        floorPoint = default;
+        if (player == null)
+            return false;
+        return TryGetFloorPointAt(player.position, out floorPoint);
+    }
+
+    Vector3 ResolveRoomCenterHorizontal(float y)
+    {
+        if (HasFloor)
+            return new Vector3(PlayerFloorPoint.x, HasFloor ? FloorHeight : y, PlayerFloorPoint.z);
+
+        if (room != null && room.FloorAnchor != null)
+        {
+            Vector3 c = room.FloorAnchor.GetAnchorCenter();
+            return new Vector3(c.x, y, c.z);
+        }
+
+        return new Vector3(0f, y, 0f);
+    }
+
     /// <summary>
     /// Compute full pose (X, Y, Z + rotation facing the player) for ConfigurationCabinet.
     /// Step 1: target = player + forward*distance.
@@ -309,39 +424,13 @@ public class MREnvironmentSurfaces : MonoBehaviour
         out Vector3 worldPosition,
         out Quaternion worldRotation)
     {
-        worldPosition = Vector3.zero;
-        worldRotation = Quaternion.identity;
-
-        if (player == null)
-            return false;
-
-        Vector3 forward = player.forward;
-        forward.y = 0f;
-        if (forward.sqrMagnitude < 0.001f)
-            forward = Vector3.forward;
-        forward.Normalize();
-
-        Vector3 target = player.position + forward * distanceMeters;
-
-        if (!TryGetFloorPointAt(target, out Vector3 floorPoint))
-            floorPoint = new Vector3(target.x, HasFloor ? FloorHeight : (player.position.y - editorEstimatedEyeHeightMeters), target.z);
-
-        Vector3 placement = floorPoint;
-        placement = NudgeAwayFromWalls(placement, cabinetFootprint);
-        placement = ClampInsideRoom(placement, cabinetFootprint);
-
-        if (TryGetFloorPointAt(placement, out Vector3 finalFloor))
-            placement.y = finalFloor.y;
-        else if (HasFloor)
-            placement.y = FloorHeight;
-
-        worldPosition = placement;
-        worldRotation = RotationFacingPlayer(worldPosition, player.position);
-
-        ConfigManager.WriteConsole(
-            $"{LogPrefix} cabinet pose target={target} placement={worldPosition} " +
-            $"hasFloor={HasFloor} floorY={FloorHeight:F2} room={(room != null ? room.gameObject.name : "null")}");
-        return true;
+        return TryGetInRoomPoseNearPlayer(
+            player,
+            distanceMeters,
+            cabinetFootprint,
+            out worldPosition,
+            out worldRotation,
+            towardRoomCenterBlend: 0.2f);
     }
 
     /// <summary>
@@ -584,9 +673,12 @@ public class MREnvironmentSurfaces : MonoBehaviour
         out Vector3 worldPosition,
         out Quaternion worldRotation)
     {
+        // Flush to the wall using the surface normal; flip if MRUK points outward.
+        // Do not use viewpoint-wall as the facing axis — that tilts objects off the wall
+        // when the ray hits at an angle (placement ray / stick fine-adjust).
         Vector3 intoRoom = HorizontalNormal(wallNormal);
         if (intoRoom.sqrMagnitude < 0.001f)
-            intoRoom = Vector3.forward;
+            intoRoom = HorizontalNormal(viewpoint - wallPoint);
         intoRoom = EnsureHorizontalNormalTowardViewpoint(wallPoint, intoRoom, viewpoint);
 
         float halfDepth = Mathf.Max(0f, frameDepthMeters) * 0.5f;
@@ -648,13 +740,17 @@ public class MREnvironmentSurfaces : MonoBehaviour
                 rayDistance,
                 WallLabelFilter,
                 out hitAnchor,
-                out _,
+                out Vector3 surfaceNormal,
                 MRUK.PositioningMethod.DEFAULT);
 
             if (hitAnchor != null)
             {
+                // Use MRUK hit normal — pose.rotation*forward is a placement forward that can
+                // diverge from the true wall plane (especially after LookRotation orthonormalize).
                 wallPoint = pose.position;
-                wallNormal = pose.rotation * Vector3.forward;
+                wallNormal = surfaceNormal.sqrMagnitude > 0.001f
+                    ? surfaceNormal
+                    : pose.rotation * Vector3.forward;
                 if (wallNormal.sqrMagnitude < 0.001f)
                     wallNormal = HorizontalNormal(hitAnchor.transform.forward);
                 return true;
@@ -788,21 +884,60 @@ public class MREnvironmentSurfaces : MonoBehaviour
                 out _,
                 MRUK.PositioningMethod.DEFAULT);
 
-            if (hitAnchor != null)
+            if (hitAnchor != null
+                && IsUsableFloorRayHit(rayOrigin, pose.position))
             {
                 floorPoint = pose.position;
                 return true;
             }
+
+            hitAnchor = null;
         }
 
         Vector3 probe = rayOrigin + direction * rayDistance;
-        if (TryGetFloorPointAt(probe, out floorPoint))
+        if (TryGetFloorPointAt(probe, out floorPoint)
+            && IsUsableFloorRayHit(rayOrigin, floorPoint))
         {
             hitAnchor = room?.FloorAnchor;
             return true;
         }
 
+        floorPoint = default;
         return false;
+    }
+
+    /// <summary>
+    /// Floor-only MRUK rays can pass through walls and hit floor on the other side.
+    /// Reject hits outside the room or with a wall between the pointer and the floor point.
+    /// </summary>
+    bool IsUsableFloorRayHit(Vector3 rayOrigin, Vector3 floorPoint)
+    {
+        if (room == null)
+            return true;
+
+        if (!room.IsPositionInRoom(floorPoint, testVerticalBounds: false))
+            return false;
+
+        Vector3 toHit = floorPoint - rayOrigin;
+        float dist = toHit.magnitude;
+        if (dist < 0.08f)
+            return true;
+
+        Vector3 dir = toHit / dist;
+        Ray wallRay = new Ray(rayOrigin, dir);
+        Pose wallPose = room.GetBestPoseFromRaycast(
+            wallRay,
+            dist - 0.05f,
+            WallLabelFilter,
+            out MRUKAnchor wallAnchor,
+            out _,
+            MRUK.PositioningMethod.DEFAULT);
+
+        if (wallAnchor == null)
+            return true;
+
+        float wallHitDist = Vector3.Distance(rayOrigin, wallPose.position);
+        return wallHitDist + 0.05f >= dist;
     }
 
     public bool TryGetFloorPointFromRay(
@@ -996,30 +1131,115 @@ public class MREnvironmentSurfaces : MonoBehaviour
 
     Vector3 ClampInsideRoom(Vector3 point, Vector3 cabinetFootprint)
     {
+        return ClampInsideRoomNear(point, cabinetFootprint, preferNear: point);
+    }
+
+    /// <summary>
+    /// Keep placement inside the room and out of furniture volumes, staying as close as possible
+    /// to <paramref name="preferNear"/>. Never teleports to a random floor sample.
+    /// </summary>
+    Vector3 ClampInsideRoomNear(Vector3 point, Vector3 cabinetFootprint, Vector3 preferNear)
+    {
         if (room == null)
             return point;
 
-        if (room.IsPositionInRoom(point, testVerticalBounds: false)
-            && !room.IsPositionInSceneVolume(point, out _, testVerticalBounds: true, distanceBuffer: 0.15f))
+        if (IsValidFreeFloorPoint(point))
             return point;
 
-        if (room.GenerateRandomPositionOnSurface(
-                MRUK.SurfaceType.FACING_UP,
-                wallClearanceMeters,
-                FloorLabelFilter,
-                out Vector3 randomPos,
-                out _)
-            && room.IsPositionInRoom(randomPos, testVerticalBounds: false))
-        {
-            return randomPos;
-        }
+        if (TryFindNearbyFreeFloorPoint(point, preferNear, out Vector3 nearby))
+            return nearby;
 
         float closestDist = room.TryGetClosestSurfacePosition(
             point, out Vector3 closest, out _, out Vector3 normal, FloorLabelFilter);
         if (FoundSurface(closestDist) && IsFloorNormal(normal))
-            return closest;
+        {
+            if (IsValidFreeFloorPoint(closest))
+                return closest;
+
+            if (TryFindNearbyFreeFloorPoint(closest, preferNear, out Vector3 nearClosest))
+                return nearClosest;
+
+            if (room.IsPositionInRoom(closest, testVerticalBounds: false))
+                return closest;
+        }
+
+        // Pull toward preferNear (usually player feet) looking for any in-room floor point.
+        for (float t = 0.9f; t >= 0f; t -= 0.15f)
+        {
+            Vector3 candidate = Vector3.Lerp(preferNear, point, t);
+            if (!TryGetFloorPointAt(candidate, out Vector3 floorCandidate))
+                floorCandidate = new Vector3(candidate.x, HasFloor ? FloorHeight : candidate.y, candidate.z);
+
+            if (IsValidFreeFloorPoint(floorCandidate))
+                return floorCandidate;
+
+            if (room.IsPositionInRoom(floorCandidate, testVerticalBounds: false))
+                return floorCandidate;
+        }
+
+        if (TryGetFloorPointAt(preferNear, out Vector3 preferFloor)
+            && room.IsPositionInRoom(preferFloor, testVerticalBounds: false))
+            return preferFloor;
 
         return point;
+    }
+
+    bool IsValidFreeFloorPoint(Vector3 point)
+    {
+        if (room == null)
+            return true;
+
+        return room.IsPositionInRoom(point, testVerticalBounds: false)
+            && !room.IsPositionInSceneVolume(point, out _, testVerticalBounds: true, distanceBuffer: 0.15f);
+    }
+
+    bool TryFindNearbyFreeFloorPoint(Vector3 around, Vector3 preferNear, out Vector3 found)
+    {
+        found = default;
+        if (room == null)
+            return false;
+
+        float bestScore = float.MaxValue;
+        bool any = false;
+        float[] radii = { 0.25f, 0.5f, 0.75f, 1.0f, 1.35f };
+        int dirs = Mathf.Max(8, wallProbeDirections);
+
+        for (int r = 0; r < radii.Length; r++)
+        {
+            float radius = radii[r];
+            for (int i = 0; i < dirs; i++)
+            {
+                float angle = i * (360f / dirs) * Mathf.Deg2Rad;
+                Vector3 offset = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle)) * radius;
+                Vector3 sample = around + offset;
+                if (!TryGetFloorPointAt(sample, out Vector3 floorSample))
+                    floorSample = new Vector3(sample.x, HasFloor ? FloorHeight : around.y, sample.z);
+
+                if (!IsValidFreeFloorPoint(floorSample))
+                    continue;
+
+                float score = HorizontalDistanceSq(floorSample, preferNear)
+                    + 0.15f * HorizontalDistanceSq(floorSample, around);
+                if (score < bestScore)
+                {
+                    bestScore = score;
+                    found = floorSample;
+                    any = true;
+                }
+            }
+
+            if (any)
+                return true;
+        }
+
+        return any;
+    }
+
+    static float HorizontalDistanceSq(Vector3 a, Vector3 b)
+    {
+        float dx = a.x - b.x;
+        float dz = a.z - b.z;
+        return dx * dx + dz * dz;
     }
 
     Vector3 NudgeAwayFromWalls(Vector3 point, Vector3 cabinetFootprint)

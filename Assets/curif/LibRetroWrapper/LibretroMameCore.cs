@@ -5,7 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 //#define _debug_fps_
-//#define _debug_audio_ // capture ~15s of game audio to a WAV on game start, see FlushAudioCaptureIfReady()
+#define _debug_audio_ // capture ~15s of game audio to a WAV on game start, see FlushAudioCaptureIfReady()
 #define _debug_
 //#define _serialize_
 
@@ -193,16 +193,18 @@ public static unsafe class LibretroMameCore
     static object AudioBufferLock = new();
     static int QuestAudioFrequency = 48000; //Quest 2 standar, can change at start
 
-    // Rate the ring-buffer content actually carries (frames/s). Unity's audio thread
-    // on Quest drains fewer frames per wall-clock second than the nominal DSP rate
-    // (measured ~84%: 40320 of 48000 on Quest 2 / Unity 2021.3, ~4us lost per frame;
-    // see docs/libretro_audio_system.md). We measure the real drain rate while games
-    // run, persist it, and tell the wrapper to resample to it so production matches
-    // consumption (no ring overflow = no crackling). Nominal until calibrated.
+    // Rate the ring-buffer content actually carries (frames/s). Unity's real audio-thread
+    // drain rate is not a fixed property of the device: it has been measured anywhere from
+    // ~84% of nominal (a ~4us/frame tax, some builds) to exactly nominal (other builds) on
+    // the same hardware - it moves with Unity/Meta SDK/OS changes outside our control. So
+    // this is NOT a one-shot calibration: every stats window (GetAndResetAudioStats) measures
+    // real consumer demand and steers wrapperOutputRate toward it in closed loop, in both
+    // directions. PlayerPrefs only seeds the first window after a fresh install/session so
+    // playback isn't wrong for the first few seconds; see docs/libretro_audio_system.md.
     const string AudioCalibrationPrefKey = "AudioCalibratedOutputRate";
     static double wrapperOutputRate = 48000;
-    static double calibConsumedFloats = 0;
-    static double calibSeconds = 0;
+    // 0 = not yet initialized (first valid window snaps to measured demand instead of EMA-blending)
+    static double smoothedDemandRate = 0;
 
     // audio stats (all fields touched only under AudioBufferLock, except wrapperRuns
     // which is incremented from the run thread via Interlocked)
@@ -608,12 +610,14 @@ public static unsafe class LibretroMameCore
         WriteConsole($"[LibRetroMameCore.Start] AUDIO Quest Sample Rate:{QuestAudioFrequency} dspBufferSize: {audioConfig.dspBufferSize}");
         LogAndroidAudioProperties();
 
-        // Calibrated output rate: the core generates at the nominal DSP rate (best
-        // quality for the resampler) and the wrapper resamples to the drain rate
-        // measured in previous sessions. Falls back to nominal when uncalibrated.
+        // Warm start only: the closed-loop controller in GetAndResetAudioStats() takes
+        // over and corrects this within the first few stats windows regardless of
+        // whether this guess is right. Range allows up to nominal (tax-free) rates -
+        // a previous session may have measured no tax at all.
         wrapperOutputRate = PlayerPrefs.GetFloat(AudioCalibrationPrefKey, 0f);
-        if (wrapperOutputRate < QuestAudioFrequency * 0.5 || wrapperOutputRate > QuestAudioFrequency)
+        if (wrapperOutputRate < QuestAudioFrequency * 0.5 || wrapperOutputRate > QuestAudioFrequency * 1.05)
             wrapperOutputRate = QuestAudioFrequency;
+        smoothedDemandRate = 0;
         ConfigManager.WriteConsole($"[LibRetroMameCore.Start] AUDIO wrapper output rate: {wrapperOutputRate:F0} (nominal {QuestAudioFrequency})");
 
         WriteConsole("[LibRetroMameCore.Start] Init environment and call retro_init()");
@@ -1460,31 +1464,26 @@ public static unsafe class LibretroMameCore
     }
 
     /// <summary>
-    /// Persists the measured audio drain rate (frames/s Unity actually consumed)
-    /// so the next game session resamples to it from the start. Needs at least 15s
-    /// of healthy playback to be trustworthy. Main thread only (PlayerPrefs).
+    /// Persists the closed-loop controller's current rate as next session's warm start.
+    /// Main thread only (PlayerPrefs).
     /// </summary>
     private static void SaveAudioCalibration()
     {
-        double floats, seconds;
+        double rate;
         lock (AudioBufferLock)
         {
-            floats = calibConsumedFloats;
-            seconds = calibSeconds;
-            calibConsumedFloats = 0;
-            calibSeconds = 0;
+            rate = smoothedDemandRate;
         }
 
-        if (seconds < 15)
-            return;
+        if (rate <= 0)
+            return; // controller never got a valid window this session, keep previous warm start
 
-        float measuredRate = (float)(floats / 2.0 / seconds);
-        if (measuredRate < QuestAudioFrequency * 0.5f || measuredRate > QuestAudioFrequency)
-            return; // implausible measurement, keep previous calibration
+        if (rate < QuestAudioFrequency * 0.5 || rate > QuestAudioFrequency * 1.05)
+            return; // implausible, keep previous calibration
 
-        PlayerPrefs.SetFloat(AudioCalibrationPrefKey, measuredRate);
+        PlayerPrefs.SetFloat(AudioCalibrationPrefKey, (float)rate);
         PlayerPrefs.Save();
-        ConfigManager.WriteConsole($"[LibRetroMameCore] AUDIO calibration saved: {measuredRate:F0} frames/s over {seconds:F0}s (nominal {QuestAudioFrequency})");
+        ConfigManager.WriteConsole($"[LibRetroMameCore] AUDIO calibration saved: {rate:F0} frames/s (nominal {QuestAudioFrequency})");
     }
 
     private static void ClearAll()
@@ -1525,8 +1524,7 @@ public static unsafe class LibretroMameCore
             audioIntervalStartOccupancy = -1;
             audioIntervalEndOccupancy = 0;
             audioStatsSince = DateTime.MinValue;
-            calibConsumedFloats = 0;
-            calibSeconds = 0;
+            smoothedDemandRate = 0;
         }
         Interlocked.Exchange(ref wrapperRuns, 0);
 
@@ -2153,13 +2151,41 @@ public static unsafe class LibretroMameCore
         float expectedPerSec = (float)wrapperOutputRate * 2;
         float runsPerSec = runs / elapsed;
 
-        // accumulate healthy windows for the persistent drain-rate calibration
-        // (underruns mean consumption was production-limited: not a valid sample)
-        if (underruns == 0 && callbacks > 0 && elapsed >= 1f)
+        // Closed-loop rate control. The real consumer demand is (copied+missing)/2:
+        // valid whether the ring is starved (copied+missing = what Unity asked for) or
+        // healthy/overflowing (missing=0, copied = full demand). Unlike a one-shot
+        // calibration this adapts in both directions and never gets stuck - see
+        // docs/libretro_audio_system.md for why the drain rate isn't a fixed constant.
+        if (elapsed >= 1f)
         {
-            calibConsumedFloats += copied;
-            calibSeconds += elapsed;
+            double measuredDemand = (copied + missing) / 2.0 / elapsed;
+            if (measuredDemand >= QuestAudioFrequency * 0.5 && measuredDemand <= QuestAudioFrequency * 1.05)
+            {
+                smoothedDemandRate = smoothedDemandRate <= 0
+                    ? measuredDemand
+                    : 0.5 * smoothedDemandRate + 0.5 * measuredDemand;
+
+                // proportional trim: steer ring occupancy toward mid-ring so producer
+                // jitter has headroom on both sides without drifting the rate long-term
+                const int setpointFloats = AudioRingCapacityFloats / 2;
+                double correction = startOcc >= 0 ? (setpointFloats - endOcc) / 2.0 / elapsed : 0;
+
+                double newRate = smoothedDemandRate + correction;
+                if (Math.Abs(newRate - wrapperOutputRate) > wrapperOutputRate * 0.001)
+                {
+                    wrapperOutputRate = newRate;
+                    try
+                    {
+                        wrapper_audio_set_output_rate(wrapperOutputRate);
+                    }
+                    catch (EntryPointNotFoundException)
+                    {
+                        // wrapper built before the settable-output-rate change: nothing to adjust
+                    }
+                }
+            }
         }
+
         // conservation: everything that entered the ring this interval either got
         // copied to Unity, discarded by recenters, or is still sitting in the ring.
         // Missing term: whatever the NATIVE side dropped on its own (invisible to us).
@@ -2171,7 +2197,8 @@ public static unsafe class LibretroMameCore
                $"gaps: {gaps} maxGap: {maxGapMs:F1}ms " +
                $"lockWait avg/max: {(totalLockWaitMs / callbacks):F2}/{maxLockWaitMs:F2}ms lockMisses: {lockMisses} " +
                $"recenters: {recenters} discarded/s: {discarded / elapsed:F0} produced floats/s: {producedPerSec:F0} " +
-               $"runs/s: {runsPerSec:F2} expectedFps: {expectedFps:F2}";
+               $"runs/s: {runsPerSec:F2} expectedFps: {expectedFps:F2} " +
+               $"demand: {(elapsed >= 1f ? (copied + missing) / 2.0 / elapsed : 0):F0} rate: {wrapperOutputRate:F0}";
     }
 
 #if _serialize_

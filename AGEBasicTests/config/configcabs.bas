@@ -9,9 +9,10 @@
 75 LETS dic, dicMatrix[0], dicMatrix[1], dicMatrix[2], dicMatrix[3] = 
      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ", "012345678","9ABCDEFGH","IJKLMNOPQ","RSTUVWXYZ"
 80 LETS dicPos, funct, cursor, cabListLen = 0,0,0,0 '0 = select room pos, 1=select dic letter, 2=select cab, 3=assing
-90 LETS matrixcol, matrixrow, matrixidx = 0, 0, 0
+90 LETS matrixidx, scrollTop = 0, 0
 100 LET cpuspeed = GetCPU()
-110 LET columnWidth = width / 4
+110 LET columnWidth = width / 3
+115 LET listRows = height - 8
 
 200 ' init screen
 210 CLS
@@ -20,42 +21,66 @@
 260 GOSUB 5500
 270 GOSUB 9000
 
-2000 IF ControlActive("JOYPAD_RIGHT") THEN LET CabRoomPos = CabRoomPos + IIF(cabRoomPos < cabsCount - 1, 1, 0)
-     ELSE IF ControlActive("JOYPAD_LEFT") THEN LET CabRoomPos = CabRoomPos + IIF(cabRoomPos > 0, -1, 0)
-     ELSE IF ControlActive("JOYPAD_DOWN") THEN GOSUB 9050 : GOTO 2050
-     ELSE IF ControlActive("JOYPAD_Y") THEN END
-2010 GOSUB 5200
-2020 SLEEP 0.1
-2030 GOTO 2000
+280 REM register event handlers
+290 ONEVENT ONCONTROL("JOYPAD_RIGHT", "pressed") GOTO 2010
+300 ONEVENT ONCONTROL("JOYPAD_LEFT", "pressed") GOTO 2210
+310 ONEVENT ONCONTROL("JOYPAD_UP", "pressed") GOTO 2410
+320 ONEVENT ONCONTROL("JOYPAD_DOWN", "pressed") GOTO 2610
+330 ONEVENT ONCONTROL("JOYPAD_Y", "pressed") GOTO 2810
+340 ONEVENT ONCONTROL("JOYPAD_B", "pressed") GOTO 2910
+350 ONEVENT ONCONTROL("JOYPAD_A", "pressed") GOTO 3110
+360 ONEVENT ONCONTROL("JOYPAD_X", "pressed") GOTO 3210
+370 ONEVENT ONTIMER(0.1) GOTO 3410
+380 END
 
-2050 LETS left, right = ControlActive("JOYPAD_LEFT"), ControlActive("JOYPAD_RIGHT") 
-2053 IF right THEN LET dicPos = dicPos + IIF(dicPos < 36, 1, 0)
-     ELSE IF left THEN LET dicPos = dicPos - IIF(dicPos > 0, 1, 0)
-     ELSE IF ControlActive("JOYPAD_B") THEN LET cabToSearch = cabToSearch + SUBSTR(dic, dicPos, 1) : GOSUB 6000
-     ELSE IF ControlActive("JOYPAD_A") THEN LET cabToSearch = "" : GOSUB 6000
-     ELSE IF ControlActive("JOYPAD_X") && cabToSearch != ""
-          THEN LET cabToSearch = SUBSTR(cabToSearch, 0, LEN(cabToSearch) - 1) : GOSUB 6000
-     ELSE IF ControlActive("JOYPAD_Y") THEN END
+2000 REM JOYPAD_RIGHT
+2010 IF funct = 0 THEN LET CabRoomPos = CabRoomPos + IIF(cabRoomPos < cabsCount - 1, 1, 0) : GOSUB 5200
+     ELSE IF funct = 1 THEN LET dicPos = dicPos + IIF(dicPos < 36, 1, 0) : GOSUB 5500 : LET cursor = 1 : GOSUB 5550
+2020 END
 
-2055 LETS up, down = ControlActive("JOYPAD_UP"), ControlActive("JOYPAD_DOWN")
-2058 IF dicPos<9 && up THEN LET cursor = 1 : GOSUB 5550 : GOSUB 9000 : GOTO 2000
-     ELSE IF dicPos>26 && down && cabListLen > 0 THEN LET cursor = 1 : GOSUB 5550 : GOSUB 9100 : GOTO 2100
-     ELSE IF up THEN LET dicPos = dicPos - 9
-     ELSE IF down && dicPos <= 26 THEN LET dicPos = dicPos + 9
+2200 REM JOYPAD_LEFT
+2210 IF funct = 0 THEN LET CabRoomPos = CabRoomPos + IIF(cabRoomPos > 0, -1, 0) : GOSUB 5200
+     ELSE IF funct = 1 THEN LET dicPos = dicPos - IIF(dicPos > 0, 1, 0) : GOSUB 5500 : LET cursor = 1 : GOSUB 5550
+     ELSE IF funct = 2 THEN LET cursor = 1 : GOSUB 7000 : GOSUB 9050 : LET cursor = 1 : GOSUB 5550
+2220 END
 
-2060 IF left || right || up || down THEN GOSUB 5500
-2070 LET cursor = 1 - cursor : GOSUB 5550
-2080 SLEEP 0.1
-2090 GOTO 2050
+2400 REM JOYPAD_UP
+2410 IF funct = 1 && dicPos < 9 THEN GOSUB 9000 : GOSUB 5200
+     ELSE IF funct = 1 THEN LET dicPos = dicPos - 9 : GOSUB 5500 : LET cursor = 1 : GOSUB 5550
+     ELSE IF funct = 2 && matrixidx <= 0 THEN LET cursor = 1 : GOSUB 7000 : GOSUB 9050 : LET cursor = 1 : GOSUB 5550
+     ELSE IF funct = 2 THEN GOSUB 7600
+2420 END
 
-2100 IF ControlActive("JOYPAD_UP") THEN LET cursor = 1 : GOSUB 7000 : GOSUB 9050 : GOTO 2050
-     ELSE IF ControlActive("JOYPAD_RIGHT") THEN GOSUB 7500
-     ELSE IF ControlActive("JOYPAD_LEFT") THEN GOSUB 7600
-     ELSE IF ControlActive("JOYPAD_Y") THEN END
-     ELSE IF ControlActive("JOYPAD_B") THEN GOSUB 9500
-2110 LET cursor = 1 - cursor: GOSUB 7000
-2120 SLEEP 0.1
-2130 GOTO 2100
+2600 REM JOYPAD_DOWN
+2610 IF funct = 0 THEN GOSUB 9050 : GOSUB 5500 : LET cursor = 1 : GOSUB 5550
+     ELSE IF funct = 1 && dicPos > 26 && cabListLen > 0 THEN LET cursor = 1 : GOSUB 5550 : GOSUB 9100 : LET cursor = 1 : GOSUB 7000
+     ELSE IF funct = 1 && dicPos <= 26 THEN LET dicPos = dicPos + 9 : GOSUB 5500 : LET cursor = 1 : GOSUB 5550
+     ELSE IF funct = 2 THEN GOSUB 7500
+2620 END
+
+2800 REM JOYPAD_Y
+2810 SHUTDOWN
+
+2900 REM JOYPAD_B
+2910 IF funct = 1 THEN LET cabToSearch = cabToSearch + SUBSTR(dic, dicPos, 1) : GOSUB 6000
+     ELSE IF funct = 2 THEN GOSUB 9500 : LET funct = 3
+     ELSE IF funct = 3 THEN GOSUB 9900 : GOSUB 9800
+2920 END
+
+3100 REM JOYPAD_A
+3110 IF funct = 1 THEN LET cabToSearch = "" : GOSUB 6000
+3120 END
+
+3200 REM JOYPAD_X
+3210 IF funct = 1 && cabToSearch != "" THEN LET cabToSearch = SUBSTR(cabToSearch, 0, LEN(cabToSearch) - 1) : GOSUB 6000
+     ELSE IF funct = 3 THEN GOSUB 9800
+3220 END
+
+3400 REM ONTIMER blink handler
+3410 IF funct = 0 THEN GOSUB 5200
+     ELSE IF funct = 1 THEN LET cursor = 1 - cursor : GOSUB 5550
+     ELSE IF funct = 2 THEN LET cursor = 1 - cursor : GOSUB 7000
+3420 END
 
 5200 REM SHOW ACTUAL CABINET TO CHANGE
 5210 LET lineCabNum = "CAB #" + STR(cabRoomPos) + ":"
@@ -94,17 +119,8 @@
 6060 GOSUB 6500
 6064 PRINT 11, 3, " " * (width - 19 - LEN(cabToSearch)), 0, 0
 6065 PRINT 11, 3, "Search: " + cabToSearch , 0, 0
-6070 LETS y, col = 7, 0
-6080 FOR idx = 0 to LEN(cabList) - 1
-6090   PRINT col * columnWidth, y, SUBSTR(cabList[idx], 0, columnWidth - 1) , 0, 0
-6100   let col = col + 1
-6110   IF col < 4 THEN GOTO 6150 
-6120   LET col = 0
-6130   LET y = y + 1
-6140   IF y > height - 1 THEN GOTO 6160
-6150 NEXT idx 
-6160 SHOW
-6180 LETS matrixidx, matrixcol, matrixrow = 0,0,0
+6070 LETS matrixidx, scrollTop = 0, 0
+6080 GOSUB 6700
 6190 LET cursor = 1 : GOSUB 7000
 6200 CALL SetCPU(cpuspeed)
 6210 RETURN
@@ -115,29 +131,35 @@
 6530 NEXT scr
 6540 RETURN
 
-7000 REM show selected cabinet in matrix
-7020 PRINT matrixcol * columnWidth, 7 + matrixrow,  
-     SUBSTR(cabList[matrixidx], 0, columnWidth - 1), cursor
+6700 REM Render visible cab list (scrolling)
+6710 GOSUB 6500
+6720 FOR idx = 0 to MIN(listRows, cabListLen - scrollTop) - 1
+6730   PRINT 0, 7 + idx, SUBSTR(cabList[scrollTop + idx], 0, columnWidth - 1), 0, 0
+6740 NEXT idx
+6750 SHOW
+6760 RETURN
+
+7000 REM show selected cabinet in list
+7020 PRINT 0, 7 + (matrixidx - scrollTop), SUBSTR(cabList[matrixidx], 0, columnWidth - 1), cursor
 7030 RETURN
 
-7500 REM next cabinet in matrix
+7500 REM next cabinet in list (scroll down)
 7510 LET cursor = 0 : GOSUB 7000
 7520 LET members = LEN(cabList)
-7530 IF matrixidx = members - 1 THEN RETURN
-7540 LETS matrixidx, matrixcol = matrixidx + 1, matrixcol + 1
-7550 IF matrixcol > 3 THEN LETS matrixcol, matrixrow = 0, matrixrow + 1
-7560 IF matrixrow > members / 4 THEN LET matrixrow = members / 4
+7530 IF matrixidx >= members - 1 THEN RETURN
+7540 LET matrixidx = matrixidx + 1
+7550 IF matrixidx < scrollTop + listRows THEN RETURN
+7560 LET scrollTop = scrollTop + 1
+7570 GOSUB 6700
 7580 RETURN
 
-7600 REM previous cabinet in matrix
+7600 REM previous cabinet in list (scroll up)
 7610 LET cursor = 0 : GOSUB 7000
-7620 LETS matrixidx, matrixcol = matrixidx - 1, matrixcol - 1
-7630 IF matrixidx < 0 THEN LETS matrixidx, matrixcol, matrixrow = 0,0,0 : 
-                           LET cursor = 1 : GOSUB 7000
-                           RETURN 
-7650 IF matrixcol < 0 THEN LETS matrixcol, matrixrow = 3, matrixrow - 1
-7660 IF matrixrow < 0 THEN LET matrixrow = 0
-7670 RETURN
+7620 LET matrixidx = matrixidx - 1
+7630 IF matrixidx >= scrollTop THEN RETURN
+7640 LET scrollTop = scrollTop - 1
+7650 GOSUB 6700
+7660 RETURN
 
 
 9000 REM change to cabinet position selection
@@ -148,9 +170,9 @@
 9060 LET funct = 1
 9070 LET helpMessage = " \235 \236 \233 \234 B:ADD, A:DEL, X:CLEAR, Y:END"
 9080 GOTO 9160
-9100 REM change to cabinet matrix select
+9100 REM change to cabinet list select
 9110 LET funct = 2
-9120 LET helpMessage = " \235 \236, B:ASSIGN, \233 PREV, Y:END"
+9120 LET helpMessage = " \233 \234, B:ASSIGN, \235 PREV, Y:END"
 9130 GOTO 9160
 
 9160 REM print help line
@@ -174,12 +196,7 @@
 9590 RESETCOLOR
 9600 PRINT 15, 16, " X: CANCEL", 0, 0
 9610 SHOW
- 
-9700 IF ControlActive("JOYPAD_X") THEN GOTO 9800
-     ELSE IF ControlActive("JOYPAD_B") THEN GOTO 9900
-     ELSE IF ControlActive("JOYPAD_Y") THEN END
-9710 SLEEP 0.1
-9720 GOTO 9700
+9615 RETURN
 
 9800 GOSUB 6060
 9810 GOSUB 9000
@@ -194,4 +211,4 @@
 9950 SHOW
 9960 CALL CabDBSave()
 9970 SLEEP 1
-9980 GOTO 9800
+9980 RETURN

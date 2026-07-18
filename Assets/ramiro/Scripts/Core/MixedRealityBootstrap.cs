@@ -13,6 +13,7 @@ public static class MixedRealityBootstrap
         sceneName == MRRuntimeSettings.FixedScene
         || sceneName == "TestMRmanager"
         || sceneName == MRTestConfigSceneLoader.TestSceneName
+        || sceneName == MRConfigurationCabinetController.CabinetConfigurationSceneName
         || sceneName == MRRuntimeSettings.ExteriorScene;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -61,6 +62,9 @@ public static class MixedRealityBootstrap
             root.AddComponent<MRTestGameCabinetSpawn>();
         else if (active.name == MRTestConfigSceneLoader.TestSceneName)
             root.AddComponent<MRTestConfigSceneLoader>();
+        else if (active.name == MRConfigurationCabinetController.CabinetConfigurationSceneName)
+            ConfigManager.WriteConsole(
+                "[MixedRealityBootstrap] CabinetConfiguration — CRT UI sandbox (auto-spawn cabinet)");
 
         Object.DontDestroyOnLoad(root);
         ConfigManager.WriteConsole("[MixedRealityBootstrap] MixedRealitySystem installed");

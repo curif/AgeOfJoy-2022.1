@@ -27,7 +27,41 @@ public static class MRCustomObjectLoader
         if (!MRCustomObjectDefinition.TryLoad(packageName, out MRCustomObjectDefinition definition))
             yield break;
 
-        string modelPath = Path.Combine(definition.PackageDir, definition.GetModelFileName());
+        yield return InstantiateDefinitionAtWorldPose(definition, worldPosition, worldRotation, result);
+    }
+
+    /// <summary>Dev/test: spawn from absolute YAML + GLB paths (Inspector drag-drop).</summary>
+    public static IEnumerator InstantiateFromPaths(
+        string yamlPath,
+        string glbAbsolutePath,
+        Vector3 worldPosition,
+        Quaternion worldRotation,
+        CustomObjectSpawnResult result)
+    {
+        result.Root = null;
+        result.Success = false;
+
+        if (!MRCustomObjectDefinition.TryLoadFromPaths(yamlPath, glbAbsolutePath, out MRCustomObjectDefinition definition))
+            yield break;
+
+        yield return InstantiateDefinitionAtWorldPose(definition, worldPosition, worldRotation, result);
+    }
+
+    static IEnumerator InstantiateDefinitionAtWorldPose(
+        MRCustomObjectDefinition definition,
+        Vector3 worldPosition,
+        Quaternion worldRotation,
+        CustomObjectSpawnResult result)
+    {
+        string packageName = definition.PackageName;
+        string modelPath = definition.GetResolvedModelPath();
+        if (string.IsNullOrEmpty(modelPath) || !File.Exists(modelPath))
+        {
+            ConfigManager.WriteConsoleError($"{LogPrefix} GLB path missing for {packageName}");
+            MRDebugLog.LogError($"Custom object '{packageName}': GLB path missing");
+            yield break;
+        }
+
         GameObject modelRoot = null;
         AnimationClip[] animationClips = null;
         yield return LoadGlbRoot(modelPath, (loaded, clips) =>
@@ -39,7 +73,7 @@ public static class MRCustomObjectLoader
         if (modelRoot == null)
         {
             ConfigManager.WriteConsoleError($"{LogPrefix} GLB load failed: {modelPath}");
-            MRDebugLog.LogError($"Custom object '{packageName}': GLB load failed ({definition.GetModelFileName()})");
+            MRDebugLog.LogError($"Custom object '{packageName}': GLB load failed ({Path.GetFileName(modelPath)})");
             yield break;
         }
 
@@ -70,7 +104,7 @@ public static class MRCustomObjectLoader
         if (definition.HasAnimatorComponent())
             MRCustomObjectGlbSupport.EnsureReadableWorldScale(root);
 
-        LogSpawnDiagnostics(packageName, root, modelRoot, definition.GetModelFileName());
+        LogSpawnDiagnostics(packageName, root, modelRoot, Path.GetFileName(modelPath));
 
         result.Root = root;
         result.Success = true;

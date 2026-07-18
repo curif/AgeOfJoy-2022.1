@@ -19,6 +19,7 @@ public class MRPlacementRayController : MonoBehaviour
     [Range(-30f, 30f)]
     [SerializeField] float wallMountYawOffsetDegrees = 0f;
     [SerializeField] float defaultStickRotationSpeed = 90f;
+    [SerializeField] float defaultStickScaleSpeed = 0.5f;
     [SerializeField] float stickDeadZone = 0.15f;
     [SerializeField] Color validColor = new Color(0.25f, 1f, 0.55f, 1f);
     [SerializeField] Color invalidColor = new Color(1f, 0.3f, 0.2f, 1f);
@@ -53,10 +54,23 @@ public class MRPlacementRayController : MonoBehaviour
     bool allowStickRotation;
     PlacementStickRotationAxis stickRotationAxis = PlacementStickRotationAxis.WorldYaw;
     float stickRotationSpeed;
+    bool allowStickScale;
+    PlacementStickScaleKind stickScaleKind = PlacementStickScaleKind.None;
+    float stickScaleSpeed;
+    float startScale = 1f;
+    float userScale = 1f;
+    float userScaleRaw = 1f;
     float initialYawDegrees;
     float userYawOffsetDegrees;
     Action<Vector3, Quaternion, MRPlacementConfirmAnchor> onConfirmPose;
     Action onCancel;
+
+    enum PlacementStickScaleKind
+    {
+        None,
+        Poster,
+        Custom
+    }
 
     MeshRenderer beamRenderer;
     Mesh beamMesh;
@@ -92,7 +106,8 @@ public class MRPlacementRayController : MonoBehaviour
         PlacementSurfaceType placementSurfaceType,
         PlacementFacingAxis objectFacingAxis,
         Action<Vector3, Quaternion, MRPlacementConfirmAnchor> confirmCallback,
-        Action cancelCallback = null)
+        Action cancelCallback = null,
+        bool allowStickScale = false)
     {
         if (target == null || confirmCallback == null)
             return;
@@ -104,6 +119,10 @@ public class MRPlacementRayController : MonoBehaviour
         facingAxis = objectFacingAxis;
         placeByPivot = profile != null;
         ResolveStickRotation(profile, placementSurfaceType, out allowStickRotation, out stickRotationAxis, out stickRotationSpeed);
+        ResolveStickScale(target, allowStickScale, out this.allowStickScale, out stickScaleKind, out startScale);
+        userScale = startScale;
+        userScaleRaw = startScale;
+        stickScaleSpeed = defaultStickScaleSpeed;
         onConfirmPose = confirmCallback;
         onCancel = cancelCallback;
 
@@ -128,18 +147,27 @@ public class MRPlacementRayController : MonoBehaviour
         isActive = true;
         s_activeCount++;
 
-        if (placementSurfaceType == PlacementSurfaceType.Wall && allowStickRotation)
-            SeedWallStickOffsetFromStartRotation();
+        // Wall stick yaw always starts at 0 (see userYawOffsetDegrees reset above). Seeding from
+        // startRotation caused ~30–40° errors on Add (spawn facing/ray ≠ live controller hit).
 
         MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
         MRTransitionLog.LogStep("PlacementRay", $"begin {target.name} surface={surfaceType}");
         ConfigManager.WriteConsole(
             $"{LogPrefix} begin move target={target.name} surface={surfaceType} facing={facingAxis} " +
             $"stickRot={allowStickRotation} stickAxis={stickRotationAxis} " +
+            $"stickScale={this.allowStickScale} scaleKind={stickScaleKind} " +
             $"mrukReady={(surfaces != null && surfaces.IsReady)} mrukAnchors={(surfaces != null && surfaces.UsesMrukAnchors)}");
+
+        // Snap immediately so the object is not left at a stale/off-screen start pose for a frame.
+        UpdatePreviewPose();
+        if (hasValidPreview && movingTarget != null)
+            movingTarget.transform.SetPositionAndRotation(previewPosition, previewRotation);
+
+        ShowPlacementInfoHud();
     }
 
     public bool AllowsStickRotation => isActive && allowStickRotation;
+    public bool AllowsStickScale => isActive && allowStickScale;
 
     public void CancelActive()
     {
@@ -147,13 +175,54 @@ public class MRPlacementRayController : MonoBehaviour
             return;
 
         if (movingTarget != null)
+        {
             movingTarget.transform.SetPositionAndRotation(startPosition, startRotation);
+            RestoreStartScale();
+        }
 
         StopMove(cancelled: true, reason: "external");
     }
 
+    static void ResolveStickScale(
+        GameObject target,
+        bool requested,
+        out bool scaleEnabled,
+        out PlacementStickScaleKind kind,
+        out float initialScale)
+    {
+        scaleEnabled = false;
+        kind = PlacementStickScaleKind.None;
+        initialScale = 1f;
+        if (!requested || target == null)
+            return;
+
+        if (MRPosterPlacement.TryReadUserScale(target, out float posterScale))
+        {
+            scaleEnabled = true;
+            kind = PlacementStickScaleKind.Poster;
+            initialScale = posterScale;
+            return;
+        }
+
+        // Caller only requests scale for poster/custom; non-poster = uniform XYZ custom scale.
+        if (MRCustomObjectPlacement.TryReadUserScale(target, out float customScale))
+        {
+            scaleEnabled = true;
+            kind = PlacementStickScaleKind.Custom;
+            initialScale = customScale;
+        }
+    }
+
+    public static bool ExpectsStickScale(MREnvironmentObjectSource source) =>
+        source == MREnvironmentObjectSource.Poster
+        || source == MREnvironmentObjectSource.Custom;
+
+    public static bool ExpectsStickScale(MREnvironmentPlacement placement) =>
+        placement != null && (placement.IsPosterSource || placement.IsCustomSource);
+
     /// <summary>
-    /// Prefab profile wins when present. Floor objects without profile (game cabinets) default to world-Y stick rotation.
+    /// Prefab profile wins when present. Objects without profile default to world-Y stick rotation
+    /// on Floor/Wall/Ceiling/Table/Object (fine yaw during placement ray).
     /// </summary>
     void ResolveStickRotation(
         MRPlacementProfile profile,
@@ -164,7 +233,10 @@ public class MRPlacementRayController : MonoBehaviour
     {
         if (profile != null)
         {
-            stickEnabled = profile.allowStickRotation;
+            // Wall mounts: always allow R-stick yaw for fine adjust on top of auto wall facing.
+            // Other surfaces respect the authored profile flag (e.g. PF_Fan ceiling = no spin).
+            stickEnabled = profile.allowStickRotation
+                || placementSurface == PlacementSurfaceType.Wall;
             rotationAxis = profile.stickRotationAxis;
             rotationSpeed = profile.stickRotationSpeed > 0f
                 ? profile.stickRotationSpeed
@@ -172,8 +244,9 @@ public class MRPlacementRayController : MonoBehaviour
             return;
         }
 
-        // Game cabinets are not prefabs — floor/ceiling placement defaults to yaw on world Y.
+        // Game cabinets / no profile — stick yaw on supported surfaces including wall.
         stickEnabled = placementSurface == PlacementSurfaceType.Floor
+            || placementSurface == PlacementSurfaceType.Wall
             || placementSurface == PlacementSurfaceType.Ceiling
             || placementSurface == PlacementSurfaceType.Table
             || placementSurface == PlacementSurfaceType.Object;
@@ -184,8 +257,9 @@ public class MRPlacementRayController : MonoBehaviour
     public static bool ExpectsStickRotationHint(MRPlacementProfile profile, PlacementSurfaceType placementSurface)
     {
         if (profile != null)
-            return profile.allowStickRotation;
+            return profile.allowStickRotation || placementSurface == PlacementSurfaceType.Wall;
         return placementSurface == PlacementSurfaceType.Floor
+            || placementSurface == PlacementSurfaceType.Wall
             || placementSurface == PlacementSurfaceType.Ceiling
             || placementSurface == PlacementSurfaceType.Table
             || placementSurface == PlacementSurfaceType.Object;
@@ -196,16 +270,20 @@ public class MRPlacementRayController : MonoBehaviour
         if (!isActive || movingTarget == null)
             return;
 
-        if (allowStickRotation)
+        if (allowStickScale && IsScaleModifierHeld())
+            ApplyStickScaleInput();
+        else if (allowStickRotation)
             ApplyStickRotationInput();
 
         UpdatePreviewPose();
         DrawRay();
+        RefreshPlacementInfoHud();
 
         if (Time.unscaledTime >= ignoreCancelUntilUnscaledTime && WasCancelPressed())
         {
             movingTarget.transform.SetPositionAndRotation(startPosition, startRotation);
-            StopMove(cancelled: true, reason: "grip");
+            RestoreStartScale();
+            StopMove(cancelled: true, reason: "B");
             return;
         }
 
@@ -360,7 +438,8 @@ public class MRPlacementRayController : MonoBehaviour
             case PlacementSurfaceType.Floor:
             default:
                 if (surfaces != null && surfaces.TryGetFloorPointFromRay(
-                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 floorPoint, out Meta.XR.MRUtilityKit.MRUKAnchor floorAnchor))
+                        rayOrigin, rayDir, maxDistanceMeters, out Vector3 floorPoint, out Meta.XR.MRUtilityKit.MRUKAnchor floorAnchor)
+                    && IsFloorHitInFrontOfViewer(floorPoint, viewerPosition, rayDir))
                 {
                     MRAnchorPoseResolver.TryGetUuid(floorAnchor, out hitAnchorUuid);
                     worldPos = floorPoint;
@@ -463,6 +542,26 @@ public class MRPlacementRayController : MonoBehaviour
         placementId = null;
         anchorPoint = null;
         return false;
+    }
+
+    /// <summary>
+    /// Reject floor hits clearly behind the viewer so the first placement-ray snap
+    /// cannot yank the object through/behind a wall when the controller points down-back.
+    /// </summary>
+    static bool IsFloorHitInFrontOfViewer(Vector3 floorPoint, Vector3 viewerPosition, Vector3 rayDir)
+    {
+        Vector3 toHit = floorPoint - viewerPosition;
+        toHit.y = 0f;
+        if (toHit.sqrMagnitude < 0.01f)
+            return true;
+
+        Vector3 forward = rayDir;
+        forward.y = 0f;
+        if (forward.sqrMagnitude < 0.001f)
+            forward = Vector3.forward;
+        forward.Normalize();
+
+        return Vector3.Dot(forward, toHit.normalized) >= -0.15f;
     }
 
     Vector3 ResolvePreviewSurfaceNormal(Quaternion worldRot)
@@ -644,10 +743,16 @@ public class MRPlacementRayController : MonoBehaviour
             onCancel?.Invoke();
 
         SetRayVisualVisible(false);
+        HidePlacementInfoHud();
         isActive = false;
         movingTarget = null;
         onConfirmPose = null;
         onCancel = null;
+        allowStickScale = false;
+        stickScaleKind = PlacementStickScaleKind.None;
+        startScale = 1f;
+        userScale = 1f;
+        userScaleRaw = 1f;
         hasValidPreview = false;
         previewAnchorUuid = Guid.Empty;
         previewObjectPlacementId = null;
@@ -658,6 +763,68 @@ public class MRPlacementRayController : MonoBehaviour
             $"end cancelled={cancelled} reason={reason} hadPreview={hadValidPreviewThisSession}");
         ConfigManager.WriteConsole(
             $"{LogPrefix} end move cancelled={cancelled} reason={reason} hadPreview={hadValidPreviewThisSession}");
+    }
+
+    void ShowPlacementInfoHud()
+    {
+        MRPlacementInfoHUD.Ensure().Show(
+            surfaceType,
+            ResolveHudScale(),
+            ResolveHudRotationDegrees(),
+            allowStickRotation,
+            allowStickScale,
+            hasValidPreview,
+            ResolveHudObjectName());
+    }
+
+    void RefreshPlacementInfoHud()
+    {
+        if (MRPlacementInfoHUD.Instance == null)
+            return;
+
+        MRPlacementInfoHUD.Instance.Refresh(
+            surfaceType,
+            ResolveHudScale(),
+            ResolveHudRotationDegrees(),
+            allowStickRotation,
+            allowStickScale,
+            hasValidPreview,
+            ResolveHudObjectName());
+    }
+
+    void HidePlacementInfoHud()
+    {
+        if (MRPlacementInfoHUD.Instance != null)
+            MRPlacementInfoHUD.Instance.Hide();
+    }
+
+    float ResolveHudScale()
+    {
+        if (allowStickScale)
+            return userScale > 0f ? userScale : 1f;
+
+        if (movingTarget != null)
+        {
+            if (MRPosterPlacement.TryReadUserScale(movingTarget, out float posterScale))
+                return posterScale;
+            float s = movingTarget.transform.localScale.x;
+            if (s > 0f)
+                return s;
+        }
+
+        return 1f;
+    }
+
+    float ResolveHudRotationDegrees()
+    {
+        if (movingTarget != null)
+            return movingTarget.transform.eulerAngles.y;
+        return NormalizeYaw(initialYawDegrees + userYawOffsetDegrees);
+    }
+
+    string ResolveHudObjectName()
+    {
+        return movingTarget != null ? movingTarget.name : "OBJECT";
     }
 
     static void ApplyFloorPivotOffset(GameObject target, ref Vector3 floorPoint, Quaternion worldRotation)
@@ -712,6 +879,70 @@ public class MRPlacementRayController : MonoBehaviour
             return;
 
         userYawOffsetDegrees += stickX * stickRotationSpeed * Time.deltaTime;
+    }
+
+    void ApplyStickScaleInput()
+    {
+        if (movingTarget == null || stickScaleKind == PlacementStickScaleKind.None)
+            return;
+
+        float stickX = ReadRightStickX();
+        if (Mathf.Abs(stickX) <= stickDeadZone)
+            return;
+
+        userScaleRaw += stickX * stickScaleSpeed * Time.deltaTime;
+        if (stickScaleKind == PlacementStickScaleKind.Custom)
+        {
+            userScaleRaw = Mathf.Clamp(
+                userScaleRaw,
+                MRCustomObjectPlacement.MinScale,
+                MRCustomObjectPlacement.MaxScale);
+        }
+        else
+        {
+            userScaleRaw = Mathf.Max(MRPosterPlacement.TuneStep, userScaleRaw);
+        }
+
+        float next = stickScaleKind == PlacementStickScaleKind.Poster
+            ? MRPosterPlacement.SnapScale(userScaleRaw)
+            : MRCustomObjectPlacement.SnapScale(userScaleRaw);
+
+        if (Mathf.Approximately(next, userScale))
+            return;
+
+        userScale = next;
+        ApplyUserScale(movingTarget, stickScaleKind, userScale);
+    }
+
+    void RestoreStartScale()
+    {
+        if (movingTarget == null || stickScaleKind == PlacementStickScaleKind.None)
+            return;
+
+        ApplyUserScale(movingTarget, stickScaleKind, startScale);
+        userScale = startScale;
+        userScaleRaw = startScale;
+    }
+
+    static void ApplyUserScale(GameObject target, PlacementStickScaleKind kind, float scale)
+    {
+        if (target == null)
+            return;
+
+        if (kind == PlacementStickScaleKind.Poster)
+            MRPosterPlacement.ApplyUserScale(target, scale);
+        else if (kind == PlacementStickScaleKind.Custom)
+            MRCustomObjectPlacement.ApplyUserScale(target, scale);
+    }
+
+    static bool IsScaleModifierHeld()
+    {
+#if UNITY_EDITOR
+        // Grip stand-in (Quest: R hand trigger). KeyCode.A already drives stick-left.
+        return MREditorInput.IsHeld(KeyCode.LeftShift) || MREditorInput.IsHeld(KeyCode.RightShift);
+#else
+        return OVRInput.Get(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
+#endif
     }
 
     static float ReadRightStickX()
@@ -1138,8 +1369,8 @@ public class MRPlacementRayController : MonoBehaviour
 #if UNITY_EDITOR
         return MREditorInput.WasAnyPressed(KeyCode.Escape, KeyCode.Backspace);
 #else
-        // Right Y (Button.Two) is CRT back / menu — grip only avoids accidental cancel.
-        return OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, OVRInput.Controller.RTouch);
+        // Placement suspends CRT — B (Button.Two) on RTouch is free for abort.
+        return OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.RTouch);
 #endif
     }
 
@@ -1149,8 +1380,15 @@ public class MRPlacementRayController : MonoBehaviour
         return profile != null ? profile.GetWallMountDepthMeters() : 0.25f;
     }
 
+    /// <summary>
+    /// Preserve prior fine yaw when moving an already wall-mounted object.
+    /// Skip when start facing is not already wall-aligned for this facingAxis
+    /// (config cabinet floor spawn, poster spawn with wrong initial facing, etc.).
+    /// </summary>
     void SeedWallStickOffsetFromStartRotation()
     {
+        const float minFacingAlign = 0.96f; // ~16°
+
         MREnvironmentSurfaces surfaces = MREnvironmentSurfaces.Instance;
         if (surfaces == null)
             return;
@@ -1176,6 +1414,12 @@ public class MRPlacementRayController : MonoBehaviour
             return;
 
         autoRot = PlacementOrientation.EnsureFacingViewer(autoRot, facingAxis, startPosition, eye);
-        userYawOffsetDegrees = Mathf.DeltaAngle(autoRot.eulerAngles.y, startRotation.eulerAngles.y);
+
+        Vector3 autoForward = PlacementOrientation.WorldForward(autoRot, facingAxis);
+        Vector3 startForward = PlacementOrientation.WorldForward(startRotation, facingAxis);
+        if (Vector3.Dot(autoForward, startForward) < minFacingAlign)
+            return;
+
+        userYawOffsetDegrees = Vector3.SignedAngle(autoForward, startForward, Vector3.up);
     }
 }
