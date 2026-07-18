@@ -7,11 +7,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
-/// <summary>Instantiates a bookshelf prefab populated with up to 8 magazine issues.</summary>
+/// <summary>Instantiates a bookshelf prefab populated with up to 9 magazine issues.</summary>
 public static class MRBookshelfFactory
 {
     const string LogPrefix = "[MRBookshelfFactory]";
-    public const int MaxShelfMagazineCount = 8;
+    // The bookshelf model has 9 authored magazine roots (Magazine1..Magazine9).
+    public const int MaxShelfMagazineCount = 9;
     public const string ShelfSlotsParentName = "PlacesBook";
     public const string ShelfSlotNamePrefix = "Place";
 
@@ -327,8 +328,13 @@ public static class MRBookshelfFactory
         proxyRoot.transform.localScale = Vector3.one;
 
         Magazine magazine = proxyRoot.GetComponent<Magazine>();
-        magazine?.ConfigureIssue(issueName);
-        magazine?.CloseMagazine();
+        if (magazine != null)
+        {
+            magazine.ConfigureIssue(issueName);
+            // The visible shelf copy is only a textured mesh. Prevent Start()
+            // from building pages or decoding magazine content.
+            magazine.enabled = false;
+        }
 
         XRGrabInteractable proxyGrabInteractable = proxyRoot.GetComponent<XRGrabInteractable>();
         if (proxyGrabInteractable != null)
@@ -369,7 +375,8 @@ public static class MRBookshelfFactory
         if (magazine != null)
         {
             magazine.ConfigureIssue(issueName);
-            magazine.CloseMagazine();
+            // Authored shelf magazines are deliberately dumb visual proxies.
+            magazine.enabled = false;
         }
 
         XRGrabInteractable proxyGrabInteractable = proxyRoot.GetComponent<XRGrabInteractable>();

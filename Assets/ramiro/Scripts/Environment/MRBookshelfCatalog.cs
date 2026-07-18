@@ -4,34 +4,85 @@ This program is free software: you can redistribute it and/or modify it under th
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using YamlDotNet.Serialization;
 
-/// <summary>Builds Bookshelf menu entries from MR/Magazines batches of up to 8 issues.</summary>
+/// <summary>
+/// Builds the single Bookshelf menu entry from MR/Magazines issues activated
+/// in MR/Magazines/magazines.yaml (issue name: true/false; missing file or
+/// missing issue counts as active). Only one bookshelf can exist in the scene,
+/// so the catalog never offers more than one entry.
+/// </summary>
 public static class MRBookshelfCatalog
 {
     public static List<MREnvironmentCatalogEntry> GetCatalogEntries()
     {
         MRMagazineCatalog.RefreshCache();
 
-        List<string> issues = MRBookshelfFactory.CollectValidIssues(MRMagazineCatalog.GetIssueNames());
+        List<string> issues = MRBookshelfFactory.CollectValidIssues(GetActiveIssueNames());
         var entries = new List<MREnvironmentCatalogEntry>();
+        if (issues.Count == 0)
+            return entries;
 
-        int shelfIndex = 0;
-        for (int start = 0; start < issues.Count; start += MRBookshelfFactory.MaxShelfMagazineCount)
+        int count = Math.Min(MRBookshelfFactory.MaxShelfMagazineCount, issues.Count);
+        List<string> shelfIssues = issues.GetRange(0, count);
+
+        entries.Add(MREnvironmentCatalogEntry.FromBookshelf(
+            "bookshelf-01",
+            GetDisplayLabel(shelfIssues),
+            shelfIssues));
+        return entries;
+    }
+
+    /// <summary>Issue names filtered by the magazines.yaml activation flags.</summary>
+    public static List<string> GetActiveIssueNames()
+    {
+        Dictionary<string, bool> activation = LoadActivationMap();
+        var active = new List<string>();
+        foreach (string issueName in MRMagazineCatalog.GetIssueNames())
         {
-            int count = Math.Min(MRBookshelfFactory.MaxShelfMagazineCount, issues.Count - start);
-            var shelfIssues = new List<string>(count);
-            for (int i = 0; i < count; i++)
-                shelfIssues.Add(issues[start + i]);
+            if (activation.TryGetValue(issueName, out bool enabled) && !enabled)
+                continue;
 
-            string shelfKey = $"bookshelf-{shelfIndex + 1:D2}";
-            entries.Add(MREnvironmentCatalogEntry.FromBookshelf(
-                shelfKey,
-                GetDisplayLabel(shelfIssues, shelfIndex),
-                shelfIssues));
-            shelfIndex++;
+            active.Add(issueName);
         }
 
-        return entries;
+        return active;
+    }
+
+    /// <summary>Parses MR/Magazines/magazines.yaml (name: true/false). Empty on any failure.</summary>
+    static Dictionary<string, bool> LoadActivationMap()
+    {
+        var activation = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+        string yamlPath = MRPaths.MagazinesYamlPath;
+        if (string.IsNullOrEmpty(yamlPath) || !File.Exists(yamlPath))
+            return activation;
+
+        try
+        {
+            string text = File.ReadAllText(yamlPath);
+            if (string.IsNullOrWhiteSpace(text))
+                return activation;
+
+            var deserializer = new DeserializerBuilder().Build();
+            var parsed = deserializer.Deserialize<Dictionary<string, bool>>(text);
+            if (parsed == null)
+                return activation;
+
+            foreach (KeyValuePair<string, bool> pair in parsed)
+            {
+                if (!string.IsNullOrWhiteSpace(pair.Key))
+                    activation[pair.Key.Trim()] = pair.Value;
+            }
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException(
+                $"[MRBookshelfCatalog] failed to parse {yamlPath}; showing all issues", e);
+            activation.Clear();
+        }
+
+        return activation;
     }
 
     public static string GetDisplayLabel(IReadOnlyList<string> issueNames, int shelfIndex = -1)

@@ -172,13 +172,13 @@ public static class MRMagazineCatalog
     }
 
     /// <summary>Load by filename or stem (FrontCover → FrontCover.png in the issue folder).</summary>
-    public static Texture2D LoadPageTextureByFileName(string issueName, string fileNameOrStem)
+    public static Texture2D LoadPageTextureByFileName(string issueName, string fileNameOrStem, int maxTextureSize = DefaultMaxPageTextureSize)
     {
         string pageFileName = ResolvePageFileName(issueName, fileNameOrStem);
         if (string.IsNullOrEmpty(pageFileName))
             return null;
 
-        return LoadPageTextureFromFile(issueName, pageFileName);
+        return LoadPageTextureFromFile(issueName, pageFileName, maxTextureSize);
     }
 
     public static string ResolvePageFileName(string issueName, string fileNameOrStem)
@@ -217,7 +217,9 @@ public static class MRMagazineCatalog
         return null;
     }
 
-    static Texture2D LoadPageTextureFromFile(string issueName, string pageFileName)
+    public const int DefaultMaxPageTextureSize = 1536;
+
+    static Texture2D LoadPageTextureFromFile(string issueName, string pageFileName, int maxTextureSize = DefaultMaxPageTextureSize)
     {
         if (string.IsNullOrEmpty(pageFileName))
             return null;
@@ -229,7 +231,9 @@ public static class MRMagazineCatalog
         try
         {
             byte[] bytes = File.ReadAllBytes(fullPath);
-            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            // Same cap/mips path as Magazine pages — bookshelf covers used to keep full-res RGBA.
+            int maxPageTextureSize = Mathf.Max(64, maxTextureSize);
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true);
             if (!texture.LoadImage(bytes))
             {
                 UnityEngine.Object.Destroy(texture);
@@ -239,8 +243,32 @@ public static class MRMagazineCatalog
                 return null;
             }
 
+            int maxDim = Mathf.Max(texture.width, texture.height);
+            if (maxDim > maxPageTextureSize)
+            {
+                float scale = (float)maxPageTextureSize / maxDim;
+                int dstW = Mathf.Max(1, Mathf.RoundToInt(texture.width * scale));
+                int dstH = Mathf.Max(1, Mathf.RoundToInt(texture.height * scale));
+                Color32[] src = texture.GetPixels32();
+                var dst = new Color32[dstW * dstH];
+                for (int y = 0; y < dstH; y++)
+                {
+                    int srcY = y * texture.height / dstH;
+                    int srcRow = srcY * texture.width;
+                    int dstRow = y * dstW;
+                    for (int x = 0; x < dstW; x++)
+                        dst[dstRow + x] = src[srcRow + (x * texture.width / dstW)];
+                }
+
+                UnityEngine.Object.Destroy(texture);
+                texture = new Texture2D(dstW, dstH, TextureFormat.RGBA32, mipChain: true);
+                texture.SetPixels32(dst);
+                texture.Apply(updateMipmaps: true, makeNoLongerReadable: true);
+            }
+
             texture.name = Path.GetFileNameWithoutExtension(pageFileName);
-            texture.filterMode = FilterMode.Bilinear;
+            texture.filterMode = FilterMode.Trilinear;
+            texture.anisoLevel = 4;
             texture.wrapMode = TextureWrapMode.Clamp;
             return texture;
         }

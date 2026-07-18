@@ -24,7 +24,8 @@ public class MRConfigurationController : MonoBehaviour
     const int HelpWrapWidth = 38;
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
-    const int OfficialCategoryCount = 2; // was 3 — Bookshelves/Magazines hidden from menu
+    /// <summary>Bookshelves row before PrefabsEnvironment packages on Official Objects home.</summary>
+    const int OfficialCategoryCount = 1;
     const int CustomCategoryCount = 2; // Posters + Room Skin rows before packages on home table
     const int ConfigCategoryCount = 4;
     const int GlobalLightOptionCount = 2;
@@ -468,7 +469,7 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.AddOption("PHONE BOOTH", "Show/hide MR travel booth");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
-        navMenu.AddOption("OFFICIAL OBJECTS", "PrefabsEnvironment catalog");
+        navMenu.AddOption("OFFICIAL OBJECTS", "Bookshelves + PrefabsEnvironment");
         navMenu.AddOption("OFFICIAL LIGHTS", "Placeable lights + global fill");
         navMenu.AddOption("CONFIG", "Move, scale, mesh, delete");
         navMenu.AddOption("DEBUG", "MR errors by date");
@@ -1245,6 +1246,9 @@ public class MRConfigurationController : MonoBehaviour
     int GetOfficialObjectsVisibleRows() =>
         GetFilterListVisibleRows(2);
 
+    int GetOfficialHomeListCount() =>
+        OfficialCategoryCount + filteredEnvCatalogEntries.Count;
+
     /// <summary>
     /// Catalog/filter list data rows that fit above the in-box footer and page footer.
     /// Keep in sync with draw loops, EndListTable padding, and ClampListScroll.
@@ -1329,8 +1333,9 @@ public class MRConfigurationController : MonoBehaviour
 
     void DrawOfficialObjectsCategoryPage()
     {
-        // PrefabsEnvironment packages only (Official Lights is on the main nav).
+        // Unified table: Bookshelves + PrefabsEnvironment packages (Official Lights is on main nav).
         RefreshObjectCatalogs();
+        RefreshMagazinesCatalog();
         envListFilter = CabinetListFilter.ShowAll;
         envListFocusOnFilter = false;
         RebuildFilteredEnvCatalogEntries();
@@ -1338,7 +1343,8 @@ public class MRConfigurationController : MonoBehaviour
         screen.PrintCentered(0, "OFFICIAL OBJECTS", true);
         screen.PrintLine(1, false, '-');
 
-        if (filteredEnvCatalogEntries.Count == 0)
+        int listCount = GetOfficialHomeListCount();
+        if (listCount == 0)
         {
             screen.PrintCentered(8, "No official objects found", true);
             screen.PrintCentered(10, "PrefabsEnvironment/", false);
@@ -1356,23 +1362,34 @@ public class MRConfigurationController : MonoBehaviour
         for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
-            if (idx >= filteredEnvCatalogEntries.Count)
+            if (idx >= listCount)
                 break;
 
-            MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx];
-            string label = Truncate(entry.DisplayLabel, CabinetListRowNameWidth);
-            string flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
+            string label;
+            string flag;
+            if (idx == 0)
+            {
+                label = "Bookshelves";
+                flag = SumCatalogInstanceCounts(magazinesCatalogEntries).ToString();
+            }
+            else
+            {
+                MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx - OfficialCategoryCount];
+                label = Truncate(entry.DisplayLabel, CabinetListRowNameWidth);
+                flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
+            }
+
             row = DrawListRow(
                 row,
                 idx,
                 selectedListIndex,
-                label,
-                GetCustomEnvCatalogRowActions(idx),
+                Truncate(label, CabinetListRowNameWidth),
+                GetOfficialHomeRowActions(idx),
                 flag,
                 nameWidth: CabinetListRowNameWidth);
         }
 
-        EndListTable(row, $"{filteredEnvCatalogEntries.Count} items");
+        EndListTable(row, $"{listCount} items");
         DrawFooter("Stick Up/Down: move");
     }
 
@@ -2097,8 +2114,8 @@ public class MRConfigurationController : MonoBehaviour
         yield return "CABINETS - arcade machines";
         yield return "CUSTOM OBJECTS - packages,";
         yield return "  posters, room skins";
-        yield return "OFFICIAL OBJECTS - lights +";
-        yield return "  built-in props";
+        yield return "OFFICIAL OBJECTS - bookshelves";
+        yield return "  + built-in props";
         yield return "CONFIG - move, scale, light,";
         yield return "  mesh, delete YAML";
         yield return "DEBUG - MR error log";
@@ -2133,10 +2150,12 @@ public class MRConfigurationController : MonoBehaviour
         yield return "  (Windows USB) — see guide";
         yield return string.Empty;
         yield return "OFFICIAL OBJECTS";
-        yield return "Plain list (lights + props)";
-        yield return "Enter → Show All / Added";
+        yield return "Home: Bookshelves, then props";
+        yield return "Bookshelves: MR/Magazines/";
+        yield return "  numbered page images";
+        yield return "  Floor; grab magazines";
+        yield return "Props: enter → Show All/Added";
         yield return "Most: Up/Down + A remove";
-        yield return "Lights: also L/R Tune";
         yield return "PF_Fan, Portable Games…";
         yield return string.Empty;
         yield return "PORTABLE GAMES";
@@ -2170,6 +2189,7 @@ public class MRConfigurationController : MonoBehaviour
         yield return "FILES (on Quest)";
         yield return "MR/Custom Objects/";
         yield return "MR/Posters/";
+        yield return "MR/Magazines/";
         yield return "MR/Room Skins/";
         yield return "Layouts auto-saved";
         yield return string.Empty;
@@ -2696,7 +2716,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.CustomObjects => GetCustomHomeRowActions(selectedListIndex),
             Screen.CustomObjectsOthers => GetCustomEnvCatalogRowActions(selectedListIndex),
             Screen.OfficialObjectsOthers => GetCustomEnvCatalogRowActions(selectedListIndex),
-            Screen.OfficialObjects => GetCustomEnvCatalogRowActions(selectedListIndex),
+            Screen.OfficialObjects => GetOfficialHomeRowActions(selectedListIndex),
             Screen.Lights => GetLightsRowActionsForSelection(),
             Screen.Posters => GetShowAllAddedEnvRowActions(selectedListIndex),
             Screen.Magazines => GetMagazinesRowActions(selectedListIndex),
@@ -2746,6 +2766,16 @@ public class MRConfigurationController : MonoBehaviour
     {
         var actions = new List<RowActionKind>();
         if (index < 0 || index >= GetCustomHomeListCount())
+            return actions;
+
+        actions.Add(RowActionKind.OpenDetail);
+        return actions;
+    }
+
+    List<RowActionKind> GetOfficialHomeRowActions(int index)
+    {
+        var actions = new List<RowActionKind>();
+        if (index < 0 || index >= GetOfficialHomeListCount())
             return actions;
 
         actions.Add(RowActionKind.OpenDetail);
@@ -2822,11 +2852,14 @@ public class MRConfigurationController : MonoBehaviour
         if (index < 0 || index >= magazinesCatalogEntries.Count || envRegistry == null)
             return actions;
 
-        MREnvironmentCatalogEntry entry = magazinesCatalogEntries[index];
-        int count = envRegistry.GetInstanceCount(entry);
-        if (count > 0)
-            actions.Add(RowActionKind.Options);
-        actions.Add(RowActionKind.Add);
+        // Only one bookshelf in the MR room — Add or Remove on the same row.
+        // Match by source (not issue list) so the row still offers Remove after
+        // the active magazines change in magazines.yaml.
+        if (envRegistry.GetBookshelfInstanceCount() > 0)
+            actions.Add(RowActionKind.Remove);
+        else
+            actions.Add(RowActionKind.Add);
+
         return actions;
     }
 
@@ -2871,7 +2904,7 @@ public class MRConfigurationController : MonoBehaviour
         // Poster-style: Show All → Add only. Show Added → Remove (+ Tune only if supported).
         if (envListFilter == CabinetListFilter.ShowAll)
         {
-            if (index == 0)
+            if (index == 0 && CanAddPlacedInstanceCopy())
                 actions.Add(RowActionKind.Add);
             return actions;
         }
@@ -2889,6 +2922,16 @@ public class MRConfigurationController : MonoBehaviour
         else if (MRPlacementRayController.ExpectsStickScale(instancesCatalogEntry.Source))
             actions.Add(RowActionKind.Move);
         return actions;
+    }
+
+    bool CanAddPlacedInstanceCopy()
+    {
+        if (instancesCatalogEntry.Source == MREnvironmentObjectSource.Bookshelf
+            && envRegistry != null
+            && envRegistry.GetBookshelfInstanceCount() > 0)
+            return false;
+
+        return true;
     }
 
     static bool SupportsPlacedInstanceTune(MREnvironmentObjectSource source) =>
@@ -2959,8 +3002,9 @@ public class MRConfigurationController : MonoBehaviour
                 return ExecuteCabinetRowAction(action);
             case Screen.CustomObjects:
                 return ExecuteCustomObjectsHomeRowAction(action);
-            case Screen.CustomObjectsOthers:
             case Screen.OfficialObjects:
+                return ExecuteOfficialObjectsHomeRowAction(action);
+            case Screen.CustomObjectsOthers:
             case Screen.OfficialObjectsOthers:
                 return ExecuteCustomEnvCatalogRowAction(action);
             case Screen.RoomSkins:
@@ -3038,6 +3082,25 @@ public class MRConfigurationController : MonoBehaviour
             return false;
 
         OpenPlacedInstances(filteredEnvCatalogEntries[packageIndex], Screen.CustomObjects);
+        return false;
+    }
+
+    bool ExecuteOfficialObjectsHomeRowAction(RowActionKind action)
+    {
+        if (action != RowActionKind.OpenDetail)
+            return false;
+
+        if (selectedListIndex < OfficialCategoryCount)
+        {
+            OpenOfficialObjectsCategory();
+            return false;
+        }
+
+        int packageIndex = selectedListIndex - OfficialCategoryCount;
+        if (packageIndex < 0 || packageIndex >= filteredEnvCatalogEntries.Count || envRegistry == null)
+            return false;
+
+        OpenPlacedInstances(filteredEnvCatalogEntries[packageIndex], Screen.OfficialObjects);
         return false;
     }
 
@@ -3182,19 +3245,38 @@ public class MRConfigurationController : MonoBehaviour
 
     bool ExecuteMagazinesRowAction(RowActionKind action)
     {
-        if (selectedListIndex < 0 || selectedListIndex >= magazinesCatalogEntries.Count)
+        if (selectedListIndex < 0 || selectedListIndex >= magazinesCatalogEntries.Count || envRegistry == null)
             return false;
 
         MREnvironmentCatalogEntry entry = magazinesCatalogEntries[selectedListIndex];
         switch (action)
         {
             case RowActionKind.Add:
-                QueueReturnToPlacedInstances(entry, Screen.Magazines);
+                if (envRegistry.GetBookshelfInstanceCount() > 0)
+                {
+                    ConfigManager.WriteConsoleWarning($"{LogPrefix} bookshelf add blocked — only one allowed");
+                    return true;
+                }
+
                 BeginAddEnvironmentWithRay(entry);
                 return false;
-            case RowActionKind.Options:
-                OpenPlacedInstances(entry, Screen.Magazines);
-                return true;
+            case RowActionKind.Remove:
+            {
+                // Match by source: the placed shelf may hold a different issue
+                // list than the current catalog entry (magazines.yaml changed).
+                MREnvironmentPlacement placement = envRegistry.FindFirstBookshelfPlacement();
+                if (placement == null)
+                    return false;
+                if (envRegistry.RemovePlacement(placement.Id))
+                {
+                    ConfigManager.WriteConsole($"{LogPrefix} removed bookshelf {entry}");
+                    if (selectedListIndex >= magazinesCatalogEntries.Count)
+                        selectedListIndex = Mathf.Max(0, magazinesCatalogEntries.Count - 1);
+                    ClampColumnIndexForCurrentRow();
+                    return true;
+                }
+                return false;
+            }
             default:
                 return false;
         }
@@ -3234,6 +3316,12 @@ public class MRConfigurationController : MonoBehaviour
         switch (action)
         {
             case RowActionKind.Add:
+                if (!CanAddPlacedInstanceCopy())
+                {
+                    ConfigManager.WriteConsoleWarning($"{LogPrefix} bookshelf add blocked — only one allowed");
+                    return true;
+                }
+
                 QueueReturnToPlacedInstances(instancesCatalogEntry, instancesReturnScreen);
                 BeginAddEnvironmentWithRay(instancesCatalogEntry);
                 return false;
@@ -3393,7 +3481,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Cabinets => filteredCabinetNames.Count,
             Screen.CustomObjects => GetCustomHomeListCount(),
             Screen.CustomObjectsOthers => filteredEnvCatalogEntries.Count,
-            Screen.OfficialObjects => filteredEnvCatalogEntries.Count,
+            Screen.OfficialObjects => GetOfficialHomeListCount(),
             Screen.Config => ConfigCategoryCount,
             Screen.DeleteConfigsConfirm => 2,
             Screen.OfficialObjectsOthers => filteredEnvCatalogEntries.Count,
@@ -3904,6 +3992,7 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case "OFFICIAL OBJECTS":
                 RefreshObjectCatalogs();
+                RefreshMagazinesCatalog();
                 envListFilter = CabinetListFilter.ShowAll;
                 envListFocusOnFilter = false;
                 RebuildFilteredEnvCatalogEntries();
@@ -4108,9 +4197,24 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
             case Screen.Magazines:
-            case Screen.OfficialObjectsOthers:
+            {
                 currentScreen = Screen.OfficialObjects;
                 selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                envListFocusOnFilter = false;
+                RefreshObjectCatalogs();
+                RefreshMagazinesCatalog();
+                RebuildFilteredEnvCatalogEntries();
+                navCooldown = navRepeatDelay;
+                SyncConfirmControlEdgeState();
+                SyncBackControlEdgeState();
+                DrawCurrentScreen();
+                break;
+            }
+            case Screen.OfficialObjectsOthers:
+                currentScreen = Screen.OfficialObjects;
+                selectedListIndex = OfficialCategoryCount;
                 selectedColumnIndex = 0;
                 listScrollOffset = 0;
                 envListFocusOnFilter = false;
@@ -4316,9 +4420,22 @@ public class MRConfigurationController : MonoBehaviour
 
     void OpenOfficialObjectsCategory()
     {
-        RefreshObjectCatalogs();
-        ResetEnvListFilterUi();
-        currentScreen = Screen.OfficialObjectsOthers;
+        switch (selectedListIndex)
+        {
+            case 0:
+                RefreshMagazinesCatalog();
+                selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                listScrollOffset = 0;
+                currentScreen = Screen.Magazines;
+                break;
+            default:
+                RefreshObjectCatalogs();
+                ResetEnvListFilterUi();
+                currentScreen = Screen.OfficialObjectsOthers;
+                break;
+        }
+
         navCooldown = navRepeatDelay;
         SyncConfirmControlEdgeState();
         SyncBackControlEdgeState();
@@ -4492,6 +4609,12 @@ public class MRConfigurationController : MonoBehaviour
 
         if (placementRay.IsActive)
             return;
+
+        if (envRegistry.GetBookshelfInstanceCount() > 0)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} bookshelf add blocked — only one allowed");
+            return;
+        }
 
         MRConfigurationCabinetController.Instance?.SuspendEditForGameCabinetPlacement();
 

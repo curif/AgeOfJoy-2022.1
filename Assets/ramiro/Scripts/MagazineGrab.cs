@@ -3,6 +3,7 @@ This program is free software: you can redistribute it and/or modify it under th
 */
 
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
 
@@ -18,9 +19,10 @@ public class MagazineGrab : MonoBehaviour
     public bool hideHandsOnGrab = true;
     [Min(0f)] public float returnDurationSeconds = 0.15f;
 
-    [Header("Page turn (while held)")]
+    [Header("Page turn (while held or touched)")]
     [Range(0.2f, 0.95f)] public float stickPageThreshold = 0.55f;
     [Range(0.05f, 0.5f)] public float stickPageRelease = 0.25f;
+    [Min(0f)] public float touchExitGraceSeconds = 0.12f;
 
 #if UNITY_EDITOR
     [Header("Editor Simulation")]
@@ -38,6 +40,8 @@ public class MagazineGrab : MonoBehaviour
     bool grabIsLeft;
     bool stickPastNext;
     bool stickPastPrev;
+    readonly HashSet<XRDirectInteractor> touchingHands = new HashSet<XRDirectInteractor>();
+    Coroutine touchExitResetCoroutine;
 
 #if UNITY_EDITOR
     bool editorGrabActive;
@@ -61,7 +65,8 @@ public class MagazineGrab : MonoBehaviour
             ReturnOnRelease = returnOnRelease,
             HideHands = hideHandsOnGrab,
             ReturnDurationSeconds = returnDurationSeconds,
-            Target = ""
+            // Snap authored grip (RightCover) to the hand — not the magazine root.
+            Target = grabTarget
         }, transform);
 
         EnsureInitialized();
@@ -82,7 +87,7 @@ public class MagazineGrab : MonoBehaviour
 
     void Update()
     {
-        HandleHeldPageInput();
+        HandlePageInput();
 
 #if UNITY_EDITOR
         if (Application.isEditor)
@@ -109,6 +114,8 @@ public class MagazineGrab : MonoBehaviour
 
         grabInteractable.selectEntered.RemoveListener(OnGrabbed);
         grabInteractable.selectExited.RemoveListener(OnReleased);
+        grabInteractable.hoverEntered.RemoveListener(OnDirectHoverEntered);
+        grabInteractable.hoverExited.RemoveListener(OnDirectHoverExited);
     }
 
     void EnsureInitialized()
@@ -123,6 +130,8 @@ public class MagazineGrab : MonoBehaviour
         ApplyGrabColliders();
         grabInteractable.selectEntered.AddListener(OnGrabbed);
         grabInteractable.selectExited.AddListener(OnReleased);
+        grabInteractable.hoverEntered.AddListener(OnDirectHoverEntered);
+        grabInteractable.hoverExited.AddListener(OnDirectHoverExited);
         NotifyPlacementPoseUpdated();
         initialized = true;
     }
@@ -160,19 +169,83 @@ public class MagazineGrab : MonoBehaviour
     void OnGrabbed(SelectEnterEventArgs args)
     {
         grabIsLeft = IsLeftInteractor(args.interactorObject);
-        ResetStickPageState();
+        CancelTouchExitReset();
+        // Direct hover normally precedes selection. Preserve the latch so a held
+        // stick cannot turn a second page during the touch-to-grab transition.
+        if (touchingHands.Count == 0)
+            ResetStickPageState();
         magazine.OpenMagazine();
         ConfigManager.WriteConsole($"[MagazineGrab] grabbed with {(grabIsLeft ? "left" : "right")} hand");
     }
 
     void OnReleased(SelectExitEventArgs _)
     {
-        ResetStickPageState();
-        if (!IsShelfPreparedMagazine())
+        if (touchingHands.Count == 0)
+            ResetStickPageState();
+        if (!IsShelfPreparedMagazine() && touchingHands.Count == 0)
             magazine.ResetMagazine();
     }
 
+    void OnDirectHoverEntered(HoverEnterEventArgs args)
+    {
+        XRDirectInteractor directInteractor = args.interactorObject as XRDirectInteractor;
+        if (directInteractor == null || IsDockedShelfMagazine())
+            return;
+
+        CancelTouchExitReset();
+        if (!touchingHands.Add(directInteractor))
+            return;
+
+        if (touchingHands.Count == 1 && !IsMagazineHeld())
+        {
+            ResetStickPageState();
+            magazine.OpenMagazine();
+        }
+    }
+
+    void OnDirectHoverExited(HoverExitEventArgs args)
+    {
+        XRDirectInteractor directInteractor = args.interactorObject as XRDirectInteractor;
+        if (directInteractor == null || !touchingHands.Remove(directInteractor))
+            return;
+
+        if (touchingHands.Count == 0 && !IsMagazineHeld())
+        {
+            CancelTouchExitReset();
+            touchExitResetCoroutine = StartCoroutine(ResetTouchStateAfterGrace());
+        }
+    }
+
+    IEnumerator ResetTouchStateAfterGrace()
+    {
+        if (touchExitGraceSeconds > 0f)
+            yield return new WaitForSeconds(touchExitGraceSeconds);
+
+        touchExitResetCoroutine = null;
+        if (touchingHands.Count == 0 && !IsMagazineHeld())
+        {
+            ResetStickPageState();
+            if (!IsShelfPreparedMagazine())
+                magazine.ResetMagazine();
+        }
+    }
+
+    void CancelTouchExitReset()
+    {
+        if (touchExitResetCoroutine == null)
+            return;
+
+        StopCoroutine(touchExitResetCoroutine);
+        touchExitResetCoroutine = null;
+    }
+
     bool IsShelfPreparedMagazine() => GetComponent<MRSpawnedShelfMagazine>() != null;
+
+    bool IsDockedShelfMagazine()
+    {
+        MRSpawnedShelfMagazine shelfMagazine = GetComponent<MRSpawnedShelfMagazine>();
+        return shelfMagazine != null && shelfMagazine.IsDockedAtShelf();
+    }
 
     void ApplyGrabColliders()
     {
@@ -194,13 +267,24 @@ public class MagazineGrab : MonoBehaviour
         }
     }
 
-    void HandleHeldPageInput()
+    void HandlePageInput()
     {
-        if (!IsMagazineHeld())
-            return;
+        float stickX;
+        if (IsMagazineHeld())
+            stickX = ReadGrabStickX(grabIsLeft);
+        else
+        {
+            if (IsDockedShelfMagazine())
+                return;
+            if (!TryReadTouchingHandStickX(out stickX))
+                return;
+        }
 
-        float stickX = ReadGrabStickX(grabIsLeft);
+        ProcessPageStick(stickX);
+    }
 
+    void ProcessPageStick(float stickX)
+    {
         if (stickX <= -stickPageThreshold)
         {
             if (!stickPastNext && magazine.CanGoNextPage())
@@ -217,6 +301,34 @@ public class MagazineGrab : MonoBehaviour
         }
         else if (Mathf.Abs(stickX) <= stickPageRelease)
             ResetStickPageState();
+    }
+
+    bool TryReadTouchingHandStickX(out float stickX)
+    {
+        stickX = 0f;
+        bool foundHand = false;
+        bool requestsNext = false;
+        bool requestsPrevious = false;
+
+        foreach (XRDirectInteractor hand in touchingHands)
+        {
+            if (hand == null)
+                continue;
+
+            float handStickX = ReadGrabStickX(IsLeftInteractor(hand));
+            foundHand = true;
+            requestsNext |= handStickX <= -stickPageThreshold;
+            requestsPrevious |= handStickX >= stickPageThreshold;
+
+            if (Mathf.Abs(handStickX) > Mathf.Abs(stickX))
+                stickX = handStickX;
+        }
+
+        // Opposite commands from two touching hands cancel each other.
+        if (requestsNext && requestsPrevious)
+            stickX = 0f;
+
+        return foundHand;
     }
 
 #if UNITY_EDITOR

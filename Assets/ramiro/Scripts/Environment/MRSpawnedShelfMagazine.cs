@@ -18,11 +18,15 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
     MRBookshelfMagazineProxy sourceProxy;
     bool releaseCheckPending;
     bool wasHeld;
+    bool dockedAtShelf = true;
 
     public void Configure(MRBookshelfMagazineProxy proxy)
     {
         sourceProxy = proxy;
+        dockedAtShelf = true;
     }
+
+    public bool IsDockedAtShelf() => dockedAtShelf;
 
     public void BeginHeldSession()
     {
@@ -73,6 +77,7 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
     {
         releaseCheckPending = false;
         wasHeld = true;
+        dockedAtShelf = false;
         sourceProxy?.OnPreparedMagazineGrabbed();
     }
 
@@ -94,9 +99,15 @@ public class MRSpawnedShelfMagazine : MonoBehaviour
             yield break;
 
         if (IsNearShelfDock())
+        {
+            dockedAtShelf = true;
             sourceProxy?.ReturnPreparedMagazineToShelf();
+        }
         else
+        {
+            dockedAtShelf = false;
             sourceProxy?.ShowProxyAndLeaveMagazineInWorld();
+        }
 
         wasHeld = false;
     }

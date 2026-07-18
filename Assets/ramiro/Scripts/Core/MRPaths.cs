@@ -23,6 +23,7 @@ public static class MRPaths
     public const string CustomObjectYamlFileName = "object.yaml";
     public const string RoomSkinYamlFileName = "roomskin.yaml";
     public const string MagazineYamlFileName = "magazine.yaml";
+    public const string MagazinesYamlFileName = "magazines.yaml";
     /// <summary>Default image filename when <c>texture</c> is omitted in roomskin.yaml.</summary>
     public const string RoomSkinDefaultTextureFileName = "texture.png";
     /// <summary>Marker: global MR/*.yaml layouts were copied into the first room folder once.</summary>
@@ -35,6 +36,7 @@ public static class MRPaths
     public static string CustomObjectsDir => Path.Combine(MrDir, CustomObjectsFolderName);
     public static string PostersDir => Path.Combine(MrDir, PostersFolderName);
     public static string MagazinesDir => Path.Combine(MrDir, MagazinesFolderName);
+    public static string MagazinesYamlPath => Path.Combine(MagazinesDir, MagazinesYamlFileName);
     public static string RoomSkinsDir => Path.Combine(MrDir, RoomSkinsFolderName);
     public static string RoomsDir => Path.Combine(MrDir, RoomsFolderName);
     public static string CabinetsLayoutPath => Path.Combine(MrDir, CabinetsLayoutFileName);
@@ -59,6 +61,7 @@ public static class MRPaths
         ConfigManager.CreateFolder(MagazinesDir);
         ConfigManager.CreateFolder(RoomSkinsDir);
         ConfigManager.CreateFolder(RoomsDir);
+        SeedMagazinesYamlIfNeeded();
         SeedExampleCustomObjectIfNeeded();
         SeedPostersReadmeIfNeeded();
         SeedMagazineReadmeIfNeeded();
@@ -303,6 +306,25 @@ public static class MRPaths
             return null;
 
         return fullPath;
+    }
+
+    /// <summary>Creates an empty MR/Magazines/magazines.yaml when missing.</summary>
+    public static void SeedMagazinesYamlIfNeeded()
+    {
+        if (!Directory.Exists(MagazinesDir) || File.Exists(MagazinesYamlPath))
+            return;
+
+        try
+        {
+            File.WriteAllText(MagazinesYamlPath, string.Empty);
+            ConfigManager.WriteConsole($"[MRPaths] created empty magazines yaml at {MagazinesYamlPath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException(
+                $"[MRPaths] failed to seed {MagazinesYamlPath}",
+                e);
+        }
     }
 
     /// <summary>Writes MR/Magazines/README.txt when the folder is new or empty.</summary>

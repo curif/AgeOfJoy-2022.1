@@ -324,6 +324,39 @@ public class MREnvironmentRegistry : MonoBehaviour
         return layout?.CountByCatalogEntry(entry) ?? 0;
     }
 
+    /// <summary>Total placed bookshelves in the MR layout (menu allows at most one).</summary>
+    public int GetBookshelfInstanceCount()
+    {
+        EnsureLayoutLoaded();
+        if (layout == null)
+            return 0;
+
+        int count = 0;
+        foreach (MREnvironmentPlacement placement in layout.GetProps())
+        {
+            if (placement != null && placement.IsBookshelfSource)
+                count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>First placed bookshelf regardless of its stored issue list.</summary>
+    public MREnvironmentPlacement FindFirstBookshelfPlacement()
+    {
+        EnsureLayoutLoaded();
+        if (layout == null)
+            return null;
+
+        foreach (MREnvironmentPlacement placement in layout.GetProps())
+        {
+            if (placement != null && placement.IsBookshelfSource)
+                return placement;
+        }
+
+        return null;
+    }
+
     public bool CanAddAnotherInstance(MREnvironmentCatalogEntry entry) =>
         !string.IsNullOrEmpty(entry.Key);
 
