@@ -638,7 +638,11 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     //flycast branch of the "Start game" BT node: same cabinet lifecycle, hardware core underneath.
     private TaskStatus StartFlycastGame()
     {
-        libretroControlMap.CreateFromConfiguration(BuildControlMapConfiguration());
+        // Flycast-only map surgery (gamepads polled directly with the standard flycast layout;
+        // gun-cabinet default rebinds) — see LibretroFlycastCore.AdjustControlMap.
+        ControlMapConfiguration flycastConf = BuildControlMapConfiguration();
+        LibretroFlycastCore.AdjustControlMap(flycastConf, lightGunTarget != null && lightGunInformation != null);
+        libretroControlMap.CreateFromConfiguration(flycastConf);
 
         LibretroFlycastCore.Shader = shader;
         LibretroFlycastCore.ControlMap = libretroControlMap;

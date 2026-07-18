@@ -24,32 +24,25 @@ input:
 
 ### `analog-stick`
 
-Chooses what the **thumbstick** drives on the emulated Dreamcast controller.
+The Dreamcast controller has **both** a digital d-pad and an analog stick, and the Quest controller pair has two thumbsticks. Both DC inputs are always reachable; `analog-stick` only chooses **which physical stick gets the analog role**:
 
-| Value | Thumbstick drives | Use for |
-|---|---|---|
-| `false` *(default)* | the **digital d-pad** | fighting games, platformers, anything digital (MVC, Soul Calibur) |
-| `true` | the **analog stick** *and analog triggers* | racing / analog games (Sega Rally 2, Crazy Taxi, Daytona) |
+| Mode | Left thumbstick | Right thumbstick | Triggers |
+|---|---|---|---|
+| `false` *(default)* | DC **d-pad** | DC **analog stick** | normal digital buttons |
+| `true` | DC **analog stick** (steering) | DC **d-pad** | **analog** — right = accelerate, left = brake |
 
-**What this does:** a Quest controller only has an analog thumbstick — there is no old-school physical D-pad. By default Age of Joy maps the Quest's thumbstick to the Dreamcast **d-pad**, which is what most games want. Other games like racing games, flying games, etc expect **analog** stick for smooth input. Setting `analog-stick: true` switches this one cabinet over to analog.
+**When to use `true`:** racing / driving / flying games (Sega Rally 2, Daytona USA 2, F355) — anything you'd steer. These want proportional steering on your dominant movement stick *and* analog gas/brake pedals on the triggers. NAOMI wheel games **require** it: the wheel is an analog axis with no digital fallback, so without it the game cannot steer at all.
 
-This only applies to the Quest stick! If you're using a Bluetooth controller your Analog Pad and D-Pad will be mapped as normal.
+**When to leave it off (default):** everything else. Fighting games and 2D titles read the d-pad (left stick); games designed around the DC analog stick (Soul Calibur movement, sports, 3D platformers) get it on the right stick automatically — no YAML needed.
 
-### What `analog-stick: true` maps
-
-| Physical control (Quest / gamepad) | Dreamcast input |
-|---|---|
-| Left thumbstick | Analog stick (steering) |
-| Right trigger | Right analog trigger — **accelerate** |
-| Left trigger | Left analog trigger — **brake** |
-
-All the normal buttons (A/B/X/Y, Start, coin) keep working as usual.
+All the normal buttons (A/B/X/Y, Start, coin) keep working as usual in both modes.
 
 ### Notes & behavior
 
-- **External gamepads (Xbox, etc.):** a real gamepad has *both* a d-pad and an analog stick, and both reach the Dreamcast at once — the d-pad drives the DC d-pad, the stick drives the DC analog stick — regardless of this setting. `analog-stick` only changes what the **Quest thumbstick** (a single physical control) does.
-- On Quest with `analog-stick: true`, the thumbstick still also nudges the digital d-pad. This is harmless for racing games (they steer on the analog axis; the d-pad is only used for menus), so both are sent. If a specific game misbehaves, let us know.
-- The triggers only produce an analog value in `analog-stick: true` mode. In the default d-pad mode the triggers act as their normal digital buttons.
+- **External gamepads (Xbox / Bluetooth) ignore this flag entirely.** A real gamepad has all the DC controls at once, so it always maps the standard flycast way, in both modes: d-pad → DC d-pad, left stick → DC analog stick, triggers → analog L2/R2, face buttons positional (pad A → DC A, B → DC B, X → DC X, Y → DC Y), shoulders → C/Z, Start → Start, Select → coin, stick clicks → TEST/SERVICE (arcade). This gamepad layout is fixed — a custom `controllers:` block remaps the Quest controllers only.
+- With `analog-stick: true` the Quest left stick is analog-only: its digital d-pad output is masked so pushing up can't fire both the analog axis and d-pad-UP at once (Daytona's change-view, for example). Menus stay navigable via the right stick.
+- The Quest triggers only produce an analog value in `analog-stick: true` mode. In the default mode they act as their normal digital buttons; a gamepad's triggers are always analog.
+- **Arcade TEST/SERVICE menus (NAOMI / Atomiswave):** on any pad cabinet, hold a **grip**, then tap **Start** — right grip = **TEST**, left grip = **SERVICE**. The chord swallows the Start press, so the game never sees it. `reicast_allow_service_buttons` is enabled automatically on every flycast cabinet (override via `environment:` if a game misbehaves); Dreamcast games have no service buttons, so the chords do nothing there. Gun cabinets use the stick clicks instead — see below.
 
 ### Example — a racing cabinet
 
@@ -83,9 +76,22 @@ crt:
 
 The engine wires up the rest automatically: port 0 is declared a light gun before the ROM loads, the VR aim raycast is pushed to the core each frame, and the coin slot is delivered as the gun's coin input. Optional tuning lives under `gun:` (`invert-pointer`, `adjust-sight: {horizontal, vertical}`) and `crt:` (`invertx` / `inverty`, `border-size-x` / `border-size-y`) if a game's aim needs calibrating.
 
+Default gun controls (the real DC gun had a trigger, a B button, Start, and a d-pad):
+
+| Physical control | Gun input |
+|---|---|
+| Right trigger | gun trigger |
+| Quest **B** button | the gun's **B** button (DC) / button 1 (NAOMI) |
+| Left-controller **menu** button | **Start** |
+| LEFT thumbstick | the gun's **d-pad** |
+| Left trigger | forced reload (offscreen shot) — aiming off the screen also works |
+| Left / right **stick click** | arcade **TEST** / **SERVICE** menu (NAOMI & Atomiswave) |
+
+The TEST and SERVICE buttons (`reicast_allow_service_buttons`, enabled automatically on every flycast cabinet, overridable via `environment:`) matter here because NAOMI gun games need them for their one-time in-game gun calibration; on a Dreamcast game the stick clicks do nothing. Pad cabinets reach the same menus via the grip+Start chords described under `input:` above.
+
 Two flycast-specific caveats:
 
-- In light-gun mode flycast reads **only** `LIGHTGUN_*` inputs on that port — `JOYPAD_*` mappings are ignored. If you add a custom `controllers:` block, remap `LIGHTGUN_TRIGGER`, `LIGHTGUN_START`, etc., not the joypad ids.
+- In light-gun mode flycast reads **only** `LIGHTGUN_*` inputs on that port — `JOYPAD_*` mappings are ignored. If you add a custom `controllers:` block, remap `LIGHTGUN_TRIGGER`, `LIGHTGUN_START`, etc., not the joypad ids (a customized `LIGHTGUN_*` id fully replaces the engine default for it).
 - Single player only for now (port 0); the other ports stay as joypads.
 
 ---
@@ -158,7 +164,7 @@ Every option below can be set under `environment: properties:` (drop the `reicas
 | `hle_bios` | **enabled** | disabled / enabled |
 | `boot_to_bios` | **disabled** | disabled / enabled |
 | `force_freeplay` | **enabled** | disabled / enabled |
-| `allow_service_buttons` | **disabled** | disabled / enabled |
+| `allow_service_buttons` | **enabled** (AoJ auto-enables it on every flycast cabinet; the core's own default is disabled) | disabled / enabled |
 | `force_wince` | **disabled** | disabled / enabled |
 | `dc_32mb_mod` | **disabled** | disabled / enabled |
 | `gdrom_fast_loading` | **disabled** | disabled / enabled |

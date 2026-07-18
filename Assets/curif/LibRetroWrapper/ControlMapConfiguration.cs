@@ -121,6 +121,55 @@ public class ControlMapConfiguration
         }
     }
 
+    // --- Map surgery used by LibretroFlycastCore.AdjustControlMap (core: flycast only) ----------
+
+    // Remove every mapped control whose friendly name starts with controlPrefix from all maps whose
+    // libretro id starts with idPrefix, on every port. Maps left empty are dropped entirely.
+    public void RemoveControlsByPrefix(string idPrefix, string controlPrefix)
+    {
+        foreach (Maps map in mapList.Where(m => m.mameControl.StartsWith(idPrefix)).ToList())
+        {
+            map.controlMaps.RemoveAll(c => c.RealControl.StartsWith(controlPrefix));
+            if (map.controlMaps.Count == 0)
+                mapList.Remove(map);
+        }
+    }
+
+    // Remove one mapped control from (mameControl, port); drops the map if it ends up empty.
+    public void RemoveControl(string mameControl, int port, string realControl)
+    {
+        Maps map = GetMap(mameControl, port);
+        ControlMap act = map?.GetAction(realControl);
+        if (act == null)
+            return;
+        map.controlMaps.Remove(act);
+        if (map.controlMaps.Count == 0)
+            mapList.Remove(map);
+    }
+
+    // True when (mameControl, port) exists and binds exactly `controls`, in any order. Lets an
+    // engine-side rebind detect a still-default map so it never stomps an author/user customization
+    // (Merge replaces an id's bindings wholesale, so any customization fails this check).
+    public bool MapEquals(string mameControl, int port, string[] controls)
+    {
+        Maps map = GetMap(mameControl, port);
+        if (map == null || map.controlMaps.Count != controls.Length)
+            return false;
+        foreach (string control in controls)
+        {
+            if (map.GetAction(control) == null)
+                return false;
+        }
+        return true;
+    }
+
+    // Drop (mameControl, port) and rebind it to `controls` (behavior inferred as AddMap does).
+    public void ReplaceMap(string mameControl, int port, string[] controls)
+    {
+        RemoveMaps(mameControl, port);
+        AddMap(mameControl, controls, null, port);
+    }
+
     public void Merge(ControlMapConfiguration other)
     {
         if (other == null)

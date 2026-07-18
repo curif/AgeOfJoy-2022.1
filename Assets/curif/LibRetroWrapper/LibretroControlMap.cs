@@ -136,6 +136,7 @@ public class LibretroControlMap : MonoBehaviour
             switch (mameControl)
             {
                 case "JOYPAD_UP":
+                case "LIGHTGUN_DPAD_UP":
                     if (resultVector.y > 0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
@@ -143,6 +144,7 @@ public class LibretroControlMap : MonoBehaviour
                     }
                     break;
                 case "JOYPAD_DOWN":
+                case "LIGHTGUN_DPAD_DOWN":
                     if (resultVector.y < -0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
@@ -150,6 +152,7 @@ public class LibretroControlMap : MonoBehaviour
                     }
                     break;
                 case "JOYPAD_RIGHT":
+                case "LIGHTGUN_DPAD_RIGHT":
                     if (resultVector.x > 0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
@@ -157,6 +160,7 @@ public class LibretroControlMap : MonoBehaviour
                     }
                     break;
                 case "JOYPAD_LEFT":
+                case "LIGHTGUN_DPAD_LEFT":
                     if (resultVector.x < -0.5 || resultFloat == 1.0)
                     {
                         // ConfigManager.WriteConsole($"{inputActionMapId}: val: {val}");
