@@ -97,6 +97,9 @@ public class MixedRealityManager : MonoBehaviour
         if (mrLighting == null)
             mrLighting = gameObject.AddComponent<MRMrEnvironmentLighting>();
 
+        if (GetComponent<MRGameplayLightingGate>() == null)
+            gameObject.AddComponent<MRGameplayLightingGate>();
+
         mrEffectMesh = GetComponent<MREffectMeshController>();
         if (mrEffectMesh == null)
             mrEffectMesh = gameObject.AddComponent<MREffectMeshController>();

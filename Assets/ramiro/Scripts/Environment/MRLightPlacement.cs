@@ -106,6 +106,8 @@ public static class MRLightPlacement
                 light.range = range;
                 light.useColorTemperature = false;
                 light.color = lightColor;
+                // Keep the MR shadow budget on the global key light only.
+                light.shadows = LightShadows.None;
             }
         }
 
