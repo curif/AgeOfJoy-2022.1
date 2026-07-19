@@ -5,7 +5,7 @@ You should have received a copy of the GNU General Public License along with thi
 */
 
 //#define _debug_fps_
-#define _debug_audio_ // capture ~15s of game audio to a WAV on game start, see FlushAudioCaptureIfReady()
+//#define _debug_audio_ // capture ~15s of game audio to a WAV on game start, see FlushAudioCaptureIfReady()
 #define _debug_
 //#define _serialize_
 

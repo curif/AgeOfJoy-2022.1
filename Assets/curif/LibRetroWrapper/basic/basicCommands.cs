@@ -145,6 +145,7 @@ public static class Commands
         //functions["CABDBREPLACE"] = typeof(CommandFunctionCABDBREPLACE);
         functions["CABDBGETNAME"] = typeof(CommandFunctionCABDBGETNAME);
         functions["CABDBGETINFO"] = typeof(CommandFunctionCABDBGETINFO);
+        functions["CABDBSETINFO"] = typeof(CommandFunctionCABDBSETINFO);
         functions["CABDBSEARCH"] = typeof(CommandFunctionCABDBSEARCH);
         functions["CABDBSEARCHARRAY"] = typeof(CommandFunctionCABDBSEARCHARRAY);
         //functions["CABDBGET"] = typeof(CommandFunctionCABDBGET);
@@ -156,7 +157,9 @@ public static class Commands
         functions["CABDBASSIGN"] = typeof(CommandFunctionCABDBASSIGN);
         functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
         functions["CABCOINSLOTSOUND"] = typeof(CommandFunctionCABCOINSLOTSOUND);
-        
+
+        //workshop test-cabinet loader
+        functions["WORKSHOPRELOAD"] = typeof(CommandFunctionWORKSHOPRELOAD);
 
         //cabinet in AGEBasic for the actual cabinet
         functions["CABPARTSCOUNT"] = typeof(CommandFunctionCABPARTSCOUNT);

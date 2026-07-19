@@ -2502,6 +2502,52 @@ public class ConfigurationController : MonoBehaviour
     {
         CoinSlot.insertCoin();
     }
+
+    [Tooltip("Editor only: full path to an .bas file to run for testing. Can be changed while Play Mode is running.")]
+    public string editorTestAGEBasicProgram;
+
+    public void EditorRunAGEBasicTest()
+    {
+        if (AGEBasic == null)
+            AGEBasic = GetComponent<basicAGE>();
+
+        string path = editorTestAGEBasicProgram?.Trim().Trim('"');
+
+        if (string.IsNullOrEmpty(path) || !File.Exists(path))
+        {
+            ConfigManager.WriteConsoleError($"[ConfigurationController.EditorRunAGEBasicTest] file not found: {path}");
+            return;
+        }
+
+        try
+        {
+            AGEBasic.ParseFile(path);
+        }
+        catch (CompilationException ce)
+        {
+            ConfigManager.WriteConsoleException("[ConfigurationController.EditorRunAGEBasicTest]", ce);
+            return;
+        }
+
+        // same handoff the "run" option in the AGEBasic menu does: bind keyboard/controller
+        // to the libretro control map and free the VR player's own locomotion, so input
+        // reaches the running program instead of moving the player.
+        setupActionMap();
+        ControllersEnable(true);
+
+        AGEBasic.Run(Path.GetFileName(path));
+
+        StartCoroutine(EditorWaitAGEBasicTestFinished());
+    }
+
+    private IEnumerator EditorWaitAGEBasicTestFinished()
+    {
+        while (AGEBasic.IsRunning() || AGEBasic.IsRunningInBackground())
+            yield return new WaitForSeconds(1f / 2f);
+
+        ControllersEnable(false);
+        cleanActionMap();
+    }
 #endif
 
 }
@@ -2518,6 +2564,11 @@ public class ConfigurationControllerEditor : Editor
         if (GUILayout.Button("InsertCoin"))
         {
             myScript.EditorInsertCoin();
+        }
+
+        if (GUILayout.Button("Run Test AGEBasic Program"))
+        {
+            myScript.EditorRunAGEBasicTest();
         }
     }
 }

@@ -114,6 +114,62 @@ class CommandFunctionCABDBGETINFO : CommandFunctionExpressionListBase
     }
 }
 
+// CABDBSETINFO(cabinetName, path, value): writes 'value' into cabinetName's description.yaml
+// at the given dotted/bracketed field path (same syntax as CABDBGETINFO). Missing intermediate
+// objects/lists are auto-created; a list index equal to the list's current length appends.
+// Rewrites the whole yaml file (comments/key order/unknown keys are not preserved) and does
+// NOT touch the live 3D cabinet - pair with WORKSHOPRELOAD() to see the change.
+// Fails soft: logs the problem and returns 0 instead of stopping the running AGEBasic program.
+class CommandFunctionCABDBSETINFO : CommandFunctionExpressionListBase
+{
+    private static readonly YamlDotNet.Serialization.ISerializer writeSerializer =
+        new YamlDotNet.Serialization.SerializerBuilder()
+            .WithNamingConvention(YamlDotNet.Serialization.NamingConventions.CamelCaseNamingConvention.Instance)
+            .ConfigureDefaultValuesHandling(YamlDotNet.Serialization.DefaultValuesHandling.OmitNull)
+            .Build();
+
+    public CommandFunctionCABDBSETINFO(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABDBSETINFO";
+    }
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 3);
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - cabinet name");
+        FunctionHelper.ExpectedNonEmptyString(vals[1], " - property path, e.g. \"crt.type\"");
+
+        string cabName = vals[0].GetString();
+        string path = vals[1].GetString();
+        string cabPath = Path.Combine(ConfigManager.CabinetsDB, cabName);
+
+        try
+        {
+            string yamlPath = Path.Combine(cabPath, "description.yaml");
+            // Raw deserialize (no Validate(), no cache): fromYaml()/Validate() derives rom = roms[0]
+            // and other computed state we must not write back to disk.
+            CabinetInformation info = YamlUtils.Parse<CabinetInformation>(yamlPath);
+
+            CabinetInfoReflection.Set(info, path, vals[2]);
+
+            File.WriteAllText(yamlPath, writeSerializer.Serialize(info));
+            ConfigManager.CabinetInformationCache.Remove(Path.GetFullPath(cabPath));
+
+            return BasicValue.True;
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[{CmdToken}] cab:'{cabName}' path:'{path}' ", e);
+            return BasicValue.False;
+        }
+    }
+}
+
 static class CabinetInfoReflection
 {
     const BindingFlags Flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase;
@@ -131,6 +187,12 @@ static class CabinetInfoReflection
 
             if (current == null)
                 return null;
+
+            if (current is ICollection col && segment.Equals("count", StringComparison.OrdinalIgnoreCase))
+            {
+                current = col.Count;
+                continue;
+            }
 
             if (current is IList list && int.TryParse(segment, out int index))
             {
@@ -158,6 +220,157 @@ static class CabinetInfoReflection
             throw new Exception($"'{segment}' not found on {type.Name} (path: '{path}')");
         }
         return current;
+    }
+
+    // Writes 'value' into 'root' at the dotted/bracketed path, auto-creating missing
+    // intermediate objects/lists where possible (mirrors Resolve's path syntax).
+    // An index equal to a list's current Count appends a new element.
+    public static void Set(object root, string path, BasicValue value)
+    {
+        string normalizedPath = System.Text.RegularExpressions.Regex.Replace(path, @"\[(\d+)\]", ".$1");
+        string[] segments = normalizedPath.Split('.');
+
+        object current = root;
+        for (int i = 0; i < segments.Length - 1; i++)
+        {
+            string segment = segments[i];
+            if (string.IsNullOrEmpty(segment))
+                throw new Exception($"invalid property path: '{path}'");
+
+            if (current is IDictionary)
+                throw new Exception($"dictionary paths are not supported (path: '{path}')");
+
+            if (current is IList list)
+            {
+                if (!int.TryParse(segment, out int index))
+                    throw new Exception($"'{segment}' is not a valid list index (path: '{path}')");
+
+                Type elemType = ListElementType(list);
+                if (index == list.Count)
+                {
+                    object created = CreateInstance(elemType, $"list element for path '{path}'");
+                    list.Add(created);
+                    current = created;
+                }
+                else if (index < 0 || index >= list.Count)
+                {
+                    throw new Exception($"index {index} out of range in path '{path}' " +
+                        $"(list has {list.Count} item(s); use index {list.Count} to append)");
+                }
+                else
+                {
+                    current = list[index];
+                }
+                continue;
+            }
+
+            Type type = current.GetType();
+            FieldInfo field = type.GetField(segment, Flags);
+            PropertyInfo prop = field == null ? type.GetProperty(segment, Flags) : null;
+            if (field == null && prop == null)
+                throw new Exception($"'{segment}' not found on {type.Name} (path: '{path}')");
+
+            Type memberType = field != null ? field.FieldType : prop.PropertyType;
+            object memberValue = field != null ? field.GetValue(current) : prop.GetValue(current);
+
+            if (memberValue == null)
+            {
+                memberValue = CreateInstance(memberType, $"'{segment}' (path: '{path}')");
+                if (field != null)
+                    field.SetValue(current, memberValue);
+                else
+                    prop.SetValue(current, memberValue);
+            }
+
+            current = memberValue;
+        }
+
+        string lastSegment = segments[segments.Length - 1];
+        if (string.IsNullOrEmpty(lastSegment))
+            throw new Exception($"invalid property path: '{path}'");
+
+        if (current is IDictionary)
+            throw new Exception($"dictionary paths are not supported (path: '{path}')");
+
+        if (lastSegment.Equals("count", StringComparison.OrdinalIgnoreCase) && current is ICollection)
+            throw new Exception($"'count' is read-only (path: '{path}')");
+
+        if (current is IList lastList)
+        {
+            if (!int.TryParse(lastSegment, out int index))
+                throw new Exception($"'{lastSegment}' is not a valid list index (path: '{path}')");
+
+            Type elemType = ListElementType(lastList);
+            object converted = ConvertBasicValue(value, elemType, path);
+
+            if (index == lastList.Count)
+                lastList.Add(converted);
+            else if (index < 0 || index >= lastList.Count)
+                throw new Exception($"index {index} out of range in path '{path}' " +
+                    $"(list has {lastList.Count} item(s); use index {lastList.Count} to append)");
+            else
+                lastList[index] = converted;
+            return;
+        }
+
+        Type ownerType = current.GetType();
+        FieldInfo lastField = ownerType.GetField(lastSegment, Flags);
+        PropertyInfo lastProp = lastField == null ? ownerType.GetProperty(lastSegment, Flags) : null;
+        if (lastField == null && lastProp == null)
+            throw new Exception($"'{lastSegment}' not found on {ownerType.Name} (path: '{path}')");
+
+        Type targetType = lastField != null ? lastField.FieldType : lastProp.PropertyType;
+        object convertedValue = ConvertBasicValue(value, targetType, path);
+
+        if (lastField != null)
+            lastField.SetValue(current, convertedValue);
+        else if (lastProp.CanWrite)
+            lastProp.SetValue(current, convertedValue);
+        else
+            throw new Exception($"'{lastSegment}' is read-only on {ownerType.Name} (path: '{path}')");
+    }
+
+    private static Type ListElementType(IList list)
+    {
+        Type listType = list.GetType();
+        Type[] args = listType.IsGenericType ? listType.GetGenericArguments() : null;
+        if (args == null || args.Length != 1)
+            throw new Exception($"cannot determine element type of {listType.Name}");
+        return args[0];
+    }
+
+    private static object CreateInstance(Type type, string context)
+    {
+        try
+        {
+            return Activator.CreateInstance(type);
+        }
+        catch (MissingMethodException)
+        {
+            throw new Exception($"cannot auto-create {type.Name} for {context} - assign a leaf value directly");
+        }
+    }
+
+    private static object ConvertBasicValue(BasicValue v, Type targetType, string path)
+    {
+        Type underlying = Nullable.GetUnderlyingType(targetType);
+        Type effectiveType = underlying ?? targetType;
+
+        if (effectiveType == typeof(string))
+            return v.GetString();
+        if (effectiveType == typeof(bool))
+            return v.IsString() ? v.GetString().Equals("true", StringComparison.OrdinalIgnoreCase) : v.GetValueAsNumber() != 0;
+        if (effectiveType == typeof(double))
+            return v.GetValueAsNumber();
+        if (effectiveType == typeof(float))
+            return (float)v.GetValueAsNumber();
+        if (effectiveType == typeof(int))
+            return (int)v.GetValueAsNumber();
+        if (effectiveType == typeof(uint))
+            return (uint)v.GetValueAsNumber();
+
+        throw new Exception($"path '{path}' resolves to a {targetType.Name}, not a settable value - " +
+            $"append a field name, e.g. '{path}.<field>'");
     }
 
     public static BasicValue ToBasicValue(object value, string path)

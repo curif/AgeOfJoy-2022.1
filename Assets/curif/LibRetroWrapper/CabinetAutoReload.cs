@@ -24,8 +24,34 @@ public class CabinetAutoReload : MonoBehaviour
 
     private Coroutine mainCoroutine;
     private bool initialized = false;
+    private volatile bool reloadRequested = false;
 
-    private CabinetDBAdmin cabinetDBAdmin; 
+    private CabinetDBAdmin cabinetDBAdmin;
+
+    // The workshop test-cabinet loader is a scene singleton: only one is ever active
+    // (the old one deactivates itself right after a new one takes over). This lets
+    // AGEBasic's WORKSHOPRELOAD() trigger a redeploy without threading a reference
+    // through basicAGE/ConfigurationCommands for a component that lives in one room.
+    private static CabinetAutoReload activeInstance;
+
+    // Requests a redeploy of the test cabinet from the on-disk cabinetsdb/test folder,
+    // without needing a new test.zip. Returns false (no-op) if there is no active
+    // workshop test-cabinet loader or the description.yaml doesn't exist yet.
+    public static bool RequestReload()
+    {
+        if (activeInstance == null || !activeInstance.isActiveAndEnabled || !activeInstance.initialized)
+        {
+            ConfigManager.WriteConsole("[CabinetAutoReload.RequestReload] no active workshop test-cabinet loader");
+            return false;
+        }
+        if (!File.Exists(testDescriptionCabinetFile))
+        {
+            ConfigManager.WriteConsole($"[CabinetAutoReload.RequestReload] {testDescriptionCabinetFile} not found");
+            return false;
+        }
+        activeInstance.reloadRequested = true;
+        return true;
+    }
 
     void Start()
     {
@@ -36,16 +62,25 @@ public class CabinetAutoReload : MonoBehaviour
 
         cabinetDBAdmin = GameObject.Find("FixedObject").GetComponent<CabinetDBAdmin>();
 
+        activeInstance = this;
+
         mainCoroutine = StartCoroutine(reload());
         initialized = true;
     }
 
     private void OnEnable()
     {
+        activeInstance = this;
         if (!initialized)
             return;
         if (mainCoroutine == null)
             mainCoroutine = StartCoroutine(reload());
+    }
+
+    private void OnDestroy()
+    {
+        if (activeInstance == this)
+            activeInstance = null;
     }
 
     private void OnApplicationPause(bool pauseStatus)
@@ -68,6 +103,8 @@ public class CabinetAutoReload : MonoBehaviour
 
     private void OnDisable()
     {
+        if (activeInstance == this)
+            activeInstance = null;
         if (!initialized)
             return;
         if (mainCoroutine != null)
@@ -83,20 +120,30 @@ public class CabinetAutoReload : MonoBehaviour
         while (true)
         {
             // ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
-            if (File.Exists(testFile))
+            bool zipPresent = File.Exists(testFile);
+            if (zipPresent || reloadRequested)
             {
-                //also deletes the zip file
-                ConfigManager.WriteConsole($"[CabinetAutoReload.reload] loading cabinet from {testFile}");
-                try
+                reloadRequested = false;
+
+                if (zipPresent)
                 {
-                    cabinetDBAdmin.loadCabinetFromZip(testFile);
+                    //also deletes the zip file
+                    ConfigManager.WriteConsole($"[CabinetAutoReload.reload] loading cabinet from {testFile}");
+                    try
+                    {
+                        cabinetDBAdmin.loadCabinetFromZip(testFile);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        ConfigManager.WriteConsoleException($"[CabinetAutoReload.reload] ERROR loading zip file {testFile}", ex);
+                        writeGenericException(CabinetDBAdmin.GetNameFromPath(testFile), "ERROR loading zip file", ex);
+                        File.Delete(testFile); //delete faulty test cabinet
+                        continue;
+                    }
                 }
-                catch (System.Exception ex)
+                else
                 {
-                    ConfigManager.WriteConsoleException($"[CabinetAutoReload.reload] ERROR loading zip file {testFile}", ex);
-                    writeGenericException(CabinetDBAdmin.GetNameFromPath(testFile), "ERROR loading zip file", ex);
-                    File.Delete(testFile); //delete faulty test cabinet
-                    continue;
+                    ConfigManager.WriteConsole($"[CabinetAutoReload.reload] reload requested from {testCabinetDir} (no zip)");
                 }
 
                 Task<bool> loadTask = LoadCabinet();
