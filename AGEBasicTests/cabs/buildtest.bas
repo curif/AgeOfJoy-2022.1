@@ -8,23 +8,23 @@
 10 LET cab = "test"
 20 LET n = CabDbGetInfo(cab, "parts.count")
 
-30 PRINT "cabinet: " + CabDbGetInfo(cab, "name")
-40 PRINT "parts: " + n
+30 PRINTLN "cabinet: " + CabDbGetInfo(cab, "name")
+40 PRINTLN "parts: " + STR(n)
 
 50 LET yearBefore = CabDbGetInfo(cab, "year")
-60 PRINT "year before: " + yearBefore
+60 PRINTLN "year before: " + STR(yearBefore)
 
-70 IF CabDbSetInfo(cab, "year", 1985) = 0 THEN PRINT "CABDBSETINFO failed, see console/log" : END
+70 IF CabDbSetInfo(cab, "year", 1985) = 0 THEN PRINTLN "CABDBSETINFO failed, see console/log" : END
 
-80 PRINT "year after: " + CabDbGetInfo(cab, "year")
+80 PRINTLN "year after: " + STR(CabDbGetInfo(cab, "year"))
 
 90 REM nested write with auto-created color block, visible after reload
 100 IF n = "" THEN GOTO 140
 110 IF n < 1 THEN GOTO 140
 
-120 PRINT "editing part: " + CabDbGetInfo(cab, "parts[0].name")
+120 PRINTLN "editing part: " + CabDbGetInfo(cab, "parts[0].name")
 130 CALL CabDbSetInfo(cab, "parts[0].color.intensity", 2)
 
-140 IF WorkshopReload() = 1 THEN PRINT "workshop reload requested..." ELSE PRINT "no active workshop test cabinet (run in the workshop)"
+140 IF WorkshopReload() = 1 THEN PRINTLN "workshop reload requested..." ELSE PRINTLN "no active workshop test cabinet (run in the workshop)"
 
 150 END
