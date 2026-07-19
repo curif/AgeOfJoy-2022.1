@@ -647,6 +647,7 @@ public class MRConfigurationCabinetController : MonoBehaviour
         PrepareCabinetInstance(cabinetInstance);
         ApplyPoseToCabinet(cabinetInstance);
         cabinetInstance.SetActive(true);
+        MRShadowCasterPolicy.Apply(cabinetInstance);
 #if UNITY_EDITOR
         TryAutoInsertCoinForEditor();
 #endif

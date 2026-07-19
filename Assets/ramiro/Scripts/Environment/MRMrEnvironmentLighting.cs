@@ -6,9 +6,10 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 /// <summary>
-/// MR global fill lighting — cool white wrap so every virtual object is lit from all sides.
-/// Uses strong ambient + two opposite directionals (key with soft shadows, fill without).
+/// MR global fill lighting — neutral white wrap so every virtual object is lit from all sides.
+/// Uses strong ambient + one directional key light with soft shadows.
 /// Toggle + intensity via CONFIG → GLOBAL LIGHT. Catalog point lights stay separate.
+/// Key light can be suspended while a Libretro game runs (ambient stays).
 /// </summary>
 public class MRMrEnvironmentLighting : MonoBehaviour
 {
@@ -16,21 +17,36 @@ public class MRMrEnvironmentLighting : MonoBehaviour
 
     /// <summary>Key “sun” angle — cool daylight, not yellow.</summary>
     [SerializeField] Vector3 keyEulerAngles = new Vector3(55f, -40f, 0f);
-    [SerializeField] Color lightColor = new Color(0.90f, 0.95f, 1f);
-    [SerializeField] Color ambientColor = new Color(0.72f, 0.76f, 0.82f);
+    [SerializeField] Color lightColor = new Color(0.96f, 0.97f, 1f);
+    [SerializeField] Color ambientColor = new Color(0.78f, 0.78f, 0.78f);
     [SerializeField] float ambientBase = 0.85f;
     [SerializeField] float keyRelative = 0.55f;
-    [SerializeField] float fillRelative = 0.40f;
+    [SerializeField] bool spawnOnStart;
 
     GameObject lightingRoot;
     Light keyLight;
-    Light fillLight;
     AmbientMode savedAmbientMode;
     Color savedAmbientLight;
     float savedAmbientIntensity;
     bool ambientSaved;
+    bool keySuspendedForGameplay;
 
     public bool IsSpawned => lightingRoot != null;
+
+    /// <summary>True when the directional key is held off for an active Libretro session.</summary>
+    public bool IsKeySuspendedForGameplay => keySuspendedForGameplay;
+
+    void Start()
+    {
+        if (spawnOnStart)
+            Spawn(transform);
+    }
+
+    void OnDestroy()
+    {
+        if (spawnOnStart)
+            Despawn(restoreAmbient: true);
+    }
 
     public void Spawn(Transform mrSpaceOrigin)
     {
@@ -47,21 +63,22 @@ public class MRMrEnvironmentLighting : MonoBehaviour
             return;
         }
 
-        if (lightingRoot != null)
+        if (lightingRoot == null)
         {
-            ApplyIntensity(MRAutoLightingSettings.Intensity);
-            return;
+            lightingRoot = new GameObject("MRLighting");
+            lightingRoot.transform.SetParent(mrSpaceOrigin, false);
+            lightingRoot.transform.localPosition = Vector3.zero;
+            lightingRoot.transform.localRotation = Quaternion.identity;
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} spawned global fill intensity={MRAutoLightingSettings.Intensity:F1}");
         }
 
-        lightingRoot = new GameObject("MRLighting");
-        lightingRoot.transform.SetParent(mrSpaceOrigin, false);
-        lightingRoot.transform.localPosition = Vector3.zero;
-        lightingRoot.transform.localRotation = Quaternion.identity;
+        if (!keySuspendedForGameplay)
+            EnsureKeyLight();
+        else
+            DestroyKeyLight();
 
-        CreateWrapLights();
         ApplyIntensity(MRAutoLightingSettings.Intensity);
-        ConfigManager.WriteConsole(
-            $"{LogPrefix} spawned global cool fill intensity={MRAutoLightingSettings.Intensity:F1}");
     }
 
     public void Despawn(bool restoreAmbient = false)
@@ -73,13 +90,43 @@ public class MRMrEnvironmentLighting : MonoBehaviour
             Destroy(lightingRoot);
         lightingRoot = null;
         keyLight = null;
-        fillLight = null;
     }
 
     /// <summary>Called when leaving MR — remove runtime lights and undo ambient fill.</summary>
     public void DespawnForMrExit()
     {
+        keySuspendedForGameplay = false;
         Despawn(restoreAmbient: true);
+    }
+
+    /// <summary>
+    /// Temporarily remove the shadow-casting key light while a game runs.
+    /// Does not change PlayerPrefs; ambient Flat stays so cabinets remain readable.
+    /// </summary>
+    public void SetKeySuspendedForGameplay(bool suspended)
+    {
+        if (keySuspendedForGameplay == suspended)
+            return;
+
+        keySuspendedForGameplay = suspended;
+
+        if (!IsSpawned)
+            return;
+
+        if (suspended)
+        {
+            DestroyKeyLight();
+            ConfigManager.WriteConsole($"{LogPrefix} key suspended for gameplay (ambient kept)");
+            return;
+        }
+
+        MRAutoLightingSettings.EnsureLoaded();
+        if (!MRAutoLightingSettings.Enabled)
+            return;
+
+        EnsureKeyLight();
+        ApplyIntensity(MRAutoLightingSettings.Intensity);
+        ConfigManager.WriteConsole($"{LogPrefix} key resumed after gameplay");
     }
 
     public void ApplyIntensity(float intensity)
@@ -88,8 +135,6 @@ public class MRMrEnvironmentLighting : MonoBehaviour
 
         if (keyLight != null)
             keyLight.intensity = intensity * keyRelative;
-        if (fillLight != null)
-            fillLight.intensity = intensity * fillRelative;
 
         ApplyAmbientFill(intensity);
     }
@@ -122,9 +167,11 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         ambientSaved = false;
     }
 
-    void CreateWrapLights()
+    void EnsureKeyLight()
     {
-        // Key + fill opposite each other, no shadows — models receive light from both hemispheres.
+        if (lightingRoot == null || keyLight != null)
+            return;
+
         var keyGo = new GameObject("MRGlobalKey");
         keyGo.transform.SetParent(lightingRoot.transform, false);
         keyGo.transform.localRotation = Quaternion.Euler(keyEulerAngles);
@@ -132,15 +179,14 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         keyLight.type = LightType.Directional;
         keyLight.color = lightColor;
         keyLight.shadows = LightShadows.Soft;
+    }
 
-        var fillGo = new GameObject("MRGlobalFill");
-        fillGo.transform.SetParent(lightingRoot.transform, false);
-        fillGo.transform.localRotation = Quaternion.Euler(keyEulerAngles) * Quaternion.Euler(0f, 180f, 0f);
-        fillLight = fillGo.AddComponent<Light>();
-        fillLight.type = LightType.Directional;
-        fillLight.color = lightColor;
-        // Fill only softens the dark side — keep shadows on the key so cabinets cast contact shadows.
-        fillLight.shadows = LightShadows.None;
+    void DestroyKeyLight()
+    {
+        if (keyLight == null)
+            return;
+
+        Destroy(keyLight.gameObject);
+        keyLight = null;
     }
 }
-

@@ -2,6 +2,7 @@
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -16,12 +17,18 @@ using UnityEngine.Serialization;
 ///  - Turning a sheet rotates the transform; mid-turn curl uses PageConeBend (_BendAmount) when pageMaterial has it.
 ///  - MagazinePaper is textures only (no vertex bend).
 ///  - A sheet is re-textured only after its turn finishes, while it is hidden.
-///  - Only 8 page textures live in memory at once (2 per sheet), so page count is unbounded.
+///  - Page textures are LRU-cached (decoded once); loads after a turn are spread across frames
+///    so Quest does not hitch or OOM on large JPEGs + mipmaps.
 /// </summary>
 [DisallowMultipleComponent]
 public class Magazine : MonoBehaviour
 {
     const string LogPrefix = "[Magazine]";
+    /// <summary>Cap decode size — full-res magazine scans + mipmaps OOM Quest after a few turns.</summary>
+    const int MaxPageTextureSize = 1536;
+    const int TextureCacheCapacity = 12;
+    /// <summary>Aniso 4 is enough at arm's length; 8 costs extra on Quest GPU.</summary>
+    const int PageTextureAniso = 4;
 
     [Header("Pages folder")]
     [Tooltip("Issue subfolder under MR/Magazines/. Used when Pages Folder Override is empty.")]
@@ -93,8 +100,16 @@ public class Magazine : MonoBehaviour
 
     readonly List<Texture2D> coverTextures = new List<Texture2D>();
     readonly List<Material> coverMaterials = new List<Material>();
+    readonly Dictionary<string, Texture2D> pageTextureCache = new Dictionary<string, Texture2D>(StringComparer.OrdinalIgnoreCase);
+    readonly LinkedList<string> pageTextureLru = new LinkedList<string>();
     Coroutine turnRoutine;
     Coroutine openRoutine;
+    Coroutine contentLoadRoutine;
+    bool deferContentLoading;
+    bool contentLoaded;
+    bool startCompleted;
+    bool openWhenContentReady;
+    bool asyncLoadRequestedBeforeStart;
 
     bool IsBusy => turnRoutine != null || openRoutine != null;
 
@@ -108,6 +123,72 @@ public class Magazine : MonoBehaviour
 
         BuildPageList();
         BuildLeaves();
+        startCompleted = true;
+
+        // A grab arrived while this shelf magazine was still dormant — begin
+        // the staged load now that the page structure exists.
+        if (asyncLoadRequestedBeforeStart)
+        {
+            asyncLoadRequestedBeforeStart = false;
+            BeginEnsureContentLoaded();
+            return;
+        }
+
+        if (deferContentLoading)
+            return;
+
+        LoadContentTextures();
+    }
+
+    /// <summary>
+    /// Skip cover/page texture decoding in <see cref="Start"/> until
+    /// <see cref="EnsureContentLoaded"/>. Used by shelf proxies so nine hidden
+    /// prepared magazines don't decode ~70 textures while docked.
+    /// Must be set right after Instantiate, before Start runs.
+    /// </summary>
+    public void SetDeferContentLoading(bool defer)
+    {
+        deferContentLoading = defer;
+    }
+
+    public void EnsureContentLoaded()
+    {
+        if (contentLoaded)
+            return;
+
+        // Called before Start ran — let Start do the full load instead.
+        if (!startCompleted)
+        {
+            deferContentLoading = false;
+            return;
+        }
+
+        LoadContentTextures();
+    }
+
+    /// <summary>
+    /// Loads a deferred shelf magazine over several frames, avoiding a large
+    /// decode burst on the frame in which the user grabs it.
+    /// </summary>
+    public void BeginEnsureContentLoaded()
+    {
+        if (contentLoaded || contentLoadRoutine != null)
+            return;
+
+        // Start has not run yet (component was disabled while docked) — the
+        // leaves/page list don't exist. Remember the request; Start honors it.
+        if (!startCompleted)
+        {
+            asyncLoadRequestedBeforeStart = true;
+            return;
+        }
+
+        contentLoadRoutine = StartCoroutine(LoadContentTexturesAsync());
+    }
+
+    void LoadContentTextures()
+    {
+        contentLoaded = true;
         LoadCovers();
 
         currentSpread = 0;
@@ -117,16 +198,43 @@ public class Magazine : MonoBehaviour
             FrontCover.localRotation = Quaternion.Euler(0f, 0f, 0f);
     }
 
+    IEnumerator LoadContentTexturesAsync()
+    {
+        yield return ApplyCoverTexturesAsync(
+            GetCoverRenderer(FrontCover),
+            insideFrontCoverImgName,
+            frontCoverImgName);
+        yield return ApplyCoverTexturesAsync(
+            GetCoverRenderer(BackCover),
+            insideBackCoverImgName,
+            backCoverImgName);
+
+        currentSpread = 0;
+        yield return ReconcileAsync();
+        contentLoaded = true;
+        contentLoadRoutine = null;
+
+        if (FrontCover != null)
+            FrontCover.localRotation = Quaternion.Euler(0f, 0f, 0f);
+
+        if (openWhenContentReady)
+        {
+            openWhenContentReady = false;
+            OpenMagazine();
+        }
+    }
+
     void OnDestroy()
     {
         if (turnRoutine != null) StopCoroutine(turnRoutine);
         if (openRoutine != null) StopCoroutine(openRoutine);
+        if (contentLoadRoutine != null) StopCoroutine(contentLoadRoutine);
 
         if (leaves != null)
         {
             for (int i = 0; i < leaves.Length; i++)
             {
-                leaves[i]?.DestroyTextures();
+                leaves[i]?.ReleaseTextureRefs();
                 leaves[i]?.DestroyPageMaterial();
 
                 // Destroy the runtime clones (index 0 is the template kept in the scene).
@@ -134,6 +242,8 @@ public class Magazine : MonoBehaviour
                     Destroy(leaves[i].Transform.gameObject);
             }
         }
+
+        ClearPageTextureCache();
 
         foreach (Texture2D texture in coverTextures)
         {
@@ -348,9 +458,35 @@ public class Magazine : MonoBehaviour
         renderer.materials = mats;
     }
 
+    IEnumerator ApplyCoverTexturesAsync(
+        Renderer renderer,
+        string frontImageName,
+        string backImageName)
+    {
+        if (renderer == null)
+            yield break;
+
+        Texture2D front = LoadAndTrackCoverTexture(frontImageName);
+        yield return null;
+        Texture2D back = LoadAndTrackCoverTexture(backImageName);
+        yield return null;
+        if (front == null && back == null)
+            yield break;
+
+        Material mat = CreateCoverMaterial(renderer);
+        coverMaterials.Add(mat);
+        ApplyPageTextures(mat, front, back);
+
+        Material[] mats = renderer.materials;
+        for (int i = 0; i < mats.Length; i++)
+            mats[i] = mat;
+        renderer.materials = mats;
+    }
+
     Texture2D LoadAndTrackCoverTexture(string imageName)
     {
-        Texture2D texture = LoadTexture(imageName);
+        // Covers stay outside the page LRU — they must survive many interior turns.
+        Texture2D texture = DecodePageTextureFromDisk(imageName);
         if (texture != null)
             coverTextures.Add(texture);
         return texture;
@@ -369,14 +505,15 @@ public class Magazine : MonoBehaviour
 
     // ------------------------------------------------------------------ navigation
 
-    public bool CanGoNextPage() => !IsBusy && currentSpread < logicalSheetCount;
-    public bool CanGoPreviousPage() => !IsBusy && currentSpread > 0;
+    public bool CanGoNextPage() => contentLoaded && !IsBusy && currentSpread < logicalSheetCount;
+    public bool CanGoPreviousPage() => contentLoaded && !IsBusy && currentSpread > 0;
 
     public void NextPage()
     {
         if (!CanGoNextPage())
             return;
 
+        EnsureContentLoaded();
         Leaf leaf = LeafForSheet(currentSpread);      // right-top sheet
         if (leaf == null)
             return;
@@ -391,6 +528,7 @@ public class Magazine : MonoBehaviour
         if (!CanGoPreviousPage())
             return;
 
+        EnsureContentLoaded();
         Leaf leaf = LeafForSheet(currentSpread - 1);   // left-top sheet
         if (leaf == null)
             return;
@@ -422,6 +560,10 @@ public class Magazine : MonoBehaviour
         lifted.y += sheetStackDepth * leaves.Length;
         leaf.Transform.localPosition = lifted;
 
+        // Decode the sheet that will enter the window after this turn, one face per frame.
+        int preloadSheet = spreadDelta > 0 ? currentSpread + 2 : currentSpread - 3;
+        int preloadPhase = 0;
+
         float elapsed = 0f;
         SetAngle(leaf, fromAngle);
         while (elapsed < pageTurnDurationSeconds)
@@ -432,6 +574,18 @@ public class Magazine : MonoBehaviour
             SetAngle(leaf, Mathf.Lerp(fromAngle, toAngle, smooth));
             // Shader bend peaks mid-turn; transform handles the main flip.
             SetPageBend(leaf, Mathf.Sin(smooth * Mathf.PI) * bendPeakAmount);
+
+            if (preloadPhase == 0)
+            {
+                PreloadSheetFace(preloadSheet, frontFace: true);
+                preloadPhase = 1;
+            }
+            else if (preloadPhase == 1)
+            {
+                PreloadSheetFace(preloadSheet, frontFace: false);
+                preloadPhase = 2;
+            }
+
             yield return null;
         }
         SetAngle(leaf, toAngle);
@@ -440,11 +594,18 @@ public class Magazine : MonoBehaviour
         leaf.Animating = false;
         currentSpread += spreadDelta;
 
-        // Textures are only touched here, after the animation, while sheets are settled.
-        Reconcile();
+        // Usually cache hits after preload; still yield so any miss cannot freeze a frame.
+        yield return ReconcileAsync();
 
         turnRoutine = null;
-        ConfigManager.WriteConsole($"{LogPrefix} spread {currentSpread}/{logicalSheetCount}");
+    }
+
+    void PreloadSheetFace(int sheet, bool frontFace)
+    {
+        if (sheet < 0 || sheet >= logicalSheetCount)
+            return;
+
+        LoadTexture(PageFile(sheet * 2 + (frontFace ? 0 : 1)));
     }
 
     // ------------------------------------------------------------------ recycling
@@ -459,16 +620,8 @@ public class Magazine : MonoBehaviour
             return;
 
         List<int> desired = DesiredSheets();
+        ReleaseLeavesOutside(desired);
 
-        // Release leaves no longer needed.
-        foreach (Leaf leaf in leaves)
-        {
-            if (!leaf.Animating && (leaf.Sheet < 0 || !desired.Contains(leaf.Sheet)))
-                leaf.Sheet = -1;
-        }
-
-        // Assign missing sheets to free leaves. Position each leaf UNDER its (already textured)
-        // top first, then swap its texture — so a texture change never happens on an exposed leaf.
         foreach (int sheet in desired)
         {
             if (LeafForSheet(sheet) != null)
@@ -480,11 +633,61 @@ public class Magazine : MonoBehaviour
 
             free.Sheet = sheet;
             free.Transform.gameObject.SetActive(true);
-            PositionLeaf(free);              // hide it behind the opaque top of its side
-            LoadSheetTextures(free, sheet);  // now the swap is covered and invisible
+            PositionLeaf(free);
+            LoadSheetTextures(free, sheet);
         }
 
-        // Position everything; park unused leaves.
+        PositionSettledLeaves();
+    }
+
+    /// <summary>Same as <see cref="Reconcile"/> but yields after each decode so the frame budget stays safe.</summary>
+    IEnumerator ReconcileAsync()
+    {
+        if (leaves == null || leaves.Length == 0)
+            yield break;
+
+        List<int> desired = DesiredSheets();
+        ReleaseLeavesOutside(desired);
+
+        foreach (int sheet in desired)
+        {
+            if (LeafForSheet(sheet) != null)
+                continue;
+
+            Leaf free = FreeLeaf();
+            if (free == null)
+                break;
+
+            free.Sheet = sheet;
+            free.Transform.gameObject.SetActive(true);
+            PositionLeaf(free);
+
+            free.ReleaseTextureRefs();
+            free.FrontTexture = LoadTexture(PageFile(sheet * 2));
+            yield return null;
+            free.BackTexture = LoadTexture(PageFile(sheet * 2 + 1));
+            if (free.PageMaterial != null)
+                ApplyPageTextures(free.PageMaterial, free.FrontTexture, free.BackTexture);
+            yield return null;
+        }
+
+        PositionSettledLeaves();
+    }
+
+    void ReleaseLeavesOutside(List<int> desired)
+    {
+        foreach (Leaf leaf in leaves)
+        {
+            if (!leaf.Animating && (leaf.Sheet < 0 || !desired.Contains(leaf.Sheet)))
+            {
+                leaf.Sheet = -1;
+                leaf.ReleaseTextureRefs();
+            }
+        }
+    }
+
+    void PositionSettledLeaves()
+    {
         foreach (Leaf leaf in leaves)
         {
             if (leaf.Animating)
@@ -588,7 +791,7 @@ public class Magazine : MonoBehaviour
 
     void LoadSheetTextures(Leaf leaf, int sheet)
     {
-        leaf.DestroyTextures();
+        leaf.ReleaseTextureRefs();
 
         leaf.FrontTexture = LoadTexture(PageFile(sheet * 2));
         leaf.BackTexture = LoadTexture(PageFile(sheet * 2 + 1));
@@ -617,6 +820,13 @@ public class Magazine : MonoBehaviour
         if (FrontCover == null)
             return;
 
+        if (!contentLoaded)
+        {
+            openWhenContentReady = true;
+            BeginEnsureContentLoaded();
+            return;
+        }
+
         if (openRoutine != null)
             StopCoroutine(openRoutine);
 
@@ -632,6 +842,40 @@ public class Magazine : MonoBehaviour
             StopCoroutine(openRoutine);
 
         openRoutine = StartCoroutine(AnimateCover(NormalizeZAngle(FrontCover.localEulerAngles.z), 0f));
+    }
+
+    /// <summary>
+    /// Closes a shelf magazine without destroying/recreating leaves or decoding
+    /// pages. Its current spread stays cached for the next pickup.
+    /// </summary>
+    public void DockOnShelf()
+    {
+        openWhenContentReady = false;
+
+        if (turnRoutine != null)
+        {
+            StopCoroutine(turnRoutine);
+            turnRoutine = null;
+        }
+
+        if (openRoutine != null)
+        {
+            StopCoroutine(openRoutine);
+            openRoutine = null;
+        }
+
+        if (leaves != null)
+        {
+            foreach (Leaf leaf in leaves)
+            {
+                if (leaf != null)
+                    leaf.Animating = false;
+            }
+            PositionSettledLeaves();
+        }
+
+        if (FrontCover != null)
+            FrontCover.localRotation = Quaternion.Euler(0f, 0f, 0f);
     }
 
     /// <summary>Destroys cloned sheets, returns to spread 0, and snaps the cover closed.</summary>
@@ -650,9 +894,14 @@ public class Magazine : MonoBehaviour
         }
 
         currentSpread = 0;
-        DestroyClonesKeepTemplate();
-        EnsurePhysicalSheetCount();
-        Reconcile();
+
+        // Content never decoded (deferred shelf magazine) — nothing to rebuild.
+        if (contentLoaded)
+        {
+            DestroyClonesKeepTemplate();
+            EnsurePhysicalSheetCount();
+            Reconcile();
+        }
 
         if (FrontCover != null)
             FrontCover.localRotation = Quaternion.Euler(0f, 0f, 0f);
@@ -668,7 +917,7 @@ public class Magazine : MonoBehaviour
         Leaf templateLeaf = leaves[0];
         templateLeaf.Animating = false;
         templateLeaf.Sheet = -1;
-        templateLeaf.DestroyTextures();
+        templateLeaf.ReleaseTextureRefs();
         templateLeaf.DestroyPageMaterial();
 
         for (int i = 1; i < leaves.Length; i++)
@@ -677,12 +926,15 @@ public class Magazine : MonoBehaviour
                 continue;
 
             leaves[i].Animating = false;
-            leaves[i].DestroyTextures();
+            leaves[i].Sheet = -1;
+            leaves[i].ReleaseTextureRefs();
             leaves[i].DestroyPageMaterial();
 
             if (leaves[i].Transform != null)
                 Destroy(leaves[i].Transform.gameObject);
         }
+
+        ClearPageTextureCache();
 
         Transform template = templateLeaf.Transform;
         if (template != null)
@@ -735,18 +987,188 @@ public class Magazine : MonoBehaviour
             return null;
         }
 
-        var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-        if (!texture.LoadImage(File.ReadAllBytes(path)))
+        if (pageTextureCache.TryGetValue(path, out Texture2D cached) && cached != null)
+        {
+            TouchPageTextureLru(path);
+            return cached;
+        }
+
+        Texture2D texture = DecodePageTextureAtPath(path);
+        if (texture == null)
+            return null;
+
+        CachePageTexture(path, texture);
+        return texture;
+    }
+
+    Texture2D DecodePageTextureFromDisk(string imageName)
+    {
+        if (string.IsNullOrWhiteSpace(imageName))
+            return null;
+
+        string path = Path.Combine(PagesFolder(), imageName.Trim());
+        if (!File.Exists(path))
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} image not found: {path}");
+            return null;
+        }
+
+        return DecodePageTextureAtPath(path);
+    }
+
+    Texture2D DecodePageTextureAtPath(string path)
+    {
+        byte[] bytes;
+        try
+        {
+            bytes = File.ReadAllBytes(path);
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"{LogPrefix} read failed: {path}", e);
+            return null;
+        }
+
+        // Prefer LoadImage straight into a mipmapped texture (no CPU pixel round-trip).
+        var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: true);
+        if (!texture.LoadImage(bytes))
         {
             Destroy(texture);
             ConfigManager.WriteConsoleWarning($"{LogPrefix} failed to decode: {path}");
             return null;
         }
 
+        int maxDim = Mathf.Max(texture.width, texture.height);
+        if (maxDim > MaxPageTextureSize)
+        {
+            Texture2D scaled = BuildDownsampledPageTexture(texture);
+            Destroy(texture);
+            texture = scaled;
+            if (texture == null)
+                return null;
+        }
+
+        texture.name = Path.GetFileNameWithoutExtension(path);
         texture.wrapMode = TextureWrapMode.Clamp;
         texture.filterMode = FilterMode.Trilinear;
-        texture.anisoLevel = 3;
+        texture.anisoLevel = PageTextureAniso;
         return texture;
+    }
+
+    /// <summary>Downsample oversized scans into a mipmapped GPU texture (readable discarded).</summary>
+    static Texture2D BuildDownsampledPageTexture(Texture2D source)
+    {
+        if (source == null)
+            return null;
+
+        int srcW = source.width;
+        int srcH = source.height;
+        int maxDim = Mathf.Max(srcW, srcH);
+        float scale = maxDim > MaxPageTextureSize ? (float)MaxPageTextureSize / maxDim : 1f;
+        int dstW = Mathf.Max(1, Mathf.RoundToInt(srcW * scale));
+        int dstH = Mathf.Max(1, Mathf.RoundToInt(srcH * scale));
+
+        if (dstW == srcW && dstH == srcH)
+            return null;
+
+        Color32[] pixels = DownsampleNearest(source.GetPixels32(), srcW, srcH, dstW, dstH);
+        var texture = new Texture2D(dstW, dstH, TextureFormat.RGBA32, mipChain: true);
+        texture.SetPixels32(pixels);
+        texture.Apply(updateMipmaps: true, makeNoLongerReadable: true);
+        return texture;
+    }
+
+    static Color32[] DownsampleNearest(Color32[] src, int srcW, int srcH, int dstW, int dstH)
+    {
+        var dst = new Color32[dstW * dstH];
+        for (int y = 0; y < dstH; y++)
+        {
+            int srcY = y * srcH / dstH;
+            int srcRow = srcY * srcW;
+            int dstRow = y * dstW;
+            for (int x = 0; x < dstW; x++)
+                dst[dstRow + x] = src[srcRow + (x * srcW / dstW)];
+        }
+        return dst;
+    }
+
+    void CachePageTexture(string path, Texture2D texture)
+    {
+        if (string.IsNullOrEmpty(path) || texture == null)
+            return;
+
+        if (pageTextureCache.TryGetValue(path, out Texture2D existing) && existing != null && existing != texture)
+            Destroy(existing);
+
+        pageTextureCache[path] = texture;
+        TouchPageTextureLru(path);
+        EvictPageTextureCacheIfNeeded();
+    }
+
+    void TouchPageTextureLru(string path)
+    {
+        LinkedListNode<string> node = pageTextureLru.Find(path);
+        if (node != null)
+            pageTextureLru.Remove(node);
+        pageTextureLru.AddFirst(path);
+    }
+
+    void EvictPageTextureCacheIfNeeded()
+    {
+        while (pageTextureCache.Count > TextureCacheCapacity && pageTextureLru.Count > 0)
+        {
+            string oldest = pageTextureLru.Last.Value;
+            if (IsPageTextureAssignedToLeaf(oldest))
+            {
+                // Keep in-use textures; rotate to front so we try another candidate next.
+                pageTextureLru.RemoveLast();
+                pageTextureLru.AddFirst(oldest);
+                break;
+            }
+
+            pageTextureLru.RemoveLast();
+            if (pageTextureCache.TryGetValue(oldest, out Texture2D tex))
+            {
+                pageTextureCache.Remove(oldest);
+                if (tex != null)
+                    Destroy(tex);
+            }
+        }
+    }
+
+    bool IsPageTextureAssignedToLeaf(string path)
+    {
+        if (leaves == null || !pageTextureCache.TryGetValue(path, out Texture2D tex) || tex == null)
+            return false;
+
+        for (int i = 0; i < leaves.Length; i++)
+        {
+            Leaf leaf = leaves[i];
+            if (leaf == null)
+                continue;
+            if (leaf.FrontTexture == tex || leaf.BackTexture == tex)
+                return true;
+        }
+
+        return false;
+    }
+
+    void ClearPageTextureCache()
+    {
+        foreach (KeyValuePair<string, Texture2D> pair in pageTextureCache)
+        {
+            if (pair.Value != null)
+                Destroy(pair.Value);
+        }
+
+        pageTextureCache.Clear();
+        pageTextureLru.Clear();
+
+        if (leaves == null)
+            return;
+
+        for (int i = 0; i < leaves.Length; i++)
+            leaves[i]?.ReleaseTextureRefs();
     }
 
     void ApplyTexture(Material material, Texture2D texture, bool frontSide)
@@ -910,10 +1332,8 @@ public class Magazine : MonoBehaviour
             PivotX = pivotX;
         }
 
-        public void DestroyTextures()
+        public void ReleaseTextureRefs()
         {
-            if (FrontTexture != null) Object.Destroy(FrontTexture);
-            if (BackTexture != null) Object.Destroy(BackTexture);
             FrontTexture = null;
             BackTexture = null;
         }
@@ -921,7 +1341,7 @@ public class Magazine : MonoBehaviour
         public void DestroyPageMaterial()
         {
             if (PageMaterial != null)
-                Object.Destroy(PageMaterial);
+                UnityEngine.Object.Destroy(PageMaterial);
             PageMaterial = null;
         }
     }

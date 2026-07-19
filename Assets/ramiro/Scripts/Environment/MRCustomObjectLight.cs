@@ -36,7 +36,8 @@ public class MRCustomObjectLight : MonoBehaviour
         attachedLight.range = Mathf.Max(0.01f, config.Range > 0f ? config.Range : 4f);
         attachedLight.color = config.Color != null ? config.Color.ToColor() : Color.white;
         attachedLight.useColorTemperature = false;
-        attachedLight.shadows = config.Shadows ? LightShadows.Soft : LightShadows.None;
+        // Custom lights illuminate only; the global MR key light owns all realtime shadows.
+        attachedLight.shadows = LightShadows.None;
 
         if (lightType == LightType.Spot)
         {

@@ -17,6 +17,12 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
     static readonly string[] GrabInteractionLayers = { "InteractablePart" };
     const string GrabPhysicsLayerName = "InteractablePart";
     static readonly Quaternion ShelfDockLocalRotation = Quaternion.Euler(-80f, 0f, 0f);
+    /// <summary>Shelf proxy covers are small on screen; 1024 halves memory vs the page cap.</summary>
+    const int ProxyCoverMaxTextureSize = 1024;
+    /// <summary>Frames between each slot's texture decode burst (lets deferred Destroys run).</summary>
+    const int PrepareStaggerFrames = 3;
+    /// <summary>Next frame free for a proxy to run its decode burst (shared across slots).</summary>
+    static int nextPrepareFrame;
 
     string issueName;
     XRSimpleInteractable interactable;
@@ -37,8 +43,37 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
     {
         issueName = configuredIssueName;
         CacheVisualsAndColliders();
-        ApplyProxyCoverTextures();
         DisableProxyInteraction();
+        ShowProxyRenderers();
+
+        // Decoding covers + preparing the magazine for all nine slots in one
+        // frame OOM-killed the app on Quest (temp full-res textures are only
+        // freed at end of frame). Stagger the heavy work a few frames apart.
+        if (gameObject.activeInHierarchy)
+        {
+            StartCoroutine(PrepareStaggered());
+            return;
+        }
+
+        FinishPrepare();
+    }
+
+    IEnumerator PrepareStaggered()
+    {
+        int targetFrame = Mathf.Max(Time.frameCount + 1, nextPrepareFrame);
+        nextPrepareFrame = targetFrame + PrepareStaggerFrames;
+        while (Time.frameCount < targetFrame)
+            yield return null;
+
+        ApplyProxyCoverTextures();
+        yield return null;
+        FinishPrepare();
+    }
+
+    void FinishPrepare()
+    {
+        if (frontCoverTexture == null && backCoverTexture == null)
+            ApplyProxyCoverTextures();
         EnsurePreparedMagazine();
         RestoreProxyVisuals();
     }
@@ -56,7 +91,8 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
     public void ShowProxyAndLeaveMagazineInWorld()
     {
         magazineLooseInWorld = true;
-        ShowProxyRenderers();
+        // Keep the shelf slot visually empty while the physical magazine is loose.
+        // The static proxy is restored only when the magazine returns to its dock.
 
         if (preparedMagazineRoot == null)
             return;
@@ -180,6 +216,7 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
         if (preparedMagazineRoot == null)
             return;
 
+        SetPreparedMagazineDormant(false);
         bool wasLooseInWorld = magazineLooseInWorld;
         magazineLooseInWorld = false;
         preparedMagazineRoot.SetActive(true);
@@ -215,8 +252,10 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
             return;
         }
 
-        frontCoverTexture = MRMagazineCatalog.LoadPageTextureByFileName(issueName, definition.GetFrontCover());
-        backCoverTexture = MRMagazineCatalog.LoadPageTextureByFileName(issueName, definition.GetBackCover());
+        frontCoverTexture = MRMagazineCatalog.LoadPageTextureByFileName(
+            issueName, definition.GetFrontCover(), ProxyCoverMaxTextureSize);
+        backCoverTexture = MRMagazineCatalog.LoadPageTextureByFileName(
+            issueName, definition.GetBackCover(), ProxyCoverMaxTextureSize);
 
         bool appliedNamedCovers = false;
         Transform frontCover = FindChildByName("FrontCover") ?? FindChildByName("LeftCover");
@@ -372,6 +411,11 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
             Transform parent = transform.parent != null ? transform.parent : transform;
             preparedMagazineRoot = Instantiate(magazinePrefab, transform.position, transform.rotation, parent);
             preparedMagazineRoot.name = $"{MREnvironmentCatalog.MagazinePrefabName}_{issueName}_Prepared";
+
+            // Docked magazines stay invisible — decode their textures only when
+            // shown/grabbed (nine eager loads OOM-killed the app on Quest).
+            Magazine deferredMagazine = preparedMagazineRoot.GetComponent<Magazine>();
+            deferredMagazine?.SetDeferContentLoading(true);
         }
 
         Magazine magazine = preparedMagazineRoot.GetComponent<Magazine>();
@@ -413,17 +457,46 @@ public class MRBookshelfMagazineProxy : MonoBehaviour
         ApplyDockPose(worldPositionStays: false);
 
         Magazine magazine = preparedMagazineRoot.GetComponent<Magazine>();
-        magazine?.ResetMagazine();
+        magazine?.DockOnShelf();
 
         SetMagazineVisualState(show: false);
         preparedMagazineGrab?.NotifyPlacementPoseUpdated();
+        SetPreparedMagazineDormant(true);
         StartCoroutine(RehidePreparedMagazineNextFrame());
+    }
+
+    /// <summary>
+    /// While docked, retain only XRGrabInteractable/Rigidbody/colliders so the
+    /// user can take the issue. Magazine page logic and follow scripts do not
+    /// receive per-frame callbacks until the issue leaves the shelf.
+    /// </summary>
+    void SetPreparedMagazineDormant(bool dormant)
+    {
+        if (preparedMagazineRoot == null)
+            return;
+
+        Magazine magazine = preparedMagazineRoot.GetComponent<Magazine>();
+        if (magazine != null)
+            magazine.enabled = !dormant;
+
+        if (preparedMagazineGrab != null)
+            preparedMagazineGrab.enabled = !dormant;
+
+        MRCustomObjectGrab customGrab = preparedMagazineRoot.GetComponent<MRCustomObjectGrab>();
+        if (customGrab != null)
+            customGrab.enabled = !dormant;
     }
 
     void SetMagazineVisualState(bool show)
     {
         if (preparedMagazineRoot == null)
             return;
+
+        if (show)
+        {
+            Magazine magazine = preparedMagazineRoot.GetComponent<Magazine>();
+            magazine?.BeginEnsureContentLoaded();
+        }
 
         SetPreparedPageObjectsActive(show);
 

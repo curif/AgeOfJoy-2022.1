@@ -324,6 +324,39 @@ public class MREnvironmentRegistry : MonoBehaviour
         return layout?.CountByCatalogEntry(entry) ?? 0;
     }
 
+    /// <summary>Total placed bookshelves in the MR layout (menu allows at most one).</summary>
+    public int GetBookshelfInstanceCount()
+    {
+        EnsureLayoutLoaded();
+        if (layout == null)
+            return 0;
+
+        int count = 0;
+        foreach (MREnvironmentPlacement placement in layout.GetProps())
+        {
+            if (placement != null && placement.IsBookshelfSource)
+                count++;
+        }
+
+        return count;
+    }
+
+    /// <summary>First placed bookshelf regardless of its stored issue list.</summary>
+    public MREnvironmentPlacement FindFirstBookshelfPlacement()
+    {
+        EnsureLayoutLoaded();
+        if (layout == null)
+            return null;
+
+        foreach (MREnvironmentPlacement placement in layout.GetProps())
+        {
+            if (placement != null && placement.IsBookshelfSource)
+                return placement;
+        }
+
+        return null;
+    }
+
     public bool CanAddAnotherInstance(MREnvironmentCatalogEntry entry) =>
         !string.IsNullOrEmpty(entry.Key);
 
@@ -729,6 +762,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         layout.Save(LayoutFilePath);
 
         ApplyRootScaleAfterFinalize(root, placement);
+        MRShadowCasterPolicy.Apply(root);
         // Placement ray moves the root after grab Configure/Start captured home — refresh dock pose
         // so returnOnRelease snaps to the confirmed position, not the initial spawn pose.
         NotifyPortableGamesPlacementUpdated(root);
@@ -888,6 +922,7 @@ public class MREnvironmentRegistry : MonoBehaviour
 
         ApplyRootScaleAfterSpawn(root, placement);
         ApplyStoredLightSettings(root, placement);
+        MRShadowCasterPolicy.Apply(root);
         NotifyPortableGamesPlacementUpdated(root);
 
         MRPlacedEnvironment marker = root.GetComponent<MRPlacedEnvironment>();

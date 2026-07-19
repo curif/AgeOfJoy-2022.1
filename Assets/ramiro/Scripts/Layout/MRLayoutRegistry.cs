@@ -875,6 +875,7 @@ public class MRLayoutRegistry : MonoBehaviour
         spawnedRoot = cabinet.gameObject;
         DisableAutoFloorSnap(spawnedRoot);
         spawnedRoot.transform.localScale = Vector3.one * MRAdjustmentsSettings.CabinetScale;
+        MRShadowCasterPolicy.Apply(spawnedRoot);
         MRGameCabinetAttractSetup.AttachAttractZone(
             spawnedRoot, cabinet, cabInfo, cabinetDBName, index, facingAxis);
 
@@ -956,6 +957,7 @@ public class MRLayoutRegistry : MonoBehaviour
         result.Root = cabinet.gameObject;
         DisableAutoFloorSnap(result.Root);
         result.Root.transform.localScale = Vector3.one * MRAdjustmentsSettings.CabinetScale;
+        MRShadowCasterPolicy.Apply(result.Root);
         MRGameCabinetAttractSetup.AttachAttractZone(
             result.Root, cabinet, cabInfo, cabinetDBName, index, facingAxis);
 
