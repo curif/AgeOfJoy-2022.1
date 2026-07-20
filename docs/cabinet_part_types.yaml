@@ -45,6 +45,20 @@ materials:
     description: Clean glass
     asset: Assets/Resources/Cabinets/Materials/GlassClean.mat
     shader: Unity built-in Standard
+  - name: flipbook
+    description: Animated material; plays a grid of frames (atlas) from the part's art texture
+    asset: Assets/Resources/Cabinets/Materials/Flipbook.mat
+    shader: Assets/Resources/Cabinets/Materials/FlipbookShader.shader
+    properties:
+      smoothness: _Glossiness       # default 0
+      metallic: _Metallic           # default 0
+      color: _Color                 # tint, default white
+      columns: _Columns             # atlas columns, 1-16, default 4
+      rows: _Rows                   # atlas rows, 1-16, default 4
+      speed: _Speed                 # playback fps, 0.5-60, default 12
+      pingpong: _Pingpong           # 0 = loop, 1 = back-and-forth, default 0
+      emission-strength: _EmissionStrength  # 0-1 crossfade, 1 = fully self-lit, default 0
+    notes: Must be a power of two texture! Opaque only, no transparency. Emission is a diffuse/emissive crossfade, not additive.
   - name: Vertex Color
     description: Vertex-color-driven material with normal map
     asset: Assets/Resources/Cabinets/Materials/Base_VertexColor_Normal.mat
