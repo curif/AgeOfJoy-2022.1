@@ -357,6 +357,13 @@ public class ConfigurationController : MonoBehaviour
 
         ControlMapConfiguration conf = new DefaultControlMap();
 #if UNITY_EDITOR
+        // DefaultControlMap already binds these directions to other keys (e.g. JOYPAD_LEFT to
+        // KEYBOARD_D). Clear them first so the WASD test bindings below don't end up sharing a
+        // key with a different direction (D would otherwise fire both JOYPAD_LEFT and JOYPAD_RIGHT).
+        conf.RemoveMaps(LC.JOYPAD_UP);
+        conf.RemoveMaps(LC.JOYPAD_DOWN);
+        conf.RemoveMaps(LC.JOYPAD_LEFT);
+        conf.RemoveMaps(LC.JOYPAD_RIGHT);
         conf.AddMap(LC.JOYPAD_UP, CM.KEYBOARD_W);
         conf.AddMap(LC.JOYPAD_DOWN, CM.KEYBOARD_S);
         conf.AddMap(LC.JOYPAD_LEFT, CM.KEYBOARD_A);
