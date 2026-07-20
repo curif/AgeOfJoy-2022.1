@@ -535,6 +535,17 @@ public class basicAGE : MonoBehaviour
         }
         if (events != null)
         {
+            foreach (Event evt in events)
+            {
+                try
+                {
+                    evt.Dispose();
+                }
+                catch (Exception e)
+                {
+                    ConfigManager.WriteConsoleException($"[BasicAGE.Shutdown] error disposing event:{evt.eventInformation.name} / {evt.eventInformation.eventId}", e);
+                }
+            }
             events.Clear();
             configCommands.events = events;
         }

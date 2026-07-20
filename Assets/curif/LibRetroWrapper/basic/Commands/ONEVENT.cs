@@ -6,6 +6,7 @@ class CommandONEVENT : CommandBase
 {
     CommandExpression eventConfigExpr;
     CommandExpression jumpLineExpr;
+    CommandExpression nameExpr;
     EventInformation info = new();
 
     public CommandONEVENT(ConfigurationCommands config) : base(config)
@@ -17,7 +18,7 @@ class CommandONEVENT : CommandBase
 
     public override bool Parse(TokenConsumer tokens)
     {
-        // ONEVENT ONTIMER(5) GOTO 100
+        // ONEVENT ONTIMER(5) GOTO 100 [NAME "id"]
         info.program = config.ProgramName;
 
         eventConfigExpr.Parse(tokens);
@@ -27,7 +28,14 @@ class CommandONEVENT : CommandBase
         tokens++;
 
         jumpLineExpr.Parse(tokens);
-        
+
+        if (tokens.Token.ToUpper() == "NAME")
+        {
+            tokens++;
+            nameExpr = new(config);
+            nameExpr.Parse(tokens);
+        }
+
         return true;
     }
 
@@ -46,6 +54,13 @@ class CommandONEVENT : CommandBase
         info.eventId = configVal[1].GetString();
         BasicValue lineVal = jumpLineExpr.Execute(vars);
         info.line = (int)lineVal.GetValueAsNumber();
+
+        if (nameExpr != null)
+        {
+            BasicValue nameVal = nameExpr.Execute(vars);
+            FunctionHelper.ExpectedString(nameVal, $"- NAME for {CmdToken}");
+            info.name = nameVal.GetString();
+        }
 
         // Specific field mapping from array
         switch (info.eventId)
@@ -99,6 +114,11 @@ class CommandONEVENT : CommandBase
                 // ["CONFIG-EVENT", "on-led-change", ledIndex, varName]
                 info.ledIndex = (int)configVal[2].GetValueAsNumber();
                 info.varName = configVal[3].GetString();
+                break;
+            case "on-custom":
+                // ["CONFIG-EVENT", "on-custom", name] - explicit NAME clause (if present) wins
+                if (nameExpr == null)
+                    info.name = configVal[2].GetString();
                 break;
         }
 

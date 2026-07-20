@@ -40,6 +40,23 @@ class CommandFunctionEVENTTRIGGER : CommandFunctionSingleExpressionBase
     }
 }
 
+class CommandFunctionONCUSTOM : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionONCUSTOM(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "ONCUSTOM";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        BasicValue name = expr.Execute(vars);
+        FunctionHelper.ExpectedString(name, $"{cmdToken} - event name must be a string");
+
+        List<object> list = new List<object> { "CONFIG-EVENT", "on-custom", name.GetString() };
+        return new BasicValue(list);
+    }
+}
+
 class CommandFunctionONTIMER : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionONTIMER(ConfigurationCommands config) : base(config)

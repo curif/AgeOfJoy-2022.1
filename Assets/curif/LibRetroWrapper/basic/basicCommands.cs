@@ -283,7 +283,9 @@ public static class Commands
 
         //EVENTS
         commands["ONEVENT"] = typeof(CommandONEVENT);
+        commands["OFFEVENT"] = typeof(CommandOFFEVENT);
         functions["EVENTTRIGGER"] = typeof(CommandFunctionEVENTTRIGGER);
+        functions["ONCUSTOM"] = typeof(CommandFunctionONCUSTOM);
         functions["ONTIMER"] = typeof(CommandFunctionONTIMER);
         functions["ONCONTROL"] = typeof(CommandFunctionONCONTROL);
         functions["ONTOUCH"] = typeof(CommandFunctionONTOUCH);

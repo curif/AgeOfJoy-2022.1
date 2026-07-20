@@ -44,7 +44,7 @@ This class manages the lifecycle of AGEBasic scripts attached to a specific arca
   - `OnPlayerGrabStartEvent`, `OnPlayerGrabEndEvent` (VR Hand interactions - Select)
   - `OnCustom` (Programmatically triggered events)
 - **Condition Evaluation:** Before an event script runs, its optional `when` clause is evaluated, supporting logical structures (`and`, `or`, and variable comparisons).
-- **Sub-script isolation:** When an event is triggered, it runs its specified script using a dedicated `Event.PrepareToRun()` call, ensuring isolated execution environments based on the cabinet's `BasicVars` state.
+- **Shared variable space, isolated control flow:** When an event is triggered, it runs its specified script using a dedicated `Event.PrepareToRun()` call, which gives it its own execution pointer and call stack (`Gosub`), but the `BasicVars` reference is not copied — it is the *same* `BasicVars` instance held by `CabinetAGEBasic.vars`. So execution state (current line, `GOSUB` stack) is isolated per event/program, but variable values are shared with every other program running for that cabinet. See "Shared Variable Space Across Executions" below.
 
 ### `AGEBasicScreenController.cs` and `AGEBasicCabinetController.cs`
 Both scripts share a lot of DNA, specifically in how they connect the basicAGE engine to Unity's ecosystem. However, they serve two distinct types of arcade cabinets, which leads to several key operational differences.
@@ -99,6 +99,23 @@ Passed to almost every object in the interpreter. Holds the current state of exe
    - A command explicitly yields (e.g., `SLEEP` returns a `WaitForSeconds`).
    - The program ends or faults.
 4. **Variable State:** Variables (`BasicValue`) are dynamically typed and can hold Numbers (doubles), Strings, or Arrays of `BasicValue`. They are stored in a `BasicVars` dictionary and implicitly declared upon first assignment (arrays require `DIM`).
+
+### Shared Variable Space Across Executions
+
+**All AGEBasic programs running for a given cabinet share a single `BasicVars` instance — there is no per-program or per-event variable isolation.**
+
+`CabinetAGEBasic` owns exactly one `BasicVars vars` field, created once (`CabinetAGEBasic.cs`) and reused for the lifetime of the cabinet (only repopulated by `IngestVariables`, never replaced). Every execution path shares it by reference rather than copying it:
+
+- **Insert-coin / setup script:** `ExecInsertCoinBas()` → `execute()` calls `AGEBasic.Run(prgName, vars, ...)`, passing the cabinet's `vars` directly.
+- **`ONEVENT` handlers:** `RegisterYamlEvents()` constructs each `Event` via `EventsFactory.Factory(info, vars, AGEBasic)`, storing the same `vars` reference on the `Event`. When the event fires, `basicAGE.RunEvents()` runs the event's program with that same `Event.vars` object — not a copy.
+- **`RUN` command:** In `basicAGE.runNextLineCurrentProgram`, the sub-program is prepared with `newProg.PrepareProgramToRun(running.Vars, line)`. Inside `AGEProgram.PrepareProgramToRun`, when a non-null `pvars` is passed, the program's `vars` field is simply reassigned to that object (`vars = pvars;`) rather than cloned. A fresh `BasicVars()` is only created when `Run()` is invoked with `pvars == null` (top-level/standalone execution with no explicit vars, e.g. editor-mode test runs).
+
+**Practical consequences:**
+- `LET X = 5` in the setup script is immediately visible to any `ONEVENT` handler that fires afterward, and to any program invoked via `RUN`.
+- A `RUN`-called sub-program can set a variable and the caller will see the new value once `RUN` returns — popping the program context (`PopProgramState`) restores the call stack and line pointer, but never touches `vars`.
+- Arrays (`DIM`) are shared by reference as well, since they live in the same underlying dictionary.
+- Because of this sharing, event handlers and `RUN` sub-programs must be written defensively: use distinct variable names to avoid accidental collisions with other events/programs on the same cabinet, and don't assume a variable starts uninitialized just because a new event fired or a new program was `RUN`.
+- `Shutdown()`/`ResetState(true)` clears the program-context stack and registered events but does **not** clear `vars` — stale values can persist across an `afterInsertCoin` restart unless variables are explicitly reset via YAML re-ingestion (`IngestVariables`).
 
 ## 3. Unity & VR Integration
 

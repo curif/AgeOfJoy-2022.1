@@ -28,6 +28,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 *   **Arrays:** Must be declared before use with `DIM`. 
     *   Example: `10 DIM MYARRAY[10, 5]`
     *   Access: `20 LET MYARRAY[0, 1] = 50`
+*   **Shared Variable Space:** All programs executed for a given cabinet — the initial setup/insert-coin script, every `ONEVENT` handler, and every program launched via `RUN` — read and write the **same** variable space. There is no per-event or per-subprogram isolation: a `LET X = 5` in one script is immediately visible to an event handler that fires afterward, or to a program invoked with `RUN`. Values set by a `RUN`-called sub-program are still visible in the caller after the sub-program finishes and control returns. Arrays are shared by reference too. Do not rely on a fresh/empty variable space when an event triggers or when `RUN` is used — pick variable names that will not collide with other events/programs running on the same cabinet.
 
 ### Operators
 *   **Math:** `+`, `-`, `*`, `/`
@@ -63,7 +64,8 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 | **READ** | `READ "listName", var1, var2...` | Reads sequential data from a named list into variables. |
 | **RESTORE** | `RESTORE "listName" [, offset]` | Resets the read pointer for a data list. |
 | **RUN** | `RUN "path/to/myprogram.bas" [LINE 30]` | Executes another program (switches context). |
-| **ONEVENT** | `ONEVENT configFunc() GOTO line` | Registers a dynamic event handler. |
+| **ONEVENT** | `ONEVENT configFunc() GOTO line [NAME "id"]` | Registers a dynamic event handler. Optional `NAME` labels it so it can later be removed with `OFFEVENT`. |
+| **OFFEVENT** | `OFFEVENT "id"` | Unregisters every `ONEVENT` handler previously registered with a matching `NAME`. No-op (removes nothing) if no handler has that name. |
 
 ---
 
@@ -72,7 +74,7 @@ Do not invent commands. Do not use features like `GOTO` with string labels (only
 AGEBasic supports an event-driven model allowing scripts to respond to VR interactions, timers, and system triggers in the background.
 
 ### Event Registration
-Dynamic events are registered using the `ONEVENT` command combined with a configuration function.
+Dynamic events are registered using the `ONEVENT` command combined with a configuration function. `ONEVENT` accepts an optional trailing `NAME "id"` clause: `ONEVENT configFunc() GOTO line NAME "id"`. Naming a handler lets it be removed later with `OFFEVENT` without touching any other registered event. Handlers registered without `NAME` cannot be targeted by `OFFEVENT`.
 
 *   `ONEVENT ONTIMER(seconds) GOTO line`: Triggers every X seconds.
 *   `ONEVENT ONCONTROL("ID", type, [port]) GOTO line`: Triggers on input. 
@@ -104,6 +106,23 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
 
 ### Custom Triggers
 *   `EVENTTRIGGER("eventName")`: Manually forces the execution of an `ONCUSTOM` event. (Used as a function, e.g., `CALL EVENTTRIGGER("Explosion")`).
+
+### Unregistering Events
+`OFFEVENT "id"` is a command (statement form, no parentheses, no `CALL` — like `ONEVENT`) that removes every registered event whose `NAME` matches `"id"`. It's a lighter-weight alternative to `SHUTDOWN` when you only want to stop one handler without killing the whole event loop, background program state, files, or sprites.
+
+*   Only affects events registered with a matching `NAME` — events registered without `NAME` are never removed.
+*   Name matching is **case-sensitive**.
+*   Removes **all** handlers sharing that name (useful if a script re-registers the same named event without cleaning up first).
+*   Silent: there's no return value to check (it's a command, not a function) — a nonexistent name simply removes nothing.
+
+```basic
+10 ONEVENT ONTIMER(1) GOTO 100 NAME "blink"
+20 END
+
+100 REM ... blink logic ...
+110 IF DONE = 1 THEN OFFEVENT "blink"
+120 END
+```
 
 ---
 
@@ -151,6 +170,19 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
 *   `FILECLOSE(fileHandle)`: Closes an open file handle.
 *   `GETFILES(path, separator, orderType)` / `GETFILESARRAY(path, orderType)`: List files in a directory. `orderType`: `0`=alphabetic, `1`=random, `2`=creation date old→new, `3`=creation date new→old.
 *   `COMBINEPATH(path1, path2)`: Joins two path segments into one, sandboxed to the app's base directory.
+
+### Path Functions
+No-argument functions returning standard device folders. Use with `COMBINEPATH()` and `GETFILES`/`GETFILESARRAY` to build portable paths.
+
+*   `ROOTPATH()`: The app's base data folder (all other paths below live under this one).
+*   `CONFIGPATH()`: The configuration folder.
+*   `AGEBASICPATH()`: Folder for standalone AGEBasic scripts/assets (also used as the base for Configuration Room scripts).
+*   `CABINETSPATH()`: Folder holding compressed cabinet packages (`.zip`).
+*   `CABINETSDBPATH()`: Folder holding uncompressed/installed cabinets.
+*   `CABINETPATH()`: The current cabinet's own files folder. Only valid inside an AGEBasic program running in a cabinet — throws otherwise.
+*   `MUSICPATH()`: Folder for the Global Music Player (JukeBox) files (see §8.2).
+*   `DEBUGPATH()`: Folder for debug output/logs.
+*   `VIDEOPATH()`: Folder for video playback files (see §9).
 
 ---
 
