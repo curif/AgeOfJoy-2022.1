@@ -112,4 +112,32 @@ public class TeleportationController : MonoBehaviour
         yield break;
     }
 
+#if UNITY_EDITOR
+    public void EditorTeleportToWorkshop()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("[TeleportationController] Teleport To Workshop only works in Play mode.");
+            return;
+        }
+
+        GameObject roomInit = GameObject.Find("FixedObject");
+        SceneDatabase sceneDatabase = roomInit != null ? roomInit.GetComponent<SceneDatabase>() : null;
+        if (sceneDatabase == null)
+        {
+            Debug.LogError("[TeleportationController] Teleport To Workshop, SceneDatabase not found (GameObject 'FixedObject').");
+            return;
+        }
+
+        SceneDocument workshop = sceneDatabase.FindByName("workshop");
+        if (workshop == null)
+        {
+            Debug.LogError("[TeleportationController] Teleport To Workshop, scene 'workshop' not found in SceneDatabase.");
+            return;
+        }
+
+        Teleport(workshop, new SceneReference[0]);
+    }
+#endif
+
 }
