@@ -391,7 +391,7 @@ public class AGEProgram
         // Force an END command at the very end of the program.
         ProcessCommand((int)currentLineNumber + 1, "END", config, filePath);
     }
-    bool AllowedAtFirst(ICommandBase cmd) => (cmd != null || cmd.Type == CommandType.Type.Command /*|| cmd.Type == CommandType.Type.Function*/);
+    bool AllowedAtFirst(ICommandBase cmd) => (cmd != null && cmd.Type == CommandType.Type.Command /*|| cmd.Type == CommandType.Type.Function*/);
     private void ProcessCommand(int lineNumber, string command, ConfigurationCommands config, string filePath)
     {
         lastLineNumberParsed = lineNumber;
