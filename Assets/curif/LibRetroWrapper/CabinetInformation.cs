@@ -17,6 +17,7 @@ public class CabinetInformation
 {
     public string name;
     public string rom;
+    public string author="";
     public List<string> roms;
     public List<Part> Parts { get; set; }
     public CRT crt; // = new CRT();

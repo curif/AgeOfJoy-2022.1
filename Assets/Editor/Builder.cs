@@ -41,11 +41,17 @@ class AndroidBuilder
             buildPath = outputPathArg.Split('=')[1];
         }
 
+        BuildOptions options = BuildOptions.None;
+        if (args.FirstOrDefault(arg => arg.StartsWith("-development")) != null)
+        {
+            options = BuildOptions.Development | BuildOptions.ConnectWithProfiler | BuildOptions.AllowDebugging;
+        }
+
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
         buildPlayerOptions.scenes = scenes;
         buildPlayerOptions.locationPathName = $"{buildPath}/AgeOfJoy.apk";
         buildPlayerOptions.target = BuildTarget.Android;
-        buildPlayerOptions.options = BuildOptions.None;
+        buildPlayerOptions.options = options;
         BuildPipeline.BuildPlayer(buildPlayerOptions);
     }
 }
