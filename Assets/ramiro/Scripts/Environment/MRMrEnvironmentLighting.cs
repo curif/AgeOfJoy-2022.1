@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 /// <summary>
 /// MR global fill lighting — neutral white wrap so every virtual object is lit from all sides.
 /// Uses strong ambient + one directional key light with soft shadows.
+/// Clears VR skybox / default reflection cubemap so glossy cabinets do not mirror the arcade.
 /// Toggle + intensity via CONFIG → GLOBAL LIGHT. Catalog point lights stay separate.
 /// Key light can be suspended while a Libretro game runs (ambient stays).
 /// </summary>
@@ -29,6 +30,13 @@ public class MRMrEnvironmentLighting : MonoBehaviour
     Color savedAmbientLight;
     float savedAmbientIntensity;
     bool ambientSaved;
+
+    Material savedSkybox;
+    DefaultReflectionMode savedDefaultReflectionMode;
+    Cubemap savedCustomReflection;
+    float savedReflectionIntensity;
+    bool reflectionsSaved;
+
     bool keySuspendedForGameplay;
 
     public bool IsSpawned => lightingRoot != null;
@@ -50,10 +58,16 @@ public class MRMrEnvironmentLighting : MonoBehaviour
 
     public void Spawn(Transform mrSpaceOrigin)
     {
+        // Always clear FixedScene VR cubemap/skybox while in MR — independent of Global Light.
+        SuppressVrEnvironmentReflections();
+
         MRAutoLightingSettings.EnsureLoaded();
         if (!MRAutoLightingSettings.Enabled)
         {
-            Despawn(restoreAmbient: false);
+            if (lightingRoot != null)
+                Destroy(lightingRoot);
+            lightingRoot = null;
+            keyLight = null;
             return;
         }
 
@@ -84,7 +98,10 @@ public class MRMrEnvironmentLighting : MonoBehaviour
     public void Despawn(bool restoreAmbient = false)
     {
         if (restoreAmbient)
+        {
             RestoreAmbientFill();
+            RestoreVrEnvironmentReflections();
+        }
 
         if (lightingRoot != null)
             Destroy(lightingRoot);
@@ -165,6 +182,43 @@ public class MRMrEnvironmentLighting : MonoBehaviour
         RenderSettings.ambientLight = savedAmbientLight;
         RenderSettings.ambientIntensity = savedAmbientIntensity;
         ambientSaved = false;
+    }
+
+    /// <summary>
+    /// FixedScene keeps a VR skybox + custom reflection cubemap. After VR rooms unload those
+    /// still feed glossy materials — looks like the arcade reflecting on MR cabinets.
+    /// </summary>
+    void SuppressVrEnvironmentReflections()
+    {
+        if (!reflectionsSaved)
+        {
+            savedSkybox = RenderSettings.skybox;
+            savedDefaultReflectionMode = RenderSettings.defaultReflectionMode;
+            savedCustomReflection = RenderSettings.customReflection as Cubemap;
+            savedReflectionIntensity = RenderSettings.reflectionIntensity;
+            reflectionsSaved = true;
+        }
+
+        RenderSettings.skybox = null;
+        RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+        RenderSettings.customReflection = null;
+        RenderSettings.reflectionIntensity = 0f;
+
+        ConfigManager.WriteConsole($"{LogPrefix} VR skybox/reflections suppressed for MR");
+    }
+
+    void RestoreVrEnvironmentReflections()
+    {
+        if (!reflectionsSaved)
+            return;
+
+        RenderSettings.skybox = savedSkybox;
+        RenderSettings.defaultReflectionMode = savedDefaultReflectionMode;
+        RenderSettings.customReflection = savedCustomReflection;
+        RenderSettings.reflectionIntensity = savedReflectionIntensity;
+        reflectionsSaved = false;
+
+        ConfigManager.WriteConsole($"{LogPrefix} VR skybox/reflections restored");
     }
 
     void EnsureKeyLight()

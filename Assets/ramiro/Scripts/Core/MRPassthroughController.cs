@@ -245,6 +245,21 @@ public class MRPassthroughController : MonoBehaviour
         MRTransitionLog.LogPassthrough("DisablePassthrough-done", this);
     }
 
+    /// <summary>Clear solid-black transition hold and show the VR skybox again.</summary>
+    public void EndTransitionBlackoutForVr()
+    {
+        RebindXRCamera(createPassthroughLayerIfMissing: false);
+        if (xrCamera != null)
+        {
+            xrCamera.clearFlags = CameraClearFlags.Skybox;
+            xrCamera.backgroundColor = savedBackgroundColor;
+        }
+
+        MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
+        MRTransitionLog.LogStep("MRPassthroughController", "EndTransitionBlackoutForVr");
+        ConfigManager.WriteConsole($"{LogPrefix} transition blackout OFF (VR)");
+    }
+
     /// <summary>Re-resolve camera/layer after additive scene reload, then force passthrough off.</summary>
     public void RebindCameraAndDisablePassthrough(bool playFadeOut = true)
     {

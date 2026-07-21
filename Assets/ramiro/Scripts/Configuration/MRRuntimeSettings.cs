@@ -85,6 +85,15 @@ public class MRRuntimeSettings : MonoBehaviour
     [Min(0f)]
     public float immersiveEndJourneyStepDurationSeconds;
 
+    [Header("Quick Travel (coin + both triggers)")]
+    [Tooltip("VR→MR Quick Travel: keep HMD black this long after MR is ready, then reveal passthrough.")]
+    [Min(0f)]
+    public float quickTravelRevealDelaySeconds = 2f;
+
+    [Tooltip("MR→VR Quick Travel: keep HMD black this long after VR is ready, then reveal the gallery.")]
+    [Min(0f)]
+    public float quickTravelVrRevealDelaySeconds = 1.5f;
+
     [Tooltip("MR→VR: delay after booth setup before arrival smoke/explosion.")]
     [Min(0f)]
     public float secondsBeforeArrivalExplosion = 0.05f;
@@ -233,6 +242,8 @@ public class MRRuntimeSettings : MonoBehaviour
 
     public const float DefaultImmersiveHandsetCueStepDurationSeconds = 2f;
     public const float DefaultImmersiveSpaceshipEngineStepDurationSeconds = 3.5f;
+    public const float DefaultQuickTravelRevealDelaySeconds = 2f;
+    public const float DefaultQuickTravelVrRevealDelaySeconds = 1.5f;
     public const float DefaultSecondsBeforeArrivalExplosion = 0.05f;
     public const float DefaultArrivalExplosionStepDurationSeconds = 1.5f;
     public const float DefaultSecondsAfterArrivalExplosionBeforeGlassAndDoor = 0.8f;
@@ -262,6 +273,16 @@ public class MRRuntimeSettings : MonoBehaviour
         Instance != null
             ? Mathf.Max(0f, Instance.immersiveEndJourneyStepDurationSeconds)
             : 0f;
+
+    public static float QuickTravelRevealDelaySeconds =>
+        Instance != null
+            ? Mathf.Max(0f, Instance.quickTravelRevealDelaySeconds)
+            : DefaultQuickTravelRevealDelaySeconds;
+
+    public static float QuickTravelVrRevealDelaySeconds =>
+        Instance != null
+            ? Mathf.Max(0f, Instance.quickTravelVrRevealDelaySeconds)
+            : DefaultQuickTravelVrRevealDelaySeconds;
 
     public static float SecondsBeforeArrivalExplosion =>
         Instance != null
