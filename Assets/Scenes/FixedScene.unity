@@ -38,6 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 8900000, guid: 32968376c638dad4bb1c843f90d03854, type: 3}
   m_Sun: {fileID: 0}
+  m_IndirectSpecularColor: {r: 0.003278396, g: 0.0035271808, b: 0.0053292187, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1597,6 +1598,12 @@ MonoBehaviour:
     SceneName: room023
     Description: room023 - "The Expo"
     PlayerSpawnGameObjectName: PlayerSpawnRoom023
+  - Scene:
+      sceneAsset: {fileID: 102900000, guid: 031f00a80841cb5d88f0e31e56a93044, type: 3}
+      sceneAssetGuidHex: 031f00a80841cb5d88f0e31e56a93044
+    SceneName: workshop
+    Description: The Workshop
+    PlayerSpawnGameObjectName: PlayerSpawnWorkshop
 --- !u!114 &484994781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3782,7 +3789,7 @@ MonoBehaviour:
   immersiveFadeSphereStepDurationSeconds: 0
   immersiveEndJourneyStepDurationSeconds: 0
   quickTravelRevealDelaySeconds: 3
-  quickTravelEffectPrefab: {fileID: 8396523289819205661, guid: 37fc895acfb3d064785b366e9954ca47, type: 3}
+  quickTravelVrRevealDelaySeconds: 1.5
   secondsBeforeArrivalExplosion: 0.05
   arrivalExplosionStepDurationSeconds: 1.5
   secondsAfterArrivalExplosionBeforeGlassAndDoor: 1.5
