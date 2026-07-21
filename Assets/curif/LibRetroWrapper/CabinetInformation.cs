@@ -566,6 +566,9 @@ public class CabinetInformation
     {
         public string type = "19i";
         public string orientation = "vertical";
+        // For type: custom — the name of the screen part inside the cabinet .glb whose mesh
+        // becomes the live screen. Ignored for the built-in prefab types.
+        public string mesh;
         public Screen screen = new Screen();
         public Geometry geometry = new Geometry();
         public string name;
@@ -575,7 +578,13 @@ public class CabinetInformation
             if (!crtTypes.Contains(type))
                 return new System.ArgumentException($"{type} is not a known CRT type");
 
-            if (orientation != "vertical" && orientation != "horizontal")
+            if (type == "custom")
+            {
+                // orientation is meaningless for custom (no screen-mock lookup) — accepted and ignored.
+                if (string.IsNullOrEmpty(mesh))
+                    return new System.ArgumentException("custom screen type requires 'mesh: <part-name>' (the screen part inside the cabinet .glb)");
+            }
+            else if (orientation != "vertical" && orientation != "horizontal")
                 return new System.ArgumentException($"{orientation} Position must be 'vertical' or 'horizontal' (lower case)");
 
             return screen.validate();

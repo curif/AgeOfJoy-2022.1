@@ -12,6 +12,9 @@ Shader "Custom/FlipbookShader"
         _Rows ("Rows", Range(1, 16)) = 4
         _Speed ("Speed (fps)", Range(0.5, 60)) = 12
         _Pingpong ("Ping-Pong (0=off 1=on)", Range(0, 1)) = 0
+        _Glossiness ("Smoothness", Range(0, 1)) = 0
+        _Metallic ("Metallic", Range(0, 1)) = 0
+        _EmissionStrength ("Emission Strength", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -27,6 +30,9 @@ Shader "Custom/FlipbookShader"
         float _Rows;
         float _Speed;
         float _Pingpong;
+        half _Glossiness;
+        half _Metallic;
+        half _EmissionStrength;
 
         struct Input
         {
@@ -60,7 +66,11 @@ Shader "Custom/FlipbookShader"
             uv += float2(col * cellSize.x, (_Rows - 1.0 - row) * cellSize.y);
 
             half4 c = tex2D(_MainTex, uv) * _Color;
-            o.Albedo = c.rgb;
+            // crossfade: strength 1 = fully self-lit (unlit look), 0 = ordinary lit surface
+            o.Albedo = c.rgb * (1.0 - _EmissionStrength);
+            o.Emission = c.rgb * _EmissionStrength;
+            o.Metallic = _Metallic;
+            o.Smoothness = _Glossiness;
             o.Alpha = c.a;
         }
         ENDCG

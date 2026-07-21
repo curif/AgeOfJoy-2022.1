@@ -184,6 +184,12 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         LibretroMameCore.WriteConsole($"[LibretroScreenController.Start] {gameObject.name}");
 
         display = GetComponent<Renderer>();
+        // Which material slot the active shader writes to. Built-in screen prefabs use slot 1
+        // (slot 0 = bezel); crt.type: custom collapses to a single slot 0 via ScreenSurfaceInfo.
+        ScreenSurfaceInfo screenSurface = GetComponent<ScreenSurfaceInfo>();
+        int screenSlot = screenSurface?.materialSlot ?? 1;
+        if (screenSurface != null) // custom screen diagnostic (debug mode only)
+            ConfigManager.WriteConsole($"[LibretroScreenController] {name}: custom screen surface slot={screenSlot}, renderer materialCount={display.materials.Length}, mesh submeshes={GetComponent<MeshFilter>()?.sharedMesh?.subMeshCount}");
         // cabinet = gameObject.transform.parent.gameObject;
         videoPlayer = gameObject.GetComponent<GameVideoPlayer>();
         if (videoPlayer == null)
@@ -223,11 +229,11 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
 
         //Game screen shader---------------------
         if (!string.IsNullOrEmpty(globalConfiguration.Configuration.cabinet.forcedShader))
-            shader = ShaderScreen.Factory(display, 1, globalConfiguration.Configuration.cabinet.forcedShader, screen.config());
+            shader = ShaderScreen.Factory(display, screenSlot, globalConfiguration.Configuration.cabinet.forcedShader, screen.config());
         else if (!string.IsNullOrEmpty(screen.shader))
-            shader = ShaderScreen.Factory(display, 1, screen.shader, screen.config());
+            shader = ShaderScreen.Factory(display, screenSlot, screen.shader, screen.config());
         else
-            shader = ShaderScreen.Factory(display, 1, "crt", screen.config());
+            shader = ShaderScreen.Factory(display, screenSlot, "crt", screen.config());
 
         //video shader ----------------
         string videoShaderName;
@@ -245,7 +251,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
             videoShaderName = shader.AlternativeShaderForAttractionVideos();
             videoShaderConfig = shader.AlternativeConfigForAttractionVideos();
         }
-        videoShader = ShaderScreen.Factory(display, 1, videoShaderName, videoShaderConfig);
+        videoShader = ShaderScreen.Factory(display, screenSlot, videoShaderName, videoShaderConfig);
 
         AttractVideoBudget.Configure(globalConfiguration.Configuration.cabinet.maxAttractVideos);
 

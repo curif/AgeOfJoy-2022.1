@@ -145,9 +145,15 @@ public class LightGunTarget : MonoBehaviour
     // The MeshFilter from the hit GameObject
     Mesh mesh;
 
-    // The triangle counts for each submesh
-    int[] trianglesSubmesh0; // Submesh 0
-    int[] trianglesSubmesh1; // Submesh 1
+    // Which material slot holds the emulator texture and which submesh is the screen surface.
+    // Built-in screen prefabs use slot/submesh 1 (0 = bezel); crt.type: custom collapses to a
+    // single-submesh mesh with slot/submesh 0. Read from ScreenSurfaceInfo (default 1) at Start.
+    int screenMaterialSlot = 1;
+    int screenSubmesh = 1;
+    // triangleBase = number of triangles in all submeshes before screenSubmesh; the screen
+    // submesh's triangles occupy hit.triangleIndex ∈ [triangleBase, triangleBase + trianglesScreen/3).
+    int triangleBase = 0;
+    int[] trianglesScreen; // triangles of the screen submesh
 
     public void Start()
     {
@@ -155,6 +161,12 @@ public class LightGunTarget : MonoBehaviour
         if (attachedToCRT)
         {
             CRTRenderer = gameObject.GetComponent<Renderer>();
+            ScreenSurfaceInfo ssi = GetComponent<ScreenSurfaceInfo>();
+            if (ssi != null)
+            {
+                screenMaterialSlot = ssi.materialSlot;
+                screenSubmesh = ssi.submeshIndex;
+            }
         }
     }
 
@@ -285,16 +297,31 @@ public class LightGunTarget : MonoBehaviour
         {
             if (texture == null)
             {
-                Material secondMaterial = CRTRenderer.materials[1];
-                texture = secondMaterial.mainTexture as Texture2D;
+                Material[] mats = CRTRenderer.materials;
+                if (screenMaterialSlot >= mats.Length)
+                {
+                    ConfigManager.WriteConsoleError($"[LightGunTarget] {name} screen material slot {screenMaterialSlot} out of range (renderer has {mats.Length}); disabling gun tracing.");
+                    attachedToCRT = false;
+                    return;
+                }
+                texture = mats[screenMaterialSlot].mainTexture as Texture2D;
 
                 // Get the MeshFilter from the hit GameObject
                 MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
                 mesh = meshFilter.mesh;
 
-                // Get the triangle counts for each submesh
-                trianglesSubmesh0 = mesh.GetTriangles(0); // Submesh 0
-                trianglesSubmesh1 = mesh.GetTriangles(1); // Submesh 1 - where the texture lives
+                if (screenSubmesh >= mesh.subMeshCount)
+                {
+                    ConfigManager.WriteConsoleError($"[LightGunTarget] {name} screen submesh {screenSubmesh} out of range (mesh has {mesh.subMeshCount}); disabling gun tracing.");
+                    attachedToCRT = false;
+                    return;
+                }
+
+                // Triangles of the screen submesh, and the running triangle count of the submeshes before it.
+                trianglesScreen = mesh.GetTriangles(screenSubmesh);
+                triangleBase = 0;
+                for (int i = 0; i < screenSubmesh; i++)
+                    triangleBase += mesh.GetTriangles(i).Length / 3;
             }
 
             // if this component is attached to a CRT
@@ -331,20 +358,19 @@ public class LightGunTarget : MonoBehaviour
     {
         int hitTriangleIndex = hit.triangleIndex;
 
-        // Determine if the hit triangle is within Submesh 1
-        int triangleIndexInSubmesh1 = -1; // Default invalid value
-
-        // Check if the hit triangle index falls within the range of Submesh 1 triangles
-        if (hitTriangleIndex >= trianglesSubmesh0.Length / 3 &&
-            hitTriangleIndex < (trianglesSubmesh0.Length + trianglesSubmesh1.Length) / 3)
+        // Check if the hit triangle index falls within the range of the screen submesh's triangles.
+        // For a single-submesh custom mesh this is base 0 / the whole mesh — every collider hit is a
+        // screen hit.
+        if (hitTriangleIndex >= triangleBase &&
+            hitTriangleIndex < triangleBase + trianglesScreen.Length / 3)
         {
-            // Adjust the triangle index to the local index within Submesh 1
-            triangleIndexInSubmesh1 = hitTriangleIndex - (trianglesSubmesh0.Length / 3);
+            // Adjust the triangle index to the local index within the screen submesh
+            int localTriangleIndex = hitTriangleIndex - triangleBase;
 
-            // Get the vertex indices of the hit triangle in Submesh 1
-            int vertIndex1 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3];
-            int vertIndex2 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 1];
-            int vertIndex3 = trianglesSubmesh1[triangleIndexInSubmesh1 * 3 + 2];
+            // Get the vertex indices of the hit triangle in the screen submesh
+            int vertIndex1 = trianglesScreen[localTriangleIndex * 3];
+            int vertIndex2 = trianglesScreen[localTriangleIndex * 3 + 1];
+            int vertIndex3 = trianglesScreen[localTriangleIndex * 3 + 2];
 
             // Get the barycentric coordinates of the hit point to interpolate UVs
             Vector3 barycentricCoord = hit.barycentricCoordinate;
@@ -373,8 +399,9 @@ public class LightGunTarget : MonoBehaviour
             lastHitX = Mathf.Clamp(Mathf.RoundToInt(normalizedX * virtualScreenWidth), -virtualScreenWidth, virtualScreenWidth);
             lastHitY = Mathf.Clamp(Mathf.RoundToInt(normalizedY * virtualScreenHeight), -virtualScreenHeight, virtualScreenHeight);
 
-            // Debug visualization of hit position on the texture
-            if (showHitPosition)
+            // Debug visualization of hit position on the texture.
+            // texture is null when the screen slot holds a RenderTexture (e.g. HW cores) — skip the draw.
+            if (showHitPosition && texture != null)
             {
                 int x, y;
                 // Calculate the x, y coordinates in Unity texture space
