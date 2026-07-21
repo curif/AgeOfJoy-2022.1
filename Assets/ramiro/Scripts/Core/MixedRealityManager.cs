@@ -36,6 +36,15 @@ public class MixedRealityManager : MonoBehaviour
     int transitionGeneration;
     int focusReturnGeneration;
     int lastTrackingRecenterCount = -1;
+    /// <summary>VR→MR via Quick Travel: keep black after load, then reveal after delay.</summary>
+    bool enterMrWithQuickTravelRevealHold;
+    /// <summary>MR→VR via Quick Travel: keep black until VR is ready + reveal delay.</summary>
+    bool enterVrWithQuickTravelBlackoutHold;
+    /// <summary>
+    /// Quick Travel MR session: no phone booth in the world and PHONE BOOTH CRT option hidden.
+    /// Cleared on VR exit or phone-booth entry.
+    /// </summary>
+    public bool SuppressPhoneBoothForQuickTravelSession { get; private set; }
     OVRDisplay subscribedDisplay;
     bool hasFloorAnchorCache;
     Vector3 cachedFloorAnchorPosition;
@@ -56,6 +65,11 @@ public class MixedRealityManager : MonoBehaviour
     Vector3? appStartCameraFloorLocalPosition;
     Quaternion? appStartCameraFloorLocalRotation;
     Vector3? appStartPlayerControllerLocalPosition;
+    /// <summary>World player pose at FixedScene boot — Quick Travel MR→VR returns here.</summary>
+    Vector3? appStartPlayerWorldPosition;
+    Quaternion? appStartPlayerWorldRotation;
+    /// <summary>Next EnterVR restores app-start pose instead of last gallery pose.</summary>
+    bool restoreAppStartPoseOnNextEnterVr;
 
     const string SavedMrPlayerPositionKey = "MR.LastSession.PlayerPosition";
     const string SavedMrPlayerRotationKey = "MR.LastSession.PlayerRotation";
@@ -114,6 +128,9 @@ public class MixedRealityManager : MonoBehaviour
         if (GetComponent<MREditMenuInput>() == null)
             gameObject.AddComponent<MREditMenuInput>();
 
+        if (GetComponent<MRQuickTravelInput>() == null)
+            gameObject.AddComponent<MRQuickTravelInput>();
+
         if (GetComponent<MRConfigurationCabinetController>() == null)
             gameObject.AddComponent<MRConfigurationCabinetController>();
 
@@ -149,7 +166,7 @@ public class MixedRealityManager : MonoBehaviour
             lastTrackingRecenterCount = OVRPlugin.GetLocalTrackingSpaceRecenterCount();
 
         CaptureAppStartTrackingOffsetIfNeeded();
-        if (!appStartCameraFloorLocalPosition.HasValue)
+        if (!appStartCameraFloorLocalPosition.HasValue || !appStartPlayerWorldPosition.HasValue)
             StartCoroutine(CaptureAppStartTrackingOffsetWhenReady());
 
         if (ShouldAutoEnterMrOnFixedSceneBoot())
@@ -159,10 +176,10 @@ public class MixedRealityManager : MonoBehaviour
     IEnumerator CaptureAppStartTrackingOffsetWhenReady()
     {
         float timeout = 5f;
-        while (!appStartCameraFloorLocalPosition.HasValue && timeout > 0f)
+        while ((!appStartCameraFloorLocalPosition.HasValue || !appStartPlayerWorldPosition.HasValue) && timeout > 0f)
         {
             CaptureAppStartTrackingOffsetIfNeeded();
-            if (appStartCameraFloorLocalPosition.HasValue)
+            if (appStartCameraFloorLocalPosition.HasValue && appStartPlayerWorldPosition.HasValue)
                 yield break;
             timeout -= Time.unscaledDeltaTime;
             yield return null;
@@ -171,15 +188,30 @@ public class MixedRealityManager : MonoBehaviour
 
     void CaptureAppStartTrackingOffsetIfNeeded()
     {
-        if (appStartCameraFloorLocalPosition.HasValue)
-            return;
-
         PlayerController pc = FindObjectOfType<PlayerController>();
         if (pc == null)
             return;
 
-        if (pc.PlayerControllerGameObject != null)
+        // Stick locomotion moves OVRPlayerControllerGalery (CharacterController), not the
+        // PlayerController height-offset child — capture the CC root or stairs Y sticks on MR→VR.
+        if (!appStartPlayerWorldPosition.HasValue)
+        {
+            Transform locomotionRoot = ResolveCharacterControllerTransform(pc);
+            if (locomotionRoot != null)
+            {
+                appStartPlayerWorldPosition = locomotionRoot.position;
+                appStartPlayerWorldRotation = locomotionRoot.rotation;
+                MRTransitionLog.Log(
+                    $"captured app start locomotion root={locomotionRoot.name} " +
+                    $"pos={appStartPlayerWorldPosition.Value} rotY={appStartPlayerWorldRotation.Value.eulerAngles.y:F1}");
+            }
+        }
+
+        if (pc.PlayerControllerGameObject != null && !appStartPlayerControllerLocalPosition.HasValue)
             appStartPlayerControllerLocalPosition = pc.PlayerControllerGameObject.transform.localPosition;
+
+        if (appStartCameraFloorLocalPosition.HasValue)
+            return;
 
         Transform floor = ResolveCameraFloorOffsetTransform(pc);
         if (floor == null)
@@ -198,6 +230,23 @@ public class MixedRealityManager : MonoBehaviour
         if (pc.xrorigin != null && pc.xrorigin.CameraFloorOffsetObject != null)
             return pc.xrorigin.CameraFloorOffsetObject.transform;
         return pc.cameraOffset;
+    }
+
+    /// <summary>
+    /// XR Origin / CharacterController root that Continuous Move actually translates.
+    /// Not the PlayerController child used only for eye-height local Y.
+    /// </summary>
+    static Transform ResolveCharacterControllerTransform(PlayerController pc)
+    {
+        if (pc == null)
+            return null;
+        if (pc.characterController != null)
+            return pc.characterController.transform;
+        if (pc.OVRPlayerGameObject != null)
+            return pc.OVRPlayerGameObject.transform;
+        if (pc.xrorigin != null)
+            return pc.xrorigin.transform;
+        return null;
     }
 
     void LateUpdate()
@@ -665,7 +714,33 @@ public class MixedRealityManager : MonoBehaviour
         }
 
         MRTransitionLog.EnsureSession("EnterMR");
-        BeginTransition(EnterMRCoroutine(directBoot: false));
+        BeginTransition(EnterMRCoroutine(directBoot: false, quickTravelRevealHold: false));
+    }
+
+    /// <summary>
+    /// Quick Travel VR→MR (coin + both triggers): same as EnterMR, but holds black after
+    /// MR is ready for <see cref="MRRuntimeSettings.QuickTravelRevealDelaySeconds"/> before revealing.
+    /// </summary>
+    public void EnterMRFromQuickTravel()
+    {
+        if (MRRuntimeSettings.IsMrEntryBlocked("EnterMRFromQuickTravel"))
+            return;
+
+        if (CurrentMode == ExperienceMode.MR || CurrentMode == ExperienceMode.MR_EDIT)
+        {
+            MRTransitionLog.LogWarning("EnterMRFromQuickTravel ignored — already in MR mode");
+            return;
+        }
+
+        if (transitionInProgress)
+        {
+            MRTransitionLog.LogWarning("EnterMRFromQuickTravel ignored — transition already in progress");
+            return;
+        }
+
+        MRTransitionLog.EnsureSession("EnterMRFromQuickTravel");
+        MRTransitionLog.LogStep("EnterMRFromQuickTravel", "requested");
+        BeginTransition(EnterMRCoroutine(directBoot: false, quickTravelRevealHold: true));
     }
 
     void EnterMRDirectFromBoot()
@@ -690,7 +765,7 @@ public class MixedRealityManager : MonoBehaviour
         }
 
         MRTransitionLog.EnsureSession("EnterMRDirectFromBoot");
-        BeginTransition(EnterMRCoroutine(directBoot: true));
+        BeginTransition(EnterMRCoroutine(directBoot: true, quickTravelRevealHold: false));
     }
 
     /// <summary>
@@ -834,6 +909,17 @@ public class MixedRealityManager : MonoBehaviour
         BeginTransition(EnterVRFromPhoneBoothCoroutine(portal));
     }
 
+    /// <summary>
+    /// Quick Travel MR→VR: restore FixedScene boot pose instead of last gallery pose.
+    /// </summary>
+    public void EnterVRFromQuickTravel()
+    {
+        restoreAppStartPoseOnNextEnterVr = true;
+        enterVrWithQuickTravelBlackoutHold = true;
+        MRTransitionLog.LogStep("EnterVRFromQuickTravel", "requested — will restore app-start pose");
+        EnterVR();
+    }
+
     public void EnterVR()
     {
         MRTransitionLog.LogStep("EnterVR", "requested");
@@ -845,12 +931,16 @@ public class MixedRealityManager : MonoBehaviour
         {
             MRTransitionLog.LogWarning("EnterVR ignored — MR environment not active");
             ConfigManager.WriteConsoleWarning($"{LogPrefix} EnterVR ignored — MR environment not active");
+            restoreAppStartPoseOnNextEnterVr = false;
+            enterVrWithQuickTravelBlackoutHold = false;
             return;
         }
 
         if (transitionInProgress)
         {
             MRTransitionLog.LogWarning("EnterVR ignored — transition already in progress");
+            restoreAppStartPoseOnNextEnterVr = false;
+            enterVrWithQuickTravelBlackoutHold = false;
             return;
         }
 
@@ -858,6 +948,12 @@ public class MixedRealityManager : MonoBehaviour
         passthrough.DisablePassthrough(playFadeOut: false);
         ResetLegacyPassthroughFlags();
         BeginMrExitImmediateSync();
+
+        if (enterVrWithQuickTravelBlackoutHold)
+        {
+            passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
+            MRTransitionLog.LogStep("EnterVR", "Quick Travel blackout ON");
+        }
 
         MRTransitionLog.LogPassthrough("EnterVR-after-immediate-disable", passthrough);
         BeginTransition(EnterVRCoroutine());
@@ -918,6 +1014,15 @@ public class MixedRealityManager : MonoBehaviour
         }
 
         transitionInProgress = false;
+        enterMrWithQuickTravelRevealHold = false;
+        if (enterVrWithQuickTravelBlackoutHold)
+        {
+            enterVrWithQuickTravelBlackoutHold = false;
+            passthrough?.EndTransitionBlackoutForVr();
+        }
+
+        if (CurrentMode == ExperienceMode.VR)
+            SuppressPhoneBoothForQuickTravelSession = false;
         sceneTransition?.ForceResetTransitionState();
     }
 
@@ -942,6 +1047,7 @@ public class MixedRealityManager : MonoBehaviour
     /// <summary>Blackout, unload VR additive scenes, then enable passthrough (avoids VR flash over passthrough).</summary>
     IEnumerator UnloadVrScenesUnderBlackoutThenPassthrough(int generation)
     {
+        bool keepBlackForQuickTravel = enterMrWithQuickTravelRevealHold;
         MRTransitionLog.LogStep("UnloadVrThenPassthrough", "blackout begin");
         passthrough.BeginTransitionBlackout();
 
@@ -954,10 +1060,16 @@ public class MixedRealityManager : MonoBehaviour
         yield return new WaitForEndOfFrame();
 
         MRTransitionLog.LogScenes("UnloadVrThenPassthrough-after-unload");
-        MRTransitionLog.LogStep("UnloadVrThenPassthrough", "before EnablePassthroughWhenReady");
-        yield return passthrough.EnablePassthroughWhenReady();
+        MRTransitionLog.LogStep("UnloadVrThenPassthrough",
+            keepBlackForQuickTravel
+                ? "before EnablePassthroughWhenReady (keepCameraBlack=quick travel)"
+                : "before EnablePassthroughWhenReady");
+        yield return passthrough.EnablePassthroughWhenReady(keepCameraBlack: keepBlackForQuickTravel);
         if (!IsTransitionCurrent(generation))
             yield break;
+
+        if (keepBlackForQuickTravel)
+            passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
 
         MRTransitionLog.LogPassthrough("UnloadVrThenPassthrough-after-passthrough", passthrough);
         if (!passthrough.PassthroughSystemReady)
@@ -1042,12 +1154,16 @@ public class MixedRealityManager : MonoBehaviour
         yield return null;
     }
 
-    IEnumerator EnterMRCoroutine(bool directBoot)
+    IEnumerator EnterMRCoroutine(bool directBoot, bool quickTravelRevealHold)
     {
+        enterMrWithQuickTravelRevealHold = quickTravelRevealHold;
+        SuppressPhoneBoothForQuickTravelSession = quickTravelRevealHold;
         int generation = transitionGeneration;
-        MRTransitionLog.LogStep("EnterMRCoroutine", $"start generation={generation} mode={CurrentMode} directBoot={directBoot}");
+        MRTransitionLog.LogStep("EnterMRCoroutine",
+            $"start generation={generation} mode={CurrentMode} directBoot={directBoot} quickTravel={quickTravelRevealHold}");
         MRTransitionLog.LogManagerState("EnterMRCoroutine-start");
-        ConfigManager.WriteConsole($"{LogPrefix} EnterMR coroutine (mode={CurrentMode}, directBoot={directBoot})");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} EnterMR coroutine (mode={CurrentMode}, directBoot={directBoot}, quickTravel={quickTravelRevealHold})");
 
         MRScenePermissions.Reset();
         MRTransitionLog.LogStep("EnterMRCoroutine", "before EnsureGranted");
@@ -1058,7 +1174,8 @@ public class MixedRealityManager : MonoBehaviour
 
         MRRoomInfoUI.Instance?.RefreshContent();
 
-        if (!directBoot && MRRuntimeSettings.RememberVrPoseOnStandardEnterMr)
+        // Quick Travel does not need gallery pose — MR→VR lands at FixedScene boot.
+        if (!directBoot && !quickTravelRevealHold && MRRuntimeSettings.RememberVrPoseOnStandardEnterMr)
             RememberVrPlayerPose();
 
         MRTransitionLog.LogStep("EnterMRCoroutine", "before SuspendForMR");
@@ -1120,14 +1237,53 @@ public class MixedRealityManager : MonoBehaviour
         configCabinet?.PrepareConfigCabinetAfterRoomScan();
         configCabinet?.BeginPlacementRayAfterRoomScan();
 
-        MRPhoneBoothVisibility.EnsureMrInstance();
-        MRPhoneBoothVisibility.ApplySavedVisibility();
+        if (SuppressPhoneBoothForQuickTravelSession)
+        {
+            MRPhoneBoothPortal.DestroyTravelerInstance();
+            MRTransitionLog.LogStep("EnterMRCoroutine", "Quick Travel — phone booth suppressed");
+            ConfigManager.WriteConsole($"{LogPrefix} Quick Travel: phone booth not spawned");
+        }
+        else
+        {
+            MRPhoneBoothVisibility.EnsureMrInstance();
+            MRPhoneBoothVisibility.ApplySavedVisibility();
+        }
+
+        yield return HoldQuickTravelRevealIfNeeded(generation);
+        if (!IsTransitionCurrent(generation))
+            yield break;
 
         MRTransitionLog.LogManagerState("EnterMRCoroutine-final");
         ConfigManager.WriteConsole($"{LogPrefix} EnterMR done");
         MRCameraRigAlignLog.LogEvent("EnterMR-done");
         ConfigManager.WriteConsole($"[MRCameraRigAlignLog] paste log from: {MRCameraRigAlignLog.LogFilePath}");
         MRTransitionLog.LogStep("EnterMRCoroutine", "DONE");
+    }
+
+    IEnumerator HoldQuickTravelRevealIfNeeded(int generation)
+    {
+        if (!enterMrWithQuickTravelRevealHold)
+            yield break;
+
+        float delay = MRRuntimeSettings.QuickTravelRevealDelaySeconds;
+        MRTransitionLog.LogStep("EnterMRCoroutine", $"quick travel reveal hold {delay:0.##}s");
+        ConfigManager.WriteConsole($"{LogPrefix} Quick Travel: holding black for {delay:0.##}s before reveal");
+
+        passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
+
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
+        if (!IsTransitionCurrent(generation))
+        {
+            enterMrWithQuickTravelRevealHold = false;
+            yield break;
+        }
+
+        passthrough.RefreshPassthroughAfterSceneUnload();
+        enterMrWithQuickTravelRevealHold = false;
+        MRTransitionLog.LogStep("EnterMRCoroutine", "quick travel reveal done");
+        ConfigManager.WriteConsole($"{LogPrefix} Quick Travel: passthrough revealed");
     }
 
     IEnumerator EnterTestSceneMrCoroutine(Vector3 originPosition, Quaternion originRotation)
@@ -1184,6 +1340,7 @@ public class MixedRealityManager : MonoBehaviour
     {
         int generation = transitionGeneration;
         bool travelBlackoutCleared = false;
+        SuppressPhoneBoothForQuickTravelSession = false;
         try
         {
             PhoneBoothTravelState travelState = portal.ConsumePendingTravelState();
@@ -1263,10 +1420,12 @@ public class MixedRealityManager : MonoBehaviour
 
             // Re-probe immediately before booth placement — MRUK may have registered anchors
             // after the probe at coroutine start (long spawn/refresh gap since merge 47844e94).
-            if (environmentSurfaces != null && player != null)
-                yield return environmentSurfaces.ProbeWhenReady(player);
+            Transform locomotionPlayer = ResolveLocomotionRootForPose() ?? player;
+            if (environmentSurfaces != null && locomotionPlayer != null)
+                yield return environmentSurfaces.ProbeWhenReady(locomotionPlayer);
 
-            portal.PlaceOnMrFloor(environmentSurfaces, player);
+            // Keep player seated inside the traveler (ignore stale saved MR pose / no yaw-to-player).
+            portal.PlaceOnMrFloorKeepingPlayerInside(environmentSurfaces, locomotionPlayer);
             // MR colocado: não aplicar travel state ao rig (ApplyPhoneBoothTravelState
             // desativado). A cabine já foi colocada no chão real via PlaceOnMrFloor;
             // mover o rig deslocaria todo o conteúdo virtual face ao passthrough.
@@ -1286,12 +1445,13 @@ public class MixedRealityManager : MonoBehaviour
             // still be settling when the first snap ran (~20 s earlier in the coroutine).
             if (environmentSurfaces != null)
             {
-                if (player != null)
-                    yield return environmentSurfaces.ProbeWhenReady(player);
+                locomotionPlayer = ResolveLocomotionRootForPose() ?? player;
+                if (locomotionPlayer != null)
+                    yield return environmentSurfaces.ProbeWhenReady(locomotionPlayer);
                 else
                     yield return null;
 
-                portal.ReconcileVerticalMrFloorSnap(environmentSurfaces);
+                portal.PlaceOnMrFloorKeepingPlayerInside(environmentSurfaces, locomotionPlayer);
                 MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
             }
 
@@ -1329,6 +1489,7 @@ public class MixedRealityManager : MonoBehaviour
     {
         int generation = transitionGeneration;
         bool travelBlackoutCleared = false;
+        SuppressPhoneBoothForQuickTravelSession = false;
         try
         {
             PhoneBoothTravelState travelState = travelerPortal != null
@@ -1567,6 +1728,9 @@ public class MixedRealityManager : MonoBehaviour
     static Transform ResolveLocomotionRootForPose()
     {
         PlayerController pc = FindObjectOfType<PlayerController>();
+        Transform ccRoot = ResolveCharacterControllerTransform(pc);
+        if (ccRoot != null)
+            return ccRoot;
         if (pc != null && pc.PlayerControllerGameObject != null)
             return pc.PlayerControllerGameObject.transform;
         return FindPlayerTransform();
@@ -1710,6 +1874,7 @@ public class MixedRealityManager : MonoBehaviour
     IEnumerator EnterVRCoroutine()
     {
         int generation = transitionGeneration;
+        SuppressPhoneBoothForQuickTravelSession = false;
         MRTransitionLog.LogStep(
             "EnterVRCoroutine",
             $"start generation={generation} mode={CurrentMode}");
@@ -1724,7 +1889,8 @@ public class MixedRealityManager : MonoBehaviour
         }
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "before ReloadVrScenes");
-        yield return sceneTransition.ReloadVrScenes();
+        bool quickTravelReturnToAppStart = restoreAppStartPoseOnNextEnterVr;
+        yield return sceneTransition.ReloadVrScenes(bootScenesOnly: quickTravelReturnToAppStart);
         if (!IsTransitionCurrent(generation))
         {
             MRTransitionLog.LogWarning($"EnterVRCoroutine aborted after ReloadVrScenes generation={generation}");
@@ -1735,14 +1901,25 @@ public class MixedRealityManager : MonoBehaviour
         MRTransitionLog.LogScenes("EnterVRCoroutine-after-reload");
         MRTransitionLog.LogManagerState("EnterVRCoroutine-after-reload");
 
-        if (MRRuntimeSettings.RestoreVrPoseOnStandardEnterVr)
+        if (quickTravelReturnToAppStart)
+        {
+            // Pose applied after RestoreVrHeightAfterMrExit (below).
+            restoreAppStartPoseOnNextEnterVr = false;
+            savedVrPlayerPosition = null;
+            savedVrPlayerRotation = null;
+            MRTransitionLog.LogStep("EnterVRCoroutine", "Quick Travel — boot scenes + skip gallery pose restore");
+        }
+        else if (MRRuntimeSettings.RestoreVrPoseOnStandardEnterVr)
+        {
             RestoreVrPlayerPose();
-
-        MRTransitionLog.LogStep("EnterVRCoroutine", "after RestoreVrPlayerPose");
+            MRTransitionLog.LogStep("EnterVRCoroutine", "after RestoreVrPlayerPose");
+        }
 
         passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
         ResetLegacyPassthroughFlags();
         MRSceneHost.SuspendForVr();
+        if (enterVrWithQuickTravelBlackoutHold)
+            passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
         MRTransitionLog.LogPassthrough("EnterVRCoroutine-after-rebind", passthrough);
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "before SetMode VR");
@@ -1780,12 +1957,28 @@ public class MixedRealityManager : MonoBehaviour
         // Phone-booth return destroys the DDOL traveler; standard EnterVR must too
         // or its solid colliders block the reloaded gallery booth.
         CleanupPhoneBoothTravelerForStandardVrExit();
-        MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
+        if (quickTravelReturnToAppStart)
+        {
+            // Keep solid black through cleanup — EndTravelBlackout would reveal mid-snap.
+            passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
+        }
+        else
+        {
+            MRPhoneBoothPortal.EndTravelBlackoutEverywhere();
+        }
+
         MRTransitionLog.LogStep("EnterVRCoroutine", "after MR cleanup");
 
         // WorldLock may have shoved CameraFloorOffsetObject; reset after MRUK is gone.
         RestoreVrHeightAfterMrExit();
         MRTransitionLog.LogStep("EnterVRCoroutine", "after RestoreVrHeightAfterMrExit");
+
+        if (quickTravelReturnToAppStart)
+        {
+            // Move CharacterController root (not height-offset child) to FixedScene spawn XYZ.
+            SnapLocomotionRootToAppStartSpawn();
+            MRTransitionLog.LogStep("EnterVRCoroutine", "after SnapLocomotionRootToAppStartSpawn (Quick Travel)");
+        }
 
         MRTransitionLog.LogStep("EnterVRCoroutine", "before config cabinet ReleaseForVr");
         MRConfigurationCabinetController.Instance?.ReleaseForVrTransition();
@@ -1794,12 +1987,46 @@ public class MixedRealityManager : MonoBehaviour
 
         passthrough.RebindCameraAndDisablePassthrough(playFadeOut: false);
         ResetLegacyPassthroughFlags();
+
+        if (enterVrWithQuickTravelBlackoutHold)
+        {
+            // Rebind restores skybox — force black again before the reveal hold (same frame).
+            passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
+            yield return HoldQuickTravelVrRevealIfNeeded(generation);
+        }
+
         MRTransitionLog.LogPassthrough("EnterVRCoroutine-final", passthrough);
         MRTransitionLog.LogScenes("EnterVRCoroutine-final");
         MRTransitionLog.LogManagerState("EnterVRCoroutine-final");
 
         ConfigManager.WriteConsole($"{LogPrefix} EnterVR done");
         MRTransitionLog.LogStep("EnterVRCoroutine", "DONE");
+    }
+
+    IEnumerator HoldQuickTravelVrRevealIfNeeded(int generation)
+    {
+        if (!enterVrWithQuickTravelBlackoutHold)
+            yield break;
+
+        float delay = MRRuntimeSettings.QuickTravelVrRevealDelaySeconds;
+        MRTransitionLog.LogStep("EnterVRCoroutine", $"quick travel VR reveal hold {delay:0.##}s");
+        ConfigManager.WriteConsole($"{LogPrefix} Quick Travel: holding black for {delay:0.##}s before VR reveal");
+
+        passthrough.BeginTransitionBlackout(triggerFadeInAnimator: false, restoreFadeSphere: false);
+
+        if (delay > 0f)
+            yield return new WaitForSecondsRealtime(delay);
+
+        if (!IsTransitionCurrent(generation))
+        {
+            enterVrWithQuickTravelBlackoutHold = false;
+            yield break;
+        }
+
+        passthrough.EndTransitionBlackoutForVr();
+        enterVrWithQuickTravelBlackoutHold = false;
+        MRTransitionLog.LogStep("EnterVRCoroutine", "quick travel VR reveal done");
+        ConfigManager.WriteConsole($"{LogPrefix} Quick Travel: VR revealed");
     }
 
     /// <summary>
@@ -1822,23 +2049,38 @@ public class MixedRealityManager : MonoBehaviour
 
     /// <summary>
     /// After MRUK/WorldLock teardown: restore CameraFloorOffset local pose and VR camera height.
+    /// CharacterController must be disabled or Unity ignores Y snaps (float until next move).
     /// </summary>
     void RestoreVrHeightAfterMrExit()
     {
         RestoreXrOriginTrackingOffsetFromAppStart();
 
-        if (appStartPlayerControllerLocalPosition.HasValue)
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        if (pc == null)
         {
-            PlayerController pc = FindObjectOfType<PlayerController>();
-            if (pc != null && pc.PlayerControllerGameObject != null)
-            {
-                pc.PlayerControllerGameObject.transform.localPosition =
-                    appStartPlayerControllerLocalPosition.Value;
-            }
+            RestoreVrScale();
+            return;
         }
 
-        RefreshPlayerControllerCameraOffset();
+        CharacterController cc = ResolvePlayerCharacterController(pc);
+        bool reenableCc = cc != null && cc.enabled;
+        if (reenableCc)
+            cc.enabled = false;
+
+        if (appStartPlayerControllerLocalPosition.HasValue && pc.PlayerControllerGameObject != null)
+        {
+            pc.PlayerControllerGameObject.transform.localPosition =
+                appStartPlayerControllerLocalPosition.Value;
+        }
+
+        pc.AdjustCameraYOffset();
         RestoreVrScale();
+
+        if (reenableCc)
+            cc.enabled = true;
+
+        Physics.SyncTransforms();
+        MRTransitionLog.LogStep("MixedRealityManager", "RestoreVrHeightAfterMrExit");
     }
 
     void RestoreXrOriginTrackingOffsetFromAppStart()
@@ -1880,7 +2122,7 @@ public class MixedRealityManager : MonoBehaviour
 
     void RememberVrPlayerPose()
     {
-        Transform player = FindPlayerTransform();
+        Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
         if (player == null)
             return;
 
@@ -1945,21 +2187,107 @@ public class MixedRealityManager : MonoBehaviour
             return false;
         }
 
-        Transform player = FindPlayerTransform();
+        Transform player = ResolveLocomotionRootForPose() ?? FindPlayerTransform();
         if (player == null)
         {
             MRTransitionLog.LogError("RestoreVrPlayerPose failed — player transform null");
             return false;
         }
 
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        CharacterController cc = ResolvePlayerCharacterController(pc) ?? player.GetComponent<CharacterController>();
+        bool reenableCc = cc != null && cc.enabled;
+        if (reenableCc)
+            cc.enabled = false;
+
         Quaternion rotation = savedVrPlayerRotation ?? player.rotation;
         player.SetPositionAndRotation(savedVrPlayerPosition.Value, rotation);
+
+        if (reenableCc)
+            cc.enabled = true;
+
+        Physics.SyncTransforms();
+
         MRTransitionLog.Log($"restored VR player pose pos={savedVrPlayerPosition.Value} rotY={rotation.eulerAngles.y:F1}");
         ConfigManager.WriteConsole($"{LogPrefix} restored VR player pose {savedVrPlayerPosition.Value}");
 
         savedVrPlayerPosition = null;
         savedVrPlayerRotation = null;
         return true;
+    }
+
+    void RestoreAppStartPlayerWorldPose()
+    {
+        SnapLocomotionRootToAppStartSpawn();
+    }
+
+    /// <summary>
+    /// Quick Travel MR→VR: teleport the CharacterController root to FixedScene boot pose.
+    /// AdjustCameraYOffset alone cannot fix stairs — it only edits the height-offset child while
+    /// OVRPlayerControllerGalery stays elevated.
+    /// </summary>
+    void SnapLocomotionRootToAppStartSpawn()
+    {
+        if (!appStartPlayerWorldPosition.HasValue)
+        {
+            MRTransitionLog.LogWarning("SnapLocomotionRootToAppStartSpawn skipped — app start pose not captured");
+            return;
+        }
+
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        Transform root = ResolveCharacterControllerTransform(pc) ?? FindPlayerTransform();
+        if (root == null)
+        {
+            MRTransitionLog.LogError("SnapLocomotionRootToAppStartSpawn failed — locomotion root null");
+            return;
+        }
+
+        CharacterController cc = ResolvePlayerCharacterController(pc) ?? root.GetComponent<CharacterController>();
+        bool reenableCc = cc != null && cc.enabled;
+        if (reenableCc)
+            cc.enabled = false;
+
+        Quaternion rotation = appStartPlayerWorldRotation ?? root.rotation;
+        root.SetPositionAndRotation(appStartPlayerWorldPosition.Value, rotation);
+
+        // Re-apply eye-height local Y on the offset child (not the CC root).
+        if (pc != null
+            && pc.PlayerControllerGameObject != null
+            && pc.PlayerControllerGameObject.transform != root)
+        {
+            if (appStartPlayerControllerLocalPosition.HasValue)
+            {
+                pc.PlayerControllerGameObject.transform.localPosition =
+                    appStartPlayerControllerLocalPosition.Value;
+            }
+
+            pc.AdjustCameraYOffset();
+        }
+        else
+        {
+            pc?.AdjustCameraYOffset();
+        }
+
+        if (reenableCc)
+            cc.enabled = true;
+
+        Physics.SyncTransforms();
+
+        MRTransitionLog.Log(
+            $"snapped locomotion root={root.name} to app-start pos={root.position} rotY={rotation.eulerAngles.y:F1}");
+        ConfigManager.WriteConsole(
+            $"{LogPrefix} snapped locomotion root to app-start {root.position}");
+    }
+
+    static CharacterController ResolvePlayerCharacterController(PlayerController pc)
+    {
+        if (pc == null)
+            return null;
+        if (pc.characterController != null)
+            return pc.characterController;
+        if (pc.PlayerControllerGameObject != null)
+            return pc.PlayerControllerGameObject.GetComponent<CharacterController>();
+        return pc.GetComponent<CharacterController>();
     }
 
     void RememberMrPlayerPose()

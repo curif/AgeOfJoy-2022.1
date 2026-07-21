@@ -394,7 +394,20 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
     public void PlaceOnMrFloor(MREnvironmentSurfaces surfaces, Transform player)
     {
-        if (MRPhoneBoothSettings.TryGetMrPose(out Vector3 savedPos, out Quaternion savedRot))
+        PlaceOnMrFloor(surfaces, player, useSavedHorizontalPose: true);
+    }
+
+    /// <param name="useSavedHorizontalPose">
+    /// False for immersive phone-booth arrival — player is already inside the traveler;
+    /// jumping to a stale PlayerPrefs pose makes the cabin vanish underfoot.
+    /// </param>
+    public void PlaceOnMrFloor(
+        MREnvironmentSurfaces surfaces,
+        Transform player,
+        bool useSavedHorizontalPose)
+    {
+        if (useSavedHorizontalPose
+            && MRPhoneBoothSettings.TryGetMrPose(out Vector3 savedPos, out Quaternion savedRot))
         {
             // Never trust saved Y — stale prefs from the ceiling bug would re-lift the booth.
             Vector3 horizontal = new Vector3(savedPos.x, 0f, savedPos.z);
@@ -405,17 +418,30 @@ public class MRPhoneBoothPortal : MonoBehaviour
             return;
         }
 
-        Vector3 horizontalProbe = ResolveFloorProbeHorizontal(player);
-        ApplyVerticalSnapToMrFloor(surfaces, horizontalProbe, "MR floor probe");
+        PlaceOnMrFloorKeepingPlayerInside(surfaces, player);
+    }
 
+    /// <summary>
+    /// Immersive VR→MR arrival: WorldLock / colocated scale often shifts the XR rig away from the
+    /// DDOL traveler. Translate the booth so the player keeps the same local seat, then floor-snap Y.
+    /// Do not yaw toward the player — that spins the cabin and leaves them outside.
+    /// </summary>
+    public void PlaceOnMrFloorKeepingPlayerInside(MREnvironmentSurfaces surfaces, Transform player)
+    {
         if (player != null)
         {
-            Vector3 toPlayer = player.position - transform.position;
-            toPlayer.y = 0f;
-            if (toPlayer.sqrMagnitude > 0.04f)
-                transform.rotation = Quaternion.LookRotation(toPlayer.normalized, Vector3.up);
+            Vector3 localPlayer = transform.InverseTransformPoint(player.position);
+            Vector3 worldOffset = transform.TransformVector(localPlayer);
+            Vector3 aligned = player.position - worldOffset;
+            transform.position = new Vector3(aligned.x, transform.position.y, aligned.z);
+            MRTransitionLog.Log(
+                $"PlaceOnMrFloor immersive realign booth→player local={localPlayer} pos={transform.position}");
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} immersive realign booth to player local={localPlayer} pos={transform.position}");
         }
 
+        Vector3 horizontal = new Vector3(transform.position.x, 0f, transform.position.z);
+        ApplyVerticalSnapToMrFloor(surfaces, horizontal, "immersive arrival");
         FinalizeMrFloorPlacement();
     }
 
