@@ -108,6 +108,10 @@ public class EventInformation
                                         "on-touch-end", "on-grab-end" ,
                                         "on-lightgun-start", "on-lightgun-stay", "on-lightgun-exit"};
     public string name = "";
+    // on-custom events: the identifier passed to ONCUSTOM("..."), used exclusively by
+    // EVENTTRIGGER to find the event. Independent of `name`, which is only a grouping
+    // label for OFFEVENT and may be overridden by an explicit NAME clause.
+    public string customEventName;
     public string program;
     [YamlMember(Alias = "goto", ApplyNamingConventions = false)]
     public int line;

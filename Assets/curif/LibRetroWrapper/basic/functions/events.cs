@@ -14,7 +14,7 @@ class CommandFunctionEVENTTRIGGER : CommandFunctionSingleExpressionBase
     public Event GetEventByName(string name)
     {
         foreach (Event evt in config.events)
-            if (evt.eventInformation.name == name)
+            if (evt.eventInformation.customEventName == name)
                 return evt;
         return null;
     }

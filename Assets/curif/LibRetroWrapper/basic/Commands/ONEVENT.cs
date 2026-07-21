@@ -116,9 +116,12 @@ class CommandONEVENT : CommandBase
                 info.varName = configVal[3].GetString();
                 break;
             case "on-custom":
-                // ["CONFIG-EVENT", "on-custom", name] - explicit NAME clause (if present) wins
+                // ["CONFIG-EVENT", "on-custom", name] - this is the EVENTTRIGGER identifier,
+                // always kept regardless of NAME. NAME (if present) only sets the grouping
+                // label used by OFFEVENT and doesn't affect how EVENTTRIGGER finds this event.
+                info.customEventName = configVal[2].GetString();
                 if (nameExpr == null)
-                    info.name = configVal[2].GetString();
+                    info.name = info.customEventName;
                 break;
         }
 

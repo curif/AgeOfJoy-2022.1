@@ -765,6 +765,10 @@ public static class EventsFactory
             case "on-insert-coin":
                 return new OnInsertCoin(eventInformation, vars, agebasic);
             case "on-custom":
+                // YAML-declared events set only `name` (no ONEVENT/NAME distinction there);
+                // fall back so EVENTTRIGGER can still find them by that name.
+                if (string.IsNullOrEmpty(eventInformation.customEventName))
+                    eventInformation.customEventName = eventInformation.name;
                 return new OnCustom(eventInformation, vars, agebasic);
             case "on-lightgun-start":
                 return new OnLightGunStart(eventInformation, vars, agebasic);
