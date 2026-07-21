@@ -30,6 +30,10 @@ public static class CRTsFactory
         objects.Add("dome-convex", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen_dome_convex"));
         objects.Add("19i-agebasic", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19iAGEBasic"));
         objects.Add("no-crt", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/noScreen"));
+        // "custom": no dedicated prefab. Reuse screen19i as the component template; Cabinet.addCRT
+        // swaps in the author's mesh (crt.mesh, a named part in the cabinet .glb) and collapses the
+        // two-slot material array down to the single screen surface.
+        objects.Add("custom", Resources.Load<GameObject>("Cabinets/PreFab/CRTs/screen19i"));
     }
 
     public static GameObject Instantiate(string type, Vector3 position, Quaternion rotation, Transform parent)

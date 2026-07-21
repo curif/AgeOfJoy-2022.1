@@ -715,12 +715,20 @@ public class Cabinet
             AudioMaxPlayerDistance = cbinfo.audio.MaxPlayerDistance;
         }
 
-        string CRTType = $"screen-mock-{orientation}";
-        GameObject CRT = GetPartController(CRTType).GameObject;
+        GameObject newCRT;
+        if (type.ToLower() == "custom")
+        {
+            newCRT = buildCustomCRT(cbinfo, type);
+        }
+        else
+        {
+            string CRTType = $"screen-mock-{orientation}";
+            GameObject CRT = GetPartController(CRTType).GameObject;
 
-        GameObject newCRT = CRTsFactory.Instantiate(type.ToLower(), CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
-        if (newCRT == null)
-            throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
+            newCRT = CRTsFactory.Instantiate(type.ToLower(), CRT.transform.position, CRT.transform.rotation, CRT.transform.parent);
+            if (newCRT == null)
+                throw new System.Exception($"Cabinet {Name} problem: can't create a CRT. Type: {type}");
+        }
         newCRT.AddComponent<CabinetPart>();
         CabinetPart cp = RegisterChild(newCRT);
 
@@ -815,6 +823,96 @@ public class Cabinet
             libretroScreenController.backgroundSoundController = backgroundSoundController;
         }
         return this;
+    }
+
+    // Builds the CRT for crt.type: custom. Instead of a screen-mock placeholder, the author
+    // supplies their own screen mesh as a named part in the cabinet .glb (crt.mesh). We reuse
+    // the screen19i prefab as the component template, drop the author's mesh + collider into it,
+    // collapse the template's two-slot material array (0 = bezel, 1 = screen) down to just the
+    // screen surface, and mark that surface as slot 0 / submesh 0 via ScreenSurfaceInfo so the
+    // shader and light-gun code target it. The donor part is consumed (deactivated) — it was
+    // only a mesh source. The shared naming/scale/controller wiring in addCRT runs afterwards.
+    private GameObject buildCustomCRT(CabinetInformation cbinfo, string type)
+    {
+        string meshPartName = cbinfo.crt.mesh;
+        ConfigManager.WriteConsole($"[buildCustomCRT] {Name}: begin, crt.mesh='{meshPartName}'");
+        try
+        {
+            if (string.IsNullOrEmpty(meshPartName))
+                throw new System.Exception($"crt.type custom requires 'mesh: <part-name>'");
+
+            CabinetPart donor = GetPartControllerOrNull(meshPartName);
+            if (donor == null)
+                throw new System.Exception($"mesh part '{meshPartName}' not found — must be a top-level named part in the .glb. Known parts: {string.Join(", ", CabinetPartsControllersByName.Keys)}");
+
+            GameObject donorGO = donor.GameObject;
+
+            // The mesh may sit directly on the named part or on a child (common with GLB import),
+            // so fall back to a child search.
+            MeshFilter donorMF = donorGO.GetComponent<MeshFilter>();
+            if (donorMF == null || donorMF.sharedMesh == null)
+                donorMF = donorGO.GetComponentInChildren<MeshFilter>();
+            if (donorMF == null || donorMF.sharedMesh == null)
+                throw new System.Exception($"mesh part '{meshPartName}' has no MeshFilter/mesh (searched the part and its children)");
+
+            Mesh screenMesh = donorMF.sharedMesh;
+            Transform meshTransform = donorMF.transform;   // where the mesh actually lives in space
+            bool readable = screenMesh.isReadable;
+            ConfigManager.WriteConsole($"[buildCustomCRT] {Name}: donor='{donorGO.name}' meshOwner='{meshTransform.name}' submeshes={screenMesh.subMeshCount} verts={screenMesh.vertexCount} readable={readable} uvs={(readable ? screenMesh.uv.Length : -1)} worldPos={meshTransform.position} lossyScale={meshTransform.lossyScale}");
+
+            if (screenMesh.subMeshCount != 1)
+                throw new System.Exception($"mesh part '{meshPartName}' must have exactly one material slot / submesh (has {screenMesh.subMeshCount})");
+
+            GameObject newCRT = CRTsFactory.Instantiate(type.ToLower(), meshTransform.position, meshTransform.rotation, meshTransform.parent);
+            if (newCRT == null)
+                throw new System.Exception($"can't instantiate CRT template. Type: {type}");
+
+            // occupy exactly the space the author modeled for the mesh (parent shared, so copy local TRS)
+            newCRT.transform.localPosition = meshTransform.localPosition;
+            newCRT.transform.localRotation = meshTransform.localRotation;
+            newCRT.transform.localScale = meshTransform.localScale;
+
+            // swap geometry: both the render mesh and the light-gun ray collider use the author's mesh
+            MeshFilter mf = newCRT.GetComponent<MeshFilter>();
+            if (mf != null)
+                mf.sharedMesh = screenMesh;
+            MeshCollider mc = newCRT.GetComponent<MeshCollider>();
+            if (mc != null)
+            {
+                mc.convex = false;              // hit.triangleIndex is only valid on a non-convex MeshCollider
+                mc.sharedMesh = screenMesh;
+            }
+
+            // collapse the template's 2-slot material array to the screen surface only. A one-submesh
+            // mesh would otherwise double-render under the leftover bezel material (Unity renders extra
+            // materials against the last submesh).
+            Renderer rend = newCRT.GetComponent<Renderer>();
+            if (rend != null)
+            {
+                Material[] mats = rend.sharedMaterials;
+                ConfigManager.WriteConsole($"[buildCustomCRT] {Name}: template materials={mats.Length} [{string.Join(", ", System.Array.ConvertAll(mats, m => m == null ? "null" : m.name))}]");
+                if (mats.Length > 1)
+                    rend.sharedMaterials = new Material[] { mats[1] };
+            }
+
+            // tell the shader + light-gun consumers the screen surface is at slot 0 / submesh 0
+            ScreenSurfaceInfo ssi = newCRT.GetComponent<ScreenSurfaceInfo>();
+            if (ssi == null)
+                ssi = newCRT.AddComponent<ScreenSurfaceInfo>();
+            ssi.materialSlot = 0;
+            ssi.submeshIndex = 0;
+
+            // the donor part was only a mesh source
+            donorGO.SetActive(false);
+
+            ConfigManager.WriteConsole($"[buildCustomCRT] {Name}: DONE — screen clone at world {newCRT.transform.position}, lossyScale {newCRT.transform.lossyScale}; donor '{donorGO.name}' deactivated.");
+            return newCRT;
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleError($"[buildCustomCRT] {Name}: FAILED — {e.Message}");
+            throw;
+        }
     }
 
     public Cabinet AddCoinSlot(string type, float rotationAngleX, float rotationAngleY, float rotationAngleZ, float scalePercentage, bool soundEnabled = true)

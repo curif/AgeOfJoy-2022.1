@@ -56,6 +56,7 @@ Implications worth keeping in mind:
 | `dome-convex` | `screen_dome_convex.prefab` | Outward-bulging dome — rarer, for cabinets whose real screen bulged outward toward the player. |
 | `19i-agebasic` | `screen19iAGEBasic.prefab` | Same 19-inch shape as `19i`, but the prefab carries `AGEBasicScreenController` instead of `LibretroScreenController`. Use this for cabinets that run AGEBasic scripts on a screen without a libretro emulator. |
 | `no-crt` | `noScreen.prefab` | No screen at all. Used for pinball / mechanical / sound-only cabinets that need coin handling and AGEBasic but have no display. Carries `AGEBasicCabinetController`. |
+| `custom` | *(reuses `screen19i.prefab`)* | **Author-supplied screen mesh.** No dedicated prefab — the screen shape is a named part in the cabinet `.glb` (`crt.mesh: <part-name>`). See §9. |
 
 The full list of valid keys is exposed at runtime as `CRTsFactory.objects.Keys` and is fed into `CabinetInformation.validate()` so a cabinet with an unknown `crt.type` is rejected with a clear error.
 
@@ -178,6 +179,7 @@ public class CRT
 {
     public string type = "19i";
     public string orientation = "vertical";
+    public string mesh;  // for type: custom — the screen part name inside the .glb (§9)
     public Screen screen = new Screen();
     public Geometry geometry = new Geometry();
     public string name;  // optional GameObject name override
@@ -200,8 +202,8 @@ To add a new screen type:
 1. **Model the screen mesh** as a Unity prefab under `Assets/Resources/Cabinets/PreFab/CRTs/`. The prefab must include:
    - A `MeshRenderer` on the screen surface with **at least two material slots**:
      - **slot 0** — bezel / frame / glass-housing material (decorative; never touched at runtime).
-     - **slot 1** — the screen surface material. `ShaderScreen.Factory` is called with `position: 1` from every call site ([`LibretroScreenController`](../Assets/curif/LibRetroWrapper/LibretroScreenController.cs#L220), [`AGEBasicScreenController`](../Assets/curif/LibRetroWrapper/AGEBasicScreenController.cs#L172), [`ConfigurationController`](../Assets/curif/UI/ConfigurationController.cs#L1533), [`CabinetDebugConsole`](../Assets/curif/LibRetroWrapper/CabinetDebugConsole.cs#L105)) and overwrites this slot with the active shader (CRT, projector, clean, etc.). The slot index is hard-coded — there is no per-prefab override.
-   - For lightgun-capable screens, the screen mesh must also have **submesh 1** as the screen surface. [`LightGunTarget.cs:288`](../Assets/curif/LibRetroWrapper/LightGunTarget.cs#L288) reads `CRTRenderer.materials[1].mainTexture` and `mesh.GetTriangles(1)` to do hit-to-UV mapping.
+     - **slot 1** — the screen surface material. `ShaderScreen.Factory` is called with the screen slot from every call site ([`LibretroScreenController`](../Assets/curif/LibRetroWrapper/LibretroScreenController.cs#L220), [`AGEBasicScreenController`](../Assets/curif/LibRetroWrapper/AGEBasicScreenController.cs#L172), [`ConfigurationController`](../Assets/curif/UI/ConfigurationController.cs#L1533), [`CabinetDebugConsole`](../Assets/curif/LibRetroWrapper/CabinetDebugConsole.cs#L105)) and overwrites this slot with the active shader (CRT, projector, clean, etc.). The slot defaults to `1`; a prefab (or a runtime-built screen) can override it by carrying a `ScreenSurfaceInfo { materialSlot }` component — this is how `type: custom` collapses to a single-slot mesh (§9). `LibretroScreenController` reads it; `AGEBasicScreenController`/`ConfigurationController`/`CabinetDebugConsole` still use the fixed slot 1.
+   - For lightgun-capable screens, the screen mesh must also have **submesh 1** as the screen surface. [`LightGunTarget.cs`](../Assets/curif/LibRetroWrapper/LightGunTarget.cs) reads `CRTRenderer.materials[slot].mainTexture` and `mesh.GetTriangles(submesh)` to do hit-to-UV mapping, where `slot`/`submesh` come from `ScreenSurfaceInfo` (default 1).
    - Whichever controller it should drive: `LibretroScreenController` (with its required components — `AudioSource`, `GameVideoPlayer`, `LibretroControlMap`, `basicAGE`, `CabinetAGEBasic`, `LightGunTarget`), `AGEBasicScreenController`, or `AGEBasicCabinetController`.
 2. **Register the prefab** by adding a single line to the static constructor in [`CRTsFactory.cs`](../Assets/curif/LibRetroWrapper/CRTsFactory.cs):
    ```csharp
@@ -221,7 +223,7 @@ To add a new screen type:
 - **`screen-mock-vertical` vs `-horizontal` is the cabinet author's call.** The same `crt.type` (e.g., `19i`) can be vertical or horizontal — the mock placement in the model defines which is which, and `orientation` in YAML just picks which mock to use.
 - **`19i-agebasic` is the only special-cased type in `Cabinet.addCRT`.** All other types go through the `LibretroScreenController` path. `no-crt` is handled in a different method entirely (`addController`).
 - **The factory has zero lifecycle management.** It just loads prefabs once and hands out instantiations. Cleanup of cabinet GameObjects (and their screens) is the caller's responsibility — see [docs/glb_model_cache.md](glb_model_cache.md) for the GLB cache that sits above this.
-- **The screen surface lives at material slot 1, not slot 0.** Every shader call site passes `position: 1` to `ShaderScreen.Factory`, and [`ShaderScreen.Activate`](../Assets/curif/LibRetroWrapper/ShaderScreen.cs#L52) does `display.materials[1] = material`. A new screen prefab whose `MeshRenderer` has fewer than two material slots — or one whose screen surface is on slot 0 — will either throw `IndexOutOfRangeException` at activation or silently render the shader on the bezel. See section 6 for the full requirements.
+- **The screen surface lives at material slot 1 by default, not slot 0.** Shader call sites pass slot `1` to `ShaderScreen.Factory` (except `LibretroScreenController`, which reads `ScreenSurfaceInfo.materialSlot` and defaults to 1), and [`ShaderScreen.Activate`](../Assets/curif/LibRetroWrapper/ShaderScreen.cs#L52) does `display.materials[slot] = material`. A new screen prefab whose `MeshRenderer` has fewer than two material slots — or one whose screen surface is on slot 0 without a matching `ScreenSurfaceInfo` — will either throw `IndexOutOfRangeException` at activation or silently render the shader on the bezel. See section 6 for the full requirements. `type: custom` (§9) is the one built-in case that deliberately uses slot 0, and it attaches `ScreenSurfaceInfo(0,0)` to say so.
 
 ---
 
@@ -239,3 +241,73 @@ To add a new screen type:
 | Display-cabinet controller (AGEBasic) | [Assets/curif/LibRetroWrapper/AGEBasicScreenController.cs](../Assets/curif/LibRetroWrapper/AGEBasicScreenController.cs) |
 | No-display controller (AGEBasic) | [Assets/curif/LibRetroWrapper/AGEBasicCabinetController.cs](../Assets/curif/LibRetroWrapper/AGEBasicCabinetController.cs) |
 | Shader system (separate axis) | [Assets/curif/LibRetroWrapper/ShaderScreen.cs](../Assets/curif/LibRetroWrapper/ShaderScreen.cs) |
+| Screen-slot/submesh descriptor | [Assets/curif/LibRetroWrapper/ScreenSurfaceInfo.cs](../Assets/curif/LibRetroWrapper/ScreenSurfaceInfo.cs) |
+| Custom-mesh build (mesh swap) | [Assets/curif/LibRetroWrapper/Cabinet.cs `buildCustomCRT`](../Assets/curif/LibRetroWrapper/Cabinet.cs) |
+
+---
+
+## 9. Custom screen meshes (`crt.type: custom`)
+
+Instead of picking a built-in shape, a cabinet author can supply their **own screen mesh** — a wrap-around screen, an odd aspect ratio, a curved or angled panel — modeled directly in the cabinet `.glb`. It renders the emulator, plays attract video/audio, takes coins, runs AGEBasic, **and works with light guns**, exactly like a built-in screen.
+
+```yaml
+crt:
+  type: custom
+  mesh: my-screen        # a top-level part in the cabinet .glb; THIS mesh becomes the screen
+  screen:
+    shader: crt          # any screen shader: crt (default), crtlod, clean, projector, …
+    invertx: false
+    inverty: false
+```
+
+### How to use it (author steps)
+
+1. **Model the screen** in Blender as a single object with **one material** (one submesh) and **UVs mapped 0–1** across the surface the emulator frame should fill — U left→right, V following the same convention as the built-in screens (flip later with `crt.screen.inverty` if it comes out upside-down). For a wrap-around screen, unwrap the curved face continuously across 0–1 U.
+2. **Name that object** and export it as a **top-level part** in the cabinet `.glb` (a sibling of `bezel`, `marquee`, `coin-slot`, etc.).
+3. In `description.yaml`, set `crt.type: custom` and `crt.mesh:` to that object's name.
+4. **Do not also list the part in `parts:`.** It is *consumed* — deactivated and replaced by the live screen — so any material/art/`istarget`/`physical`/`speaker` you put on it there is discarded.
+5. Configure the game as usual (`rom:`, `core:`, `video:`, `coinslot:`, …). **No `screen-mock-vertical/-horizontal` placeholder is needed** — the screen sits exactly where you modeled the part (WYSIWYG).
+
+`orientation` is ignored (there is no mock to pick), and `crt.geometry` (scale %, ratio, rotation) still applies *on top of* the part's own transform if you need to nudge it.
+
+### Light guns work
+
+Custom screens are fully **light-gun compatible** — HotD2- / ninja-assault-style gun games hit-test correctly on a custom mesh, including curved and angled surfaces, with no extra author effort. Add the normal `light-gun:` block and it just works:
+
+```yaml
+light-gun:
+  active: true
+  gun:
+    model: my-gun.glb
+  # crt: { invertx: true, inverty: true }   # only if the AIM is mirrored vs. the image
+```
+
+Under the hood the same mesh becomes the gun-ray **collider**, and the hit point is converted to libretro gun coordinates by barycentrically interpolating the mesh's **UVs** — so wherever your 0–1 UVs map, the gun maps too. Requirements:
+
+- **The mesh must be CPU-readable** (`Read/Write` enabled). GLB parts loaded at runtime are readable automatically, so there's nothing to toggle. This is the one hard requirement for the gun; if it were ever false, hits would silently miss.
+- **Normals face the player**, and **UVs span 0–1** cleanly (the same UVs the shader uses).
+- Gun-aim inversion is independent of the image: `light-gun.crt.invertx/inverty` correct the *aim*, `crt.screen.invertx/inverty` correct the *picture*.
+- **On hardware cores (Flycast)** the screen texture is a `RenderTexture`, so the light-gun debug circle (`light-gun.debug.active`) can't draw on it — but the gun coordinates still register (they come from the mesh UVs, not the texture). Test by shooting the game, not by looking for the red dot.
+
+### What you get for free
+
+A custom screen is a full screen instance (see below), so everything a normal screen does comes along unchanged: the emulator, attract-mode video/audio, coin handling, AGEBasic, and the screen glow light. In particular there are **no separate audio/video objects to wire** — the screen's own `AudioSource` rides on the mesh, so game/attract audio is 3D-spatialized from wherever you placed it. (See §4 and [LibretroScreenController](../Assets/curif/LibRetroWrapper/LibretroScreenController.cs) for the audio path.)
+
+### How it works under the hood
+
+There is **no `screenCustom.prefab`**. `custom` is registered in [`CRTsFactory`](../Assets/curif/LibRetroWrapper/CRTsFactory.cs) pointing at the existing **`screen19i`** prefab, and [`Cabinet.buildCustomCRT`](../Assets/curif/LibRetroWrapper/Cabinet.cs) does runtime "prefab surgery" on the instance:
+
+1. Look up the author's part by name (error clearly if missing / no mesh / more than one submesh).
+2. Instantiate `screen19i` at the part's transform and copy its local position/rotation/scale.
+3. Swap `MeshFilter.sharedMesh` **and** `MeshCollider.sharedMesh` to the author's mesh (collider stays non-convex — required for `hit.triangleIndex`).
+4. Collapse the two-slot material array to just the screen-surface material (drop the bezel slot).
+5. Attach `ScreenSurfaceInfo { materialSlot = 0, submeshIndex = 0 }` so the shader (§6/§7) and `LightGunTarget` target slot/submesh 0 instead of the default 1.
+6. Deactivate the donor part and fall through to the normal `LibretroScreenController` wiring.
+
+Reusing the authored prefab (rather than bolting components onto the raw part) is deliberate: it keeps the full, correct component set — including an **authored `AudioSource`**, which Unity's `OnAudioFilterRead` needs to pull emulator audio on Quest (a runtime-added `AudioSource` stays silent there).
+
+### Scope and limitations
+
+- **Libretro cabinets only.** `type: custom` always wires the `LibretroScreenController` (emulator) path — including light guns and the Flycast HW path. Per-cabinet AGEBasic hooks work on it exactly as on any libretro screen.
+- **No AGEBasic-only custom screen.** `custom` cannot substitute for `19i-agebasic` (a display driven purely by AGEBasic, no emulator) — there is no `custom-agebasic` type. Adding one would mean giving `AGEBasicScreenController` the same `ScreenSurfaceInfo` slot/submesh treatment `LibretroScreenController` got, plus a branch in `Cabinet.addCRT`.
+- **One submesh** on the mesh, and the part must be **top-level** in the `.glb`. Failures (wrong submesh count, missing part) are reported through the normal cabinet load-error path.

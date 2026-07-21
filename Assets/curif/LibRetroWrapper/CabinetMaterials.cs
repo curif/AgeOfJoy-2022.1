@@ -21,6 +21,7 @@ public static class CabinetMaterials
     public static Material CleanGlass;
     public static Material DirtyGlass;
     public static Material TVBorder;
+    public static Material Flipbook;
     public static Material VertexColor;
     public static Material VertexColorNormal;
     public static Material FrontGlassWithBezel;
@@ -82,6 +83,17 @@ public static class CabinetMaterials
                 {"emission-color", "_EmmisionColor" },
                 {"normal", "_BumpMap" }
 
+            };
+    static Dictionary<string, string> MaterialFlipbookPropertyTranslator = new Dictionary<string, string>()
+            {
+                {"smoothness", "_Glossiness" },
+                {"metallic", "_Metallic" },
+                {"color", "_Color" },
+                {"columns", "_Columns" },
+                {"rows", "_Rows" },
+                {"speed", "_Speed" },
+                {"pingpong", "_Pingpong" },
+                {"emission-strength", "_EmissionStrength" }
             };
     static Dictionary<string, string> MaterialVertexPropertyTranslator = new Dictionary<string, string>()
             {
@@ -190,6 +202,7 @@ public static class CabinetMaterials
         CleanGlass = Resources.Load<Material>("Cabinets/Materials/GlassClean");
         DirtyGlass = Resources.Load<Material>("Cabinets/Materials/GlassDirt");
         LayerGlass = Resources.Load<Material>("Cabinets/Materials/GlassTranspLayer");
+        Flipbook = Resources.Load<Material>("Cabinets/Materials/Flipbook");
         VertexColor = Resources.Load<Material>("Cabinets/Materials/Base_VertexColor");
         VertexColorNormal = Resources.Load<Material>("Cabinets/Materials/Base_VertexColor_Normal");
 
@@ -216,6 +229,7 @@ public static class CabinetMaterials
         materialList.Add("dirty glass", new MaterialInfo(DirtyGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
         materialList.Add("layer glass", new MaterialInfo(LayerGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
         materialList.Add("clean glass", new MaterialInfo(CleanGlass, new MaterialPropertyTranslator(MaterialStandardPropertyTranslator)));
+        materialList.Add("flipbook", new MaterialInfo(Flipbook, new MaterialPropertyTranslator(MaterialFlipbookPropertyTranslator)));
         materialList.Add("Vertex Color", new MaterialInfo(VertexColorNormal, new MaterialPropertyTranslator(MaterialVertexPropertyTranslator)));
 
     }

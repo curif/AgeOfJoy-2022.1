@@ -551,7 +551,8 @@ public static class CabinetFactory
         try
         {
             if (cbinfo.crt != null &&
-                (cabinet.PartsExist("screen-mock-vertical") ||
+                (cbinfo.crt.type?.ToLower() == "custom" ||
+                    cabinet.PartsExist("screen-mock-vertical") ||
                     cabinet.PartsExist("screen-mock-horizontal")))
             {
                 Vector3 CRTrotation = new Vector3(cbinfo.crt.geometry.rotation.x,
