@@ -199,18 +199,27 @@ public class MRSceneTransition : MonoBehaviour
     }
 #endif
 
-    public IEnumerator ReloadVrScenes()
+    /// <param name="bootScenesOnly">
+    /// When true (Quick Travel → FixedScene spawn), reload only IntroGalleryExterior + IntroGallery
+    /// like AtStart — not every Room* that was loaded when entering MR. GateControllers stream the rest.
+    /// </param>
+    public IEnumerator ReloadVrScenes(bool bootScenesOnly = false)
     {
         transitionRunning = true;
-        MRTransitionLog.LogStep("ReloadVrScenes", "begin");
+        MRTransitionLog.LogStep("ReloadVrScenes", $"begin bootScenesOnly={bootScenesOnly}");
         MRTransitionLog.LogScenes("ReloadVrScenes-begin");
 
 #if UNITY_EDITOR
         yield return ReactivateEditorHiddenVrScenes();
 #endif
 
-        var scenesToLoad = BuildReloadSceneList();
-        MRTransitionLog.Log($"ReloadVrScenes queue=[{string.Join(", ", scenesToLoad)}] unloadedHistory=[{string.Join(", ", unloadedSceneNames)}] fixedScene={IsFixedSceneLoaded()}");
+        var scenesToLoad = bootScenesOnly
+            ? BuildBootSceneReloadList()
+            : BuildReloadSceneList();
+        MRTransitionLog.Log(
+            $"ReloadVrScenes queue=[{string.Join(", ", scenesToLoad)}] " +
+            $"unloadedHistory=[{string.Join(", ", unloadedSceneNames)}] " +
+            $"bootOnly={bootScenesOnly} fixedScene={IsFixedSceneLoaded()}");
 
         if (scenesToLoad.Count == 0)
         {
@@ -293,8 +302,8 @@ public class MRSceneTransition : MonoBehaviour
 
         unloadedSceneNames.Clear();
         transitionRunning = false;
-        MRTransitionLog.LogStep("ReloadVrScenes", $"DONE roomScenes={loadedCount}");
-        ConfigManager.WriteConsole($"{LogPrefix} VR scenes reloaded ({loadedCount} room scene(s) active)");
+        MRTransitionLog.LogStep("ReloadVrScenes", $"DONE roomScenes={loadedCount} bootOnly={bootScenesOnly}");
+        ConfigManager.WriteConsole($"{LogPrefix} VR scenes reloaded ({loadedCount} room scene(s) active, bootOnly={bootScenesOnly})");
     }
 
     List<string> BuildReloadSceneList()
@@ -316,6 +325,21 @@ public class MRSceneTransition : MonoBehaviour
                 if (!scenesToLoad.Contains(sceneName))
                     scenesToLoad.Add(sceneName);
             }
+        }
+
+        return scenesToLoad;
+    }
+
+    /// <summary>Same scenes as AtStart — FixedScene spawn neighborhood only.</summary>
+    static List<string> BuildBootSceneReloadList()
+    {
+        var scenesToLoad = new List<string>();
+        foreach (string sceneName in MRRuntimeSettings.VrScenesToReloadOnExitMr())
+        {
+            if (string.IsNullOrEmpty(sceneName) || sceneName == FixedSceneName)
+                continue;
+            if (!scenesToLoad.Contains(sceneName))
+                scenesToLoad.Add(sceneName);
         }
 
         return scenesToLoad;

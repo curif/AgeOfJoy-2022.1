@@ -227,9 +227,8 @@ public class ChangeControls : MonoBehaviour
             mrLocomotionSuspended = true;
             ConfigManager.WriteConsole($"[ChangeControls] MR locomotion suspended=True isPlaying={isPlaying}");
 
-            if (isPlaying)
-                return;
-
+            // Always disable providers — ContinuousTurnProvider.Update still runs when enabled
+            // even if InputActions were disabled for cabinet play (NRE in ApplyProcessors).
             DisableLocomotionForMr();
             return;
         }
@@ -251,12 +250,10 @@ public class ChangeControls : MonoBehaviour
     void DisableLocomotionForMr()
     {
         mrSavedTeleportEnabled = beamController != null && beamController.enabled;
-        mrSavedSnapTurnActive = SnapTurnActive;
+        mrSavedSnapTurnActive = actionBasedSnapTurnProvider != null
+            && actionBasedSnapTurnProvider.enableTurnLeftRight;
 
-        leftHandMoveAction.action?.Disable();
-        rightHandContinuousTurnAction.action?.Disable();
-        rightHandSnapTurnAction.action?.Disable();
-
+        // Stop provider Update() before touching InputActions (avoids ReadValue NRE).
         if (actionBasedContinuousMoveProvider != null)
             actionBasedContinuousMoveProvider.enabled = false;
         if (actionBasedContinuousTurnProvider != null)
@@ -265,10 +262,24 @@ public class ChangeControls : MonoBehaviour
             actionBasedSnapTurnProvider.enabled = false;
         if (beamController != null)
             beamController.enabled = false;
+
+        RefreshLocomotionActionRefs();
+        leftHandMoveAction.action?.Disable();
+        rightHandContinuousTurnAction.action?.Disable();
+        rightHandSnapTurnAction.action?.Disable();
+        DisableTurnProviderActions();
     }
 
     void RestoreLocomotionAfterMr()
     {
+        RefreshLocomotionActionRefs();
+
+        // Enable InputActions before providers — ContinuousTurn.Update reads them immediately.
+        leftHandMoveAction.action?.Enable();
+        rightHandContinuousTurnAction.action?.Enable();
+        rightHandSnapTurnAction.action?.Enable();
+        EnableTurnProviderActions();
+
         if (actionBasedContinuousMoveProvider != null)
         {
             actionBasedContinuousMoveProvider.enabled = true;
@@ -277,15 +288,10 @@ public class ChangeControls : MonoBehaviour
                 cc.enabled = true;
         }
 
-        // DisableLocomotionForMr turns continuous turn off; must re-enable before SnapTurnActive.
         if (actionBasedContinuousTurnProvider != null)
             actionBasedContinuousTurnProvider.enabled = true;
         if (actionBasedSnapTurnProvider != null)
             actionBasedSnapTurnProvider.enabled = true;
-
-        leftHandMoveAction.action?.Enable();
-        rightHandContinuousTurnAction.action?.Enable();
-        rightHandSnapTurnAction.action?.Enable();
 
         SnapTurnActive = mrSavedSnapTurnActive;
 
@@ -296,6 +302,34 @@ public class ChangeControls : MonoBehaviour
         bool turnOn = actionBasedContinuousTurnProvider != null && actionBasedContinuousTurnProvider.enabled;
         ConfigManager.WriteConsole(
             $"[ChangeControls] locomotion restored move={moveOn} continuousTurn={turnOn} snap={mrSavedSnapTurnActive}");
+    }
+
+    void RefreshLocomotionActionRefs()
+    {
+        if (actionBasedContinuousTurnProvider != null)
+            rightHandContinuousTurnAction = actionBasedContinuousTurnProvider.rightHandTurnAction;
+        if (actionBasedSnapTurnProvider != null)
+            rightHandSnapTurnAction = actionBasedSnapTurnProvider.rightHandSnapTurnAction;
+        if (actionBasedContinuousMoveProvider != null)
+            leftHandMoveAction = actionBasedContinuousMoveProvider.leftHandMoveAction;
+    }
+
+    void DisableTurnProviderActions()
+    {
+        if (actionBasedContinuousTurnProvider == null)
+            return;
+
+        actionBasedContinuousTurnProvider.leftHandTurnAction.action?.Disable();
+        actionBasedContinuousTurnProvider.rightHandTurnAction.action?.Disable();
+    }
+
+    void EnableTurnProviderActions()
+    {
+        if (actionBasedContinuousTurnProvider == null)
+            return;
+
+        actionBasedContinuousTurnProvider.leftHandTurnAction.action?.Enable();
+        actionBasedContinuousTurnProvider.rightHandTurnAction.action?.Enable();
     }
 
 
@@ -321,9 +355,17 @@ public class ChangeControls : MonoBehaviour
             activateDeactivateControls(true);
             setControllers(true);
             reserveValues();
-            rightHandContinuousTurnAction.action.Disable();
-            rightHandSnapTurnAction.action.Disable();
-            leftHandMoveAction.action.Disable();
+            rightHandContinuousTurnAction.action?.Disable();
+            rightHandSnapTurnAction.action?.Disable();
+            leftHandMoveAction.action?.Disable();
+            DisableTurnProviderActions();
+
+            if (actionBasedContinuousMoveProvider != null)
+                actionBasedContinuousMoveProvider.enabled = false;
+            if (actionBasedContinuousTurnProvider != null)
+                actionBasedContinuousTurnProvider.enabled = false;
+            if (actionBasedSnapTurnProvider != null)
+                actionBasedSnapTurnProvider.enabled = false;
 
             beamController.enabled = false;
         }
@@ -338,9 +380,18 @@ public class ChangeControls : MonoBehaviour
                 DisableLocomotionForMr();
             else
             {
-                rightHandContinuousTurnAction.action.Enable();
-                rightHandSnapTurnAction.action.Enable();
-                leftHandMoveAction.action.Enable();
+                RefreshLocomotionActionRefs();
+                leftHandMoveAction.action?.Enable();
+                rightHandContinuousTurnAction.action?.Enable();
+                rightHandSnapTurnAction.action?.Enable();
+                EnableTurnProviderActions();
+
+                if (actionBasedContinuousMoveProvider != null)
+                    actionBasedContinuousMoveProvider.enabled = true;
+                if (actionBasedContinuousTurnProvider != null)
+                    actionBasedContinuousTurnProvider.enabled = true;
+                if (actionBasedSnapTurnProvider != null)
+                    actionBasedSnapTurnProvider.enabled = true;
             }
         }
     }
@@ -349,12 +400,24 @@ public class ChangeControls : MonoBehaviour
     {
         get
         {
-            return actionBasedSnapTurnProvider.enableTurnLeftRight;
+            return actionBasedSnapTurnProvider != null && actionBasedSnapTurnProvider.enableTurnLeftRight;
         }
         set
         {
+            if (actionBasedSnapTurnProvider != null)
+                actionBasedSnapTurnProvider.enableTurnLeftRight = value;
+
+            if (actionBasedContinuousTurnProvider == null)
+                return;
+
+            // Keep continuous turn off while MR has locomotion suspended.
+            if (mrLocomotionSuspended)
+            {
+                actionBasedContinuousTurnProvider.enabled = false;
+                return;
+            }
+
             actionBasedContinuousTurnProvider.enabled = !value;
-            actionBasedSnapTurnProvider.enableTurnLeftRight = value;
         }
     }
     public float SnapTurnAmount

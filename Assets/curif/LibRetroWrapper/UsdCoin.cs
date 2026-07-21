@@ -11,6 +11,10 @@ public class UsdCoin : MonoBehaviour
 
     [SerializeField]
     bool isGrabbed = false;
+
+    /// <summary>True while the coin is held by an XR interactor (Quick Travel chord, etc.).</summary>
+    public bool IsGrabbed => isGrabbed;
+
     public CoinSlotController ctrl;
 
     GameObject CoinSlot;
@@ -27,6 +31,35 @@ public class UsdCoin : MonoBehaviour
         CoinSlot = null;
         preserveOriginalValues();
         grabInteractable = GetComponent<XRGrabInteractable>();
+        BindSelectEvents();
+    }
+
+    void BindSelectEvents()
+    {
+        if (grabInteractable == null)
+            return;
+
+        grabInteractable.selectEntered.AddListener(OnSelectEntered);
+        grabInteractable.selectExited.AddListener(OnSelectExited);
+    }
+
+    void OnDestroy()
+    {
+        if (grabInteractable == null)
+            return;
+
+        grabInteractable.selectEntered.RemoveListener(OnSelectEntered);
+        grabInteractable.selectExited.RemoveListener(OnSelectExited);
+    }
+
+    void OnSelectEntered(SelectEnterEventArgs _)
+    {
+        isGrabbed = true;
+    }
+
+    void OnSelectExited(SelectExitEventArgs _)
+    {
+        isGrabbed = false;
     }
 
     void preserveOriginalValues()

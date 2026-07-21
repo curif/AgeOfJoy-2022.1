@@ -13,11 +13,23 @@ public static class MRPhoneBoothVisibility
 
     public static void Toggle()
     {
+        if (IsPhoneBoothSuppressedForQuickTravel())
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} toggle ignored — Quick Travel session");
+            return;
+        }
+
         SetVisible(!MRPhoneBoothSettings.Visible);
     }
 
     public static void SetVisible(bool visible)
     {
+        if (IsPhoneBoothSuppressedForQuickTravel())
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} SetVisible ignored — Quick Travel session");
+            return;
+        }
+
         MRPhoneBoothSettings.SetVisible(visible);
 
         if (!IsMrWorldActive())
@@ -37,6 +49,9 @@ public static class MRPhoneBoothVisibility
     /// <summary>Creates the MR booth once if missing; reused for every show/hide.</summary>
     public static MRPhoneBoothPortal EnsureMrInstance()
     {
+        if (IsPhoneBoothSuppressedForQuickTravel())
+            return null;
+
         if (!IsMrWorldActive())
             return MRPhoneBoothPortal.FindMrTravelerInstance(includeInactive: true);
 
@@ -45,6 +60,9 @@ public static class MRPhoneBoothVisibility
 
     public static void ApplySavedVisibility()
     {
+        if (IsPhoneBoothSuppressedForQuickTravel())
+            return;
+
         if (!IsMrWorldActive())
             return;
 
@@ -61,6 +79,9 @@ public static class MRPhoneBoothVisibility
 
     public static string GetStatusLabel()
     {
+        if (IsPhoneBoothSuppressedForQuickTravel())
+            return "DISABLED (quick travel)";
+
         MRPhoneBoothSettings.EnsureLoaded();
 
         if (!IsMrWorldActive())
@@ -71,6 +92,12 @@ public static class MRPhoneBoothVisibility
             return "VISIBLE";
 
         return "HIDDEN";
+    }
+
+    public static bool IsPhoneBoothSuppressedForQuickTravel()
+    {
+        MixedRealityManager manager = MixedRealityManager.Instance;
+        return manager != null && manager.SuppressPhoneBoothForQuickTravelSession;
     }
 
     static bool IsMrWorldActive()

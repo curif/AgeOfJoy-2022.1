@@ -275,8 +275,11 @@ public class MRConfigurationController : MonoBehaviour
         navMenu.Deselect();
         ActivateShader(true);
         DrawCurrentScreen();
-        MRPhoneBoothVisibility.EnsureMrInstance();
-        MRPhoneBoothVisibility.ApplySavedVisibility();
+        if (!MRPhoneBoothVisibility.IsPhoneBoothSuppressedForQuickTravel())
+        {
+            MRPhoneBoothVisibility.EnsureMrInstance();
+            MRPhoneBoothVisibility.ApplySavedVisibility();
+        }
         ConfigManager.WriteConsole($"{LogPrefix} session started (catalog={catalogNames.Count})");
     }
 
@@ -468,7 +471,8 @@ public class MRConfigurationController : MonoBehaviour
             alignTop = true,
             leftAlign = true
         };
-        navMenu.AddOption("PHONE BOOTH", "Show/hide MR travel booth");
+        if (!MRPhoneBoothVisibility.IsPhoneBoothSuppressedForQuickTravel())
+            navMenu.AddOption("PHONE BOOTH", "Show/hide MR travel booth");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
         navMenu.AddOption("OFFICIAL OBJECTS", "Bookshelves + PrefabsEnvironment");
@@ -4032,6 +4036,8 @@ public class MRConfigurationController : MonoBehaviour
             case "MOVE CONFIG":
                 return;
             case "PHONE BOOTH":
+                if (MRPhoneBoothVisibility.IsPhoneBoothSuppressedForQuickTravel())
+                    return;
                 selectedListIndex = 0;
                 selectedColumnIndex = 0;
                 currentScreen = Screen.PhoneBooth;
