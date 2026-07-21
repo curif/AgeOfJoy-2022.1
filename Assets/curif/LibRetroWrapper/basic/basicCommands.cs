@@ -12,6 +12,7 @@ public static class Commands
         commands["'"] = typeof(CommandREM2);
         commands["LET"] = typeof(CommandLET);
         commands["LETS"] = typeof(CommandLETS);
+        commands["DECLARE"] = typeof(CommandDECLARE);
         commands["DIM"] = typeof(CommandDIM);
         commands["GOTO"] = typeof(CommandGOTO);
         commands["IF"] = typeof(CommandIFTHEN);
