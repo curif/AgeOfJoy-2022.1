@@ -196,13 +196,31 @@ AGEBasic operates on a virtual CRT screen within the VR cabinet.
 *   `PRINT x, y, text, [inverted], [draw_immediately]`: Prints text at character coordinates. `draw_immediately`: if you use `0` (false) you must use `SHOW` later to show the screen.
 *   `PRINTLN text, ...`: Prints line.
 *   `PRINTCENTERED y, text, inverted [, draw_immediately]`: Prints centered text. **Three arguments are required**: row, text string, and inverted flag (0=normal, 1=inverted colors). `draw_immediately` is optional (default 1). Example: `PRINTCENTERED 5, "HELLO", 0`
-*   `BGCOLOR color` / `FGCOLOR color `: Sets background/foreground color. Color can be a name (e.g., "red") or RGB (`R, G, B`).
+*   `BGCOLOR color` / `FGCOLOR color `: Sets background/foreground color. Color can be a name (e.g., "red") or RGB (`R, G, B`). **Named colors only work for `BGCOLOR`/`FGCOLOR`** — see "Named Colors" below.
 *   `RESETCOLOR` / `INVERTCOLOR`
-*   `DPSET x, y, color, [draw_immediately] `: Draw pixel.
-*   `DLINE corner1[2], corner2[2], color, [draw_immediately]`: Draw line.
-*   `DOVAL corner[2], radX, radY, color, [fill], [fillcolor], [draw_immediately]`: Draw oval.
-*   `DCIRCLE corner[2], radius, color...`: Draw circle.
-*   `DBOX corner1[2], size[2], color...`: Draw rectangle.
+*   `SETCOLORSPACE "name"`: Selects the palette used for named-color lookups in `BGCOLOR`/`FGCOLOR`. See "Named Colors" below for valid space names and their color lists.
+*   `DPSET x, y, color, [draw_immediately] `: Draw pixel. `color` is an `R, G, B` triplet — **string names are NOT supported here.**
+*   `DLINE corner1[2], corner2[2], color, [draw_immediately]`: Draw line. `color` is `R, G, B` only.
+*   `DOVAL corner[2], radX, radY, color, [fill], [fillcolor], [draw_immediately]`: Draw oval. `color`/`fillcolor` are `R, G, B` only.
+*   `DCIRCLE corner[2], radius, color...`: Draw circle. `color` is `R, G, B` only.
+*   `DBOX corner1[2], size[2], color...`: Draw rectangle. `color` is `R, G, B` only.
+
+### Named Colors (`BGCOLOR` / `FGCOLOR` only)
+
+`BGCOLOR`/`FGCOLOR` can take a string color name instead of `R, G, B`. The name is looked up **case-insensitively** in the currently active color space, selected with `SETCOLORSPACE "name"`. Pixel-drawing commands (`DPSET`, `DLINE`, `DOVAL`, `DCIRCLE`, `DBOX`) do **not** accept named colors — always pass `R, G, B` to those.
+
+| Space | Names |
+| :--- | :--- |
+| `ibmpc` | black, blue, green, cyan, red, magenta, brown, light_gray, dark_gray, light_blue, light_green, light_cyan, light_red, light_magenta, yellow, white |
+| `c64` | black, white, red, cyan, violet, green, blue, yellow, orange, brown, light_red, darkgrey, grey, light_green, light_blue, light_grey |
+| `zx` | black, blue, red, magenta, green, cyan, yellow, white, bright_black, bright_blue, bright_red, bright_magenta, bright_green, bright_cyan, bright_yellow, bright_white |
+| `appleii` | black, red, blue, purple, green, gray, medium_blue, light_blue, brown, orange, light_gray, pink, light_green, yellow, aqua, white |
+| `atari2600` | black, white, red, cyan, purple, green, blue, yellow |
+| `msx` / `msx_mono` | transparent, black, green, "light green", blue, "light blue", "dark red", cyan, red, "light red", yellow, "light yellow", "dark green", magenta, gray, white |
+| `to7` | black, red, green, yellow, blue, pink, cyan, white |
+| `cpc` / `cpc_mono` | black, blue, bright_blue, red, magenta, mauve, bright_red, purple, bright_magenta, green, cyan, sky_blue, yellow, white, pastel_blue, orange, pink, pastel_magenta, bright_green, sea_green, bright_cyan, lime, pastel_green, pastel_cyan, bright_yellow, pastel_yellow, bright_white |
+
+**Note:** MSX color names use spaces (e.g. `"light green"`), while every other space uses underscores (e.g. `"light_green"`) — this inconsistency comes from the source data and is not a typo.
 *   `SCREENWIDTH()`, `SCREENHEIGHT()`: Returns character grid dimensions.
 *   `DSCREENWIDTH()`, `DSCREENHEIGHT()`: Returns pixel dimensions.
 
