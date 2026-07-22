@@ -162,7 +162,6 @@ public class CabinetAutoReload : MonoBehaviour
                 if (loadedSuccesfully)
                 {
                     ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} successfully loaded ");
-                    gameObject.SetActive(false); //don't destroy it
                     yield break;
                 }
             }
@@ -263,7 +262,6 @@ public class CabinetAutoReload : MonoBehaviour
         try
         {
             ConfigManager.WriteConsole("[CabinetAutoReload] New Test Cabinet deployed ******");
-            //UnityEngine.Object.Destroy(gameObject);
 
             CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
             cba.AgentPlayerPositions = AgentPlayerPositions;
@@ -281,6 +279,9 @@ public class CabinetAutoReload : MonoBehaviour
             cabReplaceComp.backgroundSoundController = backgroundSoundController;
 
             cab.gameObject.SetActive(true);
+
+            ConfigManager.WriteConsole($"[CabinetAutoReload] destroying old test cabinet {gameObject.name}");
+            UnityEngine.Object.Destroy(gameObject);
 
             return true;
         }

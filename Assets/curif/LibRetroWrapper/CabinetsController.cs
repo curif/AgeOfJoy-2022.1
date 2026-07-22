@@ -482,6 +482,12 @@ public class CabinetsController : MonoBehaviour
         return cabinet?.CabinetReplace;
     }
 
+    //returns the live Cabinet instance (part/transform access) for a loaded position, or null if not loaded yet.
+    public Cabinet GetLiveCabinetByPosition(int position)
+    {
+        return GetCabinetReplaceByPosition(position)?.cabinet;
+    }
+
     public int Count()
     {
         //only active gameobjects:
