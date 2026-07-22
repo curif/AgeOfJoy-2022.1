@@ -20,21 +20,7 @@ public static class PlaceOnFloorFromBoxCollider
         }
 
         // Align the lower part of the GameObject to the floor
-        if (!AlignLowerPartToFloor(transform, boxCollider))
-        {
-            Vector3 reservedPosition = transform.position;
-            transform.position = new Vector3(
-                transform.position.x,
-                transform.position.y + 0.5f,
-                transform.position.z
-            );
-            if (!AlignLowerPartToFloor(transform, boxCollider))
-            {
-                transform.position = reservedPosition;
-                return false;
-            }
-        }
-        return true;
+        return AlignLowerPartToFloor(transform, boxCollider);
     }
     public static void CreateSphere(Vector3 position, GameObject go)
     {
@@ -48,23 +34,31 @@ public static class PlaceOnFloorFromBoxCollider
         // Set the scale of the sphere to 0.1 in all dimensions
         sphere.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
     }
+    // Models placed in the same slot (e.g. workshop test cabinets reloaded via
+    // CabinetAutoReload) can have wildly different heights/pivots than whatever
+    // occupied that slot before, so the lower point of the box collider can end up
+    // far above or below the floor. Cast from well above it through a generous
+    // distance instead of a narrow guess-and-retry window, so the floor is found
+    // regardless of how far off the spawn height is.
+    private const float CastAboveOffset = 50f;
+    private const float MaxCastDistance = 200f;
+
     private static bool AlignLowerPartToFloor(Transform transform, BoxCollider boxCollider)
     {
+        float lowerPointY = CalculateLowerPointY(transform, boxCollider);
+        Vector3 castOrigin = new Vector3(transform.position.x,
+                                            lowerPointY + CastAboveOffset,
+                                            transform.position.z);
+        Ray ray = new Ray(castOrigin, Vector3.down);
 
-        // Cast a ray downwards from the center of the BoxCollider
-        Vector3 lowBoxCollider = new Vector3(transform.position.x,
-                                                CalculateLowerPointY(transform, boxCollider) + 0.5f,
-                                                transform.position.z);
-        Ray ray = new Ray(lowBoxCollider, Vector3.down);
-
-        //CreateSphere(lowBoxCollider, transform.gameObject);
+        //CreateSphere(castOrigin, transform.gameObject);
 
         // Perform a raycast to check for the floor
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, 1f, floorLayer))
+        if (Physics.Raycast(ray, out hit, MaxCastDistance, floorLayer))
         {
-            float yOffset = lowBoxCollider.y - hit.point.y - 0.5f;
-            
+            float yOffset = lowerPointY - hit.point.y;
+
             // Adjust the position of the GameObject
             transform.position -= new Vector3(0f, yOffset, 0f);
             return true;
@@ -110,7 +104,7 @@ public class PutOnFloor : MonoBehaviour
     {
 
         if (!PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
-            ConfigManager.WriteConsoleWarning($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {name}");
+            ConfigManager.WriteConsoleWarning($"[PutOnFloor.Start] can't re-position cabinet on floor {name}");
         yield break;
     }
 }

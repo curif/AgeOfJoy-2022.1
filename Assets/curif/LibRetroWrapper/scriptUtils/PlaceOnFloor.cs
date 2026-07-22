@@ -31,7 +31,7 @@ public class PlaceOnFloor : Editor
 
             // in PutOnFloor.cs
             if (! PlaceOnFloorFromBoxCollider.PlaceOnFloor(transform, boxCollider))
-                ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor after two intents {transform.gameObject}");
+                ConfigManager.WriteConsoleError($"[PutOnFloor.Start] can't re-position cabinet on floor {transform.gameObject}");
 
             // Set the child GameObject and its children recursively as static
             transform.gameObject.isStatic = true;
