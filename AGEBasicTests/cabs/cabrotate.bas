@@ -1,0 +1,34 @@
+5 call DebugMode(1)
+10 REM Test CABROTATE/CABSETROTATION/CABGETROTATION and their GLOBAL/ROOM variants.
+20 REM CABxxx acts on this cabinet's own root gameObject (not a part).
+30 LET BEFORE = CABGETROTATION("Y")
+40 CALL LOG("own cabinet rotation Y before: " + STR(BEFORE))
+50 CALL CABSETROTATION("Y", 45)
+60 LET AFTER = CABGETROTATION("Y")
+70 CALL LOG("own cabinet rotation Y after CABSETROTATION 45: " + STR(AFTER))
+80 IF AFTER <> 45 THEN GOTO 2000
+90 CALL CABROTATE("Y", 10)
+100 LET AFTER2 = CABGETROTATION("Y")
+110 CALL LOG("own cabinet rotation Y after CABROTATE +10: " + STR(AFTER2))
+120 IF AFTER2 <> 55 THEN GOTO 2010
+
+200 REM Edit TARGETPOS to a position, in the current room, different from this cabinet's own position.
+210 LET TARGETPOS = 1
+220 LET RBEFORE = CABROOMGETROTATION(TARGETPOS, "Y")
+230 CALL LOG("room cabinet " + STR(TARGETPOS) + " rotation Y before: " + STR(RBEFORE))
+240 CALL CABROOMSETROTATION(TARGETPOS, "Y", 30)
+250 LET RAFTER = CABROOMGETROTATION(TARGETPOS, "Y")
+260 CALL LOG("room cabinet " + STR(TARGETPOS) + " rotation Y after CABROOMSETROTATION 30: " + STR(RAFTER))
+270 IF RAFTER <> 30 THEN GOTO 3000
+
+280 CALL LOG("cabrotate.bas verification OK!")
+290 END
+
+2000 CALL LOGERROR("CABSETROTATION did not stick: expected 45, got " + STR(AFTER))
+2001 END
+
+2010 CALL LOGERROR("CABROTATE did not stick: expected 55, got " + STR(AFTER2))
+2011 END
+
+3000 CALL LOGERROR("CABROOMSETROTATION did not stick: expected 30, got " + STR(RAFTER))
+3001 END

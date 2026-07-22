@@ -538,6 +538,161 @@ class CommandFunctionCABPARTSGETGLOBALROTATION : CommandFunctionExpressionListBa
     }
 }
 
+// CABSETROTATION(axis, angle) — rotate the whole cabinet (root gameObject, not a part) to an absolute
+// local angle on one axis, measured from the cabinet's placement rotation.
+class CommandFunctionCABSETROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABSETROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABSETROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // axis(X/Y/Z), angle
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - axis (X, Y, Z)");
+        FunctionHelper.ExpectedNumber(vals[1], " - angle");
+
+        string axis = vals[0].GetString().ToUpper();
+        float rotationValue = (float)vals[1].GetNumber();
+
+        config.Cabinet.RotateLocalEulerAngleByAxisFromOrigin(axis, rotationValue);
+
+        return BasicValue.True;
+    }
+}
+
+// CABROTATE(axis, angle) — rotate the whole cabinet relative to its current local rotation.
+class CommandFunctionCABROTATE : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABROTATE(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABROTATE";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // axis(X/Y/Z), angle
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - axis (X, Y, Z)");
+        FunctionHelper.ExpectedNumber(vals[1], " - angle");
+
+        string axis = vals[0].GetString().ToUpper();
+        float rotationValue = (float)vals[1].GetNumber();
+
+        config.Cabinet.RotateLocalEulerAngleByAxis(axis, rotationValue);
+
+        return BasicValue.True;
+    }
+}
+
+// CABGETROTATION(axis) — local rotation delta (degrees) of the whole cabinet since placement.
+class CommandFunctionCABGETROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABGETROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABGETROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 1); // axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - axis (X, Y, Z)");
+
+        string axis = vals[0].GetString().ToUpper();
+        float rotationValue = config.Cabinet.GetLocalRotationByAxis(axis);
+
+        return new BasicValue(rotationValue);
+    }
+}
+
+// CABSETGLOBALROTATION(axis, angle) — rotate the whole cabinet to an absolute world-space angle on one axis.
+class CommandFunctionCABSETGLOBALROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABSETGLOBALROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABSETGLOBALROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 2); // axis(X/Y/Z), angle
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - axis (X, Y, Z)");
+        FunctionHelper.ExpectedNumber(vals[1], " - angle");
+
+        string axis = vals[0].GetString().ToUpper();
+        float rotationValue = (float)vals[1].GetNumber();
+
+        config.Cabinet.RotateWorldEulerAngleByAxis(axis, rotationValue);
+
+        return BasicValue.True;
+    }
+}
+
+// CABGETGLOBALROTATION(axis) — world-space rotation delta (degrees) of the whole cabinet since placement.
+class CommandFunctionCABGETGLOBALROTATION : CommandFunctionExpressionListBase
+{
+    public CommandFunctionCABGETGLOBALROTATION(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "CABGETGLOBALROTATION";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return Parse(tokens, 1); // axis(X/Y/Z)
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
+        if (config?.Cabinet == null)
+            throw new Exception("AGEBasic can't access the Cabinet data.");
+
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - axis (X, Y, Z)");
+
+        string axis = vals[0].GetString().ToUpper();
+        float rotationValue = config.Cabinet.GetWorldRotationByAxis(axis);
+
+        return new BasicValue(rotationValue);
+    }
+}
+
 class CommandFunctionCABPARTSGETTRANSPARENCY : CommandFunctionSingleExpressionBase
 {
     public CommandFunctionCABPARTSGETTRANSPARENCY(ConfigurationCommands config) : base(config)

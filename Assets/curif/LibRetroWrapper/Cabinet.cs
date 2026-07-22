@@ -29,6 +29,11 @@ public class Cabinet
     public Dictionary<string, CabinetPart> CabinetPartsControllersByName = new();
     public Dictionary<int, CabinetPart> CabinetPartsControllersByIdx = new();
 
+    // Rotation of the cabinet as a whole (the root gameObject), captured right after placement,
+    // used as the origin for CABSETROTATION/CABSETGLOBALROTATION and the baseline for the GET* commands.
+    private Quaternion initialLocalRotation;
+    private Quaternion initialWorldRotation;
+
 
     // public bool IsValid
     // {
@@ -307,6 +312,8 @@ public class Cabinet
         //https://docs.unity3d.com/ScriptReference/Object.Instantiate.html
         gameObject = GameObject.Instantiate<GameObject>(go, position, rotation, parent);
         gameObject.name = name;
+        initialLocalRotation = gameObject.transform.localRotation;
+        initialWorldRotation = gameObject.transform.rotation;
         RegisterChildren(gameObject);
 
         CabinetPart bezel = GetPartControllerOrNull("bezel");
@@ -368,6 +375,78 @@ public class Cabinet
             return CabinetPartsControllersByIdx[idx];
 
         return null;
+    }
+
+    private static Quaternion EulerAngleByAxis(string axis, float angle)
+    {
+        if (angle < -360 || angle > 360)
+            throw new Exception($"Rotation: {axis} value must be between -360 and 360 degrees. value {angle}");
+
+        switch (axis)
+        {
+            case "X":
+                return Quaternion.Euler(angle, 0, 0);
+            case "Y":
+                return Quaternion.Euler(0, angle, 0);
+            case "Z":
+                return Quaternion.Euler(0, 0, angle);
+            default:
+                throw new Exception($"Rotation: axis should be X, Y, or Z: {axis}");
+        }
+    }
+
+    public Cabinet RotateLocalEulerAngleByAxisFromOrigin(string axis, float angle)
+    {
+        gameObject.transform.localRotation = initialLocalRotation * EulerAngleByAxis(axis, angle);
+        return this;
+    }
+
+    public Cabinet RotateLocalEulerAngleByAxis(string axis, float angle)
+    {
+        gameObject.transform.localRotation *= EulerAngleByAxis(axis, angle);
+        return this;
+    }
+
+    public float GetLocalRotationByAxis(string axis)
+    {
+        Quaternion deltaRotation = gameObject.transform.localRotation * Quaternion.Inverse(initialLocalRotation);
+        Vector3 deltaEuler = deltaRotation.eulerAngles;
+
+        switch (axis)
+        {
+            case "X":
+                return deltaEuler.x;
+            case "Y":
+                return deltaEuler.y;
+            case "Z":
+                return deltaEuler.z;
+            default:
+                throw new Exception($"Rotation: axis should be X, Y, or Z: {axis}");
+        }
+    }
+
+    public Cabinet RotateWorldEulerAngleByAxis(string axis, float angle)
+    {
+        gameObject.transform.rotation = initialWorldRotation * EulerAngleByAxis(axis, angle);
+        return this;
+    }
+
+    public float GetWorldRotationByAxis(string axis)
+    {
+        Quaternion deltaRotation = gameObject.transform.rotation * Quaternion.Inverse(initialWorldRotation);
+        Vector3 deltaEuler = deltaRotation.eulerAngles;
+
+        switch (axis)
+        {
+            case "X":
+                return deltaEuler.x;
+            case "Y":
+                return deltaEuler.y;
+            case "Z":
+                return deltaEuler.z;
+            default:
+                throw new Exception($"Rotation: axis should be X, Y, or Z: {axis}");
+        }
     }
 
     public GameObject PartsOrNull(string partName)

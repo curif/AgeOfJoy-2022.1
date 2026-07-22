@@ -77,8 +77,9 @@ AGEBasic supports an event-driven model allowing scripts to respond to VR intera
 Dynamic events are registered using the `ONEVENT` command combined with a configuration function. `ONEVENT` accepts an optional trailing `NAME "id"` clause: `ONEVENT configFunc() GOTO line NAME "id"`. Naming a handler lets it be removed later with `OFFEVENT` without touching any other registered event. Handlers registered without `NAME` cannot be targeted by `OFFEVENT`.
 
 *   `ONEVENT ONTIMER(seconds) GOTO line`: Triggers every X seconds.
-*   `ONEVENT ONCONTROL("ID", type, [port]) GOTO line`: Triggers on input. 
+*   `ONEVENT ONCONTROL("ID", type, [port]) GOTO line`: Triggers on input.
     *   `type`: `"pressed"`, `"held"`, or `"released"`.
+    *   `port` (optional, default `0`): see "Controls & Input" in §7 for the port convention (left vs right controller).
 *   `ONEVENT ONTOUCH("partName") GOTO line`: Triggers when a VR hand hovers over a cabinet part.
 *   `ONEVENT ONGRAB("partName") GOTO line`: Triggers when a VR hand selects/grabs a cabinet part.
 *   `ONEVENT ONCOLLISION("part", "impact1", ...) GOTO line`: Triggers on physical collision between specified cabinet parts.
@@ -221,8 +222,19 @@ Sprites are drawn over the background and retain their Z-order. Loading is async
 AGEBasic can interact directly with the Age of Joy 3D environment.
 
 ### Controls & Input
-*   `CONTROLACTIVE("ID", [port])`: Returns true if a specific Libretro button (e.g., "JOYPAD_UP_0", "JOYPAD_B_0") is pressed. Includes automatic 250ms debouncing.
+*   `CONTROLACTIVE("ID", [port])`: Returns true if a specific Libretro button (e.g., `CONTROLACTIVE("JOYPAD_UP")`, `CONTROLACTIVE("JOYPAD_B", 1)`) is pressed. Includes automatic 250ms debouncing.
 *   `CONTROLRUMBLE("ID", amplitude, duration)`: Triggers controller haptics.
+
+**The `port` concept:** `port` is an optional argument (default `0`) passed separately from the button `"ID"` — it is **not** appended to the ID string yourself. For the directional pad (`JOYPAD_UP`/`DOWN`/`LEFT`/`RIGHT`), `port` selects which physical thumbstick/D-pad drives it: **port `0` = left controller stick, port `1` = right controller stick**. For every other button ID (`JOYPAD_A`, `JOYPAD_B`, etc.) port is normally left at its default `0`. Same `port` argument applies to `ONCONTROL("ID", type, [port])`.
+
+**Available control IDs** (from `LibretroControlMapDictionnary.cs`), for use with `CONTROLACTIVE`/`ONCONTROL`:
+
+*   **Joypad buttons:** `JOYPAD_A`, `JOYPAD_B`, `JOYPAD_X`, `JOYPAD_Y`, `JOYPAD_START`, `JOYPAD_SELECT`, `JOYPAD_UP`, `JOYPAD_DOWN`, `JOYPAD_LEFT`, `JOYPAD_RIGHT`, `JOYPAD_L`, `JOYPAD_R`, `JOYPAD_L2`, `JOYPAD_R2`, `JOYPAD_L3`, `JOYPAD_R3`
+*   **Rumble:** `JOYPAD_LEFT_RUMBLE`, `JOYPAD_RIGHT_RUMBLE`
+*   **Cabinet:** `EXIT`, `INSERT`
+*   **Mouse:** `MOUSE_X`, `MOUSE_Y`, `MOUSE_LEFT`, `MOUSE_RIGHT`, `MOUSE_MIDDLE`, `MOUSE_WHEELUP`, `MOUSE_WHEELDOWN`, `MOUSE_HORIZ_WHEELUP`, `MOUSE_HORIZ_WHEELDOWN`, `MOUSE_BUTTON_4`, `MOUSE_BUTTON_5`
+*   **Lightgun:** `LIGHTGUN_AUX_A`, `LIGHTGUN_AUX_B`, `LIGHTGUN_AUX_C`, `LIGHTGUN_DPAD_UP`, `LIGHTGUN_DPAD_DOWN`, `LIGHTGUN_DPAD_LEFT`, `LIGHTGUN_DPAD_RIGHT`, `LIGHTGUN_START`, `LIGHTGUN_SELECT`, `LIGHTGUN_TRIGGER`, `LIGHTGUN_RELOAD`
+*   **Other:** `MODIFIER`, `KEYB-UP`, `KEYB-DOWN`, `KEYB-LEFT`, `KEYB-RIGHT`
 
 ### Player & Room
 *   `PLAYERGETHEIGHT()` / `PLAYERSETHEIGHT(h)`
@@ -240,6 +252,16 @@ AGEBasic can interact directly with the Age of Joy 3D environment.
 *   `CABPARTSSETCOLOR(part, R, G, B)`
 *   `CABPARTSEMISSION(part, bool)`
 *   `CABPARTSAUDIOPLAY(part)` / `CABPARTSAUDIOSTOP(part)`
+
+`CABPARTSROTATE`/`CABPARTSSETROTATION` (and their `GLOBAL` counterparts) always require a `part` argument —
+there is no `part` value that means "the whole cabinet," since parts are resolved from the cabinet's
+first-level children only. To rotate the cabinet **as a single unit** (its root object, carrying every part
+with it), use the whole-cabinet commands instead:
+
+*   `CABSETROTATION("X|Y|Z", angle)`: Sets the whole cabinet's local rotation on an axis, relative to its placement rotation (absolute, not additive).
+*   `CABROTATE("X|Y|Z", angle)`: Rotates the whole cabinet locally by a relative angle.
+*   `CABGETROTATION("X|Y|Z")`: Reads the whole cabinet's current local rotation delta (degrees) on an axis, relative to its placement rotation.
+*   `CABSETGLOBALROTATION("X|Y|Z", angle)` / `CABGETGLOBALROTATION("X|Y|Z")`: Same, but in world space.
 
 ### Cabinet Registry & Replacement
 AGEBasic can inspect and change which cabinet game occupies each position in a room, and swap the live 3D cabinet without going through the in-VR Configuration Room UI.
@@ -272,6 +294,45 @@ AGEBasic can inspect and change which cabinet game occupies each position in a r
 40 CALL CABROOMREPLACE(3, "SpaceInvaders")
 50 END
 ```
+
+### Cross-Cabinet Part Manipulation (`CABROOMPARTS*`)
+
+The `CABPARTS*` functions (§7 "Cabinet Parts Manipulation") only ever act on the cabinet whose own AGEBasic
+program is currently running — there is no way to reach a different cabinet with them, and they throw if
+called from a standalone runner (Workshop, Configuration Room) with no bound cabinet.
+
+`CABROOMPARTS*` functions provide the same manipulations, but target **any cabinet in the current room by
+position** (0-based, same convention as `CABROOMGETNAME`/`CABROOMREPLACE` — room is always the current one,
+never an explicit parameter). This lets a Workshop script, a Configuration Room script, or one cabinet's
+program manipulate a *different* cabinet's parts. Every function takes the cabinet `position` as its first
+argument, followed by the same arguments as its `CABPARTS*` counterpart. All of them throw if no cabinet is
+currently loaded at that position (e.g. it's still showing an "out of order" placeholder).
+
+*   `CABROOMPARTSCOUNT(position)` / `CABROOMPARTSNAME(position, idx)`: Enumerate parts of the target cabinet.
+*   `CABROOMPARTSENABLE(position, part, bool)`: Enables/disables a part.
+*   `CABROOMPARTSGETCOORDINATE(position, part, "X|Y|Z")` / `CABROOMPARTSSETCOORDINATE(position, part, "X|Y|Z", val)`: Local position.
+*   `CABROOMPARTSGETGLOBALCOORDINATE(position, part, "X|Y|Z")` / `CABROOMPARTSSETGLOBALCOORDINATE(position, part, "X|Y|Z", val)`: World position.
+*   `CABROOMPARTSSETROTATION(position, part, "X|Y|Z", angle)`: Sets local rotation on an axis relative to the part's origin.
+*   `CABROOMPARTSROTATE(position, part, "X|Y|Z", angle)`: Rotates the part locally by a relative angle.
+*   `CABROOMPARTSGETROTATION(position, part, "X|Y|Z")`: Reads current local rotation on an axis.
+*   `CABROOMPARTSSETGLOBALROTATION(position, part, "X|Y|Z", angle)` / `CABROOMPARTSGETGLOBALROTATION(position, part, "X|Y|Z")`: World rotation.
+*   `CABROOMPARTSGETTRANSPARENCY(position, part)` / `CABROOMPARTSSETTRANSPARENCY(position, part, percent)`: Transparency 0-100.
+*   `CABROOMPARTSSETCOLOR(position, part, R, G, B)`: Sets base color.
+*   `CABROOMPARTSEMISSION(position, part, bool)` / `CABROOMPARTSSETEMISSIONCOLOR(position, part, R, G, B)`: Emission.
+
+Example — rotate a neighboring cabinet's door from any running program:
+```basic
+10 LET DOOR_POS = 3
+20 CALL CABROOMPARTSSETROTATION(DOOR_POS, "door", "Y", 90)
+30 END
+```
+
+**Whole-cabinet rotation by room position** — the `CABROOM*` equivalents of `CAB{SET,GET}{,GLOBAL}ROTATION`/`CABROTATE`
+(§7), for rotating a *different* cabinet's root object (not one of its parts) from any running program:
+
+*   `CABROOMSETROTATION(position, "X|Y|Z", angle)` / `CABROOMROTATE(position, "X|Y|Z", angle)`: Set (absolute, from placement) or rotate (relative) the target cabinet's local rotation.
+*   `CABROOMGETROTATION(position, "X|Y|Z")`: Reads the target cabinet's current local rotation delta.
+*   `CABROOMSETGLOBALROTATION(position, "X|Y|Z", angle)` / `CABROOMGETGLOBALROTATION(position, "X|Y|Z")`: Same, in world space.
 
 ### Workshop
 *   `WORKSHOPRELOAD()`: **Workshop room only.** Redeploys the workshop's test cabinet from the on-disk `cabinetsdb/test` folder, without needing to drop a new `test.zip` — the intended way to iterate after editing the test cabinet's `description.yaml` with `CABDBSETINFO`. Returns `1` if the request was accepted (the redeploy happens within a couple of seconds and rewrites `test.log` with any compile/deploy problems), or `0` if there is no active workshop test-cabinet loader (e.g. called from a different room, or no test cabinet has ever been loaded). **Warning**: never call this unconditionally from `debug.bas` — the workshop debug console reruns `debug.bas` whenever `test.log` changes, and an unconditional `WORKSHOPRELOAD()` there creates an infinite reload loop.

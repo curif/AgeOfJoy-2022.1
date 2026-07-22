@@ -140,6 +140,30 @@ public static class Commands
         functions["CABROOMGETNAME"] = typeof(CommandFunctionCABROOMGETNAME);
         functions["CABROOMREPLACE"] = typeof(CommandFunctionCABROOMREPLACE);
 
+        //cabinet parts of ANY cabinet in the room (by position), not just the running cabinet
+        functions["CABROOMPARTSCOUNT"] = typeof(CommandFunctionCABROOMPARTSCOUNT);
+        functions["CABROOMPARTSNAME"] = typeof(CommandFunctionCABROOMPARTSNAME);
+        functions["CABROOMPARTSENABLE"] = typeof(CommandFunctionCABROOMPARTSENABLE);
+        functions["CABROOMPARTSGETCOORDINATE"] = typeof(CommandFunctionCABROOMPARTSGETCOORDINATE);
+        functions["CABROOMPARTSSETCOORDINATE"] = typeof(CommandFunctionCABROOMPARTSSETCOORDINATE);
+        functions["CABROOMPARTSGETGLOBALCOORDINATE"] = typeof(CommandFunctionCABROOMPARTSGETGLOBALCOORDINATE);
+        functions["CABROOMPARTSSETGLOBALCOORDINATE"] = typeof(CommandFunctionCABROOMPARTSSETGLOBALCOORDINATE);
+        functions["CABROOMPARTSSETROTATION"] = typeof(CommandFunctionCABROOMPARTSSETROTATION);
+        functions["CABROOMPARTSROTATE"] = typeof(CommandFunctionCABROOMPARTSROTATE);
+        functions["CABROOMPARTSGETROTATION"] = typeof(CommandFunctionCABROOMPARTSGETROTATION);
+        functions["CABROOMPARTSSETGLOBALROTATION"] = typeof(CommandFunctionCABROOMPARTSSETGLOBALROTATION);
+        functions["CABROOMPARTSGETGLOBALROTATION"] = typeof(CommandFunctionCABROOMPARTSGETGLOBALROTATION);
+        functions["CABROOMSETROTATION"] = typeof(CommandFunctionCABROOMSETROTATION);
+        functions["CABROOMROTATE"] = typeof(CommandFunctionCABROOMROTATE);
+        functions["CABROOMGETROTATION"] = typeof(CommandFunctionCABROOMGETROTATION);
+        functions["CABROOMSETGLOBALROTATION"] = typeof(CommandFunctionCABROOMSETGLOBALROTATION);
+        functions["CABROOMGETGLOBALROTATION"] = typeof(CommandFunctionCABROOMGETGLOBALROTATION);
+        functions["CABROOMPARTSGETTRANSPARENCY"] = typeof(CommandFunctionCABROOMPARTSGETTRANSPARENCY);
+        functions["CABROOMPARTSSETTRANSPARENCY"] = typeof(CommandFunctionCABROOMPARTSSETTRANSPARENCY);
+        functions["CABROOMPARTSSETCOLOR"] = typeof(CommandFunctionCABROOMPARTSSETCOLOR);
+        functions["CABROOMPARTSEMISSION"] = typeof(CommandFunctionCABROOMPARTSEMISSION);
+        functions["CABROOMPARTSSETEMISSIONCOLOR"] = typeof(CommandFunctionCABROOMPARTSSETEMISSIONCOLOR);
+
         //cabinets in registry
         functions["CABDBCOUNT"] = typeof(CommandFunctionCABDBCOUNT);
         functions["CABDBCOUNTINROOM"] = typeof(CommandFunctionCABDBCOUNTINROOM);
@@ -179,6 +203,11 @@ public static class Commands
         functions["CABPARTSSETROTATION"] = typeof(CommandFunctionCABPARTSSETROTATION);
         functions["CABPARTSROTATE"] = typeof(CommandFunctionCABPARTSROTATE);
         functions["CABPARTSSETGLOBALROTATION"] = typeof(CommandFunctionCABPARTSSETGLOBALROTATION);
+        functions["CABSETROTATION"] = typeof(CommandFunctionCABSETROTATION);
+        functions["CABROTATE"] = typeof(CommandFunctionCABROTATE);
+        functions["CABGETROTATION"] = typeof(CommandFunctionCABGETROTATION);
+        functions["CABSETGLOBALROTATION"] = typeof(CommandFunctionCABSETGLOBALROTATION);
+        functions["CABGETGLOBALROTATION"] = typeof(CommandFunctionCABGETGLOBALROTATION);
 
         functions["CABPARTSGETROTATION"] = typeof(CommandFunctionCABPARTSGETROTATION);
         functions["CABPARTSGETGLOBALROTATION"] = typeof(CommandFunctionCABPARTSGETGLOBALROTATION);
