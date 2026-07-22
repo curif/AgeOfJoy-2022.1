@@ -266,6 +266,7 @@ public class CabinetAutoReload : MonoBehaviour
             CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
             cba.AgentPlayerPositions = AgentPlayerPositions;
             cba.backgroundSoundController = backgroundSoundController;
+            cba.debugConsole = debugConsole;
 
             //add CabinetReplace, needed for libretroController
             CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
