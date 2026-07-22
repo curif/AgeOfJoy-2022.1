@@ -14,6 +14,7 @@ public static class MRPaths
     public const string MrFolderName = "MR";
     public const string CustomObjectsFolderName = "Custom Objects";
     public const string PostersFolderName = "Posters";
+    public const string SkyboxesFolderName = "Skyboxes";
     public const string MagazinesFolderName = "Magazines";
     public const string RoomSkinsFolderName = "Room Skins";
     public const string RoomsFolderName = "Rooms";
@@ -22,6 +23,7 @@ public static class MRPaths
     public const string RoomMetaFileName = "meta.yaml";
     public const string CustomObjectYamlFileName = "object.yaml";
     public const string RoomSkinYamlFileName = "roomskin.yaml";
+    public const string WindowYamlFileName = "window.yaml";
     public const string MagazineYamlFileName = "magazine.yaml";
     public const string MagazinesYamlFileName = "magazines.yaml";
     /// <summary>Default image filename when <c>texture</c> is omitted in roomskin.yaml.</summary>
@@ -35,9 +37,12 @@ public static class MRPaths
     public static string MrDir => Path.Combine(ConfigManager.BaseDir, MrFolderName);
     public static string CustomObjectsDir => Path.Combine(MrDir, CustomObjectsFolderName);
     public static string PostersDir => Path.Combine(MrDir, PostersFolderName);
+    public static string SkyboxesDir => Path.Combine(MrDir, SkyboxesFolderName);
     public static string MagazinesDir => Path.Combine(MrDir, MagazinesFolderName);
     public static string MagazinesYamlPath => Path.Combine(MagazinesDir, MagazinesYamlFileName);
     public static string RoomSkinsDir => Path.Combine(MrDir, RoomSkinsFolderName);
+    public static string WindowSkinsDir => Path.Combine(RoomSkinsDir, "Window");
+    public static string WindowYamlPath => Path.Combine(WindowSkinsDir, WindowYamlFileName);
     public static string RoomsDir => Path.Combine(MrDir, RoomsFolderName);
     public static string CabinetsLayoutPath => Path.Combine(MrDir, CabinetsLayoutFileName);
     public static string ObjectsLayoutPath => Path.Combine(MrDir, ObjectsLayoutFileName);
@@ -58,15 +63,101 @@ public static class MRPaths
         ConfigManager.CreateFolder(MrDir);
         ConfigManager.CreateFolder(CustomObjectsDir);
         ConfigManager.CreateFolder(PostersDir);
+        ConfigManager.CreateFolder(SkyboxesDir);
         ConfigManager.CreateFolder(MagazinesDir);
         ConfigManager.CreateFolder(RoomSkinsDir);
         ConfigManager.CreateFolder(RoomsDir);
+        EnsureRoomSkinSurfaceFolders();
         SeedMagazinesYamlIfNeeded();
         SeedExampleCustomObjectIfNeeded();
         SeedPostersReadmeIfNeeded();
+        SeedSkyboxesReadmeIfNeeded();
+        SeedRoomSkinsReadmeIfNeeded();
+        MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
+        SeedWindowYamlIfNeeded();
         SeedMagazineReadmeIfNeeded();
         SeedExampleMagazineIfNeeded();
-        MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
+    }
+
+    /// <summary>Creates MR/Room Skins/Wall|Ceiling|Floor|Window (no YAML).</summary>
+    public static void EnsureRoomSkinSurfaceFolders()
+    {
+        ConfigManager.CreateFolder(RoomSkinsDir);
+        foreach (string folder in MRRoomSkinCatalog.SurfaceFolderNames)
+            ConfigManager.CreateFolder(Path.Combine(RoomSkinsDir, folder));
+    }
+
+    /// <summary>
+    /// Creates MR/Room Skins/Window/window.yaml when missing, already pointing at the
+    /// MRRuntimeSettings.defaultSkyboxImage (or City360 / first Window image).
+    /// </summary>
+    public static void SeedWindowYamlIfNeeded()
+    {
+        EnsureRoomSkinSurfaceFolders();
+        if (File.Exists(WindowYamlPath))
+            return;
+
+        try
+        {
+            string image = MRRoomSkinCatalog.EnsureDefaultWindowImageFromRuntimeSettings()
+                ?? string.Empty;
+            string yaml = BuildWindowYamlSeedText(image);
+            File.WriteAllText(WindowYamlPath, yaml);
+            ConfigManager.WriteConsole(
+                string.IsNullOrEmpty(image)
+                    ? $"[MRPaths] created {WindowYamlPath} (no default image yet)"
+                    : $"[MRPaths] created {WindowYamlPath} defaultImage={image}");
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {WindowYamlPath}", e);
+        }
+    }
+
+    static string BuildWindowYamlSeedText(string defaultImageFileName)
+    {
+        if (string.IsNullOrEmpty(defaultImageFileName))
+        {
+            return
+                "# Age of Joy — MR window skybox per Scene Capture room\n" +
+                "# Path: MR/Room Skins/Window/window.yaml\n" +
+                "# Empty image = portal off. First room visit sets MRRuntimeSettings.defaultSkyboxImage.\n" +
+                "\n" +
+                "version: 1\n" +
+                "rooms: []\n";
+        }
+
+        return
+            "# Age of Joy — MR window skybox per Scene Capture room\n" +
+            "# Path: MR/Room Skins/Window/window.yaml\n" +
+            "# default _global comes from MRRuntimeSettings.defaultSkyboxImage.\n" +
+            "# New Scene Capture rooms copy this default on first open.\n" +
+            "# Empty image on a room = portal off (CRT Rem).\n" +
+            "\n" +
+            "version: 1\n" +
+            "rooms:\n" +
+            "  - roomId: _global\n" +
+            $"    image: {defaultImageFileName}\n" +
+            "    yaw: 0\n";
+    }
+
+    /// <summary>Writes MR/Room Skins/README.txt when missing.</summary>
+    public static void SeedRoomSkinsReadmeIfNeeded()
+    {
+        EnsureRoomSkinSurfaceFolders();
+        string readmePath = Path.Combine(RoomSkinsDir, "README.txt");
+        if (File.Exists(readmePath))
+            return;
+
+        try
+        {
+            File.WriteAllText(readmePath, RoomSkinsReadmeText);
+            ConfigManager.WriteConsole($"[MRPaths] created room skins readme at {readmePath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {readmePath}", e);
+        }
     }
 
     public static string GetRoomDir(string roomId)
@@ -280,6 +371,59 @@ public static class MRPaths
         return fullPath;
     }
 
+    /// <summary>Writes MR/Skyboxes/README.txt when the folder is new or empty.</summary>
+    public static void SeedSkyboxesReadmeIfNeeded()
+    {
+        if (!Directory.Exists(SkyboxesDir))
+            return;
+
+        if (HasAnySkyboxImage())
+            return;
+
+        string readmePath = Path.Combine(SkyboxesDir, "README.txt");
+        if (File.Exists(readmePath))
+            return;
+
+        try
+        {
+            File.WriteAllText(readmePath, SkyboxesReadmeText);
+            ConfigManager.WriteConsole($"[MRPaths] created skyboxes readme at {readmePath}");
+        }
+        catch (System.Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {readmePath}", e);
+        }
+    }
+
+    static bool HasAnySkyboxImage()
+    {
+        if (!Directory.Exists(SkyboxesDir))
+            return false;
+
+        foreach (string file in Directory.GetFiles(SkyboxesDir, "*.*", SearchOption.AllDirectories))
+        {
+            if (MRSkyboxesCatalog.IsSupportedImageFile(file))
+                return true;
+        }
+
+        return false;
+    }
+
+    public static string ResolveSkyboxFilePath(string relativePath)
+    {
+        if (string.IsNullOrEmpty(relativePath))
+            return null;
+
+        string normalized = MRSkyboxesCatalog.NormalizeRelativePath(relativePath);
+        string fullPath = Path.GetFullPath(
+            Path.Combine(SkyboxesDir, normalized.Replace('/', Path.DirectorySeparatorChar)));
+        string skyboxesRoot = Path.GetFullPath(SkyboxesDir);
+        if (!fullPath.StartsWith(skyboxesRoot, System.StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return fullPath;
+    }
+
     public static string GetMagazineIssueDir(string issueName)
     {
         if (string.IsNullOrEmpty(issueName))
@@ -437,6 +581,48 @@ On Quest prefer .png or .jpg (.tif often does not load).
 Subfolders are allowed (e.g. Posters/80/my-movie.png).
 
 Placed posters are saved in MR/objects-layout.yaml.
+";
+
+    const string SkyboxesReadmeText = @"Age of Joy — MR window skyboxes (legacy)
+===========================================
+
+Prefer MR/Room Skins/Window/ for window HDRIs (CRT → CUSTOM OBJECTS → Room Skin → Window).
+
+This MR/Skyboxes/ folder is still scanned as a fallback.
+";
+
+    const string RoomSkinsReadmeText = @"Age of Joy — MR room skins
+=============================
+
+Put images in surface folders:
+
+  MR/Room Skins/Wall/      — wall textures
+  MR/Room Skins/Ceiling/   — ceiling textures
+  MR/Room Skins/Floor/     — floor textures
+  MR/Room Skins/Window/    — equirect skybox for the window portal (PNG/JPG 2:1)
+
+Window selection is per Scene Capture room in:
+
+  MR/Room Skins/Window/window.yaml
+
+First open seeds defaultImage from MRRuntimeSettings.defaultSkyboxImage.
+New rooms copy that default; CRT Rem clears image (portal off).
+
+Example:
+
+  version: 1
+  rooms:
+    - roomId: _global
+      image: City360.png
+      yaw: 0
+    - roomId: ""my-room-id""
+      image: City360.png
+      yaw: 90
+
+Then open MR CONFIGURATION → CUSTOM OBJECTS → Room Skin → pick a folder → Add.
+
+Supported formats: .png .jpg .jpeg .webp .bmp
+On Quest prefer .png or .jpg.
 ";
 
     /// <summary>Writes Custom Objects/Example/object.yaml when the folder has no packages yet.</summary>

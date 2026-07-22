@@ -78,6 +78,7 @@ public class MRConfigurationController : MonoBehaviour
         Cabinets,
         Adjustments,
         GlobalLight,
+        Skybox,
         PhoneBooth,
         Config,
         CustomObjects,
@@ -136,6 +137,8 @@ public class MRConfigurationController : MonoBehaviour
     readonly List<MREnvironmentCatalogEntry> postersCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> magazinesCatalogEntries = new List<MREnvironmentCatalogEntry>();
     readonly List<MREnvironmentCatalogEntry> roomSkinsCatalogEntries = new List<MREnvironmentCatalogEntry>();
+    /// <summary>Null/empty = Wall/Ceiling/Floor/Window categories; else images in that folder.</summary>
+    string roomSkinSurfaceFolder;
     readonly List<MREnvironmentPlacement> placedInstances = new List<MREnvironmentPlacement>();
     /// <summary>Show Added flat list for multi-copy catalogs (e.g. Posters): one row per placement.</summary>
     readonly List<MREnvironmentPlacement> showAddedEnvPlacements = new List<MREnvironmentPlacement>();
@@ -360,6 +363,12 @@ public class MRConfigurationController : MonoBehaviour
                 int columnDir = ReadHorizontalNavDirection();
                 if (columnDir != 0)
                 {
+                    if (TryAdjustWindowSkyboxYaw(columnDir))
+                    {
+                        navCooldown = navRepeatDelay;
+                        return;
+                    }
+
                     MoveColumnSelection(columnDir);
                     navCooldown = navRepeatDelay;
                     return;
@@ -636,9 +645,16 @@ public class MRConfigurationController : MonoBehaviour
         for (int i = 0; i < source.Count; i++)
         {
             MREnvironmentCatalogEntry entry = source[i];
+            if (currentScreen == Screen.RoomSkins && !string.IsNullOrEmpty(roomSkinSurfaceFolder))
+            {
+                string prefix = roomSkinSurfaceFolder + "/";
+                if (!entry.Key.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase))
+                    continue;
+            }
+
             if (envListFilter == CabinetListFilter.ShowAdded)
             {
-                if (envRegistry == null || envRegistry.GetInstanceCount(entry) <= 0)
+                if (GetRoomSkinInstanceCount(entry) <= 0)
                     continue;
             }
 
@@ -649,10 +665,45 @@ public class MRConfigurationController : MonoBehaviour
             filteredEnvCatalogEntries.Add(entry);
         }
 
+        // Active room skin (#=1) always first in the folder list (Wall/Ceiling/Floor/Window).
+        if (currentScreen == Screen.RoomSkins
+            && !string.IsNullOrEmpty(roomSkinSurfaceFolder)
+            && filteredEnvCatalogEntries.Count > 1)
+        {
+            filteredEnvCatalogEntries.Sort(CompareRoomSkinEntriesActiveFirst);
+        }
+
         if (UsesShowAllAddedAddRemove(currentScreen) && envListFilter == CabinetListFilter.ShowAdded)
             RebuildShowAddedEnvPlacements();
         else
             ClearShowAddedEnvPlacements();
+    }
+
+    int CompareRoomSkinEntriesActiveFirst(MREnvironmentCatalogEntry a, MREnvironmentCatalogEntry b)
+    {
+        int activeA = GetRoomSkinInstanceCount(a) > 0 ? 0 : 1;
+        int activeB = GetRoomSkinInstanceCount(b) > 0 ? 0 : 1;
+        if (activeA != activeB)
+            return activeA.CompareTo(activeB);
+
+        return string.Compare(
+            MRRoomSkinCatalog.GetDisplayLabel(a.Key),
+            MRRoomSkinCatalog.GetDisplayLabel(b.Key),
+            System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Window skins use <c>window.yaml</c> per Scene Capture room; other skins use objects-layout.
+    /// </summary>
+    int GetRoomSkinInstanceCount(MREnvironmentCatalogEntry entry)
+    {
+        if (string.IsNullOrEmpty(entry.Key))
+            return 0;
+
+        if (entry.Key.StartsWith("Window/", System.StringComparison.OrdinalIgnoreCase))
+            return MRSkyboxSettings.GetActiveInstanceCount(entry.Key);
+
+        return envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0;
     }
 
     void ClearShowAddedEnvPlacements()
@@ -850,6 +901,9 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.GlobalLight:
                 DrawGlobalLightPage();
+                break;
+            case Screen.Skybox:
+                DrawSkyboxPage();
                 break;
             case Screen.PhoneBooth:
                 DrawPhoneBoothPage();
@@ -1157,6 +1211,57 @@ public class MRConfigurationController : MonoBehaviour
         DrawFooter("Up/Down: row   L/R: +/-   A: on/off or step");
     }
 
+    void DrawSkyboxPage()
+    {
+        MRSkyboxesCatalog.RefreshCache();
+        MRSkyboxSettings.EnsureLoaded();
+
+        const int nameWidth = 22;
+        const int tableStartRow = 0;
+        int row = BeginListTable("SKYBOX", "NAME", "USE", nameWidth, startRow: tableStartRow);
+
+        string selected = MRSkyboxSettings.SelectedRelativePath;
+        IReadOnlyList<string> paths = MRSkyboxesCatalog.GetRelativePaths();
+        int total = 1 + paths.Count;
+        int visibleRows = GetFilterListVisibleRows(tableStartRow: 2);
+        ClampListScroll();
+
+        for (int i = 0; i < visibleRows; i++)
+        {
+            int idx = listScrollOffset + i;
+            if (idx >= total)
+                break;
+
+            if (idx == 0)
+            {
+                bool defaultSelected = string.IsNullOrEmpty(selected);
+                row = DrawListRow(
+                    row,
+                    0,
+                    selectedListIndex,
+                    Truncate("(built-in default)", nameWidth),
+                    new List<RowActionKind> { RowActionKind.OpenDetail },
+                    defaultSelected ? "Yes" : "-",
+                    nameWidth: nameWidth);
+                continue;
+            }
+
+            string path = paths[idx - 1];
+            bool isSelected = string.Equals(path, selected, System.StringComparison.OrdinalIgnoreCase);
+            row = DrawListRow(
+                row,
+                idx,
+                selectedListIndex,
+                Truncate(MRSkyboxesCatalog.GetDisplayLabel(path), nameWidth),
+                new List<RowActionKind> { RowActionKind.OpenDetail },
+                isSelected ? "Yes" : "-",
+                nameWidth: nameWidth);
+        }
+
+        EndListTable(row, $"{paths.Count} in MR/Skyboxes/");
+        DrawFooter("A: use skybox   B: back");
+    }
+
     void DrawConfigCategoryPage()
     {
         screen.PrintCentered(0, "CONFIG", true);
@@ -1240,12 +1345,19 @@ public class MRConfigurationController : MonoBehaviour
 
     int SumCatalogInstanceCounts(IReadOnlyList<MREnvironmentCatalogEntry> entries)
     {
-        if (envRegistry == null || entries == null)
+        if (entries == null)
             return 0;
 
         int total = 0;
         for (int i = 0; i < entries.Count; i++)
-            total += envRegistry.GetInstanceCount(entries[i]);
+        {
+            MREnvironmentCatalogEntry entry = entries[i];
+            if (entry.Key.StartsWith("Window/", System.StringComparison.OrdinalIgnoreCase))
+                total += MRSkyboxSettings.GetActiveInstanceCount(entry.Key);
+            else if (envRegistry != null)
+                total += envRegistry.GetInstanceCount(entry);
+        }
+
         return total;
     }
 
@@ -1617,19 +1729,30 @@ public class MRConfigurationController : MonoBehaviour
 
     void DrawRoomSkinsPage()
     {
-        // One active skin per surface — no Show All / Show Added; Add/Remove toggle on same list.
         envListFilter = CabinetListFilter.ShowAll;
         envListFocusOnFilter = false;
+
+        if (string.IsNullOrEmpty(roomSkinSurfaceFolder))
+        {
+            DrawRoomSkinCategoriesPage();
+            return;
+        }
+
         RebuildFilteredEnvCatalogEntries();
 
-        screen.PrintCentered(0, "ROOM SKIN", true);
+        screen.PrintCentered(0, roomSkinSurfaceFolder.ToUpperInvariant(), true);
         screen.PrintLine(1, false, '-');
 
-        if (roomSkinsCatalogEntries.Count == 0)
+        bool isWindowFolder = IsWindowRoomSkinFolder();
+        int imageCount = filteredEnvCatalogEntries.Count;
+        int yawRows = isWindowFolder ? 1 : 0;
+        int totalRows = yawRows + imageCount;
+
+        if (totalRows == 0)
         {
-            screen.PrintCentered(8, "No room skins found", true);
-            screen.PrintCentered(10, "MR/Room Skins/", false);
-            DrawFooter("Stick Up/Down: move");
+            screen.PrintCentered(8, "No images found", true);
+            screen.PrintCentered(10, $"MR/Room Skins/{roomSkinSurfaceFolder}/", false);
+            DrawFooter("B: back");
             return;
         }
 
@@ -1638,12 +1761,30 @@ public class MRConfigurationController : MonoBehaviour
         for (int i = 0; i < visibleRows; i++)
         {
             int idx = listScrollOffset + i;
-            if (idx >= filteredEnvCatalogEntries.Count)
+            if (idx >= totalRows)
                 break;
 
-            MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[idx];
-            string label = Truncate(entry.DisplayLabel, RoomSkinListRowNameWidth);
-            string flag = (envRegistry != null ? envRegistry.GetInstanceCount(entry) : 0).ToString();
+            if (isWindowFolder && idx == 0)
+            {
+                MRSkyboxSettings.EnsureLoaded();
+                row = DrawListRow(
+                    row,
+                    0,
+                    selectedListIndex,
+                    Truncate($"Yaw {MRSkyboxSettings.YawDegrees:0}°", RoomSkinListRowNameWidth),
+                    new List<RowActionKind>(AdjustmentValueActions),
+                    string.Empty,
+                    nameWidth: RoomSkinListRowNameWidth);
+                continue;
+            }
+
+            int imageIndex = idx - yawRows;
+            if (imageIndex < 0 || imageIndex >= imageCount)
+                break;
+
+            MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[imageIndex];
+            string label = Truncate(MRRoomSkinCatalog.GetDisplayLabel(entry.Key), RoomSkinListRowNameWidth);
+            string flag = GetRoomSkinInstanceCount(entry).ToString();
             row = DrawListRow(
                 row,
                 idx,
@@ -1654,8 +1795,68 @@ public class MRConfigurationController : MonoBehaviour
                 nameWidth: RoomSkinListRowNameWidth);
         }
 
-        EndListTable(row, $"{filteredEnvCatalogEntries.Count} skins");
-        DrawFooter("Stick Up/Down: move");
+        EndListTable(row, $"{imageCount} images");
+        DrawFooter(isWindowFolder
+            ? "L/R: yaw ±5°  A: add/rem"
+            : "Stick Up/Down: move");
+    }
+
+    /// <summary>Window Room Skin: L/R on Yaw row rotates the portal sky immediately.</summary>
+    bool TryAdjustWindowSkyboxYaw(int direction)
+    {
+        if (currentScreen != Screen.RoomSkins
+            || !IsWindowRoomSkinFolder()
+            || selectedListIndex != 0
+            || direction == 0)
+            return false;
+
+        MRSkyboxSettings.AdjustYaw(direction);
+        MRSkyboxPortalController.Instance?.ApplyYawFromSettings();
+        ResetSelectionCursorBlink();
+        DrawCurrentScreen();
+        return true;
+    }
+
+    bool IsWindowRoomSkinFolder() =>
+        !string.IsNullOrEmpty(roomSkinSurfaceFolder)
+        && string.Equals(roomSkinSurfaceFolder, "Window", System.StringComparison.OrdinalIgnoreCase);
+
+    int GetRoomSkinFolderListCount()
+    {
+        if (string.IsNullOrEmpty(roomSkinSurfaceFolder))
+            return MRRoomSkinCatalog.SurfaceFolderNames.Length;
+
+        int images = filteredEnvCatalogEntries.Count;
+        return IsWindowRoomSkinFolder() ? 1 + images : images;
+    }
+
+    int GetRoomSkinImageIndex(int listIndex)
+    {
+        if (!IsWindowRoomSkinFolder())
+            return listIndex;
+        return listIndex - 1;
+    }
+
+    void DrawRoomSkinCategoriesPage()
+    {
+        screen.PrintCentered(0, "ROOM SKIN", true);
+        screen.PrintLine(1, false, '-');
+
+        int row = BeginListTable(null, "FOLDER", null, RoomSkinListRowNameWidth, startRow: 2);
+        for (int i = 0; i < MRRoomSkinCatalog.SurfaceFolderNames.Length; i++)
+        {
+            string folder = MRRoomSkinCatalog.SurfaceFolderNames[i];
+            row = DrawListRow(
+                row,
+                i,
+                selectedListIndex,
+                Truncate(folder, RoomSkinListRowNameWidth),
+                new List<RowActionKind> { RowActionKind.OpenDetail },
+                nameWidth: RoomSkinListRowNameWidth);
+        }
+
+        EndListTable(row, "MR/Room Skins/");
+        DrawFooter("A: open folder   B: back");
     }
 
     void DrawLightsPage()
@@ -2144,8 +2345,11 @@ public class MRConfigurationController : MonoBehaviour
         yield return "  Show Added = Remove / Repos";
         yield return "  Scale on ray: grip+R-stick";
         yield return "  Folder MR/Posters/ wall";
-        yield return "Room Skin: A Add or Remove";
-        yield return "  No ray — room mesh only";
+        yield return "Room Skin: enter Wall/Ceiling/";
+        yield return "  Floor/Window folders";
+        yield return "  Drop images in folder";
+        yield return "  (no YAML needed)";
+        yield return "  Window = skybox portal";
         yield return "  Folder MR/Room Skins/";
         yield return "Packages: enter → filters";
         yield return "  Show All: Add only";
@@ -2178,6 +2382,14 @@ public class MRConfigurationController : MonoBehaviour
         yield return "Menu: show or hide booth";
         yield return "Booth must be visible to";
         yield return "  leave MR";
+        yield return string.Empty;
+        yield return "ROOM SKIN";
+        yield return "Folders: Wall Ceiling Floor";
+        yield return "  Window (HDRI portal)";
+        yield return "Window: first row Yaw L/R";
+        yield return "  rotates sky on Y axis";
+        yield return "MR/Room Skins/{folder}/";
+        yield return "  images only — no YAML";
         yield return string.Empty;
         yield return "CONFIG";
         yield return "Move Config: wall ray";
@@ -2278,12 +2490,14 @@ public class MRConfigurationController : MonoBehaviour
         || screen == Screen.Adjustments
         || screen == Screen.GlobalLight
         || screen == Screen.LightTune
+        || screen == Screen.RoomSkins
         || screen == Screen.Debug;
 
     static bool UsesPlusMinusActionCursor(Screen screen) =>
         screen == Screen.Adjustments
         || screen == Screen.GlobalLight
-        || screen == Screen.LightTune;
+        || screen == Screen.LightTune
+        || screen == Screen.RoomSkins;
 
     /// <summary>
     /// Show Added copy rows with Remove + Tune: L/R moves >> on the ACTION option (like Adjustments +/-).
@@ -2732,6 +2946,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Mesh => GetMeshRowActions(selectedListIndex),
             Screen.Adjustments => AdjustmentValueActions,
             Screen.GlobalLight => GetGlobalLightRowActions(selectedListIndex),
+            Screen.Skybox => GetSkyboxRowActions(),
             Screen.LightTune => AdjustmentValueActions,
             Screen.PhoneBooth => GetPhoneBoothRowActions(),
             Screen.Debug => GetDebugRowActions(selectedListIndex),
@@ -2887,11 +3102,24 @@ public class MRConfigurationController : MonoBehaviour
     List<RowActionKind> GetRoomSkinsRowActions(int index)
     {
         var actions = new List<RowActionKind>();
-        if (index < 0 || index >= filteredEnvCatalogEntries.Count || envRegistry == null)
+
+        // Category list: Wall / Ceiling / Floor / Window.
+        if (string.IsNullOrEmpty(roomSkinSurfaceFolder))
+        {
+            actions.Add(RowActionKind.OpenDetail);
+            return actions;
+        }
+
+        // Window folder: first row is Yaw L/R.
+        if (IsWindowRoomSkinFolder() && index == 0)
+            return new List<RowActionKind>(AdjustmentValueActions);
+
+        int imageIndex = GetRoomSkinImageIndex(index);
+        if (imageIndex < 0 || imageIndex >= filteredEnvCatalogEntries.Count)
             return actions;
 
         // One skin per surface: active (#=1) → Remove, otherwise Add.
-        if (envRegistry.GetInstanceCount(filteredEnvCatalogEntries[index]) > 0)
+        if (GetRoomSkinInstanceCount(filteredEnvCatalogEntries[imageIndex]) > 0)
             actions.Add(RowActionKind.Remove);
         else
             actions.Add(RowActionKind.Add);
@@ -2917,6 +3145,9 @@ public class MRConfigurationController : MonoBehaviour
             return new List<RowActionKind>(AdjustmentValueActions);
         return new List<RowActionKind>();
     }
+
+    static List<RowActionKind> GetSkyboxRowActions() =>
+        new List<RowActionKind> { RowActionKind.OpenDetail };
 
     List<RowActionKind> GetPlacedInstanceRowActions(int index)
     {
@@ -3047,6 +3278,8 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.GlobalLight:
                 ExecuteGlobalLightRowAction(action);
                 return true;
+            case Screen.Skybox:
+                return ExecuteSkyboxRowAction(action);
             case Screen.LightTune:
                 ExecuteLightTuneRowAction(action);
                 return true;
@@ -3248,10 +3481,68 @@ public class MRConfigurationController : MonoBehaviour
 
     bool ExecuteRoomSkinsRowAction(RowActionKind action)
     {
-        if (selectedListIndex < 0 || selectedListIndex >= filteredEnvCatalogEntries.Count || envRegistry == null)
+        // Categories → open folder.
+        if (string.IsNullOrEmpty(roomSkinSurfaceFolder))
+        {
+            if (action != RowActionKind.OpenDetail)
+                return false;
+            if (selectedListIndex < 0 || selectedListIndex >= MRRoomSkinCatalog.SurfaceFolderNames.Length)
+                return false;
+
+            roomSkinSurfaceFolder = MRRoomSkinCatalog.SurfaceFolderNames[selectedListIndex];
+            selectedListIndex = 0;
+            selectedColumnIndex = 0;
+            listScrollOffset = 0;
+            RebuildFilteredEnvCatalogEntries();
+            return true;
+        }
+
+        // Window yaw row.
+        if (IsWindowRoomSkinFolder() && selectedListIndex == 0)
+        {
+            int direction = action == RowActionKind.Increase ? 1 : action == RowActionKind.Decrease ? -1 : 0;
+            if (direction == 0)
+                return false;
+
+            MRSkyboxSettings.AdjustYaw(direction);
+            MRSkyboxPortalController.Instance?.ApplyYawFromSettings();
+            return true;
+        }
+
+        int imageIndex = GetRoomSkinImageIndex(selectedListIndex);
+        if (imageIndex < 0 || imageIndex >= filteredEnvCatalogEntries.Count)
             return false;
 
-        MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[selectedListIndex];
+        MREnvironmentCatalogEntry entry = filteredEnvCatalogEntries[imageIndex];
+
+        // Window: persist in MR/Room Skins/Window/window.yaml (per Scene Capture room).
+        if (IsWindowRoomSkinFolder()
+            || entry.Key.StartsWith("Window/", System.StringComparison.OrdinalIgnoreCase))
+        {
+            switch (action)
+            {
+                case RowActionKind.Add:
+                    BeginAddRoomSkinInstant(entry);
+                    return false;
+                case RowActionKind.Remove:
+                    MRSkyboxSettings.SetSelectedRelativePath(string.Empty);
+                    MRSkyboxPortalController.Instance?.Clear(destroyRoot: false);
+                    RebuildFilteredEnvCatalogEntries();
+                    int listCount = GetRoomSkinFolderListCount();
+                    if (selectedListIndex >= listCount)
+                        selectedListIndex = Mathf.Max(0, listCount - 1);
+                    ClampColumnIndexForCurrentRow();
+                    ClampListScroll();
+                    ConfigManager.WriteConsole($"{LogPrefix} removed window skybox {entry} (window.yaml)");
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        if (envRegistry == null)
+            return false;
+
         switch (action)
         {
             case RowActionKind.Add:
@@ -3267,8 +3558,9 @@ public class MRConfigurationController : MonoBehaviour
                 {
                     ConfigManager.WriteConsole($"{LogPrefix} removed room skin {entry}");
                     RebuildFilteredEnvCatalogEntries();
-                    if (selectedListIndex >= filteredEnvCatalogEntries.Count)
-                        selectedListIndex = Mathf.Max(0, filteredEnvCatalogEntries.Count - 1);
+                    int listCount = GetRoomSkinFolderListCount();
+                    if (selectedListIndex >= listCount)
+                        selectedListIndex = Mathf.Max(0, listCount - 1);
                     ClampColumnIndexForCurrentRow();
                     ClampListScroll();
                     return true;
@@ -3367,6 +3659,31 @@ public class MRConfigurationController : MonoBehaviour
             return;
 
         MRAutoLightingVisibility.AdjustIntensity(direction);
+    }
+
+    bool ExecuteSkyboxRowAction(RowActionKind action)
+    {
+        if (action != RowActionKind.OpenDetail)
+            return false;
+
+        MRSkyboxesCatalog.RefreshCache();
+        IReadOnlyList<string> paths = MRSkyboxesCatalog.GetRelativePaths();
+
+        if (selectedListIndex <= 0)
+        {
+            MRSkyboxSettings.SetSelectedRelativePath(string.Empty);
+        }
+        else
+        {
+            int pathIndex = selectedListIndex - 1;
+            if (pathIndex < 0 || pathIndex >= paths.Count)
+                return false;
+
+            MRSkyboxSettings.SetSelectedRelativePath(paths[pathIndex]);
+        }
+
+        MRSkyboxPortalController.Instance?.ApplySelectedSkybox();
+        return true;
     }
 
     bool ExecutePlacedInstanceRowAction(RowActionKind action)
@@ -3549,10 +3866,11 @@ public class MRConfigurationController : MonoBehaviour
             Screen.Lights => GetLightsListCount(),
             Screen.Posters => GetShowAllAddedListCount(),
             Screen.Magazines => magazinesCatalogEntries.Count,
-            Screen.RoomSkins => filteredEnvCatalogEntries.Count,
+            Screen.RoomSkins => GetRoomSkinFolderListCount(),
             Screen.PlacedInstances => GetPlacedInstancesListCount(),
             Screen.Mesh => MeshOptionCount,
             Screen.GlobalLight => GlobalLightOptionCount,
+            Screen.Skybox => 1 + MRSkyboxesCatalog.GetRelativePaths().Count,
             Screen.Debug => debugDisplayLines.Count,
             _ => 0
         };
@@ -3923,6 +4241,23 @@ public class MRConfigurationController : MonoBehaviour
                 DrawCurrentScreen();
                 break;
 
+            case Screen.Skybox:
+            {
+                int skyCount = GetListCount();
+                if (skyCount == 0)
+                    return;
+
+                selectedListIndex += delta;
+                if (selectedListIndex < 0)
+                    selectedListIndex = skyCount - 1;
+                else if (selectedListIndex >= skyCount)
+                    selectedListIndex = 0;
+                selectedColumnIndex = 0;
+                ClampListScroll();
+                DrawCurrentScreen();
+                break;
+            }
+
             case Screen.LightTune:
                 selectedLightTuneIndex += delta;
                 if (selectedLightTuneIndex < 0)
@@ -4001,6 +4336,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Mesh:
             case Screen.Adjustments:
             case Screen.GlobalLight:
+            case Screen.Skybox:
             case Screen.LightTune:
             case Screen.PhoneBooth:
             case Screen.Debug:
@@ -4237,7 +4573,22 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.Posters:
             case Screen.RoomSkins:
             {
+                if (currentScreen == Screen.RoomSkins && !string.IsNullOrEmpty(roomSkinSurfaceFolder))
+                {
+                    roomSkinSurfaceFolder = null;
+                    selectedListIndex = 0;
+                    selectedColumnIndex = 0;
+                    listScrollOffset = 0;
+                    RebuildFilteredEnvCatalogEntries();
+                    navCooldown = navRepeatDelay;
+                    SyncConfirmControlEdgeState();
+                    SyncBackControlEdgeState();
+                    DrawCurrentScreen();
+                    break;
+                }
+
                 int returnRow = currentScreen == Screen.RoomSkins ? 1 : 0;
+                roomSkinSurfaceFolder = null;
                 currentScreen = Screen.CustomObjects;
                 envListFilter = CabinetListFilter.ShowAll;
                 envListFocusOnFilter = false;
@@ -4318,6 +4669,7 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             case Screen.Cabinets:
             case Screen.PhoneBooth:
+            case Screen.Skybox:
             case Screen.Config:
             case Screen.CustomObjects:
             case Screen.OfficialObjects:
@@ -4443,6 +4795,7 @@ public class MRConfigurationController : MonoBehaviour
                 break;
             default:
                 RefreshRoomSkinsCatalog();
+                roomSkinSurfaceFolder = null;
                 envListFilter = CabinetListFilter.ShowAll;
                 envListFocusOnFilter = false;
                 RebuildFilteredEnvCatalogEntries();
@@ -4566,7 +4919,25 @@ public class MRConfigurationController : MonoBehaviour
 
         yield return MRRoomSurfaceSkin.ApplyPackageWhenReady(entry.Key);
 
-        bool saved = envRegistry.TryFinalizeRoomSkinInstant(entry);
+        bool isWindow = entry.Key.StartsWith("Window/", System.StringComparison.OrdinalIgnoreCase)
+            || (MRRoomSkinDefinition.TryLoad(entry.Key, out MRRoomSkinDefinition def)
+                && def.IsWindowSkyboxOnly);
+
+        bool saved;
+        if (isWindow)
+        {
+            // Source of truth: window.yaml for the bound Scene Capture room.
+            MRSkyboxSettings.SetSelectedRelativePath(entry.Key);
+            MRSkyboxPortalController.Instance?.Refresh(reloadSkybox: true);
+            saved = MRSkyboxSettings.HasActiveWindow;
+        }
+        else
+        {
+            saved = envRegistry != null && envRegistry.TryFinalizeRoomSkinInstant(entry);
+            if (saved)
+                MRSkyboxPortalController.Instance?.Refresh(reloadSkybox: true);
+        }
+
         if (!saved)
         {
             ConfigManager.WriteConsoleWarning($"{LogPrefix} room skin add failed for {entry}");
@@ -4574,7 +4945,10 @@ public class MRConfigurationController : MonoBehaviour
         }
 
         ShowIdleAfterExternalPlacement();
-        ConfigManager.WriteConsole($"{LogPrefix} room skin applied {entry}");
+        ConfigManager.WriteConsole(
+            isWindow
+                ? $"{LogPrefix} window skybox applied {entry} → window.yaml"
+                : $"{LogPrefix} room skin applied {entry}");
     }
 
     void BeginAddPosterWithRay(MREnvironmentCatalogEntry entry)
@@ -5046,6 +5420,8 @@ public class MRConfigurationController : MonoBehaviour
             visibleRows = GetFilterListVisibleRows(
                 currentScreen == Screen.RoomSkins || currentScreen == Screen.Magazines ? 2 : 3);
         else if (currentScreen == Screen.Debug)
+            visibleRows = GetFilterListVisibleRows(tableStartRow: 2);
+        else if (currentScreen == Screen.Skybox)
             visibleRows = GetFilterListVisibleRows(tableStartRow: 2);
         int maxOffset = Mathf.Max(0, count - visibleRows);
         if (selectedListIndex < listScrollOffset)

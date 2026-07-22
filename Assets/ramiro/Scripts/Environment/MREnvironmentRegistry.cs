@@ -487,8 +487,8 @@ public class MREnvironmentRegistry : MonoBehaviour
         List<string> packageNames = CollectActiveRoomSkinPackageNames();
         if (packageNames.Count == 0)
         {
-            if (MRRoomSurfaceSkin.IsActive)
-                MRRoomSurfaceSkin.Clear();
+            MRRoomSurfaceSkin.Clear();
+            // Window portal is controlled by window.yaml — MixedRealityManager.Refresh applies it.
             yield break;
         }
 
@@ -515,8 +515,7 @@ public class MREnvironmentRegistry : MonoBehaviour
         List<string> packageNames = CollectActiveRoomSkinPackageNames();
         if (packageNames.Count == 0)
         {
-            if (MRRoomSurfaceSkin.IsActive)
-                MRRoomSurfaceSkin.Clear();
+            MRRoomSurfaceSkin.Clear();
             return;
         }
 
@@ -537,6 +536,13 @@ public class MREnvironmentRegistry : MonoBehaviour
                 continue;
 
             if (string.IsNullOrEmpty(placement.PackageName))
+                continue;
+
+            // Window skyboxes live in window.yaml, not objects-layout.
+            if (placement.PackageName.StartsWith("Window/", StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (MRRoomSkinDefinition.TryLoad(placement.PackageName, out MRRoomSkinDefinition def)
+                && def.IsWindowSkyboxOnly)
                 continue;
 
             packageNames.Add(placement.PackageName);
