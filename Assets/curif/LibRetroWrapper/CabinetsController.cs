@@ -182,6 +182,16 @@ public class CabinetsController : MonoBehaviour
                 cabInfo.CabinetController.game = new();
                 cabInfo.CabinetController.game.Position = idx;
 
+                // The workshop's position 0 is CabinetAutoReload's disposable dev/test slot: it's
+                // never persisted to the registry (see ReplaceInRoom overload below), so pre-seed
+                // its CabinetDBName here. This also naturally excludes it from the registry-lookup
+                // and auto-assignment loops below (they only touch positions with no CabinetDBName yet).
+                if (IsWorkshopReloadSlot(Room, idx))
+                {
+                    cabInfo.CabinetController.game.Room = Room;
+                    cabInfo.CabinetController.game.CabinetDBName = "test";
+                }
+
                 cabInfo.CabinetController.backgroundSoundController = backgroundSoundController;
 
                 //MaxAllowedSpace to identify NPC animation
@@ -525,8 +535,14 @@ public class CabinetsController : MonoBehaviour
     }
 
     public async Task<bool> ReplaceInRoom(int position, string room, string cabinetDBName)
+        => await ReplaceInRoom(position, room, cabinetDBName, cbInfoOverride: null);
+
+    // cbInfoOverride: lets callers with special loading needs (e.g. CabinetAutoReload's
+    // no-cache/forced-debug workshop test cabinet) supply an already-parsed CabinetInformation.
+    // This never touches the registry - it's only meant for disposable/dev-only slots, since a
+    // not-yet-loaded position can't apply the override synchronously (see the else branch below).
+    public async Task<bool> ReplaceInRoom(int position, string room, string cabinetDBName, CabinetInformation cbInfoOverride)
     {
-        //replace in the registry
         CabinetPosition toAdd = new();
         toAdd.Room = room;
         toAdd.Position = position;
@@ -539,7 +555,7 @@ public class CabinetsController : MonoBehaviour
         if (cr != null)
         {
             ConfigManager.WriteConsole($"[CabinetController.ReplaceInRoom] replacing a cabinet by [{toAdd}]");
-            GameObject newCab = await cr.ReplaceWith(toAdd);
+            GameObject newCab = await cr.ReplaceWith(toAdd, cbInfoOverride);
             if (newCab != null)
             {
                 cabinet.GameObjectReplacement = newCab;
@@ -551,6 +567,12 @@ public class CabinetsController : MonoBehaviour
         }
         else
         {
+            if (cbInfoOverride != null)
+            {
+                ConfigManager.WriteConsoleError($"[CabinetController.ReplaceInRoom] position {position} not yet loaded; cannot apply an override load for [{toAdd}]");
+                return false;
+            }
+
             CabinetController cc = GetCabinetControllerByPosition(position);
             if (cc != null)
             {
@@ -563,6 +585,9 @@ public class CabinetsController : MonoBehaviour
         ConfigManager.WriteConsoleError($"[CabinetController.ReplaceInRoom] no cabinet found to replace by [{toAdd}]");
         return false;
     }
+
+    private static bool IsWorkshopReloadSlot(string room, int position)
+        => position == 0 && string.Equals(room, "workshop", StringComparison.OrdinalIgnoreCase);
 
     /// <summary> reconciles this room's live cabinets against the current in-memory registry,
     /// swapping any position whose live cabinet no longer matches its registry assignment.
@@ -631,12 +656,19 @@ public class CabinetsController : MonoBehaviour
             return;
         }
 
+        // The workshop's dev/test slot (position 0) must load immediately at scene start so
+        // CabinetAutoReload always has a CabinetReplace to swap through - it can't wait for a
+        // player to walk up and stand still near it like a normal cabinet.
+        bool isWorkshopReloadSlot = IsWorkshopReloadSlot(Room, cci.Position);
+
         //Check player position in room and cabinet status.
-        if (!cc.LoadIsAllowed())
+        if (!isWorkshopReloadSlot && !cc.LoadIsAllowed())
+            return;
+        if (isWorkshopReloadSlot && string.IsNullOrEmpty(cc.game?.CabinetDBName))
             return;
 
         //player should be static for first load.
-        if (!cc.PlayerIsStatic())
+        if (!isWorkshopReloadSlot && !cc.PlayerIsStatic())
             return;
 
         cci.IsLoading = true;

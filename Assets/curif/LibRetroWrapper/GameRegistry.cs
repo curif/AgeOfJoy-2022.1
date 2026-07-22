@@ -176,10 +176,13 @@ public class GameRegistry : MonoBehaviour
             return;
         }
 
-        // Get all cabinet directories sorted in alphabetical order
+        // Get all cabinet directories sorted in alphabetical order.
+        // "test" is the workshop's disposable dev cabinet slot (managed exclusively by
+        // CabinetAutoReload) and must never be picked up by normal registry assignment.
         cabinetDirectories = System.IO.Directory.GetDirectories(ConfigManager.CabinetsDB)
                                                 .OrderBy(path => path)
                                                 .Select(path => System.IO.Path.GetFileName(path))
+                                                .Where(name => !string.Equals(name, "test", StringComparison.OrdinalIgnoreCase))
                                                 .ToArray();
     }
 

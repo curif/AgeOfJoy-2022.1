@@ -4,19 +4,20 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 */
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 
 public class CabinetAutoReload : MonoBehaviour
 {
-    [Tooltip("Positions where the player can stay to load the cabinet")]
-    public List<AgentScenePosition> AgentPlayerPositions;
-    public BackgroundSoundController backgroundSoundController;
     public CabinetDebugConsole debugConsole;
+
+    [Tooltip("The CabinetsController on this same GameObject that owns position 0 (the workshop test slot)")]
+    public CabinetsController cabinetsController;
+
+    private const int WorkshopTestPosition = 0;
+    private const string WorkshopRoom = "workshop";
 
     static string testCabinetDir;
     static string testDescriptionCabinetFile;
@@ -28,10 +29,11 @@ public class CabinetAutoReload : MonoBehaviour
 
     private CabinetDBAdmin cabinetDBAdmin;
 
-    // The workshop test-cabinet loader is a scene singleton: only one is ever active
-    // (the old one deactivates itself right after a new one takes over). This lets
-    // AGEBasic's WORKSHOPRELOAD() trigger a redeploy without threading a reference
-    // through basicAGE/ConfigurationCommands for a component that lives in one room.
+    // The workshop test-cabinet loader is a scene singleton: only one is ever active for the
+    // whole scene lifetime (it no longer gets destroyed/recreated per swap - CabinetsController/
+    // CabinetReplace own the actual GameObject swap now). This lets AGEBasic's WORKSHOPRELOAD()
+    // trigger a redeploy without threading a reference through basicAGE/ConfigurationCommands
+    // for a component that lives in one room.
     private static CabinetAutoReload activeInstance;
 
     // Requests a redeploy of the test cabinet from the on-disk cabinetsdb/test folder,
@@ -68,21 +70,6 @@ public class CabinetAutoReload : MonoBehaviour
         initialized = true;
     }
 
-    private void OnEnable()
-    {
-        activeInstance = this;
-        if (!initialized)
-            return;
-        if (mainCoroutine == null)
-            mainCoroutine = StartCoroutine(reload());
-    }
-
-    private void OnDestroy()
-    {
-        if (activeInstance == this)
-            activeInstance = null;
-    }
-
     private void OnApplicationPause(bool pauseStatus)
     {
         if (pauseStatus)
@@ -101,22 +88,8 @@ public class CabinetAutoReload : MonoBehaviour
         }
     }
 
-    private void OnDisable()
-    {
-        if (activeInstance == this)
-            activeInstance = null;
-        if (!initialized)
-            return;
-        if (mainCoroutine != null)
-        {
-            StopCoroutine(mainCoroutine);
-            mainCoroutine = null;
-        }
-    }
-
     IEnumerator reload()
     {
-        bool loadedSuccesfully = false;
         while (true)
         {
             // ConfigManager.WriteConsole($"[CabinetAutoReload] test for file: {File.Exists(testFile)} {testFile}");
@@ -149,6 +122,7 @@ public class CabinetAutoReload : MonoBehaviour
                 Task<bool> loadTask = LoadCabinet();
                 yield return new WaitUntil(() => loadTask.IsCompleted);
 
+                bool loadedSuccesfully;
                 if (loadTask.IsFaulted)
                 {
                     ConfigManager.WriteConsoleException("[CabinetAutoReload.reload] ERROR loading cabinet", loadTask.Exception);
@@ -159,11 +133,11 @@ public class CabinetAutoReload : MonoBehaviour
                     loadedSuccesfully = loadTask.Result;
                 }
 
+                // Keep looping (don't yield break) even on success: this component is permanent
+                // now (CabinetsController/CabinetReplace own the swapped cabinet's lifecycle),
+                // so it must keep watching for the *next* test.zip drop indefinitely.
                 if (loadedSuccesfully)
-                {
                     ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} successfully loaded ");
-                    yield break;
-                }
             }
             ConfigManager.WriteConsole($"[CabinetAutoReload.reload] {testFile} waiting for a new cabinet... ");
             yield return new WaitForSeconds(2f);
@@ -188,11 +162,8 @@ public class CabinetAutoReload : MonoBehaviour
 
     private async Task<bool> LoadCabinet()
     {
-
         if (!File.Exists(testDescriptionCabinetFile))
             return false;
-
-        // ConfigManager.WriteConsole($"[CabinetAutoReload] New cabinet to test: {testDescriptionCabinetFile}");
 
         //new cabinet to test
         CabinetInformation cbInfo = null;
@@ -214,7 +185,6 @@ public class CabinetAutoReload : MonoBehaviour
             return false;
         }
 
-
         //force debug mode:
         cbInfo.debug = true;
         //
@@ -222,32 +192,9 @@ public class CabinetAutoReload : MonoBehaviour
         ConfigManager.WriteConsole($"[CabinetAutoReload] cabinet problems (if any):...");
         CabinetInformation.showCabinetProblems(cbInfo, "", "test");
 
-        Cabinet cab;
-        try
-        {
-            //cabinet inseption
-            ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name}");
-            ConfigManager.WriteConsole($"[CabinetAutoReload]AgentPlayerPositions: {string.Join(",", AgentPlayerPositions.Select(x => x.ToString()))}");
-
-            cab = await CabinetFactory.fromInformationAsync(cbInfo, "workshop", 0, transform.position,
-                                                         transform.rotation, transform.parent,
-                                                         AgentPlayerPositions, backgroundSoundController,
-                                                         cacheGlbModels: false);
-        }
-        catch (System.Exception ex)
-        {
-            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
-            CabinetInformation.showCabinetProblems(null, moreProblems: ex.Message, "test"); //write to output file
-            return false;
-        }
-
-        if (cab == null)
-            return false;
-
-
         // invalidate all cached textures for test cabinet
         if (cbInfo.Parts != null)
-        { 
+        {
             foreach (CabinetInformation.Part p in cbInfo.Parts)
             {
                 if (p?.art?.file != null)
@@ -256,41 +203,23 @@ public class CabinetAutoReload : MonoBehaviour
                 }
             }
         }
-        CabinetFactory.skinFromInformation(cab, cbInfo);
 
-
+        bool ok;
         try
         {
-            ConfigManager.WriteConsole("[CabinetAutoReload] New Test Cabinet deployed ******");
-
-            CabinetAutoReload cba = (CabinetAutoReload)cab.gameObject.AddComponent(typeof(CabinetAutoReload)); //this will excecute Start().
-            cba.AgentPlayerPositions = AgentPlayerPositions;
-            cba.backgroundSoundController = backgroundSoundController;
-            cba.debugConsole = debugConsole;
-
-            //add CabinetReplace, needed for libretroController
-            CabinetReplace cabReplaceComp = cab.gameObject.AddComponent<CabinetReplace>();
-            cabReplaceComp.AgentPlayerPositionComponents = AgentPlayerPositions;
-            cabReplaceComp.cabinet = cab;
-            /*cabReplaceComp.AgentPlayerPositionComponentsToUnload = AgentPlayerPositionComponentsToUnload;
-            cabReplaceComp.AgentPlayerPositionComponentsToLoad = AgentPlayerPositionComponentsToLoad;
-            cabReplaceComp.game = newCabGame;
-            cabReplaceComp.outOfOrderCabinet = gameObject;
-            */
-            cabReplaceComp.backgroundSoundController = backgroundSoundController;
-
-            cab.gameObject.SetActive(true);
-
-            ConfigManager.WriteConsole($"[CabinetAutoReload] destroying old test cabinet {gameObject.name}");
-            UnityEngine.Object.Destroy(gameObject);
-
-            return true;
+            ConfigManager.WriteConsole($"[CabinetAutoReload] Deploy test cabinet {cbInfo.name} via CabinetsController");
+            ok = await cabinetsController.ReplaceInRoom(WorkshopTestPosition, WorkshopRoom, "test", cbInfo);
         }
         catch (System.Exception ex)
         {
-            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading cabinet from description {testDescriptionCabinetFile}", ex);
+            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR replacing test cabinet via CabinetsController {testDescriptionCabinetFile}", ex);
             CabinetInformation.showCabinetProblems(null, moreProblems: ex.Message, "test"); //write to output file
             return false;
         }
+
+        if (!ok)
+            ConfigManager.WriteConsoleError("[CabinetAutoReload] CabinetsController.ReplaceInRoom failed for test cabinet");
+
+        return ok;
     }
 }

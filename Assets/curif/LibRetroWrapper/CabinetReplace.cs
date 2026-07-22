@@ -36,37 +36,45 @@ public class CabinetReplace : MonoBehaviour
     }
 
     public async Task<GameObject> ReplaceWith(CabinetPosition newCabGame)
+        => await ReplaceWith(newCabGame, cbInfoOverride: null);
+
+    // cbInfoOverride lets callers with special loading needs (e.g. CabinetAutoReload's
+    // no-cache/forced-debug workshop test cabinet) supply an already-parsed CabinetInformation
+    // instead of the default cached fromYaml load below.
+    public async Task<GameObject> ReplaceWith(CabinetPosition newCabGame, CabinetInformation cbInfoOverride)
     {
         ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] game: {newCabGame}");
 
-        string cabinetPath = ConfigManager.CabinetsDB + "/" + newCabGame.CabinetDBName;
-        string descriptionPath = cabinetPath + "/description.yaml";
-        if (!File.Exists(descriptionPath))
+        CabinetInformation cbInfo = cbInfoOverride;
+        if (cbInfo == null)
         {
-            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] not found: {descriptionPath}");
-            return null;
-        }
-
-        ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] replace {name} with {descriptionPath}");
-
-        //new cabinet to test
-        CabinetInformation cbInfo = null;
-        try
-        {
-            cbInfo = CabinetInformation.fromYaml(cabinetPath);
-            if (cbInfo == null)
+            string cabinetPath = ConfigManager.CabinetsDB + "/" + newCabGame.CabinetDBName;
+            string descriptionPath = cabinetPath + "/description.yaml";
+            if (!File.Exists(descriptionPath))
             {
-                ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR NULL cabinet - new cabinet from yaml: {descriptionPath}");
+                ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] not found: {descriptionPath}");
                 return null;
             }
 
-            ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] cabinet problems (if any):...");
-            CabinetInformation.showCabinetProblems(cbInfo);
-        }
-        catch (System.Exception ex)
-        {
-            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from YAML {descriptionPath}: {ex}");
-            return null;
+            ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] replace {name} with {descriptionPath}");
+
+            try
+            {
+                cbInfo = CabinetInformation.fromYaml(cabinetPath);
+                if (cbInfo == null)
+                {
+                    ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR NULL cabinet - new cabinet from yaml: {descriptionPath}");
+                    return null;
+                }
+
+                ConfigManager.WriteConsole($"[CabinetReplace.ReplaceWith] cabinet problems (if any):...");
+                CabinetInformation.showCabinetProblems(cbInfo);
+            }
+            catch (System.Exception ex)
+            {
+                ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from YAML {descriptionPath}: {ex}");
+                return null;
+            }
         }
 
         Cabinet cab;
@@ -88,7 +96,7 @@ public class CabinetReplace : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from INFORMATION in yaml {descriptionPath}: {ex}");
+            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from INFORMATION {newCabGame}: {ex}");
             return null;
         }
 
@@ -115,7 +123,7 @@ public class CabinetReplace : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from description {descriptionPath}: {ex}");
+            ConfigManager.WriteConsoleError($"[CabinetReplace.ReplaceWith] ERROR loading cabinet from description {newCabGame}: {ex}");
             return null;
         }
     }
