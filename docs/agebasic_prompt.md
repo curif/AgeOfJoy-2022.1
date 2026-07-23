@@ -169,7 +169,8 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
 *   `FILEWRITE(fileHandle, text)`: Writes a line to an open file.
 *   `FILEEOF(fileHandle)`: Returns `1` if the file pointer is at the end of the file.
 *   `FILECLOSE(fileHandle)`: Closes an open file handle.
-*   `GETFILES(path, separator, orderType)` / `GETFILESARRAY(path, orderType)`: List files in a directory. `orderType`: `0`=alphabetic, `1`=random, `2`=creation date old→new, `3`=creation date new→old.
+*   `GETFILES(path, separator, orderType)` / `GETFILESARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])`: List files in a directory. `orderType`: `0`=alphabetic, `1`=random, `2`=creation date old→new, `3`=creation date new→old. `GETFILESARRAY` optionally accepts `wildcard` (MS-DOS style filename pattern, default `"*"` = all files — see below), `pageOffset` (0-based starting index, default `0`), and `pageCount` (max files to return, default all remaining) to page through large directories instead of returning every file at once.
+    *   **Wildcard syntax** (old MS-DOS style, `*` matches any run of characters): `"*zip"` matches all files ending in `zip`; `"abc*"` matches all files starting with `abc`; `"*xy*"` matches all files containing `xy`; `"pepe.zip"` (no `*`) matches only that exact filename. Example: `GETFILESARRAY(path, 0, "*.zip")`.
 *   `COMBINEPATH(path1, path2)`: Joins two path segments into one, sandboxed to the app's base directory.
 
 ### Path Functions

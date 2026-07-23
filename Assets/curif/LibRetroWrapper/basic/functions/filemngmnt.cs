@@ -47,22 +47,22 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
         }
     }
 
-    protected static string[] GetFiles(string path, int orderType)
+    protected static string[] GetFiles(string path, int orderType, string wildcard = "*")
     {
         string[] files;
         switch (orderType)
         {
             case 0: // Alphabetic order
-                files = Directory.GetFiles(path).OrderBy(f => f).ToArray();
+                files = Directory.GetFiles(path, wildcard).OrderBy(f => f).ToArray();
                 break;
             case 1: // Random order
-                files = Directory.GetFiles(path).OrderBy(f => Guid.NewGuid()).ToArray();
+                files = Directory.GetFiles(path, wildcard).OrderBy(f => Guid.NewGuid()).ToArray();
                 break;
             case 2: // Creation date from old to new
-                files = Directory.GetFiles(path).OrderBy(f => new FileInfo(f).CreationTime).ToArray();
+                files = Directory.GetFiles(path, wildcard).OrderBy(f => new FileInfo(f).CreationTime).ToArray();
                 break;
             case 3: // Creation date from new to old
-                files = Directory.GetFiles(path).OrderByDescending(f => new FileInfo(f).CreationTime).ToArray();
+                files = Directory.GetFiles(path, wildcard).OrderByDescending(f => new FileInfo(f).CreationTime).ToArray();
                 break;
             default:
                 files = null;
@@ -83,6 +83,16 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GETFILESARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])
+//   Lists files in a directory as an array, optionally filtered by an
+//   MS-DOS style wildcard and paginated.
+//   wildcard: "*" (default, matches everything) style pattern, e.g.:
+//     "*zip"    - all files ending in "zip"
+//     "abc*"    - all files starting with "abc"
+//     "*xy*"    - all files containing "xy"
+//     "pepe.zip" - only the exact file "pepe.zip" (accepted, if useless)
+// ─────────────────────────────────────────────────────────────────────────────
 class CommandFunctionGETFILESARRAY : CommandFunctionGETFILES
 {
     public CommandFunctionGETFILESARRAY(ConfigurationCommands config) : base(config)
@@ -97,8 +107,15 @@ class CommandFunctionGETFILESARRAY : CommandFunctionGETFILES
     private BasicValue[] GetParams(BasicVars vars)
     {
         BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 2);
         FunctionHelper.ExpectedNonEmptyString(vals[0], " - file path");
         FunctionHelper.ExpectedNumber(vals[1], " - order");
+        if (vals.Length >= 3)
+            FunctionHelper.ExpectedString(vals[2], " - wildcard");
+        if (vals.Length >= 4)
+            FunctionHelper.ExpectedNumber(vals[3], " - page offset");
+        if (vals.Length >= 5)
+            FunctionHelper.ExpectedNumber(vals[4], " - page count");
         return vals;
     }
     public override BasicValue Execute(BasicVars vars)
@@ -108,14 +125,24 @@ class CommandFunctionGETFILESARRAY : CommandFunctionGETFILES
 
         string path = FunctionHelper.FileTraversalFree(vals[0].GetValueAsString(), ConfigManager.BaseDir);
         int orderType = (int)vals[1].GetValueAsNumber();
+        string wildcard = vals.Length >= 3 && !string.IsNullOrEmpty(vals[2].GetValueAsString()) ? vals[2].GetValueAsString() : "*";
 
         string[] files;
         try
         {
-            // Get files from the specified path based on order type
-            files = GetFiles(path, orderType);
+            // Get files from the specified path based on order type and wildcard
+            files = GetFiles(path, orderType, wildcard);
             if (files == null)
                 return new BasicValue("");
+
+            // Optional pagination: GETFILESARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])
+            int pageOffset = vals.Length >= 4 ? (int)vals[3].GetValueAsNumber() : 0;
+            int pageCount = vals.Length >= 5 ? (int)vals[4].GetValueAsNumber() : files.Length - pageOffset;
+
+            if (pageOffset < 0 || pageOffset >= files.Length)
+                return new BasicValue("");
+
+            files = files.Skip(pageOffset).Take(Math.Max(0, pageCount)).ToArray();
 
             return new BasicValue(files.Select(f => Path.GetFileName(f)).ToArray());
         }
