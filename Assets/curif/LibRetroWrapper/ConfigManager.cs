@@ -44,6 +44,7 @@ public static class ConfigManager
     public static string GameSaveDir = Path.Combine(BaseDir, "save");
     public static string GameStatesDir = Path.Combine(BaseDir, "startstates");
     public static string ConfigDir = Path.Combine(BaseDir, "configuration");
+    public static string WorkshopYamlPath = Path.Combine(ConfigDir, "workshop.yaml");
     public static string ConfigControllersDir = Path.Combine(ConfigDir, "controllers");
     public static string ConfigControllerSchemesDir = Path.Combine(ConfigDir, "controllers/schemes");
     public static string AGEBasicDir = Path.Combine(BaseDir, "AGEBasic");
