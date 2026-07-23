@@ -1195,11 +1195,25 @@ public class ConfigurationController : MonoBehaviour
         }
         AGEBasicPrograms.SetOptions(AGEBasic.GetParsedPrograms());
     }
-    private void AGEBasicRun()
+    // Returns true if the program actually started. AGEBasic.Run() can throw synchronously
+    // (e.g. "program already running"); left uncaught, that exception escapes the behavior
+    // tree Do() callback and kills the run() coroutine that drives this whole screen, freezing
+    // the configuration UI until the app is restarted. So it must be caught here.
+    private bool AGEBasicRun()
     {
         string program = AGEBasicPrograms.GetSelectedOption();
-        AGEBasic.Run(program);
-        return;
+        try
+        {
+            AGEBasic.Run(program);
+            return true;
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[ConfigurationController.AGEBasicRun] failed to start {program}", e);
+            AGEBasic.LastRuntimeException = new RuntimeException(program, 0, e.Message, e);
+            ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
+            return false;
+        }
     }
 
 
@@ -1669,7 +1683,11 @@ public class ConfigurationController : MonoBehaviour
                 AGEBasic.DebugMode = ageBasicInformation.debug;
                 AGEBasic.Run(ageBasicInformation.afterLoad);
 
-                while (AGEBasic.IsRunning() || AGEBasic.IsRunningInBackground())
+                // IsRunningInBackground() reflects whether the ONEVENT event loop is alive, which by
+                // design can persist indefinitely after the program itself ends (END only exits the
+                // program scope, not the event loop). Waiting on it here would hang forever for any
+                // afterLoad script that registers a lasting event, so only wait for the program itself.
+                while (AGEBasic.IsRunning())
                     yield return new WaitForSeconds(1f / 2f);
 
                 ConfigManager.WriteConsole($"[ConfigurationController] [{ageBasicInformation.afterLoad}] ended. Error: [{AGEBasic.LastRuntimeException}]");
@@ -1699,7 +1717,19 @@ public class ConfigurationController : MonoBehaviour
         tree = buildBT();
         while (true)
         {
-            tree.Tick();
+            // An uncaught exception here would kill this coroutine permanently (Unity does not
+            // resume a coroutine after an exception escapes MoveNext()), freezing the whole
+            // configuration screen since status would never change again. Recover to the main
+            // menu instead.
+            try
+            {
+                tree.Tick();
+            }
+            catch (Exception e)
+            {
+                ConfigManager.WriteConsoleException("[ConfigurationController.run] unhandled exception ticking behavior tree", e);
+                status = StatusOptions.onMainMenu;
+            }
             ResetInputValues();
 
             if (status == StatusOptions.init || status == StatusOptions.waitingForCoin)
@@ -2399,9 +2429,11 @@ public class ConfigurationController : MonoBehaviour
 
                         else if (w.name == "run")
                         {
-                            AGEBasicRun();
-                            AGEBasicRunTimeout = DateTime.Now.AddSeconds(60 * 30); //if not reach in time abort
-                            status = StatusOptions.onRunAGEBasicRunning;
+                            if (AGEBasicRun())
+                            {
+                                AGEBasicRunTimeout = DateTime.Now.AddSeconds(60 * 30); //if not reach in time abort
+                                status = StatusOptions.onRunAGEBasicRunning;
+                            }
                             return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                         }
 
@@ -2435,13 +2467,26 @@ public class ConfigurationController : MonoBehaviour
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
                   }
 
-                  if (AGEBasic.IsRunning() || AGEBasic.IsRunningInBackground())
+                  if (AGEBasic.IsRunning())
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
 
-                  if (AGEBasic.LastRuntimeException != null)
-                      ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
+                  // The foreground program stopped. If it ended via END while it still has ONEVENT
+                  // handlers registered, that's the program intentionally staying alive, waiting on
+                  // those events (END only exits the program scope, not the event loop) — it is NOT
+                  // finished. Only SHUTDOWN (which clears the events itself) or an END with no events
+                  // left means the program is actually done.
+                  if (AGEBasic.LastRuntimeException == null && AGEBasic.IsRunningInBackground())
+                      return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
 
-                  // Both foreground and background (event loop) have finished — return to menu.
+                  // A crash is different: whatever events happen to be registered are leftover from
+                  // an incomplete setup, not an intentional "wait for events" state, so clean them up.
+                  if (AGEBasic.LastRuntimeException != null)
+                  {
+                      if (AGEBasic.IsRunningInBackground())
+                          AGEBasic.Shutdown();
+                      ((GenericTimedLabel)AGEBasicContainer.GetWidget("RuntimeStatus")).Start(4);
+                  }
+
                   AGEBasicShowLastRuntimeError();
                   status = StatusOptions.onRunAGEBasic;
                   return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
@@ -2549,8 +2594,15 @@ public class ConfigurationController : MonoBehaviour
 
     private IEnumerator EditorWaitAGEBasicTestFinished()
     {
-        while (AGEBasic.IsRunning() || AGEBasic.IsRunningInBackground())
+        // See the identical logic in the "AGEBasicRunning" BT state: an END with ONEVENT handlers
+        // still registered means the program is intentionally staying alive waiting on those events,
+        // not finished — only a crash or an eventless END/SHUTDOWN really ends it.
+        while (AGEBasic.IsRunning() ||
+               (AGEBasic.LastRuntimeException == null && AGEBasic.IsRunningInBackground()))
             yield return new WaitForSeconds(1f / 2f);
+
+        if (AGEBasic.LastRuntimeException != null && AGEBasic.IsRunningInBackground())
+            AGEBasic.Shutdown();
 
         ControllersEnable(false);
         cleanActionMap();

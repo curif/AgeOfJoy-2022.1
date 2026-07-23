@@ -33,7 +33,7 @@ The `TokenConsumer` class is a sequential token reader used during the parsing o
 This class manages the lifecycle of AGEBasic scripts attached to a specific arcade cabinet.
 - **Initialization:** Reads configuration from `description.yaml` (via `CabinetAGEBasicInformation`). It pre-loads variables using `IngestVariables` and registers all declarative events defined in the YAML by adding them to the `basicAGE` event list.
 - **Event Coroutine (`RunEvents`):** Manages a continuous background loop that checks conditions and executes mapped scripts based on cabinet interactions. It supports dynamic registration of events at runtime. If an event script is triggered, it invokes a new `runProgram` coroutine and prevents overlapping runs by sequentially yielding (`while (IsRunning()) yield return null;`).
-- **SHUTDOWN vs END:** The engine makes a hard behavioral distinction between `END` and `SHUTDOWN`. Calling `END` sets `config.stop = true`, gracefully exiting the local program context but allowing the `eventCoroutine` loop to persist. Calling `SHUTDOWN` sets `config.shutdown = true` and `config.stop = true`, which forcefully kills the local program context, executes a `StopCoroutine` on the background `eventCoroutine`, and fully clears the registered events queue and file pointers.
+- **SHUTDOWN vs END:** The engine makes a hard behavioral distinction between `END` and `SHUTDOWN`. Calling `END` sets `config.stop = true`, gracefully exiting the local program context but allowing the `eventCoroutine` loop to persist. Calling `SHUTDOWN` sets `config.shutdown = true` and `config.stop = true`, which forcefully kills the local program context, executes a `StopCoroutine` on the background `eventCoroutine`, and fully clears the registered events queue and file pointers. Any host code that needs to detect "the program is done" must account for this — see *"Detecting Program Completion (END vs SHUTDOWN)"* under section 2.
 - **Event Types:** Implements an extensible event system through the `Event` base class and its derived forms:
   - `OnTimer`, `OnAlways` (Time-based triggers)
   - `OnControlActivePressed`, `OnControlActiveHeld`, `OnControlActiveReleased` (MAME input mapping)
@@ -77,6 +77,7 @@ Serves as the central user interface (UI) manager inside the virtual configurati
 - **Diagnostics:** Offers visual widgets to inspect the last thrown compilation error (`CompilationException`) or runtime error (`LastRuntimeException`), making it an essential tool for script developers debugging inside VR.
 - **Autostart:** Automatically executes a designated startup script (defined via `config.agebasic.afterLoad` in the global configuration) as soon as the configuration room is fully initialized.
 - **Global Systems Management:** Maps deeply into the global ecosystem, handling non-scripting tasks such as setting audio levels, configuring NPC behaviors, managing player locomotion, tweaking screen shader attributes, and adjusting environmental lighting.
+- **Test-run completion detection:** The "AGEBasic > run" screen (`onRunAGEBasicRunning` BT state) and the editor-only `EditorWaitAGEBasicTestFinished()` helper decide when a manually-run script is "done" using the same rule described in *"Detecting Program Completion"* below — see that section before touching either of these.
 
 
 
@@ -116,6 +117,46 @@ Passed to almost every object in the interpreter. Holds the current state of exe
 - Arrays (`DIM`) are shared by reference as well, since they live in the same underlying dictionary.
 - Because of this sharing, event handlers and `RUN` sub-programs must be written defensively: use distinct variable names to avoid accidental collisions with other events/programs on the same cabinet, and don't assume a variable starts uninitialized just because a new event fired or a new program was `RUN`.
 - `Shutdown()`/`ResetState(true)` clears the program-context stack and registered events but does **not** clear `vars` — stale values can persist across an `afterInsertCoin` restart unless variables are explicitly reset via YAML re-ingestion (`IngestVariables`).
+
+### Detecting Program Completion (END vs SHUTDOWN) — a recurring pitfall
+
+Any host code that runs an AGEBasic program and needs to know when it's "finished" (to redraw a menu, restore input control, free a cabinet, etc.) must **not** simply wait for both `basicAGE.IsRunning()` and `basicAGE.IsRunningInBackground()` to become false. That pattern looks intuitive but is wrong, and has caused real freezes in `ConfigurationController.cs`'s AGEBasic test-run screen.
+
+- `IsRunning()` reflects the **foreground program** (`running != null` or `Status` is `Running`/`WaitingForStart`).
+- `IsRunningInBackground()` reflects whether the **event loop** is alive (`eventCoroutine != null && events.Count > 0`) — this is true for as long as *any* `ONEVENT` handler remains registered, regardless of whether one is actively executing right now.
+
+The two commands that end a foreground program mean different things for the event loop, and host code must branch on which one happened:
+
+| How the program stopped | Events still registered? | Meaning |
+|---|---|---|
+| `END` | Yes | **Not finished.** The script intentionally left handlers running and is waiting on them — `END` only exits the current program's scope, it never touches the event loop. Treat this as "still running." |
+| `END` | No | Finished. Nothing left to do. |
+| `SHUTDOWN` | (always none — `Shutdown()` clears `events` itself) | Finished. Equivalent to the "no events" case. |
+| Uncaught runtime exception | Yes or no | Finished — but treat any registered events as leftover, incomplete state from the crash (e.g. the script died partway through its own `ONEVENT` setup), not an intentional wait. Clean them up (`Shutdown()`) before reporting completion. |
+
+The correct completion check (see `ConfigurationController.cs`, `onRunAGEBasicRunning` BT state, and `EditorWaitAGEBasicTestFinished()` for the reference implementation):
+
+```csharp
+if (AGEBasic.IsRunning())
+    return Continue; // still executing
+
+// Foreground stopped. An END that left events registered means the program is
+// intentionally still active, waiting on those events — not finished.
+if (AGEBasic.LastRuntimeException == null && AGEBasic.IsRunningInBackground())
+    return Continue;
+
+// A crash is different: leftover events are incomplete setup, not an intentional wait.
+if (AGEBasic.LastRuntimeException != null && AGEBasic.IsRunningInBackground())
+    AGEBasic.Shutdown();
+
+// truly finished: report result, hand control back.
+```
+
+Getting this wrong has two failure modes, both observed in practice:
+1. **Waiting for `IsRunningInBackground()` unconditionally** — a script that does normal, intentional `ONEVENT` + `END` (e.g. an interactive picker that waits for further input events) never lets the background flag clear, so the host screen hangs forever waiting for "completion" that was never coming.
+2. **Force-`Shutdown()`ing as soon as the foreground ends, regardless of why** — kills a legitimately-still-running script's event handlers, so an interactive program that intentionally ended its setup phase via `END` gets cut off mid-interaction (input events silently stop firing) instead of continuing to run.
+
+A host-side safety-net timeout (e.g. `ConfigurationController`'s 30-minute `AGEBasicRunTimeout`) is still worth keeping regardless — it protects against a script that legitimately never calls `SHUTDOWN` and is simply abandoned by the developer testing it.
 
 ## 3. Unity & VR Integration
 
