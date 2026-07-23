@@ -171,10 +171,11 @@ In practice, neither `mame2003-plus` nor `mame2010` call `RETRO_ENVIRONMENT_SET_
 *   `FILECLOSE(fileHandle)`: Closes an open file handle.
 *   `GETFILES(path, separator, orderType)` / `GETFILESARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])`: List files in a directory. `orderType`: `0`=alphabetic, `1`=random, `2`=creation date old→new, `3`=creation date new→old. `GETFILESARRAY` optionally accepts `wildcard` (MS-DOS style filename pattern, default `"*"` = all files — see below), `pageOffset` (0-based starting index, default `0`), and `pageCount` (max files to return, default all remaining) to page through large directories instead of returning every file at once.
     *   **Wildcard syntax** (old MS-DOS style, `*` matches any run of characters): `"*zip"` matches all files ending in `zip`; `"abc*"` matches all files starting with `abc`; `"*xy*"` matches all files containing `xy`; `"pepe.zip"` (no `*`) matches only that exact filename. Example: `GETFILESARRAY(path, 0, "*.zip")`.
+*   `GETDIRSARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])`: Same parameters and semantics as `GETFILESARRAY`, but lists subdirectories of `path` instead of files, returning bare folder names. Example: `GETDIRSARRAY(path, 0)`.
 *   `COMBINEPATH(path1, path2)`: Joins two path segments into one, sandboxed to the app's base directory.
 
 ### Path Functions
-No-argument functions returning standard device folders. Use with `COMBINEPATH()` and `GETFILES`/`GETFILESARRAY` to build portable paths.
+No-argument functions returning standard device folders. Use with `COMBINEPATH()` and `GETFILES`/`GETFILESARRAY`/`GETDIRSARRAY` to build portable paths.
 
 *   `ROOTPATH()`: The app's base data folder (all other paths below live under this one).
 *   `CONFIGPATH()`: The configuration folder.

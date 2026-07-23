@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Unity.VisualScripting;
+using static BasicValue;
 
 class CommandFunctionGETFILES : CommandFunctionExpressionListBase
 {
@@ -70,6 +71,31 @@ class CommandFunctionGETFILES : CommandFunctionExpressionListBase
 
         }
         return files;
+    }
+
+    protected static string[] GetDirectories(string path, int orderType, string wildcard = "*")
+    {
+        string[] dirs;
+        switch (orderType)
+        {
+            case 0: // Alphabetic order
+                dirs = Directory.GetDirectories(path, wildcard).OrderBy(d => d).ToArray();
+                break;
+            case 1: // Random order
+                dirs = Directory.GetDirectories(path, wildcard).OrderBy(d => Guid.NewGuid()).ToArray();
+                break;
+            case 2: // Creation date from old to new
+                dirs = Directory.GetDirectories(path, wildcard).OrderBy(d => new DirectoryInfo(d).CreationTime).ToArray();
+                break;
+            case 3: // Creation date from new to old
+                dirs = Directory.GetDirectories(path, wildcard).OrderByDescending(d => new DirectoryInfo(d).CreationTime).ToArray();
+                break;
+            default:
+                dirs = null;
+                break;
+
+        }
+        return dirs;
     }
 
     private BasicValue[] GetParams(BasicVars vars)
@@ -144,7 +170,76 @@ class CommandFunctionGETFILESARRAY : CommandFunctionGETFILES
 
             files = files.Skip(pageOffset).Take(Math.Max(0, pageCount)).ToArray();
 
-            return new BasicValue(files.Select(f => Path.GetFileName(f)).ToArray());
+            return new BasicValue(files.Select(f => Path.GetFileName(f)).ToArray(), BasicValueType.String);
+
+        }
+        catch (Exception ex)
+        {
+            // Handle any exceptions that may occur (e.g., invalid path)
+            AGEBasicDebug.WriteConsole($"Error: {ex.Message}");
+            return new BasicValue("");
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GETDIRSARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])
+//   Lists subdirectories of a directory as an array, optionally filtered by an
+//   MS-DOS style wildcard and paginated. Same parameters and semantics as
+//   GETFILESARRAY, but returns folder names instead of file names.
+// ─────────────────────────────────────────────────────────────────────────────
+class CommandFunctionGETDIRSARRAY : CommandFunctionGETFILES
+{
+    public CommandFunctionGETDIRSARRAY(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "GETDIRSARRAY";
+    }
+
+    public override bool Parse(TokenConsumer tokens)
+    {
+        return base.Parse(tokens, 2);
+    }
+    private BasicValue[] GetParams(BasicVars vars)
+    {
+        BasicValue[] vals = exprs.ExecuteList(vars);
+        FunctionHelper.ExpectedAtLeast(vals, 2);
+        FunctionHelper.ExpectedNonEmptyString(vals[0], " - folder path");
+        FunctionHelper.ExpectedNumber(vals[1], " - order");
+        if (vals.Length >= 3)
+            FunctionHelper.ExpectedString(vals[2], " - wildcard");
+        if (vals.Length >= 4)
+            FunctionHelper.ExpectedNumber(vals[3], " - page offset");
+        if (vals.Length >= 5)
+            FunctionHelper.ExpectedNumber(vals[4], " - page count");
+        return vals;
+    }
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
+        BasicValue[] vals = GetParams(vars);
+
+        string path = FunctionHelper.FileTraversalFree(vals[0].GetValueAsString(), ConfigManager.BaseDir);
+        int orderType = (int)vals[1].GetValueAsNumber();
+        string wildcard = vals.Length >= 3 && !string.IsNullOrEmpty(vals[2].GetValueAsString()) ? vals[2].GetValueAsString() : "*";
+
+        string[] dirs;
+        try
+        {
+            // Get subdirectories from the specified path based on order type and wildcard
+            dirs = GetDirectories(path, orderType, wildcard);
+            if (dirs == null)
+                return new BasicValue("");
+
+            // Optional pagination: GETDIRSARRAY(path, orderType, [wildcard], [pageOffset], [pageCount])
+            int pageOffset = vals.Length >= 4 ? (int)vals[3].GetValueAsNumber() : 0;
+            int pageCount = vals.Length >= 5 ? (int)vals[4].GetValueAsNumber() : dirs.Length - pageOffset;
+
+            if (pageOffset < 0 || pageOffset >= dirs.Length)
+                return new BasicValue("");
+
+            dirs = dirs.Skip(pageOffset).Take(Math.Max(0, pageCount)).ToArray();
+
+            return new BasicValue(dirs.Select(d => Path.GetFileName(d)).ToArray(), BasicValueType.String);
         }
         catch (Exception ex)
         {
