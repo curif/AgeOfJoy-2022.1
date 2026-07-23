@@ -158,6 +158,10 @@ Getting this wrong has two failure modes, both observed in practice:
 
 A host-side safety-net timeout (e.g. `ConfigurationController`'s 30-minute `AGEBasicRunTimeout`) is still worth keeping regardless — it protects against a script that legitimately never calls `SHUTDOWN` and is simply abandoned by the developer testing it.
 
+**Known call sites applying this rule** (check these first before adding a new one elsewhere):
+- `ConfigurationController.cs` — `onRunAGEBasicRunning` BT state, and `EditorWaitAGEBasicTestFinished()` (editor-only).
+- `AGEBasicCabinetController.cs` — the `"not running anymore?"` condition inside `buildScreenBT()`'s `RepeatUntilSuccess("Until player or program exit")`. Same rule, applied to a live gameplay cabinet rather than a one-shot test: an `END` that leaves `ONEVENT` handlers registered (e.g. lightgun/collision/timer handlers meant to run for the whole play session) means the game is still going, not over. The subsequent `"END Program"` step always calls `cabinetAGEBasic.Stop()` (→ `AGEBasic.Shutdown()`) regardless of *why* the condition tripped, so it's safe for that condition to fire promptly on a crash. (`SuspendAttractAndPlaybackForTransition()` in the same file ORs `IsRunning()`/`IsRunningInBackground()` too, but only to decide *whether* to bother running cleanup, not as a wait-loop exit condition — over-triggering there is harmless, so it doesn't need this treatment.)
+
 ## 3. Unity & VR Integration
 
 AGEBasic achieves its capabilities by acting as a safe proxy to complex Unity components. The `ConfigurationCommands` context allows commands to:

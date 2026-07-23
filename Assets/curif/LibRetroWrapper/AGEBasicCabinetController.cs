@@ -297,10 +297,23 @@ public class AGEBasicCabinetController : MonoBehaviour, ISuspendableCabinetScree
               .Sequence("AGEBasic Running")
                 .RepeatUntilSuccess("Until player or program exit")
                     .Selector()
-                        .Condition("not running anymore?", () => 
+                        .Condition("not running anymore?", () =>
                         {
-                            return !cabinetAGEBasic.AGEBasic.IsRunning() && 
-                                   !cabinetAGEBasic.AGEBasic.IsRunningInBackground();
+                            if (cabinetAGEBasic.AGEBasic.IsRunning())
+                                return false;
+
+                            // An END that left ONEVENT handlers registered means the program
+                            // intentionally stays active waiting on those events (e.g. lightgun,
+                            // collision or timer handlers meant to run for the whole play session)
+                            // — the game isn't actually over. A crash is different: any events left
+                            // registered are incomplete leftover state from the crash, not an
+                            // intentional wait, so still treat the game as over ("END Program" below
+                            // always calls Stop()/Shutdown() and cleans them up regardless).
+                            if (cabinetAGEBasic.AGEBasic.LastRuntimeException == null &&
+                                cabinetAGEBasic.AGEBasic.IsRunningInBackground())
+                                return false;
+
+                            return true;
                         })
                         .Sequence("Manual Exit")
                             .Condition("user EXIT pressed?", () =>
