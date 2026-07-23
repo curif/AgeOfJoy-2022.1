@@ -235,6 +235,9 @@ public class MREffectMeshController : MonoBehaviour
                 $"{LogPrefix} {instanceName} has no MeshMaterial ({materialName} missing)");
 
         effectMesh.CastShadow = false;
+        // Cut holes in walls for doors/windows; portal owns WINDOW_FRAME (do not mesh it).
+        effectMesh.CutHoles = MRUKAnchor.SceneLabels.DOOR_FRAME | MRUKAnchor.SceneLabels.WINDOW_FRAME;
+        effectMesh.Labels &= ~MRUKAnchor.SceneLabels.WINDOW_FRAME;
     }
 
     static Material ResolveMeshMaterial(out string materialName)

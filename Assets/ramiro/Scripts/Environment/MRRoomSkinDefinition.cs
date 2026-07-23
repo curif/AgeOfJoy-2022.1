@@ -151,10 +151,75 @@ public class MRRoomSkinDefinition
         if (string.IsNullOrEmpty(packageName))
             return false;
 
+        // Folder layout: Wall/brick.png (no YAML).
+        if (TryLoadFromSurfaceFolderImage(packageName, out definition))
+            return true;
+
+        return TryLoadYamlPackage(packageName, out definition);
+    }
+
+    /// <summary>Legacy yaml packages under Resources or MR/Room Skins/{package}/roomskin.yaml.</summary>
+    public static bool TryLoadYamlPackage(string packageName, out MRRoomSkinDefinition definition)
+    {
+        definition = null;
+        if (string.IsNullOrEmpty(packageName))
+            return false;
+
         if (TryLoadFromResources(packageName, out definition))
             return true;
 
         return TryLoadFromDisk(packageName, out definition);
+    }
+
+    /// <summary>
+    /// Key format <c>Wall/my.png</c> → surface from folder, texture = file. No YAML.
+    /// </summary>
+    public static bool TryLoadFromSurfaceFolderImage(string relativeKey, out MRRoomSkinDefinition definition)
+    {
+        definition = null;
+        string normalized = MRRoomSkinCatalog.NormalizeRelativePath(relativeKey);
+        int slash = normalized.IndexOf('/');
+        if (slash <= 0 || slash >= normalized.Length - 1)
+            return false;
+
+        string folder = normalized.Substring(0, slash);
+        string fileName = normalized.Substring(slash + 1);
+        if (fileName.Contains('/') || fileName.Contains('\\'))
+            return false;
+
+        if (!MRRoomSkinCatalog.TryParseSurfaceFolder(folder, out MRRoomSkinSurface surface))
+            return false;
+
+        string canonicalFolder = MRRoomSkinCatalog.GetSurfaceFolderName(surface);
+        string packageDir = Path.Combine(MRPaths.RoomSkinsDir, canonicalFolder);
+        string fullPath = Path.Combine(packageDir, fileName);
+        if (!File.Exists(fullPath) || !MRPostersCatalog.IsSupportedImageFile(fullPath))
+            return false;
+
+        definition = new MRRoomSkinDefinition
+        {
+            Version = SupportedYamlVersion,
+            Kind = KindValue,
+            Name = Path.GetFileNameWithoutExtension(fileName),
+            DisplayName = Path.GetFileNameWithoutExtension(fileName),
+            Texture = fileName,
+            Surfaces = new List<string> { FormatSurfaceYamlName(surface) },
+            PackageName = $"{canonicalFolder}/{fileName}",
+            PackageDir = packageDir,
+            FromResources = false,
+            ResolvedTexturePath = fileName
+        };
+        return definition.IsValid;
+    }
+
+    /// <summary>True when this skin only drives the window skybox portal (not EffectMesh).</summary>
+    public bool IsWindowSkyboxOnly
+    {
+        get
+        {
+            IReadOnlyList<MRRoomSkinSurface> surfaces = GetNormalizedSurfaces();
+            return surfaces.Count == 1 && surfaces[0] == MRRoomSkinSurface.Window;
+        }
     }
 
     static bool TryLoadFromResources(string packageName, out MRRoomSkinDefinition definition)

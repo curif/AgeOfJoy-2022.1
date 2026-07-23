@@ -120,6 +120,17 @@ public class MRRuntimeSettings : MonoBehaviour
     public List<MRPhoneBoothTransitionSequence.MrToVrReturnStep> mrToVrReturnSteps =
         MRPhoneBoothTransitionSequence.CopyDefaultMrToVr();
 
+    [Header("Skybox (window portal)")]
+    [Tooltip(
+        "Equirectangular image used as the default MR skybox when MR/Skyboxes/ is empty " +
+        "(or no user skybox is selected yet). Assign in FixedScene Inspector.")]
+    public Texture2D defaultSkyboxImage;
+
+    [Tooltip(
+        "Required. Prefab spawned on each MRUK WINDOW_FRAME (Window.prefab). " +
+        "Must include child SkyBoxPortalMask with SkyboxPortalMask.mat already assigned.")]
+    public GameObject windowPrefab;
+
     [Header("Debug")]
     public bool logWarningWhenInstanceMissing = true;
 
@@ -239,6 +250,19 @@ public class MRRuntimeSettings : MonoBehaviour
 
     public static float ArrivalExplosionVolume =>
         Instance != null ? Mathf.Clamp01(Instance.arrivalExplosionVolume) : 1f;
+
+    /// <summary>
+    /// Built-in equirect image for the MR window skybox when the user has not added any in MR/Skyboxes/.
+    /// Null when no FixedScene instance or the slot is empty.
+    /// </summary>
+    public static Texture2D DefaultSkyboxImage =>
+        Instance != null ? Instance.defaultSkyboxImage : null;
+
+    /// <summary>
+    /// Prefab for MRUK window portals (required). Materials come from the prefab child SkyBoxPortalMask.
+    /// </summary>
+    public static GameObject WindowPrefab =>
+        Instance != null ? Instance.windowPrefab : null;
 
     public const float DefaultImmersiveHandsetCueStepDurationSeconds = 2f;
     public const float DefaultImmersiveSpaceshipEngineStepDurationSeconds = 3.5f;

@@ -26,6 +26,7 @@ public class MixedRealityManager : MonoBehaviour
     MRMrEnvironmentLighting mrLighting;
     MREffectMeshController mrEffectMesh;
     MREnvironmentSurfaces environmentSurfaces;
+    MRSkyboxPortalController skyboxPortal;
     bool transitionInProgress;
     Coroutine runningTransition;
     Coroutine mrukEnvironmentRefreshRoutine;
@@ -121,6 +122,10 @@ public class MixedRealityManager : MonoBehaviour
         environmentSurfaces = GetComponent<MREnvironmentSurfaces>();
         if (environmentSurfaces == null)
             environmentSurfaces = gameObject.AddComponent<MREnvironmentSurfaces>();
+
+        skyboxPortal = GetComponent<MRSkyboxPortalController>();
+        if (skyboxPortal == null)
+            skyboxPortal = gameObject.AddComponent<MRSkyboxPortalController>();
 
         if (GetComponent<MRRoomInfoUI>() == null)
             gameObject.AddComponent<MRRoomInfoUI>();
@@ -346,6 +351,9 @@ public class MixedRealityManager : MonoBehaviour
                 yield return environment.SpawnAllAsync(MRSpaceOrigin);
 
             layout?.EnsureAttractPlaybackOnSpawned();
+            if (environment != null)
+                yield return environment.ReapplyRoomSkinsWhenReady();
+            skyboxPortal?.Refresh(reloadSkybox: true);
             MRRoomInfoUI.Instance?.RefreshContent();
         }
         finally
@@ -971,6 +979,7 @@ public class MixedRealityManager : MonoBehaviour
         MRConfigurationCabinetController.Instance?.HideForMrExit();
         mrLighting?.DespawnForMrExit();
         mrEffectMesh?.Despawn();
+        skyboxPortal?.Clear();
         int hidden = ActiveRegistry()?.HideAllMrCabinetsImmediateCount() ?? 0;
         int hiddenEnv = ActiveEnvironmentRegistry()?.HideAllImmediateCount() ?? 0;
         MRTransitionLog.Log($"sync hide done mrCabinetsHidden={hidden} envPropsHidden={hiddenEnv}");
@@ -1856,6 +1865,9 @@ public class MixedRealityManager : MonoBehaviour
         MREnvironmentRegistry environmentRegistry = ActiveEnvironmentRegistry();
         if (environmentRegistry != null)
             yield return environmentRegistry.ReapplyRoomSkinsWhenReady();
+
+        // Always reload sky from per-room settings after skins — matches TestWindow path.
+        skyboxPortal?.Refresh(reloadSkybox: true);
     }
 
     static IEnumerator WaitForUsableRoom(float timeoutSeconds)
@@ -2426,6 +2438,8 @@ public class MixedRealityManager : MonoBehaviour
         MRPhoneBoothPortal phoneBooth = MRPhoneBoothPortal.FindMrTravelerInstance(includeInactive: true);
         if (phoneBooth != null && phoneBooth.gameObject.activeSelf && environmentSurfaces != null)
             phoneBooth.ReconcileVerticalMrFloorSnap(environmentSurfaces);
+
+        skyboxPortal?.Refresh(reloadSkybox: true);
 
         MRRoomInfoUI.Instance?.RefreshContent();
         ConfigManager.WriteConsole($"{LogPrefix} environment refreshed after room scan");

@@ -50,6 +50,7 @@ public static class MRActiveRoom
 
         MRLayoutRegistry.Instance?.UnloadLayoutMemory();
         MREnvironmentRegistry.Instance?.UnloadLayoutMemory();
+        MRSkyboxSettings.OnActiveRoomChanged();
 
         ConfigManager.WriteConsole(
             $"{LogPrefix} bound {(string.IsNullOrEmpty(previous) ? "(none)" : previous)} -> {roomId}");
@@ -65,5 +66,6 @@ public static class MRActiveRoom
         BoundRoomId = null;
         MRLayoutRegistry.Instance?.UnloadLayoutMemory();
         MREnvironmentRegistry.Instance?.UnloadLayoutMemory();
+        MRSkyboxSettings.OnActiveRoomChanged();
     }
 }

@@ -21,7 +21,8 @@ public static class MRRoomSurfaceSkin
     static readonly Dictionary<MeshRenderer, Material> runtimeMaterials = new Dictionary<MeshRenderer, Material>();
     static readonly List<Texture2D> ownedTextures = new List<Texture2D>();
 
-    public static bool IsActive => runtimeMaterials.Count > 0;
+    public static bool IsActive =>
+        runtimeMaterials.Count > 0 || activePackageNames.Count > 0;
 
     public static bool TryApplyPackage(string packageName)
     {
@@ -36,6 +37,14 @@ public static class MRRoomSurfaceSkin
 
     public static IEnumerator ApplyPackageWhenReady(string packageName, float timeoutSeconds = 15f)
     {
+        if (MRRoomSkinDefinition.TryLoad(packageName, out MRRoomSkinDefinition early)
+            && early.IsWindowSkyboxOnly)
+        {
+            if (!TryApplyPackage(packageName))
+                ConfigManager.WriteConsoleWarning($"{LogPrefix} apply failed for {packageName}");
+            yield break;
+        }
+
         if (!MREffectMeshSettings.AnchorMeshEnabled)
             MREffectMeshVisibility.SetAnchorMeshEnabled(true);
 
@@ -84,11 +93,33 @@ public static class MRRoomSurfaceSkin
 
         MREffectMeshController controller = ResolveEffectMeshController();
         controller?.RestoreDefaultMeshMaterials();
+
+        // Do NOT wipe MRSkyboxSettings here. Despawn/reapply calls Clear mid-cycle;
+        // persisting an empty selection left the portal on the shader default (solid gray).
+        // Callers that remove all window skins should reset via ApplySelectedSkybox / ResetToDefault.
+
         ConfigManager.WriteConsole($"{LogPrefix} cleared");
+    }
+
+    /// <summary>Clear EffectMesh paints and disable the window portal (no CRT Window active).</summary>
+    public static void ClearAndResetWindowSkybox()
+    {
+        Clear();
+        MRSkyboxSettings.SetSelectedRelativePath(string.Empty);
+        MRSkyboxPortalController.Instance?.Clear(destroyRoot: false);
     }
 
     static bool TryApplyDefinition(MRRoomSkinDefinition definition)
     {
+        if (definition == null || !definition.IsValid)
+        {
+            ConfigManager.WriteConsoleWarning($"{LogPrefix} invalid room skin definition");
+            return false;
+        }
+
+        if (definition.IsWindowSkyboxOnly)
+            return TryApplyWindowSkybox(definition);
+
         MREffectMeshController controller = ResolveEffectMeshController();
         EffectMesh effectMesh = controller != null ? controller.GetAnchorEffectMesh() : null;
         if (effectMesh == null || effectMesh.EffectMeshObjects.Count == 0)
@@ -97,13 +128,44 @@ public static class MRRoomSurfaceSkin
             return false;
         }
 
-        if (!definition.IsValid)
+        return TryApplySingleTextureDefinition(definition, effectMesh);
+    }
+
+    static bool TryApplyWindowSkybox(MRRoomSkinDefinition definition)
+    {
+        Texture2D texture = MRRoomSkinCatalog.LoadSkyboxTexture(definition);
+        if (texture == null)
+            texture = LoadOwnedTexture(definition, definition.ResolvedTexturePath);
+        if (texture == null)
         {
-            ConfigManager.WriteConsoleWarning($"{LogPrefix} invalid room skin definition '{definition.PackageName}'");
+            ConfigManager.WriteConsoleWarning(
+                $"{LogPrefix} window skybox texture missing for '{definition.PackageName}'");
             return false;
         }
 
-        return TryApplySingleTextureDefinition(definition, effectMesh);
+        // Portal takes ownership. Do not also keep this Texture2D in ownedTextures —
+        // Clear() would Destroy it while the sky material still references it (solid gray).
+        if (ownedTextures.Contains(texture))
+            ownedTextures.Remove(texture);
+
+        MRSkyboxSettings.SetSelectedRelativePath(definition.PackageName);
+        MRSkyboxPortalController portal = MRSkyboxPortalController.Instance;
+        if (portal != null)
+            portal.ApplySkyboxTexture(texture, takeOwnership: true);
+        else
+        {
+            // Keep selection in prefs; do not destroy — portal Refresh will take ownership
+            // or reload from disk. Destroying here left a saved path with no way to show
+            // the already-decoded pixels and raced room-bind timing.
+            if (!ownedTextures.Contains(texture))
+                ownedTextures.Add(texture);
+            ConfigManager.WriteConsole(
+                $"{LogPrefix} window skybox queued '{definition.PackageName}' (portal not ready)");
+        }
+
+        activePackageNames.Add(definition.PackageName);
+        ConfigManager.WriteConsole($"{LogPrefix} window skybox '{definition.PackageName}'");
+        return true;
     }
 
     static bool TryApplySingleTextureDefinition(MRRoomSkinDefinition definition, EffectMesh effectMesh)
