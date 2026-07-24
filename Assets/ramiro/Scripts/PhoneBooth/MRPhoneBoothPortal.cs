@@ -399,7 +399,7 @@ public class MRPhoneBoothPortal : MonoBehaviour
 
     /// <param name="useSavedHorizontalPose">
     /// False for immersive phone-booth arrival — player is already inside the traveler;
-    /// jumping to a stale PlayerPrefs pose makes the cabin vanish underfoot.
+    /// jumping to a stale saved MR pose makes the cabin vanish underfoot.
     /// </param>
     public void PlaceOnMrFloor(
         MREnvironmentSurfaces surfaces,

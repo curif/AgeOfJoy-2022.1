@@ -26,6 +26,7 @@ public static class MRPaths
     public const string WindowYamlFileName = "window.yaml";
     public const string MagazineYamlFileName = "magazine.yaml";
     public const string MagazinesYamlFileName = "magazines.yaml";
+    public const string PhoneBoothYamlFileName = "phone-booth.yaml";
     /// <summary>Default image filename when <c>texture</c> is omitted in roomskin.yaml.</summary>
     public const string RoomSkinDefaultTextureFileName = "texture.png";
     /// <summary>Marker: global MR/*.yaml layouts were copied into the first room folder once.</summary>
@@ -40,6 +41,7 @@ public static class MRPaths
     public static string SkyboxesDir => Path.Combine(MrDir, SkyboxesFolderName);
     public static string MagazinesDir => Path.Combine(MrDir, MagazinesFolderName);
     public static string MagazinesYamlPath => Path.Combine(MagazinesDir, MagazinesYamlFileName);
+    public static string PhoneBoothYamlPath => Path.Combine(MrDir, PhoneBoothYamlFileName);
     public static string RoomSkinsDir => Path.Combine(MrDir, RoomSkinsFolderName);
     public static string WindowSkinsDir => Path.Combine(RoomSkinsDir, "Window");
     public static string WindowYamlPath => Path.Combine(WindowSkinsDir, WindowYamlFileName);
@@ -75,8 +77,35 @@ public static class MRPaths
         SeedRoomSkinsReadmeIfNeeded();
         MRRoomSkinCatalog.SeedBuiltInPackagesToDevice();
         SeedWindowYamlIfNeeded();
+        SeedPhoneBoothYamlIfNeeded();
         SeedMagazineReadmeIfNeeded();
         SeedExampleMagazineIfNeeded();
+    }
+
+    /// <summary>Creates MR/phone-booth.yaml with defaults when missing.</summary>
+    public static void SeedPhoneBoothYamlIfNeeded()
+    {
+        ConfigManager.CreateFolder(MrDir);
+        if (File.Exists(PhoneBoothYamlPath))
+            return;
+
+        try
+        {
+            const string yaml =
+                "# Age of Joy — MR phone booth preferences\n" +
+                "# Path: MR/phone-booth.yaml\n" +
+                "# visible: show/hide booth in MR\n" +
+                "# autoHideAfterTravel: hide after phone-booth VR→MR (default true)\n" +
+                "version: 1\n" +
+                "visible: true\n" +
+                "autoHideAfterTravel: true\n";
+            File.WriteAllText(PhoneBoothYamlPath, yaml);
+            ConfigManager.WriteConsole($"[MRPaths] created {PhoneBoothYamlPath}");
+        }
+        catch (Exception e)
+        {
+            ConfigManager.WriteConsoleException($"[MRPaths] failed to seed {PhoneBoothYamlPath}", e);
+        }
     }
 
     /// <summary>Creates MR/Room Skins/Wall|Ceiling|Floor|Window (no YAML).</summary>

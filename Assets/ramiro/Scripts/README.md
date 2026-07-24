@@ -171,7 +171,7 @@ and portal logic.
 | `MRPhoneBoothTravelVfx` | Door VFX, glass swap, shake, passthrough during travel |
 | `MRPhoneBoothTravelHeadFade` | Head fade via gallery `ZoneBlackout` |
 | `MRPhoneBoothInteriorVolumeLayout` | Interior volume / spawn alignment inside booth |
-| `MRPhoneBoothSettings` | Audio clips and timing values |
+| `MRPhoneBoothSettings` | `MR/phone-booth.yaml` — visibility, auto-hide after travel, MR pose |
 | `MRPhoneBoothVisibility` | CRT **PHONE BOOTH** show/hide |
 | `PhoneBoothJourneyDirection` | Enum: `VrToMr`, `MrToVr` |
 | `PhoneBoothTravelState` | Travel sequence phase state |

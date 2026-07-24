@@ -72,7 +72,7 @@ Ao fazer isso, será iniciada a transição do modo VR para MR, incluindo todos 
 
 Para voltar ao modo VR, basta utilizar novamente o **fone** da cabine telefônica.
 
-Caso a cabine esteja escondida, ela poderá ser exibida novamente pelo menu **PHONE BOOTH**, disponível no [armário de configuração](#8-armário-de-configuração-crt).
+Por padrão, a cabine **some depois que você entra no MR**. Mostre-a de novo pelo menu **PHONE BOOTH** no [armário de configuração](#8-armário-de-configuração-crt) e pegue o fone.
 
 ---
 
@@ -205,7 +205,7 @@ O número ao lado do nome (ou `xN`) mostra quantas cópias já existem na sua sa
 
 ```
 MR CONFIGURATION
-├── PHONE BOOTH     → mostrar ou esconder a cabine telefônica
+├── PHONE BOOTH     → mostrar/esconder cabine; auto-hide na entrada
 ├── CABINETS        → catálogo de jogos arcade no MR
 ├── CUSTOM OBJECTS  → objetos personalizados, posters e room skins
 ├── OFFICIAL OBJECTS→ luzes e props oficiais
@@ -218,6 +218,8 @@ MR CONFIGURATION
 #### PHONE BOOTH
 
 Permite mostrar ou esconder a cabine telefônica utilizada para entrar e sair do Mixed Reality.
+
+Após a viagem para o MR, a cabine **some por padrão**. Use **Booth → SHOW** quando quiser voltar ao VR. Desligue **Auto-hide entry** (**OFF**) se preferir que a cabine continue na sala após a viagem (ela só some se você esconder manualmente).
 
 #### CABINETS
 
@@ -499,16 +501,25 @@ Para sair do jogo e voltar à lista de ROMs, pressione **Y** (mão esquerda).
 
 A **cabine telefônica** é utilizada para alternar entre os modos VR e Mixed Reality.
 
-Por padrão, ela permanece **visível** após entrar no MR. Caso prefira liberar espaço na sala, você pode escondê-la temporariamente.
+Por padrão, ela **some depois que você entra no MR** (libera espaço no chão). Mostre-a pelo armário de configuração quando quiser voltar ao VR.
 
 ### Mostrar ou esconder a cabine
 
 1. Abra o armário de configuração (insira uma moeda).
-2. Acesse **PHONE BOOTH** e pressione **A**.
-3. Escolha **Show** ou **Hide** utilizando **L** ou **R**.
-4. Confirme com **A**.
+2. Acesse **PHONE BOOTH**.
+3. Selecione **Booth** e pressione **A** para **SHOW** ou **HIDE**.
 
 Quando a cabine for exibida novamente, ela retornará à última posição utilizada.
+
+### Auto-hide na entrada
+
+1. Em **PHONE BOOTH**, selecione **Auto-hide entry**.
+2. Pressione **A** para alternar **ON** (padrão) ou **OFF**.
+
+| Opção | Comportamento |
+|-------|----------------|
+| **ON** (padrão) | A cabine some automaticamente após a viagem pela cabine para o MR |
+| **OFF** | A cabine permanece na sala; só some se você escolher **HIDE** |
 
 > **Importante:** a cabine precisa estar **visível** para que seja possível [voltar ao modo VR](#3-como-sair-do-mr).
 
@@ -568,6 +579,7 @@ Você não precisa mover ou editar arquivos manualmente durante o uso normal do 
 | `MR/Custom Objects/` | Objetos personalizados |
 | `MR/Posters/` | Posters |
 | `MR/Room Skins/` | Room Skins |
+| `MR/phone-booth.yaml` | Preferências da cabine (mostrar/esconder e auto-hide) |
 
 Se você também utiliza o [AOJ MR Studio](#20-aoj-mr-studio), essas pastas podem ser sincronizadas automaticamente com o computador, facilitando a criação e o gerenciamento de conteúdo.
 

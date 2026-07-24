@@ -39,7 +39,7 @@ Two directions exist:
 | `PayphoneHandsetGrab` | `Scripts/PhoneBooth/` | XRGrabInteractable wrapper; notifies portal on grab/release |
 | `MRPhoneBoothTravelHeadFade` | `Scripts/PhoneBooth/` | Per-frame head-position monitoring against ZoneBlackout; drives `cullingMask=0` + black clear color |
 | `MRPhoneBoothTravelVfx` | `Scripts/PhoneBooth/` | Opaque glass swap, interior glow pulse, cabinet shake coroutine |
-| `MRPhoneBoothSettings` | `Scripts/PhoneBooth/` | `PlayerPrefs` persistence for booth MR pose and visibility |
+| `MRPhoneBoothSettings` | `Scripts/PhoneBooth/` | `MR/phone-booth.yaml` — visibility, auto-hide, MR pose |
 | `MRPhoneBoothVisibility` | `Scripts/PhoneBooth/` | Show/hide the MR booth |
 | `PhoneBoothTravelState` | `Scripts/PhoneBooth/` | Serializable snapshot of player pose relative to booth root at travel start |
 | `PhoneBoothJourneyDirection` | `Scripts/PhoneBooth/` | Enum: `ToMR` / `ToVR` |

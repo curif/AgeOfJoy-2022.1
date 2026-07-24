@@ -1438,6 +1438,7 @@ public class MixedRealityManager : MonoBehaviour
             // MR colocado: não aplicar travel state ao rig (ApplyPhoneBoothTravelState
             // desativado). A cabine já foi colocada no chão real via PlaceOnMrFloor;
             // mover o rig deslocaria todo o conteúdo virtual face ao passthrough.
+            // Keep booth visible through arrival VFX (player is inside). Auto-hide runs after.
             MRPhoneBoothSettings.SetVisible(true);
             portal.SetVisible(true, playHideEffect: false);
 
@@ -1464,9 +1465,10 @@ public class MixedRealityManager : MonoBehaviour
                 MRConfigurationCabinetController.Instance?.RefreshPoseForMrReentry();
             }
 
-            MRPhoneBoothSettings.SetVisible(true);
             portal.SetVisible(true, playHideEffect: false);
             portal.NotifyHandsetsTravelComplete();
+            // Default: hide booth after travel so the room is clear; show via CRT to return to VR.
+            MRPhoneBoothVisibility.ApplyAfterPhoneBoothTravelArrival();
 
             MRTransitionLog.LogManagerState("EnterMRFromPhoneBoothCoroutine-final");
             ConfigManager.WriteConsole($"{LogPrefix} EnterMRFromPhoneBooth done");

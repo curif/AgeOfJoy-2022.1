@@ -77,6 +77,27 @@ public static class MRPhoneBoothVisibility
         traveler.SetVisible(MRPhoneBoothSettings.Visible, playHideEffect: false);
     }
 
+    /// <summary>
+    /// After phone-booth VR→MR arrival finishes: hide by default (free floor space),
+    /// unless the user disabled auto-hide in the CRT PHONE BOOTH menu.
+    /// </summary>
+    public static void ApplyAfterPhoneBoothTravelArrival()
+    {
+        if (IsPhoneBoothSuppressedForQuickTravel())
+            return;
+
+        MRPhoneBoothSettings.EnsureLoaded();
+        if (MRPhoneBoothSettings.AutoHideAfterTravel)
+        {
+            SetVisible(false);
+            ConfigManager.WriteConsole($"{LogPrefix} auto-hide after phone-booth travel");
+            return;
+        }
+
+        SetVisible(true);
+        ConfigManager.WriteConsole($"{LogPrefix} kept visible after travel (auto-hide off)");
+    }
+
     public static string GetStatusLabel()
     {
         if (IsPhoneBoothSuppressedForQuickTravel())
