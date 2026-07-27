@@ -1350,8 +1350,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.6468678, y: 0.9434521, z: 2.0641289}
-  m_Center: {x: -1.1282215, y: 0.5107916, z: -0.7065959}
+  m_Size: {x: 3.1382089, y: 0.9434521, z: 2.0641289}
+  m_Center: {x: -0.87389207, y: 0.5107916, z: -0.7065959}
 --- !u!114 &929731836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1365,7 +1365,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   IdleTimeCheck: 0.5
-  ScenesToLoad: []
+  ScenesToLoad:
+  - sceneAsset: {fileID: 102900000, guid: df9bb803a9eba8b468d8b00b2def009a, type: 3}
+    sceneAssetGuidHex: df9bb803a9eba8b468d8b00b2def009a
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: 4fcdde1b795ec6048b2e3d4b651e44d3, type: 3}
     sceneAssetGuidHex: 4fcdde1b795ec6048b2e3d4b651e44d3
@@ -1580,6 +1582,8 @@ MonoBehaviour:
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: 4fcdde1b795ec6048b2e3d4b651e44d3, type: 3}
     sceneAssetGuidHex: 4fcdde1b795ec6048b2e3d4b651e44d3
+  - sceneAsset: {fileID: 102900000, guid: df9bb803a9eba8b468d8b00b2def009a, type: 3}
+    sceneAssetGuidHex: df9bb803a9eba8b468d8b00b2def009a
   SceneBlockers: []
 --- !u!1001 &987363506
 PrefabInstance:
@@ -2799,6 +2803,8 @@ MonoBehaviour:
   ScenesToUnload:
   - sceneAsset: {fileID: 102900000, guid: 1cc66a48f66c6854aa8a94e1c017bc44, type: 3}
     sceneAssetGuidHex: 1cc66a48f66c6854aa8a94e1c017bc44
+  - sceneAsset: {fileID: 102900000, guid: df9bb803a9eba8b468d8b00b2def009a, type: 3}
+    sceneAssetGuidHex: df9bb803a9eba8b468d8b00b2def009a
   SceneBlockers:
   - SceneRef:
       sceneAsset: {fileID: 102900000, guid: 4fcdde1b795ec6048b2e3d4b651e44d3, type: 3}
