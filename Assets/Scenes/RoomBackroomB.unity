@@ -1479,6 +1479,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 341060684}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &432160580
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 432160581}
+  m_Layer: 0
+  m_Name: PlayerSpawnBackroomB
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 2147483647
+  m_IsActive: 1
+--- !u!4 &432160581
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 432160580}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.0008890155, z: -0, w: -0.99999964}
+  m_LocalPosition: {x: 4.5647864, y: -0.030000001, z: 0.62731445}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 792312688}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &441973348
 GameObject:
   m_ObjectHideFlags: 0
@@ -3518,6 +3549,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 432160581}
   - {fileID: 1177972488}
   - {fileID: 1941411196}
   - {fileID: 474801443}
@@ -6657,7 +6689,9 @@ MonoBehaviour:
   ScenesToLoad:
   - sceneAsset: {fileID: 102900000, guid: 401481f380880494d8f7064ec19b68b8, type: 3}
     sceneAssetGuidHex: 401481f380880494d8f7064ec19b68b8
-  ScenesToUnload: []
+  ScenesToUnload:
+  - sceneAsset: {fileID: 102900000, guid: 10ac5e2ed50c763489b1cf9a74f36d56, type: 3}
+    sceneAssetGuidHex: 10ac5e2ed50c763489b1cf9a74f36d56
   SceneBlockers: []
 --- !u!1001 &1306776513
 PrefabInstance:

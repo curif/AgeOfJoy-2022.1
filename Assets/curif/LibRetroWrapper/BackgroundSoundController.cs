@@ -24,7 +24,7 @@ public class BackgroundSoundController : MonoBehaviour
         roomConfiguration = RoomConfigurationGameObject.GetComponent<RoomConfiguration>();
         OnEnable();
         change();
-    }
+    }w
     void changeWithBackgroundData(ConfigInformation.Background background)
     {
         GameObject[] backgroundSoundObjects = GameObject.FindGameObjectsWithTag("backgroundsound");
