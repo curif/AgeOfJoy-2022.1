@@ -15,8 +15,6 @@ public class Teleportation : MonoBehaviour
     [Tooltip("List of scenes to unload when teleport")]
     public SceneReference[] ScenesToUnload;
 
-    private SceneDocument teleportTo;
-
     public void Teleport(SceneDocument teleportTo)
     {
         if (string.IsNullOrEmpty(teleportTo.PlayerSpawnGameObjectName))
