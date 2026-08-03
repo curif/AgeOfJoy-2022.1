@@ -24,6 +24,9 @@ public class MRConfigurationController : MonoBehaviour
     const int HelpWrapWidth = 38;
     const int MeshOptionCount = 3;
     const int MeshScanColorsRowIndex = 2;
+    const int PhoneBoothOptionCount = 2;
+    const int PhoneBoothVisibilityRow = 0;
+    const int PhoneBoothAutoHideRow = 1;
     /// <summary>Bookshelf Add/Remove row before PrefabsEnvironment packages on Official Objects home.</summary>
     const int OfficialCategoryCount = 1;
     const int CustomCategoryCount = 2; // Posters + Room Skin rows before packages on home table
@@ -481,7 +484,7 @@ public class MRConfigurationController : MonoBehaviour
             leftAlign = true
         };
         if (!MRPhoneBoothVisibility.IsPhoneBoothSuppressedForQuickTravel())
-            navMenu.AddOption("PHONE BOOTH", "Show/hide MR travel booth");
+            navMenu.AddOption("PHONE BOOTH", "Visibility & auto-hide");
         navMenu.AddOption("CABINETS", "Catalog: add or remove in MR space");
         navMenu.AddOption("CUSTOM OBJECTS", "Others + Posters + Room Skin");
         navMenu.AddOption("OFFICIAL OBJECTS", "Bookshelves + PrefabsEnvironment");
@@ -2179,19 +2182,28 @@ public class MRConfigurationController : MonoBehaviour
 
     void DrawPhoneBoothPage()
     {
-        screen.PrintCentered(0, "PHONE BOOTH", true);
-        screen.PrintLine(1, false, '-');
+        const int nameWidth = 18;
+        int row = BeginListTable("PHONE BOOTH", "ITEM", null, nameWidth, startRow: 0);
 
-        screen.Print(1, 3, "Grab the handset to travel", false);
-        screen.Print(1, 4, "VR gallery <-> MR room", false);
+        row = DrawListRow(
+            row,
+            PhoneBoothVisibilityRow,
+            selectedListIndex,
+            Truncate("Booth", nameWidth),
+            GetPhoneBoothRowActions(PhoneBoothVisibilityRow),
+            nameWidth: nameWidth);
+        row = DrawListRow(
+            row,
+            PhoneBoothAutoHideRow,
+            selectedListIndex,
+            Truncate("Auto-hide entry", nameWidth),
+            GetPhoneBoothRowActions(PhoneBoothAutoHideRow),
+            nameWidth: nameWidth);
 
-        bool visible = MRPhoneBoothSettings.Visible;
-
-        // Single action — yellow bar; Press A toggles visibility.
-        string actionLabel = visible
-            ? SelectionCursorPrefix + " Press A to HIDE booth"
-            : SelectionCursorPrefix + " Press A to SHOW booth";
-        PrintSelectionLine(1, 8, actionLabel, true);
+        EndListTable(row);
+        screen.Print(1, row + 1, "Handset: travel VR <-> MR", false);
+        screen.Print(1, row + 2, "Auto-hide: off = stay in room", false);
+        DrawFooter("Up/Down: row   A: change");
     }
 
     void DrawDebugPage()
@@ -2318,6 +2330,7 @@ public class MRConfigurationController : MonoBehaviour
         yield return string.Empty;
         yield return "MENU";
         yield return "PHONE BOOTH - show/hide";
+        yield return "  + auto-hide on MR entry";
         yield return "CABINETS - arcade machines";
         yield return "CUSTOM OBJECTS - packages,";
         yield return "  posters, room skins";
@@ -2379,7 +2392,11 @@ public class MRConfigurationController : MonoBehaviour
         yield return string.Empty;
         yield return "PHONE BOOTH";
         yield return "Handset: travel VR <-> MR";
-        yield return "Menu: show or hide booth";
+        yield return "After travel: booth hides";
+        yield return "  by default (free space)";
+        yield return "CRT: SHOW booth to leave MR";
+        yield return "Auto-hide entry OFF = keep";
+        yield return "  booth in the room";
         yield return "Booth must be visible to";
         yield return "  leave MR";
         yield return string.Empty;
@@ -2409,6 +2426,7 @@ public class MRConfigurationController : MonoBehaviour
         yield return "MR/Posters/";
         yield return "MR/Magazines/";
         yield return "MR/Room Skins/";
+        yield return "MR/phone-booth.yaml";
         yield return "Layouts auto-saved";
         yield return string.Empty;
         yield return "REQUIREMENTS";
@@ -2948,7 +2966,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.GlobalLight => GetGlobalLightRowActions(selectedListIndex),
             Screen.Skybox => GetSkyboxRowActions(),
             Screen.LightTune => AdjustmentValueActions,
-            Screen.PhoneBooth => GetPhoneBoothRowActions(),
+            Screen.PhoneBooth => GetPhoneBoothRowActions(selectedListIndex),
             Screen.Debug => GetDebugRowActions(selectedListIndex),
             _ => System.Array.Empty<RowActionKind>()
         };
@@ -3215,9 +3233,18 @@ public class MRConfigurationController : MonoBehaviour
         return actions;
     }
 
-    List<RowActionKind> GetPhoneBoothRowActions()
+    List<RowActionKind> GetPhoneBoothRowActions(int index)
     {
         var actions = new List<RowActionKind>();
+        if (index == PhoneBoothAutoHideRow)
+        {
+            if (MRPhoneBoothSettings.AutoHideAfterTravel)
+                actions.Add(RowActionKind.ToggleOff);
+            else
+                actions.Add(RowActionKind.ToggleOn);
+            return actions;
+        }
+
         if (MRPhoneBoothSettings.Visible)
             actions.Add(RowActionKind.Hide);
         else
@@ -3805,6 +3832,15 @@ public class MRConfigurationController : MonoBehaviour
 
     void ExecutePhoneBoothRowAction(RowActionKind action)
     {
+        if (selectedListIndex == PhoneBoothAutoHideRow)
+        {
+            if (action == RowActionKind.ToggleOn)
+                MRPhoneBoothSettings.SetAutoHideAfterTravel(true);
+            else if (action == RowActionKind.ToggleOff)
+                MRPhoneBoothSettings.SetAutoHideAfterTravel(false);
+            return;
+        }
+
         switch (action)
         {
             case RowActionKind.Show:
@@ -3869,6 +3905,7 @@ public class MRConfigurationController : MonoBehaviour
             Screen.RoomSkins => GetRoomSkinFolderListCount(),
             Screen.PlacedInstances => GetPlacedInstancesListCount(),
             Screen.Mesh => MeshOptionCount,
+            Screen.PhoneBooth => PhoneBoothOptionCount,
             Screen.GlobalLight => GlobalLightOptionCount,
             Screen.Skybox => 1 + MRSkyboxesCatalog.GetRelativePaths().Count,
             Screen.Debug => debugDisplayLines.Count,
@@ -4150,6 +4187,7 @@ public class MRConfigurationController : MonoBehaviour
             case Screen.RoomSkins:
             case Screen.Magazines:
             case Screen.Mesh:
+            case Screen.PhoneBooth:
                 int count = GetListCount();
                 if (count == 0)
                     return;
@@ -4743,6 +4781,7 @@ public class MRConfigurationController : MonoBehaviour
     void ExecuteDeleteAllLayoutConfigs()
     {
         lastDeletedYamlCount = MRPaths.DeleteAllYamlFiles();
+        MRPhoneBoothSettings.InvalidateAfterYamlWipe();
         registry?.ClearLayoutAndDespawn();
         envRegistry?.ClearLayoutAndDespawn();
         RefreshObjectCatalogs();

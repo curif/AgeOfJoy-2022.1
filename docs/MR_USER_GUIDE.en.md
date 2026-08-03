@@ -72,7 +72,7 @@ This starts the transition from VR to MR, including travel effects, fade, and pa
 
 To return to VR mode, use the phone booth **handset** again.
 
-If the booth is hidden, you can show it again via the **PHONE BOOTH** menu on the [configuration cabinet](#8-configuration-cabinet-crt).
+By default the booth **hides after you enter MR**. Show it again via the **PHONE BOOTH** menu on the [configuration cabinet](#8-configuration-cabinet-crt), then grab the handset.
 
 ---
 
@@ -205,7 +205,7 @@ The number next to a name (or `xN`) shows how many copies are already in your ro
 
 ```
 MR CONFIGURATION
-├── PHONE BOOTH     → show or hide the phone booth
+├── PHONE BOOTH     → show/hide booth; auto-hide on MR entry
 ├── CABINETS        → arcade game catalog in MR
 ├── CUSTOM OBJECTS  → custom objects, posters, and room skins
 ├── OFFICIAL OBJECTS→ lights and official props
@@ -218,6 +218,8 @@ MR CONFIGURATION
 #### PHONE BOOTH
 
 Lets you show or hide the phone booth used to enter and leave Mixed Reality.
+
+After travel into MR, the booth **hides by default**. Use **Booth → SHOW** when you want to return to VR. Turn **Auto-hide entry** to **OFF** if you prefer the booth to stay in the room after travel (it then only disappears when you hide it manually).
 
 #### CABINETS
 
@@ -499,16 +501,25 @@ Press **Y** (left hand) to exit the game and return to the ROM list.
 
 The **phone booth** switches between VR and Mixed Reality.
 
-By default it stays **visible** after you enter MR. You can hide it temporarily to free up space.
+By default it **hides after you enter MR** (frees floor space). Show it from the configuration cabinet when you want to return to VR.
 
 ### Show or hide the booth
 
 1. Open the configuration cabinet (insert a coin).
-2. Go to **PHONE BOOTH** and press **A**.
-3. Choose **Show** or **Hide** with **L** or **R**.
-4. Confirm with **A**.
+2. Go to **PHONE BOOTH**.
+3. Select **Booth** and press **A** to **SHOW** or **HIDE**.
 
 When the booth is shown again, it returns to the last position used.
+
+### Auto-hide on entry
+
+1. In **PHONE BOOTH**, select **Auto-hide entry**.
+2. Press **A** to switch **ON** (default) or **OFF**.
+
+| Setting | Behavior |
+|---------|----------|
+| **ON** (default) | Booth hides automatically after phone-booth travel into MR |
+| **OFF** | Booth stays in the room; only hides if you choose **HIDE** |
 
 > **Important:** the booth must be **visible** to [return to VR mode](#3-how-to-leave-mr).
 
@@ -568,6 +579,7 @@ You do not need to move or edit files manually during normal use of the game.
 | `MR/Custom Objects/` | Custom objects |
 | `MR/Posters/` | Posters |
 | `MR/Room Skins/` | Room skins |
+| `MR/phone-booth.yaml` | Phone booth show/hide and auto-hide preference |
 
 If you also use [AOJ MR Studio](#20-aoj-mr-studio), these folders can sync automatically to your computer, making content creation and management easier.
 
