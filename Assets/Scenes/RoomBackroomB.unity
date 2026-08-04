@@ -36,7 +36,7 @@ RenderSettings:
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
-  m_CustomReflection: {fileID: 0}
+  m_CustomReflection: {fileID: 8900000, guid: c14dd221529986a48971db6d9decaf28, type: 3}
   m_Sun: {fileID: 0}
   m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
@@ -564,24 +564,40 @@ PrefabInstance:
       value: 0.5219997
       objectReference: {fileID: 0}
     - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
-      propertyPath: m_Range
-      value: 4.8067007
-      objectReference: {fileID: 0}
-    - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
-      propertyPath: m_RenderMode
+      propertyPath: m_Type
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+      propertyPath: m_Range
+      value: 4.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+      propertyPath: m_SpotAngle
+      value: 108.06467
+      objectReference: {fileID: 0}
+    - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+      propertyPath: m_RenderMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_Lightmapping
-      value: 2
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_Shadows.m_Type
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 3755128816449042835, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+      propertyPath: m_Name
+      value: RoomBackroomB main light
+      objectReference: {fileID: 0}
+    - target: {fileID: 3755128816449042835, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+      propertyPath: m_TagString
+      value: Light
+      objectReference: {fileID: 0}
     - target: {fileID: 5051854582836032061, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 5.8741083
+      value: 5.877366
       objectReference: {fileID: 0}
     - target: {fileID: 5051854582836032061, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_LocalPosition.y
@@ -589,7 +605,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5051854582836032061, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.791683
+      value: 4.6238055
       objectReference: {fileID: 0}
     - target: {fileID: 5051854582836032061, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -634,13 +650,35 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3755128816449042835, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 160748342}
   m_SourcePrefab: {fileID: 100100000, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
 --- !u!4 &160748340 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5051854582836032061, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
   m_PrefabInstance: {fileID: 160748339}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &160748341 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3755128816449042835, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
+  m_PrefabInstance: {fileID: 160748339}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &160748342
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 160748341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d4d88461292b94999e51339a00d597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomConfiguration: {fileID: 1444335882}
+  intensity: 1
 --- !u!1001 &174614868
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3724,6 +3762,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1267317281}
+  - {fileID: 1634965030}
+  - {fileID: 1412538339}
   - {fileID: 432160581}
   - {fileID: 1177972488}
   - {fileID: 1941411196}
@@ -6945,7 +6985,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_Range
-      value: 5.421238
+      value: 5.88
       objectReference: {fileID: 0}
     - target: {fileID: 2649060912319132791, guid: 4dd143055be405a4e9511999d28900c2, type: 3}
       propertyPath: m_Lightmapping
@@ -7974,6 +8014,71 @@ Transform:
   - {fileID: 485699114}
   m_Father: {fileID: 792312688}
   m_LocalEulerAnglesHint: {x: 0, y: 89.137, z: 0}
+--- !u!1 &1412538338
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1412538339}
+  - component: {fileID: 1412538340}
+  m_Layer: 0
+  m_Name: Reflection Probe_BackroomB (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1412538339
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1412538338}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.0008890155, z: -0, w: -0.99999964}
+  m_LocalPosition: {x: 6.887298, y: 1.077, z: 7.662015}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 792312688}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!215 &1412538340
+ReflectionProbe:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1412538338}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Type: 0
+  m_Mode: 2
+  m_RefreshMode: 0
+  m_TimeSlicingMode: 0
+  m_Resolution: 128
+  m_UpdateFrequency: 0
+  m_BoxSize: {x: 10, y: 10, z: 10}
+  m_BoxOffset: {x: 0, y: 0, z: 0}
+  m_NearClip: 0.3
+  m_FarClip: 1000
+  m_ShadowDistance: 100
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 1, g: 0.9205433, b: 0.0141509175, a: 0}
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IntensityMultiplier: 1
+  m_BlendDistance: 1
+  m_HDR: 0
+  m_BoxProjection: 1
+  m_RenderDynamicObjects: 0
+  m_UseOcclusionCulling: 0
+  m_Importance: 1
+  m_CustomBakedTexture: {fileID: 8900000, guid: c14dd221529986a48971db6d9decaf28, type: 3}
 --- !u!1 &1444335879
 GameObject:
   m_ObjectHideFlags: 0
@@ -8019,7 +8124,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6327fb4d56a7ed2c091bfba182ca213d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  FileName: RoomBackroomsB.yaml
+  FileName: RoomBackroomB.yaml
   Path: 
   OnFileChanged:
     m_PersistentCalls:
@@ -8040,7 +8145,7 @@ MonoBehaviour:
   OnRoomConfigChanged:
     m_PersistentCalls:
       m_Calls: []
-  Room: RoomBackroomsB
+  Room: RoomBackroomB
   yamlPath: 
   fileMonitor: {fileID: 1444335881}
   globalConfiguration: {fileID: 0}
@@ -9587,6 +9692,71 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.0019963102, y: 0.0019230642, z: 0.013322569}
   m_Center: {x: 0.000007876428, y: -0.000021152835, z: 0.006652139}
+--- !u!1 &1634965029
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1634965030}
+  - component: {fileID: 1634965031}
+  m_Layer: 0
+  m_Name: Reflection Probe_BackroomB
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1634965030
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1634965029}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: -0.0008890155, z: -0, w: -0.99999964}
+  m_LocalPosition: {x: 5.5569506, y: 1.077, z: 1.8443699}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 792312688}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!215 &1634965031
+ReflectionProbe:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1634965029}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Type: 0
+  m_Mode: 2
+  m_RefreshMode: 0
+  m_TimeSlicingMode: 0
+  m_Resolution: 128
+  m_UpdateFrequency: 0
+  m_BoxSize: {x: 10, y: 10, z: 10}
+  m_BoxOffset: {x: 0, y: 0, z: 0}
+  m_NearClip: 0.3
+  m_FarClip: 1000
+  m_ShadowDistance: 100
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 1, g: 0.9205433, b: 0.0141509175, a: 0}
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IntensityMultiplier: 1
+  m_BlendDistance: 1
+  m_HDR: 0
+  m_BoxProjection: 1
+  m_RenderDynamicObjects: 0
+  m_UseOcclusionCulling: 0
+  m_Importance: 1
+  m_CustomBakedTexture: {fileID: 8900000, guid: 3a995af7b5e50a74bb2990f0b1285961, type: 3}
 --- !u!1001 &1698274313
 PrefabInstance:
   m_ObjectHideFlags: 0

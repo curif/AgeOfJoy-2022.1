@@ -14,7 +14,7 @@
 50 LET yearBefore = CabDbGetInfo(cab, "year")
 60 PRINTLN "year before: " + STR(yearBefore)
 
-70 IF CabDbSetInfo(cab, "year", 1985) = 0 THEN PRINTLN "CABDBSETINFO failed, see console/log" : END
+70 IF CabDbSetInfo(cab, "year", 1985) = 0 THEN PRINTLN "CABDBSETINFO failed, see console/log" : End
 
 80 PRINTLN "year after: " + STR(CabDbGetInfo(cab, "year"))
 
