@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
-using UnityEditor;
+using UnityEngine.SceneManagement;
 using UnityEngine.XR.Interaction.Toolkit;
 
 #if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
 
 [CustomEditor(typeof(CabinetController))]
 public class CabinetEditor : Editor
@@ -80,6 +82,65 @@ public class CabinetEditor : Editor
     {
         return Selection.activeGameObject != null &&
                Selection.activeGameObject.GetComponent<CabinetController>() != null;
+    }
+
+    // Bakes the automatically-detected floor collider into floorOverride so multi-story
+    // rooms don't rely on runtime raycast disambiguation. Re-run after moving a placeholder.
+    [MenuItem("Custom/Cabinets: Detect Floor", false, 11)]
+    static void DetectFloor()
+    {
+        if (Selection.activeGameObject == null)
+        {
+            Debug.LogError("Please select a cabinet object first!");
+            return;
+        }
+
+        CabinetController cabinetController = Selection.activeGameObject.GetComponent<CabinetController>();
+        if (cabinetController == null)
+        {
+            Debug.LogError("Selected object must have a CabinetController component!");
+            return;
+        }
+
+        DetectFloorFor(cabinetController);
+    }
+
+    [MenuItem("Custom/Cabinets: Detect Floor", true)]
+    static bool ValidateDetectFloor()
+    {
+        return Selection.activeGameObject != null &&
+               Selection.activeGameObject.GetComponent<CabinetController>() != null;
+    }
+
+    [MenuItem("Custom/Cabinets: Detect Floors For All Cabinets In Scene", false, 12)]
+    static void DetectFloorsForAllInScene()
+    {
+        CabinetController[] all = Object.FindObjectsOfType<CabinetController>(true);
+        int detected = 0, failed = 0;
+        foreach (CabinetController cc in all)
+        {
+            if (DetectFloorFor(cc))
+                detected++;
+            else
+                failed++;
+        }
+        Debug.Log($"[CabinetEditor.DetectFloorsForAllInScene] detected {detected}, failed {failed} of {all.Length}");
+        EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+    }
+
+    static bool DetectFloorFor(CabinetController cabinetController)
+    {
+        Collider floor = PlaceOnFloorFromBoxCollider.DetectFloorBelow(cabinetController.transform.position);
+        if (floor == null)
+        {
+            Debug.LogWarning($"[CabinetEditor.DetectFloor] no floor found below {cabinetController.name}");
+            return false;
+        }
+
+        cabinetController.floorOverride = floor;
+        EditorUtility.SetDirty(cabinetController);
+        Debug.Log($"[CabinetEditor.DetectFloor] {cabinetController.name} floor set to {floor.name}");
+        return true;
     }
 }
 

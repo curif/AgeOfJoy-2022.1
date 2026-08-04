@@ -11,7 +11,7 @@ public static class PlaceOnFloorFromBoxCollider
 {
     static LayerMask floorLayer = LayerMask.GetMask("floor");
 
-    public static bool PlaceOnFloor(Transform transform, BoxCollider boxCollider)
+    public static bool PlaceOnFloor(Transform transform, BoxCollider boxCollider, Collider floorOverride = null)
     {
         if (transform == null || boxCollider == null)
         {
@@ -20,7 +20,7 @@ public static class PlaceOnFloorFromBoxCollider
         }
 
         // Align the lower part of the GameObject to the floor
-        return AlignLowerPartToFloor(transform, boxCollider);
+        return AlignLowerPartToFloor(transform, boxCollider, floorOverride);
     }
     public static void CreateSphere(Vector3 position, GameObject go)
     {
@@ -43,21 +43,25 @@ public static class PlaceOnFloorFromBoxCollider
     private const float CastAboveOffset = 50f;
     private const float MaxCastDistance = 200f;
 
-    private static bool AlignLowerPartToFloor(Transform transform, BoxCollider boxCollider)
+    private static bool AlignLowerPartToFloor(Transform transform, BoxCollider boxCollider, Collider floorOverride = null)
     {
         float lowerPointY = CalculateLowerPointY(transform, boxCollider);
-        Vector3 castOrigin = new Vector3(transform.position.x,
-                                            lowerPointY + CastAboveOffset,
-                                            transform.position.z);
-        Ray ray = new Ray(castOrigin, Vector3.down);
 
-        //CreateSphere(castOrigin, transform.gameObject);
-
-        // Perform a raycast to check for the floor
-        RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, MaxCastDistance, floorLayer))
+        // Manual escape hatch for rooms where automatic floor detection picks the
+        // wrong level (multi-story rooms with stacked "floor" colliders). When set,
+        // skip detection entirely and align straight to the assigned floor's top.
+        if (floorOverride != null)
         {
-            float yOffset = lowerPointY - hit.point.y;
+            float overrideY = floorOverride.bounds.max.y;
+            float overrideOffset = lowerPointY - overrideY;
+            transform.position -= new Vector3(0f, overrideOffset, 0f);
+            return true;
+        }
+
+        RaycastHit closestBelow;
+        if (FindClosestFloorBelow(new Vector3(transform.position.x, lowerPointY, transform.position.z), out closestBelow))
+        {
+            float yOffset = lowerPointY - closestBelow.point.y;
 
             // Adjust the position of the GameObject
             transform.position -= new Vector3(0f, yOffset, 0f);
@@ -65,6 +69,48 @@ public static class PlaceOnFloorFromBoxCollider
         }
         ConfigManager.WriteConsoleWarning($"[PutOnFloor.AlignLowerPartToFloor] floor not found for {transform.gameObject.name}");
         return false;
+    }
+
+    // In multi-floor buildings several floor colliders share the "floor" layer and
+    // can be stacked above/below a given point (e.g. every story's slab shares X/Z).
+    // A plain Raycast only returns the nearest hit to the cast origin, which can land
+    // on a floor above the point instead of the one directly underneath it. RaycastAll
+    // every "floor" hit and keep only those at or below referenceY, then pick the
+    // highest of those (i.e. the floor immediately below the point).
+    private static bool FindClosestFloorBelow(Vector3 referencePoint, out RaycastHit closestBelow)
+    {
+        Vector3 castOrigin = new Vector3(referencePoint.x, referencePoint.y + CastAboveOffset, referencePoint.z);
+        Ray ray = new Ray(castOrigin, Vector3.down);
+
+        //CreateSphere(castOrigin, transform.gameObject);
+
+        const float BelowTolerance = 0.01f;
+        RaycastHit[] hits = Physics.RaycastAll(ray, MaxCastDistance, floorLayer);
+        bool found = false;
+        closestBelow = default;
+        float closestBelowY = float.NegativeInfinity;
+        foreach (RaycastHit candidate in hits)
+        {
+            if (candidate.point.y > referencePoint.y + BelowTolerance)
+                continue; // floor is above the reference point, not a valid resting surface
+
+            if (!found || candidate.point.y > closestBelowY)
+            {
+                closestBelow = candidate;
+                closestBelowY = candidate.point.y;
+                found = true;
+            }
+        }
+        return found;
+    }
+
+    // Editor-time detection helper: finds the floor collider directly below a world
+    // position (e.g. a CabinetController placeholder's transform) so it can be baked
+    // into floorOverride ahead of time, without ambiguity at runtime.
+    public static Collider DetectFloorBelow(Vector3 worldPosition)
+    {
+        RaycastHit hit;
+        return FindClosestFloorBelow(worldPosition, out hit) ? hit.collider : null;
     }
 
     public static float CalculateLowerPointY(Transform transform, BoxCollider boxCollider)
@@ -86,6 +132,11 @@ public class PutOnFloor : MonoBehaviour
 {
     public BoxCollider boxCollider;
 
+    [Tooltip("Optional manual override: the floor collider to align to. Leave empty " +
+        "for automatic detection; set this for cabinets in multi-story rooms where " +
+        "automatic detection picks the wrong floor.")]
+    public Collider floorOverride;
+
     private void Start()
     {
         // Get the BoxCollider component attached to the GameObject
@@ -103,7 +154,7 @@ public class PutOnFloor : MonoBehaviour
     private IEnumerator placeOnFloorCoroutine()
     {
 
-        if (!PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider))
+        if (!PlaceOnFloorFromBoxCollider.PlaceOnFloor(gameObject.transform, boxCollider, floorOverride))
             ConfigManager.WriteConsoleWarning($"[PutOnFloor.Start] can't re-position cabinet on floor {name}");
         yield break;
     }

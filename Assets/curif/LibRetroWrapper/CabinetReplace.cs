@@ -16,6 +16,10 @@ public class CabinetReplace : MonoBehaviour
     public GameObject outOfOrderCabinet;
     public Cabinet cabinet;
 
+    [Tooltip("Optional manual override: the floor collider this cabinet slot should rest on. " +
+        "Carried over from CabinetController so it survives auto-reloads.")]
+    public Collider floorOverride;
+
     public BackgroundSoundController backgroundSoundController;
 
     [Tooltip("The system will find it")]
@@ -89,7 +93,8 @@ public class CabinetReplace : MonoBehaviour
                                                          transform.position, transform.rotation,
                                                          transform.parent,
                                                          AgentPlayerPositionComponentsToLoad,
-                                                         backgroundSoundController
+                                                         backgroundSoundController,
+                                                         floorOverride: floorOverride
                                                          );
 
             // cab.gameObject.SetActive(false);  // Removed because skinning below needs active gameobjects to start coroutines
@@ -113,6 +118,7 @@ public class CabinetReplace : MonoBehaviour
             cabReplaceComp.cabinet = cab;
             cabReplaceComp.outOfOrderCabinet = gameObject;
             cabReplaceComp.backgroundSoundController = backgroundSoundController;
+            cabReplaceComp.floorOverride = floorOverride;
             
             cab.gameObject.SetActive(true);
 

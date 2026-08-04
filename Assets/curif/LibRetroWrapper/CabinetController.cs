@@ -34,6 +34,11 @@ public class CabinetController : MonoBehaviour
     [Tooltip("Loaded by script")]
     public GameObject outOfOrderCabinet;
 
+    [Tooltip("Optional manual override: the floor collider this cabinet slot should rest on. " +
+        "Leave empty for automatic detection; set this for slots in multi-story rooms where " +
+        "automatic floor detection picks the wrong floor.")]
+    public Collider floorOverride;
+
     public BackgroundSoundController backgroundSoundController;
 
     private CabinetReplace cabinetReplaceComponent;

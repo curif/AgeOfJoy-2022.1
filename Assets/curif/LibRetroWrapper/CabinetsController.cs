@@ -707,7 +707,8 @@ public class CabinetsController : MonoBehaviour
                                                      cci.GameObjectOutOfOrder.transform.rotation,
                                                      cci.GameObjectOutOfOrder.transform.parent,
                                                      cc.AgentPlayerPositionComponents,
-                                                     cc.backgroundSoundController);
+                                                     cc.backgroundSoundController,
+                                                     floorOverride: cc.floorOverride);
             }
             catch (Exception ex)
             {
@@ -740,6 +741,7 @@ public class CabinetsController : MonoBehaviour
             cabReplaceComp.backgroundSoundController = backgroundSoundController;
             cabReplaceComp.cabinet = cab;
             cabReplaceComp.game = cc.game;
+            cabReplaceComp.floorOverride = cc.floorOverride;
             cci.CabinetReplace = cabReplaceComp;
 
             //this didn't work:

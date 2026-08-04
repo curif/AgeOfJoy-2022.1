@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.00321959, g: 0.0035184768, b: 0.005235345, a: 1}
+  m_IndirectSpecularColor: {r: 0.003278396, g: 0.0035271808, b: 0.0053292187, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -1215,6 +1215,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 1340871508}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -4906,6 +4910,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 1310471538}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentScenePosition
       value: 
       objectReference: {fileID: 1113672772}
@@ -8464,6 +8472,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8160664758392565956, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
   m_PrefabInstance: {fileID: 577943817}
   m_PrefabAsset: {fileID: 0}
+--- !u!65 &577943819 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 8160664758392565979, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
+  m_PrefabInstance: {fileID: 577943817}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &607249188
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9531,6 +9544,11 @@ PrefabInstance:
 --- !u!4 &719804633 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8160664758392565956, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
+  m_PrefabInstance: {fileID: 719804632}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &719804634 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 8160664758392565979, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
   m_PrefabInstance: {fileID: 719804632}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &726314862
@@ -10611,6 +10629,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 719804634}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -12868,6 +12890,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 1310471538}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -15385,6 +15411,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 577943819}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentScenePosition
       value: 
       objectReference: {fileID: 1705963956}
@@ -15992,6 +16022,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 719804634}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -18747,6 +18781,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2686686293774240007, guid: 2815327ed41133346863bb69fe36118a, type: 3}
   m_PrefabInstance: {fileID: 1310471536}
   m_PrefabAsset: {fileID: 0}
+--- !u!65 &1310471538 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 4989140629230102124, guid: 2815327ed41133346863bb69fe36118a, type: 3}
+  m_PrefabInstance: {fileID: 1310471536}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1315884320
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19098,6 +19137,11 @@ PrefabInstance:
 --- !u!4 &1340871507 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8160664758392565956, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
+  m_PrefabInstance: {fileID: 1340871506}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &1340871508 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 8160664758392565979, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
   m_PrefabInstance: {fileID: 1340871506}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1347847936
@@ -21639,6 +21683,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8160664758392565956, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
   m_PrefabInstance: {fileID: 1474085759}
   m_PrefabAsset: {fileID: 0}
+--- !u!65 &1474085761 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 8160664758392565979, guid: e05789c207ec33979899d370dc0ebbd3, type: 3}
+  m_PrefabInstance: {fileID: 1474085759}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1486631156
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -21759,6 +21808,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483639
       objectReference: {fileID: 0}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 577943819}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -23167,6 +23220,10 @@ PrefabInstance:
       value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 577943819}
+    - target: {fileID: 4623895752779343241, guid: ebd6086d8d2edc9e5acd28be7721635f, type: 3}
       propertyPath: AgentScenePosition
       value: 
       objectReference: {fileID: 2122702216}
@@ -23656,6 +23713,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 1310471538}
     - target: {fileID: 577949475825735669, guid: 67d7f9ccaccd9f796902755a7d34929c, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -25151,6 +25212,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 1474085761}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentScenePosition
       value: 
@@ -28282,6 +28347,10 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 577943819}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentScenePosition
       value: 
       objectReference: {fileID: 1564254752}
@@ -29001,6 +29070,10 @@ PrefabInstance:
       value: 2147483639
       objectReference: {fileID: 0}
     - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 719804634}
+    - target: {fileID: 5455908607048437785, guid: a2df101d82a8f3d59b5fdcefc99d88df, type: 3}
       propertyPath: AgentScenePosition
       value: 
       objectReference: {fileID: 113632881}
@@ -29150,6 +29223,10 @@ PrefabInstance:
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
+    - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
+      propertyPath: floorOverride
+      value: 
+      objectReference: {fileID: 1310471538}
     - target: {fileID: 1499569331622103719, guid: 7467d627945c63b2a9fee99f0a48400a, type: 3}
       propertyPath: AgentScenePosition
       value: 

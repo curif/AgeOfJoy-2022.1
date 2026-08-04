@@ -270,11 +270,12 @@ public class Cabinet
     */
 
 
-    public PutOnFloor toFloor()
+    public PutOnFloor toFloor(Collider floorOverride = null)
     {
         PutOnFloor onFloor = gameObject.GetComponent<PutOnFloor>();
         if (onFloor == null)
             onFloor = gameObject.AddComponent<PutOnFloor>();
+        onFloor.floorOverride = floorOverride;
         return onFloor;
     }
 

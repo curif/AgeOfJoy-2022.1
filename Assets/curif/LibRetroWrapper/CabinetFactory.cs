@@ -460,7 +460,8 @@ public static class CabinetFactory
                                              Vector3 position, Quaternion rotation, Transform parent,
                                             List<AgentScenePosition> agentPlayerPositions,
                                             BackgroundSoundController backgroundSoundController,
-                                            bool cacheGlbModels = true)
+                                            bool cacheGlbModels = true,
+                                            Collider floorOverride = null)
     {
         string modelFilePath = "";
         if (!String.IsNullOrEmpty(cbinfo.model.file))
@@ -487,7 +488,7 @@ public static class CabinetFactory
         //addRigidBody();
         // cbinfo.debug = true;
         BoxCollider boxCollider = cabinet.addBoxCollider(false);
-        cabinet.toFloor();
+        cabinet.toFloor(floorOverride);
         try
         {
             //assign a material to all the components that aren't in the 
@@ -626,10 +627,11 @@ public static class CabinetFactory
                                              Vector3 position, Quaternion rotation, Transform parent,
                                             List<AgentScenePosition> agentPlayerPositions,
                                             BackgroundSoundController backgroundSoundController,
-                                            bool cacheGlbModels = true)
+                                            bool cacheGlbModels = true,
+                                            Collider floorOverride = null)
     {
         return fromInformationAsync(cbinfo, room, number, position, rotation, parent,
-                                    agentPlayerPositions, backgroundSoundController, cacheGlbModels)
+                                    agentPlayerPositions, backgroundSoundController, cacheGlbModels, floorOverride)
             .GetAwaiter()
             .GetResult();
     }
