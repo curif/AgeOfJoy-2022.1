@@ -153,8 +153,8 @@ public class CabinetDebugConsole : MonoBehaviour
         scr.ResetForegroundColor();
 
         scr.Print("");
-        scr.Print("Copy a cabinet to test into the");
-        scr.Print($"{ConfigManager.Cabinets} folder.");
+        scr.Print("Summon a cabinet to test by calling");
+        scr.Print("WORKSHOPRELOAD(\"cabinetname\") from AGEBasic.");
         scr.Print("");
         scr.Print($"An AGEBasic program will show the test");
         scr.Print($"results in this computer (only errors are shown)");
@@ -164,9 +164,8 @@ public class CabinetDebugConsole : MonoBehaviour
         scr.Print($"/AGEBasic folder to show the results.");
         scr.Print("");
         scr.Print("The program will run again");
-        scr.Print("automatically when you ");
-        scr.Print("copy a new test.zip cabinet");
-        scr.Print("into the /cabinets folder.");
+        scr.Print("automatically when the summoned");
+        scr.Print("cabinet's files change on disk.");
         scr.Print("");
         scr.ForegroundColorString = "green";
         scr.Print("Waiting for a cabinet...");

@@ -105,16 +105,51 @@ public class UserLightSettings : ConfigInformationBase
 
 This is the YAML schema (`light.color` + `light.intensity`) merged from the global config and the room's own `.yaml` under `ConfigManager.ConfigDir`. [`RoomConfiguration`](../Assets/curif/LibRetroWrapper/RoomConfiguration.cs) loads it on scene init and fires `OnRoomConfigChanged` when the file is edited at runtime.
 
-### `ReflectionChangeTrigger` ([Assets/geometrizer/scripts/ReflectionChangeTrigger.cs](../Assets/geometrizer/scripts/ReflectionChangeTrigger.cs))
+### `PF_ReflectionChangeTrigger` — the room-entry environment trigger
 
-Despite the name, this script does two jobs whenever the player walks into its trigger volume:
+Every room scene drops one instance of [`Assets/geometrizer/PF_ReflectionChangeTrigger.prefab`](../Assets/geometrizer/PF_ReflectionChangeTrigger.prefab) — a box-shaped trigger volume covering the room (or its doorway). It is the mechanism that makes "this room has its own look" true at runtime.
 
-1. **Swap the reflection cubemap** — assigns `newReflectionCubemap` to `RenderSettings.customReflectionTexture` and calls `DynamicGI.UpdateEnvironment()`. This exists because Unity's built-in reflection probe pipeline does not behave well across the scene loading model used here; the cubemap swap is a manual workaround that ties room-to-room visual continuity to the same trigger that swaps the mood light.
-2. **Apply the user-light settings from YAML** — reads `roomConfiguration.Configuration.light` and calls `userLightManager.ApplyUserLightSettings(...)`.
+#### Why it exists
 
-The reflection swap and the mood light **share this one trigger by design**: when a player crosses a doorway into a new room, both the ambient mood and the reflection environment should change together as a single visual event.
+**Rooms are loaded additively, but Unity's environment settings are global.** [`GateController`](../Assets/curif/LibRetroWrapper/GateController.cs) (line 207) and [`TeleportationController`](../Assets/curif/LibRetroWrapper/TeleportationController.cs) (line 44) bring rooms in with `LoadSceneMode.Additive`, so a room coexists at runtime with the gallery and with any neighbouring rooms already streamed in.
 
-> Set the trigger's `BoxCollider` to layer `Player` so it only fires on the player GameObject.
+`RenderSettings.skybox`, `RenderSettings.customReflectionTexture` and the ambient environment are **process-global, not per-scene**. Whichever scene was loaded or activated last wins for all of them, and reflection/light probe blending does not follow the player across an additive scene boundary. Unity offers no built-in "the environment of the scene I am standing in" concept under this loading model.
+
+The only reliable signal for *which* room the player is actually in is therefore the player's physical position. Crossing into the volume is that signal: at that moment the room pushes its own cubemap, skybox and mood light into the shared render state. Without this trigger a room would simply inherit whatever environment the previously visited room left behind.
+
+#### What the prefab carries
+
+| Component | Role |
+|---|---|
+| `BoxCollider` | `isTrigger`, GameObject on layer `Player`, with `m_IncludeLayers` restricted to that layer so physics never reports non-player contacts. Resize per room in the scene instance. |
+| [`ReflectionChangeTrigger`](../Assets/geometrizer/scripts/ReflectionChangeTrigger.cs) | Reflection cubemap swap **plus** the room's mood light. |
+| [`SkyboxChangeTrigger`](../Assets/geometrizer/scripts/SkyboxChangeTrigger.cs) | Assigns `newSkyboxMaterial` to `RenderSettings.skybox` and calls `DynamicGI.UpdateEnvironment()`. |
+
+Bundling all three concerns on one GameObject is **deliberate**: when the player crosses a doorway, reflections, sky and mood light must change together as a single visual beat rather than popping at separate moments.
+
+#### `ReflectionChangeTrigger` behaviour
+
+Despite the name, the script does two jobs on `OnTriggerEnter` (guarded by `other.CompareTag("Player")`):
+
+1. **Swap the reflection cubemap** — assigns `newReflectionCubemap` to `RenderSettings.customReflectionTexture` and calls `DynamicGI.UpdateEnvironment()`, skipping the work if the cubemap is already current.
+2. **Apply the user-light settings from YAML** — reads `roomConfiguration.Configuration.light` and calls `userLightManager.ApplyUserLightSettings(color, intensity)`. It first forces `light.color.intensity = 0` so brightness is driven by the separate `intensity` field rather than by the intensity baked into the `RGBColor`.
+
+Its lifecycle covers the cases where the player never crosses the volume, or edits the config while standing inside it:
+
+- **`Start()`** — if the room YAML has no `light` block, it applies the inspector fallback `RoomStartingColor` / `intensity` (the dev-time default); otherwise it applies the YAML values immediately, so the room already looks right before the player reaches the trigger.
+- **`OnEnable` / `OnDisable`** — subscribe and unsubscribe `OnRoomConfigChanged` on the `RoomConfiguration`, guarded by `isListenerAdded`. Editing the room's `.yaml` at runtime re-applies the light live, with no scene reload.
+- **`Start()` fallback lookup** — if `userLightManager` is not wired in the inspector (it is null on the prefab), it resolves via `GameObject.Find("UserLightManager")`.
+
+#### Wiring a room instance
+
+Per-scene overrides on the prefab instance — Room001 ([Assets/Scenes/Room001.unity](../Assets/Scenes/Room001.unity), around line 20586) is the reference example:
+
+- `BoxCollider` `m_Size` / `m_Center` — sized to the room.
+- `roomConfiguration` — **must** point at the scene's own `RoomConfiguration` object; left null, the room falls back to `RoomStartingColor` forever and ignores its YAML.
+- `RoomStartingColor` / `intensity` — dev-time fallback only (Room001 uses black / 0).
+- `newReflectionCubemap`, `newSkyboxMaterial` — usually inherited from the prefab; override for a room with a distinct look.
+
+> **Gotchas.** The serialized `lightTransitionDuration` field is **dead** — every call site omits the duration argument and takes `ApplyUserLightSettings`'s own `1f` default, which coincidentally matches the prefab value, so changing it in the inspector does nothing. And because `userLightManager` is resolved by name, renaming the `UserLightManager` GameObject breaks the light silently (see §8).
 
 ---
 

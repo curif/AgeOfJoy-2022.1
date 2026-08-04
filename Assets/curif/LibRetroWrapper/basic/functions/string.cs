@@ -133,7 +133,7 @@ class CommandFunctionSUBSTR : CommandFunctionExpressionListBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{exprs}] ");
 
         BasicValue[] vals = exprs.ExecuteList(vars);
-        FunctionHelper.ExpectedString(vals[0]);
+        FunctionHelper.ExpectedString(vals[0], "- first param");
         FunctionHelper.ExpectedNumber(vals[1], " - start");
         FunctionHelper.ExpectedNumber(vals[2], " - length");
 

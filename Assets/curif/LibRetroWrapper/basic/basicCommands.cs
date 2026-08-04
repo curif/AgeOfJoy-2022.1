@@ -88,6 +88,7 @@ public static class Commands
         //files
         functions["GETFILES"] = typeof(CommandFunctionGETFILES);
         functions["GETFILESARRAY"] = typeof(CommandFunctionGETFILESARRAY);
+        functions["GETDIRSARRAY"] = typeof(CommandFunctionGETDIRSARRAY);
         functions["READM3UARRAY"] = typeof(CommandFunctionREADM3UARRAY);
         functions["FILEEXISTS"] = typeof(CommandFunctionFILEEXISTS);
         functions["COMBINEPATH"] = typeof(CommandFunctionCOMBINEPATH);

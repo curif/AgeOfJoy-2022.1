@@ -58,7 +58,8 @@ public class BasicValue : IEnumerable<BasicValue>
     public BasicValue(float number) => SetValue((double)number);
     public BasicValue(bool boolean) => SetValue(boolean ? 1.0 : 0.0);
     public BasicValue(BasicValue val) => SetValue(val);
-    public BasicValue(string[] val) => SetValue(val);
+    //public BasicValue(string[] val) => SetValue(val);
+    public BasicValue(string[] val, BasicValueType forceType = BasicValueType.empty) => SetValue(val, forceType);
 
     /// <summary>
     /// Initializes a new instance of the BasicValue class as a 1-dimensional array
@@ -1400,7 +1401,7 @@ public class BasicValue : IEnumerable<BasicValue>
     /// <param name="val">The string array to assign.</param>
     /// <returns>The current BasicValue instance, now representing the string array.</returns>
     /// <exception cref="ArgumentNullException">Thrown if the input string array is null.</exception>
-    public BasicValue SetValue(string[] val)
+    public BasicValue SetValue(string[] val, BasicValueType forceType = BasicValueType.empty)
     {
         if (val == null)
         {
@@ -1420,7 +1421,7 @@ public class BasicValue : IEnumerable<BasicValue>
             // Convert each string to a BasicValue.
             // Using new BasicValue(string) constructor will parse numbers if applicable,
             // or store as string if not.
-            this.arrayValues[i] = new BasicValue(val[i]);
+            this.arrayValues[i] = new BasicValue(val[i], forceType);
         }
         return this;
     }
