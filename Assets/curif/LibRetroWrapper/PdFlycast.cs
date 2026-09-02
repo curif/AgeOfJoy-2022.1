@@ -26,6 +26,11 @@ public class PdFlycast : MonoBehaviour
     public string gameFile = "vf3.cdi";
     public string coreFileName = "libflycast_libretro_android.so";
 
+    [Tooltip("Content subdirectory under downloads/ (and system/) — \"dc\" for flycast, \"modelizer\" " +
+             "for the Model 1/2 + Namco System 2x core. Games (and, for modelizer, its BIOS + I/O board " +
+             "sets) all live flat in downloads/<contentDir>/.")]
+    public string contentDir = LibretroFlycastCore.ContentDirName;
+
     [Tooltip("Tick the emulator at the core's own reported rate (Dreamcast NTSC ≈ 59.94 Hz) rather " +
              "than targetHz. Keeps emulated time correct — matters for audio sync. If off, or the " +
              "core reports no rate, targetHz is used.")]
@@ -106,8 +111,8 @@ public class PdFlycast : MonoBehaviour
         //   BIOS + nvmem : <SystemDir>/dc/     (Flycast forces the /dc subdir on its system dir)
         //   games        : <RomsDir>/dc/<file> (downloads/dc/), falling back to downloads/
         string sysDir   = ConfigManager.SystemDir;
-        string saveDir  = Path.Combine(sysDir, LibretroFlycastCore.ContentDirName, "saves");
-        string romsDir  = Path.Combine(ConfigManager.RomsDir, LibretroFlycastCore.ContentDirName);
+        string saveDir  = Path.Combine(sysDir, contentDir, "saves");
+        string romsDir  = Path.Combine(ConfigManager.RomsDir, contentDir);
 
         // Per-device override: first non-empty line of <roms>/game.txt names the game file to load
         // (relative to the flycast roms dir), replacing the scene-serialized gameFile. Lets us swap
@@ -134,12 +139,45 @@ public class PdFlycast : MonoBehaviour
         string gamePath = Path.Combine(romsDir, gameFile);
         if (!File.Exists(gamePath))
             gamePath = Path.Combine(ConfigManager.RomsDir, gameFile);
-        string corePath = Path.Combine(LibretroHWBridge.NativeLibraryDir(), coreFileName);
+        // Per-device core override: first non-empty line of <CoresDir>/core.txt names the core .so to
+        // load, replacing coreFileName. Combined with the usercores hot-load below, this makes the whole
+        // core swappable by adb push alone — no Unity rebuild. Push the rebuilt core AND core.txt to the
+        // same cores/ folder; on restart SyncCores stages it into usercores/ and we dlopen it from there.
+        string coreOverridePath = Path.Combine(ConfigManager.CoresDir, "core.txt");
+        try
+        {
+            if (File.Exists(coreOverridePath))
+            {
+                foreach (string line in File.ReadAllLines(coreOverridePath))
+                {
+                    string trimmed = line.Trim();
+                    if (trimmed.Length == 0) continue;
+                    Status($"core.txt override: '{coreFileName}' → '{trimmed}'");
+                    coreFileName = trimmed;
+                    break;
+                }
+            }
+        }
+        catch (Exception e) { Status("core.txt read failed (using default core): " + e.Message); }
+
+        // Hot-load a pushed core from the exec-capable app-private dir. /sdcard is noexec, so the core
+        // can't be dlopen'd where adb drops it (cores/); CoresController.SyncCores stages cores/ → usercores/
+        // (internal storage) on boot. Prefer that staged copy; fall back to the APK-packaged core when
+        // nothing was pushed (stock flycast keeps working untouched).
+        Assets.curif.LibRetroWrapper.CoresController.EnsureLoaded();
+        string stagedCore = Path.Combine(ConfigManager.InternalCoresDir, coreFileName);
+        string corePath = File.Exists(stagedCore)
+            ? stagedCore
+            : Path.Combine(LibretroHWBridge.NativeLibraryDir(), coreFileName);
+        Status($"core resolved from {(File.Exists(stagedCore) ? "usercores (pushed)" : "APK nativeLibraryDir (packaged)")}");
         try { Directory.CreateDirectory(saveDir); } catch { }
 
         Status($"start core='{corePath}' sys='{sysDir}' roms='{romsDir}' game='{gamePath}' zeroCopy={zeroCopy}");
         if (!File.Exists(gamePath)) Status($"WARNING game not found at '{gamePath}' — push it to downloads/dc/ first");
 
+        // Capture the core's INFO-level boot chatter (default WARN hides boot progress). Must precede
+        // Start(); drained via RecentLog() below on success OR failure.
+        LibretroHWBridge.SetLogVerbosity(1);
         // Must be set before Start() — it decides which device extensions the core is asked to enable.
         LibretroHWBridge.SetZeroCopy(zeroCopy);
         started = LibretroHWBridge.Start(corePath, sysDir, saveDir, gamePath);
@@ -158,6 +196,15 @@ public class PdFlycast : MonoBehaviour
         Status(started
             ? $"pdlr_start OK — running (zeroCopy={zeroCopy}, tick={_tickHz:F3}Hz, coreFps={coreFps:F3}, sampleRate={LibretroHWBridge.SampleRate:F0})"
             : $"pdlr_start FAILED — {LibretroHWBridge.NativeLastError}");
+
+        // Dump the core's captured boot trace (native pdlr ring) on success AND failure — a new core
+        // often "succeeds" then emits no frames, so the trace matters either way. Routed through Status()
+        // so it lands in pdflycast_status.txt (verboseStatus) even when Debug.Log isn't reaching logcat.
+        Status($"NativeLastError='{LibretroHWBridge.NativeLastError}' bridgeAvailable={LibretroHWBridge.Available} preload='{LibretroHWBridge.PreloadInfo}'");
+        string[] bootTrace = LibretroHWBridge.RecentLog();
+        Status($"--- core boot trace ({bootTrace.Length} lines) ---");
+        foreach (string line in bootTrace) Status("  " + line);
+        Status("--- end boot trace ---");
 
         if (started && audioEnabled) SetupAudio();
         _lastRunAt = Time.unscaledTime;
@@ -291,6 +338,12 @@ public class PdFlycast : MonoBehaviour
         if (gp.buttonWest.isPressed)  b |= 1u << LibretroHWBridge.Joypad.X;
         if (gp.buttonNorth.isPressed) b |= 1u << LibretroHWBridge.Joypad.Y;
         if (gp.startButton.isPressed) b |= 1u << LibretroHWBridge.Joypad.START;
+        // SELECT → coin (RetroPad SELECT is Flycast's NAOMI/Atomiswave coin insert).
+        if (gp.selectButton.isPressed) b |= 1u << LibretroHWBridge.Joypad.SELECT;
+        // Shoulder buttons → RetroPad L/R. A stock DC pad has no digital shoulders (only the analog
+        // triggers below), so these mostly matter for NAOMI/Atomiswave button layouts.
+        if (gp.leftShoulder.isPressed)  b |= 1u << LibretroHWBridge.Joypad.L;
+        if (gp.rightShoulder.isPressed) b |= 1u << LibretroHWBridge.Joypad.R;
         if (gp.dpad.up.isPressed)     b |= 1u << LibretroHWBridge.Joypad.UP;
         if (gp.dpad.down.isPressed)   b |= 1u << LibretroHWBridge.Joypad.DOWN;
         if (gp.dpad.left.isPressed)   b |= 1u << LibretroHWBridge.Joypad.LEFT;
@@ -302,7 +355,10 @@ public class PdFlycast : MonoBehaviour
         // libretro analog: +X right, +Y down — Unity's stick Y is up-positive, so negate Y.
         short lx = (short)Mathf.Clamp(Mathf.RoundToInt(s.x * 32767f), -32767, 32767);
         short ly = (short)Mathf.Clamp(Mathf.RoundToInt(-s.y * 32767f), -32767, 32767);
-        LibretroHWBridge.SetInput(b, lx, ly);
+        // Analog triggers → Dreamcast L2/R2 ([0, 0x7fff]): R = accelerate, L = brake in racing titles.
+        short lt = (short)Mathf.Clamp(Mathf.RoundToInt(gp.leftTrigger.ReadValue()  * 32767f), 0, 32767);
+        short rt = (short)Mathf.Clamp(Mathf.RoundToInt(gp.rightTrigger.ReadValue() * 32767f), 0, 32767);
+        LibretroHWBridge.SetInput(b, lx, ly, lt, rt);
     }
 
     // 2D audio mirroring AoJ's proven MAME path (LibretroScreenController): an AUTHORED AudioSource
