@@ -1008,17 +1008,13 @@ volatile int16_t  s_analogLY = 0;
 volatile int16_t  s_triggerL = 0;   // Dreamcast left  analog trigger (L2), [0, 0x7fff]
 volatile int16_t  s_triggerR = 0;   // Dreamcast right analog trigger (R2), [0, 0x7fff]
 
-// DEBUG-quad arcade remap. The C# quad (PdFlycast) only delivers A/B/X/Y/START/d-pad + left stick,
-// but arcade driving games (Daytona on the Model2 core) need Coin/Accel/Brake. When the loaded core
-// is the Model2 fork we synthesize those in input_state_cb (Y→Select/coin, A→R2/accel, B→L2/brake).
-// Set at load; throwaway test wiring, gated so Flycast's debug input path is untouched.
-bool s_arcadeRemap = false;
-
 // Pipelined blit fence (see blit_frame). ON only for the m2-vk Model 1/2 core, whose heavier GPU load
 // benefits from overlapping the blit-completion wait with CPU emulation. OFF for Flycast and every
 // other core — they keep the proven immediate-wait blit, byte-for-byte the shipping field path. Keyed
-// off the same "m2" core-name test as s_arcadeRemap but derived independently (that remap is throwaway
-// wiring and may be deleted; this must not go with it). Set at load.
+// off an "m2" core-name test at load. (A former sibling flag, s_arcadeRemap — the debug-quad
+// Y→coin/A→accel/B→brake synthesis — was removed once C# began sending honest positional bits on
+// both the cabinet and quad paths; it double-mapped them. This blit flag is real and independent, so
+// it stayed.) Set at load.
 bool s_pipelineBlit = false;
 
 // Frame orientation correction (see blit_frame). ON only for the m2-vk Model 1/2 core, which writes
@@ -1028,6 +1024,17 @@ bool s_pipelineBlit = false;
 // downstream crop/shader convention is unchanged. Flycast (R8G8B8A8 copy path) never enters there.
 // Set at load; keyed off the same "m2" core-name test as s_pipelineBlit.
 bool s_flip180 = false;
+
+// Native-sized zero-copy buffer (see blit_frame). ON only for the m2-vk Model 1/2 core, whose boards
+// run at a fixed native resolution per game (Model 2 496x384, System 22 640x480, System 21 496x480).
+// We allocate the AHB buffer at that native frame instead of the fixed kCeilW/kCeilH ceiling, so the
+// frame FILLS the buffer: no black margin, no UV crop, and the screen shader samples native pixels
+// (the CRT material ignores the _MainTex_ST crop, so a sub-buffer frame would otherwise sit in a
+// corner). OFF for Flycast and every other core — DC titles change resolution mid-run (Soul Calibur
+// 640x239 boot -> 640x480), which the fixed ceiling + per-frame crop is built to absorb; the one-shot
+// AHB import here cannot resize. So this is not merely additive-safe for Flycast, it is correct only
+// for fixed-resolution boards. Set at load; keyed off the same "m2" core-name test as s_flip180.
+bool s_nativeBuffer = false;
 
 // Per-port maple device, applied at content load (pdlr_set_port_device, pre-start). Default: 4
 // JOYPADs — the RetroArch maple parity that gates NAOMI audio init; a gun cabinet flips port 0.
@@ -1044,19 +1051,11 @@ int16_t  RETRO_CALLCONV input_state_cb(unsigned port, unsigned device, unsigned 
 {
     if (port != 0) return 0;
     if (device == RETRO_DEVICE_JOYPAD) {
+        // Honest positional RetroPad. Every core (Flycast, m2-vk) maps these ids to per-game controls
+        // itself; the frontend forwards the bits as C# sends them. (A debug-quad arcade remap once
+        // synthesized coin/accel/brake here for the Model2 core when the quad sent only A/B/X/Y — it
+        // was removed once C# began sending positional coin/accel/brake, which it double-mapped.)
         uint32_t bits = s_buttons;
-        if (s_arcadeRemap) {
-            // The quad only delivers A/B/X/Y/START/d-pad; synthesize the arcade controls Daytona
-            // needs. Y→Select(coin), A→R2(accel), B→L2(brake) — the core's L2/R2 digital-bit fallback
-            // turns those into full pedals. Source bits are cleared so they don't also fire A/B/Y.
-            const uint32_t src = bits;
-            bits &= ~((1u<<RETRO_DEVICE_ID_JOYPAD_SELECT)|(1u<<RETRO_DEVICE_ID_JOYPAD_L2)|
-                      (1u<<RETRO_DEVICE_ID_JOYPAD_R2)|(1u<<RETRO_DEVICE_ID_JOYPAD_Y)|
-                      (1u<<RETRO_DEVICE_ID_JOYPAD_A)|(1u<<RETRO_DEVICE_ID_JOYPAD_B));
-            if (src & (1u<<RETRO_DEVICE_ID_JOYPAD_Y)) bits |= 1u<<RETRO_DEVICE_ID_JOYPAD_SELECT;
-            if (src & (1u<<RETRO_DEVICE_ID_JOYPAD_A)) bits |= 1u<<RETRO_DEVICE_ID_JOYPAD_R2;
-            if (src & (1u<<RETRO_DEVICE_ID_JOYPAD_B)) bits |= 1u<<RETRO_DEVICE_ID_JOYPAD_L2;
-        }
         if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t)bits;  // bulk query
         return (bits >> id) & 1u;
     }
@@ -1134,9 +1133,9 @@ bool load_and_bind(const char* core_path)
     g.retro_get_system_info(&info);
     if (info.library_name)    snprintf(g.name,    sizeof(g.name),    "%s", info.library_name);
     if (info.library_version) snprintf(g.version, sizeof(g.version), "%s", info.library_version);
-    s_arcadeRemap  = (strstr(g.name, "m2") != nullptr);  // Model2 core → debug-quad arcade remap on
     s_pipelineBlit = (strstr(g.name, "m2") != nullptr);  // m2-vk → pipelined blit fence; others immediate-wait
     s_flip180      = (strstr(g.name, "m2") != nullptr);  // m2-vk writes 180° from canonical; corrected in blit_frame
+    s_nativeBuffer = (strstr(g.name, "m2") != nullptr);  // m2-vk boards are fixed-res → native-sized AHB, no crop
     LOGI("load_and_bind: core='%s' v'%s' api=%u exts='%s' need_fullpath=%d",
          g.name, g.version, g.retro_api_version(), info.valid_extensions ? info.valid_extensions : "",
          info.need_fullpath);
@@ -1250,8 +1249,10 @@ bool ensure_ahb_buffers(int w, int h)
 {
     if (bufs[0].image != VK_NULL_HANDLE && ahbW == w && ahbH == h) return true;
     if (bufs[0].image != VK_NULL_HANDLE) {
-        // Should never happen now — callers pass the fixed kCeilW/kCeilH ceiling, so w/h are constant
-        // and this early-returns above. Kept as a guard: the import is one-shot; never silently resize.
+        // Should never happen: callers pass constant dims per run — the fixed kCeilW/kCeilH ceiling, or
+        // (s_nativeBuffer) a fixed-resolution board's own frame size — so w/h don't change after the
+        // first alloc and this early-returns above. Kept as a guard: the import is one-shot; never
+        // silently resize (a hypothetical mid-run native-res change would land here and keep the first).
         LOGE("[ahb] unexpected size change %dx%d -> %dx%d after alloc; keeping original", ahbW, ahbH, w, h);
         return true;
     }
@@ -1337,11 +1338,18 @@ void blit_frame()
     if (vk.imageCount == lastBlitImageCount) return;   // no new core frame — ready buffer still current
     VkImage src = vk.lastImage.create_info.image;
     if (src == VK_NULL_HANDLE) return;
-    // Buffers are the fixed ceiling, not the current frame — the active frame may be smaller (and may
-    // change over the run). The active region is copied into the top-left; C# crops to it.
-    if (!ensure_ahb_buffers(kCeilW, kCeilH)) return;
-    const uint32_t copyW = (uint32_t)((frameW < kCeilW) ? frameW : kCeilW);
-    const uint32_t copyH = (uint32_t)((frameH < kCeilH) ? frameH : kCeilH);
+    // Buffer sizing. Two regimes:
+    //  - Fixed ceiling (Flycast, default): the AHB is kCeilW×kCeilH; the active frame may be smaller and
+    //    may change over the run, so it is copied into a corner and C# UV-crops to it.
+    //  - Native (s_nativeBuffer, m2-vk): the AHB is the game's own fixed native frame, so the copy fills
+    //    it edge to edge — no margin, no crop, native pixels straight to the screen shader.
+    // ensure_ahb_buffers is one-shot; both regimes pass constant dims per run (kCeil is constant; a
+    // fixed-res board's frameW/frameH is too), so it early-returns after the first allocation.
+    const int bufW = s_nativeBuffer ? frameW : kCeilW;
+    const int bufH = s_nativeBuffer ? frameH : kCeilH;
+    if (!ensure_ahb_buffers(bufW, bufH)) return;
+    const uint32_t copyW = (uint32_t)((frameW < bufW) ? frameW : bufW);
+    const uint32_t copyH = (uint32_t)((frameH < bufH) ? frameH : bufH);
 
     AhbBuf& b   = bufs[writeIdx];
     VkImage dst = b.image;
@@ -2010,8 +2018,9 @@ int pdlr_frame_size(int* out_w, int* out_h)
     return 0;
 }
 
-// The fixed AHB/external-texture dimensions (kCeilW/kCeilH). C# sizes its external Texture2D to this,
-// not to the active frame, and UV-crops the active sub-rect (pdlr_frame_size) within it.
+// The actual allocated AHB/external-texture dimensions (ahbW/ahbH): the kCeilW/kCeilH ceiling by
+// default, or the game's native frame under s_nativeBuffer. C# sizes its external Texture2D to this and
+// UV-crops the active sub-rect (pdlr_frame_size) within it — a no-op when native == active == buffer.
 int pdlr_buffer_size(int* out_w, int* out_h)
 {
     if (ahbW <= 0 || ahbH <= 0) return -1;
@@ -2068,8 +2077,8 @@ void pdlr_set_input(uint32_t buttons, int16_t lx, int16_t ly, int16_t lt, int16_
     // [input] line while pressing == Gamepad.current is null on the C# side.
     static uint32_t s_lastInputLogged = 0xffffffffu;
     if (buttons != s_lastInputLogged) {
-        LOGI("[input] rx buttons=0x%04x lx=%d ly=%d (arcadeRemap=%d: Y=coin A=accel B=brake START=start)",
-             buttons, (int)lx, (int)ly, (int)s_arcadeRemap);
+        LOGI("[input] rx buttons=0x%04x lx=%d ly=%d lt=%d rt=%d (positional RetroPad)",
+             buttons, (int)lx, (int)ly, (int)lt, (int)rt);
         s_lastInputLogged = buttons;
     }
     s_buttons  = buttons;
