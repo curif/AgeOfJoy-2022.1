@@ -578,16 +578,22 @@ public static class LibretroFlycastCore
 
         // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls. In LIGHTGUN mode
         // flycast reads ONLY lightgun ids on that port, so the coin must ride SELECT here too.
+        //
+        // The trigger consumed by the TEST/SERVICE chord is held off this channel as well (chordTrig),
+        // exactly as it is held off L2/R2 above. Both of the gun's trigger-bound ids sit on a chord
+        // trigger: LIGHTGUN_TRIGGER on the right (the SERVICE half) and LIGHTGUN_RELOAD on the left
+        // (the TEST half, moved there by AdjustControlMap). Without the gate, reaching for a service
+        // switch also fires or reloads the gun.
         if (lightGunTarget != null)
         {
             uint gb = 0;
-            if (ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << LibretroHWBridge.Lightgun.TRIGGER;
+            if (chordTrig != 2 && ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << LibretroHWBridge.Lightgun.TRIGGER;
             if (ControlMap.isActive(LC.LIGHTGUN_AUX_A)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_A;
             if (ControlMap.isActive(LC.LIGHTGUN_AUX_B)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_B;
             if (ControlMap.isActive(LC.LIGHTGUN_AUX_C)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_C;
             if (ControlMap.isActive(LC.LIGHTGUN_START)) gb |= 1u << LibretroHWBridge.Lightgun.START;
             if (ControlMap.isActive(LC.LIGHTGUN_SELECT)) gb |= 1u << LibretroHWBridge.Lightgun.SELECT;
-            if (ControlMap.isActive(LC.LIGHTGUN_RELOAD)) gb |= 1u << LibretroHWBridge.Lightgun.RELOAD;
+            if (chordTrig != 1 && ControlMap.isActive(LC.LIGHTGUN_RELOAD)) gb |= 1u << LibretroHWBridge.Lightgun.RELOAD;
             if (ControlMap.isActive(LC.LIGHTGUN_DPAD_UP)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_UP;
             if (ControlMap.isActive(LC.LIGHTGUN_DPAD_DOWN)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_DOWN;
             if (ControlMap.isActive(LC.LIGHTGUN_DPAD_LEFT)) gb |= 1u << LibretroHWBridge.Lightgun.DPAD_LEFT;

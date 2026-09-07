@@ -858,6 +858,7 @@ public class Cabinet
             LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
             libretroScreenController.GameFile = gameFile;
+            libretroScreenController.GameVolumeDecibels = cbinfo.gameVolumeDecibels;
             libretroScreenController.PlayList = playList;
             libretroScreenController.CabEnvironment = coreEnvironment;
             libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;

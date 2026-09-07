@@ -160,10 +160,9 @@ public static class LibretroModelizerCore
         if (lightGunTarget != null && lightGunTarget.Initialized())
             LibretroHWBridge.SetPortDevice(0, LibretroHWBridge.DEVICE_LIGHTGUN);
 
-        // Test/Service is a core option (`model2_diagnostic_input`), left at the core's default (OFF)
-        // for now — deliberately not set here. PollInput still forwards the L3/R3 bits positionally,
-        // so a cabinet can enable the combo purely via the `environment:` override below with no C#
-        // change.
+        // Test/Service: PollInput/PollGamepad cook the L3+R3+trigger double chord in C# and emit
+        // bit 14 (L3) = TEST / bit 15 (R3) = SERVICE. The m2-vk core binds those straight to
+        // IPT_SERVICE / IPT_SERVICE1 with no combo of its own, so no core option is needed here.
 
         // Per-cabinet core-option overrides (description.yaml `environment:`) — must be pushed before
         // Start()/retro_load_game. Layered on top of the core's own defaults inside libpdlr: YAML wins,
@@ -469,12 +468,25 @@ public static class LibretroModelizerCore
             coinFrames--;
         }
 
-        // Test/Service: the stick clicks are forwarded as plain RetroPad L3/R3 bits. The core's
-        // `model2_diagnostic_input` option turns the configured combo into TEST/SERVICE — currently
-        // left at the core default (OFF), so these bits are inert until a cabinet opts in via
-        // `environment:`. Forwarded positionally so no C# change is needed when it is enabled.
-        if (ControlMap.isActive(LC.JOYPAD_L3)) b |= 1u << 14;
-        if (ControlMap.isActive(LC.JOYPAD_R3)) b |= 1u << 15;
+        // Arcade TEST/SERVICE double chord — the same gesture as the Flycast core. Deliberately
+        // awkward so it can't fire by accident: hold BOTH stick clicks (L3 + R3) together, then
+        // squeeze a trigger. L3+R3 + LEFT trigger = TEST, L3+R3 + RIGHT trigger = SERVICE. The stick
+        // clicks are only the modifier — they never reach the game as bare L3/R3 (nothing else sets
+        // bits 14/15) — and the consumed trigger is kept off the game's L2/R2 below (chordTrig) so it
+        // isn't seen underneath. Both triggers at once fires nothing. The m2-vk core binds bit 14 (L3)
+        // → IPT_SERVICE (TEST switch) and bit 15 (R3) → IPT_SERVICE1 (SERVICE button) directly, with
+        // no combo of its own, so this C# gate is the only gate.
+        int chordTrig = 0;   // trigger consumed by the chord: 1 = left, 2 = right (kept off L2/R2)
+        if (ControlMap.isActive(LC.JOYPAD_L3) && ControlMap.isActive(LC.JOYPAD_R3))
+        {
+            bool leftTrig = ControlMap.isActive(LC.JOYPAD_L);    // left  trigger
+            bool rightTrig = ControlMap.isActive(LC.JOYPAD_R);   // right trigger
+            if (leftTrig ^ rightTrig)
+            {
+                b |= leftTrig ? (1u << 14) : (1u << 15);          // TEST : SERVICE
+                chordTrig = leftTrig ? 1 : 2;
+            }
+        }
 
         // The core serves a single analog channel (ANALOG_LEFT) plus the two analog triggers on
         // port 0. The `analog-stick` flag decides which Quest thumbstick is that analog channel and
@@ -490,8 +502,8 @@ public static class LibretroModelizerCore
         if (AnalogStick)
         {
             ControlMap.ReadStick(out lx, out ly);
-            lt = ControlMap.ReadTrigger(LC.JOYPAD_L);   // left  trigger → analog brake (core: IPT_PEDAL2)
-            rt = ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → analog accel (core: IPT_PEDAL)
+            lt = chordTrig == 1 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_L);   // left  trigger → analog brake (core: IPT_PEDAL2)
+            rt = chordTrig == 2 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_R);   // right trigger → analog accel (core: IPT_PEDAL)
             if (ControlMap.isActive(LC.JOYPAD_UP, 1)) b |= 1u << 4;
             if (ControlMap.isActive(LC.JOYPAD_DOWN, 1)) b |= 1u << 5;
             if (ControlMap.isActive(LC.JOYPAD_LEFT, 1)) b |= 1u << 6;
@@ -504,9 +516,10 @@ public static class LibretroModelizerCore
             if (ControlMap.isActive(LC.JOYPAD_LEFT)) b |= 1u << 6;
             if (ControlMap.isActive(LC.JOYPAD_RIGHT)) b |= 1u << 7;
             ControlMap.ReadStick(out lx, out ly, 1);
-            // Quest triggers → digital L2/R2 (analog value only in analog-stick mode above).
-            if (ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 12;   // left  trigger → L2
-            if (ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 13;   // right trigger → R2
+            // Quest triggers → digital L2/R2 (analog value only in analog-stick mode above). The
+            // chord-consumed trigger is held off.
+            if (chordTrig != 1 && ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 12;   // left  trigger → L2
+            if (chordTrig != 2 && ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 13;   // right trigger → R2
         }
 
         PollGamepad(ref b, ref lx, ref ly, ref lt, ref rt);
@@ -514,12 +527,23 @@ public static class LibretroModelizerCore
         LibretroHWBridge.SetInput(b, lx, ly, lt, rt);
 
         // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls, same path as Flycast.
-        // In LIGHTGUN mode the core reads ONLY lightgun ids on that port, so the coin rides SELECT
-        // here too.
+        // The coin rides SELECT here too.
+        //
+        // ⚠ Unlike flycast, m2-vk keeps the port's PAD device live alongside the gun device — that is
+        // deliberate, it is what gives a gun game any route to the test menu — so a stray press on
+        // this channel is NOT invisible: it reaches the machine as a real switch and the Model 2
+        // INPUT TEST screen draws it. LIGHTGUN_TRIGGER is on the right trigger, which is also the
+        // SERVICE half of the TEST/SERVICE chord, so the chord's consumed trigger is held off here
+        // (chordTrig) exactly as it is held off L2/R2 above. Without the gate, asking for SERVICE
+        // lit the gun trigger at the same time — the whole reason this bug looked like two switches
+        // firing at once, and why it never showed on a pad cabinet or in RetroArch (where the
+        // switches are pressed bare, with no trigger involved). Nothing else in the stock gun map
+        // sits on a trigger: RELOAD/START are on start, AUX_A/B/C on A/B/X, SELECT on select, and
+        // AdjustControlMap makes no gun-specific rebinds.
         if (lightGunTarget != null)
         {
             uint gb = 0;
-            if (ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << LibretroHWBridge.Lightgun.TRIGGER;
+            if (chordTrig != 2 && ControlMap.isActive(LC.LIGHTGUN_TRIGGER)) gb |= 1u << LibretroHWBridge.Lightgun.TRIGGER;
             if (ControlMap.isActive(LC.LIGHTGUN_AUX_A)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_A;
             if (ControlMap.isActive(LC.LIGHTGUN_AUX_B)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_B;
             if (ControlMap.isActive(LC.LIGHTGUN_AUX_C)) gb |= 1u << LibretroHWBridge.Lightgun.AUX_C;
@@ -541,10 +565,11 @@ public static class LibretroModelizerCore
 
     // A physical gamepad maps to a positional RetroPad exactly as standalone RetroArch would — south→B
     // (bit 0), east→A (bit 8), west→Y (bit 1), north→X (bit 9), d-pad→d-pad, left stick→analog stick,
-    // triggers→analog L2/R2, shoulders→L/R, stick clicks→L3/R3 (for the core diagnostic combo) — in
-    // both cabinet modes. Merges with the Quest-derived state: bits OR, stick sums clamp, triggers
-    // take the max. AdjustControlMap stripped gamepad-* from the JOYPAD_* action maps, so this is the
-    // only path a pad reaches the joypad state through. Reads are allocation-free.
+    // triggers→analog L2/R2, shoulders→L/R, L3+R3+trigger→arcade TEST (left) / SERVICE (right)
+    // matching the Quest chord — in both cabinet modes. Merges with the Quest-derived state: bits OR,
+    // stick sums clamp, triggers take the max. AdjustControlMap stripped gamepad-* from the JOYPAD_*
+    // action maps, so this is the only path a pad reaches the joypad state through. Reads are
+    // allocation-free.
     static void PollGamepad(ref uint b, ref short lx, ref short ly, ref short lt, ref short rt)
     {
         Gamepad pad = Gamepad.current;
@@ -562,8 +587,6 @@ public static class LibretroModelizerCore
         if (pad.buttonNorth.isPressed) b |= 1u << 9;        // RetroPad X
         if (pad.leftShoulder.isPressed) b |= 1u << 10;      // RetroPad L
         if (pad.rightShoulder.isPressed) b |= 1u << 11;     // RetroPad R
-        if (pad.leftStickButton.isPressed) b |= 1u << 14;   // L3 (core diagnostic combo)
-        if (pad.rightStickButton.isPressed) b |= 1u << 15;  // R3
 
         Vector2 stick = pad.leftStick.ReadValue();
         lx = ClampAxis(lx + Mathf.RoundToInt(stick.x * 0x7fff));
@@ -571,6 +594,19 @@ public static class LibretroModelizerCore
 
         float l = Mathf.Clamp01(pad.leftTrigger.ReadValue());
         float r = Mathf.Clamp01(pad.rightTrigger.ReadValue());
+
+        // Arcade TEST/SERVICE double chord — the pad counterpart of the PollInput chord. Hold both
+        // stick clicks (L3 + R3), then a trigger: L3+R3+LEFT = TEST (bit 14), L3+R3+RIGHT = SERVICE
+        // (bit 15); both triggers at once fires nothing. Zero the squeezed trigger so a game sees
+        // neither its analog value nor its L2/R2 shadow (below) underneath. The stick clicks are the
+        // modifier only — nothing else sets bits 14/15, so a bare click never reaches the game.
+        bool lTrig = l > 0.5f, rTrig = r > 0.5f;
+        if (pad.leftStickButton.isPressed && pad.rightStickButton.isPressed && (lTrig ^ rTrig))
+        {
+            b |= lTrig ? (1u << 14) : (1u << 15);   // TEST : SERVICE
+            if (lTrig) l = 0f; else r = 0f;         // swallow the squeezed trigger (analog + shadow)
+        }
+
         lt = (short)Mathf.Max(lt, (short)Mathf.RoundToInt(l * 0x7fff));
         rt = (short)Mathf.Max(rt, (short)Mathf.RoundToInt(r * 0x7fff));
         if (l > 0.5f) b |= 1u << 12;   // digital L2 shadow

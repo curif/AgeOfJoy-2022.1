@@ -36,6 +36,14 @@ public class CabinetInformation
     public string statefile = "state.nv";
     public Video video;// = new Video();
     public Audio audio;
+
+    // Per-cabinet gain for the emulated game audio, in decibels. 0 = unchanged, >0 boosts a
+    // soft game, <0 attenuates. Applied on the cabinet's own AudioSource (before the global
+    // Game mixer), so it is independent of and stacks with AGEBasic AUDIOGAMESETVOLUME.
+    // Clamped to [-40, +20] dB where it is applied (LibretroScreenController).
+    [YamlMember(Alias = "game-volume-decibels", ApplyNamingConventions = false)]
+    public float gameVolumeDecibels = 0f;
+
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";

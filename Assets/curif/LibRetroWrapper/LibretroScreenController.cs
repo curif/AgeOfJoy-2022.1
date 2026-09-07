@@ -97,6 +97,13 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     [SerializeField]
     public string Brightness = "1.0";
 
+    // Per-cabinet game-audio gain in dB (description.yaml: game-volume-decibels). 0 = unchanged,
+    // >0 boosts a soft game, <0 attenuates. Applied to this cabinet's own AudioSource in
+    // OnAudioFilterRead, before the global Game mixer — independent of AGEBasic AUDIOGAMESETVOLUME.
+    [Tooltip("Game audio gain in decibels. 0 = unchanged, >0 louder, <0 quieter.")]
+    [SerializeField]
+    public float GameVolumeDecibels = 0f;
+
     [SerializeField]
     public string Core = "mame2003+";
 
@@ -943,6 +950,22 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         return (screenPos.z > 0 && screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1);
     }
 
+    // Cache the dB→linear conversion so the audio thread doesn't call Pow every callback.
+    // Recomputed only when GameVolumeDecibels changes (it is set once by the factory).
+    private float gameGainCachedDb = float.NaN;
+    private float gameGainLinear = 1f;
+
+    private float GameGainLinear()
+    {
+        if (GameVolumeDecibels != gameGainCachedDb)
+        {
+            gameGainCachedDb = GameVolumeDecibels;
+            float db = Mathf.Clamp(GameVolumeDecibels, -40f, 20f);
+            gameGainLinear = (db == 0f) ? 1f : Mathf.Pow(10f, db / 20f);
+        }
+        return gameGainLinear;
+    }
+
     private void OnAudioFilterRead(float[] data, int channels)
     {
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
@@ -951,6 +974,20 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
             LibretroFlycastCore.MoveAudioStreamTo(data);
         else if (LibretroModelizerCore.isRunning(ScreenName, GameFile))
             LibretroModelizerCore.MoveAudioStreamTo(data);
+        else
+            return; // no game audio this callback (attract/other) — leave the buffer untouched
+
+        float gain = GameGainLinear();
+        if (gain == 1f)
+            return;
+
+        // Apply the per-cabinet gain and hard-clamp to [-1, 1]. Boosting a soft game is clean;
+        // boosting already-loud content clips here (inherent to any positive gain).
+        for (int i = 0; i < data.Length; i++)
+        {
+            float s = data[i] * gain;
+            data[i] = s > 1f ? 1f : (s < -1f ? -1f : s);
+        }
     }
 
     private void OnDestroy()
