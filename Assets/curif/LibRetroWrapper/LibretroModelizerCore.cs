@@ -45,6 +45,7 @@ public static class LibretroModelizerCore
     public static CoinSlotController CoinSlot;
     public static LightGunTarget lightGunTarget;   // null unless the cabinet declares light-gun
     public static bool AnalogStick;                // route left thumbstick → analog steering + triggers (racing cabinets)
+    public static bool TwinStick;                  // twin-stick cabinets (Virtual-On): both thumbsticks drive the two digital sticks
     public static CoreEnvironment CabEnvironment;  // per-cabinet core-option overrides (description.yaml `environment:`)
 
     // VR display refresh the native pump phase-locks to (rooms present at 72 Hz).
@@ -150,6 +151,10 @@ public static class LibretroModelizerCore
         try { Directory.CreateDirectory(saveDir); } catch { }
 
         Trace($"[LibretroModelizerCore.Start] core='{corePath}' sys='{sysDir}' game='{gamePath}'");
+
+        // Twin-stick and analog-stick are mutually exclusive input modes; twin-stick wins in PollInput.
+        if (TwinStick && AnalogStick)
+            TraceErr("[LibretroModelizerCore.Start] both input.twin-stick and input.analog-stick set — twin-stick wins, analog-stick ignored");
 
         // In debug mode capture the core's INFO chatter too, not just WARN and above.
         if (ConfigManager.DebugActive)
@@ -436,7 +441,8 @@ public static class LibretroModelizerCore
     // (bit N == RETRO_DEVICE_ID_JOYPAD_N) plus the analog stick/trigger values. Two sources merge here
     // every frame:
     //  - the Quest controllers (and keyboard), via the cabinet's LibretroControlMap — the cabinet's
-    //    `analog-stick` flag decides which thumbstick is the analog channel and which is the d-pad;
+    //    `analog-stick` / `twin-stick` flags decide how the thumbsticks are routed (see the three-mode
+    //    block below); twin-stick wins if both are set;
     //  - a physical Bluetooth/USB gamepad, polled directly (PollGamepad) with a fixed positional
     //    layout — a real pad has every control at once, so the flag never applies.
     //
@@ -449,10 +455,17 @@ public static class LibretroModelizerCore
         if (ControlMap == null) return;
 
         uint b = 0;
-        if (ControlMap.isActive(LC.JOYPAD_A)) b |= 1u << 8;    // Quest A → RetroPad A
-        if (ControlMap.isActive(LC.JOYPAD_B)) b |= 1u << 0;    // Quest B → RetroPad B
-        if (ControlMap.isActive(LC.JOYPAD_X)) b |= 1u << 9;    // Quest X → RetroPad X
-        if (ControlMap.isActive(LC.JOYPAD_Y)) b |= 1u << 1;    // Quest Y → RetroPad Y
+        // Face buttons. Skipped in twin-stick mode: von makes no use of B/Y/A/X (bits 0/1/8/9), and the
+        // core's face-diamond fallback that would otherwise read them is suppressed for von, so sending
+        // them would be inert at best — and keeping them off avoids any re-collision with the right
+        // stick if the core's diamond ever comes back. The right stick rides ANALOG_RIGHT (rx/ry).
+        if (!TwinStick)
+        {
+            if (ControlMap.isActive(LC.JOYPAD_A)) b |= 1u << 8;    // Quest A → RetroPad A
+            if (ControlMap.isActive(LC.JOYPAD_B)) b |= 1u << 0;    // Quest B → RetroPad B
+            if (ControlMap.isActive(LC.JOYPAD_X)) b |= 1u << 9;    // Quest X → RetroPad X
+            if (ControlMap.isActive(LC.JOYPAD_Y)) b |= 1u << 1;    // Quest Y → RetroPad Y
+        }
         if (ControlMap.isActive(LC.JOYPAD_START)) b |= 1u << 3;
 
         // Coin: a taken coin (or the INSERT control) holds SELECT a few frames — the core maps
@@ -489,8 +502,9 @@ public static class LibretroModelizerCore
         }
 
         // The core serves a single analog channel (ANALOG_LEFT) plus the two analog triggers on
-        // port 0. The `analog-stick` flag decides which Quest thumbstick is that analog channel and
-        // which is the digital joystick (d-pad):
+        // port 0. Three input modes, chosen by the cabinet flags (twin-stick wins over analog-stick):
+        //  - twin-stick true (Virtual-On): LEFT stick = d-pad, RIGHT stick = ANALOG_RIGHT (rx/ry) —
+        //    the two drive the game's two digital sticks; triggers = Shots, grips = Dashes. See below.
         //  - analog-stick true (racing): LEFT stick = steering (ANALOG_LEFT), triggers = pedals, and
         //    the d-pad moves to the RIGHT stick (menus/view). One physical stick must never drive both
         //    an analog axis and a d-pad direction (e.g. Daytona's change-view).
@@ -498,8 +512,30 @@ public static class LibretroModelizerCore
         //    feeds the analog channel for the rare title that reads it; triggers are digital L2/R2.
         // The RIGHT stick is read through port 1, where the default map binds it.
         short lx, ly;
+        short rx = 0, ry = 0;   // right analog stick — only used in twin-stick mode
         short lt = 0, rt = 0;
-        if (AnalogStick)
+        if (TwinStick)
+        {
+            // Twin-stick cabinets (Cyber Troopers Virtual-On). BOTH thumbsticks are sent as ANALOG: the
+            // core binds von's two digital sticks (IPT_JOYSTICKLEFT/RIGHT) to ANALOG_LEFT / ANALOG_RIGHT
+            // and threshold-converts each axis to the digital directions. The core's digital d-pad /
+            // face-diamond fallback is deliberately removed for von (the right diamond shared MAME-button
+            // slots with the Shot/Dash buttons, so a button press also threw the stick), which is why the
+            // LEFT stick must be analog here too — its d-pad fallback went with it. Buttons come from the
+            // `von` layout row: Shots on the shoulders (bits 10/11), Dashes on L2/R2 (bits 12/13, read as
+            // the core's L2/R2 axis via the digital-bit fallback). ReadStick returns libretro convention
+            // (up = negative Y), which the ANALOG channels expect.
+            ControlMap.ReadStick(out lx, out ly);       // LEFT  thumbstick → ANALOG_LEFT
+            ControlMap.ReadStick(out rx, out ry, 1);    // RIGHT thumbstick → ANALOG_RIGHT (rx/ry, port 1)
+
+            // Shots on the triggers (RetroPad L/R shoulders); Dashes on the grips (L2/R2). The
+            // chord-consumed trigger is held off, exactly as L2/R2 are in the default branch.
+            if (chordTrig != 1 && ControlMap.isActive(LC.JOYPAD_L)) b |= 1u << 10;   // left  trigger → Left Shot
+            if (chordTrig != 2 && ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 11;   // right trigger → Right Shot
+            if (ControlMap.isActive(LC.JOYPAD_L2)) b |= 1u << 12;                    // left  grip → Left Dash
+            if (ControlMap.isActive(LC.JOYPAD_R2)) b |= 1u << 13;                    // right grip → Right Dash
+        }
+        else if (AnalogStick)
         {
             ControlMap.ReadStick(out lx, out ly);
             lt = chordTrig == 1 ? (short)0 : ControlMap.ReadTrigger(LC.JOYPAD_L);   // left  trigger → analog brake (core: IPT_PEDAL2)
@@ -508,6 +544,12 @@ public static class LibretroModelizerCore
             if (ControlMap.isActive(LC.JOYPAD_DOWN, 1)) b |= 1u << 5;
             if (ControlMap.isActive(LC.JOYPAD_LEFT, 1)) b |= 1u << 6;
             if (ControlMap.isActive(LC.JOYPAD_RIGHT, 1)) b |= 1u << 7;
+            // Grips → RetroPad L/R shoulders (bits 10/11). Free in racing mode — the Quest triggers are
+            // the analog pedals here — so a driving cabinet can put extra buttons on the grips (e.g.
+            // Tokyo Wars' two cannon triggers). NOT routed to L2/R2 (bits 12/13): those are the pedal
+            // axes, and a digital L2/R2 bit reads as a full pedal press.
+            if (ControlMap.isActive(LC.JOYPAD_L2)) b |= 1u << 10;   // left  grip → RetroPad L
+            if (ControlMap.isActive(LC.JOYPAD_R2)) b |= 1u << 11;   // right grip → RetroPad R
         }
         else
         {
@@ -522,9 +564,9 @@ public static class LibretroModelizerCore
             if (chordTrig != 2 && ControlMap.isActive(LC.JOYPAD_R)) b |= 1u << 13;   // right trigger → R2
         }
 
-        PollGamepad(ref b, ref lx, ref ly, ref lt, ref rt);
+        PollGamepad(ref b, ref lx, ref ly, ref rx, ref ry, ref lt, ref rt);
 
-        LibretroHWBridge.SetInput(b, lx, ly, lt, rt);
+        LibretroHWBridge.SetInput(b, lx, ly, rx, ry, lt, rt);
 
         // Gun cabinet: push the VR raycast hit + the lightgun-mapped controls, same path as Flycast.
         // The coin rides SELECT here too.
@@ -570,7 +612,7 @@ public static class LibretroModelizerCore
     // stick sums clamp, triggers take the max. AdjustControlMap stripped gamepad-* from the JOYPAD_*
     // action maps, so this is the only path a pad reaches the joypad state through. Reads are
     // allocation-free.
-    static void PollGamepad(ref uint b, ref short lx, ref short ly, ref short lt, ref short rt)
+    static void PollGamepad(ref uint b, ref short lx, ref short ly, ref short rx, ref short ry, ref short lt, ref short rt)
     {
         Gamepad pad = Gamepad.current;
         if (pad == null) return;
@@ -591,6 +633,12 @@ public static class LibretroModelizerCore
         Vector2 stick = pad.leftStick.ReadValue();
         lx = ClampAxis(lx + Mathf.RoundToInt(stick.x * 0x7fff));
         ly = ClampAxis(ly + Mathf.RoundToInt(-stick.y * 0x7fff));   // libretro analog-up is -y
+
+        // Right stick → ANALOG_RIGHT (twin-stick cores read it; harmless 0 for the others). Same
+        // sum-and-clamp merge as the left stick so a pad and the Quest can coexist.
+        Vector2 rstick = pad.rightStick.ReadValue();
+        rx = ClampAxis(rx + Mathf.RoundToInt(rstick.x * 0x7fff));
+        ry = ClampAxis(ry + Mathf.RoundToInt(-rstick.y * 0x7fff));
 
         float l = Mathf.Clamp01(pad.leftTrigger.ReadValue());
         float r = Mathf.Clamp01(pad.rightTrigger.ReadValue());

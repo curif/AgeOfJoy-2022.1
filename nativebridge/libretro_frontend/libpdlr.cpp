@@ -1005,6 +1005,8 @@ void     RETRO_CALLCONV input_poll_cb(void) {}
 volatile uint32_t s_buttons  = 0;   // bit N == RETRO_DEVICE_ID_JOYPAD_N
 volatile int16_t  s_analogLX = 0;
 volatile int16_t  s_analogLY = 0;
+volatile int16_t  s_analogRX = 0;   // right analog stick X (twin-stick cores, e.g. m2-vk Virtual-On); 0 for Flycast
+volatile int16_t  s_analogRY = 0;   // right analog stick Y
 volatile int16_t  s_triggerL = 0;   // Dreamcast left  analog trigger (L2), [0, 0x7fff]
 volatile int16_t  s_triggerR = 0;   // Dreamcast right analog trigger (R2), [0, 0x7fff]
 
@@ -1062,6 +1064,12 @@ int16_t  RETRO_CALLCONV input_state_cb(unsigned port, unsigned device, unsigned 
     if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT) {
         if (id == RETRO_DEVICE_ID_ANALOG_X) return s_analogLX;
         if (id == RETRO_DEVICE_ID_ANALOG_Y) return s_analogLY;
+    }
+    // Right analog stick — twin-stick cores (m2-vk Virtual-On). Stays 0 for Flycast, which only ever
+    // pushes the left stick through pdlr_set_input, so this returns the same 0 the old fall-through did.
+    if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_RIGHT) {
+        if (id == RETRO_DEVICE_ID_ANALOG_X) return s_analogRX;
+        if (id == RETRO_DEVICE_ID_ANALOG_Y) return s_analogRY;
     }
     // Dreamcast analog triggers (racing games). Flycast reads L2/R2 as ANALOG_BUTTON and *2s them
     // to the 0..0xffff trigger range; a value of 0 makes it fall back to the digital L2/R2 bit.
@@ -2088,6 +2096,15 @@ void pdlr_set_input(uint32_t buttons, int16_t lx, int16_t ly, int16_t lt, int16_
     s_triggerR = rt;
 }
 
+// Twin-stick variant: adds the right analog stick (rx/ry). The 5-arg pdlr_set_input above is kept for
+// Flycast (and any caller that predates this) and simply implies rx=ry=0 — see the forwarder below.
+void pdlr_set_input2(uint32_t buttons, int16_t lx, int16_t ly, int16_t rx, int16_t ry, int16_t lt, int16_t rt)
+{
+    pdlr_set_input(buttons, lx, ly, lt, rt);   // buttons + left stick + triggers + the edge log
+    s_analogRX = rx;
+    s_analogRY = ry;
+}
+
 void pdlr_set_port_device(unsigned port, unsigned device)
 {
     if (port < 4) s_portDevice[port] = device;
@@ -2183,7 +2200,7 @@ void pdlr_shutdown(void)
     vk.semaphores = nullptr; vk.numSemaphores = 0; vk.srcQueueFamily = 0;
 
     s_systemDir[0] = 0; s_saveDir[0] = 0; s_gameDir[0] = 0;
-    s_buttons = 0; s_analogLX = 0; s_analogLY = 0; s_triggerL = 0; s_triggerR = 0;
+    s_buttons = 0; s_analogLX = 0; s_analogLY = 0; s_analogRX = 0; s_analogRY = 0; s_triggerL = 0; s_triggerR = 0;
     s_optOverrides.clear();   // next game re-declares its own overrides before pdlr_start
     for (unsigned p = 0; p < 4; ++p) s_portDevice[p] = RETRO_DEVICE_JOYPAD;   // next game starts pad-only
     s_lgX = -0x7fff; s_lgY = -0x7fff; s_lgOffscreen = 1; s_lgButtons = 0;

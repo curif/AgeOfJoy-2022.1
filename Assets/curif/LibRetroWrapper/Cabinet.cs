@@ -877,6 +877,7 @@ public class Cabinet
             libretroScreenController.cabinet = this;
             libretroScreenController.Core = core;
             libretroScreenController.AnalogStick = cbinfo.input?.analogStick ?? false;
+            libretroScreenController.TwinStick = cbinfo.input?.twinStick ?? false;
             libretroScreenController.Persistent = persistent;
             libretroScreenController.LibretroInputDevices = libretroInputDevices;
 

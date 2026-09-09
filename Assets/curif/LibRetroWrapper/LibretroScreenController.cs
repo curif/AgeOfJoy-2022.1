@@ -111,6 +111,10 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     [SerializeField]
     public bool AnalogStick = false;
 
+    // Modelizer only: twin-stick cabinets (Virtual-On) drive both digital sticks (input.twin-stick).
+    [SerializeField]
+    public bool TwinStick = false;
+
     [SerializeField]
     public bool? Persistent;
 
@@ -742,6 +746,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         LibretroModelizerCore.ControlMap = libretroControlMap;
         LibretroModelizerCore.CoinSlot = CoinSlot;
         LibretroModelizerCore.AnalogStick = AnalogStick;
+        LibretroModelizerCore.TwinStick = TwinStick;
         LibretroModelizerCore.CabEnvironment = CabEnvironment;
 
         // Light guns configuration (same wiring as the MAME path; must precede LibretroModelizerCore.Start,
