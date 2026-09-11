@@ -113,6 +113,11 @@ PDLR_API int pdlr_frame_count(void);
 // Call once per frame before pdlr_run.
 PDLR_API void pdlr_set_input(uint32_t buttons, int16_t lx, int16_t ly, int16_t lt, int16_t rt);
 
+// Twin-stick variant, adds the right analog stick `rx`/`ry` (RETRO_DEVICE_INDEX_ANALOG_RIGHT),
+// -32768..32767 — for cores that read both sticks (m2-vk Virtual-On). Equivalent to pdlr_set_input
+// with rx=ry=0. Flycast keeps using the 5-arg form, so its right-stick reads stay 0 as before.
+PDLR_API void pdlr_set_input2(uint32_t buttons, int16_t lx, int16_t ly, int16_t rx, int16_t ry, int16_t lt, int16_t rt);
+
 // Override a libretro core option for the NEXT pdlr_start (from a cabinet's description.yaml
 // `environment:` block). Call BEFORE pdlr_start — the core reads options during retro_load_game.
 // Overlays the Flycast.opt defaults (this wins); options left unset keep their default value.

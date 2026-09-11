@@ -58,6 +58,11 @@ namespace Assets.curif.LibRetroWrapper
             // here so `core: flycast` validates, downloads/dc/ is created and the config cabinet lists it.
             AddInternalCore(LibretroFlycastCore.CoreName, LibretroFlycastCore.CoreLibFileName, FlycastConfig(),
                             LibretroFlycastCore.ContentDirName);
+            // Hardware-rendered core (Vulkan): Modelizer (m2-vk — Sega Model 1/2 + Namco System 21/22/23),
+            // same libpdlr/HW path as Flycast. Registered here so `core: modelizer` validates,
+            // downloads/modelizer/ is created and the config cabinet lists it.
+            AddInternalCore(LibretroModelizerCore.CoreName, LibretroModelizerCore.CoreLibFileName, ModelizerConfig(),
+                            LibretroModelizerCore.ContentDirName);
         }
 
         public static CoreEnvironment Mame2003PlusConfig()
@@ -85,6 +90,14 @@ namespace Assets.curif.LibRetroWrapper
             // Core options come from a Flycast.opt file next to the game (libpdlr reads it);
             // the wrapper-style environment properties don't apply to the hardware path.
             return new CoreEnvironment(LibretroFlycastCore.CoreName, new Dictionary<string, string>());
+        }
+
+        public static CoreEnvironment ModelizerConfig()
+        {
+            // Hardware path: core options come from the environment: block in the cabinet YAML
+            // (layered by LibretroModelizerCore.Start) plus the core's own per-game defaults;
+            // the wrapper-style environment properties don't apply. Same shape as FlycastConfig.
+            return new CoreEnvironment(LibretroModelizerCore.CoreName, new Dictionary<string, string>());
         }
 
         public static CoreEnvironment FbNeoConfig()
