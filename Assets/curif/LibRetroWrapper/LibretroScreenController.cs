@@ -97,12 +97,23 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     [SerializeField]
     public string Brightness = "1.0";
 
+    // Per-cabinet game-audio gain in dB (description.yaml: game-volume-decibels). 0 = unchanged,
+    // >0 boosts a soft game, <0 attenuates. Applied to this cabinet's own AudioSource in
+    // OnAudioFilterRead, before the global Game mixer — independent of AGEBasic AUDIOGAMESETVOLUME.
+    [Tooltip("Game audio gain in decibels. 0 = unchanged, >0 louder, <0 quieter.")]
+    [SerializeField]
+    public float GameVolumeDecibels = 0f;
+
     [SerializeField]
     public string Core = "mame2003+";
 
     // Flycast only: route the thumbstick to the DC analog stick + triggers (input.analog-stick).
     [SerializeField]
     public bool AnalogStick = false;
+
+    // Modelizer only: twin-stick cabinets (Virtual-On) drive both digital sticks (input.twin-stick).
+    [SerializeField]
+    public bool TwinStick = false;
 
     [SerializeField]
     public bool? Persistent;
@@ -288,6 +299,8 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         //the emulator suspends with the app (headset off / system overlay) — RetroArch pauses too
         if (LibretroFlycastCore.isRunning(ScreenName, GameFile))
             LibretroFlycastCore.SetPaused(pauseStatus);
+        if (LibretroModelizerCore.isRunning(ScreenName, GameFile))
+            LibretroModelizerCore.SetPaused(pauseStatus);
 
         if (pauseStatus)
         {
@@ -385,7 +398,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
             .Sequence("Start the game")
               .Condition("CoinSlot is present", () => CoinSlot != null)
               //.Condition("Is visible", () => display.isVisible)
-              .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !LibretroFlycastCore.GameLoaded)
+              .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !LibretroFlycastCore.GameLoaded && !LibretroModelizerCore.GameLoaded)
               .Condition("There are coins", () => CoinSlot.hasCoins())
               // .Condition("Player near", () => Vector3.Distance(Player.transform.position, Display.transform.position) < DistanceMinToPlayerToActivate)
               //.Condition("Player looking screen", () => isPlayerLookingAtScreen3()) if coinslot is present with coins is sufficient
@@ -405,6 +418,8 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
                   //hardware-rendered core (own Vulkan device, libpdlr) has its own start path
                   if (isFlycast)
                       return StartFlycastGame();
+                  if (isModelizer)
+                      return StartModelizerGame();
 
                   //start mame
                   LibretroMameCore.Speaker = audioSource;
@@ -546,7 +561,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
 
             .Selector("Video/Audio Player control")
                 .Sequence()
-                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || LibretroFlycastCore.GameLoaded || !playerInTheZone)
+                    .Condition("Running any game or Player not in the zone?", () => LibretroMameCore.GameLoaded || LibretroFlycastCore.GameLoaded || LibretroModelizerCore.GameLoaded || !playerInTheZone)
                     .Do("Stop video and audio player", () =>
                     {
                         videoPlayer.Stop();
@@ -556,7 +571,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
                 .End()
                 .Sequence()
                     .Condition("Player in the zone?", () => playerInTheZone)
-                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !LibretroFlycastCore.GameLoaded)
+                    .Condition("Not running any game", () => !LibretroMameCore.GameLoaded && !LibretroFlycastCore.GameLoaded && !LibretroModelizerCore.GameLoaded)
                     .Selector()
                         .Sequence()
                             .Condition("Is Player near enough to see video", () =>
@@ -603,6 +618,12 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
     private bool isFlycast
     {
         get { return Core == LibretroFlycastCore.CoreName; }
+    }
+
+    //hardware-rendered core driven by LibretroModelizerCore/libpdlr (Sega Model 1/2 + Namco Sys21/22/23)
+    private bool isModelizer
+    {
+        get { return Core == LibretroModelizerCore.CoreName; }
     }
 
     //select the control map by priority: cabinet yaml > per-game user config > control scheme > global
@@ -710,6 +731,78 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         return TaskStatus.Success;
     }
 
+    //modelizer branch of the "Start game" BT node: same cabinet lifecycle as Flycast, modelizer HW core
+    //underneath. Mirrors StartFlycastGame; the DC-specific input surgery lives inside
+    //LibretroModelizerCore.AdjustControlMap (positional RetroPad, no gun-shaped default rebinds).
+    private TaskStatus StartModelizerGame()
+    {
+        // Modelizer-only map surgery (Bluetooth/USB gamepads polled directly with a positional layout,
+        // so gamepad-* is stripped from the JOYPAD_* ids) — see LibretroModelizerCore.AdjustControlMap.
+        ControlMapConfiguration modelizerConf = BuildControlMapConfiguration();
+        LibretroModelizerCore.AdjustControlMap(modelizerConf, lightGunTarget != null && lightGunInformation != null);
+        libretroControlMap.CreateFromConfiguration(modelizerConf);
+
+        LibretroModelizerCore.Shader = shader;
+        LibretroModelizerCore.ControlMap = libretroControlMap;
+        LibretroModelizerCore.CoinSlot = CoinSlot;
+        LibretroModelizerCore.AnalogStick = AnalogStick;
+        LibretroModelizerCore.TwinStick = TwinStick;
+        LibretroModelizerCore.CabEnvironment = CabEnvironment;
+
+        // Light guns configuration (same wiring as the MAME path; must precede LibretroModelizerCore.Start,
+        // which declares the gun's port 0 as LIGHTGUN before the core loads the game)
+        if (lightGunTarget != null && lightGunInformation != null)
+        {
+            lightGunTarget.enabled = true;
+            lightGunTarget.Init(lightGunInformation, PathBase, player);
+            LibretroModelizerCore.lightGunTarget = lightGunTarget;
+        }
+
+        bool insertCoinOnStartup = InsertCoinOnStartup.HasValue ?
+          InsertCoinOnStartup.Value : globalConfiguration.Configuration.cabinet.insertCoinOnStartup;
+        if (!insertCoinOnStartup)
+        {
+            CoinSlot.clean();
+        }
+
+#if !UNITY_EDITOR
+        if (isGameFilePresent())
+        {
+            if (!LibretroModelizerCore.Start(ScreenName, GameFile))
+            {
+                CoinSlot.clean();
+                return TaskStatus.Failure;
+            }
+        }
+#endif
+
+        PreparePlayerToPlayGame(true);
+        if (lightGunTarget != null)
+            changeControls.ChangeRightJoystickModelLightGun(lightGunTarget.GetModelPath(), true);
+
+        if (isGameFilePresent())
+        {
+            //stand-by texture until the first emulated frame is bound (the AHB import takes a moment)
+            shader.Activate(ShaderScreenBase.StandByTexture);
+            shader.Invert(GameInvertX, GameInvertY);
+
+            //audio mixer group
+            audioSource.outputAudioMixerGroup = audioMixerGame;
+            audioSource.spatialize = false;
+            audioSource.Play();
+        }
+
+        cabinet.PhyActivate();
+
+        // age basic Insert coin
+        if (ageBasicInformation != null && ageBasicInformation.active != false)
+            cabinetAGEBasic.ExecInsertCoinBas();
+
+        gameRunning = true;
+
+        return TaskStatus.Success;
+    }
+
     bool PlayerWantsToExit()
     {
         if (libretroControlMap.isActive(LC.MODIFIER) && libretroControlMap.isActive(LC.EXIT))
@@ -739,6 +832,7 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
 
             LibretroMameCore.End(ScreenName, GameFile);
             LibretroFlycastCore.End(ScreenName, GameFile);
+            LibretroModelizerCore.End(ScreenName, GameFile);
         }
         timeToExit = DateTime.MinValue;
 
@@ -826,6 +920,10 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         {
             LibretroFlycastCore.Update();
         }
+        else if (LibretroModelizerCore.isRunning(ScreenName, GameFile))
+        {
+            LibretroModelizerCore.Update();
+        }
 
         shader.Update();
 
@@ -857,21 +955,54 @@ public class LibretroScreenController : MonoBehaviour, ISuspendableCabinetScreen
         return (screenPos.z > 0 && screenPos.x > 0 && screenPos.x < 1 && screenPos.y > 0 && screenPos.y < 1);
     }
 
+    // Cache the dB→linear conversion so the audio thread doesn't call Pow every callback.
+    // Recomputed only when GameVolumeDecibels changes (it is set once by the factory).
+    private float gameGainCachedDb = float.NaN;
+    private float gameGainLinear = 1f;
+
+    private float GameGainLinear()
+    {
+        if (GameVolumeDecibels != gameGainCachedDb)
+        {
+            gameGainCachedDb = GameVolumeDecibels;
+            float db = Mathf.Clamp(GameVolumeDecibels, -40f, 20f);
+            gameGainLinear = (db == 0f) ? 1f : Mathf.Pow(10f, db / 20f);
+        }
+        return gameGainLinear;
+    }
+
     private void OnAudioFilterRead(float[] data, int channels)
     {
         if (LibretroMameCore.isRunning(ScreenName, GameFile))
             LibretroMameCore.MoveAudioStreamTo(data, channels);
         else if (LibretroFlycastCore.isRunning(ScreenName, GameFile))
             LibretroFlycastCore.MoveAudioStreamTo(data);
+        else if (LibretroModelizerCore.isRunning(ScreenName, GameFile))
+            LibretroModelizerCore.MoveAudioStreamTo(data);
+        else
+            return; // no game audio this callback (attract/other) — leave the buffer untouched
+
+        float gain = GameGainLinear();
+        if (gain == 1f)
+            return;
+
+        // Apply the per-cabinet gain and hard-clamp to [-1, 1]. Boosting a soft game is clean;
+        // boosting already-loud content clips here (inherent to any positive gain).
+        for (int i = 0; i < data.Length; i++)
+        {
+            float s = data[i] * gain;
+            data[i] = s > 1f ? 1f : (s < -1f ? -1f : s);
+        }
     }
 
     private void OnDestroy()
     {
-        if (LibretroMameCore.isRunning(ScreenName, GameFile) || LibretroFlycastCore.isRunning(ScreenName, GameFile))
+        if (LibretroMameCore.isRunning(ScreenName, GameFile) || LibretroFlycastCore.isRunning(ScreenName, GameFile) || LibretroModelizerCore.isRunning(ScreenName, GameFile))
             PreparePlayerToPlayGame(false);
 
         LibretroMameCore.End(ScreenName, GameFile);
         LibretroFlycastCore.End(ScreenName, GameFile);
+        LibretroModelizerCore.End(ScreenName, GameFile);
 
         shader?.ReleaseMaterialInstance();
         videoShader?.ReleaseMaterialInstance();

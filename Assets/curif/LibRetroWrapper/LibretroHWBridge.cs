@@ -47,6 +47,9 @@ public static class LibretroHWBridge
     [DllImport(LIB, EntryPoint = "pdlr_set_input")]
     static extern void _pdlr_set_input(uint buttons, short lx, short ly, short lt, short rt);
 
+    [DllImport(LIB, EntryPoint = "pdlr_set_input2")]
+    static extern void _pdlr_set_input2(uint buttons, short lx, short ly, short rx, short ry, short lt, short rt);
+
     [DllImport(LIB, EntryPoint = "pdlr_set_port_device")]
     static extern void _pdlr_set_port_device(uint port, uint device);
 
@@ -263,6 +266,21 @@ public static class LibretroHWBridge
     public static void SetInput(uint buttons, short lx, short ly, short lt = 0, short rt = 0)
     {
         if (!Available) return;
+        _pdlr_set_input(buttons, lx, ly, lt, rt);
+    }
+
+    // Twin-stick overload: also pushes the RIGHT analog stick (rx/ry, [-0x7fff, 0x7fff]) for cores that
+    // read both sticks (modelizer Virtual-On). Falls back to the 5-arg entry point (right stick dropped)
+    // if the loaded libpdlr.so predates pdlr_set_input2, so an older .so still runs without throwing.
+    static bool _setInput2Missing;
+    public static void SetInput(uint buttons, short lx, short ly, short rx, short ry, short lt, short rt)
+    {
+        if (!Available) return;
+        if (!_setInput2Missing)
+        {
+            try { _pdlr_set_input2(buttons, lx, ly, rx, ry, lt, rt); return; }
+            catch (EntryPointNotFoundException) { _setInput2Missing = true; }
+        }
         _pdlr_set_input(buttons, lx, ly, lt, rt);
     }
 

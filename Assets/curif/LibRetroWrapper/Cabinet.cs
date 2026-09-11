@@ -858,6 +858,7 @@ public class Cabinet
             LibretroScreenController libretroScreenController = newCRT.GetComponent<LibretroScreenController>();
 
             libretroScreenController.GameFile = gameFile;
+            libretroScreenController.GameVolumeDecibels = cbinfo.gameVolumeDecibels;
             libretroScreenController.PlayList = playList;
             libretroScreenController.CabEnvironment = coreEnvironment;
             libretroScreenController.SecondsToWaitToFinishLoad = timeToLoad;
@@ -876,6 +877,7 @@ public class Cabinet
             libretroScreenController.cabinet = this;
             libretroScreenController.Core = core;
             libretroScreenController.AnalogStick = cbinfo.input?.analogStick ?? false;
+            libretroScreenController.TwinStick = cbinfo.input?.twinStick ?? false;
             libretroScreenController.Persistent = persistent;
             libretroScreenController.LibretroInputDevices = libretroInputDevices;
 

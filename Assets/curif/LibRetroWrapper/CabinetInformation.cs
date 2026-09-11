@@ -36,6 +36,14 @@ public class CabinetInformation
     public string statefile = "state.nv";
     public Video video;// = new Video();
     public Audio audio;
+
+    // Per-cabinet gain for the emulated game audio, in decibels. 0 = unchanged, >0 boosts a
+    // soft game, <0 attenuates. Applied on the cabinet's own AudioSource (before the global
+    // Game mixer), so it is independent of and stacks with AGEBasic AUDIOGAMESETVOLUME.
+    // Clamped to [-40, +20] dB where it is applied (LibretroScreenController).
+    [YamlMember(Alias = "game-volume-decibels", ApplyNamingConventions = false)]
+    public float gameVolumeDecibels = 0f;
+
     public string md5sum;
     public string space = "1x1x2";
     public string core = "mame2003+";
@@ -54,8 +62,8 @@ public class CabinetInformation
     [YamlMember(Alias = "input", ApplyNamingConventions = false)]
     public InputInformation input = new();
 
-    // Per-cabinet input options. Currently consumed only by the Flycast HW core (core: flycast);
-    // the software cores (MAME/FBNeo) ignore it.
+    // Per-cabinet input options. Consumed by the Flycast HW core (core: flycast) and the Modelizer
+    // HW core (core: modelizer); the software cores (MAME/FBNeo) ignore it.
     public class InputInformation
     {
         // Route the analog thumbstick to the Dreamcast analog stick + analog triggers instead of
@@ -63,6 +71,13 @@ public class CabinetInformation
         // right for racing games (Sega Rally 2, etc.). See docs/AOJ_FlycastCore.md.
         [YamlMember(Alias = "analog-stick", ApplyNamingConventions = false)]
         public bool analogStick = false;
+
+        // Modelizer only: twin-stick cabinets (Cyber Troopers Virtual-On). Both Quest thumbsticks
+        // drive the game's two digital sticks (left → d-pad, right → the unused face diamond, which
+        // the core ORs onto its right stick); triggers = Shots, grips = Dashes. Mutually exclusive
+        // with analog-stick — twin-stick wins if both are set. See docs/modelizercore.md.
+        [YamlMember(Alias = "twin-stick", ApplyNamingConventions = false)]
+        public bool twinStick = false;
     }
 
     public CabinetAGEBasicInformation agebasic = new();

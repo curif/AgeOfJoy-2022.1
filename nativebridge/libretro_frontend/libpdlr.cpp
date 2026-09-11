@@ -338,7 +338,11 @@ std::mutex s_audioMutex;
 // consumer signals s_audioSpaceCv. A wait timeout keeps a stalled/idle consumer from freezing video
 // (falls back to the old drop path). s_backpressureMs<=0 disables it (old behavior).
 std::condition_variable s_audioSpaceCv;
-int  s_backpressureMs = 48;   // target buffered ms before the producer blocks (0 = off). Knob: backpressure.txt
+// Default OFF. Back-pressure exists only for Flycast-DC's ARM7/AICA sound-driver INIT race, which is
+// now fixed in the core (clean-throttle build) — so it earns nothing and costs a shallow, easily
+// starved audio buffer plus an in-retro_run producer stall. Cores with no such race (Modelizer, a
+// Model2 MAME fork) want the full buffer depth. Re-enable per-run via backpressure.txt if ever needed.
+int  s_backpressureMs = 0;    // target buffered ms before the producer blocks (0 = off). Knob: backpressure.txt
 
 // --- Boot governor: hard real-time cap on guest audio production --------------------------------
 // Measured on a dead boot (2026-07-04): in the first ~3 s the guest free-runs at up to 2.28x real
@@ -452,6 +456,8 @@ PFN_vkGetAndroidHardwareBufferPropertiesANDROID fpGetAhbProps = nullptr;  // on 
 VkCommandPool    blitPool    = VK_NULL_HANDLE;   // shared (blit is fence-serialized)
 VkCommandBuffer  blitCmd     = VK_NULL_HANDLE;
 VkFence          blitFence   = VK_NULL_HANDLE;
+bool             blitPending = false;   // pipelined fence: a blit was submitted and not yet waited
+int              blitPendingIdx = -1;   // buffer that pending blit wrote; published once its fence signals
 uint64_t         blitErr     = 0;
 uint64_t         lastBlitImageCount = 0;     // skip the blit when the core produced no new frame
 uint64_t         lastRbImageCount   = 0;     // same, for the CPU read-back path
@@ -566,6 +572,70 @@ VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL pdlr_GetInstanceProcAddr(VkInstance ins
     return vkGetInstanceProcAddr(instance, name);
 }
 
+// When the core provides NO negotiation create_device (the standard libretro-Vulkan model: the
+// FRONTEND owns device creation and the core queries it via GET_HW_RENDER_INTERFACE), libpdlr builds
+// the VkDevice itself — same as RetroArch's default path, plus the AHB import extensions our
+// zero-copy blit needs on the render device. Flycast-DC is the odd core that does its own; every
+// normal core (Modelizer, …) lands here.
+bool create_device_frontend_default(struct retro_vulkan_context* ctx)
+{
+    // 1. A graphics+compute queue family (the interface contract requires the core's queue to support
+    //    BOTH; Adreno exposes a single universal family that does).
+    uint32_t qfCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(vk.phys, &qfCount, nullptr);
+    if (!qfCount) { LOGE("[vk] frontend-default: no queue families"); return false; }
+    VkQueueFamilyProperties qfs[16];
+    if (qfCount > 16) qfCount = 16;
+    vkGetPhysicalDeviceQueueFamilyProperties(vk.phys, &qfCount, qfs);
+    const VkQueueFlags need = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;
+    uint32_t family = UINT32_MAX;
+    for (uint32_t i = 0; i < qfCount; ++i)
+        if ((qfs[i].queueFlags & need) == need) { family = i; break; }
+    if (family == UINT32_MAX) { LOGE("[vk] frontend-default: no graphics+compute queue family"); return false; }
+
+    const float prio = 1.0f;
+    VkDeviceQueueCreateInfo qci{ VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO };
+    qci.queueFamilyIndex = family;
+    qci.queueCount       = 1;
+    qci.pQueuePriorities = &prio;
+
+    // 2. Enable every feature the GPU supports — matches RetroArch's default device (the core logs
+    //    features as "supported, not enabled" and renders correctly under it, so the full supported
+    //    set is the safe superset). Core 1.0 features need no extensions to enable.
+    VkPhysicalDeviceFeatures features{};
+    vkGetPhysicalDeviceFeatures(vk.phys, &features);
+
+    // 3. On the zero-copy path the render device must carry the AHB import extensions so we can alias
+    //    the core's frame into an AndroidHardwareBuffer and hand it to Unity (same exts the shim
+    //    injects on the negotiation path).
+    const char* exts[8]; uint32_t n = 0;
+    if (s_zeroCopy) for (const char* e : kAhbDeviceExts) exts[n++] = e;
+
+    VkDeviceCreateInfo dci{ VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO };
+    dci.queueCreateInfoCount    = 1;
+    dci.pQueueCreateInfos       = &qci;
+    dci.enabledExtensionCount   = n;
+    dci.ppEnabledExtensionNames = n ? exts : nullptr;
+    dci.pEnabledFeatures        = &features;
+
+    VkDevice dev = VK_NULL_HANDLE;
+    VkResult r = vkCreateDevice(vk.phys, &dci, nullptr, &dev);
+    if (r != VK_SUCCESS) { LOGE("[vk] frontend-default vkCreateDevice failed (%d)", r); return false; }
+
+    VkQueue q = VK_NULL_HANDLE;
+    vkGetDeviceQueue(dev, family, 0, &q);
+
+    ctx->gpu                             = vk.phys;
+    ctx->device                          = dev;
+    ctx->queue                           = q;
+    ctx->queue_family_index              = family;
+    ctx->presentation_queue              = q;      // no surface — present queue == render queue
+    ctx->presentation_queue_family_index = family;
+    LOGI("[vk] frontend-default create_device OK: device=%p queue=%p family=%u exts=%u features=all-supported",
+         (void*)dev, (void*)q, family, n);
+    return true;
+}
+
 // Create our VkInstance, let the core build its VkDevice on it (negotiation), then context_reset.
 int create_vulkan_context()
 {
@@ -600,30 +670,35 @@ int create_vulkan_context()
     VkPhysicalDeviceProperties pp; vkGetPhysicalDeviceProperties(vk.phys, &pp);
     LOGI("[vk] gpu: %s", pp.deviceName);
 
-    if (!(vk.haveNego && vk.nego.create_device)) {
-        LOGE("[vk] core provided no negotiation create_device — frontend-default not implemented");
-        return -1;
-    }
     struct retro_vulkan_context ctx; memset(&ctx, 0, sizeof(ctx));
-    VkPhysicalDeviceFeatures features; memset(&features, 0, sizeof(features));
-    // 2c: ask the core to enable the AHB-import extensions on the device it builds, so we can
-    // allocate an AHB-backed image on THAT device and blit the core's frame into it. The KHR deps
-    // (external_memory, ycbcr, dedicated_allocation, bind_memory2, get_memory_requirements2) are
-    // core in Vulkan 1.1. queue_family_foreign is a required dep of the AHB extension. For a plain
-    // RGBA8 (non-external-format) AHB no samplerYcbcrConversion *feature* is needed.
-    const char* reqExts[] = {
-        "VK_ANDROID_external_memory_android_hardware_buffer",
-        "VK_EXT_queue_family_foreign",
-    };
-    // Pass the shim get_instance_proc_addr on the zero-copy path so the core's vkCreateDevice gets
-    // our AHB extensions injected (Flycast ignores required_device_extensions, so we also pass them
-    // directly as a courtesy for cores that DO honor them).
-    bool ok = vk.nego.create_device(&ctx, vk.instance, vk.phys, VK_NULL_HANDLE /*surface*/,
-                                    s_zeroCopy ? pdlr_GetInstanceProcAddr : vkGetInstanceProcAddr,
-                                    s_zeroCopy ? reqExts : nullptr,
-                                    s_zeroCopy ? (unsigned)(sizeof(reqExts)/sizeof(reqExts[0])) : 0,
-                                    nullptr, 0, &features);
-    if (!ok) { LOGE("[vk] core create_device returned FALSE"); return -1; }
+    if (vk.haveNego && vk.nego.create_device) {
+        // Negotiation path: the core builds the VkDevice (Flycast-DC). On the zero-copy path we hand
+        // it the AHB-injecting shim proc-addr so its vkCreateDevice picks up our extensions.
+        // 2c: ask the core to enable the AHB-import extensions on the device it builds, so we can
+        // allocate an AHB-backed image on THAT device and blit the core's frame into it. The KHR deps
+        // (external_memory, ycbcr, dedicated_allocation, bind_memory2, get_memory_requirements2) are
+        // core in Vulkan 1.1. queue_family_foreign is a required dep of the AHB extension. For a plain
+        // RGBA8 (non-external-format) AHB no samplerYcbcrConversion *feature* is needed.
+        VkPhysicalDeviceFeatures features; memset(&features, 0, sizeof(features));
+        const char* reqExts[] = {
+            "VK_ANDROID_external_memory_android_hardware_buffer",
+            "VK_EXT_queue_family_foreign",
+        };
+        // Pass the shim get_instance_proc_addr on the zero-copy path so the core's vkCreateDevice gets
+        // our AHB extensions injected (Flycast ignores required_device_extensions, so we also pass them
+        // directly as a courtesy for cores that DO honor them).
+        bool ok = vk.nego.create_device(&ctx, vk.instance, vk.phys, VK_NULL_HANDLE /*surface*/,
+                                        s_zeroCopy ? pdlr_GetInstanceProcAddr : vkGetInstanceProcAddr,
+                                        s_zeroCopy ? reqExts : nullptr,
+                                        s_zeroCopy ? (unsigned)(sizeof(reqExts)/sizeof(reqExts[0])) : 0,
+                                        nullptr, 0, &features);
+        if (!ok) { LOGE("[vk] core create_device returned FALSE"); return -1; }
+        LOGI("[vk] core negotiation create_device OK");
+    } else {
+        // Standard libretro-Vulkan model: no core create_device, so the frontend owns the device.
+        // The core reads it back via GET_HW_RENDER_INTERFACE (Modelizer, and every normal core).
+        if (!create_device_frontend_default(&ctx)) return -1;
+    }
     vk.phys        = ctx.gpu;
     vk.device      = ctx.device;
     vk.queue       = ctx.queue;
@@ -930,8 +1005,38 @@ void     RETRO_CALLCONV input_poll_cb(void) {}
 volatile uint32_t s_buttons  = 0;   // bit N == RETRO_DEVICE_ID_JOYPAD_N
 volatile int16_t  s_analogLX = 0;
 volatile int16_t  s_analogLY = 0;
+volatile int16_t  s_analogRX = 0;   // right analog stick X (twin-stick cores, e.g. m2-vk Virtual-On); 0 for Flycast
+volatile int16_t  s_analogRY = 0;   // right analog stick Y
 volatile int16_t  s_triggerL = 0;   // Dreamcast left  analog trigger (L2), [0, 0x7fff]
 volatile int16_t  s_triggerR = 0;   // Dreamcast right analog trigger (R2), [0, 0x7fff]
+
+// Pipelined blit fence (see blit_frame). ON only for the m2-vk Model 1/2 core, whose heavier GPU load
+// benefits from overlapping the blit-completion wait with CPU emulation. OFF for Flycast and every
+// other core — they keep the proven immediate-wait blit, byte-for-byte the shipping field path. Keyed
+// off an "m2" core-name test at load. (A former sibling flag, s_arcadeRemap — the debug-quad
+// Y→coin/A→accel/B→brake synthesis — was removed once C# began sending honest positional bits on
+// both the cabinet and quad paths; it double-mapped them. This blit flag is real and independent, so
+// it stayed.) Set at load.
+bool s_pipelineBlit = false;
+
+// Frame orientation correction (see blit_frame). ON only for the m2-vk Model 1/2 core, which writes
+// its framebuffer 180° from Flycast's canonical orientation (mirrored + upside down on the quad).
+// We correct it in the blit by reversing the source offsets on both axes — free, since m2's
+// B8G8R8A8 already takes the vkCmdBlitImage branch — so the core stays intact and the whole
+// downstream crop/shader convention is unchanged. Flycast (R8G8B8A8 copy path) never enters there.
+// Set at load; keyed off the same "m2" core-name test as s_pipelineBlit.
+bool s_flip180 = false;
+
+// Native-sized zero-copy buffer (see blit_frame). ON only for the m2-vk Model 1/2 core, whose boards
+// run at a fixed native resolution per game (Model 2 496x384, System 22 640x480, System 21 496x480).
+// We allocate the AHB buffer at that native frame instead of the fixed kCeilW/kCeilH ceiling, so the
+// frame FILLS the buffer: no black margin, no UV crop, and the screen shader samples native pixels
+// (the CRT material ignores the _MainTex_ST crop, so a sub-buffer frame would otherwise sit in a
+// corner). OFF for Flycast and every other core — DC titles change resolution mid-run (Soul Calibur
+// 640x239 boot -> 640x480), which the fixed ceiling + per-frame crop is built to absorb; the one-shot
+// AHB import here cannot resize. So this is not merely additive-safe for Flycast, it is correct only
+// for fixed-resolution boards. Set at load; keyed off the same "m2" core-name test as s_flip180.
+bool s_nativeBuffer = false;
 
 // Per-port maple device, applied at content load (pdlr_set_port_device, pre-start). Default: 4
 // JOYPADs — the RetroArch maple parity that gates NAOMI audio init; a gun cabinet flips port 0.
@@ -948,12 +1053,23 @@ int16_t  RETRO_CALLCONV input_state_cb(unsigned port, unsigned device, unsigned 
 {
     if (port != 0) return 0;
     if (device == RETRO_DEVICE_JOYPAD) {
-        if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t)s_buttons;  // bulk query
-        return (s_buttons >> id) & 1u;
+        // Honest positional RetroPad. Every core (Flycast, m2-vk) maps these ids to per-game controls
+        // itself; the frontend forwards the bits as C# sends them. (A debug-quad arcade remap once
+        // synthesized coin/accel/brake here for the Model2 core when the quad sent only A/B/X/Y — it
+        // was removed once C# began sending positional coin/accel/brake, which it double-mapped.)
+        uint32_t bits = s_buttons;
+        if (id == RETRO_DEVICE_ID_JOYPAD_MASK) return (int16_t)bits;  // bulk query
+        return (bits >> id) & 1u;
     }
     if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_LEFT) {
         if (id == RETRO_DEVICE_ID_ANALOG_X) return s_analogLX;
         if (id == RETRO_DEVICE_ID_ANALOG_Y) return s_analogLY;
+    }
+    // Right analog stick — twin-stick cores (m2-vk Virtual-On). Stays 0 for Flycast, which only ever
+    // pushes the left stick through pdlr_set_input, so this returns the same 0 the old fall-through did.
+    if (device == RETRO_DEVICE_ANALOG && index == RETRO_DEVICE_INDEX_ANALOG_RIGHT) {
+        if (id == RETRO_DEVICE_ID_ANALOG_X) return s_analogRX;
+        if (id == RETRO_DEVICE_ID_ANALOG_Y) return s_analogRY;
     }
     // Dreamcast analog triggers (racing games). Flycast reads L2/R2 as ANALOG_BUTTON and *2s them
     // to the 0..0xffff trigger range; a value of 0 makes it fall back to the digital L2/R2 bit.
@@ -1025,6 +1141,9 @@ bool load_and_bind(const char* core_path)
     g.retro_get_system_info(&info);
     if (info.library_name)    snprintf(g.name,    sizeof(g.name),    "%s", info.library_name);
     if (info.library_version) snprintf(g.version, sizeof(g.version), "%s", info.library_version);
+    s_pipelineBlit = (strstr(g.name, "m2") != nullptr);  // m2-vk → pipelined blit fence; others immediate-wait
+    s_flip180      = (strstr(g.name, "m2") != nullptr);  // m2-vk writes 180° from canonical; corrected in blit_frame
+    s_nativeBuffer = (strstr(g.name, "m2") != nullptr);  // m2-vk boards are fixed-res → native-sized AHB, no crop
     LOGI("load_and_bind: core='%s' v'%s' api=%u exts='%s' need_fullpath=%d",
          g.name, g.version, g.retro_api_version(), info.valid_extensions ? info.valid_extensions : "",
          info.need_fullpath);
@@ -1138,8 +1257,10 @@ bool ensure_ahb_buffers(int w, int h)
 {
     if (bufs[0].image != VK_NULL_HANDLE && ahbW == w && ahbH == h) return true;
     if (bufs[0].image != VK_NULL_HANDLE) {
-        // Should never happen now — callers pass the fixed kCeilW/kCeilH ceiling, so w/h are constant
-        // and this early-returns above. Kept as a guard: the import is one-shot; never silently resize.
+        // Should never happen: callers pass constant dims per run — the fixed kCeilW/kCeilH ceiling, or
+        // (s_nativeBuffer) a fixed-resolution board's own frame size — so w/h don't change after the
+        // first alloc and this early-returns above. Kept as a guard: the import is one-shot; never
+        // silently resize (a hypothetical mid-run native-res change would land here and keep the first).
         LOGE("[ahb] unexpected size change %dx%d -> %dx%d after alloc; keeping original", ahbW, ahbH, w, h);
         return true;
     }
@@ -1206,14 +1327,37 @@ bool ensure_ahb_buffers(int w, int h)
 void blit_frame()
 {
     if (!vk.contextReady || !vk.haveImage || frameW <= 0 || frameH <= 0) return;
+
+    // Pipelined fence (m2-vk only, gated by s_pipelineBlit): retire the PREVIOUS blit here rather than
+    // immediately after submitting it. Between that submit and now the pump ran retro_run + display-
+    // pacing, during which the GPU drained the blit — so this wait is normally ~0, and the fence stall
+    // Model2's heavier GPU load used to add to the critical path (retro_run + blit serialized → sub-
+    // realtime → audio underrun) is now overlapped with CPU emulation. Publishing moves here too: C#
+    // sees the buffer one display frame later, fully rendered. Flycast and every other core skip this
+    // block entirely (they take the immediate-wait path below). Shutdown's vkDeviceWaitIdle drains any
+    // still-pending blit safely.
+    if (s_pipelineBlit && blitPending) {
+        vkWaitForFences(vk.device, 1, &blitFence, VK_TRUE, UINT64_MAX);
+        blitPending = false;
+        bufs[blitPendingIdx].firstUse = false;
+        readyIdx = blitPendingIdx;                 // publish the now-complete buffer
+    }
+
     if (vk.imageCount == lastBlitImageCount) return;   // no new core frame — ready buffer still current
     VkImage src = vk.lastImage.create_info.image;
     if (src == VK_NULL_HANDLE) return;
-    // Buffers are the fixed ceiling, not the current frame — the active frame may be smaller (and may
-    // change over the run). The active region is copied into the top-left; C# crops to it.
-    if (!ensure_ahb_buffers(kCeilW, kCeilH)) return;
-    const uint32_t copyW = (uint32_t)((frameW < kCeilW) ? frameW : kCeilW);
-    const uint32_t copyH = (uint32_t)((frameH < kCeilH) ? frameH : kCeilH);
+    // Buffer sizing. Two regimes:
+    //  - Fixed ceiling (Flycast, default): the AHB is kCeilW×kCeilH; the active frame may be smaller and
+    //    may change over the run, so it is copied into a corner and C# UV-crops to it.
+    //  - Native (s_nativeBuffer, m2-vk): the AHB is the game's own fixed native frame, so the copy fills
+    //    it edge to edge — no margin, no crop, native pixels straight to the screen shader.
+    // ensure_ahb_buffers is one-shot; both regimes pass constant dims per run (kCeil is constant; a
+    // fixed-res board's frameW/frameH is too), so it early-returns after the first allocation.
+    const int bufW = s_nativeBuffer ? frameW : kCeilW;
+    const int bufH = s_nativeBuffer ? frameH : kCeilH;
+    if (!ensure_ahb_buffers(bufW, bufH)) return;
+    const uint32_t copyW = (uint32_t)((frameW < bufW) ? frameW : bufW);
+    const uint32_t copyH = (uint32_t)((frameH < bufH) ? frameH : bufH);
 
     AhbBuf& b   = bufs[writeIdx];
     VkImage dst = b.image;
@@ -1243,18 +1387,46 @@ void blit_frame()
     vkCmdPipelineBarrier(blitCmd, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                          0, 0, nullptr, 0, nullptr, 2, pre);
 
-    VkImageCopy region{};
-    region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-    region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
-    // BOTTOM-left, not top-left: C#'s UV crop (ApplyZeroCopyCrop) samples the V band [1-av, 1] and
-    // the external texture turned out to sample V UNflipped (Soul Calibur 640x239 boot showed the
+    // The AHB is R8G8B8A8_UNORM (== Unity RGBA32). vkCmdCopyImage is a RAW byte copy — it does NOT
+    // convert component order, so a core whose frame is a different channel order (Modelizer delivers
+    // B8G8R8A8_UNORM) would land R/B-swapped ("blue is orange"). When the core's format already
+    // matches the AHB (Flycast delivers R8G8B8A8) the copy is identity and we keep it (proven path,
+    // zero conversion cost). When it differs we blit instead: vkCmdBlitImage converts by LOGICAL
+    // component (blue stays blue), and both formats support blit-src/blit-dst on Adreno. NEAREST at
+    // 1:1 so there is no scaling/filtering — a converting copy in all but name.
+    //
+    // BOTTOM-left, not top-left, in both paths: C#'s UV crop (ApplyZeroCopyCrop) samples the V band
+    // [1-av, 1] and the external texture samples V UNflipped (Soul Calibur 640x239 boot showed the
     // stale bottom half of the previous full frame; HotD2's 479-line frames left a never-written
-    // white row at the bottom). Placing the active band at the bottom makes the written band and
-    // the sampled band coincide; identity for full-height frames.
-    region.dstOffset = { 0, (int32_t)(ahbH - (int)copyH), 0 };
-    region.extent = { copyW, copyH, 1 };
-    vkCmdCopyImage(blitCmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    // white row at the bottom). Placing the active band at the bottom makes the written band and the
+    // sampled band coincide; identity for full-height frames.
+    if (vk.lastImage.create_info.format == VK_FORMAT_R8G8B8A8_UNORM) {
+        VkImageCopy region{};
+        region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+        region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+        region.dstOffset = { 0, (int32_t)(ahbH - (int)copyH), 0 };
+        region.extent = { copyW, copyH, 1 };
+        vkCmdCopyImage(blitCmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                       dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    } else {
+        VkImageBlit region{};
+        region.srcSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+        region.dstSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+        // s_flip180 (m2-vk): reverse the source X and Y so dst top-left ← src bottom-right — a 180°
+        // flip that lands m2's mirrored+upside-down frame in Flycast's canonical orientation. The dst
+        // band is untouched, so C#'s UV crop convention is unaffected. Off for every other core.
+        if (s_flip180) {
+            region.srcOffsets[0] = { (int32_t)copyW, (int32_t)copyH, 0 };
+            region.srcOffsets[1] = { 0, 0, 1 };
+        } else {
+            region.srcOffsets[0] = { 0, 0, 0 };
+            region.srcOffsets[1] = { (int32_t)copyW, (int32_t)copyH, 1 };
+        }
+        region.dstOffsets[0] = { 0, (int32_t)(ahbH - (int)copyH), 0 };
+        region.dstOffsets[1] = { (int32_t)copyW, (int32_t)ahbH, 1 };
+        vkCmdBlitImage(blitCmd, src, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                       dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_NEAREST);
+    }
 
     // restore core image; dst -> SHADER_READ (the layout Unity's imported image expects)
     sb.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL; sb.newLayout = vk.lastImage.image_layout;
@@ -1273,10 +1445,20 @@ void blit_frame()
     VkResult r = vkQueueSubmit(vk.queue, 1, &si, blitFence);
     vk.queueMutex.unlock();
     if (r != VK_SUCCESS) { if ((blitErr++ % 120) == 0) LOGE("[ahb] blit vkQueueSubmit failed %d", r); return; }
-    vkWaitForFences(vk.device, 1, &blitFence, VK_TRUE, UINT64_MAX);   // buffer is complete before we publish it
-    b.firstUse = false;
-    readyIdx  = writeIdx;                       // publish: C# displays this buffer
-    writeIdx  = (writeIdx + 1) % kNumBuf;       // next blit targets a different buffer
+    if (s_pipelineBlit) {
+        // m2-vk only: do NOT wait here — the fence is retired at the top of the NEXT call (pipelined).
+        // This buffer's firstUse clear and readyIdx publish happen there, once the GPU has finished it.
+        blitPending    = true;
+        blitPendingIdx = writeIdx;
+        writeIdx       = (writeIdx + 1) % kNumBuf;   // next blit targets a different buffer
+    } else {
+        // Flycast and every other core: the proven, shipping path — block on the blit, then publish
+        // this buffer. Byte-for-byte the pre-pipelining behavior; nothing already in the field changes.
+        vkWaitForFences(vk.device, 1, &blitFence, VK_TRUE, UINT64_MAX);   // buffer complete before publish
+        b.firstUse = false;
+        readyIdx   = writeIdx;                       // publish: C# displays this buffer
+        writeIdx   = (writeIdx + 1) % kNumBuf;       // next blit targets a different buffer
+    }
     lastBlitImageCount = vk.imageCount;
 }
 
@@ -1844,8 +2026,9 @@ int pdlr_frame_size(int* out_w, int* out_h)
     return 0;
 }
 
-// The fixed AHB/external-texture dimensions (kCeilW/kCeilH). C# sizes its external Texture2D to this,
-// not to the active frame, and UV-crops the active sub-rect (pdlr_frame_size) within it.
+// The actual allocated AHB/external-texture dimensions (ahbW/ahbH): the kCeilW/kCeilH ceiling by
+// default, or the game's native frame under s_nativeBuffer. C# sizes its external Texture2D to this and
+// UV-crops the active sub-rect (pdlr_frame_size) within it — a no-op when native == active == buffer.
 int pdlr_buffer_size(int* out_w, int* out_h)
 {
     if (ahbW <= 0 || ahbH <= 0) return -1;
@@ -1897,11 +2080,29 @@ int pdlr_frame_count(void) { return (int)vk.imageCount; }
 
 void pdlr_set_input(uint32_t buttons, int16_t lx, int16_t ly, int16_t lt, int16_t rt)
 {
+    // DEBUG: log every button edge so we can confirm C# is actually delivering gamepad input (a
+    // release build swallows Debug.Log, but this native line always reaches logcat). Absence of any
+    // [input] line while pressing == Gamepad.current is null on the C# side.
+    static uint32_t s_lastInputLogged = 0xffffffffu;
+    if (buttons != s_lastInputLogged) {
+        LOGI("[input] rx buttons=0x%04x lx=%d ly=%d lt=%d rt=%d (positional RetroPad)",
+             buttons, (int)lx, (int)ly, (int)lt, (int)rt);
+        s_lastInputLogged = buttons;
+    }
     s_buttons  = buttons;
     s_analogLX = lx;
     s_analogLY = ly;
     s_triggerL = lt;
     s_triggerR = rt;
+}
+
+// Twin-stick variant: adds the right analog stick (rx/ry). The 5-arg pdlr_set_input above is kept for
+// Flycast (and any caller that predates this) and simply implies rx=ry=0 — see the forwarder below.
+void pdlr_set_input2(uint32_t buttons, int16_t lx, int16_t ly, int16_t rx, int16_t ry, int16_t lt, int16_t rt)
+{
+    pdlr_set_input(buttons, lx, ly, lt, rt);   // buttons + left stick + triggers + the edge log
+    s_analogRX = rx;
+    s_analogRY = ry;
 }
 
 void pdlr_set_port_device(unsigned port, unsigned device)
@@ -1970,6 +2171,7 @@ void pdlr_shutdown(void)
         bufs[i].firstUse = true;
     }
     fpGetAhbProps = nullptr; ahbW = ahbH = 0; writeIdx = 0; readyIdx = -1;
+    blitPending = false; blitPendingIdx = -1;   // pipelined-fence state — next game starts fresh
     lastBlitImageCount = 0; lastRbImageCount = 0;
     rbMapped = nullptr; rbReady = false; rbW = rbH = 0; frameW = frameH = 0;
 
@@ -1998,7 +2200,7 @@ void pdlr_shutdown(void)
     vk.semaphores = nullptr; vk.numSemaphores = 0; vk.srcQueueFamily = 0;
 
     s_systemDir[0] = 0; s_saveDir[0] = 0; s_gameDir[0] = 0;
-    s_buttons = 0; s_analogLX = 0; s_analogLY = 0; s_triggerL = 0; s_triggerR = 0;
+    s_buttons = 0; s_analogLX = 0; s_analogLY = 0; s_analogRX = 0; s_analogRY = 0; s_triggerL = 0; s_triggerR = 0;
     s_optOverrides.clear();   // next game re-declares its own overrides before pdlr_start
     for (unsigned p = 0; p < 4; ++p) s_portDevice[p] = RETRO_DEVICE_JOYPAD;   // next game starts pad-only
     s_lgX = -0x7fff; s_lgY = -0x7fff; s_lgOffscreen = 1; s_lgButtons = 0;
