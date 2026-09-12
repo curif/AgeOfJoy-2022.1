@@ -33,6 +33,13 @@ public class CabinetAutoReload : MonoBehaviour
     private const string MetadataFileName = "metadata.yaml";
     private const string TextureCacheExtension = ".aojv1";
 
+    // Legacy drop-a-zip workflow: a test.zip left in the (uncompressed) cabinets/ folder is
+    // extracted into cabinetsdb/<name> and deployed, same as calling WORKSHOPRELOAD("<name>").
+    // Kept alongside the folder-watch mechanism above - both are valid ways to push a cabinet in.
+    private const string ZipCabinetFileName = "test.zip";
+    private CabinetDBAdmin cabinetDBAdmin;
+    private string ZipCabinetFile => Path.Combine(ConfigManager.Cabinets, ZipCabinetFileName);
+
     private string currentCabinetName;
 
     private Coroutine mainCoroutine;
@@ -108,6 +115,37 @@ public class CabinetAutoReload : MonoBehaviour
         return true;
     }
 
+    // Handles a test.zip dropped in cabinets/: extracts it into cabinetsdb/<name> and then
+    // hands off to RequestReload(name), which has the exact same effect as an AGEBasic
+    // WORKSHOPRELOAD("<name>") call - it switches the workshop slot to that cabinet (persisting
+    // the choice) if it's a different one, or just redeploys it if it's already the active one.
+    private void HandleZipDrop()
+    {
+        string zipPath = ZipCabinetFile;
+        string name = CabinetDBAdmin.GetNameFromPath(zipPath);
+        ConfigManager.WriteConsole($"[CabinetAutoReload] '{ZipCabinetFileName}' detected, loading cabinet '{name}' from zip");
+
+        string extractedPath;
+        try
+        {
+            extractedPath = cabinetDBAdmin.loadCabinetFromZip(zipPath);
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleException($"[CabinetAutoReload] ERROR loading zip file {zipPath}", ex);
+            writeGenericException(name, "ERROR loading zip file", ex);
+            return;
+        }
+
+        if (string.IsNullOrEmpty(extractedPath))
+        {
+            ConfigManager.WriteConsoleError($"[CabinetAutoReload] ERROR loading zip file {zipPath}");
+            return;
+        }
+
+        RequestReload(name);
+    }
+
     void Start()
     {
         ConfigManager.WriteConsole($"[CabinetAutoReload] start ");
@@ -125,6 +163,10 @@ public class CabinetAutoReload : MonoBehaviour
         }
 
         activeInstance = this;
+
+        cabinetDBAdmin = GameObject.Find("FixedObject")?.GetComponent<CabinetDBAdmin>();
+        if (cabinetDBAdmin == null)
+            ConfigManager.WriteConsole("[CabinetAutoReload] WARNING: CabinetDBAdmin not found, test.zip auto-load disabled");
 
         mainCoroutine = StartCoroutine(reload());
         initialized = true;
@@ -154,6 +196,11 @@ public class CabinetAutoReload : MonoBehaviour
 
         while (true)
         {
+            if (!reloadRequested && cabinetDBAdmin != null && File.Exists(ZipCabinetFile))
+            {
+                HandleZipDrop();
+            }
+
             if (reloadRequested)
             {
                 reloadRequested = false;
