@@ -45,6 +45,70 @@ Flycast bundles its own third-party dependencies under `core/deps/` (libchdr, vi
 glslang, VulkanMemoryAllocator, and others). Their licenses and notices travel with the Flycast
 source linked above.
 
+### Modelizer (`libmodelizer_libretro_android.so`)
+
+Modelizer is a Vulkan-accelerated libretro core for Sega Model 1, Sega Model 2, and Namco
+System 21/22/23 hardware. It is a **derivative work of MAME**.
+
+- **Copyright** © 1997-2026 MAMEdev and contributors. New files added by Modelizer are
+  © mcwild77 and carry MAME's own `// license:BSD-3-Clause` header.
+- **License:** GNU General Public License, version 2 or (at your option) any later version
+  (**GPL-2.0-or-later**). That is the license MAME's `COPYING` gives MAME as a whole. The
+  individual source files compiled into this core are under less restrictive, GPL-compatible
+  licenses: almost all are BSD-3-Clause, two are LGPL-2.1-or-later (`src/devices/imagedev/mfmhd.cpp`,
+  `src/lib/formats/rpk.cpp`), and a few are MIT, zlib, or public domain. No GPL-2.0-only file is
+  compiled in.
+- **Upstream:** https://github.com/mamedev/mame
+- **Base:** upstream release tag `mame0289`.
+- **MODIFIED BY US.** Yes. The changes add a new libretro OSD layer and Vulkan renderer under
+  `src/osd/libretro_m2/`, a `modelizer` build target (`scripts/target/mame/modelizer.lua`,
+  `src/mame/modelizer.flt`), and small hooks in upstream driver and device files. Most hooks are
+  guarded by `#ifdef M2VK`. They are in the Sega Model 1/2, Namco System 21/22/23, JVS, H8, i8251 and
+  SCSP sources, plus `src/frontend/mame/mame.cpp` and `src/osd/modules/lib/osdlib_unix.cpp`.
+  Against `mame0289` the change touches 143 files, with 53,232 insertions and 86 deletions. All but
+  30 of those files are new files under `src/osd/libretro_m2/`.
+- **The shipped binary was built from `f12f983269d`.** It reports
+  `0.289 (mame0289-2-gf12f983269d)` through `retro_get_system_info`, and its SHA-256 (stripped) is
+  `24faf65113df89eadfc33dfb6058f1476e6807e7d6add66ab598afd6585510a2`
+- **Complete corresponding source** for the binary we distribute:
+  https://github.com/mcwild77/modelizer-aoj/tree/f12f983269d (public; the commit is on branch `main`).
+  Build instructions are in `BUILDING.md` and `build-android.sh` at that commit.
+- **Full license texts** (GPL-2.0, LGPL-2.1, BSD-3-Clause, BSD-2-Clause, MIT, Zlib, BSL-1.0, CC0)
+  are in `COPYING` and `docs/legal/` at the source commit above.
+
+Required notices, reproduced from MAME's `COPYING`:
+
+> MAME is a registered trademark of Gregory Ember. Other trademarks are property of their
+> respective owners.
+>
+> MAME as a whole is made available under the terms of the GNU General Public License. Individual
+> source files may be made available under less restrictive licenses, as noted in their respective
+> header comments.
+>
+> MAME
+> Copyright (c) 1997-2026 MAMEdev and contributors
+>
+> This program is free software; you can redistribute it and/or modify it under the terms of the
+> GNU General Public License version 2, as provided in docs/legal/GPL-2.0.
+>
+> This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+> without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+> GNU General Public License for more details.
+>
+> This software is based in part on the work of the Independent JPEG Group.
+
+MAME's bundled third-party libraries are statically linked into the core. They include zlib,
+libjpeg, FLAC, LZMA, zstd, expat, Lua, SQLite, utf8proc, asmjit, SoftFloat 3, ymfm and WDL FFT, and
+all are under permissive licenses (zlib, IJG, BSD, MIT, or public domain). Each one's license and
+notices ship with its source under `3rdparty/` at the commit above. The core also carries its own
+copy of the MIT-licensed libretro API headers (see the libretro section below).
+
+**Trademark and affiliation.** "MAME" is used here only to identify where the code comes from.
+Modelizer and Age of Joy are not affiliated with or endorsed by MAMEdev or Gregory Ember. The core
+presents itself to the frontend as `modelizer`, and neither the core nor Age of Joy uses the MAME
+name or logo as a product name. "Sega", "Model 2", "Namco" and "System 22" are trademarks of their
+respective owners and are used only to describe the hardware emulated.
+
 ---
 
 ## Native code written for Age of Joy
