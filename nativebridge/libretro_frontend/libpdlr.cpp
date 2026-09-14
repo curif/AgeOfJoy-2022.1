@@ -1141,9 +1141,11 @@ bool load_and_bind(const char* core_path)
     g.retro_get_system_info(&info);
     if (info.library_name)    snprintf(g.name,    sizeof(g.name),    "%s", info.library_name);
     if (info.library_version) snprintf(g.version, sizeof(g.version), "%s", info.library_version);
-    s_pipelineBlit = (strstr(g.name, "m2") != nullptr);  // m2-vk → pipelined blit fence; others immediate-wait
-    s_flip180      = (strstr(g.name, "m2") != nullptr);  // m2-vk writes 180° from canonical; corrected in blit_frame
-    s_nativeBuffer = (strstr(g.name, "m2") != nullptr);  // m2-vk boards are fixed-res → native-sized AHB, no crop
+    // The Model 1/2 core reports library_name "modelizer" (was "m2-vk" before 2026-09-10); match both.
+    const bool isModelizer = strstr(g.name, "modelizer") != nullptr || strstr(g.name, "m2") != nullptr;
+    s_pipelineBlit = isModelizer;  // pipelined blit fence; others immediate-wait
+    s_flip180      = isModelizer;  // core writes 180° from canonical; corrected in blit_frame
+    s_nativeBuffer = isModelizer;  // fixed-res boards → native-sized AHB, no crop
     LOGI("load_and_bind: core='%s' v'%s' api=%u exts='%s' need_fullpath=%d",
          g.name, g.version, g.retro_api_version(), info.valid_extensions ? info.valid_extensions : "",
          info.need_fullpath);
