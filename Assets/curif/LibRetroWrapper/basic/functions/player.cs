@@ -16,8 +16,10 @@ class CommandFunctionPLAYERGETHEIGHT : CommandFunctionNoExpressionBase
         AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] ");
         if (config?.Player == null)
             return new BasicValue(0);
-        float height = config.Player.CameraYOffset;
-        ConfigManager.WriteConsole($"[PLAYERGETHEIGHT] get player height is {height}");
+        // Measured eye height above the virtual floor (tracked headset height, CameraOffset scale
+        // and any PLAYERSETHEIGHT override included), so a save/restore round trip is exact.
+        float height = config.Player.MeasuredEyeHeight;
+        ConfigManager.WriteConsole($"[PLAYERGETHEIGHT] measured player eye height is {height}");
 
         return new BasicValue(height);
     }
@@ -42,10 +44,10 @@ class CommandFunctionPLAYERSETHEIGHT : CommandFunctionSingleExpressionBase
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNumber(val, "Player height");
         float playerHeight = (float)val.GetValueAsNumber();
-        config.Player.CameraYOffset = playerHeight;
-        ConfigManager.WriteConsole($"[PLAYERSETHEIGHT] SEt player height to {playerHeight}");
-        //config.Player.CameraYOffset = playerHeight;
-        //config.Player.ForceHeight(playerHeight);
+        // Dynamic snap: eyes land exactly at playerHeight above the floor for every player.
+        // Does not touch the configured (config cabinet) height.
+        config.Player.SetEyeHeightOverride(playerHeight);
+        ConfigManager.WriteConsole($"[PLAYERSETHEIGHT] set player eye height to {playerHeight}");
 
         return new BasicValue(1);
     }

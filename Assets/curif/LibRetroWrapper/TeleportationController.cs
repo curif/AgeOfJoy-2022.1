@@ -66,6 +66,12 @@ public class TeleportationController : MonoBehaviour
             destinationPosition.z = sourcePosition.z;
             //moves the player
             player.transform.position = destinationPosition;
+
+            // A cabinet script (PLAYERSETHEIGHT) may have left an eye-height override behind
+            // (crashed or missing after-leave script); never carry it into another room.
+            PlayerController playerController = player.GetComponent<PlayerController>();
+            if (playerController != null)
+                playerController.ClearEyeHeightOverride();
         }
         else
         {
