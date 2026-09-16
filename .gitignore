@@ -120,13 +120,22 @@ ProjectSettings/ProjectVersion.txt
 # Lightmaps (EXR is high def, PNG is low def/direction)
 /[Aa]ssets/**/Lightmap-*.exr
 /[Aa]ssets/**/Lightmap-*.png
+/[Aa]ssets/**/Lightmap-*.exr.meta
+/[Aa]ssets/**/Lightmap-*.png.meta
 
 # Reflection Probes
 /[Aa]ssets/**/ReflectionProbe-*.exr
 /[Aa]ssets/**/ReflectionProbe-*.png
+/[Aa]ssets/**/ReflectionProbe-*.exr.meta
+/[Aa]ssets/**/ReflectionProbe-*.png.meta
 
 # Lighting Data Assets (Optional: Ignore if you want to force re-baking)
 /[Aa]ssets/**/LightingData.asset
+/[Aa]ssets/**/LightingData.asset.meta
+
+# Occlusion Culling bake data
+/[Aa]ssets/**/OcclusionCullingData.asset
+/[Aa]ssets/**/OcclusionCullingData.asset.meta
 
 # Global illumination cache (Specific to some Unity versions)
 /[Aa]ssets/**/GI/
