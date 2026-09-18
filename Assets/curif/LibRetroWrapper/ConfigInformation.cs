@@ -65,6 +65,7 @@ public class ConfigInformation
         public const float minHeight = 1.35f;
         public const float factorHeight = 0.05f;
         public const float minimalHeight = factorHeight * 2;
+        public const float offSet = 0.1f; 
 
         // Updated maxHeight to reflect the new tallest option (N=17)
         public const float maxHeight = minHeight + (17f * factorHeight); // Now 2.20f
@@ -93,12 +94,9 @@ public class ConfigInformation
               {"Colossus", maxHeight }                          // N=17 -> 2.20m (Using updated maxHeight)
           };
 
-        // Difference between a configured height and the average one. Informational only:
-        // in Floor tracking mode the rig must never be lifted statically by the configured height
-        // (see the height contract in PlayerController.cs); the headset supplies the eye height.
         public static float HeightCalculatorPlayerController(float height)
         {
-            return height - avgHeigh;
+            return height - avgHeigh + offSet;
         }
         public static Dictionary<string, float> Scales = new Dictionary<string, float>
         {

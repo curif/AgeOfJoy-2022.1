@@ -2,7 +2,7 @@
 #define XR_MODULE_AVAILABLE
 #endif
 
-//PROBLEM: the camera offset scale interfere with the teleportation system.
+//PROBLEM: the camera offset scale interfere with the teleportation system. 
 // https://github.com/curif/AgeOfJoy-2022.1/issues/237
 //#define ADJUST_SCALE
 
@@ -17,23 +17,6 @@ using System.Collections.Specialized;
 using UnityEditor.XR.LegacyInputHelpers;
 using static OVRHaptics;
 
-/*
-Player rig height contract (Floor tracking mode):
-
-  rig root (CharacterController, XROrigin)          <- rests on the virtual floor
-    PlayerControllerGameObject ("PlayerController")  <- eye-height OVERRIDE node, local Y = 0 by default
-      CameraOffset (XROrigin.CameraFloorOffsetObject, scale 0.9)  <- local Y = 0 in Floor mode
-        Main Camera                                   <- tracked pose, Y = eye height above the real floor
-
-In Floor mode the headset already reports the eye height above the Guardian floor, so the
-app must NOT add a static lift of its own: any local Y on the override node raises the
-player's real floor above the virtual floor by exactly that amount. The configured player
-height (config cabinet) therefore no longer moves the rig on device. The override node is
-reserved for scripted, dynamic eye-height snaps (AGEBasic PLAYERSETHEIGHT on sit-down
-cabinets), computed against the measured tracked height so they land the same for every
-player. In the editor (no HMD) the camera sits at local 0, and the configured height is used
-as a simulated eye height instead.
-*/
 public class PlayerController : MonoBehaviour
 {
     public GlobalConfiguration globalConfiguration;
@@ -44,15 +27,29 @@ public class PlayerController : MonoBehaviour
     public Transform cameraOffset; // Assign the CameraOffset GameObject
     public GameObject OVRPlayerGameObject; // Assign the root XR Origin (OVRPlayer)
 
+    private Coroutine coroutine;
+
+    private const float IntroGalleryPFMegaFloorY = 0.4826951f; //compensate. Same value that IntroGallery's PF MegaFloor.
+    
     [SerializeField]
     float cameraYOffset;
 
     private bool isListenerAdded = false;
+    /*
+    public float CameraYOffset
+    {
+        get => cameraYOffset;
+        set
+        {
+            cameraYOffset = value;
+            if (cameraYOffset > 0)
+                AdjustCameraYOffset();
+            else
+                changeToCalculatedFromFloor();
+        }
+    }
+    */
 
-    /// <summary>
-    /// Configured player height (config cabinet / global configuration). On device this is
-    /// informational only: the rig is not lifted by it (see the height contract above).
-    /// </summary>
     public float CameraYOffset
     {
         get => cameraYOffset;
@@ -75,6 +72,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    // public void JumpTo(Vector3 pos)
+    // {
+    //     Vector3 pos = new Vector3()
+    //     MoveCameraToWorldLocation
+    // }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -93,73 +96,67 @@ public class PlayerController : MonoBehaviour
 
         if (changeControls == null)
             changeControls = GetComponent<ChangeControls>();
-
+        
         OnEnable();
         change();
     }
-
-    /// <summary>
-    /// Current eye height above the rig origin (== above the virtual floor while the rig rests on
-    /// it). Includes the tracked headset height, the CameraOffset scale and any active override.
-    /// </summary>
-    public float MeasuredEyeHeight
+    public void ForceHeightBad3(float targetHeight)
     {
-        get
-        {
-            if (xrorigin != null && xrorigin.Camera != null)
-                return xrorigin.CameraInOriginSpaceHeight;
-            return PlayerControllerGameObject != null ? PlayerControllerGameObject.transform.localPosition.y : 0f;
-        }
+        // This is your real-world head height (headset Y relative to rig origin)
+        float cameraLocalY = Camera.main.transform.localPosition.y;
+
+        // Calculate how much to shift the rig to get the desired world height
+        float diff = targetHeight - cameraLocalY;
+
+        // Apply offset to XR Origin (root)
+        Vector3 pos = OVRPlayerGameObject.transform.position;
+        pos.y = diff; // Set absolute rig position so camera ends up at target height
+        OVRPlayerGameObject.transform.position = pos;
+
+        Debug.Log($"[ForceHeight] Target: {targetHeight:F2}, Local Camera Y: {cameraLocalY:F2}, Setting Rig Y to: {diff:F2}");
     }
 
-    /// <summary>
-    /// Eye height the player would have with no override applied (override node at local Y = 0).
-    /// </summary>
-    public float NaturalEyeHeight
+
+
+    public void ForceHeightBad2(float targetHeight)
     {
-        get
-        {
-            float overrideY = PlayerControllerGameObject != null ? PlayerControllerGameObject.transform.localPosition.y : 0f;
-            return MeasuredEyeHeight - overrideY;
-        }
+        // Get current world camera height
+        float currentCameraHeight = Camera.main.transform.position.y;
+
+        // Get the difference between current and target height
+        float diff = currentCameraHeight - targetHeight;
+
+        // Move the entire XR rig (PlayerController or root) downward to match the desired height
+        Vector3 localPos = PlayerControllerGameObject.transform.localPosition;
+        localPos.y -= diff;
+        PlayerControllerGameObject.transform.localPosition = localPos;
+
+        Debug.Log($"[ForceHeight] Target: {targetHeight:F2}, Current: {currentCameraHeight:F2}, Diff: {diff:F2}");
     }
 
-    /// <summary>
-    /// Dynamic eye-height snap used by AGEBasic PLAYERSETHEIGHT: places the player's eyes exactly
-    /// <paramref name="eyeHeight"/> meters above the virtual floor, whatever their real height.
-    /// Cleared by <see cref="ClearEyeHeightOverride"/> (room change, config reload).
-    /// </summary>
-    public void SetEyeHeightOverride(float eyeHeight)
+    public float GetHeightBAd()
     {
-        if (PlayerControllerGameObject == null)
-            return;
-
-        float target = Mathf.Max(eyeHeight, ConfigInformation.Player.minimalHeight);
-        Vector3 localPosition = PlayerControllerGameObject.transform.localPosition;
-        localPosition.y = target - NaturalEyeHeight;
-        PlayerControllerGameObject.transform.localPosition = localPosition;
-
-        ConfigManager.WriteConsole($"[PlayerController.SetEyeHeightOverride] eye height {target} natural: {NaturalEyeHeight} override Y: {localPosition.y}");
+        // Assumes the MainCamera is the HMD camera
+        return Camera.main.transform.localPosition.y;
     }
 
-    /// <summary>
-    /// Returns the override node to its baseline (0 on device; simulated eye height in the editor).
-    /// </summary>
-    public void ClearEyeHeightOverride()
+    //activate playerPositionDebug to debug the player behavior. Deactivate on production.
+    public void ForceHeightBad(float height)
     {
-        AdjustCameraYOffset();
-    }
+        //[AGE][PlayerController.ForceHeight] height: 1.261735 PlayerControllerGameObject: (0.00, -0.34, 0.00).Actual CameraYOffset(xrorigin):1.6
+        Vector3 playerControllerLocalPosition = PlayerControllerGameObject.transform.localPosition;
+        Vector3 cameraOffsetLocalPosition = xrorigin.CameraFloorOffsetObject.transform.localPosition;
+        float realHeight = cameraOffsetLocalPosition.y + playerControllerLocalPosition.y;
+        float diff = realHeight - height;
 
-    /// <summary>
-    /// Applies the configured player height. On device (Floor tracking) this resets the override
-    /// node to local Y = 0: the headset supplies the eye height and any static lift here would
-    /// float the player above the floor. In the editor the configured value simulates eye height.
-    /// </summary>
+        playerControllerLocalPosition.y -= diff;
+        PlayerControllerGameObject.transform.localPosition = playerControllerLocalPosition;
+        ConfigManager.WriteConsole($"[PlayerController.ForceHeight] height: {height} Player RealHeight: {realHeight} PlayerControllerGameObject: {PlayerControllerGameObject.transform.localPosition}. Actual CameraYOffset (xrorigin):{xrorigin.CameraYOffset}");
+     }
+
+    //activate playerPositionDebug to debug the player behavior. Deactivate on production.
     public void AdjustCameraYOffset()
     {
-        if (PlayerControllerGameObject == null)
-            return;
-
         Vector3 localPosition = PlayerControllerGameObject.transform.localPosition;
 
         if (cameraYOffset == 0)
@@ -169,16 +166,70 @@ public class PlayerController : MonoBehaviour
 
 #if UNITY_EDITOR
         ConfigInformation.Player.ShowHeightPlayers();
-        // No HMD: the camera sits at local 0, so the configured height stands in for the tracked eye height.
         localPosition.y = cameraYOffset;
 #else
-        // Floor tracking: never lift the rig statically (see the height contract at the top of this file).
-        localPosition.y = 0f;
+        ConfigManager.WriteConsole($"[PlayerController.AdjustCameraYOffset] actual cameraOfset transform: {cameraOffset.localPosition}");
+
+        /*
+        adjust the gameobject that controls the player position Y to a position that is the main floor Y (introgallery)
+        plus the difference between the average height and the height set by the user.
+        */
+        //localPosition.y = /*IntroGalleryPFMegaFloorY +*/ cameraYOffset - ConfigInformation.Player.avgHeigh ;
+        localPosition.y = ConfigInformation.Player.HeightCalculatorPlayerController(cameraYOffset);
 #endif
 
         PlayerControllerGameObject.transform.localPosition = localPosition;
-        ConfigManager.WriteConsole($"[PlayerController.AdjustCameraYOffset] configured height: {cameraYOffset} override node: {PlayerControllerGameObject.transform.localPosition} cameraOffset: {(cameraOffset != null ? cameraOffset.localPosition.ToString() : "?")} tracking: {(xrorigin != null ? xrorigin.CurrentTrackingOriginMode.ToString() : "?")}");
+        ConfigManager.WriteConsole($"[PlayerController.AdjustCameraYOffset] height: {cameraYOffset} PlayerControllerGameObject: {PlayerControllerGameObject.transform.localPosition}. Actual CameraYOffset (xrorigin):{xrorigin.CameraYOffset}");
+        
+
+        //if (coroutine == null)
+        //    coroutine = StartCoroutine(SetFakeHeightRoutine(cameraYOffset));
+
+#if XR_MODULE_AVAILABLE
+
+        //ConfigManager.WriteConsole($"[AdjustCameraYOffset] XR_MODULE_AVAILABLE CameraYOffset = {cameraYOffset}");
+
+        /*
+        this should be done by MoveOffsetHeight and MoveOffsetHeight(float y) in xrOrigin 
+        when CameraYOffset is assigned, but don't work even when XR_MODULE_AVAILABLE is defined.
+        */
+        //Vector3 localPosition = cameraOffset.localPosition;
+        //localPosition.y = cameraYOffset;
+        //cameraOffset.localPosition = localPosition;
+
+#endif
     }
+    /*
+    private IEnumerator SetFakeHeightRoutine(float height)
+    {
+        Debug.Log($"[SetFakeHeightRoutine] Setting Player Height to FAKE ({height}m) (Device Tracking)");
+
+        // 1. Set the desired offset VALUE first
+        xrorigin.CameraYOffset = height;
+
+        // 2. Request the mode switch
+        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Device;
+
+        // 3. Wait a frame for the system to potentially process the mode switch and recenter
+        yield return null;
+
+        // 4. (Optional but sometimes helpful) Re-assert the offset value
+        // This ensures the internal MoveOffsetHeight uses the correct value AFTER the mode switch settles.
+        xrorigin.CameraYOffset = height;
+
+        ConfigManager.WriteConsole($"[SetFakeHeightRoutine] Fake Height routine finished. CameraFloorOffsetObject localPos: {xrorigin.CameraFloorOffsetObject.transform.localPosition}");
+
+        coroutine = null;
+    }
+    void changeToCalculatedFromFloor()
+    {
+        xrorigin.RequestedTrackingOriginMode = XROrigin.TrackingOriginMode.Floor;
+        cameraYOffset = 0f;
+        xrorigin.CameraYOffset = 0f;
+
+        ConfigManager.WriteConsole($"[changeToCalculatedFromFloor] new player eye height calculated from floor");
+    }
+    */
 
     public void AdjustScale()
     {
@@ -237,8 +288,10 @@ public class PlayerController : MonoBehaviour
 #endif
 
         CameraYOffset = player.height;
+        //ForceHeight(player.height);
 
-        ConfigManager.WriteConsole($"[changeWithPlayerData] configured player height {player.height} (rig not lifted in Floor tracking mode)");
+        // characterController.height = player.height + 0.1f;
+        ConfigManager.WriteConsole($"[changeWithPlayerData] new player eye height {player.height}");
         ConfigManager.WriteConsole($"[changeWithPlayerData] {ConfigInformation.Player.ShowHeightPlayers()}");
         return;
     }
