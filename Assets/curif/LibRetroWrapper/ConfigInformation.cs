@@ -28,6 +28,7 @@ public class ConfigInformation
     public CabinetConfiguration cabinet = CabinetDefault();
     public UserLightSettings light = null;
     public AGEBasicInformation agebasic = null;
+    public Deco deco = null;
 
     [YamlMember(Alias = "system-skin", ApplyNamingConventions = false)]
     public string system_skin = "c64";
@@ -57,6 +58,17 @@ public class ConfigInformation
         {
             return status == null || validStatus.Contains(status);
         }
+    }
+
+    // Room decoration options. Global + per-room (room wins, see Merge).
+    public class Deco : ConfigInformationBase
+    {
+        // null == not set == default ON. When off, pictures/posters use the bundled artwork
+        // instead of the user's deco/pictures and deco/posters drop folders.
+        [YamlMember(Alias = "randomize-user-images", ApplyNamingConventions = false)]
+        public bool? randomizeUserImages;
+
+        public const bool randomizeUserImagesDefault = true;
     }
 
     public class Player : ConfigInformationBase
@@ -409,6 +421,8 @@ public class ConfigInformation
         ret += "Player \n";
         ret += $" \t height: {player?.height}\n";
         ret += $" \t scale: {player?.scale}\n";
+        ret += "Deco \n";
+        ret += $" \t randomize-user-images: {deco?.randomizeUserImages}\n";
         return ret;
     }
 
@@ -519,6 +533,13 @@ public class ConfigInformation
         if (ci1?.light != null || ci2?.light != null)
         {
             ret.light = ci2?.light != null ? ci2.light : ci1.light;
+        }
+
+        if (ci1?.deco != null || ci2?.deco != null)
+        {
+            ret.deco = new();
+            ret.deco.randomizeUserImages = ci2?.deco?.randomizeUserImages != null ?
+                                             ci2.deco.randomizeUserImages : ci1?.deco?.randomizeUserImages;
         }
 
         return ret;
