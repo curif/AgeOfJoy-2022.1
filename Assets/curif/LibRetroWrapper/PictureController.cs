@@ -31,6 +31,19 @@ public class PictureController : MonoBehaviour
         random = new System.Random(DateTime.Now.Second);
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
+        // User drop-folder override: if deco/pictures holds images, fill frames from ONLY those
+        // (forced to 1024x512). Falls through to the bundled set when the folder is empty or when
+        // the user turned the option off in the configuration cabinet (Deco menu).
+        if (DecoUserImages.RandomizeEnabled(gameObject))
+        {
+            List<string> userFiles = DecoUserImages.ScanAndReconcile(ConfigManager.DecoPicturesDir, ConfigManager.DecoPicturesCacheDir);
+            if (userFiles.Count > 0)
+            {
+                StartCoroutine(RandomizeFromUserImages(userFiles));
+                return;
+            }
+        }
+
         // Load and parse the YAML file as a TextAsset
         if (textureData == null)
         {
@@ -79,6 +92,52 @@ public class PictureController : MonoBehaviour
         }
 
     }
+    // Fill every frame from the user's deco/pictures pool (repeating to cover all frames, same
+    // wrap-around as the bundled path). Loads are serialized + forced to 1024x512 via DecoUserImages.
+    IEnumerator RandomizeFromUserImages(List<string> files)
+    {
+        yield return new WaitForEndOfFrame();
+        if (gameObject.transform.childCount == 0)
+            yield break;
+
+        List<string> shuffled = ShuffleList(files);
+        int idx = 0;
+        for (int childIdx = 0; childIdx < gameObject.transform.childCount; childIdx++)
+        {
+            if (idx >= shuffled.Count)
+                idx = 0;
+
+            Transform child = gameObject.transform.GetChild(childIdx);
+            yield return DecoUserImages.LoadGated(
+                shuffled[idx],
+                tex => ApplyUserTextureToChild(tex, child),
+                ConfigManager.DecoPicturesCacheDir, 1024, 512);
+
+            idx++;
+            yield return null;
+        }
+    }
+
+    // Same renderer targeting as ApplyTextureToChild, but assigns an already-loaded texture.
+    private void ApplyUserTextureToChild(Texture2D texture, Transform child)
+    {
+        if (texture == null)
+            return;
+
+        Renderer renderer;
+        if (child.childCount > 0)
+        {
+            Transform picture = child.GetChild(0);
+            renderer = picture.gameObject.GetComponent<Renderer>();
+            renderer.material.SetTexture("_Albedo", texture);
+        }
+        else
+        {
+            renderer = child.gameObject.GetComponent<Renderer>();
+            renderer.material.SetTexture("_MainTex", texture);
+        }
+    }
+
     private PictureAndFrameTexture LoadYamlFromTextAsset(TextAsset yamlTextAsset)
     {
         if (yamlTextAsset == null)

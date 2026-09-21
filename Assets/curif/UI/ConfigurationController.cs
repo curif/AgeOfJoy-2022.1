@@ -211,6 +211,7 @@ public class ConfigurationController : MonoBehaviour
         onCabinet,
         onLights,
         onDebugMenu,
+        onDecoMenu,
         exit
     }
     private StatusOptions status;
@@ -222,6 +223,8 @@ public class ConfigurationController : MonoBehaviour
 
     private GenericBool isGlobalConfigurationWidget;
     private GenericWidgetContainer changeModeContainer, audioContainer, resetContainer, controllerContainer, npcContainer;
+    private GenericWidgetContainer decoContainer;
+    private GenericBool decoRandomizeUserImages;
     private GenericLabel lblGameSelected;
     private GenericOptions controlMapGameId, controlMapMameControl;
     private GenericOptionsInteger controlMapPort;
@@ -675,6 +678,7 @@ public class ConfigurationController : MonoBehaviour
             mainMenu.AddOption("debug & bug report", " tools for fixing issues  ");
         }
         mainMenu.AddOption("lights", "  Change color and light intensity ");
+        mainMenu.AddOption("deco", "    arcade decoration options    ");
         mainMenu.AddOption("change mode (global/room)", "  global or room configuration ");
         mainMenu.AddOption("reset", "         back to default       ");
         mainMenu.AddOption("teleport", "       teleport to a room       ");
@@ -752,6 +756,53 @@ public class ConfigurationController : MonoBehaviour
                     .Add(NPCStatusOptions)
                     .Add(new GenericButton(scr, "save", "save and exit", 4, 10, true))
                     .Add(new GenericButton(scr, "exit", "exit", 4, 11, true));
+    }
+
+    private void SetDecoWidgets()
+    {
+        if (decoContainer != null)
+            return;
+
+        // Window spans columns 2..37; text starts at x=4, so the longest line
+        // ("/deco/pictures and /deco/posters", 32 chars) ends at column 35 and fits.
+        decoRandomizeUserImages = new GenericBool(scr, "active", "active",
+                                                  ConfigInformation.Deco.randomizeUserImagesDefault, 6, 8);
+
+        decoContainer = new(scr, "deco");
+        decoContainer.Add(new GenericWindow(scr, 2, 5, "decoWindow", 36, 12, " Deco Configuration ", true))
+                     .Add(new GenericLabel(scr, "decoTitle", "User Posters and Pictures", 4, 7))
+                     .Add(decoRandomizeUserImages)
+                     .Add(new GenericLabel(scr, "decoHelp1", "Randomly places pictures and", 4, 10))
+                     .Add(new GenericLabel(scr, "decoHelp2", "posters located in:", 4, 11))
+                     .Add(new GenericLabel(scr, "decoHelp3", "/deco/pictures and /deco/posters", 4, 12))
+                     .Add(new GenericButton(scr, "save", "save and exit", 4, 14, true))
+                     .Add(new GenericButton(scr, "exit", "exit", 4, 15, true));
+    }
+
+    public void DecoScreenDraw()
+    {
+        scr.Clear();
+        decoContainer.Draw();
+
+        //some help
+        scr.Print(2, 18, UDLR_TO_CHANGE);
+        scr.Print(2, 19, B_TO_SELECT);
+    }
+
+    private void DecoGetValues()
+    {
+        ConfigInformation config = configHelper.getConfigInformation(isGlobalConfigurationWidget.value);
+        decoRandomizeUserImages.SetValue(config?.deco?.randomizeUserImages ??
+                                         ConfigInformation.Deco.randomizeUserImagesDefault);
+    }
+
+    private void DecoSave()
+    {
+        bool isGlobal = isGlobalConfigurationWidget.value;
+        ConfigInformation config = configHelper.getConfigInformation(isGlobal);
+        config.deco = new();
+        config.deco.randomizeUserImages = decoRandomizeUserImages.value;
+        configHelper.Save(isGlobal, config);
     }
 
     private void SetControlMapWidgets()
@@ -1883,6 +1934,9 @@ public class ConfigurationController : MonoBehaviour
                       case "lights":
                           status = StatusOptions.onLights;
                           break;
+                      case "deco":
+                          status = StatusOptions.onDecoMenu;
+                          break;
                       case "debug & bug report":
                           status = StatusOptions.onDebugMenu;
                           break;
@@ -1924,6 +1978,44 @@ public class ConfigurationController : MonoBehaviour
                       }
                       scr.DrawScreen();
                       return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+                  }
+                  scr.DrawScreen();
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;
+              })
+            .End()
+
+            .Sequence("Deco Configuration")
+              .Condition("On Deco Config", () => status == StatusOptions.onDecoMenu)
+              .Do("Init", () =>
+              {
+                  SetDecoWidgets();
+                  DecoGetValues();
+                  DecoScreenDraw();
+                  scr.DrawScreen();
+                  return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+              })
+              .Do("Process", () =>
+              {
+                  changeContainerSelection(decoContainer);
+
+                  if (inputDictionary["action"])
+                  {
+                      GenericWidget w = decoContainer.GetSelectedWidget();
+                      if (w != null)
+                      {
+                          if (w.name == "exit")
+                          {
+                              status = StatusOptions.onMainMenu;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+                          }
+                          else if (w.name == "save")
+                          {
+                              DecoSave();
+                              status = StatusOptions.onMainMenu;
+                              return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Success;
+                          }
+                          w.Action();
+                      }
                   }
                   scr.DrawScreen();
                   return CleverCrow.Fluid.BTs.Tasks.TaskStatus.Continue;

@@ -54,6 +54,12 @@ public static class ConfigManager
     public static string nvramDir = Path.Combine(GameSaveDir, "nvram");
     public static string MusicDir = Path.Combine(BaseDir, "music");
     public static string VideoDir = Path.Combine(BaseDir, "video");
+    // User-facing decoration drop-folders (loose images at top level) + their in-folder cache subdirs.
+    public static string DecoDir = Path.Combine(BaseDir, "deco");
+    public static string DecoPicturesDir = Path.Combine(DecoDir, "pictures");
+    public static string DecoPostersDir = Path.Combine(DecoDir, "posters");
+    public static string DecoPicturesCacheDir = Path.Combine(DecoPicturesDir, "cache");
+    public static string DecoPostersCacheDir = Path.Combine(DecoPostersDir, "cache");
     public static string CoresDir = Path.Combine(BaseDir, "cores");
     public static string InternalCoresDir = Path.Combine(BaseAppDir, "usercores");
     public static string ConfigCoresDir = Path.Combine(ConfigDir, "cores");
@@ -176,6 +182,11 @@ public static class ConfigManager
         CreateFolder(DebugDir);
         CreateFolder(MusicDir);
         CreateFolder(VideoDir);
+        CreateFolder(DecoDir);
+        CreateFolder(DecoPicturesDir);
+        CreateFolder(DecoPostersDir);
+        CreateFolder(DecoPicturesCacheDir);
+        CreateFolder(DecoPostersCacheDir);
         CreateFolder(CoresDir);
         CreateFolder(InternalCoresDir);
         CreateFolder(SystemDir);
