@@ -34,14 +34,21 @@ public class PictureController : MonoBehaviour
         // User drop-folder override: if deco/pictures holds images, fill frames from ONLY those
         // (forced to 1024x512). Falls through to the bundled set when the folder is empty or when
         // the user turned the option off in the configuration cabinet (Deco menu).
-        if (DecoUserImages.RandomizeEnabled(gameObject))
+        try
         {
-            List<string> userFiles = DecoUserImages.ScanAndReconcile(ConfigManager.DecoPicturesDir, ConfigManager.DecoPicturesCacheDir);
-            if (userFiles.Count > 0)
+            if (DecoUserImages.RandomizeEnabled(gameObject))
             {
-                StartCoroutine(RandomizeFromUserImages(userFiles));
-                return;
+                List<string> userFiles = DecoUserImages.ScanAndReconcile(ConfigManager.DecoPicturesDir, ConfigManager.DecoPicturesCacheDir);
+                if (userFiles != null && userFiles.Count > 0)
+                {
+                    StartCoroutine(RandomizeFromUserImages(userFiles));
+                    return;
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            ConfigManager.WriteConsoleWarning($"[PictureController] Failed to load user deco images, falling back to bundled set: {ex.Message}");
         }
 
         // Load and parse the YAML file as a TextAsset
@@ -51,14 +58,12 @@ public class PictureController : MonoBehaviour
             textureData = LoadYamlFromTextAsset(yamlTextAsset);
         }
 
-        if (textureData == null || textureData.textures.Count == 0)
+        if (textureData == null || textureData.textures == null || textureData.textures.Count == 0)
         {
             ConfigManager.WriteConsoleWarning("[PictureController] No textures found in YAML file.");
             return;
         }
         StartCoroutine(RandomizePictures());
-
-        
     }
 
     IEnumerator RandomizePictures()
@@ -82,7 +87,14 @@ public class PictureController : MonoBehaviour
 
             // Apply the texture to the child
             string texturePath = $"Decoration/Pictures/{textures[textureIndex].Name}";
-            ApplyTextureToChild(texturePath, gameObject.transform.GetChild(childIdx));
+            try
+            {
+                ApplyTextureToChild(texturePath, gameObject.transform.GetChild(childIdx));
+            }
+            catch (Exception ex)
+            {
+                ConfigManager.WriteConsoleWarning($"[PictureController] Failed to apply texture '{texturePath}' to child {childIdx}: {ex.Message}");
+            }
 
             textureIndex++;
 
@@ -121,21 +133,29 @@ public class PictureController : MonoBehaviour
     // Same renderer targeting as ApplyTextureToChild, but assigns an already-loaded texture.
     private void ApplyUserTextureToChild(Texture2D texture, Transform child)
     {
-        if (texture == null)
+        if (texture == null || child == null)
             return;
 
         Renderer renderer;
+        string textureSlot;
         if (child.childCount > 0)
         {
             Transform picture = child.GetChild(0);
             renderer = picture.gameObject.GetComponent<Renderer>();
-            renderer.material.SetTexture("_Albedo", texture);
+            textureSlot = "_Albedo";
         }
         else
         {
             renderer = child.gameObject.GetComponent<Renderer>();
-            renderer.material.SetTexture("_MainTex", texture);
+            textureSlot = "_MainTex";
         }
+
+        if (renderer == null || renderer.material == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[PictureController] No renderer/material found on '{child.name}' to apply user texture.");
+            return;
+        }
+        renderer.material.SetTexture(textureSlot, texture);
     }
 
     private PictureAndFrameTexture LoadYamlFromTextAsset(TextAsset yamlTextAsset)
@@ -163,27 +183,37 @@ public class PictureController : MonoBehaviour
 
     private void ApplyTextureToChild(string texturePath, Transform child)
     {
+        if (child == null)
+            return;
+
         Texture2D texture = Resources.Load<Texture2D>(texturePath);
 
-        if (texture != null)
+        if (texture == null)
         {
-            Renderer renderer;
-            if (child.childCount > 0)
-            {
-                Transform picture = child.GetChild(0);
-                renderer = picture.gameObject.GetComponent<Renderer>();
-                renderer.material.SetTexture("_Albedo", texture);
-            }
-            else
-            {
-                renderer = child.gameObject.GetComponent<Renderer>();
-                renderer.material.SetTexture("_MainTex", texture);
-            }
+            ConfigManager.WriteConsoleWarning($"[PictureController] Texture not found at path: {texturePath}");
+            return;
+        }
+
+        Renderer renderer;
+        string textureSlot;
+        if (child.childCount > 0)
+        {
+            Transform picture = child.GetChild(0);
+            renderer = picture.gameObject.GetComponent<Renderer>();
+            textureSlot = "_Albedo";
         }
         else
         {
-            ConfigManager.WriteConsoleWarning($"[PictureController] Texture not found at path: {texturePath}");
+            renderer = child.gameObject.GetComponent<Renderer>();
+            textureSlot = "_MainTex";
         }
+
+        if (renderer == null || renderer.material == null)
+        {
+            ConfigManager.WriteConsoleWarning($"[PictureController] No renderer/material found on '{child.name}' to apply texture: {texturePath}");
+            return;
+        }
+        renderer.material.SetTexture(textureSlot, texture);
     }
     /*
      * .OrderBy(name => random.Next()).ToArray():
