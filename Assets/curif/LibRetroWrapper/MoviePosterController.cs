@@ -24,6 +24,19 @@ public class MoviePosterController : MonoBehaviour
         random = new System.Random(DateTime.Now.Second);
         UnityEngine.Random.InitState((int)System.DateTime.Now.Ticks);
 
+        // User drop-folder override: if deco/posters holds images, fill ALL poster frames (any
+        // decade) from ONLY those (forced to 512x1024). Falls through to the bundled decade set when
+        // the folder is empty or the user turned the option off in the configuration cabinet (Deco menu).
+        if (DecoUserImages.RandomizeEnabled(gameObject))
+        {
+            List<string> userFiles = DecoUserImages.ScanAndReconcile(ConfigManager.DecoPostersDir, ConfigManager.DecoPostersCacheDir);
+            if (userFiles.Count > 0)
+            {
+                StartCoroutine(RandomizeFromUserImages(userFiles));
+                return;
+            }
+        }
+
         // Load and parse the YAML file as a TextAsset
         TextAsset yamlTextAsset = Resources.Load<TextAsset>($"Decoration/MoviePoster/Pictures/{decade}/contents");
         textureData = LoadYamlFromTextAsset(yamlTextAsset);
@@ -64,6 +77,57 @@ public class MoviePosterController : MonoBehaviour
                 yield return null;
 
             }
+        }
+    }
+
+    // Fill every poster frame from the user's deco/posters pool (repeating to cover all frames).
+    // Decade-agnostic: any deco/posters image can land on any poster frame. Loads are serialized
+    // + forced to 512x1024 via DecoUserImages.
+    IEnumerator RandomizeFromUserImages(List<string> files)
+    {
+        yield return new WaitForEndOfFrame();
+        if (gameObject.transform.childCount == 0)
+            yield break;
+
+        List<string> shuffled = ShuffleList(files);
+        int idx = 0;
+        for (int childIdx = 0; childIdx < gameObject.transform.childCount; childIdx++)
+        {
+            if (idx >= shuffled.Count)
+                idx = 0;
+
+            Transform child = gameObject.transform.GetChild(childIdx);
+            yield return DecoUserImages.LoadGated(
+                shuffled[idx],
+                tex => ApplyUserTextureToChild(tex, child),
+                ConfigManager.DecoPostersCacheDir, 512, 1024);
+
+            idx++;
+            yield return null;
+        }
+    }
+
+    // Same renderer targeting + random emissive glow as ApplyTextureToChild, but assigns an
+    // already-loaded texture.
+    private void ApplyUserTextureToChild(Texture2D texture, Transform child)
+    {
+        if (texture == null)
+            return;
+
+        Renderer renderer;
+        if (child.childCount > 0)
+        {
+            Transform poster = child.GetChild(0);
+            renderer = poster.gameObject.GetComponent<Renderer>();
+            renderer.material.SetTexture("_Albedo", texture);
+
+            if (UnityEngine.Random.Range(0f, 1f) > 0.7f)
+                renderer.material.SetFloat("_EmissiveAmount", 0.6f);
+        }
+        else
+        {
+            renderer = child.gameObject.GetComponent<Renderer>();
+            renderer.material.SetTexture("_MainTex", texture);
         }
     }
 

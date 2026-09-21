@@ -47,16 +47,16 @@ public static class CabinetTextureCache
 
     // Tries to serve `path` from the on-disk .aojv1 cache into the LRU. Reports success via
     // onDone so callers can fall through to (re)compressing when there's no valid cache yet.
-    private static IEnumerator TryLoadFromDiskCache(string path, bool makeNoLongerReadable, Action<Texture2D> onComplete, Action<bool> onDone)
+    private static IEnumerator TryLoadFromDiskCache(string path, bool makeNoLongerReadable, Action<Texture2D> onComplete, Action<bool> onDone, string cacheDir = null)
     {
-        if (!TextureDiskCache.HasValidCache(path))
+        if (!TextureDiskCache.HasValidCache(path, cacheDir))
         {
             onDone(false);
             yield break;
         }
 
         Texture2D cachedTex = null;
-        yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex, makeNoLongerReadable);
+        yield return TextureDiskCache.LoadFromDiskAsync(path, (tex) => cachedTex = tex, makeNoLongerReadable, cacheDir);
 
         if (cachedTex == null)
         {
@@ -79,7 +79,7 @@ public static class CabinetTextureCache
     // in-memory video-frame snapshot) through GPU resize-to-multiple-of-4, compression, the
     // .aojv1 disk cache write, and the LRU add. Shared by LoadAndCacheAsync (downloaded textures)
     // and CacheTextureAsync (textures the caller already has in memory).
-    private static IEnumerator CompressAndCache(string path, Texture2D texTmp, Action<Texture2D> onComplete, bool makeNoLongerReadable)
+    private static IEnumerator CompressAndCache(string path, Texture2D texTmp, Action<Texture2D> onComplete, bool makeNoLongerReadable, string cacheDir = null, int forceWidth = 0, int forceHeight = 0, bool generateMipmaps = false)
     {
         float originalSizeInBytes = CalculateActualSizeBytes(texTmp);
 
@@ -94,11 +94,19 @@ public static class CabinetTextureCache
             int w = texTmp.width;
             int h = texTmp.height;
 
-            // Hardware compression requires dimensions to be multiples of 4.
-            if (w % 4 != 0 || h % 4 != 0)
+            // A forced target size (deco frames pass e.g. 1024x512) overrides the mult-4 snap and
+            // stretches to fill; otherwise pad up to the nearest multiple of 4 (hardware
+            // compression requires it). Both forced targets are multiples of 4.
+            bool forced = forceWidth > 0 && forceHeight > 0;
+            int newWidth = forced ? forceWidth : w + (4 - (w % 4)) % 4;
+            int newHeight = forced ? forceHeight : h + (4 - (h % 4)) % 4;
+
+            // Enter the GPU path to resize, and/or to build a mip chain when one is wanted but the
+            // source doesn't already have it (deco). Cabinets pass generateMipmaps:false, so this
+            // stays exactly the old "resize only when not multiple-of-4" behavior for them.
+            bool needsMips = generateMipmaps && texTmp.mipmapCount <= 1;
+            if (newWidth != w || newHeight != h || needsMips)
             {
-                int newWidth = w + (4 - (w % 4)) % 4;
-                int newHeight = h + (4 - (h % 4)) % 4;
                 ConfigManager.WriteConsole($"[CompressAndCache] GPU Resizing {path} from {w}x{h} to {newWidth}x{newHeight} for compression.");
 
                 RenderTexture rt = RenderTexture.GetTemporary(newWidth, newHeight, 0, RenderTextureFormat.ARGB32);
@@ -125,9 +133,11 @@ public static class CabinetTextureCache
 
                 if (!request.hasError)
                 {
-                    // Create without mipmaps initially so LoadRawTextureData's expected byte size matches the single mip level read back.
-                    Texture2D resizedTex = new Texture2D(newWidth, newHeight, TextureFormat.RGBA32, false, false);
-                    resizedTex.LoadRawTextureData(request.GetData<byte>());
+                    // We only read back mip 0, so set that level explicitly (SetPixelData, not
+                    // LoadRawTextureData which would expect the whole mip pyramid) and let
+                    // Apply(updateMipmaps:true) build the chain when generateMipmaps allocated one.
+                    Texture2D resizedTex = new Texture2D(newWidth, newHeight, TextureFormat.RGBA32, generateMipmaps, false);
+                    resizedTex.SetPixelData(request.GetData<byte>(), 0);
 
                     // Apply with 'updateMipmaps: true' so Unity generates the mip chain now.
                     resizedTex.Apply(true, false);
@@ -149,7 +159,7 @@ public static class CabinetTextureCache
                 texTmp.name = "COMPRESSED-" + path;
 
                 //SAVE CACHE immediately
-                TextureDiskCache.SaveToDisk(path, texTmp);
+                TextureDiskCache.SaveToDisk(path, texTmp, cacheDir);
             }
             else
             {
@@ -202,7 +212,7 @@ public static class CabinetTextureCache
         yield return CompressAndCache(path, sourceTex, onComplete, makeNoLongerReadable);
     }
 
-    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete, bool makeNoLongerReadable = true, bool forceCompress = false)
+    public static IEnumerator LoadAndCacheAsync(string path, Action<Texture2D> onComplete, bool makeNoLongerReadable = true, bool forceCompress = false, string cacheDir = null, int forceWidth = 0, int forceHeight = 0, bool generateMipmaps = false)
     {
         EnsureCacheInitialized();
 
@@ -222,11 +232,11 @@ public static class CabinetTextureCache
         if (useOriginalMode)
             // clean up any previously generated compressed disk cache when the user
             // is not compressing textures
-            TextureDiskCache.DeleteCache(path);
+            TextureDiskCache.DeleteCache(path, cacheDir);
         else
         {
             bool diskHit = false;
-            yield return TryLoadFromDiskCache(path, makeNoLongerReadable, onComplete, done => diskHit = done);
+            yield return TryLoadFromDiskCache(path, makeNoLongerReadable, onComplete, done => diskHit = done, cacheDir);
             if (diskHit) yield break;
         }
 
@@ -280,7 +290,7 @@ public static class CabinetTextureCache
                 yield break;
             }
                 
-            yield return CompressAndCache(path, texTmp, onComplete, makeNoLongerReadable);
+            yield return CompressAndCache(path, texTmp, onComplete, makeNoLongerReadable, cacheDir, forceWidth, forceHeight, generateMipmaps);
             yield break;
 
             /*
