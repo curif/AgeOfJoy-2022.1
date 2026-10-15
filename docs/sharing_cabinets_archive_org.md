@@ -189,3 +189,45 @@ The other files in the item are added by archive.org itself and ignored by AGE o
 - A download is written to `<name>.zip.part` and renamed to `<name>.zip` only after the md5 matches. A failed or corrupt download leaves no file behind.
 - Every verified download is recorded in `configuration/internetarchive_md5.txt`. A cabinet that is present (unpacked in `cabinetsdb` or still waiting in `cabinets`) with that md5 is not downloaded again.
 - A downloaded zip in `cabinets` is unpacked the next time the app starts or a room loads; the loader deletes the zip afterwards. A script can install it right away, without restarting, with `CABDBINSTALL` / `CABDBINSTALLSTATUS`.
+
+---
+
+## 10. Cabinet Market: find, download and install from the headset (`marketplace.bas`)
+
+`marketplace.bas` (in `agebasicdev/`) is a standalone AGEBasic program that lets a player do the whole trip inside the headset: find packs, pick a cabinet, download it from archive.org and install it, with no PC, no sideloading and no restart. It is the player-facing side of everything above: a pack only shows up in it if its item has the subject tag `ageofjoy-cabinets` (see "Getting listed").
+
+![Cabinet Market workflow](cabinet_market_workflow.svg)
+
+### What the player sees
+
+A C64-style full-screen program (palette from `SETCOLORSPACE "c64"`, charset from the cabinet's `system-skin`), with a breadcrumb `1 PACKS > 2 CABINETS > 3 INSTALL`.
+
+| Step | Screen | What happens |
+|---|---|---|
+| Search | `ARCHIVE.ORG` box with a spinner | `IASEARCH("")` lists the tagged packs, then every pack is read with `IALOAD` ("READING PACK n OF N"). |
+| 1 Packs | Pack list + info panel | Pack title, number of cabinets (`n CABS`) and description. A pack that isn't `READY` (`PROCESSING`, `DARK`, error) is shown in red and can't be opened. Empty packs can't be opened either. |
+| 2 Cabinets | Cabinet list + info panel | Name, size, state and description. Tags: `NEW` (not downloaded), `OWNED` (same md5 already present), `UPDATE` (a different version is present). |
+| 3 Install | Download progress bar, then `INSTALL?` box | `IADOWNLOAD` + `IADOWNLOADPROGRESS`; when finished the player confirms the install. |
+| Result | `SUCCESS` / `ERROR` / `CANCELLED` box | B returns to the cabinet list to pick another one. |
+
+Controls: **Up/Down** move, **Left/Right** change page, **B** open the pack / download the cabinet / confirm / continue / retry, **A** back to the packs / refuse the install, **Y** leave (`SHUTDOWN`).
+
+### Flow and the functions it uses
+
+1. `IASEARCH("")` → poll `IASTATUS` until `READY` → `IAPACKS` gives the identifiers. Search failed → "SEARCH FAILED, CHECK YOUR INTERNET CONNECTION"; no packs → "NO PACKS FOUND". B retries.
+2. `IALOAD` for every pack, polling `IASTATUS` until none is `LOADING`.
+3. Pack list uses `IAINFO(pack, "title" | "count" | "description")`; cabinet list uses `IACABS(pack)` and `IACABINFO(pack, cab, "name" | "size" | "downloaded" | "description")`. `downloaded` is 0 = new, 1 = owned, 2 = update.
+4. B on a cabinet: `IADOWNLOAD(pack, cab)`, then each timer tick `IADOWNLOADSTATUS` (`QUEUED`/`DOWNLOADING`/`COMPLETED`/failed) and `IADOWNLOADPROGRESS` drive the bar.
+5. `COMPLETED`:
+   - if `FILEEXISTS(COMBINEPATH(CABINETSPATH(), cab))` is true, the zip is waiting in `cabinets` and the player is asked "INSTALL <cabinet>?";
+   - if not, the md5 already matched an installed cabinet and the screen says "ALREADY INSTALLED".
+6. **B (yes):** `CABDBINSTALL(cab)` (after checking the zip exists, because it throws without it), then `CABDBINSTALLSTATUS` is polled until `INSTALLED` ("READY TO USE IN YOUR ROOMS") or failed ("THE CABINET ZIP IS NOT VALID").
+7. **A (no):** `FILEDELETE` removes the zip, so it is not auto-installed at the next start.
+
+The program is event-driven: `ONEVENT ONCONTROL(...)` handlers for the joypad and one `ONEVENT ONTIMER(0.2)` that blinks the cursor and polls the running job (search, download or install) by the current mode (`MKMODE`: 0 search, 1 packs, 2 cabinets, 3 download, 4 confirm, 5 install, 6 result, 7 fatal error).
+
+### Notes for pack authors
+
+- The market shows the pack **Title** (make it descriptive, see section 8), the item **Description** and your per-cabinet description fields, all uppercased. Keep descriptions short; they are word-wrapped into a few lines of the info panel.
+- Cabinet names in the list are the zip names. Replace a zip with the same name to publish an update: players holding an older md5 see `UPDATE`.
+- The player only sees what archive.org has already processed and indexed (see section 7 and "Getting listed"), so a new pack can take minutes to hours to appear.

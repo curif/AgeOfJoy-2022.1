@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" font-family="'Courier New', Courier, monospace">
+  <defs>
+    <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000" opacity="0.10"/>
+    </pattern>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#ffe06c"/>
+    </marker>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2.2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- C64 border + screen -->
+  <rect width="1200" height="640" fill="#7869c4"/>
+  <rect x="30" y="30" width="1140" height="580" fill="#40318d"/>
+
+  <!-- title -->
+  <g filter="url(#glow)" text-anchor="middle">
+    <text x="600" y="78" font-size="26" font-weight="bold" fill="#ffffff">**** AGE OF JOY CABINET MARKET ****</text>
+    <text x="600" y="106" font-size="15" fill="#a0e4cb">FROM THE ARTIST'S BENCH TO YOUR ARCADE - ALL INSIDE THE HEADSET</text>
+  </g>
+  <line x1="60" y1="122" x2="1140" y2="122" stroke="#7869c4" stroke-width="2" stroke-dasharray="8 4"/>
+
+  <!-- ============ STEP 1 ============ -->
+  <g>
+    <rect x="66" y="156" width="250" height="300" fill="#352879" stroke="#7869c4" stroke-width="3"/>
+    <rect x="66" y="156" width="250" height="34" fill="#7869c4"/>
+    <text x="82" y="179" font-size="17" font-weight="bold" fill="#40318d">1 CREATE</text>
+    <!-- cabinet pixel art -->
+    <g transform="translate(150,206)" shape-rendering="crispEdges">
+      <rect x="0" y="0" width="84" height="12" fill="#7869c4"/>
+      <rect x="-6" y="12" width="96" height="96" fill="#ffe06c"/>
+      <rect x="6" y="22" width="72" height="50" fill="#000"/>
+      <rect x="10" y="26" width="64" height="42" fill="#a0e4cb"/>
+      <rect x="22" y="34" width="12" height="12" fill="#40318d"/>
+      <rect x="44" y="34" width="12" height="12" fill="#40318d"/>
+      <rect x="30" y="52" width="24" height="6" fill="#40318d"/>
+      <rect x="-6" y="78" width="96" height="14" fill="#9f4e44"/>
+      <rect x="14" y="82" width="8" height="8" fill="#ff7777"/>
+      <rect x="62" y="82" width="8" height="8" fill="#6abfc6"/>
+      <rect x="-12" y="108" width="108" height="10" fill="#7869c4"/>
+    </g>
+    <text x="191" y="352" font-size="15" font-weight="bold" fill="#ffe06c" text-anchor="middle">CABINET ARTIST</text>
+    <text x="191" y="378" font-size="13" fill="#a0e4cb" text-anchor="middle">designs the 3D cabinet,</text>
+    <text x="191" y="396" font-size="13" fill="#a0e4cb" text-anchor="middle">artwork and CDL config</text>
+    <text x="191" y="422" font-size="13" fill="#ffffff" text-anchor="middle">packs it as</text>
+    <text x="191" y="442" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">galaga.zip</text>
+  </g>
+
+  <!-- arrow 1->2 -->
+  <g>
+    <line x1="322" y1="306" x2="352" y2="306" stroke="#ffe06c" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="337" y="292" font-size="12" fill="#ffe06c" text-anchor="middle">UPLOAD</text>
+  </g>
+
+  <!-- ============ STEP 2 ============ -->
+  <g>
+    <rect x="360" y="156" width="250" height="300" fill="#352879" stroke="#7869c4" stroke-width="3"/>
+    <rect x="360" y="156" width="250" height="34" fill="#7869c4"/>
+    <text x="376" y="179" font-size="17" font-weight="bold" fill="#40318d">2 PUBLISH</text>
+    <!-- archive building -->
+    <g transform="translate(436,204)" shape-rendering="crispEdges">
+      <polygon points="0,30 50,0 100,30" fill="#ffe06c"/>
+      <rect x="6" y="30" width="88" height="8" fill="#ffe06c"/>
+      <rect x="12" y="42" width="12" height="52" fill="#ffffff"/>
+      <rect x="32" y="42" width="12" height="52" fill="#ffffff"/>
+      <rect x="56" y="42" width="12" height="52" fill="#ffffff"/>
+      <rect x="76" y="42" width="12" height="52" fill="#ffffff"/>
+      <rect x="2" y="96" width="96" height="10" fill="#ffe06c"/>
+      <rect x="-4" y="108" width="108" height="8" fill="#ffe06c"/>
+    </g>
+    <text x="485" y="352" font-size="15" font-weight="bold" fill="#ffe06c" text-anchor="middle">ARCHIVE.ORG PACK</text>
+    <text x="485" y="378" font-size="13" fill="#a0e4cb" text-anchor="middle">the zip goes into an item</text>
+    <text x="485" y="396" font-size="13" fill="#a0e4cb" text-anchor="middle">with a title + descriptions</text>
+    <rect x="395" y="410" width="180" height="30" fill="#40318d" stroke="#a0e4cb" stroke-width="2"/>
+    <text x="485" y="430" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">tag: ageofjoy-cabinets</text>
+  </g>
+
+  <!-- arrow 2->3 -->
+  <g>
+    <line x1="616" y1="306" x2="646" y2="306" stroke="#ffe06c" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="631" y="292" font-size="12" fill="#ffe06c" text-anchor="middle">SEARCH</text>
+  </g>
+
+  <!-- ============ STEP 3 ============ -->
+  <g>
+    <rect x="654" y="156" width="250" height="300" fill="#352879" stroke="#7869c4" stroke-width="3"/>
+    <rect x="654" y="156" width="250" height="34" fill="#7869c4"/>
+    <text x="670" y="179" font-size="17" font-weight="bold" fill="#40318d">3 BROWSE + GET</text>
+    <!-- headset -->
+    <g transform="translate(722,206)" shape-rendering="crispEdges">
+      <rect x="0" y="10" width="114" height="54" fill="#7869c4"/>
+      <rect x="8" y="18" width="98" height="38" fill="#000"/>
+      <rect x="12" y="22" width="90" height="30" fill="#40318d"/>
+      <text x="57" y="42" font-size="11" fill="#a0e4cb" text-anchor="middle">PACKS &gt; CABS</text>
+      <rect x="-8" y="26" width="8" height="22" fill="#6abfc6"/>
+      <rect x="114" y="26" width="8" height="22" fill="#6abfc6"/>
+      <rect x="40" y="64" width="34" height="10" fill="#7869c4"/>
+    </g>
+    <text x="779" y="320" font-size="15" font-weight="bold" fill="#ffe06c" text-anchor="middle">marketplace.bas</text>
+    <text x="779" y="344" font-size="13" fill="#a0e4cb" text-anchor="middle">player lists the packs,</text>
+    <text x="779" y="362" font-size="13" fill="#a0e4cb" text-anchor="middle">picks a cabinet (NEW /</text>
+    <text x="779" y="380" font-size="13" fill="#a0e4cb" text-anchor="middle">OWNED / UPDATE)</text>
+    <text x="779" y="404" font-size="13" fill="#ffffff" text-anchor="middle">presses B: download</text>
+    <rect x="684" y="416" width="190" height="14" fill="#000"/>
+    <rect x="686" y="418" width="124" height="10" fill="#a0e4cb"/>
+    <text x="779" y="447" font-size="11" fill="#ffffff" text-anchor="middle">md5 verified by archive.org</text>
+  </g>
+
+  <!-- arrow 3->4 -->
+  <g>
+    <line x1="910" y1="306" x2="940" y2="306" stroke="#ffe06c" stroke-width="4" marker-end="url(#arrow)"/>
+    <text x="925" y="292" font-size="12" fill="#ffe06c" text-anchor="middle">B: YES</text>
+  </g>
+
+  <!-- ============ STEP 4 ============ -->
+  <g>
+    <rect x="948" y="156" width="186" height="300" fill="#352879" stroke="#a0e4cb" stroke-width="3"/>
+    <rect x="948" y="156" width="186" height="34" fill="#a0e4cb"/>
+    <text x="962" y="179" font-size="17" font-weight="bold" fill="#40318d">4 PLAY!</text>
+    <g transform="translate(1000,206)" shape-rendering="crispEdges" filter="url(#glow)">
+      <rect x="0" y="0" width="84" height="12" fill="#a0e4cb"/>
+      <rect x="-6" y="12" width="96" height="96" fill="#a0e4cb"/>
+      <rect x="6" y="22" width="72" height="50" fill="#000"/>
+      <rect x="10" y="26" width="64" height="42" fill="#ffe06c"/>
+      <path d="M22,48 l14,14 l28,-28" stroke="#40318d" stroke-width="8" fill="none"/>
+      <rect x="-6" y="78" width="96" height="14" fill="#6abfc6"/>
+      <rect x="-12" y="108" width="108" height="10" fill="#7869c4"/>
+    </g>
+    <text x="1041" y="352" font-size="15" font-weight="bold" fill="#ffe06c" text-anchor="middle">INSTALLED!</text>
+    <text x="1041" y="378" font-size="13" fill="#a0e4cb" text-anchor="middle">CABDBINSTALL</text>
+    <text x="1041" y="396" font-size="13" fill="#a0e4cb" text-anchor="middle">unpacks it now,</text>
+    <text x="1041" y="414" font-size="13" fill="#a0e4cb" text-anchor="middle">no restart</text>
+    <text x="1041" y="440" font-size="12" fill="#ffffff" text-anchor="middle">ready in your rooms</text>
+  </g>
+
+  <!-- loop: another cabinet -->
+  <path d="M1041,462 L1041,492 L779,492 L779,466" fill="none" stroke="#6abfc6" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="910" y="486" font-size="12" fill="#6abfc6" text-anchor="middle">PICK ANOTHER CABINET</text>
+
+  <!-- NO OTHER TOOL banner -->
+  <g>
+    <rect x="66" y="518" width="1068" height="64" fill="#352879" stroke="#ffe06c" stroke-width="3"/>
+    <rect x="66" y="518" width="14" height="64" fill="#ffe06c"/>
+    <text x="100" y="545" font-size="17" font-weight="bold" fill="#ffe06c">STEPS 3 + 4 HAPPEN 100% INSIDE THE HEADSET</text>
+    <text x="100" y="568" font-size="14" fill="#ffffff">No PC. No sideloading. No account. No other tool. Just marketplace.bas and an internet connection.</text>
+  </g>
+
+  <!-- scanlines + vignette -->
+  <rect x="30" y="30" width="1140" height="580" fill="url(#scan)" pointer-events="none"/>
+  <rect x="30" y="30" width="1140" height="580" fill="none" stroke="#352879" stroke-width="6"/>
+</svg>
