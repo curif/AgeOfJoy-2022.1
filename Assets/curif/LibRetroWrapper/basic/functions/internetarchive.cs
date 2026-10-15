@@ -5,7 +5,9 @@ using System.Linq;
 // archive.org cabinet packs. Rules: docs/sharing_cabinets_archive_org.md
 //
 // IALOAD(idOrUrl)              starts loading the pack, returns its identifier
-// IASTATUS(id)                 "LOADING" | "READY" | "PROCESSING" | "DARK" | "NOTFOUND" | "FAILED" | "UNKNOWN"
+// IASEARCH(query)              starts an archive.org search ("" = packs tagged subject "ageofjoy-cabinets"), returns the handle
+// IAPACKS(handle)              array with the pack identifiers found, newest first ("" if none)
+// IASTATUS(id|handle)          "LOADING" | "READY" | "PROCESSING" | "DARK" | "NOTFOUND" | "FAILED" | "UNKNOWN"
 // IAINFO(id, field)            "title" | "description" | "count" | "identifier"
 // IACABS(id)                   array with the cabinet zip names ("" if none)
 // IACABINFO(id, cab, field)    "name" | "description" | "size" | "md5" | "url" | "downloaded"
@@ -52,11 +54,62 @@ class CommandFunctionIASTATUS : CommandFunctionSingleExpressionBase
 
         BasicValue val = expr.Execute(vars);
         FunctionHelper.ExpectedNonEmptyString(val, "identifier");
+
+        // a search handle (see IASEARCH) never looks like an identifier: it has ':' or spaces.
+        IASearch search = dm.GetArchiveSearch(val.GetValueAsString());
+        if (search != null)
+            return new BasicValue(search.Status.ToString().ToUpperInvariant());
+
         IAItem item = dm.GetArchiveItem(InternetArchive.NormalizeIdentifier(val.GetValueAsString()));
         if (item == null)
             return new BasicValue("UNKNOWN");
 
         return new BasicValue(item.Status.ToString().ToUpperInvariant());
+    }
+}
+
+class CommandFunctionIASEARCH : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionIASEARCH(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "IASEARCH";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        DownloadManager dm = DownloadFunctionsHelper.GetManager(config);
+
+        string query = expr.Execute(vars).GetValueAsString().Trim();
+        if (query.Length == 0)
+            query = InternetArchive.DefaultSearch;
+
+        dm.FetchArchiveSearch(query);
+        return new BasicValue(query);
+    }
+}
+
+class CommandFunctionIAPACKS : CommandFunctionSingleExpressionBase
+{
+    public CommandFunctionIAPACKS(ConfigurationCommands config) : base(config)
+    {
+        cmdToken = "IAPACKS";
+    }
+
+    public override BasicValue Execute(BasicVars vars)
+    {
+        AGEBasicDebug.WriteConsole($"[AGE BASIC RUN {CmdToken}] [{expr}] ");
+
+        DownloadManager dm = DownloadFunctionsHelper.GetManager(config);
+
+        BasicValue val = expr.Execute(vars);
+        FunctionHelper.ExpectedNonEmptyString(val, "search");
+        IASearch search = dm.GetArchiveSearch(val.GetValueAsString());
+        if (search == null || search.Identifiers.Count == 0)
+            return new BasicValue("");
+
+        return new BasicValue(search.Identifiers.ToArray(), BasicValue.BasicValueType.String);
     }
 }
 

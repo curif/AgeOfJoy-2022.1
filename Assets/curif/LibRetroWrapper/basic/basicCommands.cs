@@ -110,6 +110,8 @@ public static class Commands
 
         //internet archive cabinet packs
         functions["IALOAD"] = typeof(CommandFunctionIALOAD);
+        functions["IASEARCH"] = typeof(CommandFunctionIASEARCH);
+        functions["IAPACKS"] = typeof(CommandFunctionIAPACKS);
         functions["IASTATUS"] = typeof(CommandFunctionIASTATUS);
         functions["IAINFO"] = typeof(CommandFunctionIAINFO);
         functions["IACABS"] = typeof(CommandFunctionIACABS);

@@ -49,6 +49,7 @@ public class DownloadManager : MonoBehaviour
     private bool isDownloading = false;
 
     private Dictionary<string, IAItem> archiveItems = new Dictionary<string, IAItem>();
+    private Dictionary<string, IASearch> archiveSearches = new Dictionary<string, IASearch>();
     // cabinet file name ("galaga.zip") -> md5 of the last verified download
     private Dictionary<string, string> downloadedMd5 = null;
 
@@ -164,14 +165,50 @@ public class DownloadManager : MonoBehaviour
 
     private IEnumerator FetchArchiveItemCoroutine(string identifier)
     {
-        // archive.org is sometimes slow or answers 5xx: retry a few times before giving up.
-        const int attempts = 3;
-        IAItem result = new IAItem { Identifier = identifier, Status = IAStatus.Failed };
+        string json = null;
+        yield return GetTextWithRetry(InternetArchive.MetadataUrl(identifier), $"metadata of {identifier}", t => json = t);
+        archiveItems[identifier] = json != null
+            ? InternetArchive.Parse(identifier, json)
+            : new IAItem { Identifier = identifier, Status = IAStatus.Failed };
+    }
 
+    // Starts (or restarts) an advanced search. Poll GetArchiveSearch(query).Status.
+    public void FetchArchiveSearch(string query)
+    {
+        if (string.IsNullOrEmpty(query))
+            return;
+        archiveSearches[query] = new IASearch { Query = query, Status = IAStatus.Loading };
+        StartCoroutine(FetchArchiveSearchCoroutine(query));
+    }
+
+    public IASearch GetArchiveSearch(string query)
+    {
+        if (string.IsNullOrEmpty(query))
+            return null;
+        archiveSearches.TryGetValue(query, out IASearch search);
+        return search;
+    }
+
+    private IEnumerator FetchArchiveSearchCoroutine(string query)
+    {
+        string json = null;
+        yield return GetTextWithRetry(InternetArchive.SearchUrl(query), $"search {query}", t => json = t);
+        IASearch result = json != null
+            ? InternetArchive.ParseSearch(query, json)
+            : new IASearch { Query = query, Status = IAStatus.Failed };
+        if (result.NumFound > result.Identifiers.Count)
+            Debug.LogWarning($"archive.org search {query}: {result.NumFound} found, only {result.Identifiers.Count} read");
+        archiveSearches[query] = result;
+    }
+
+    // archive.org is sometimes slow or answers 5xx: retry a few times before giving up. onDone gets null on failure.
+    private IEnumerator GetTextWithRetry(string url, string what, Action<string> onDone)
+    {
+        const int attempts = 3;
         for (int attempt = 1; attempt <= attempts; attempt++)
         {
             bool retry;
-            using (UnityWebRequest www = UnityWebRequest.Get(InternetArchive.MetadataUrl(identifier)))
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
                 www.timeout = 60;
                 www.SetRequestHeader("User-Agent", "AgeOfJoy");
@@ -179,22 +216,19 @@ public class DownloadManager : MonoBehaviour
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    result = InternetArchive.Parse(identifier, www.downloadHandler.text);
-                    retry = false;
+                    onDone(www.downloadHandler.text);
+                    yield break;
                 }
-                else
-                {
-                    Debug.LogError($"archive.org metadata failed for {identifier} (attempt {attempt}/{attempts}): {www.error} (HTTP {www.responseCode})");
-                    // 4xx won't get better by retrying.
-                    retry = www.responseCode == 0 || www.responseCode >= 500;
-                }
+                Debug.LogError($"archive.org {what} failed (attempt {attempt}/{attempts}): {www.error} (HTTP {www.responseCode})");
+                // 4xx won't get better by retrying.
+                retry = www.responseCode == 0 || www.responseCode >= 500;
             }
             if (!retry)
                 break;
             if (attempt < attempts)
                 yield return new WaitForSeconds(2f * attempt);
         }
-        archiveItems[identifier] = result;
+        onDone(null);
     }
 
     // 0: not downloaded, 1: downloaded and md5 matches the item's, 2: downloaded but different/unknown (update available).

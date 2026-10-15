@@ -44,7 +44,7 @@ An item can hold as many cabinets as you like. One item is effectively a **cabin
    - **Page URL:** this becomes the **identifier**, for example `ageofjoy-curif-pack-1`. Choose it carefully, because you can't change it later.
    - **Title:** a readable name, for example `AGE of Joy Cabinet Pack 1`.
    - **Description:** a short description of the whole pack.
-   - **Subject tags:** `ageofjoy`, `cabinet`.
+   - **Subject tags:** `ageofjoy`, `cabinet` and **`ageofjoy-cabinets`**. The last one makes your pack show up in the game's pack search (see "Getting listed").
    - **Media type:** *Software*.
    - **License:** optional; pick one if you want to.
 4. Open **Add additional metadata** and add **one row per cabinet**. Each row is a field name and a value:
@@ -87,6 +87,7 @@ ia upload ageofjoy-curif-pack-1 *.zip \
    --metadata="title:AGE of Joy Cabinet Pack 1" \
    --metadata="subject:ageofjoy" \
    --metadata="subject:cabinet" \
+   --metadata="subject:ageofjoy-cabinets" \
    --metadata="galaga:The standard Galaga cabinet" \
    --metadata="dkong:Donkey Kong, original Nintendo cabinet"
 
@@ -108,6 +109,14 @@ Give the community **either** of these. Both refer to the same pack, and AGE of 
 
 - the identifier: `ageofjoy-curif-pack-1`
 - the URL: `https://archive.org/details/ageofjoy-curif-pack-1`
+
+### Getting listed
+
+Add the subject tag **`ageofjoy-cabinets`** to your item and the game finds it by itself, with no registration. Players list all tagged packs with `IASEARCH("")`.
+
+- For an existing item: **Edit item → Subject tags**, or `ia metadata <identifier> --append-list="subject:ageofjoy-cabinets"`.
+- archive.org's search index updates minutes to hours after the change, so a new pack may take a while to appear.
+- Check it in a browser: `https://archive.org/advancedsearch.php?q=subject%3A%22ageofjoy-cabinets%22&fl[]=identifier&output=json`
 
 ---
 
@@ -160,6 +169,7 @@ The other files in the item are added by archive.org itself and ignored by AGE o
 > The AGEBasic functions `IALOAD`, `IASTATUS`, `IAINFO`, `IACABS`, `IACABINFO` and `IADOWNLOAD` / `IADOWNLOADSTATUS` / `IADOWNLOADPROGRESS` implement the rules below. They are documented in `docs/agebasic_prompt.md` ("Internet Archive & Downloads"), and `AGEBasicTests/config/internetarchive.bas` is a working example. Code: `InternetArchive.cs` (parsing), `DownloadManager.cs` (network, md5), `basic/functions/internetarchive.cs`.
 
 - **Item data:** `GET https://archive.org/metadata/<identifier>`. This public JSON needs no key and no login. If the user gives a URL like `https://archive.org/details/<identifier>`, the identifier is the last part of the path.
+- **Pack search (`IASEARCH` / `IAPACKS`):** `GET https://archive.org/advancedsearch.php?q=<query>&fl[]=identifier&rows=1000&sort[]=publicdate desc&output=json`. The default query is `subject:"ageofjoy-cabinets"`. The answer is `{"response":{"numFound":N,"docs":[{"identifier":"..."}]}}`; no match is `numFound: 0` with empty `docs`, not an error. The search index lags uploads.
 - **Download:** `https://archive.org/download/<identifier>/<file name>`.
 - **Which files are cabinets:** entries in `files` whose name ends in `.zip` (case-insensitive) and whose `source` is `original`. The game ignores:
   - archive.org's own files: `<identifier>_files.xml`, `_meta.xml`, `_meta.sqlite` and `_archive.torrent`;

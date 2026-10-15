@@ -45,9 +45,55 @@ public class IAItem
     }
 }
 
+// archive.org advanced-search result: identifiers of the items that match a query.
+public class IASearch
+{
+    public string Query;
+    public IAStatus Status = IAStatus.Loading; // Loading, Ready or Failed
+    public List<string> Identifiers = new List<string>();
+    public int NumFound;
+}
+
 public static class InternetArchive
 {
     const string Host = "https://archive.org";
+
+    // Every uploader can set this subject tag on their item, so packs are listed without a central registry.
+    public const string DefaultSearch = "subject:\"ageofjoy-cabinets\"";
+    public const int SearchRows = 1000;
+
+    public static string SearchUrl(string query) =>
+        $"{Host}/advancedsearch.php?q={Uri.EscapeDataString(query)}&fl%5B%5D=identifier&rows={SearchRows}&page=1&sort%5B%5D=publicdate%20desc&output=json";
+
+    public static IASearch ParseSearch(string query, string json)
+    {
+        var search = new IASearch { Query = query };
+        try
+        {
+            var response = JObject.Parse(json)["response"] as JObject;
+            if (response == null)
+            {
+                search.Status = IAStatus.Failed;
+                return search;
+            }
+            search.NumFound = (int)ParseLong(response["numFound"]);
+            if (response["docs"] is JArray docs)
+            {
+                foreach (var doc in docs.OfType<JObject>())
+                {
+                    string id = AsText(doc["identifier"]).ToLowerInvariant();
+                    if (id.Length > 0 && !search.Identifiers.Contains(id))
+                        search.Identifiers.Add(id);
+                }
+            }
+            search.Status = IAStatus.Ready;
+        }
+        catch (Exception)
+        {
+            search.Status = IAStatus.Failed;
+        }
+        return search;
+    }
 
     // "ident", "https://archive.org/details/ident/...", ".../metadata/ident", ".../download/ident/file" -> "ident"
     public static string NormalizeIdentifier(string idOrUrl)
