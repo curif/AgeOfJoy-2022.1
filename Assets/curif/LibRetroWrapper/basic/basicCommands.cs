@@ -186,6 +186,8 @@ public static class Commands
         functions["CABDBRELOAD"] = typeof(CommandFunctionCABDBRELOAD);
         functions["CABDBGETASSIGNED"] = typeof(CommandFunctionCABDBGETASSIGNED);
         functions["CABDBASSIGN"] = typeof(CommandFunctionCABDBASSIGN);
+        functions["CABDBINSTALL"] = typeof(CommandFunctionCABDBINSTALL);
+        functions["CABDBINSTALLSTATUS"] = typeof(CommandFunctionCABDBINSTALLSTATUS);
         functions["CABINSERTCOIN"] = typeof(CommandFunctionCABINSERTCOIN);
         functions["CABCOINSLOTSOUND"] = typeof(CommandFunctionCABCOINSLOTSOUND);
 

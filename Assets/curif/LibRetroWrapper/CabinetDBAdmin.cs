@@ -94,16 +94,6 @@ public class CabinetDBAdmin : MonoBehaviour
     }
     
 
-    private static void DecompressFile(string path, string destPath)
-    {
-        ConfigManager.WriteConsole($"[DecompressFile] from {path} to {destPath}");
-        // using FileStream compressedFileStream = File.Open(path, FileMode.Open);
-        // using FileStream outputFileStream = File.Create(destPath);
-        // using var decompressor = new GZipStream(compressedFileStream, CompressionMode.Decompress);
-        // decompressor.CopyTo(outputFileStream);
-        ZipFile.ExtractToDirectory(path, destPath, true); //overwrite.
-    }
-
     public static string GetNameFromPath(string path)
     {
         return Path.GetFileNameWithoutExtension(path);
@@ -112,26 +102,36 @@ public class CabinetDBAdmin : MonoBehaviour
     //load the contents of the zip file and move them to the database cabinet directory. Deletes the original zip file.
     public string loadCabinetFromZip(string zipPath)
     {
-        string pathDest = "";
+        ConfigManager.WriteConsole($"[loadCabinetFromZip] from {zipPath}");
         try
         {
-            string cabZipFileName = GetNameFromPath(zipPath);
-            pathDest = Path.Combine(ConfigManager.CabinetsDB, cabZipFileName);
-            if (!Directory.Exists(pathDest))
-                Directory.CreateDirectory(pathDest);
-            else
-                emptyDir(pathDest);
-
-            // Object.ZipUtility.UncompressFromZip(path, null, $"{ConfigManager.CabinetsDB}/{cabZipFileName}");
-            DecompressFile(zipPath, pathDest);
-            File.Delete(zipPath);
-
+            return ExtractCabinetZip(zipPath, CabinetDestPath(zipPath));
         }
         catch (System.Exception e)
         {
             ConfigManager.WriteConsoleException($"[loadCabinetFromZip] ERROR decompressing Cabinet {zipPath}", e);
             return "";
         }
+    }
+
+    // cabinetsdb/<zip name without extension>
+    public static string CabinetDestPath(string zipPath)
+    {
+        return Path.Combine(ConfigManager.CabinetsDB, GetNameFromPath(zipPath));
+    }
+
+    // Unpacks the zip into pathDest (emptied first) and deletes the zip.
+    // No logging and no Unity API: safe to run on a background thread (see CabinetInstaller).
+    // Throws on failure. Returns pathDest.
+    public static string ExtractCabinetZip(string zipPath, string pathDest)
+    {
+        if (!Directory.Exists(pathDest))
+            Directory.CreateDirectory(pathDest);
+        else
+            emptyDir(pathDest);
+
+        ZipFile.ExtractToDirectory(zipPath, pathDest, true); //overwrite.
+        File.Delete(zipPath);
         return pathDest;
     }
 

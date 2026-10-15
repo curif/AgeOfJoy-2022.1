@@ -178,4 +178,4 @@ The other files in the item are added by archive.org itself and ignored by AGE o
 - The metadata and the files are requested with `UnityWebRequest`, which follows the redirect from `archive.org/download/...` to the storage server.
 - A download is written to `<name>.zip.part` and renamed to `<name>.zip` only after the md5 matches. A failed or corrupt download leaves no file behind.
 - Every verified download is recorded in `configuration/internetarchive_md5.txt`. A cabinet that is present (unpacked in `cabinetsdb` or still waiting in `cabinets`) with that md5 is not downloaded again.
-- A downloaded zip in `cabinets` is unpacked the next time the app starts or a room loads; the loader deletes the zip afterwards.
+- A downloaded zip in `cabinets` is unpacked the next time the app starts or a room loads; the loader deletes the zip afterwards. A script can install it right away, without restarting, with `CABDBINSTALL` / `CABDBINSTALLSTATUS`.

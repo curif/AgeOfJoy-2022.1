@@ -200,7 +200,7 @@ Read cabinet packs published on archive.org and download their cabinets (see `do
 *   `IADOWNLOADSTATUS(id, cabinet)`: `"QUEUED"`, `"DOWNLOADING"`, `"COMPLETED"`, `"FAILED"` or `"NOTFOUND"`.
 *   `IADOWNLOADPROGRESS(id, cabinet)`: Percentage, `0` to `100`.
 
-A downloaded cabinet zip is unpacked on the next app start or room load, and the zip is then deleted.
+A downloaded cabinet zip is installed automatically on the next app start, or right away with `CABDBINSTALL` (see "Installing a cabinet" below).
 
 ```basic
 10 LET PACK = IALOAD("https://archive.org/details/cabinet-pack-1-1")
@@ -217,7 +217,27 @@ A downloaded cabinet zip is unpacked on the next app start or room load, and the
 120 IF IADOWNLOADSTATUS(PACK, CABS[0]) = "QUEUED" || IADOWNLOADSTATUS(PACK, CABS[0]) = "DOWNLOADING" THEN GOTO 110
 130 PRINT 0, 20, "RESULT: " + IADOWNLOADSTATUS(PACK, CABS[0])
 140 SHOW
-150 END
+150 IF IADOWNLOADSTATUS(PACK, CABS[0]) != "COMPLETED" THEN END
+```
+
+#### Installing a cabinet
+
+*   `CABDBINSTALL(cabinet)`: Starts installing `CABINETSPATH()/<cabinet>.zip` (`"galaga"` or `"galaga.zip"`). It runs on a background thread, so it never stalls the frame. The install unpacks the zip into `CABINETSDBPATH()/<cabinet>/` (replacing that folder if it already exists), deletes the zip, and, once finished, adds the cabinet to the cabinet list used by `CABDBCOUNT`, `CABDBGETNAME` and `CABDBSEARCH`. Returns `1` if the install started or is already running. Throws a runtime error when the name is empty or `"test"` (the workshop slot is reserved), the zip doesn't exist, or the zip has no `description.yaml` at its root.
+*   `CABDBINSTALLSTATUS(cabinet)`: `"INSTALLING"`, `"INSTALLED"`, `"FAILED"` or `"NOTFOUND"` (no install was requested in this session). **Poll it until it isn't `"INSTALLING"`**: the cabinet is added to the in-memory cabinet list by the poll that first sees the install finished. If the script never polls, the files are still on disk and the cabinet is picked up on the next app start.
+
+Reinstalling a cabinet that's already placed in a room replaces its files, but the live 3D cabinet doesn't change until it is reloaded (`CABROOMREPLACE` or reloading the room).
+
+Continuing the example above — install the downloaded cabinet and place it at position 3 of the current room:
+```basic
+160 LET CABNAME = IACABINFO(PACK, CABS[0], "name")
+170 CALL CABDBINSTALL(CABNAME)
+180 SLEEP 0.5
+190 IF CABDBINSTALLSTATUS(CABNAME) = "INSTALLING" THEN GOTO 180
+200 IF CABDBINSTALLSTATUS(CABNAME) != "INSTALLED" THEN PRINT 0, 21, "INSTALL FAILED" : SHOW : END
+210 CALL CABDBASSIGN(ROOMNAME(), 3, CABNAME)
+220 CALL CABDBSAVE()
+230 CALL CABROOMREPLACE(3, CABNAME)
+240 END
 ```
 
 ---
@@ -338,6 +358,7 @@ AGEBasic can inspect and change which cabinet game occupies each position in a r
 *   `CABDBDELETE(room, position)`: Removes the registry entry at `room`/`position`. Throws a runtime error if nothing is assigned there.
 *   `CABDBSAVE()`: Persists all in-memory registry changes (`CABDBADD`/`CABDBASSIGN`/`CABDBDELETE`) to `registry.yaml`. **Required** — those three only mutate memory; without a matching `CABDBSAVE()` the changes are lost the next time the room reloads.
 *   `CABDBRELOAD()`: Re-reads `registry.yaml` from disk into memory, discarding any unsaved in-memory changes, and re-scans the cabinet DB folder for unassigned cabinets. **Also reconciles the currently loaded room**: any position whose live 3D cabinet no longer matches what the reloaded registry assigns is swapped in-place (same swap used by `CABROOMREPLACE`). Positions with no registry entry are left untouched. Use when the registry file was modified outside the running script (e.g. by another process or a manual edit) and the script needs to see the current on-disk state, including an immediately updated room.
+*   `CABDBINSTALL(cabinet)` / `CABDBINSTALLSTATUS(cabinet)`: Install a cabinet zip from `CABINETSPATH()` into the cabinet DB (see §5 "Installing a cabinet").
 
 **Typical pattern to durably swap a cabinet from a script** (mirrors what the in-VR Configuration Room UI does internally):
 ```basic
