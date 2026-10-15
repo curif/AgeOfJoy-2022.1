@@ -220,7 +220,7 @@ public class basicAGE : MonoBehaviour
         }
 
         configCommands.ConfigurationController = ConfigurationController;
-        //configCommands.DownloadManager = DownloadManager;
+        configCommands.DownloadManager = DownloadManager;
         configCommands.ControlMap = libretroControlMap;
         configCommands.ScreenGenerator = ScreenGenerator;
         configCommands.SceneDatabase = SceneDatabase;

@@ -187,6 +187,39 @@ No-argument functions returning standard device folders. Use with `COMBINEPATH()
 *   `DEBUGPATH()`: Folder for debug output/logs.
 *   `VIDEOPATH()`: Folder for video playback files (see §9).
 
+### Internet Archive & Downloads
+
+Read cabinet packs published on archive.org and download their cabinets (see `docs/sharing_cabinets_archive_org.md`). Network calls never block: **start** the work, then **poll** its status with `SLEEP` between checks. A script that polls without `SLEEP` wastes the 2ms/frame CPU budget.
+
+*   `IALOAD(idOrUrl)`: Starts loading an archive.org item (a cabinet pack). Accepts the identifier (`cabinet-pack-1-1`) or the item URL (`https://archive.org/details/cabinet-pack-1-1`). Returns the identifier.
+*   `IASTATUS(id)`: `"LOADING"`, `"READY"`, `"PROCESSING"` (archive.org is still processing the item), `"DARK"` (taken down), `"NOTFOUND"`, `"FAILED"` (network error) or `"UNKNOWN"` (never loaded).
+*   `IAINFO(id, field)`: Pack information. `field`: `"title"`, `"description"`, `"count"` (number of cabinets) or `"identifier"`.
+*   `IACABS(id)`: Array with the cabinet zip names (`"galaga.zip"`, ...), or `""` if the pack has none or isn't loaded.
+*   `IACABINFO(id, cabinet, field)`: Information about one cabinet; `cabinet` is `"galaga"` or `"galaga.zip"`. `field`: `"name"`, `"description"`, `"size"` (bytes), `"md5"`, `"url"` (the file address on archive.org) or `"downloaded"`: `0` = not downloaded, `1` = downloaded with the same md5, `2` = downloaded but with a different md5 (an update is available). "Downloaded" means the cabinet zip is waiting in `CABINETSPATH()` or was already unpacked into `CABINETSDBPATH()`.
+*   `IADOWNLOAD(id, cabinet)`: Queues the download of a cabinet (`"galaga"` or `"galaga.zip"`) of a loaded pack into `CABINETSPATH()` and returns the cabinet file name. The file is written as `<name>.part` and renamed only when complete and its md5 matches, so a cabinet zip never appears half downloaded. A cabinet already downloaded with the same md5 is not downloaded again.
+*   `IADOWNLOADSTATUS(id, cabinet)`: `"QUEUED"`, `"DOWNLOADING"`, `"COMPLETED"`, `"FAILED"` or `"NOTFOUND"`.
+*   `IADOWNLOADPROGRESS(id, cabinet)`: Percentage, `0` to `100`.
+
+A downloaded cabinet zip is unpacked on the next app start or room load, and the zip is then deleted.
+
+```basic
+10 LET PACK = IALOAD("https://archive.org/details/cabinet-pack-1-1")
+20 SLEEP 0.5
+30 IF IASTATUS(PACK) = "LOADING" THEN GOTO 20
+40 IF IASTATUS(PACK) != "READY" THEN PRINT 0, 0, "PACK ERROR: " + IASTATUS(PACK) : END
+50 LET CABS = IACABS(PACK)
+60 FOR I = 0 TO LEN(CABS) - 1
+70   PRINT 0, I, CABS[I] + " " + IACABINFO(PACK, CABS[I], "description")
+80 NEXT I
+90 SHOW
+100 CALL IADOWNLOAD(PACK, CABS[0])
+110 SLEEP 0.5
+120 IF IADOWNLOADSTATUS(PACK, CABS[0]) = "QUEUED" || IADOWNLOADSTATUS(PACK, CABS[0]) = "DOWNLOADING" THEN GOTO 110
+130 PRINT 0, 20, "RESULT: " + IADOWNLOADSTATUS(PACK, CABS[0])
+140 SHOW
+150 END
+```
+
 ---
 
 ## 6. Screen & Drawing Commands
@@ -428,7 +461,7 @@ Plays `.sid` files (PSID/RSID v1–v4) through the cabinet's AudioSource. Suppor
 20 SIDLOAD "sfx",   COMBINEPATH(AGEBASICPATH(), "music/zap.sid")
 30 SIDVOLUME "music", 70 : SIDVOLUME "sfx", 60
 40 SIDPLAY "music"
-50 IF CONTROLACTIVE("JOYPAD_B_0") THEN SIDPLAY "sfx", 1
+50 IF CONTROLACTIVE("JOYPAD_B") THEN SIDPLAY "sfx", 1
 60 SLEEP 0.05 : GOTO 50
 ```
 

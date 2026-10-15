@@ -108,10 +108,15 @@ public static class Commands
         functions["FILEDELETE"] = typeof(CommandFunctionFILEDELETE);
         functions["FILECOPY"] = typeof(CommandFunctionFILECOPY);
 
-        //download manager
-        //functions["DOWNLOAD"] = typeof(CommandFunctionDOWNLOAD);
-        //functions["DOWNLOADSTATUS"] = typeof(CommandFunctionDOWNLOADSTATUS);
-        //functions["DOWNLOADPROGRESS"] = typeof(CommandFunctionDOWNLOADPROGRESS);
+        //internet archive cabinet packs
+        functions["IALOAD"] = typeof(CommandFunctionIALOAD);
+        functions["IASTATUS"] = typeof(CommandFunctionIASTATUS);
+        functions["IAINFO"] = typeof(CommandFunctionIAINFO);
+        functions["IACABS"] = typeof(CommandFunctionIACABS);
+        functions["IACABINFO"] = typeof(CommandFunctionIACABINFO);
+        functions["IADOWNLOAD"] = typeof(CommandFunctionIADOWNLOAD);
+        functions["IADOWNLOADSTATUS"] = typeof(CommandFunctionIADOWNLOADSTATUS);
+        functions["IADOWNLOADPROGRESS"] = typeof(CommandFunctionIADOWNLOADPROGRESS);
 
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);

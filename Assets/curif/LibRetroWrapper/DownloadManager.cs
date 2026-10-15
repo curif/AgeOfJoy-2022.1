@@ -1,11 +1,17 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System;
 
+// Sequential file downloader used by the DOWNLOAD* AGEBasic functions, plus an archive.org item cache
+// used by the IA* functions.
+// Downloads go to "<savePath>.part" and are moved to savePath only when complete (and md5 verified),
+// so the cabinets loader never sees a partial zip.
 public class DownloadManager : MonoBehaviour
 {
     public enum DownloadStatus
@@ -21,36 +27,44 @@ public class DownloadManager : MonoBehaviour
     {
         public string url;
         public string savePath;
+        public string expectedMd5;
         public DownloadStatus status;
         public float progress;
 
-        public DownloadItem(string url, string savePath)
+        public DownloadItem(string url, string savePath, string expectedMd5)
         {
             this.url = url;
             this.savePath = savePath;
+            this.expectedMd5 = string.IsNullOrEmpty(expectedMd5) ? null : expectedMd5.ToLowerInvariant();
             this.status = DownloadStatus.Idle;
             this.progress = 0f;
         }
     }
 
+    private const string Md5RecordFile = "internetarchive_md5.txt";
+
     private Queue<DownloadItem> downloadQueue = new Queue<DownloadItem>();
     private List<DownloadItem> completedDownloads = new List<DownloadItem>(); // Track completed/failed downloads
     private DownloadItem currentDownload = null;
     private bool isDownloading = false;
-    private HttpClient httpClient;
 
-    void Awake()
+    private Dictionary<string, IAItem> archiveItems = new Dictionary<string, IAItem>();
+    // cabinet file name ("galaga.zip") -> md5 of the last verified download
+    private Dictionary<string, string> downloadedMd5 = null;
+
+    // The component lives in the room's FixedObject; created on demand when the scene doesn't have it.
+    public static DownloadManager Get()
     {
-        httpClient = new HttpClient();
-        httpClient.Timeout = System.TimeSpan.FromMinutes(5);
+        GameObject root = GameObject.Find("FixedObject");
+        if (root == null)
+            return null;
+        DownloadManager dm = root.GetComponent<DownloadManager>();
+        if (dm == null)
+            dm = root.AddComponent<DownloadManager>();
+        return dm;
     }
 
-    void OnDestroy()
-    {
-        httpClient?.Dispose();
-    }
-
-    public void DownloadFile(string url, string savePath)
+    public void DownloadFile(string url, string savePath, string expectedMd5 = null)
     {
         if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(savePath))
         {
@@ -58,7 +72,22 @@ public class DownloadManager : MonoBehaviour
             return;
         }
 
-        DownloadItem item = new DownloadItem(url, savePath);
+        // same destination already queued or in progress
+        if ((currentDownload != null && currentDownload.savePath == savePath) ||
+            downloadQueue.Any(i => i.savePath == savePath))
+            return;
+
+        DownloadItem item = new DownloadItem(url, savePath, expectedMd5);
+
+        // already downloaded with the same md5: nothing to download.
+        if (item.expectedMd5 != null && IsDownloadedWithMd5(Path.GetFileName(savePath), item.expectedMd5))
+        {
+            item.status = DownloadStatus.Completed;
+            item.progress = 1f;
+            completedDownloads.Add(item);
+            return;
+        }
+
         downloadQueue.Enqueue(item);
 
         if (!isDownloading)
@@ -77,7 +106,7 @@ public class DownloadManager : MonoBehaviour
         return (currentDownload.status, currentDownload.progress);
     }
 
-    // New method to query status of a specific file
+    // Query status of a specific file, by url or by save path.
     public (DownloadStatus status, float progress) GetFileStatus(string identifier)
     {
         if (string.IsNullOrEmpty(identifier))
@@ -101,9 +130,10 @@ public class DownloadManager : MonoBehaviour
             }
         }
 
-        // Check completed/failed downloads
-        foreach (var item in completedDownloads)
+        // Check completed/failed downloads, newest first: a repeated download reports its latest result.
+        for (int i = completedDownloads.Count - 1; i >= 0; i--)
         {
+            var item = completedDownloads[i];
             if (item.url == identifier || item.savePath == identifier)
             {
                 return (item.status, item.progress);
@@ -113,85 +143,265 @@ public class DownloadManager : MonoBehaviour
         return (DownloadStatus.NotFound, 0f);
     }
 
-    private IEnumerator DownloadCoroutine()
+    // ---- archive.org items ------------------------------------------------------------------
+
+    // Starts (or restarts) the metadata fetch. Poll GetArchiveItem(id).Status.
+    public void FetchArchiveItem(string identifier)
     {
-        isDownloading = true;
-
-        while (downloadQueue.Count > 0 || currentDownload != null)
-        {
-            if (currentDownload == null)
-            {
-                currentDownload = downloadQueue.Dequeue();
-                currentDownload.status = DownloadStatus.Downloading;
-
-                Task downloadTask = DownloadFileAsync(currentDownload);
-            }
-
-            yield return null;
-
-            if (currentDownload.status == DownloadStatus.Completed ||
-                currentDownload.status == DownloadStatus.Failed)
-            {
-                completedDownloads.Add(currentDownload);
-                currentDownload = null;
-            }
-        }
-
-        isDownloading = false;
+        if (string.IsNullOrEmpty(identifier))
+            return;
+        archiveItems[identifier] = new IAItem { Identifier = identifier, Status = IAStatus.Loading };
+        StartCoroutine(FetchArchiveItemCoroutine(identifier));
     }
 
-    private async Task DownloadFileAsync(DownloadItem item)
+    public IAItem GetArchiveItem(string identifier)
     {
-        try
+        if (string.IsNullOrEmpty(identifier))
+            return null;
+        archiveItems.TryGetValue(identifier, out IAItem item);
+        return item;
+    }
+
+    private IEnumerator FetchArchiveItemCoroutine(string identifier)
+    {
+        // archive.org is sometimes slow or answers 5xx: retry a few times before giving up.
+        const int attempts = 3;
+        IAItem result = new IAItem { Identifier = identifier, Status = IAStatus.Failed };
+
+        for (int attempt = 1; attempt <= attempts; attempt++)
         {
-            if (item.url.StartsWith("file://"))
+            bool retry;
+            using (UnityWebRequest www = UnityWebRequest.Get(InternetArchive.MetadataUrl(identifier)))
             {
-                string filePath = item.url.Replace("file://", "");
-                if (File.Exists(filePath))
+                www.timeout = 60;
+                www.SetRequestHeader("User-Agent", "AgeOfJoy");
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
                 {
-                    File.Copy(filePath, item.savePath, true);
-                    item.progress = 1f;
-                    item.status = DownloadStatus.Completed;
+                    result = InternetArchive.Parse(identifier, www.downloadHandler.text);
+                    retry = false;
                 }
                 else
                 {
-                    throw new FileNotFoundException("Local file not found");
+                    Debug.LogError($"archive.org metadata failed for {identifier} (attempt {attempt}/{attempts}): {www.error} (HTTP {www.responseCode})");
+                    // 4xx won't get better by retrying.
+                    retry = www.responseCode == 0 || www.responseCode >= 500;
                 }
             }
-            else
+            if (!retry)
+                break;
+            if (attempt < attempts)
+                yield return new WaitForSeconds(2f * attempt);
+        }
+        archiveItems[identifier] = result;
+    }
+
+    // 0: not downloaded, 1: downloaded and md5 matches the item's, 2: downloaded but different/unknown (update available).
+    public int DownloadedState(IACabinet cab)
+    {
+        bool present = Directory.Exists(Path.Combine(ConfigManager.CabinetsDB, cab.Name)) ||
+                       File.Exists(Path.Combine(ConfigManager.Cabinets, cab.FileName));
+        if (!present)
+            return 0;
+        return IsDownloadedWithMd5(cab.FileName, cab.Md5) ? 1 : 2;
+    }
+
+    // ---- downloaded md5 record ---------------------------------------------------------------
+
+    private string Md5RecordPath => Path.Combine(ConfigManager.ConfigDir, Md5RecordFile);
+
+    private Dictionary<string, string> LoadDownloadedMd5()
+    {
+        if (downloadedMd5 != null)
+            return downloadedMd5;
+        downloadedMd5 = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            if (File.Exists(Md5RecordPath))
             {
-                using (HttpResponseMessage response = await httpClient.GetAsync(item.url, HttpCompletionOption.ResponseHeadersRead))
+                foreach (string line in File.ReadAllLines(Md5RecordPath))
                 {
-                    response.EnsureSuccessStatusCode();
-                    long totalBytes = response.Content.Headers.ContentLength ?? -1L;
-
-                    using (var contentStream = await response.Content.ReadAsStreamAsync())
-                    using (var fileStream = new FileStream(item.savePath, FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        byte[] buffer = new byte[8192];
-                        long bytesRead = 0;
-                        int count;
-
-                        while ((count = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
-                        {
-                            await fileStream.WriteAsync(buffer, 0, count);
-                            bytesRead += count;
-
-                            if (totalBytes > 0)
-                            {
-                                item.progress = (float)bytesRead / totalBytes;
-                            }
-                        }
-                    }
-
-                    item.progress = 1f;
-                    item.status = DownloadStatus.Completed;
+                    string[] parts = line.Split('\t');
+                    if (parts.Length == 2 && parts[0].Length > 0)
+                        downloadedMd5[parts[0]] = parts[1];
                 }
             }
         }
         catch (Exception e)
         {
-            Debug.LogError($"Download failed for {item.url}: {e.Message}");
+            Debug.LogError($"Can't read {Md5RecordFile}: {e.Message}");
+        }
+        return downloadedMd5;
+    }
+
+    private void RecordDownloadedMd5(string fileName, string md5)
+    {
+        var map = LoadDownloadedMd5();
+        map[fileName] = md5;
+        try
+        {
+            File.WriteAllLines(Md5RecordPath, map.Select(kv => kv.Key + "\t" + kv.Value));
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Can't write {Md5RecordFile}: {e.Message}");
+        }
+    }
+
+    // True if the cabinet is present (decompressed or pending) and the last verified download had this md5.
+    private bool IsDownloadedWithMd5(string fileName, string md5)
+    {
+        if (string.IsNullOrEmpty(md5))
+            return false;
+        string name = Path.GetFileNameWithoutExtension(fileName);
+        bool present = Directory.Exists(Path.Combine(ConfigManager.CabinetsDB, name)) ||
+                       File.Exists(Path.Combine(ConfigManager.Cabinets, fileName));
+        if (!present)
+            return false;
+        return LoadDownloadedMd5().TryGetValue(fileName, out string recorded) &&
+               string.Equals(recorded, md5, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ComputeMd5(string path)
+    {
+        using (var md5 = MD5.Create())
+        using (var stream = File.OpenRead(path))
+        {
+            return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+        }
+    }
+
+    // ---- download loop ----------------------------------------------------------------------
+
+    private IEnumerator DownloadCoroutine()
+    {
+        isDownloading = true;
+
+        while (downloadQueue.Count > 0)
+        {
+            currentDownload = downloadQueue.Dequeue();
+            currentDownload.status = DownloadStatus.Downloading;
+
+            yield return DownloadItemCoroutine(currentDownload);
+
+            completedDownloads.Add(currentDownload);
+            currentDownload = null;
+        }
+
+        isDownloading = false;
+    }
+
+    private IEnumerator DownloadItemCoroutine(DownloadItem item)
+    {
+        string partPath = item.savePath + ".part";
+        string error = null;
+
+        try
+        {
+            string dir = Path.GetDirectoryName(item.savePath);
+            if (!string.IsNullOrEmpty(dir))
+                Directory.CreateDirectory(dir);
+            if (File.Exists(partPath))
+                File.Delete(partPath);
+        }
+        catch (Exception e)
+        {
+            error = e.Message;
+        }
+
+        if (error == null)
+        {
+            if (item.url.StartsWith("file://"))
+            {
+                try
+                {
+                    string filePath = item.url.Replace("file://", "");
+                    if (!File.Exists(filePath))
+                        throw new FileNotFoundException("Local file not found");
+                    File.Copy(filePath, partPath, true);
+                }
+                catch (Exception e)
+                {
+                    error = e.Message;
+                }
+            }
+            else
+            {
+                // archive.org: if the main url fails with a server error, try the item's storage servers directly.
+                var urls = new List<string> { item.url };
+                if (InternetArchive.TryParseDownloadUrl(item.url, out string identifier, out string archiveFile))
+                    urls.AddRange(InternetArchive.MirrorUrls(GetArchiveItem(identifier), archiveFile));
+
+                foreach (string url in urls)
+                {
+                    error = null;
+                    using (UnityWebRequest www = UnityWebRequest.Get(url))
+                    {
+                        www.downloadHandler = new DownloadHandlerFile(partPath) { removeFileOnAbort = true };
+                        www.SetRequestHeader("User-Agent", "AgeOfJoy");
+                        www.timeout = 0; // large files: no overall timeout
+                        UnityWebRequestAsyncOperation op = www.SendWebRequest();
+                        while (!op.isDone)
+                        {
+                            item.progress = www.downloadProgress;
+                            yield return null;
+                        }
+                        if (www.result != UnityWebRequest.Result.Success)
+                            error = $"{www.error} (HTTP {www.responseCode}) {url}";
+                        if (error == null || www.responseCode < 500)
+                            break; // success, or an error that another server won't fix
+                    }
+                    Debug.LogWarning($"Download attempt failed: {error}");
+                }
+            }
+        }
+
+        // md5 on a worker thread: don't hitch the frame on big zips.
+        string md5 = null;
+        if (error == null)
+        {
+            Task<string> md5Task = Task.Run(() => ComputeMd5(partPath));
+            while (!md5Task.IsCompleted)
+                yield return null;
+            if (md5Task.IsFaulted)
+                error = md5Task.Exception.GetBaseException().Message;
+            else
+                md5 = md5Task.Result;
+        }
+
+        if (error == null && item.expectedMd5 != null && md5 != item.expectedMd5)
+            error = $"md5 mismatch, expected {item.expectedMd5} got {md5}";
+
+        if (error == null)
+        {
+            try
+            {
+                if (File.Exists(item.savePath))
+                    File.Delete(item.savePath);
+                File.Move(partPath, item.savePath);
+                RecordDownloadedMd5(Path.GetFileName(item.savePath), md5);
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+            }
+        }
+
+        if (error == null)
+        {
+            item.progress = 1f;
+            item.status = DownloadStatus.Completed;
+        }
+        else
+        {
+            Debug.LogError($"Download failed for {item.url}: {error}");
+            try
+            {
+                if (File.Exists(partPath))
+                    File.Delete(partPath);
+            }
+            catch (Exception) { }
             item.status = DownloadStatus.Failed;
             item.progress = 0f;
         }
