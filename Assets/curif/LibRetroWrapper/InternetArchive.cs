@@ -25,6 +25,17 @@ public class IACabinet
     public string Url;
 }
 
+// any original file of an item (rom, music, video, ...), not only the cabinet zips.
+public class IAFile
+{
+    public string Name;   // path inside the item: "file.zip" or "roms/file.zip"
+    public long Size;
+    public string Md5;
+    public string Format = "";
+    public string Mtime = "";
+    public string Url;
+}
+
 public class IAItem
 {
     public string Identifier;
@@ -32,6 +43,7 @@ public class IAItem
     public string Title = "";
     public string Description = "";
     public List<IACabinet> Cabinets = new List<IACabinet>();
+    public List<IAFile> Files = new List<IAFile>(); // every original file, archive.org's own files excluded
     // storage servers that hold the item (d1, d2, server) and its folder (dir), used as fallback for downloads.
     public List<string> Servers = new List<string>();
     public string Dir = "";
@@ -42,6 +54,15 @@ public class IAItem
             return null;
         string name = cab.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ? cab.Substring(0, cab.Length - 4) : cab;
         return Cabinets.FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // exact (case insensitive) match on the full path of the file inside the item.
+    public IAFile FindFile(string file)
+    {
+        if (string.IsNullOrEmpty(file))
+            return null;
+        string name = file.Replace('\\', '/').TrimStart('/');
+        return Files.FirstOrDefault(f => string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase));
     }
 }
 
@@ -128,7 +149,7 @@ public static class InternetArchive
         if (parts.Length < 3 || parts[0] != "download")
             return false;
         identifier = parts[1].ToLowerInvariant();
-        fileName = Uri.UnescapeDataString(parts[parts.Length - 1]);
+        fileName = string.Join("/", parts.Skip(2).Select(Uri.UnescapeDataString));
         return true;
     }
 
@@ -138,13 +159,38 @@ public static class InternetArchive
         if (item == null || string.IsNullOrEmpty(item.Dir))
             yield break;
         foreach (string host in item.Servers)
-            yield return $"https://{host}{item.Dir}/{Uri.EscapeDataString(file)}";
+            yield return $"https://{host}{item.Dir}/{EscapePath(file)}";
     }
 
     public static string MetadataUrl(string identifier) => $"{Host}/metadata/{Uri.EscapeDataString(identifier)}";
 
     public static string DownloadUrl(string identifier, string file) =>
-        $"{Host}/download/{Uri.EscapeDataString(identifier)}/{Uri.EscapeDataString(file)}";
+        $"{Host}/download/{Uri.EscapeDataString(identifier)}/{EscapePath(file)}";
+
+    // escapes each segment: "roms/my game.zip" -> "roms/my%20game.zip"
+    static string EscapePath(string path) =>
+        string.Join("/", path.Split('/').Select(Uri.EscapeDataString));
+
+    // archive.org's own bookkeeping files, never content.
+    static bool IsSystemFile(string identifier, string name)
+    {
+        if (name.StartsWith(identifier + "_", StringComparison.OrdinalIgnoreCase) &&
+            (name.EndsWith("_files.xml", StringComparison.OrdinalIgnoreCase) ||
+             name.EndsWith("_meta.xml", StringComparison.OrdinalIgnoreCase) ||
+             name.EndsWith("_meta.sqlite", StringComparison.OrdinalIgnoreCase) ||
+             name.EndsWith("_reviews.xml", StringComparison.OrdinalIgnoreCase)))
+            return true;
+        return name.Equals("__ia_thumb.jpg", StringComparison.OrdinalIgnoreCase);
+    }
+
+    // MS-DOS style pattern ("*", "?") matched against the whole name, case insensitive.
+    public static bool WildcardMatch(string name, string wildcard)
+    {
+        if (string.IsNullOrEmpty(wildcard) || wildcard == "*")
+            return true;
+        string re = "^" + System.Text.RegularExpressions.Regex.Escape(wildcard).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+        return System.Text.RegularExpressions.Regex.IsMatch(name, re, System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    }
 
     // archive.org returns a single value as a string and repeated values as an array.
     static string AsText(JToken t)
@@ -223,6 +269,22 @@ public static class InternetArchive
                     continue;
                 originals[name] = f;
             }
+        }
+
+        foreach (var kv in originals.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            string name = kv.Key.Replace('\\', '/');
+            if (IsSystemFile(identifier, name))
+                continue;
+            item.Files.Add(new IAFile
+            {
+                Name = name,
+                Size = ParseLong(kv.Value["size"]),
+                Md5 = AsText(kv.Value["md5"]).ToLowerInvariant(),
+                Format = AsText(kv.Value["format"]),
+                Mtime = AsText(kv.Value["mtime"]),
+                Url = DownloadUrl(identifier, name)
+            });
         }
 
         // archive.org's own files (_files.xml, _meta.xml, ...) and derivatives are never .zip originals.

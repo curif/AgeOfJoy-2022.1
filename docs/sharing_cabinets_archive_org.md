@@ -166,7 +166,7 @@ The other files in the item are added by archive.org itself and ignored by AGE o
 
 ## 9. What AGE of Joy reads (developer reference)
 
-> The AGEBasic functions `IALOAD`, `IASTATUS`, `IAINFO`, `IACABS`, `IACABINFO` and `IADOWNLOAD` / `IADOWNLOADSTATUS` / `IADOWNLOADPROGRESS` implement the rules below. They are documented in `docs/agebasic_prompt.md` ("Internet Archive & Downloads"), and `AGEBasicTests/config/internetarchive.bas` is a working example. Code: `InternetArchive.cs` (parsing), `DownloadManager.cs` (network, md5), `basic/functions/internetarchive.cs`.
+> The AGEBasic functions `IALOAD`, `IASTATUS`, `IAINFO`, `IACABS`, `IACABINFO` and `IADOWNLOAD` / `IADOWNLOADSTATUS` / `IADOWNLOADPROGRESS` implement the rules below. `IAFILES`, `IAFILEINFO` and `IAFILEDOWNLOAD*` do the same for any file type (saved in `downloads/`). They are documented in `docs/agebasic_prompt.md` ("Internet Archive & Downloads"), and `AGEBasicTests/config/internetarchive.bas` is a working example. Code: `InternetArchive.cs` (parsing), `DownloadManager.cs` (network, md5), `basic/functions/internetarchive.cs`.
 
 - **Item data:** `GET https://archive.org/metadata/<identifier>`. This public JSON needs no key and no login. If the user gives a URL like `https://archive.org/details/<identifier>`, the identifier is the last part of the path.
 - **Pack search (`IASEARCH` / `IAPACKS`):** `GET https://archive.org/advancedsearch.php?q=<query>&fl[]=identifier&rows=1000&sort[]=publicdate desc&output=json`. The default query is `subject:"ageofjoy-cabinets"`. The answer is `{"response":{"numFound":N,"docs":[{"identifier":"..."}]}}`; no match is `numFound: 0` with empty `docs`, not an error. The search index lags uploads.

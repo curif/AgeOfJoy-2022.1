@@ -392,6 +392,8 @@ class PathFunctionsBase : CommandFunctionNoExpressionBase
 
                     return new BasicValue(config.Cabinet.FilesPath);
                 }
+            case "DOWNLOADSPATH":
+                return new BasicValue(ConfigManager.RomsDir);
             case "ROOTPATH":
                 return new BasicValue(ConfigManager.BaseDir);
             case "MUSICPATH":
@@ -427,6 +429,11 @@ class CommandFunctionCABINETSPATH : PathFunctionsBase
 class CommandFunctionCABINETPATH : PathFunctionsBase
 {
     public CommandFunctionCABINETPATH(ConfigurationCommands config) : base(config, "CABINETPATH") { }
+}
+
+class CommandFunctionDOWNLOADSPATH : PathFunctionsBase
+{
+    public CommandFunctionDOWNLOADSPATH(ConfigurationCommands config) : base(config, "DOWNLOADSPATH") { }
 }
 
 class CommandFunctionROOTPATH : PathFunctionsBase

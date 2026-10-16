@@ -96,6 +96,7 @@ public static class Commands
         functions["AGEBASICPATH"] = typeof(CommandFunctionAGEBASICPATH);
         functions["CABINETSDBPATH"] = typeof(CommandFunctionCABINETSDBPATH);
         functions["CABINETSPATH"] = typeof(CommandFunctionCABINETSPATH);
+        functions["DOWNLOADSPATH"] = typeof(CommandFunctionDOWNLOADSPATH);
         functions["CABINETPATH"] = typeof(CommandFunctionCABINETPATH);
         functions["ROOTPATH"] = typeof(CommandFunctionROOTPATH);
         functions["MUSICPATH"] = typeof(CommandFunctionMUSICPATH);
@@ -119,6 +120,11 @@ public static class Commands
         functions["IADOWNLOAD"] = typeof(CommandFunctionIADOWNLOAD);
         functions["IADOWNLOADSTATUS"] = typeof(CommandFunctionIADOWNLOADSTATUS);
         functions["IADOWNLOADPROGRESS"] = typeof(CommandFunctionIADOWNLOADPROGRESS);
+        functions["IAFILES"] = typeof(CommandFunctionIAFILES);
+        functions["IAFILEINFO"] = typeof(CommandFunctionIAFILEINFO);
+        functions["IAFILEDOWNLOAD"] = typeof(CommandFunctionIAFILEDOWNLOAD);
+        functions["IAFILEDOWNLOADSTATUS"] = typeof(CommandFunctionIAFILEDOWNLOADSTATUS);
+        functions["IAFILEDOWNLOADPROGRESS"] = typeof(CommandFunctionIAFILEDOWNLOADPROGRESS);
 
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);

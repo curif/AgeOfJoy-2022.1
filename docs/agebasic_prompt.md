@@ -186,6 +186,7 @@ No-argument functions returning standard device folders. Use with `COMBINEPATH()
 *   `MUSICPATH()`: Folder for the Global Music Player (JukeBox) files (see §8.2).
 *   `DEBUGPATH()`: Folder for debug output/logs.
 *   `VIDEOPATH()`: Folder for video playback files (see §9).
+*   `DOWNLOADSPATH()`: Folder where `IAFILEDOWNLOAD` saves files by default (`downloads/`).
 
 ### Internet Archive & Downloads
 
@@ -195,12 +196,20 @@ Read cabinet packs published on archive.org and download their cabinets (see `do
 *   `IASEARCH(query)`: Starts an archive.org search for packs and returns a handle. `""` searches every pack tagged with the subject `ageofjoy-cabinets` (anyone can add the tag to their item). Any other archive.org query works too, e.g. `collection:something`.
 *   `IAPACKS(handle)`: Array with the pack identifiers found by `IASEARCH`, newest first, or `""` if none or not ready. Pass each one to `IALOAD`.
 *   `IASTATUS(id)`: also accepts an `IASEARCH` handle (`"LOADING"`, `"READY"` or `"FAILED"`). For a pack: `"LOADING"`, `"READY"`, `"PROCESSING"` (archive.org is still processing the item), `"DARK"` (taken down), `"NOTFOUND"`, `"FAILED"` (network error) or `"UNKNOWN"` (never loaded).
-*   `IAINFO(id, field)`: Pack information. `field`: `"title"`, `"description"`, `"count"` (number of cabinets) or `"identifier"`.
+*   `IAINFO(id, field)`: Pack information. `field`: `"title"`, `"description"`, `"count"` (number of cabinets), `"files"` (number of files of any type) or `"identifier"`.
 *   `IACABS(id)`: Array with the cabinet zip names (`"galaga.zip"`, ...), or `""` if the pack has none or isn't loaded.
 *   `IACABINFO(id, cabinet, field)`: Information about one cabinet; `cabinet` is `"galaga"` or `"galaga.zip"`. `field`: `"name"`, `"description"`, `"size"` (bytes), `"md5"`, `"url"` (the file address on archive.org) or `"downloaded"`: `0` = not downloaded, `1` = downloaded with the same md5, `2` = downloaded but with a different md5 (an update is available). "Downloaded" means the cabinet zip is waiting in `CABINETSPATH()` or was already unpacked into `CABINETSDBPATH()`.
 *   `IADOWNLOAD(id, cabinet)`: Queues the download of a cabinet (`"galaga"` or `"galaga.zip"`) of a loaded pack into `CABINETSPATH()` and returns the cabinet file name. The file is written as `<name>.part` and renamed only when complete and its md5 matches, so a cabinet zip never appears half downloaded. A cabinet already downloaded with the same md5 is not downloaded again.
 *   `IADOWNLOADSTATUS(id, cabinet)`: `"QUEUED"`, `"DOWNLOADING"`, `"COMPLETED"`, `"FAILED"` or `"NOTFOUND"`.
 *   `IADOWNLOADPROGRESS(id, cabinet)`: Percentage, `0` to `100`.
+
+Any file of an item (ROMs, music, video...), not only cabinets. Only the item's original files are listed (archive.org's own files and derivatives are left out). Files go to `DOWNLOADSPATH()` unless `destFolder` is given; `destFolder` must be inside the AGE of Joy folder and can't be the cabinets, cabinets DB, cores, configuration or system folders (use `IADOWNLOAD` for cabinets). A file in a subfolder of the item (`"roms/x.zip"`) is saved without the subfolder (`<destFolder>/x.zip`). Same md5 already downloaded in that folder = not downloaded again.
+
+*   `IAFILES(id, [wildcard])`: Array with the names of the files of a loaded item (full path inside the item), or `""` if none. `wildcard` uses `*` and `?` over the full name, e.g. `"*.zip"`, `"roms/*"`.
+*   `IAFILEINFO(id, file, field, [destFolder])`: Information about one file. `field`: `"name"`, `"size"` (bytes), `"md5"`, `"url"`, `"format"`, `"mtime"` or `"downloaded"` (`0` = no, `1` = same md5, `2` = different md5) checked in `destFolder` or `DOWNLOADSPATH()`.
+*   `IAFILEDOWNLOAD(id, file, [destFolder])`: Queues the download (same `.part` + md5 verification as `IADOWNLOAD`) and returns the saved file name.
+*   `IAFILEDOWNLOADSTATUS(id, file, [destFolder])`: `"QUEUED"`, `"DOWNLOADING"`, `"COMPLETED"`, `"FAILED"` or `"NOTFOUND"`.
+*   `IAFILEDOWNLOADPROGRESS(id, file, [destFolder])`: Percentage, `0` to `100`.
 
 A downloaded cabinet zip is installed automatically on the next app start, or right away with `CABDBINSTALL` (see "Installing a cabinet" below).
 

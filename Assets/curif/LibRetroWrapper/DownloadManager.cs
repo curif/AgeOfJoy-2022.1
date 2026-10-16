@@ -81,7 +81,7 @@ public class DownloadManager : MonoBehaviour
         DownloadItem item = new DownloadItem(url, savePath, expectedMd5);
 
         // already downloaded with the same md5: nothing to download.
-        if (item.expectedMd5 != null && IsDownloadedWithMd5(Path.GetFileName(savePath), item.expectedMd5))
+        if (item.expectedMd5 != null && IsSavePathDownloadedWithMd5(savePath, item.expectedMd5))
         {
             item.status = DownloadStatus.Completed;
             item.progress = 1f;
@@ -242,6 +242,42 @@ public class DownloadManager : MonoBehaviour
     }
 
     // ---- downloaded md5 record ---------------------------------------------------------------
+
+    // Key of a download in the md5 record. Files saved directly in the cabinets folder keep the bare file
+    // name (compatible with existing records); anything else is keyed by its path relative to the base
+    // dir ("downloads/x.zip"), so it can never collide with a cabinet.
+    private static string RecordKey(string savePath)
+    {
+        string full = Path.GetFullPath(savePath);
+        string dir = Path.GetDirectoryName(full);
+        if (string.Equals(dir, Path.GetFullPath(ConfigManager.Cabinets), StringComparison.Ordinal))
+            return Path.GetFileName(full);
+        string baseDir = Path.GetFullPath(ConfigManager.BaseDir).TrimEnd('/', '\\');
+        string rel = full.StartsWith(baseDir, StringComparison.Ordinal) ? full.Substring(baseDir.Length) : full;
+        return rel.TrimStart('/', '\\').Replace('\\', '/');
+    }
+
+    private bool IsCabinetSavePath(string savePath) =>
+        !RecordKey(savePath).Contains("/");
+
+    // cabinets: present (decompressed or pending) with the md5 recorded. Other files: present with the md5 recorded.
+    private bool IsSavePathDownloadedWithMd5(string savePath, string md5)
+    {
+        if (IsCabinetSavePath(savePath))
+            return IsDownloadedWithMd5(Path.GetFileName(savePath), md5);
+        if (string.IsNullOrEmpty(md5) || !File.Exists(savePath))
+            return false;
+        return LoadDownloadedMd5().TryGetValue(RecordKey(savePath), out string recorded) &&
+               string.Equals(recorded, md5, StringComparison.OrdinalIgnoreCase);
+    }
+
+    // 0: not downloaded, 1: downloaded and md5 matches, 2: downloaded but different/unknown (update available).
+    public int FileDownloadedState(string savePath, string md5)
+    {
+        if (!File.Exists(savePath))
+            return 0;
+        return IsSavePathDownloadedWithMd5(savePath, md5) ? 1 : 2;
+    }
 
     private string Md5RecordPath => Path.Combine(ConfigManager.ConfigDir, Md5RecordFile);
 
@@ -414,7 +450,7 @@ public class DownloadManager : MonoBehaviour
                 if (File.Exists(item.savePath))
                     File.Delete(item.savePath);
                 File.Move(partPath, item.savePath);
-                RecordDownloadedMd5(Path.GetFileName(item.savePath), md5);
+                RecordDownloadedMd5(RecordKey(item.savePath), md5);
             }
             catch (Exception e)
             {
