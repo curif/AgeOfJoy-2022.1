@@ -126,6 +126,21 @@ public static class Commands
         functions["IAFILEDOWNLOADSTATUS"] = typeof(CommandFunctionIAFILEDOWNLOADSTATUS);
         functions["IAFILEDOWNLOADPROGRESS"] = typeof(CommandFunctionIAFILEDOWNLOADPROGRESS);
 
+        //github releases / apk install
+        functions["GHLOAD"] = typeof(CommandFunctionGHLOAD);
+        functions["GHSTATUS"] = typeof(CommandFunctionGHSTATUS);
+        functions["GHRELEASES"] = typeof(CommandFunctionGHRELEASES);
+        functions["GHRELEASEINFO"] = typeof(CommandFunctionGHRELEASEINFO);
+        functions["GHFILES"] = typeof(CommandFunctionGHFILES);
+        functions["GHFILEINFO"] = typeof(CommandFunctionGHFILEINFO);
+        functions["GHDOWNLOAD"] = typeof(CommandFunctionGHDOWNLOAD);
+        functions["GHDOWNLOADSTATUS"] = typeof(CommandFunctionGHDOWNLOADSTATUS);
+        functions["GHDOWNLOADPROGRESS"] = typeof(CommandFunctionGHDOWNLOADPROGRESS);
+        functions["APKINSTALL"] = typeof(CommandFunctionAPKINSTALL);
+        functions["APKINSTALLSTATUS"] = typeof(CommandFunctionAPKINSTALLSTATUS);
+        functions["APKINSTALLPROGRESS"] = typeof(CommandFunctionAPKINSTALLPROGRESS);
+        functions["APPVERSION"] = typeof(CommandFunctionAPPVERSION);
+
         //introspection
         functions["EXISTS"] = typeof(CommandFunctionEXIST);
         functions["TYPE"] = typeof(CommandFunctionTYPE);

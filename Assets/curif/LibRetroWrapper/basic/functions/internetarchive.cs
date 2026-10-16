@@ -294,16 +294,7 @@ class CommandFunctionIADOWNLOADSTATUS : CommandFunctionExpressionListBase
 
         var (status, _) = dm.GetFileStatus(IADownloadHelper.SavePath(cab));
 
-        string statusString = status switch
-        {
-            DownloadManager.DownloadStatus.Idle => "QUEUED",
-            DownloadManager.DownloadStatus.Downloading => "DOWNLOADING",
-            DownloadManager.DownloadStatus.Completed => "COMPLETED",
-            DownloadManager.DownloadStatus.Failed => "FAILED",
-            DownloadManager.DownloadStatus.NotFound => "NOTFOUND",
-            _ => "unknown" // Shouldn't happen
-        };
-        return new BasicValue(statusString);
+        return new BasicValue(DownloadFunctionsHelper.StatusString(status));
     }
 }
 
@@ -356,14 +347,20 @@ static class IAFileHelper
     // Subfolders of the item are flattened: "roms/x.zip" is saved as <dest>/x.zip
     public static string SavePath(string cmd, IAFile file, BasicValue[] vals, int destIndex)
     {
-        string dest = ConfigManager.RomsDir;
-        if (vals.Length > destIndex)
-        {
-            FunctionHelper.ExpectedString(vals[destIndex], "destination folder");
-            if (!string.IsNullOrEmpty(vals[destIndex].GetValueAsString()))
-                dest = vals[destIndex].GetValueAsString();
-        }
-        dest = FunctionHelper.FileTraversalFree(dest, ConfigManager.BaseDir);
+        return Path.Combine(DestFolder(cmd, vals, destIndex, ConfigManager.RomsDir), Path.GetFileName(file.Name));
+    }
+
+    // optional destination folder argument at destIndex ("" or missing: defaultDir, which isn't checked).
+    // Also used by the GH* functions.
+    public static string DestFolder(string cmd, BasicValue[] vals, int destIndex, string defaultDir)
+    {
+        if (vals.Length <= destIndex)
+            return defaultDir;
+        FunctionHelper.ExpectedString(vals[destIndex], "destination folder");
+        string requested = vals[destIndex].GetValueAsString();
+        if (string.IsNullOrEmpty(requested))
+            return defaultDir;
+        string dest = FunctionHelper.FileTraversalFree(requested, ConfigManager.BaseDir);
 
         // cabinets have IADOWNLOAD; a script must not drop native cores or change the configuration.
         foreach (string forbidden in new[] { ConfigManager.Cabinets, ConfigManager.CabinetsDB, ConfigManager.CoresDir,
@@ -373,9 +370,9 @@ static class IAFileHelper
             if (dest.Equals(f, StringComparison.OrdinalIgnoreCase) ||
                 dest.StartsWith(f + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
                 dest.StartsWith(f + "/", StringComparison.OrdinalIgnoreCase))
-                throw new Exception($"{cmd}: destination folder {vals[destIndex].GetValueAsString()} is not allowed, use IADOWNLOAD for cabinets");
+                throw new Exception($"{cmd}: destination folder {requested} is not allowed, use IADOWNLOAD for cabinets");
         }
-        return Path.Combine(dest, Path.GetFileName(file.Name));
+        return dest;
     }
 }
 
@@ -503,16 +500,7 @@ class CommandFunctionIAFILEDOWNLOADSTATUS : CommandFunctionExpressionListBase
 
         var (status, _) = dm.GetFileStatus(IAFileHelper.SavePath(CmdToken, file, vals, 2));
 
-        string statusString = status switch
-        {
-            DownloadManager.DownloadStatus.Idle => "QUEUED",
-            DownloadManager.DownloadStatus.Downloading => "DOWNLOADING",
-            DownloadManager.DownloadStatus.Completed => "COMPLETED",
-            DownloadManager.DownloadStatus.Failed => "FAILED",
-            DownloadManager.DownloadStatus.NotFound => "NOTFOUND",
-            _ => "unknown"
-        };
-        return new BasicValue(statusString);
+        return new BasicValue(DownloadFunctionsHelper.StatusString(status));
     }
 }
 

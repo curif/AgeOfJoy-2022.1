@@ -21,5 +21,7 @@
   <uses-permission android:name="com.oculus.permission.USE_ANCHOR_API" />
   <uses-permission android:name="com.oculus.permission.USE_PASSTHROUGH" />
   <uses-permission android:name="com.oculus.permission.BOUNDARY_VISIBILITY" />
+  <!-- APKINSTALL (AGEBasic): in-app updates from GitHub releases. Not allowed in Meta Store builds. -->
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
 </manifest>

@@ -251,6 +251,44 @@ Continuing the example above — install the downloaded cabinet and place it at 
 240 END
 ```
 
+### GitHub Releases & APK Update
+
+Lists the releases of any public GitHub project (no login) and installs an AGE of Joy update from inside the headset. Same start/poll pattern as the `IA*` functions. GitHub allows 60 unauthenticated requests per hour per IP: call `GHLOAD` once, not in a loop.
+
+*   `GHLOAD(project, [count])`: Starts loading the newest `count` releases (1 to 100, default 10). `project` is `"owner/repo"` or a GitHub URL (`https://github.com/curif/AgeOfJoy-2022.1`). Returns `"owner/repo"` It also deletes the apk of the installed version (`APPVERSION()`) from the Download folder: after an update it isn't needed anymore.
+*   `GHSTATUS(project)`: `"LOADING"`, `"READY"`, `"NOTFOUND"`, `"RATELIMITED"` (try again later), `"FAILED"` or `"UNKNOWN"` (never loaded).
+*   `GHRELEASES(project)`: Array with the release tags, newest first, or `""` if none.
+*   `GHRELEASEINFO(project, tag, field)`: `"name"`, `"date"` (ISO 8601 UTC), `"prerelease"` (`1`/`0`), `"notes"`, `"files"` (number of files), `"installed"` (`1` if it's the running version, see `APPVERSION()`), and about the release's apk: `"apk"` (file name, `""` if none), `"url"`, `"size"` (bytes), `"sha256"`.
+*   `GHFILES(project, tag, [wildcard])`: Array with the file names of a release, or `""`.
+*   `GHFILEINFO(project, tag, file, field, [destFolder])`: `"name"`, `"size"`, `"url"`, `"sha256"`, `"path"` (where `GHDOWNLOAD` saves it) or `"downloaded"` (`0` = no, `1` = same sha256, `2` = different). `file` `""` = the release's apk.
+*   `GHDOWNLOAD(project, tag, [file], [destFolder])`: Queues the download of a release file (`""` or missing = the apk) and returns its full path. Default folder: the shared Download folder of the headset (`/sdcard/Download`), outside the AGE of Joy folder; any other `destFolder` follows the `IAFILEDOWNLOAD` rules. Saved as `<repo>-<tag>-<file>`, verified with GitHub's sha256, written as `.part` until complete. Only one version of each file is kept: the project's other versions of the same file in that folder are deleted first (an apk is over 1 GB). Throws a runtime error if there isn't enough free space.
+*   `GHDOWNLOADSTATUS(project, tag, [file], [destFolder])` / `GHDOWNLOADPROGRESS(...)`: like `IAFILEDOWNLOADSTATUS` / `IAFILEDOWNLOADPROGRESS`.
+*   `APKINSTALL(path)`: Starts installing an AGE of Joy apk (from the Download folder or the AGE of Joy folder). Apks of other apps are refused. Returns `"STARTED"`, `"NOPERMISSION"` (the first time: it opens the Android "install unknown apps" screen for AGE of Joy, the user enables it and the script calls `APKINSTALL` again), `"NOTFOUND"`, `"WRONGPACKAGE"`, `"NOSPACE"` or `"BUSY"`.
+*   `APKINSTALLSTATUS()`: `"IDLE"`, `"COPYING"` (the apk is copied to the Android installer, see `APKINSTALLPROGRESS()`), `"COMMITTING"`, `"WAITINGUSER"` (Android shows its install dialog), then `"SUCCESS"`, `"ABORTED"` (the user cancelled), `"CONFLICT"` (signed with another key), `"STORAGE"`, `"INCOMPATIBLE"`, `"INVALID"`, `"BLOCKED"` or `"FAILED"`. When the user accepts, Android closes AGE of Joy to apply the update; the user starts it again. Rooms, cabinets and configuration are kept.
+*   `APKINSTALLPROGRESS()`: Percentage, `0` to `100`, while `"COPYING"`.
+*   `APPVERSION()`: The installed version (the release tag, e.g. `"0.5.0-rc31"`).
+
+Any release can be installed over the current one, older releases too.
+
+```basic
+10 LET P = GHLOAD("curif/AgeOfJoy-2022.1", 5)
+20 SLEEP 0.5
+30 IF GHSTATUS(P) = "LOADING" THEN GOTO 20
+40 IF GHSTATUS(P) != "READY" THEN PRINT 0, 0, "ERROR: " + GHSTATUS(P) : SHOW : END
+50 LET TAGS = GHRELEASES(P)
+60 LET TAG = TAGS[0]
+70 LET APK = GHDOWNLOAD(P, TAG)
+80 SLEEP 1
+90 PRINT 0, 1, TAG + " " + STR(INT(GHDOWNLOADPROGRESS(P, TAG))) + "%  " : SHOW
+100 IF GHDOWNLOADSTATUS(P, TAG) = "QUEUED" || GHDOWNLOADSTATUS(P, TAG) = "DOWNLOADING" THEN GOTO 80
+110 IF GHDOWNLOADSTATUS(P, TAG) != "COMPLETED" THEN PRINT 0, 2, "DOWNLOAD FAILED" : SHOW : END
+120 LET R = APKINSTALL(APK)
+130 IF R != "STARTED" THEN PRINT 0, 2, "INSTALL: " + R : SHOW : END
+140 SLEEP 0.5
+150 PRINT 0, 2, APKINSTALLSTATUS() + " " + STR(INT(APKINSTALLPROGRESS())) + "%  " : SHOW
+160 IF APKINSTALLSTATUS() = "COPYING" || APKINSTALLSTATUS() = "COMMITTING" || APKINSTALLSTATUS() = "WAITINGUSER" THEN GOTO 140
+```
+
 ---
 
 ## 6. Screen & Drawing Commands

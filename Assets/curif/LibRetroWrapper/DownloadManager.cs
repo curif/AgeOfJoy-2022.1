@@ -50,6 +50,7 @@ public class DownloadManager : MonoBehaviour
 
     private Dictionary<string, IAItem> archiveItems = new Dictionary<string, IAItem>(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, IASearch> archiveSearches = new Dictionary<string, IASearch>();
+    private Dictionary<string, GHProject> githubProjects = new Dictionary<string, GHProject>(StringComparer.OrdinalIgnoreCase);
     // cabinet file name ("galaga.zip") -> md5 of the last verified download
     private Dictionary<string, string> downloadedMd5 = null;
 
@@ -166,7 +167,7 @@ public class DownloadManager : MonoBehaviour
     private IEnumerator FetchArchiveItemCoroutine(string identifier)
     {
         string json = null;
-        yield return GetTextWithRetry(InternetArchive.MetadataUrl(identifier), $"metadata of {identifier}", t => json = t);
+        yield return GetTextWithRetry(InternetArchive.MetadataUrl(identifier), $"archive.org metadata of {identifier}", t => json = t);
         archiveItems[identifier] = json != null
             ? InternetArchive.Parse(identifier, json)
             : new IAItem { Identifier = identifier, Status = IAStatus.Failed };
@@ -192,7 +193,7 @@ public class DownloadManager : MonoBehaviour
     private IEnumerator FetchArchiveSearchCoroutine(string query)
     {
         string json = null;
-        yield return GetTextWithRetry(InternetArchive.SearchUrl(query), $"search {query}", t => json = t);
+        yield return GetTextWithRetry(InternetArchive.SearchUrl(query), $"archive.org search {query}", t => json = t);
         IASearch result = json != null
             ? InternetArchive.ParseSearch(query, json)
             : new IASearch { Query = query, Status = IAStatus.Failed };
@@ -201,10 +202,52 @@ public class DownloadManager : MonoBehaviour
         archiveSearches[query] = result;
     }
 
-    // archive.org is sometimes slow or answers 5xx: retry a few times before giving up. onDone gets null on failure.
-    private IEnumerator GetTextWithRetry(string url, string what, Action<string> onDone)
+    // ---- github releases ----------------------------------------------------------------------
+
+    // Starts (or restarts) the releases fetch. Poll GetGitHubReleases(project).Status.
+    public void FetchGitHubReleases(string project, int count)
+    {
+        if (string.IsNullOrEmpty(project))
+            return;
+        githubProjects[project] = new GHProject { Project = project, Status = GHStatus.Loading };
+        StartCoroutine(FetchGitHubReleasesCoroutine(project, count));
+    }
+
+    public GHProject GetGitHubReleases(string project)
+    {
+        if (string.IsNullOrEmpty(project))
+            return null;
+        githubProjects.TryGetValue(project, out GHProject result);
+        return result;
+    }
+
+    private IEnumerator FetchGitHubReleasesCoroutine(string project, int count)
+    {
+        string json = null;
+        long failCode = 0;
+        yield return GetTextWithRetry(GitHubReleases.ReleasesUrl(project, count), $"github releases of {project}",
+                                      t => json = t, GitHubReleases.ApiHeaders, code => failCode = code);
+        GHProject result;
+        if (json != null)
+            result = GitHubReleases.Parse(project, json);
+        else
+        {
+            // unauthenticated limit exhausted: 403 or 429 (see X-RateLimit-Remaining).
+            GHStatus status = failCode == 404 ? GHStatus.NotFound
+                            : failCode == 403 || failCode == 429 ? GHStatus.RateLimited
+                            : GHStatus.Failed;
+            result = new GHProject { Project = project, Status = status };
+        }
+        githubProjects[project] = result;
+    }
+
+    // archive.org is sometimes slow or answers 5xx: retry a few times before giving up. onDone gets null on failure,
+    // onFail (optional) the last HTTP code (0: no answer).
+    private IEnumerator GetTextWithRetry(string url, string what, Action<string> onDone,
+                                         Dictionary<string, string> headers = null, Action<long> onFail = null)
     {
         const int attempts = 3;
+        long lastCode = 0;
         for (int attempt = 1; attempt <= attempts; attempt++)
         {
             bool retry;
@@ -212,6 +255,9 @@ public class DownloadManager : MonoBehaviour
             {
                 www.timeout = 60;
                 www.SetRequestHeader("User-Agent", "AgeOfJoy");
+                if (headers != null)
+                    foreach (var h in headers)
+                        www.SetRequestHeader(h.Key, h.Value);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -219,7 +265,8 @@ public class DownloadManager : MonoBehaviour
                     onDone(www.downloadHandler.text);
                     yield break;
                 }
-                Debug.LogError($"archive.org {what} failed (attempt {attempt}/{attempts}): {www.error} (HTTP {www.responseCode})");
+                lastCode = www.responseCode;
+                Debug.LogError($"{what} failed (attempt {attempt}/{attempts}): {www.error} (HTTP {www.responseCode})");
                 // 4xx won't get better by retrying.
                 retry = www.responseCode == 0 || www.responseCode >= 500;
             }
@@ -228,6 +275,7 @@ public class DownloadManager : MonoBehaviour
             if (attempt < attempts)
                 yield return new WaitForSeconds(2f * attempt);
         }
+        onFail?.Invoke(lastCode);
         onDone(null);
     }
 
@@ -333,12 +381,15 @@ public class DownloadManager : MonoBehaviour
                string.Equals(recorded, md5, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string ComputeMd5(string path)
+    // expected hashes are md5 hex, or "sha256:<hex>" (github release digests). The result has the same form.
+    private static string ComputeHash(string path, string expected)
     {
-        using (var md5 = MD5.Create())
+        bool sha256 = expected != null && expected.StartsWith("sha256:", StringComparison.Ordinal);
+        using (HashAlgorithm algorithm = sha256 ? (HashAlgorithm)SHA256.Create() : MD5.Create())
         using (var stream = File.OpenRead(path))
         {
-            return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+            string hex = BitConverter.ToString(algorithm.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+            return sha256 ? "sha256:" + hex : hex;
         }
     }
 
@@ -431,7 +482,7 @@ public class DownloadManager : MonoBehaviour
         string md5 = null;
         if (error == null)
         {
-            Task<string> md5Task = Task.Run(() => ComputeMd5(partPath));
+            Task<string> md5Task = Task.Run(() => ComputeHash(partPath, item.expectedMd5));
             while (!md5Task.IsCompleted)
                 yield return null;
             if (md5Task.IsFaulted)
@@ -441,7 +492,7 @@ public class DownloadManager : MonoBehaviour
         }
 
         if (error == null && item.expectedMd5 != null && md5 != item.expectedMd5)
-            error = $"md5 mismatch, expected {item.expectedMd5} got {md5}";
+            error = $"hash mismatch, expected {item.expectedMd5} got {md5}";
 
         if (error == null)
         {

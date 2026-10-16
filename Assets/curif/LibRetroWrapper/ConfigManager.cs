@@ -28,11 +28,14 @@ public static class ConfigManager
     //public static  string BasePublicDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "publiccabs");
 
     public static string BaseAppDir = BaseDir + "/data";
+    public static string PublicDownloadDir = Path.Combine(BasePrivateDir, "PublicDownload");
 #else
     public static string Bundle = "com.curif.AgeOfJoy";
     public static string BaseAppDir = "/data/data/" + Bundle;
     //public static  string BasePublicDir = "/storage/emulated/0/Documents/AgeOfJoy";
     public static  string BasePrivateDir = "/sdcard/Android/data/" + Bundle;
+    // shared Download folder (outside the app folder), used for GitHub release apks (GHDOWNLOAD).
+    public static string PublicDownloadDir = "/sdcard/Download";
 #endif
     public static string BaseDir = BasePrivateDir;
 
