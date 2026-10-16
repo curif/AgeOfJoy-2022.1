@@ -48,7 +48,7 @@ public class DownloadManager : MonoBehaviour
     private DownloadItem currentDownload = null;
     private bool isDownloading = false;
 
-    private Dictionary<string, IAItem> archiveItems = new Dictionary<string, IAItem>();
+    private Dictionary<string, IAItem> archiveItems = new Dictionary<string, IAItem>(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, IASearch> archiveSearches = new Dictionary<string, IASearch>();
     // cabinet file name ("galaga.zip") -> md5 of the last verified download
     private Dictionary<string, string> downloadedMd5 = null;

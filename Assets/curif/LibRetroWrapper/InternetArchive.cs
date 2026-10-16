@@ -102,7 +102,7 @@ public static class InternetArchive
             {
                 foreach (var doc in docs.OfType<JObject>())
                 {
-                    string id = AsText(doc["identifier"]).ToLowerInvariant();
+                    string id = AsText(doc["identifier"]);
                     if (id.Length > 0 && !search.Identifiers.Contains(id))
                         search.Identifiers.Add(id);
                 }
@@ -131,7 +131,7 @@ public static class InternetArchive
                 return "";
             s = parts[i + 1];
         }
-        return s.Trim('/').ToLowerInvariant();
+        return s.Trim('/');
     }
 
     // identifier and file name from an https://archive.org/download/<id>/<file> url. False if it is not one.
@@ -148,7 +148,7 @@ public static class InternetArchive
         string[] parts = uri.AbsolutePath.Split('/').Where(p => p.Length > 0).ToArray();
         if (parts.Length < 3 || parts[0] != "download")
             return false;
-        identifier = parts[1].ToLowerInvariant();
+        identifier = parts[1];
         fileName = string.Join("/", parts.Skip(2).Select(Uri.UnescapeDataString));
         return true;
     }
